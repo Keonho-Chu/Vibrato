@@ -2,12 +2,14 @@
 
 ## [Unreleased]
 
+- Windows session-state locks now drain late terminal reconciliation writes before disposal returns and safely reclaim dead transition claims, including released owner tombstones left by interrupted cleanup. (#5102)
 - A runtime-state marker recorded against a different workspace path now reports that mismatch instead of claiming the file is unreadable, and a terminal, not-live marker that travelled into the current workspace with its session directory is adopted rather than refused. Live, non-terminal, and out-of-workspace markers are still refused untouched.
 ||||||| parent of f0f52342e (fix(coding-agent): separate foreign-workspace runtime markers from unreadable ones)
 - Headless SDK substrate close now reports success when exact teardown observes the recorded process gone even if cleanup unlinks the durable proof first; live or identity-ambiguous substrates still report `substrate_mismatch`. (#5130)
 
 - Windows session-state locks now drain late terminal reconciliation writes before disposal returns and safely reclaim valid dead transition claims during resume. (#5102)
 
+||||||| parent of 942ed5649 (fix(session): recover released transition debris)
 - Deferred MCP startup now releases queued idle yields as soon as readiness settles without bypassing prompt admission. Barrier extensions remain gated, rejected startup drops the wake without prompting, settled sessions retain the normal idle merge window, and readiness stays session-local. (#5085)
 
 - ACP deep-interview's real subprocess fixture now retires its owned lifecycle sessions before broker/root cleanup, preventing detached session hosts from recreating the fixture root after teardown. (#5086)
