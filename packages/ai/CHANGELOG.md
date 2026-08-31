@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- OpenAI Codex WebSockets are now opt-in on Windows. Bun 1.4.0 can segfault in its Windows TLS WebSocket handshake, so the automatic model preference uses SSE on Windows while the explicit WebSocket setting remains available for operators who have a newer safe runtime.
 ## [0.17.3] - 2026-09-03
 
 ## [0.17.2] - 2026-09-03
