@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- File locks now use a descriptor-relative exclusive directory-publication fallback
 ### Fixed
 
 - Managed-session file identities now use one canonical unsigned 64-bit representation across stat/native boundaries and replacement cleanup receipts. Native Windows file IDs surfaced as signed negative bigints no longer create double-hyphen receipt names that block persistence or reopen; already-written signed receipt names and interrupted pending receipts are recovered only through the existing identity-bound, fail-closed reconciliation paths. (#5095)
