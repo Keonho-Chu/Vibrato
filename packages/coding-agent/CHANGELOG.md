@@ -2,7 +2,9 @@
 
 ## [Unreleased]
 
+- Coordinator session-state locks now reclaim an empty, identity-qualified released transition tombstone on POSIX after a short release grace period. Live, foreign, malformed, non-empty, or identity-changed claims remain fail-closed, while persistent macOS/File Provider debris no longer burns the full transition timeout on every state write. (#5159)
 - Windows session-state locks now drain late terminal reconciliation writes before disposal returns and safely reclaim dead transition claims, including released owner tombstones left by interrupted cleanup. (#5102)
+||||||| parent of f72928d7e (fix(coordinator): recover released transition tombstones (#5160))
 - A runtime-state marker recorded against a different workspace path now reports that mismatch instead of claiming the file is unreadable, and a terminal, not-live marker that travelled into the current workspace with its session directory is adopted rather than refused. Live, non-terminal, and out-of-workspace markers are still refused untouched.
 ||||||| parent of f0f52342e (fix(coding-agent): separate foreign-workspace runtime markers from unreadable ones)
 - Headless SDK substrate close now reports success when exact teardown observes the recorded process gone even if cleanup unlinks the durable proof first; live or identity-ambiguous substrates still report `substrate_mismatch`. (#5130)
