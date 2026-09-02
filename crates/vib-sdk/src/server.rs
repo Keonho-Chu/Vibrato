@@ -72,8 +72,8 @@ pub struct ServerConfig {
 	/// Whether an SDK workflow-gate resolver is available for ask round-trips.
 	/// When `false`, asks are notify-only and replies are rejected.
 	pub resolver_available: bool,
-	/// Optional Vibrato state root. When set, the server writes/removes the endpoint
-	/// discovery file at `<state_root>/sdk/<session_id>.json`.
+	/// Optional Vibrato state root. When set, the server writes/removes the
+	/// endpoint discovery file at `<state_root>/sdk/<session_id>.json`.
 	pub state_root:         Option<PathBuf>,
 	/// When `true`, accepted client replies are forwarded to the host (via
 	/// [`ServerHandle::take_reply_receiver`]) instead of resolving internally,

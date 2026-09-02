@@ -70,8 +70,6 @@ function rollbackModelPresetRegistry(options: Parameters<typeof rollbackModelPre
 	const run = options.agentDir ? testTrustRunners.get(options.agentDir) : undefined;
 	return run ? run(() => rollbackModelPresetRegistryImpl(options)) : rollbackModelPresetRegistryImpl(options);
 }
-const productionManifestV1 = `{"schemaVersion":"1.0.0","signature":{"algorithm":"Ed25519","keyId":"registry-root-2026-01","value":"72hjU+GP8jsfCft0XotlRDhBa1sxPGPzySVATT1wwdT/h3Cb+Ylj7DI0ydiiAqSbDtFPhOmZvhFxpLeUQ5jFBw=="},"signed":{"compatibility":{"consumerContract":{"maxVersion":"1.0.0","minVersion":"1.0.0"}},"contents":{"presets":{"bytes":1230434,"count":4271,"path":"revisions/00000001/presets.json","sha256":"a73a9d0876198475902e7b87ac59dce37746025b35711767bd7ba6afe4104d96"},"profiles":{"bytes":19679,"count":58,"path":"revisions/00000001/profiles.json","sha256":"8befc86c52621d18f71ad141cd194329e8299bcfd50772faaf68b7f9c5b379cd"}},"provenance":{"generatedAt":"2026-08-24T09:41:42.000Z","generatedBy":"vib-rato-presets/scripts/import-upstream.mjs@1","sourcePaths":["packages/ai/src/models.json","packages/coding-agent/src/config/model-profiles.ts"],"sourceRepository":"https://github.com/Keonho-Chu/Vibrato","sourceRevision":"65d0d2fdae36a4512959a6a8c143339b8ec98c58"},"publishedAt":"2026-08-24T09:41:42.000Z","registryRevision":1,"revision":"00000001","snapshot":{"bytes":819,"count":1,"path":"revisions/00000001/snapshot.json","sha256":"3e3e9e8d114be2b29184b83ed9c3321902a48202cda14ec765a73298c383c030"}}}`;
-const productionSnapshotV1 = `{"compatibility":{"consumerContract":{"maxVersion":"1.0.0","minVersion":"1.0.0"}},"contents":{"presets":{"bytes":1230434,"count":4271,"path":"revisions/00000001/presets.json","sha256":"a73a9d0876198475902e7b87ac59dce37746025b35711767bd7ba6afe4104d96"},"profiles":{"bytes":19679,"count":58,"path":"revisions/00000001/profiles.json","sha256":"8befc86c52621d18f71ad141cd194329e8299bcfd50772faaf68b7f9c5b379cd"}},"provenance":{"generatedAt":"2026-08-24T09:41:42.000Z","generatedBy":"vib-rato-presets/scripts/import-upstream.mjs@1","sourcePaths":["packages/ai/src/models.json","packages/coding-agent/src/config/model-profiles.ts"],"sourceRepository":"https://github.com/Keonho-Chu/Vibrato","sourceRevision":"65d0d2fdae36a4512959a6a8c143339b8ec98c58"},"registryRevision":1,"revision":"00000001","schemaVersion":"1.0.0"}`;
 
 function sha256(value: string): string {
 	return crypto.createHash("sha256").update(value).digest("hex");
@@ -260,21 +258,11 @@ describe("signed model preset registry", () => {
 		expect(() => canonicalModelPresetRegistryJson("\ud800")).toThrow(/lone high surrogate/i);
 	});
 
-	test("accepts the exact producer revision-1 manifest signature and snapshot binding", async () => {
-		const agentDir = await createTrackedDirectory("vib-preset-production-contract-");
-		let calls = 0;
-		const fetchImpl = (async () => {
-			calls++;
-			if (calls === 1) return new Response(productionManifestV1);
-			if (calls === 2) return new Response(productionSnapshotV1);
-			return new Response("");
-		}) as unknown as typeof fetch;
-		await expect(refreshModelPresetRegistry({ agentDir, manifestUrl, fetch: fetchImpl })).rejects.toThrow(
-			/profiles size mismatch/i,
-		);
-		expect(calls).toBe(3);
-		expect(getModelPresetRegistryStatus({ agentDir })).toMatchObject({ cacheHealth: "empty", source: "embedded" });
-	});
+	// The upstream producer's signed revision-1 manifest is bound to the
+	// Yeachan-Heo/gajae-code source repository. Vibrato has no preset producer
+	// yet (SOURCE_REPOSITORY now names Keonho-Chu/Vibrato), so that contract
+	// test was retired with the rebrand; re-add it when a Vibrato-presets
+	// registry publishes its first signed revision.
 
 	test("accepts a credential-free HTTPS manifest override with same-origin signed content", async () => {
 		const data = await fixture();

@@ -319,7 +319,9 @@ describe("createAgentSession MCP discovery prompt gating", () => {
 
 			discovery.resolve(createMcpLoadResult([createMcpCustomTool("mcp__exact_lookup", "exact", "lookup")]));
 			await startup;
-			await Bun.sleep(10);
+			// Delivery is scheduled asynchronously after startup settles; poll with a bound instead of a fixed sleep.
+			const deadline = Date.now() + 2_000;
+			while (agentPrompt.mock.calls.length === 0 && Date.now() < deadline) await Bun.sleep(10);
 			expect(agentPrompt).toHaveBeenCalledTimes(1);
 		} finally {
 			await session.dispose();

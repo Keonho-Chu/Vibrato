@@ -28,15 +28,13 @@
   ],
   "expectedProviderOrder": [
     "openai-codex",
-    "anthropic",
-    "google"
+    "anthropic"
   ],
   "setup": {
     "schema": 1,
     "providers": [
       "openai-codex",
-      "anthropic",
-      "google"
+      "anthropic"
     ]
   },
   "expectedTiers": {

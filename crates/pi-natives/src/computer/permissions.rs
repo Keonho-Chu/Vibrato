@@ -85,8 +85,8 @@ impl std::fmt::Display for PermissionError {
 		write!(
 			f,
 			"COMPUTER_PERMISSION_REQUIRED: {name} permission is required to {what}. Grant it in \
-			 System Settings for the current Vibrato launcher, then fully quit and relaunch Vibrato before \
-			 retrying. {}",
+			 System Settings for the current Vibrato launcher, then fully quit and relaunch Vibrato \
+			 before retrying. {}",
 			current_process_diagnostic()
 		)
 	}

@@ -1297,9 +1297,8 @@ describe("bare /login external credential import gate", () => {
 			if (!(selector instanceof ProviderOnboardingSelectorComponent)) {
 				throw new Error("Expected provider onboarding selector");
 			}
-			selector.handleInput("\x1b[B");
-			selector.handleInput("\x1b[B");
-			selector.handleInput("\x1b[B");
+			// Import existing credentials is the sixth entry (after the two endpoint options).
+			for (let step = 0; step < 5; step++) selector.handleInput("\x1b[B");
 			selector.handleInput("\n");
 			await importCompleted;
 			expect(discoveryReads).toBe(2);

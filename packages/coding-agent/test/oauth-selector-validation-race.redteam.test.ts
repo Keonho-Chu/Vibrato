@@ -4,6 +4,7 @@ import { clearProviderAuthHealth, getProviderAuthHealth } from "@vib-rato/coding
 import { OAuthSelectorComponent } from "@vib-rato/coding-agent/modes/components/oauth-selector";
 import { getThemeByName, setThemeInstance } from "@vib-rato/coding-agent/modes/theme/theme";
 import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { getSelectableOAuthProviders } from "../src/config/provider-allowlist";
 
 let testTheme = await getThemeByName("red-claw");
 
@@ -135,7 +136,7 @@ describe("OAuth selector validation generation race", () => {
 	});
 
 	test("terminates the spinner when one provider is stale and another is fresh", async () => {
-		const providers = getOAuthProviders().slice(0, 2);
+		const providers = getSelectableOAuthProviders().slice(0, 2);
 		if (providers.length < 2) throw new Error("Expected at least two OAuth providers");
 		const [droppedProvider, freshProvider] = providers;
 		if (!droppedProvider || !freshProvider) throw new Error("Expected two OAuth providers");

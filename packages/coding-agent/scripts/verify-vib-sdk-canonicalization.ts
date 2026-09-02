@@ -1561,6 +1561,28 @@ function isExactTmuxScrollCopyModeSendKeys(
 	);
 }
 
+const tmuxSelfInjectionGuardPath = "packages/coding-agent/src/tools/tmux-self-injection-guard.ts";
+
+/**
+ * The self-injection guard names the tmux input verbs it REFUSES to run
+ * against the agent pane. The verbs only ever appear inside its exact
+ * `INPUT_VERBS` deny-list literal; the module never spawns tmux, so those
+ * occurrences are the opposite of content injection.
+ */
+function isExactSelfInjectionGuardDenyList(
+	file: string,
+	contents: string,
+	occurrence: TmuxPrimitiveOccurrence,
+): boolean {
+	if (file !== tmuxSelfInjectionGuardPath) return false;
+	if (occurrence.primitive !== "send-keys" && occurrence.primitive !== "paste-buffer") return false;
+	const lineStart = contents.lastIndexOf("\n", occurrence.start) + 1;
+	const lineEnd = contents.indexOf("\n", occurrence.end);
+	return /^const INPUT_VERBS = new Set\(\["send-keys", "paste-buffer", "send-prefix"\]\);$/.test(
+		contents.slice(lineStart, lineEnd === -1 ? contents.length : lineEnd),
+	);
+}
+
 function isTypeOnlyTmuxPrimitiveOccurrence(contents: string, occurrence: TmuxPrimitiveOccurrence): boolean {
 	const lineStart = contents.lastIndexOf("\n", occurrence.start) + 1;
 	const lineEnd = contents.indexOf("\n", occurrence.end);
@@ -1581,6 +1603,7 @@ function tmuxMachineBusViolations(file: string, contents: string): string[] {
 		if (
 			isExactTeamFallback ||
 			isExactTmuxScrollCopyModeSendKeys(file, contents, occurrence) ||
+			isExactSelfInjectionGuardDenyList(file, contents, occurrence) ||
 			isTypeOnlyTmuxPrimitiveOccurrence(contents, occurrence)
 		)
 			continue;

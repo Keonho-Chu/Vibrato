@@ -27,7 +27,7 @@ describe("resolvePresetSelector", () => {
 	});
 
 	test("matches a vib-rato/-namespaced preset name case-insensitively on the prefix", () => {
-		expect(resolvePresetSelector("VIBRATO/codex-medium", registryWithProfiles("codex-medium"))).toBe("codex-medium");
+		expect(resolvePresetSelector("VIB-RATO/codex-medium", registryWithProfiles("codex-medium"))).toBe("codex-medium");
 	});
 
 	test("returns undefined for an unknown preset name so the caller falls through", () => {

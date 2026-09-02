@@ -765,7 +765,12 @@ export async function runInteractiveMode(
 		}
 		// Nothing usable yet (no credentials, no discovered endpoint): open the
 		// provider onboarding menu, whose first entry is the vLLM endpoint setup.
-		if (session.modelRegistry.getAvailable().length === 0) mode.showProviderOnboarding();
+		// Test harnesses stub the registry and mode, so probe both before calling.
+		const availableModels =
+			typeof session.modelRegistry?.getAvailable === "function" ? session.modelRegistry.getAvailable() : undefined;
+		if (availableModels?.length === 0 && typeof mode.showProviderOnboarding === "function") {
+			mode.showProviderOnboarding();
+		}
 	}
 	mode.renderInitialMessages(undefined, { preserveExistingChat: true });
 
