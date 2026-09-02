@@ -40,9 +40,9 @@ describe("end-to-end import", () => {
 		await write(".claude.json", JSON.stringify({ mcpServers: { claudeSrv: { command: "cbin" } } }));
 		await write(".claude/skills/alpha/SKILL.md", "---\ndescription: a\n---\nbody");
 		const report = await runMigrate(opts({ from: ["claude-code"] }));
-		const config = await readMCPConfigFile(path.join(cwd, ".gjc", "mcp.json"));
+		const config = await readMCPConfigFile(path.join(cwd, ".vib", "mcp.json"));
 		expect(config.mcpServers?.claudeSrv).toMatchObject({ command: "cbin" });
-		expect(await fs.readFile(path.join(cwd, ".gjc", "skills", "alpha", "SKILL.md"), "utf-8")).toContain(
+		expect(await fs.readFile(path.join(cwd, ".vib", "skills", "alpha", "SKILL.md"), "utf-8")).toContain(
 			"description: a",
 		);
 		expect(report.ok).toBe(true);
@@ -52,9 +52,9 @@ describe("end-to-end import", () => {
 		await write(".codex/config.toml", '[mcp_servers.codexSrv]\ncommand = "cdx"\n');
 		await write(".codex/prompts/review.md", "Review carefully.");
 		await runMigrate(opts({ from: ["codex"] }));
-		const config = await readMCPConfigFile(path.join(cwd, ".gjc", "mcp.json"));
+		const config = await readMCPConfigFile(path.join(cwd, ".vib", "mcp.json"));
 		expect(config.mcpServers?.codexSrv).toMatchObject({ type: "stdio", command: "cdx" });
-		expect(await fs.readFile(path.join(cwd, ".gjc", "skills", "review", "SKILL.md"), "utf-8")).toContain(
+		expect(await fs.readFile(path.join(cwd, ".vib", "skills", "review", "SKILL.md"), "utf-8")).toContain(
 			"description:",
 		);
 	});
@@ -66,9 +66,9 @@ describe("end-to-end import", () => {
 		);
 		await write(".config/opencode/commands/deploy.md", "Deploy it.");
 		await runMigrate(opts({ from: ["opencode"] }));
-		const config = await readMCPConfigFile(path.join(cwd, ".gjc", "mcp.json"));
+		const config = await readMCPConfigFile(path.join(cwd, ".vib", "mcp.json"));
 		expect(config.mcpServers?.ocSrv).toMatchObject({ type: "stdio", command: "ocb" });
-		expect(await fs.readFile(path.join(cwd, ".gjc", "skills", "deploy", "SKILL.md"), "utf-8")).toContain(
+		expect(await fs.readFile(path.join(cwd, ".vib", "skills", "deploy", "SKILL.md"), "utf-8")).toContain(
 			"description:",
 		);
 	});
@@ -88,8 +88,8 @@ describe("end-to-end import", () => {
 		await write(".claude/skills/alpha/SKILL.md", "---\ndescription: a\n---\nbody");
 		const outside = await fs.mkdtemp(path.join(os.tmpdir(), "migrate-import-outside-"));
 		try {
-			await fs.mkdir(path.join(cwd, ".gjc", "skills"), { recursive: true });
-			await fs.symlink(outside, path.join(cwd, ".gjc", "skills", "alpha"), "dir");
+			await fs.mkdir(path.join(cwd, ".vib", "skills"), { recursive: true });
+			await fs.symlink(outside, path.join(cwd, ".vib", "skills", "alpha"), "dir");
 
 			const report = await runMigrate(opts({ from: ["claude-code"] }));
 			const alphaAction = report.actions.find(action => action.type === "skill" && action.name === "alpha");
@@ -112,7 +112,7 @@ describe("end-to-end import", () => {
 		await runMigrate(opts({ from: ["claude-code"] }));
 		await write(".claude.json", JSON.stringify({ mcpServers: { srv: { command: "v2" } } }));
 		await runMigrate(opts({ from: ["claude-code"], force: true }));
-		const config = await readMCPConfigFile(path.join(cwd, ".gjc", "mcp.json"));
+		const config = await readMCPConfigFile(path.join(cwd, ".vib", "mcp.json"));
 		expect(config.mcpServers?.srv).toMatchObject({ command: "v2" });
 	});
 });

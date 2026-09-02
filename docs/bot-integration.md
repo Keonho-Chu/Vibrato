@@ -1,8 +1,8 @@
 # External controller integration guide
 
-This guide is for authors of bots and orchestrators that want to drive Gajae-Code (`gjc`) without scraping terminal scrollback. Hermes, OpenClaw, GitHub bots, chatops bots, and custom schedulers are examples of external controllers; none of them need bespoke GJC behavior if they use Coordinator MCP, the broker-bound SDK session CLI, or a managed SDK-core adapter.
+This guide is for authors of bots and orchestrators that want to drive Vibrato (`vib`) without scraping terminal scrollback. Hermes, OpenClaw, GitHub bots, chatops bots, and custom schedulers are examples of external controllers; none of them need bespoke Vibrato behavior if they use Coordinator MCP, the broker-bound SDK session CLI, or a managed SDK-core adapter.
 
-GJC is an external runner. Your controller owns queueing, identity, policy, and credentials; GJC owns the coding-agent session, workflows, tools, artifacts, and evidence inside the selected repository or worktree.
+Vibrato is an external runner. Your controller owns queueing, identity, policy, and credentials; Vibrato owns the coding-agent session, workflows, tools, artifacts, and evidence inside the selected repository or worktree.
 
 ## Integration surfaces
 
@@ -10,17 +10,17 @@ Use the smallest surface that fits your bot:
 
 | Surface | Best for | Command | Stability notes |
 | --- | --- | --- | --- |
-| Coordinator MCP | Any external controller that can discover SDK-backed sessions, send turns, answer questions, and read artifacts. | `gjc mcp-serve coordinator` | Preferred orchestration surface. `gjc mcp-serve hermes` is a compatibility alias, not a separate contract. |
-| Setup adapter | Rendering a portable MCP config and operator instructions for a controller profile. | `gjc setup hermes --root /path/to/repo` | Compatibility-oriented config renderer; does not call an LLM or validate provider credentials. |
-| SDK session CLI | Broker-bound semantic session operations and explicit raw SDK dispatch with JSON output. | `gjc sdk session list|inspect|send|status|tail` or `gjc sdk session raw control|query|global` | Resolves authority through the broker and never exposes endpoint credentials. |
+| Coordinator MCP | Any external controller that can discover SDK-backed sessions, send turns, answer questions, and read artifacts. | `vib mcp-serve coordinator` | Preferred orchestration surface. `vib mcp-serve hermes` is a compatibility alias, not a separate contract. |
+| Setup adapter | Rendering a portable MCP config and operator instructions for a controller profile. | `vib setup hermes --root /path/to/repo` | Compatibility-oriented config renderer; does not call an LLM or validate provider credentials. |
+| SDK session CLI | Broker-bound semantic session operations and explicit raw SDK dispatch with JSON output. | `vib sdk session list|inspect|send|status|tail` or `vib sdk session raw control|query|global` | Resolves authority through the broker and never exposes endpoint credentials. |
 
 ## Recommended architecture
 
 ```text
 external controller / bot
   ├─ chooses repo/worktree and task policy
-  ├─ starts MCP server: gjc mcp-serve coordinator
-  ├─ discovers or starts one SDK-backed GJC session
+  ├─ starts MCP server: vib mcp-serve coordinator
+  ├─ discovers or starts one SDK-backed Vibrato session
   ├─ sends one bounded turn at a time
   ├─ answers structured questions explicitly
   ├─ watches the durable lifecycle event cursor first
@@ -34,13 +34,13 @@ Do not infer completion from terminal output. Treat SDK-backed durable turn stat
 Render a non-mutating config preview:
 
 ```sh
-gjc setup hermes --root /path/to/repo --profile my-bot --repo my-repo
+vib setup hermes --root /path/to/repo --profile my-bot --repo my-repo
 ```
 
 Install into a Hermes-compatible profile only when the target path is intentional:
 
 ```sh
-gjc setup hermes \
+vib setup hermes \
   --root /path/to/repo \
   --profile my-bot \
   --repo my-repo \
@@ -49,28 +49,28 @@ gjc setup hermes \
   --install
 ```
 
-The generated `mcp_servers` block carries `timeout` / `connect_timeout` (default 180/60 whole seconds), the host MCP client's per-call budgets — not a GJC turn deadline, and not the coordinator per-call caps (`watch_events` `timeout_ms` up to 30000 ms; `await_turn` bounded at 30 minutes). Tune them with `gjc setup hermes --timeout <seconds>` / `--connect-timeout <seconds>` (1–3600); `--install` preserves installed numeric values when a flag is omitted, and an explicit flag overrides them.
+The generated `mcp_servers` block carries `timeout` / `connect_timeout` (default 180/60 whole seconds), the host MCP client's per-call budgets — not a Vibrato turn deadline, and not the coordinator per-call caps (`watch_events` `timeout_ms` up to 30000 ms; `await_turn` bounded at 30 minutes). Tune them with `vib setup hermes --timeout <seconds>` / `--connect-timeout <seconds>` (1–3600); `--install` preserves installed numeric values when a flag is omitted, and an explicit flag overrides them.
 
 Run provider-independent contract smokes before trying a live model:
 
 ```sh
-gjc setup hermes --root /path/to/repo --smoke --json
-gjc mcp-serve coordinator --check --json
+vib setup hermes --root /path/to/repo --smoke --json
+vib mcp-serve coordinator --check --json
 ```
 
-`gjc mcp-serve coordinator --check --json` (and the `hermes` compatibility alias) is a discovery-only, non-mutating catalog check. Its successful JSON payload retains `ok`, `server`, `readOnly`, and `tools`, and adds `catalog: { "ready": true, "reason": null }` plus `broker`. `broker.discovery_status` is `ready`, `unavailable`, or `error`; its reason is one of `absent_or_invalid`, `unsupported_state_version`, `discovery_access_denied`, or `discovery_read_failed` (or `null` when ready). `broker.operational_ready` is always `null`: this check observes canonical broker discovery but does not connect, ensure/bootstrap, write, repair, or delete. It reports `bootstrap_supported: true` and `bootstrap_attempted: false`, and never exposes broker paths, authority, endpoint, process, token, or raw error details. The human output remains the server/tools summary. SDK check behavior is separate and unchanged.
+`vib mcp-serve coordinator --check --json` (and the `hermes` compatibility alias) is a discovery-only, non-mutating catalog check. Its successful JSON payload retains `ok`, `server`, `readOnly`, and `tools`, and adds `catalog: { "ready": true, "reason": null }` plus `broker`. `broker.discovery_status` is `ready`, `unavailable`, or `error`; its reason is one of `absent_or_invalid`, `unsupported_state_version`, `discovery_access_denied`, or `discovery_read_failed` (or `null` when ready). `broker.operational_ready` is always `null`: this check observes canonical broker discovery but does not connect, ensure/bootstrap, write, repair, or delete. It reports `bootstrap_supported: true` and `bootstrap_attempted: false`, and never exposes broker paths, authority, endpoint, process, token, or raw error details. The human output remains the server/tools summary. SDK check behavior is separate and unchanged.
 
 The generated config uses these environment variables:
 
 | Variable | Purpose |
 | --- | --- |
-| `GJC_COORDINATOR_MCP_WORKDIR_ROOTS` | Required allowlist for workdirs and artifact paths. |
-| `GJC_COORDINATOR_MCP_MUTATIONS` | Startup opt-in for mutation classes: `sessions`, `questions`, `reports`, or `all`. |
-| `GJC_COORDINATOR_MCP_SESSION_COMMAND` | Command used to start real GJC sessions, defaulting to `gjc --worktree` in generated setup. |
-| `GJC_COORDINATOR_MCP_PROFILE` | Optional profile namespace so one bot cannot enumerate another profile's state. |
-| `GJC_COORDINATOR_MCP_REPO` | Optional repo namespace so one repo cannot enumerate another repo's state. |
-| `GJC_COORDINATOR_MCP_STATE_ROOT` | Optional coordination state root; defaults under `.gjc/state/coordinator-mcp`. |
-| `GJC_COORDINATOR_MCP_ARTIFACT_BYTE_CAP` | Maximum bytes returned by artifact reads. |
+| `VIB_COORDINATOR_MCP_WORKDIR_ROOTS` | Required allowlist for workdirs and artifact paths. |
+| `VIB_COORDINATOR_MCP_MUTATIONS` | Startup opt-in for mutation classes: `sessions`, `questions`, `reports`, or `all`. |
+| `VIB_COORDINATOR_MCP_SESSION_COMMAND` | Command used to start real Vibrato sessions, defaulting to `vib --worktree` in generated setup. |
+| `VIB_COORDINATOR_MCP_PROFILE` | Optional profile namespace so one bot cannot enumerate another profile's state. |
+| `VIB_COORDINATOR_MCP_REPO` | Optional repo namespace so one repo cannot enumerate another repo's state. |
+| `VIB_COORDINATOR_MCP_STATE_ROOT` | Optional coordination state root; defaults under `.vib/state/coordinator-mcp`. |
+| `VIB_COORDINATOR_MCP_ARTIFACT_BYTE_CAP` | Maximum bytes returned by artifact reads. |
 
 Mutating calls require both startup opt-in, per-call `allow_mutation: true`, and the required caller-provided `idempotency_key`. Missing any one fails closed.
 
@@ -80,9 +80,9 @@ Use three different smoke levels so CI does not depend on one operator's model, 
 
 | Smoke | Required for CI | What it proves | Example |
 | --- | --- | --- | --- |
-| Contract smoke | Yes | MCP server metadata, tool discovery, exported tool names, input schemas, read-only default, and mutation-gate failures. No provider credentials required. | `gjc mcp-serve coordinator --check --json` and focused tests around `tools/list` plus mutation denial. |
+| Contract smoke | Yes | MCP server metadata, tool discovery, exported tool names, input schemas, read-only default, and mutation-gate failures. No provider credentials required. | `vib mcp-serve coordinator --check --json` and focused tests around `tools/list` plus mutation denial. |
 | Dry-run lifecycle smoke | Yes when changed behavior affects lifecycle state | A generic controller can discover a mocked SDK session, send a turn, observe active-turn protection, report terminal status, and read the completed turn without a real LLM. | `bun test packages/coding-agent/test/coordinator-mcp-server.test.ts` uses mocked SDK services and temporary state roots. |
-| Optional live smoke | No | One operator's local provider/model/profile setup can run end-to-end in their chosen repo. Failure diagnoses that setup; it must not fail CI or PR validation. | Start `gjc mcp-serve coordinator` with local env, dispatch a tiny task, then report/read evidence. |
+| Optional live smoke | No | One operator's local provider/model/profile setup can run end-to-end in their chosen repo. Failure diagnoses that setup; it must not fail CI or PR validation. | Start `vib mcp-serve coordinator` with local env, dispatch a tiny task, then report/read evidence. |
 
 A public bot integration change should at least preserve the contract smoke and local-leak docs test. Live smokes are diagnostics, not mandatory gates.
 
@@ -90,35 +90,35 @@ A public bot integration change should at least preserve the contract smoke and 
 
 Read-only tools:
 
-- `gjc_coordinator_list_sessions`
-- `gjc_coordinator_read_status`
-- `gjc_coordinator_read_tail`
-- `gjc_coordinator_read_turn`
-- `gjc_coordinator_await_turn`
-- `gjc_coordinator_list_questions`
-- `gjc_coordinator_list_artifacts`
-- `gjc_coordinator_read_artifact`
-- `gjc_coordinator_read_coordination_status`
-- `gjc_coordinator_watch_events`
-- `gjc_coordinator_read_codex_handoff` — reads the Codex app-server resume bridge registration and durable wake state; endpoints are unix sockets or loopback TCP only. Public handoffs report only whether a token is configured, never its path. Token files are independently authorized under `GJC_COORDINATOR_MCP_CODEX_TOKEN_ROOT` (default: the coordinator state root's managed `codex-tokens` directory), must be owner-only (`0600` or stricter), regular non-symlink files owned by the coordinator user, 1–4096 bytes, and contain neither CR nor LF. The coordinator binds the canonical no-follow file identity at registration and rejects replacement at delivery. Returned wake events expose lifecycle schema version 1 (`pending` → `requested`, `published` → `delivered`, `acked` → `acknowledged`, `failed` → `failed`); durable `attempts` and `last_error` are its failure/retry metadata. Heartbeats are unsupported (`automation_update_unavailable`), so delivery remains event-driven with startup drain.
+- `vib_coordinator_list_sessions`
+- `vib_coordinator_read_status`
+- `vib_coordinator_read_tail`
+- `vib_coordinator_read_turn`
+- `vib_coordinator_await_turn`
+- `vib_coordinator_list_questions`
+- `vib_coordinator_list_artifacts`
+- `vib_coordinator_read_artifact`
+- `vib_coordinator_read_coordination_status`
+- `vib_coordinator_watch_events`
+- `vib_coordinator_read_codex_handoff` — reads the Codex app-server resume bridge registration and durable wake state; endpoints are unix sockets or loopback TCP only. Public handoffs report only whether a token is configured, never its path. Token files are independently authorized under `VIB_COORDINATOR_MCP_CODEX_TOKEN_ROOT` (default: the coordinator state root's managed `codex-tokens` directory), must be owner-only (`0600` or stricter), regular non-symlink files owned by the coordinator user, 1–4096 bytes, and contain neither CR nor LF. The coordinator binds the canonical no-follow file identity at registration and rejects replacement at delivery. Returned wake events expose lifecycle schema version 1 (`pending` → `requested`, `published` → `delivered`, `acked` → `acknowledged`, `failed` → `failed`); durable `attempts` and `last_error` are its failure/retry metadata. Heartbeats are unsupported (`automation_update_unavailable`), so delivery remains event-driven with startup drain.
 
 Mutating tools:
 
-- `gjc_coordinator_start_session`
-- `gjc_coordinator_retire_start_session` — retires a stranded start intent only after exact indexed terminal-uncertain session proof; it never signals a live process.
-- `gjc_coordinator_activate_session`
-- `gjc_coordinator_register_session`
-- `gjc_coordinator_send_prompt`
-- `gjc_coordinator_submit_question_answer`
-- `gjc_coordinator_report_status`
-- `gjc_coordinator_stop_session`
-- `gjc_coordinator_register_codex_handoff` — registers the Codex app-server resume bridge with a unix/loopback endpoint and an independently authorized token-file reference only; raw token material and paths outside the configured token root are rejected.
-- `gjc_coordinator_ack_codex_handoff` — acknowledges a Codex resume wake by durable `wake_key`; wake prompts never include GJC final responses.
+- `vib_coordinator_start_session`
+- `vib_coordinator_retire_start_session` — retires a stranded start intent only after exact indexed terminal-uncertain session proof; it never signals a live process.
+- `vib_coordinator_activate_session`
+- `vib_coordinator_register_session`
+- `vib_coordinator_send_prompt`
+- `vib_coordinator_submit_question_answer`
+- `vib_coordinator_report_status`
+- `vib_coordinator_stop_session`
+- `vib_coordinator_register_codex_handoff` — registers the Codex app-server resume bridge with a unix/loopback endpoint and an independently authorized token-file reference only; raw token material and paths outside the configured token root are rejected.
+- `vib_coordinator_ack_codex_handoff` — acknowledges a Codex resume wake by durable `wake_key`; wake prompts never include Vibrato final responses.
 
-`gjc_coordinator_stop_session` closes a coordinator delegate-created (ephemeral) session through canonical SDK broker lifecycle control, then removes its coordinator metadata only after the broker reports success. It refuses sessions with an active turn. User-registered sessions require both `force: true` and the `GJC_COORDINATOR_MCP_FORCE_STOP` capability; the same SDK lifecycle path reaps abandoned ephemeral delegate sessions after the configured idle TTL.
+`vib_coordinator_stop_session` closes a coordinator delegate-created (ephemeral) session through canonical SDK broker lifecycle control, then removes its coordinator metadata only after the broker reports success. It refuses sessions with an active turn. User-registered sessions require both `force: true` and the `VIB_COORDINATOR_MCP_FORCE_STOP` capability; the same SDK lifecycle path reaps abandoned ephemeral delegate sessions after the configured idle TTL.
 
-`gjc_coordinator_retire_start_session` is the recovery terminal for a
-`gjc_coordinator_start_session` receipt stranded in `in_progress` after an
+`vib_coordinator_retire_start_session` is the recovery terminal for a
+`vib_coordinator_start_session` receipt stranded in `in_progress` after an
 unobserved compensation. It requires the original creation key and request
 digest plus the indexed session identity. The broker must prove the recorded
 host is exited, the endpoint is absent, and any lifecycle leftovers are
@@ -126,20 +126,20 @@ identity-bound before the coordinator receipt is sealed as `retired`.
 
 High-level delegation tools:
 
-- `gjc_delegate_plan`
-- `gjc_delegate_execute`
+- `vib_delegate_plan`
+- `vib_delegate_execute`
 
-The `gjc_delegate_*` tools package common GJC workflows for hosts that want to delegate an entire planning or execution turn without manually composing `start_session` and `send_prompt`. The retired Team-specific delegation and RPC lifecycle interfaces have been removed. They use the same coordinator mutation gates and workdir allowlists as the lower-level session tools.
+The `vib_delegate_*` tools package common Vibrato workflows for hosts that want to delegate an entire planning or execution turn without manually composing `start_session` and `send_prompt`. The retired Team-specific delegation and RPC lifecycle interfaces have been removed. They use the same coordinator mutation gates and workdir allowlists as the lower-level session tools.
 
-### Start a managed GJC session
+### Start a managed Vibrato session
 
-Call `gjc_coordinator_start_session` with a canonical workdir inside `GJC_COORDINATOR_MCP_WORKDIR_ROOTS`:
+Call `vib_coordinator_start_session` with a canonical workdir inside `VIB_COORDINATOR_MCP_WORKDIR_ROOTS`:
 
 ```json
 {
   "cwd": "/path/to/repo",
   "prompt": "Optional first bounded task prompt",
-  "idempotency_key": "start-gjc-demo-1",
+  "idempotency_key": "start-vib-demo-1",
   "allow_mutation": true
 }
 ```
@@ -154,19 +154,19 @@ A stock session publishes readiness immediately, so a running chat daemon surfac
 {
   "cwd": "/path/to/repo",
   "prepare_existing_thread": true,
-  "idempotency_key": "prepare-gjc-demo-1",
+  "idempotency_key": "prepare-vib-demo-1",
   "allow_mutation": true
 }
 ```
 
-A prepared session is live and endpoint-addressable but withholds its readiness signal, so no root is claimed. The response carries `session_id` and `state: "prepared"`, and `session_state.ready_for_input` is `false`. `prepare_existing_thread` refuses an initial `prompt`, and `gjc_coordinator_send_prompt` refuses the session with `session_not_activated` until it is activated.
+A prepared session is live and endpoint-addressable but withholds its readiness signal, so no root is claimed. The response carries `session_id` and `state: "prepared"`, and `session_state.ready_for_input` is `false`. `prepare_existing_thread` refuses an initial `prompt`, and `vib_coordinator_send_prompt` refuses the session with `session_not_activated` until it is activated.
 
 Preparation requires a configured, session-enabled Slack target in the selected workdir. Slack owns the existing-thread presentation mapping, while `SessionRouter` supplies exact endpoint-generation proof and performs activation without exposing endpoint credentials. Without that combined authority the start fails closed with a lifecycle startup failure instead of returning a prepared session that could activate before any thread is bound.
 
 Bind the existing thread through the daemon-owned command path, which is the only writer of chat mappings:
 
 ```sh
-gjc notify bind-thread --session-id <session_id> --thread-ts <root_ts>
+vib notify bind-thread --session-id <session_id> --thread-ts <root_ts>
 ```
 
 Then activate the session so it publishes the readiness it withheld:
@@ -174,27 +174,27 @@ Then activate the session so it publishes the readiness it withheld:
 ```json
 {
   "session_id": "<session_id>",
-  "idempotency_key": "activate-gjc-demo-1",
+  "idempotency_key": "activate-vib-demo-1",
   "allow_mutation": true
 }
 ```
 
-`gjc_coordinator_activate_session` proves the exact endpoint generation and asks the session itself to activate; the session's own gate refuses activation with `not_bound` while no binding exists at that generation. It is idempotent: an exact replay answers `already` without a second readiness signal, and durable state moves from `prepared` to `ready_for_input` only after the session proves `activated` or `already`.
+`vib_coordinator_activate_session` proves the exact endpoint generation and asks the session itself to activate; the session's own gate refuses activation with `not_bound` while no binding exists at that generation. It is idempotent: an exact replay answers `already` without a second readiness signal, and durable state moves from `prepared` to `ready_for_input` only after the session proves `activated` or `already`.
 
 ### Register an SDK-discoverable session
 
-Register an already-running GJC session only after its endpoint is discoverable from the selected workdir:
+Register an already-running Vibrato session only after its endpoint is discoverable from the selected workdir:
 
 ```json
 {
-  "session_id": "visible-gjc-1",
+  "session_id": "visible-vib-1",
   "cwd": "/path/to/repo",
-  "idempotency_key": "register-visible-gjc-1",
+  "idempotency_key": "register-visible-vib-1",
   "allow_mutation": true
 }
 ```
 
-`gjc_coordinator_register_session` validates the session id and workdir allowlist, verifies SDK endpoint discovery, and only re-registers a runtime that already has the persisted sidecar authority required for authenticated updates. Use `gjc_coordinator_start_session` for a new runtime. Optional `tmux_session` and `tmux_target` fields are advisory process metadata only.
+`vib_coordinator_register_session` validates the session id and workdir allowlist, verifies SDK endpoint discovery, and only re-registers a runtime that already has the persisted sidecar authority required for authenticated updates. Use `vib_coordinator_start_session` for a new runtime. Optional `tmux_session` and `tmux_target` fields are advisory process metadata only.
 
 ### Send work as turns
 
@@ -202,9 +202,9 @@ Send one bounded task prompt and persist the returned `turn_id`:
 
 ```json
 {
-  "session_id": "gjc-demo",
+  "session_id": "vib-demo",
   "prompt": "Use /skill:ralplan to build a plan for ...",
-  "idempotency_key": "send-gjc-demo-1",
+  "idempotency_key": "send-vib-demo-1",
   "allow_mutation": true
 }
 ```
@@ -216,7 +216,7 @@ A session may have one active turn by default. A second prompt returns `active_t
 
 ### Wait or watch for completion
 
-Use `gjc_coordinator_watch_events` as the primary lifecycle loop. Persist and resume with `next_after_seq`, not `latest_seq`: `latest_seq` is the snapshot watermark, while a filtered or limited page can intentionally return `next_after_seq < latest_seq`. A zero-time watch performs one bounded immediate reconcile/export pass; a positive `timeout_ms` is a bounded long poll. Handle metadata-only `turn.waiting_for_answer`, `question.opened`, `turn.completed`, and `turn.failed` events, and read details through `gjc_coordinator_read_turn` or `gjc_coordinator_list_questions`.
+Use `vib_coordinator_watch_events` as the primary lifecycle loop. Persist and resume with `next_after_seq`, not `latest_seq`: `latest_seq` is the snapshot watermark, while a filtered or limited page can intentionally return `next_after_seq < latest_seq`. A zero-time watch performs one bounded immediate reconcile/export pass; a positive `timeout_ms` is a bounded long poll. Handle metadata-only `turn.waiting_for_answer`, `question.opened`, `turn.completed`, and `turn.failed` events, and read details through `vib_coordinator_read_turn` or `vib_coordinator_list_questions`.
 
 ```json
 {
@@ -226,18 +226,18 @@ Use `gjc_coordinator_watch_events` as the primary lifecycle loop. Persist and re
 }
 ```
 
-A cursor ahead of the snapshot returns `reason: "cursor_ahead"` with `snapshot_watermark`; reconcile from that watermark according to your retention policy. Malformed or fractional cursors return the public `invalid_input` error. `gjc_coordinator_read_turn` and `gjc_coordinator_await_turn` remain available for snapshots and bounded compatibility waits. Terminal turn statuses are `completed`, `failed`, `cancelled`, and `superseded`; non-terminal statuses include `queued`, `delivering`, `active`, `waiting_for_answer`, and `completing`.
+A cursor ahead of the snapshot returns `reason: "cursor_ahead"` with `snapshot_watermark`; reconcile from that watermark according to your retention policy. Malformed or fractional cursors return the public `invalid_input` error. `vib_coordinator_read_turn` and `vib_coordinator_await_turn` remain available for snapshots and bounded compatibility waits. Terminal turn statuses are `completed`, `failed`, `cancelled`, and `superseded`; non-terminal statuses include `queued`, `delivering`, `active`, `waiting_for_answer`, and `completing`.
 
-`gjc_coordinator_report_status` is optional additive controller-authored evidence. Use it when the bot has an explicit summary/evidence record, needs to record policy cancellation, or must provide a fallback provider/tool failure. Runtime-derived watch events do not require a preceding report. The report idempotency key is crash-recoverable: retrying an identical request after a disconnect repairs canonical projections and retained event delivery before replaying the committed report response without creating another report. The durable receipt/canonical report is consulted before mutable evidence paths are revalidated, so an evidence file may be deleted or renamed after commit without breaking an identical replay. When used, this writes the final response/error, evidence paths, and coordinator report that later reads consume:
+`vib_coordinator_report_status` is optional additive controller-authored evidence. Use it when the bot has an explicit summary/evidence record, needs to record policy cancellation, or must provide a fallback provider/tool failure. Runtime-derived watch events do not require a preceding report. The report idempotency key is crash-recoverable: retrying an identical request after a disconnect repairs canonical projections and retained event delivery before replaying the committed report response without creating another report. The durable receipt/canonical report is consulted before mutable evidence paths are revalidated, so an evidence file may be deleted or renamed after commit without breaking an identical replay. When used, this writes the final response/error, evidence paths, and coordinator report that later reads consume:
 
 ```json
 {
-  "session_id": "gjc-demo",
+  "session_id": "vib-demo",
   "turn_id": "turn-00000000-0000-0000-0000-000000000000",
   "status": "completed",
   "summary": "Implemented the requested fix and ran focused tests.",
   "evidence_paths": ["/path/to/repo/test-output.txt"],
-  "idempotency_key": "report-gjc-demo-1",
+  "idempotency_key": "report-vib-demo-1",
   "allow_mutation": true
 }
 ```
@@ -249,7 +249,7 @@ Use `status: "cancelled"` when the coordinator policy intentionally stops tracki
 
 Discord, Hermes, Clawhip, and similar external notifiers should be opt-in and should forward only the public lifecycle surface. Use one of these supported paths:
 
-- Coordinator controllers: watch `gjc_coordinator_watch_events` first, persist `next_after_seq`, and notify from the metadata-only `turn.completed`, `turn.failed`, `turn.waiting_for_answer`, or `question.opened` events. Read details through the existing authorized tools; use `gjc_coordinator_report_status` only for optional controller-authored evidence, cancellation, or fallback reporting.
+- Coordinator controllers: watch `vib_coordinator_watch_events` first, persist `next_after_seq`, and notify from the metadata-only `turn.completed`, `turn.failed`, `turn.waiting_for_answer`, or `question.opened` events. Read details through the existing authorized tools; use `vib_coordinator_report_status` only for optional controller-authored evidence, cancellation, or fallback reporting.
 - In-process extensions or hooks: subscribe to the public lifecycle events `turn_end` and `agent_end` from the shared hook/extension event contract.
 
 Recommended notification mapping:
@@ -267,7 +267,7 @@ Do not forward raw prompts, transcripts, tool outputs, hidden instructions, priv
 Example public-safe extension event payloads:
 
 ```json
-{ "type": "turn_end", "turnIndex": 2, "summary": "Turn finished; review the local GJC session for details." }
+{ "type": "turn_end", "turnIndex": 2, "summary": "Turn finished; review the local Vibrato session for details." }
 ```
 
 ```json
@@ -285,14 +285,14 @@ Example opt-in forwarding policy:
 }
 ```
 
-GJC does not currently expose a structured stop-reason field on `agent_end`; integrators that need `waiting_for_answer`, `failed`, `cancelled`, or `superseded` should prefer the Coordinator MCP turn status because it is explicit, terminal-state oriented, and safe to relay after controller-side redaction.
+Vibrato does not currently expose a structured stop-reason field on `agent_end`; integrators that need `waiting_for_answer`, `failed`, `cancelled`, or `superseded` should prefer the Coordinator MCP turn status because it is explicit, terminal-state oriented, and safe to relay after controller-side redaction.
 
 ### Answer structured questions
 
 Pull questions for one required session; every call reconciles durable pending `workflow.gates.list` rows before returning a bounded `questions`, `diagnostics`, and `reconciliation` snapshot. Filter `status: "pending"`; legacy `status: "open"` remains a compatibility alias for pending. A session can return multiple questions, so handle every pending row independently. The public rows include only the safe question shape, a versioned per-question `answer_schema`, and a per-pending-row `answer_binding`; they never expose private gate payloads or gate values. In coordination-status snapshots, inspect each session's `question_snapshots[].reconciliation` and `diagnostics`; when `summary.questions_complete` is false, `summary.questions` and `summary.open_questions` are `null` and must not be treated as zero.
 
 ```json
-{ "session_id": "gjc-demo", "status": "pending" }
+{ "session_id": "vib-demo", "status": "pending" }
 ```
 
 Submit the exact identifiers and binding from one pending row. Validate `answer` against that row's versioned `answer_schema`; the supported union uses public option ids (`opt_0`, etc.):
@@ -308,39 +308,39 @@ A selected answer may contain multiple ids only when the row has `multi: true`; 
 
 ```json
 {
-  "session_id": "gjc-demo",
+  "session_id": "vib-demo",
   "turn_id": "turn-00000000-0000-0000-0000-000000000000",
   "question_id": "question-1",
   "answer_binding": "<binding returned by list_questions>",
   "answer": { "selected": ["opt_0"] },
-  "idempotency_key": "answer-gjc-demo-1",
+  "idempotency_key": "answer-vib-demo-1",
   "allow_mutation": true
 }
 ```
 
-`gjc_coordinator_submit_question_answer` requires `session_id`, `turn_id`, `question_id`, `answer_binding`, `answer`, `idempotency_key`, and `allow_mutation: true`; it resolves through `workflow.gate_answer`, never generic `ask.answer`. It revalidates against a complete fresh snapshot after restart and before resolution. Incomplete reconciliation returns `terminal_uncertain`; stale, terminal, absent, or ownership-mismatched rows are not answerable. Retry only an identical request with the same idempotency key: it replays the accepted result; reusing that key with conflicting arguments returns `idempotency_conflict`. Always answer the advertised shape; do not synthesize destructive approvals unless bot policy permits them.
+`vib_coordinator_submit_question_answer` requires `session_id`, `turn_id`, `question_id`, `answer_binding`, `answer`, `idempotency_key`, and `allow_mutation: true`; it resolves through `workflow.gate_answer`, never generic `ask.answer`. It revalidates against a complete fresh snapshot after restart and before resolution. Incomplete reconciliation returns `terminal_uncertain`; stale, terminal, absent, or ownership-mismatched rows are not answerable. Retry only an identical request with the same idempotency key: it replays the accepted result; reusing that key with conflicting arguments returns `idempotency_conflict`. Always answer the advertised shape; do not synthesize destructive approvals unless bot policy permits them.
 
 This Coordinator MCP pull loop is separate from #2549/#2551 and unattended plain-CLI behavior; those paths do not gain coordinator gate access.
 
 ### Read artifacts and reports
 
-Use `gjc_coordinator_list_artifacts` to inspect safe roots and `gjc_coordinator_read_artifact` to read a bounded artifact:
+Use `vib_coordinator_list_artifacts` to inspect safe roots and `vib_coordinator_read_artifact` to read a bounded artifact:
 
 ```json
-{ "path": "/path/to/repo/.gjc/ultragoal/ledger.jsonl" }
+{ "path": "/path/to/repo/.vib/ultragoal/ledger.jsonl" }
 ```
 
-Artifact reads are Linux-only because they require identity-bound handle authorization; on macOS and Windows the tool returns the generic `artifact_unavailable` error; detect support through `tools/list` rather than invocation errors. Controllers on those platforms must use their own approved repository/worktree access for artifact collection, then submit bounded paths or summaries with `gjc_coordinator_report_status`. Linux artifact paths are canonicalized, symlink escapes are rejected, and output is byte-capped. Use `gjc_coordinator_read_coordination_status` for status reports written through `gjc_coordinator_report_status`.
+Artifact reads are Linux-only because they require identity-bound handle authorization; on macOS and Windows the tool returns the generic `artifact_unavailable` error; detect support through `tools/list` rather than invocation errors. Controllers on those platforms must use their own approved repository/worktree access for artifact collection, then submit bounded paths or summaries with `vib_coordinator_report_status`. Linux artifact paths are canonicalized, symlink escapes are rejected, and output is byte-capped. Use `vib_coordinator_read_coordination_status` for status reports written through `vib_coordinator_report_status`.
 
 ## Managed SDK attachment integration
 
-Bots must attach through a managed SDK-core adapter backed by `SessionRouter`. Do not read `.gjc/state/sdk` endpoint records, retain URL/token credentials, or open raw per-session WebSockets. `SessionRouter` owns endpoint resolution, credentials, replay, reconnect, rotation, and exact opaque attachment authority; provider code owns only transport and presentation state.
+Bots must attach through a managed SDK-core adapter backed by `SessionRouter`. Do not read `.vib/state/sdk` endpoint records, retain URL/token credentials, or open raw per-session WebSockets. `SessionRouter` owns endpoint resolution, credentials, replay, reconnect, rotation, and exact opaque attachment authority; provider code owns only transport and presentation state.
 
 Use the Telegram, Discord, or Slack managed adapter for a single live session. Use Coordinator MCP for multi-session orchestration, artifacts, status, and durable workflow-gate operations. Lifecycle mutations always enter `SessionLifecycleService` and the Broker ledger with a stable idempotency identity.
-The `@gajae-code/coding-agent` runtime and `@gajae-code/natives` native addon ship from the same source release at exact matching package versions; the native loader version sentinel enforces the pair. Mixed native/runtime versions are unsupported and cannot claim SDK compatibility.
+The `@vib-rato/coding-agent` runtime and `@vib-rato/natives` native addon ship from the same source release at exact matching package versions; the native loader version sentinel enforces the pair. Mixed native/runtime versions are unsupported and cannot claim SDK compatibility.
 
 Key SDK workflow-gate facts:
-- `gjc sdk session raw control|query|global` resolves through `SessionRouter` or the lifecycle facade and emits credential-free JSON. Scripts never receive the underlying transport credentials.
+- `vib sdk session raw control|query|global` resolves through `SessionRouter` or the lifecycle facade and emits credential-free JSON. Scripts never receive the underlying transport credentials.
 
 - `action_needed.id` is an opaque, transient presentation ID. It is the only
   generic `reply.id` authority. Do not equate it with a durable workflow gate.
@@ -351,14 +351,14 @@ Key SDK workflow-gate facts:
 - Rust/N-API compatibility is additive: legacy `ActionNeeded`, `register_ask`,
   and `registerAsk` stay uncorrelated; explicit workflow reader/registration
   APIs preserve correlation without exposing private arbitration state.
-- The `@gajae-code/coding-agent` runtime and `@gajae-code/natives` native addon ship from the same source release at exact matching package versions; the native loader version sentinel enforces the pair. Mixed native/runtime versions are unsupported and cannot claim SDK compatibility.
+- The `@vib-rato/coding-agent` runtime and `@vib-rato/natives` native addon ship from the same source release at exact matching package versions; the native loader version sentinel enforces the pair. Mixed native/runtime versions are unsupported and cannot claim SDK compatibility.
 
 The prior documented invariant `action_needed.id == gate_id` is incorrect for
 v3 and must not be implemented by controllers. See [the SDK session CLI guide](./sdk-session-cli.md)
 for broker-bound controls and [the SDK guide](./sdk.md) for Router and lifecycle
 ownership. `--mode rpc`, `--mode rpc-ui`, and `--mode bridge` have been removed
 and have no compatibility shim; migrate controllers to Coordinator MCP,
-`gjc sdk session`, or a managed Telegram, Discord, or Slack adapter.
+`vib sdk session`, or a managed Telegram, Discord, or Slack adapter.
 
 ## Error handling playbook
 
@@ -369,7 +369,7 @@ and have no compatibility shim; migrate controllers to Coordinator MCP,
 | `unknown_session` | Re-list sessions through the Broker, then start a new managed session or report a recoverable blocker. |
 | `active_turn_exists` | Poll the active turn, send with `queue: true`, or use `force: true` only when supersession is intentional. |
 | `timeout` from `await_turn` | Treat as non-terminal. Poll again or inspect `read_status`; do not mark failure solely from a bounded wait timeout. |
-| Coordinator cancellation | Use `gjc_coordinator_report_status` with `status: "cancelled"` for an intentionally stopped turn, or send replacement work with `force: true` when supersession is policy-approved. This is coordinator state, not process control. |
+| Coordinator cancellation | Use `vib_coordinator_report_status` with `status: "cancelled"` for an intentionally stopped turn, or send replacement work with `force: true` when supersession is policy-approved. This is coordinator state, not process control. |
 | Stale session state | Check `read_status.session_state` and broker-backed session status. Report a recoverable blocker rather than inspecting endpoint state. |
 | Provider/auth failure | Optionally capture the model/provider error in `report_status` with `status: "failed"`; watch `turn.failed` and do not retry forever without a policy budget. |
 | Artifact denied | On Linux, keep the artifact inside allowlisted roots and avoid symlink escapes. On macOS/Windows, use the controller's approved repository/worktree reader and report the bounded result instead. |
@@ -383,15 +383,15 @@ Generic MCP controller config:
 ```json
 {
   "mcp_servers": {
-    "gjc_coordinator": {
-      "command": "gjc",
+    "vib_coordinator": {
+      "command": "vib",
       "args": ["mcp-serve", "coordinator"],
       "env": {
-        "GJC_COORDINATOR_MCP_WORKDIR_ROOTS": "/home/bot/src/project:/home/bot/src/worktrees",
-        "GJC_COORDINATOR_MCP_MUTATIONS": "sessions,questions,reports",
-        "GJC_COORDINATOR_MCP_PROFILE": "controller-prod",
-        "GJC_COORDINATOR_MCP_REPO": "project",
-        "GJC_COORDINATOR_MCP_SESSION_COMMAND": "gjc --worktree"
+        "VIB_COORDINATOR_MCP_WORKDIR_ROOTS": "/home/bot/src/project:/home/bot/src/worktrees",
+        "VIB_COORDINATOR_MCP_MUTATIONS": "sessions,questions,reports",
+        "VIB_COORDINATOR_MCP_PROFILE": "controller-prod",
+        "VIB_COORDINATOR_MCP_REPO": "project",
+        "VIB_COORDINATOR_MCP_SESSION_COMMAND": "vib --worktree"
       },
       "enabled": true
     }
@@ -402,10 +402,10 @@ Generic MCP controller config:
 Example controller loop:
 
 ```text
-1. Start `gjc mcp-serve coordinator` with repo/worktree roots allowlisted.
-2. Call `gjc_coordinator_start_session` for a GJC-managed worktree session.
-3. Send `/skill:deep-interview`, `/skill:ralplan`, or an approved `gjc ultragoal ...` task as one turn.
-4. Await the turn; answer `gjc_coordinator_list_questions` entries using bot policy.
+1. Start `vib mcp-serve coordinator` with repo/worktree roots allowlisted.
+2. Call `vib_coordinator_start_session` for a Vibrato-managed worktree session.
+3. Send `/skill:deep-interview`, `/skill:ralplan`, or an approved `vib ultragoal ...` task as one turn.
+4. Await the turn; answer `vib_coordinator_list_questions` entries using bot policy.
 5. Report terminal status with evidence paths.
 6. Read artifacts/reports for the user-facing bot response.
 ```
@@ -414,16 +414,16 @@ Hermes and OpenClaw can use the same MCP tool contract. Their names here are exa
 
 ## Long-running prompts are progress-aware
 
-`sdk.promptDeadlineMs` (default `1_800_000` ms) is an inactivity lease, not a fixed wall-clock kill. The SDK renews the accepted prompt's terminal deadline from attributable `tool_execution_start` / `tool_execution_end` events for the exact `commandId`/`turnId`, bounded by `sdk.promptMaxRuntimeMs` (default `21_600_000` ms, max `86_400_000`). Persist `session_id` / `turn_id` from the accepted prompt and reconcile via `turn.result` (Q26) or `gjc sdk session status` rather than replaying blindly. Heartbeats, streaming chatter, retries, and other-turn activity do not extend the lease. Distinguish `timeout_ms` on `await_turn` / coordinator await from the SDK terminal deadline.
+`sdk.promptDeadlineMs` (default `1_800_000` ms) is an inactivity lease, not a fixed wall-clock kill. The SDK renews the accepted prompt's terminal deadline from attributable `tool_execution_start` / `tool_execution_end` events for the exact `commandId`/`turnId`, bounded by `sdk.promptMaxRuntimeMs` (default `21_600_000` ms, max `86_400_000`). Persist `session_id` / `turn_id` from the accepted prompt and reconcile via `turn.result` (Q26) or `vib sdk session status` rather than replaying blindly. Heartbeats, streaming chatter, retries, and other-turn activity do not extend the lease. Distinguish `timeout_ms` on `await_turn` / coordinator await from the SDK terminal deadline.
 
 ## Security and credential boundaries
 
 - Do not put provider API keys, GitHub tokens, or bot secrets in prompts.
 - Prefer host tools, host URI schemes, or bot-side sidecars for credentialed external writes.
-- Keep `GJC_COORDINATOR_MCP_WORKDIR_ROOTS` narrow; do not allow `/`, `/home`, or broad parent directories.
+- Keep `VIB_COORDINATOR_MCP_WORKDIR_ROOTS` narrow; do not allow `/`, `/home`, or broad parent directories.
 - Use namespaces for multi-tenant bots.
 - Keep mutation classes minimal: read-only for dashboards, `sessions` for work dispatch, `questions` for answering questions, and `reports` for final state.
-- Treat `.gjc/` as local runtime state and evidence. Do not expose it wholesale to untrusted users.
+- Treat `.vib/` as local runtime state and evidence. Do not expose it wholesale to untrusted users.
 
 ## Related references
 

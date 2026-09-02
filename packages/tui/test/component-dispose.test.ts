@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
-import { type Component, Container, Loader, type TUI } from "@gajae-code/tui";
+import { type Component, Container, Loader, type TUI } from "@vib-rato/tui";
 
 /** Component that records how many times dispose() was called. */
 class DisposeSpy implements Component {

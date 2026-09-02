@@ -1,4 +1,4 @@
-import { type AuthStorage, getEnvApiKey } from "@gajae-code/ai/core";
+import { type AuthStorage, getEnvApiKey } from "@vib-rato/ai/core";
 import type { SearchResponse } from "../../../web/search/types";
 import { SearchProviderError } from "../../../web/search/types";
 import { ParallelApiError, type ParallelSearchResult, type ParallelSearchSource } from "../../parallel";
@@ -119,7 +119,7 @@ async function searchWithAuthStorage(
 	const apiKey = await authStorage.getApiKey("parallel", sessionId, { signal: params.signal });
 	if (!apiKey) {
 		throw new ParallelApiError(
-			"Parallel credentials not found. Set PARALLEL_API_KEY or login with 'gjc /login parallel'.",
+			"Parallel credentials not found. Set PARALLEL_API_KEY or login with 'vib /login parallel'.",
 		);
 	}
 

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import {
 	validateApiKeyAgainstModelsEndpoint,
 	validateOpenAICompatibleApiKey,
-} from "@gajae-code/ai/utils/oauth/api-key-validation";
+} from "@vib-rato/ai/utils/oauth/api-key-validation";
 
 const realFetch = globalThis.fetch;
 

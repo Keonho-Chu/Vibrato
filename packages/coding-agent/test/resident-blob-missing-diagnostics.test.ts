@@ -2,7 +2,7 @@ import { afterEach, describe, expect, test, vi } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 import { EphemeralBlobStore, ResidentBlobMissingError, resolveTextBlobSync } from "../src/session/blob-store";
 import {
 	assertResidentReferencesResolvableForTests,
@@ -22,7 +22,7 @@ import {
 const tmpRoots: string[] = [];
 
 function makeStore(): EphemeralBlobStore {
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-resident-diag-"));
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-resident-diag-"));
 	tmpRoots.push(dir);
 	return new EphemeralBlobStore(path.join(dir, "resident"));
 }

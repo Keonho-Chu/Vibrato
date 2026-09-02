@@ -3,17 +3,8 @@
  *
  * Interactive multi-step wizard for adding MCP servers.
  */
-import {
-	Container,
-	Input,
-	matchesKey,
-	replaceTabs,
-	Spacer,
-	Text,
-	TruncatedText,
-	truncateToWidth,
-} from "@gajae-code/tui";
-import { getMCPConfigPath, getProjectDir } from "@gajae-code/utils";
+import { Container, Input, matchesKey, replaceTabs, Spacer, Text, TruncatedText, truncateToWidth } from "@vib-rato/tui";
+import { getMCPConfigPath, getProjectDir } from "@vib-rato/utils";
 import { validateServerName } from "../../runtime-mcp/config-writer";
 import { analyzeAuthError, discoverOAuthEndpoints } from "../../runtime-mcp/oauth-discovery";
 import type {

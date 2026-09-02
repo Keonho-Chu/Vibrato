@@ -4,8 +4,8 @@ import {
 	initializeWithSettings,
 	loadCapability,
 	registerProvider,
-} from "@gajae-code/coding-agent/capability";
-import type { Settings } from "@gajae-code/coding-agent/config/settings";
+} from "@vib-rato/coding-agent/capability";
+import type { Settings } from "@vib-rato/coding-agent/config/settings";
 
 const capability = defineCapability<{ name: string }>({
 	id: "session-provider-policy-regression",

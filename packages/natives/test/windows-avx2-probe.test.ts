@@ -1,9 +1,9 @@
 /**
- * Regression for https://github.com/Yeachan-Heo/gajae-code/issues/4652.
+ * Regression for https://github.com/Keonho-Chu/Vibrato/issues/4652.
  *
  * The native loader's AVX2 probe used to spawn an unhidded
  * `powershell.exe -Command [System.Runtime.Intrinsics.X86.Avx2]::IsSupported`
- * from every GJC process start on Windows. Two failures:
+ * from every Vibrato process start on Windows. Two failures:
  *
  *   1. Console flash: `childProcess.spawnSync` had no `windowsHide`, so any
  *      detached, console-less parent (SDK broker, session hosts) made Windows

@@ -1,10 +1,10 @@
 import { describe, expect, test } from "bun:test";
-import type { Api, Model } from "@gajae-code/ai";
+import type { Api, Model } from "@vib-rato/ai";
 import {
 	buildCanonicalModelIndex,
 	compareEquivalentModelVariants,
 	getFinalSlashSegmentAliasKey,
-} from "@gajae-code/coding-agent/config/model-equivalence";
+} from "@vib-rato/coding-agent/config/model-equivalence";
 
 function makeModel(provider: string, id: string, overrides: Partial<Model<Api>> = {}): Model<Api> {
 	return {

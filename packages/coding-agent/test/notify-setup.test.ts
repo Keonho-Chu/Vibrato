@@ -3,7 +3,7 @@ import { EventEmitter } from "node:events";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 import {
 	type NotifyCommandArgs,
 	type NotifyCommandDeps,
@@ -93,7 +93,7 @@ function runTelegramSetupWithAttachedDaemon(cmd: NotifyCommandArgs, deps: Notify
 
 function setupSettings(globalSettings: Record<string, unknown> = {}): Settings {
 	const settings = Settings.isolated(globalSettings as never);
-	const agentDir = path.join(os.tmpdir(), `gjc-notify-setup-test-${process.pid}-${isolatedSettingsCounter++}`);
+	const agentDir = path.join(os.tmpdir(), `vib-notify-setup-test-${process.pid}-${isolatedSettingsCounter++}`);
 	Object.defineProperty(settings, "getAgentDir", {
 		configurable: true,
 		value: () => agentDir,
@@ -501,9 +501,9 @@ describe("notify setup cli", () => {
 			const roots = daemonPaths(settings.getAgentDir()).roots;
 			const existing = {
 				version: 1,
-				roots: ["/existing/.gjc/state"],
-				managedRoots: ["/existing/.gjc/state"],
-				sessions: { existing: "/existing/.gjc/state" },
+				roots: ["/existing/.vib/state"],
+				managedRoots: ["/existing/.vib/state"],
+				sessions: { existing: "/existing/.vib/state" },
 			};
 			fs.mkdirSync(path.dirname(roots), { recursive: true });
 			fs.writeFileSync(roots, JSON.stringify(existing));
@@ -755,7 +755,7 @@ test("non-interactive setup rejects non-private chat ids without writing config"
 });
 
 test("injected setup preflight overrides ambient foreign daemon state", async () => {
-	const agentDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-notify-setup-preflight-"));
+	const agentDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-notify-setup-preflight-"));
 	const foreignTokenFingerprint = "deadbeef-foreign";
 	try {
 		fs.mkdirSync(path.join(agentDir, "notifications"), { recursive: true });
@@ -823,7 +823,7 @@ test("injected setup preflight overrides ambient foreign daemon state", async ()
 });
 
 test("ambient setup preflight accepts only matching canonical daemon provenance", async () => {
-	const agentDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-notify-setup-incarnation-"));
+	const agentDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-notify-setup-incarnation-"));
 	const statePath = path.join(agentDir, "notifications", "telegram-daemon.state.json");
 	const daemonSecret = "foreign-daemon-secret";
 	const cases: Array<{
@@ -1792,7 +1792,7 @@ test("CLI setup reports an undecided outcome when a failed commit leaves the sta
 
 describe("notify daemon-internal lightweight startup", () => {
 	function tempAgentDir(): string {
-		return fs.mkdtempSync(path.join(os.tmpdir(), "gjc-notify-daemon-agent-"));
+		return fs.mkdtempSync(path.join(os.tmpdir(), "vib-notify-daemon-agent-"));
 	}
 
 	test("lightweight daemon settings read only notification keys from config.yml", async () => {
@@ -1823,7 +1823,7 @@ describe("notify daemon-internal lightweight startup", () => {
 	});
 
 	test("lightweight daemon settings fall back to safe notification defaults", () => {
-		const settings = createLightweightDaemonSettings({ agentDir: "/tmp/gjc-agent", rawConfig: {} });
+		const settings = createLightweightDaemonSettings({ agentDir: "/tmp/vib-agent", rawConfig: {} });
 		const cfg = getNotificationConfig(settings);
 		expect(cfg.enabled).toBe(false);
 		expect(cfg.botToken).toBeUndefined();
@@ -1843,7 +1843,7 @@ describe("notify daemon-internal lightweight startup", () => {
 				SettingsImpl: {
 					async init() {
 						settingsLoaded = true;
-						return createLightweightDaemonSettings({ agentDir: "/tmp/gjc-agent", rawConfig: {} });
+						return createLightweightDaemonSettings({ agentDir: "/tmp/vib-agent", rawConfig: {} });
 					},
 				},
 				DaemonImpl: class {
@@ -1854,7 +1854,7 @@ describe("notify daemon-internal lightweight startup", () => {
 					async run(): Promise<void> {}
 				} as never,
 			});
-			expect(warning).toHaveBeenCalledWith("GJC notify daemon exiting because its owner is not alive");
+			expect(warning).toHaveBeenCalledWith("Vibrato notify daemon exiting because its owner is not alive");
 			expect(warning.mock.calls.flat().join("\n")).not.toContain(token);
 			expect(settingsLoaded).toBe(false);
 			expect(daemonConstructed).toBe(false);

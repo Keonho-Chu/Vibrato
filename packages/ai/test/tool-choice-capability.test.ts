@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from "bun:test";
 import * as fsSync from "node:fs";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { TempDir } from "@gajae-code/utils";
+import { TempDir } from "@vib-rato/utils";
 import type { Model, ToolChoice, ToolChoiceSupport } from "../src/types";
 import {
 	clearToolChoiceIncapabilityRegistryForTests,

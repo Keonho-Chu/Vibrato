@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from "bun:test";
-import { ThinkingLevel } from "@gajae-code/agent-core";
-import { logger } from "@gajae-code/utils";
+import { ThinkingLevel } from "@vib-rato/agent-core";
+import { logger } from "@vib-rato/utils";
 import { executeNotificationControlCommand } from "../src/sdk/bus";
 
 function fakeCtx(overrides: Record<string, unknown> = {}) {

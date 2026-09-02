@@ -1,7 +1,7 @@
-import type { ThinkingLevel } from "@gajae-code/agent-core";
-import type { Usage } from "@gajae-code/ai/core";
-import type { FallbackTriggerClass } from "@gajae-code/ai/utils/fallback-transport";
-import { $env } from "@gajae-code/utils";
+import type { ThinkingLevel } from "@vib-rato/agent-core";
+import type { Usage } from "@vib-rato/ai/core";
+import type { FallbackTriggerClass } from "@vib-rato/ai/utils/fallback-transport";
+import { $env } from "@vib-rato/utils";
 import * as z from "zod/v4";
 import { AUTOROUTING_SELECTOR_MAX_LENGTH, type AutoroutingReasonCode } from "../config/autorouting-contract";
 import { isValidTaskId, TASK_ID_DESCRIPTION } from "./id";
@@ -29,13 +29,13 @@ const parsePositiveIntegerEnvironment = (keys: string[], defaultValue: number): 
 
 /** Maximum output bytes per agent */
 export const MAX_OUTPUT_BYTES = parsePositiveIntegerEnvironment(
-	["GJC_TASK_MAX_OUTPUT_BYTES", "PI_TASK_MAX_OUTPUT_BYTES"],
+	["VIB_TASK_MAX_OUTPUT_BYTES", "PI_TASK_MAX_OUTPUT_BYTES"],
 	500_000,
 );
 
 /** Maximum output lines per agent */
 export const MAX_OUTPUT_LINES = parsePositiveIntegerEnvironment(
-	["GJC_TASK_MAX_OUTPUT_LINES", "PI_TASK_MAX_OUTPUT_LINES"],
+	["VIB_TASK_MAX_OUTPUT_LINES", "PI_TASK_MAX_OUTPUT_LINES"],
 	5000,
 );
 
@@ -83,7 +83,7 @@ const spawnPlanSchema = z
 
 const repositoryBindingSchema = z
 	.object({
-		schema: z.literal("gjc.repository_binding.v1"),
+		schema: z.literal("vib.repository_binding.v1"),
 		worktreeRoot: z.string().min(1).describe("canonical git worktree root"),
 		commonDir: z.string().min(1).nullable().describe("git common dir, or null outside a git checkout"),
 		relativeSubdir: z.string().min(1).optional().describe("optional repo-relative subdirectory; not an absolute cwd"),
@@ -527,7 +527,7 @@ export function formatBufferOverflowSummary(overflow: {
 		`retained ${overflow.stagedEventCount}/${overflow.maxStagedEvents} events, ` +
 		`${overflow.stagedBytes} staged bytes; rejected event ${overflow.incomingEventBytes} bytes; ` +
 		`projected ${overflow.stagedBytes + overflow.incomingEventBytes}/${overflow.maxStagedBytes} bytes. ` +
-		"Local gjc staging limit, not a provider or context-window failure; re-issuing reproduces it."
+		"Local vib staging limit, not a provider or context-window failure; re-issuing reproduces it."
 	);
 }
 
@@ -842,7 +842,7 @@ export interface SingleResult {
 	 * and fail-closed validation (#2901).
 	 */
 	repositoryBinding?: {
-		schema: "gjc.repository_binding.v1";
+		schema: "vib.repository_binding.v1";
 		worktreeRoot: string;
 		commonDir: string | null;
 		relativeSubdir?: string;
@@ -906,7 +906,7 @@ export interface TaskToolDetails {
  *
  * Additive: this does not alter any existing task result shape. It is the
  * durable, model-independent unit the deterministic orchestration-token
- * benchmark (`@gajae-code/orchestration-token-benchmark`) consumes to measure
+ * benchmark (`@vib-rato/orchestration-token-benchmark`) consumes to measure
  * token efficiency without any live-model calls.
  */
 export interface TaskTokenLog {

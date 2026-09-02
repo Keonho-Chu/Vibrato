@@ -1,14 +1,14 @@
 import { execSync } from "node:child_process";
-import type { ClipboardImage } from "@gajae-code/natives";
+import type { ClipboardImage } from "@vib-rato/natives";
 
-let nativeClipboardModule: typeof import("@gajae-code/natives") | undefined;
+let nativeClipboardModule: typeof import("@vib-rato/natives") | undefined;
 
-function nativeClipboard(): typeof import("@gajae-code/natives") {
-	nativeClipboardModule ??= require("@gajae-code/natives") as typeof import("@gajae-code/natives");
+function nativeClipboard(): typeof import("@vib-rato/natives") {
+	nativeClipboardModule ??= require("@vib-rato/natives") as typeof import("@vib-rato/natives");
 	return nativeClipboardModule;
 }
 
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 import { settings } from "../config/settings";
 
 function hasDisplay(): boolean {

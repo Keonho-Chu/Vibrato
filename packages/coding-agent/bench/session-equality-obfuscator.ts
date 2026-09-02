@@ -1,5 +1,5 @@
 import * as os from "node:os";
-import type { AgentMessage } from "@gajae-code/agent-core";
+import type { AgentMessage } from "@vib-rato/agent-core";
 import { SecretObfuscator, type SecretEntry } from "../src/secrets/obfuscator";
 
 const EQUALITY_WARMUP_ITERATIONS = 20;

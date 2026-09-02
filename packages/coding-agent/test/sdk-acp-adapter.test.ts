@@ -320,7 +320,7 @@ test("ACP SDK adapter maps native and extension methods and keeps endpoint crede
 	await adapter.cancel();
 	await adapter.cancel("owned");
 	await adapter.setModel({ modelId: "provider/model" });
-	await adapter.handle("_gjc/sdk/control", { operation: "runtime.reload", input: { components: ["tools"] } });
+	await adapter.handle("_vib/sdk/control", { operation: "runtime.reload", input: { components: ["tools"] } });
 	await expect(adapter.handle("listSessions")).rejects.toMatchObject({ code: "operation_prohibited" });
 	expect(harness.requests).toEqual(
 		expect.arrayContaining([
@@ -399,19 +399,19 @@ test("ACP generic routes honor provider, machine, and secret field dispositions"
 		sessionId: harness.attachment.sessionId,
 	});
 	await adapter.start();
-	await expect(adapter.handle("_gjc/sdk/control", { operation: "host_tools.register" })).rejects.toMatchObject({
+	await expect(adapter.handle("_vib/sdk/control", { operation: "host_tools.register" })).rejects.toMatchObject({
 		code: "provider_required",
 	});
-	await expect(adapter.handle("_gjc/sdk/control", { operation: "auth.login" })).rejects.toMatchObject({
+	await expect(adapter.handle("_vib/sdk/control", { operation: "auth.login" })).rejects.toMatchObject({
 		code: "provider_required",
 	});
-	await expect(adapter.handle("_gjc/sdk/global", { operation: "session.get_endpoint" })).rejects.toMatchObject({
+	await expect(adapter.handle("_vib/sdk/global", { operation: "session.get_endpoint" })).rejects.toMatchObject({
 		code: "endpoint_credential_forbidden",
 	});
 	await expect(
-		adapter.handle("_gjc/sdk/control", { operation: "config.patch", input: { apiToken: "secret" } }),
+		adapter.handle("_vib/sdk/control", { operation: "config.patch", input: { apiToken: "secret" } }),
 	).rejects.toMatchObject({ code: "secret_field_forbidden" });
-	await adapter.handle("_gjc/sdk/control", { operation: "config.patch", input: { killSwitchHotkey: true } });
+	await adapter.handle("_vib/sdk/control", { operation: "config.patch", input: { killSwitchHotkey: true } });
 	expect(harness.requests).toContainEqual(
 		expect.objectContaining({
 			type: "control_request",
@@ -455,7 +455,7 @@ test("ACP SDK adapter exposes SDK event frames while rejecting raw lifecycle glo
 	const unsubscribe = adapter.onFrame(frame => received.push(frame));
 	await adapter.start();
 	await expect(
-		adapter.handle("_gjc/sdk/global", {
+		adapter.handle("_vib/sdk/global", {
 			operation: "session.create",
 			input: { cwd: "/workspace" },
 			idempotencyKey: "generic-lifecycle-key",
@@ -484,7 +484,7 @@ test("ACP reconcile_uncertain validates proof and projects an opaque result", as
 			retired: true,
 			ledgerState: "terminal_error",
 			indexType: "session_closed",
-			stateRoot: "/workspace/.gjc/state",
+			stateRoot: "/workspace/.vib/state",
 			endpointGeneration: 2,
 			endpointMtimeMs: 1,
 			processIncarnation: "linux:123",
@@ -500,7 +500,7 @@ test("ACP reconcile_uncertain validates proof and projects an opaque result", as
 		{
 			sessionId: "retired-session",
 			cwd: "/workspace",
-			stateRoot: "/workspace/.gjc/state",
+			stateRoot: "/workspace/.vib/state",
 			endpointGeneration: 2,
 			endpointMtimeMs: 1,
 			processIncarnation: "linux:123",
@@ -833,7 +833,7 @@ test("the ACP MCP launch wrapper reports broker refusal and re-attributes spawn 
 	expect(acpMcpLaunchFailure(readyThenExited, [])).toBe(readyThenExited);
 });
 test("the production ACP MCP launch path preserves broker admission timeout failures", async () => {
-	const root = await fs.mkdtemp(path.join(tmpdir(), "gjc-acp-mcp-admission-timeout-"));
+	const root = await fs.mkdtemp(path.join(tmpdir(), "vib-acp-mcp-admission-timeout-"));
 	const agentDir = path.join(root, "agent");
 	const cwd = path.join(root, "workspace");
 	const token = "acp-admission-timeout-token";

@@ -16,7 +16,7 @@
  * "prompt is too long".
  */
 import { describe, expect, it } from "bun:test";
-import type { Message } from "@gajae-code/ai";
+import type { Message } from "@vib-rato/ai";
 import { serializeConversation } from "../src/compaction/utils";
 
 function assistantWithToolCall(args: unknown): Message {

@@ -18,11 +18,11 @@ CLI / daemon session commands / ACP / MCP
 ```
 
 - **Interactive and print CLI**: `src/cli.ts` routes ordinary CLI work to `src/main.ts`, which owns local session setup and interactive or one-shot execution.
-- **Internal SDK transport client**: `src/sdk/client/client.ts` supplies `SdkClient` only to Broker, `SessionRouter`, and trusted in-process adapters. It is not exported from `@gajae-code/coding-agent/sdk` and is not a public attachment surface.
+- **Internal SDK transport client**: `src/sdk/client/client.ts` supplies `SdkClient` only to Broker, `SessionRouter`, and trusted in-process adapters. It is not exported from `@vib-rato/coding-agent/sdk` and is not a public attachment surface.
 
-- **Daemon session CLI**: `gjc daemon session ...` is implemented by `src/commands/daemon.ts` and `src/sdk/cli/session-cli.ts`. It bootstraps the Broker for lifecycle globals and uses `SessionRouter` for exact live controls and queries; it never receives endpoint credentials or launches a private transport.
+- **Daemon session CLI**: `vib daemon session ...` is implemented by `src/commands/daemon.ts` and `src/sdk/cli/session-cli.ts`. It bootstraps the Broker for lifecycle globals and uses `SessionRouter` for exact live controls and queries; it never receives endpoint credentials or launches a private transport.
 - **ACP**: `src/modes/acp/acp-mode.ts` creates the ACP connection and `src/modes/acp/acp-agent.ts` adapts ACP requests through Broker lifecycle services and exact `SessionRouter` attachments.
-- **MCP**: `gjc mcp-serve sdk` dispatches to `src/sdk/mcp/server.ts`. `gjc mcp-serve coordinator` (and the `hermes` compatibility alias) dispatches to `src/coordinator-mcp/server.ts`.
+- **MCP**: `vib mcp-serve sdk` dispatches to `src/sdk/mcp/server.ts`. `vib mcp-serve coordinator` (and the `hermes` compatibility alias) dispatches to `src/coordinator-mcp/server.ts`.
 
 ## SDK ownership and authority
 

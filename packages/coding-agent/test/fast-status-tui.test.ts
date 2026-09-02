@@ -1,9 +1,9 @@
 import { beforeAll, describe, expect, test, vi } from "bun:test";
-import type { Model } from "@gajae-code/ai";
-import { getThemeByName, setThemeInstance, theme } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { InteractiveModeContext } from "@gajae-code/coding-agent/modes/types";
-import { executeBuiltinSlashCommand } from "@gajae-code/coding-agent/slash-commands/builtin-registry";
-import { Text } from "@gajae-code/tui";
+import type { Model } from "@vib-rato/ai";
+import { getThemeByName, setThemeInstance, theme } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { InteractiveModeContext } from "@vib-rato/coding-agent/modes/types";
+import { executeBuiltinSlashCommand } from "@vib-rato/coding-agent/slash-commands/builtin-registry";
+import { Text } from "@vib-rato/tui";
 
 function model(provider: string, id: string): Model {
 	return { provider, id } as unknown as Model;

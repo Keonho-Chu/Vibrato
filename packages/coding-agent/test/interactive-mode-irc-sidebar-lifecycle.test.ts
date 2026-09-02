@@ -1,9 +1,9 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as path from "node:path";
-import { Agent } from "@gajae-code/agent-core";
-import { resetSettingsForTest, Settings } from "@gajae-code/coding-agent/config/settings";
-import { initTheme } from "@gajae-code/coding-agent/modes/theme/theme";
-import { TempDir } from "@gajae-code/utils";
+import { Agent } from "@vib-rato/agent-core";
+import { resetSettingsForTest, Settings } from "@vib-rato/coding-agent/config/settings";
+import { initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
+import { TempDir } from "@vib-rato/utils";
 import { ModelRegistry } from "../src/config/model-registry";
 import { IrcSplitViewComponent } from "../src/modes/components/irc-sidebar";
 import { InteractiveMode } from "../src/modes/interactive-mode";

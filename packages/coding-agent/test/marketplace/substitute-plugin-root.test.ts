@@ -1,9 +1,9 @@
 import { describe, expect, it } from "bun:test";
-import { substitutePluginRoot } from "@gajae-code/coding-agent/discovery/substitute-plugin-root";
+import { substitutePluginRoot } from "@vib-rato/coding-agent/discovery/substitute-plugin-root";
 
 // Use concatenation to avoid noTemplateCurlyInString lint rule on literal placeholder names
 const CLAUDE_VAR = "$" + "{CLAUDE_PLUGIN_ROOT}";
-const GJC_VAR = "$" + "{GJC_PLUGIN_ROOT}";
+const VIB_VAR = "$" + "{VIB_PLUGIN_ROOT}";
 
 describe("substitutePluginRoot", () => {
 	const ROOT = "/plugins/my-plugin";
@@ -12,12 +12,12 @@ describe("substitutePluginRoot", () => {
 		expect(substitutePluginRoot(`${CLAUDE_VAR}/bin/server`, ROOT)).toBe("/plugins/my-plugin/bin/server");
 	});
 
-	it("replaces GJC_PLUGIN_ROOT in strings", () => {
-		expect(substitutePluginRoot(`${GJC_VAR}/bin/server`, ROOT)).toBe("/plugins/my-plugin/bin/server");
+	it("replaces VIB_PLUGIN_ROOT in strings", () => {
+		expect(substitutePluginRoot(`${VIB_VAR}/bin/server`, ROOT)).toBe("/plugins/my-plugin/bin/server");
 	});
 
 	it("replaces both variables in same string", () => {
-		expect(substitutePluginRoot(`${CLAUDE_VAR}:${GJC_VAR}`, ROOT)).toBe("/plugins/my-plugin:/plugins/my-plugin");
+		expect(substitutePluginRoot(`${CLAUDE_VAR}:${VIB_VAR}`, ROOT)).toBe("/plugins/my-plugin:/plugins/my-plugin");
 	});
 
 	it("handles arrays recursively", () => {
@@ -37,7 +37,7 @@ describe("substitutePluginRoot", () => {
 		const input = {
 			command: `${CLAUDE_VAR}/server`,
 			args: ["--port", "3000"],
-			env: { HOME: GJC_VAR },
+			env: { HOME: VIB_VAR },
 		};
 		expect(substitutePluginRoot(input, ROOT)).toEqual({
 			command: "/plugins/my-plugin/server",

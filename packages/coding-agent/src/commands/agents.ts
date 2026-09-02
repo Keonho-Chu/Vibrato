@@ -1,7 +1,7 @@
 /**
  * Manage bundled task agents.
  */
-import { Args, Command, Flags, renderCommandHelp } from "@gajae-code/utils/cli";
+import { Args, Command, Flags, renderCommandHelp } from "@vib-rato/utils/cli";
 import { type AgentsAction, type AgentsCommandArgs, runAgentsCommand } from "../cli/agents-cli";
 import { initTheme } from "../modes/theme/theme";
 
@@ -22,21 +22,21 @@ export default class Agents extends Command {
 		force: Flags.boolean({ char: "f", description: "Overwrite existing agent files" }),
 		json: Flags.boolean({ description: "Output JSON" }),
 		dir: Flags.string({ description: "Output directory (overrides --user/--project)" }),
-		user: Flags.boolean({ description: "Write to ~/.gjc/agent/agents (default)" }),
-		project: Flags.boolean({ description: "Write to ./.gjc/agents" }),
+		user: Flags.boolean({ description: "Write to ~/.vib/agent/agents (default)" }),
+		project: Flags.boolean({ description: "Write to ./.vib/agents" }),
 	};
 
 	static examples = [
-		"# Export bundled agents into user config (default)\n  gjc agents unpack",
-		"# Export bundled agents into project config\n  gjc agents unpack --project",
-		"# Overwrite existing local agent files\n  gjc agents unpack --project --force",
-		"# Export into a custom directory\n  gjc agents unpack --dir ./tmp/agents --json",
+		"# Export bundled agents into user config (default)\n  vib agents unpack",
+		"# Export bundled agents into project config\n  vib agents unpack --project",
+		"# Overwrite existing local agent files\n  vib agents unpack --project --force",
+		"# Export into a custom directory\n  vib agents unpack --dir ./tmp/agents --json",
 	];
 
 	async run(): Promise<void> {
 		const { args, flags } = await this.parse(Agents);
 		if (!args.action) {
-			renderCommandHelp("gjc", "agents", Agents);
+			renderCommandHelp("vib", "agents", Agents);
 			return;
 		}
 

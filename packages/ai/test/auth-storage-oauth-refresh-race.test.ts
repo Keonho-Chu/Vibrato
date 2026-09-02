@@ -51,7 +51,7 @@ describe("AuthStorage OAuth refresh race", () => {
 		if (!authStorage || !store) throw new Error("test setup failed");
 
 		// Seed the shared DB with one expired OAuth credential; this simulates the
-		// state two cooperating gjc processes both load from the persisted row.
+		// state two cooperating vib processes both load from the persisted row.
 		await authStorage.set("anthropic", [
 			{
 				type: "oauth",
@@ -492,7 +492,7 @@ describe("AuthStorage OAuth refresh race", () => {
 		// literal "invalid_grant"). Before the fix this was misclassified as
 		// transient and the healthy credential was temp-blocked for 5 minutes on
 		// every rotation race — with Kimi's ~12-minute access tokens and several
-		// gjc processes sharing the store, users saw repeated "logged out" states.
+		// vib processes sharing the store, users saw repeated "logged out" states.
 		await authStorage.set("anthropic", [
 			{
 				type: "oauth",

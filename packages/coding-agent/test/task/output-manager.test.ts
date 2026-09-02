@@ -7,7 +7,7 @@ import { AgentOutputManager } from "../../src/task/output-manager";
 const tempDirs: string[] = [];
 
 async function makeArtifactsDir(existing: string[]): Promise<string> {
-	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-output-manager-"));
+	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-output-manager-"));
 	tempDirs.push(dir);
 	for (const file of existing) await fs.writeFile(path.join(dir, file), "x");
 	return dir;

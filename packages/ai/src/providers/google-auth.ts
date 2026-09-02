@@ -14,7 +14,7 @@
 
 import { Buffer } from "node:buffer";
 import * as path from "node:path";
-import { $credentialEnv, $envpos, getTrustedHomeDir, isEnoent, logger } from "@gajae-code/utils";
+import { $credentialEnv, $envpos, getTrustedHomeDir, isEnoent, logger } from "@vib-rato/utils";
 import type { FetchImpl } from "../types";
 
 const OAUTH_TOKEN_URL = "https://oauth2.googleapis.com/token";

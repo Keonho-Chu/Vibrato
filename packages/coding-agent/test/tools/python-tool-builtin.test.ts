@@ -1,18 +1,18 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { Agent, type AgentTool, type AgentToolResult } from "@gajae-code/agent-core";
-import { getBundledModel } from "@gajae-code/ai/core";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import * as pyExecutor from "@gajae-code/coding-agent/eval/py/executor";
-import { AgentSession } from "@gajae-code/coding-agent/session/agent-session";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { TempDir } from "@gajae-code/utils";
-import { sessionIpykernelsArtifactsDir, sessionIpykernelsDir } from "../../src/gjc-runtime/session-layout";
+import { Agent, type AgentTool, type AgentToolResult } from "@vib-rato/agent-core";
+import { getBundledModel } from "@vib-rato/ai/core";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import * as pyExecutor from "@vib-rato/coding-agent/eval/py/executor";
+import { AgentSession } from "@vib-rato/coding-agent/session/agent-session";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { TempDir } from "@vib-rato/utils";
 import { BUILTIN_TOOL_DESCRIPTORS, createTools, type ToolSession } from "../../src/tools";
 import { PYTHON_TOOL_NAME, pythonKernelOwnerId } from "../../src/tools/python";
+import { sessionIpykernelsArtifactsDir, sessionIpykernelsDir } from "../../src/vib-runtime/session-layout";
 
 const TEST_SESSION_ID = "test-session";
 
@@ -142,7 +142,7 @@ describe("builtin session Python tool", () => {
 	const sessionCleanups: Array<() => Promise<void>> = [];
 
 	function tempDir(): string {
-		const dir = TempDir.createSync("@gjc-python-builtin-");
+		const dir = TempDir.createSync("@vib-python-builtin-");
 		tempDirs.push(dir);
 		return dir.path();
 	}
@@ -351,14 +351,14 @@ describe("builtin session Python tool", () => {
 		const noSessionTool = await loadPythonTool({ cwd, getSessionId: () => null });
 		const noSession = await executeTool(noSessionTool, { code: "x = 1" });
 		expect(noSession.isError).toBe(true);
-		expect(textOf(noSession)).toContain("requires a GJC session id");
+		expect(textOf(noSession)).toContain("requires a Vibrato session id");
 
 		// The null-session contract binds clear too: actionable error, no owner
 		// disposal, and no transcript state.
 		const disposalsBeforeNullClear = disposeSpy.mock.calls.length;
 		const noSessionClear = await executeTool(noSessionTool, { action: "clear" });
 		expect(noSessionClear.isError).toBe(true);
-		expect(textOf(noSessionClear)).toContain("requires a GJC session id");
+		expect(textOf(noSessionClear)).toContain("requires a Vibrato session id");
 		expect(disposeSpy.mock.calls.length).toBe(disposalsBeforeNullClear);
 
 		const cleared = await executeTool(tool, { action: "clear" });

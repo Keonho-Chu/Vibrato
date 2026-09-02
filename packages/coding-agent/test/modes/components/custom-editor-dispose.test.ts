@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import type { EditorTheme, SelectListTheme, SymbolTheme } from "@gajae-code/tui";
-import { setDefaultTabWidth } from "@gajae-code/utils";
+import type { EditorTheme, SelectListTheme, SymbolTheme } from "@vib-rato/tui";
+import { setDefaultTabWidth } from "@vib-rato/utils";
 import { CustomEditor } from "../../../src/modes/components/custom-editor";
 
 const identity = (text: string) => text;

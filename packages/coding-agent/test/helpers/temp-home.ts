@@ -29,7 +29,7 @@ export interface WithTempHomeOptions {
  *   out-of-root/unowned targets instead of blindly recursing.
  */
 export async function withTempHome<T>(fn: (home: string) => Promise<T>, options: WithTempHomeOptions = {}): Promise<T> {
-	const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-temp-home-"));
+	const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-temp-home-"));
 	const home = path.join(root, "home");
 	fs.mkdirSync(home, { recursive: true });
 	assertSafeDeletion(home);

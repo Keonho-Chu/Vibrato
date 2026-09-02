@@ -21,9 +21,9 @@ interface RouterHarness {
 async function routerHarness(
 	onSubscriptionFrame?: (subscription: NotificationSubscription, frame: unknown) => Promise<void>,
 ): Promise<RouterHarness> {
-	const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-telegram-fault-"));
-	const agentDir = path.join(root, ".gjc", "agent");
-	const stateRoot = path.join(root, ".gjc", "state");
+	const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-telegram-fault-"));
+	const agentDir = path.join(root, ".vib", "agent");
+	const stateRoot = path.join(root, ".vib", "state");
 	const sessionId = "telegram-fault-session";
 	const endpointFile = path.join(stateRoot, "sdk", `${sessionId}.json`);
 	fs.mkdirSync(path.dirname(endpointFile), { recursive: true });

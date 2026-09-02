@@ -1,8 +1,8 @@
 import { beforeAll, describe, expect, test } from "bun:test";
-import type { UsageLimit, UsageReport } from "@gajae-code/ai";
-import { renderUsageReports } from "@gajae-code/coding-agent/modes/controllers/command-controller";
-import { getThemeByName, setThemeInstance, theme } from "@gajae-code/coding-agent/modes/theme/theme";
-import { formatLimitDetail } from "@gajae-code/coding-agent/slash-commands/helpers/usage-report";
+import type { UsageLimit, UsageReport } from "@vib-rato/ai";
+import { renderUsageReports } from "@vib-rato/coding-agent/modes/controllers/command-controller";
+import { getThemeByName, setThemeInstance, theme } from "@vib-rato/coding-agent/modes/theme/theme";
+import { formatLimitDetail } from "@vib-rato/coding-agent/slash-commands/helpers/usage-report";
 
 function stripAnsi(text: string): string {
 	return text.replace(/\x1b\[[0-9;]*m/g, "");

@@ -3,7 +3,7 @@
  *
  * Serializes concurrent read→compute→write windows against the same absolute
  * path so independent sessions cannot silently overwrite each other's successful
- * disjoint edits (https://github.com/Yeachan-Heo/gajae-code/issues/2900).
+ * disjoint edits (https://github.com/Keonho-Chu/Vibrato/issues/2900).
  *
  * - Always: in-process async mutex keyed by resolved absolute path.
  * - Optionally: durable cross-process `<path>.lock` via `withFileLock` for real

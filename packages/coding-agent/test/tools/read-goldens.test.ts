@@ -3,26 +3,26 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { AgentToolContext } from "@gajae-code/agent-core";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { EditTool, getFileReadCache } from "@gajae-code/coding-agent/edit";
-import { computeLineHash } from "@gajae-code/coding-agent/hashline/hash";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import type { ToolSession } from "@gajae-code/coding-agent/tools";
-import { wrapToolWithMetaNotice } from "@gajae-code/coding-agent/tools/output-meta";
-import { ReadTool } from "@gajae-code/coding-agent/tools/read";
-import * as markit from "@gajae-code/coding-agent/utils/markit";
-import * as scrapers from "@gajae-code/coding-agent/web/scrapers/types";
+import type { AgentToolContext } from "@vib-rato/agent-core";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { EditTool, getFileReadCache } from "@vib-rato/coding-agent/edit";
+import { computeLineHash } from "@vib-rato/coding-agent/hashline/hash";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import type { ToolSession } from "@vib-rato/coding-agent/tools";
+import { wrapToolWithMetaNotice } from "@vib-rato/coding-agent/tools/output-meta";
+import { ReadTool } from "@vib-rato/coding-agent/tools/read";
+import * as markit from "@vib-rato/coding-agent/utils/markit";
+import * as scrapers from "@vib-rato/coding-agent/web/scrapers/types";
 
 const markitContents = new Map<string, string>();
 const convertFileWithMarkit = markit.convertFileWithMarkit;
 
 const MANIFEST_PATH = path.join(import.meta.dir, "../fixtures/read-goldens/manifest.json");
 const GOLDEN_ROOT = path.dirname(MANIFEST_PATH);
-const UPDATE = process.env.GJC_UPDATE_READ_GOLDENS === "1";
-const SEED_INVARIANT = process.env.GJC_SEED_READ_GOLDENS === "1";
-const SEED_SURFACE = process.env.GJC_SEED_READ_SURFACE_GOLDENS === "1";
-const FORCE_TRUNCATION = process.env.GJC_FORCE_READ_TRUNCATION as "head" | "last" | "both" | undefined;
+const UPDATE = process.env.VIB_UPDATE_READ_GOLDENS === "1";
+const SEED_INVARIANT = process.env.VIB_SEED_READ_GOLDENS === "1";
+const SEED_SURFACE = process.env.VIB_SEED_READ_SURFACE_GOLDENS === "1";
+const FORCE_TRUNCATION = process.env.VIB_FORCE_READ_TRUNCATION as "head" | "last" | "both" | undefined;
 const GOLDEN_BUCKETS_TO_CHECK: readonly Bucket[] =
 	FORCE_TRUNCATION === "head" ? ["invariant"] : ["invariant", "changed", "surface"];
 
@@ -139,14 +139,14 @@ function writeGolden(bucket: Bucket, name: string, variant: Variant, value: Capt
 			`refusing to write ${bucket}/${name}: update mode may only write changed/. Drift here is an implementation bug, not a golden bug.`,
 		);
 	}
-	if (!UPDATE) throw new Error("writeGolden called without GJC_UPDATE_READ_GOLDENS=1");
+	if (!UPDATE) throw new Error("writeGolden called without VIB_UPDATE_READ_GOLDENS=1");
 	fs.mkdirSync(path.join(GOLDEN_ROOT, bucket), { recursive: true });
 	fs.writeFileSync(goldenPath(bucket, name, variant), `${stableJson(value)}\n`);
 }
 
 function seedGolden(bucket: Bucket, name: string, variant: Variant, value: Captured): void {
 	if (bucket === "changed") throw new Error(`seeding is not allowed for changed/${name}`);
-	if (!SEED_INVARIANT) throw new Error("seedGolden called without GJC_SEED_READ_GOLDENS=1");
+	if (!SEED_INVARIANT) throw new Error("seedGolden called without VIB_SEED_READ_GOLDENS=1");
 	const target = goldenPath(bucket, name, variant);
 	if (fs.existsSync(target)) throw new Error(`refusing to overwrite existing ${bucket}/${name}.${variant}.json`);
 	fs.mkdirSync(path.join(GOLDEN_ROOT, bucket), { recursive: true });
@@ -154,7 +154,7 @@ function seedGolden(bucket: Bucket, name: string, variant: Variant, value: Captu
 }
 
 function seedSurfaceGolden(name: string, variant: Variant, value: Captured): void {
-	if (!SEED_SURFACE) throw new Error("seedSurfaceGolden called without GJC_SEED_READ_SURFACE_GOLDENS=1");
+	if (!SEED_SURFACE) throw new Error("seedSurfaceGolden called without VIB_SEED_READ_SURFACE_GOLDENS=1");
 	const target = goldenPath("surface", name, variant);
 	if (fs.existsSync(target)) throw new Error(`refusing to overwrite existing surface/${name}.${variant}.json`);
 	fs.mkdirSync(path.join(GOLDEN_ROOT, "surface"), { recursive: true });
@@ -318,7 +318,7 @@ function phaseOneGoldensReady(): boolean {
 			entry.hashLines.every(hashLines => fs.existsSync(goldenPath(entry.bucket, entry.name, variantFor(hashLines)))),
 		);
 }
-const REQUESTED_PHASE = process.env.GJC_READ_GOLDENS_PHASE;
+const REQUESTED_PHASE = process.env.VIB_READ_GOLDENS_PHASE;
 const CURRENT_PHASE: GoldenPhase =
 	REQUESTED_PHASE === undefined ? (phaseOneGoldensReady() ? 1 : 0) : REQUESTED_PHASE === "1" ? 1 : 0;
 
@@ -490,7 +490,7 @@ async function captureSurface(entry: Entry, tool: { description: string }): Prom
 			const text = await new Response(process.stdout).text();
 			const error = await new Response(process.stderr).text();
 			await process.exited;
-			if (process.exitCode !== 0) throw new Error(`gjc read --help failed: ${error}`);
+			if (process.exitCode !== 0) throw new Error(`vib read --help failed: ${error}`);
 			return surfaceCaptured(text);
 		}
 		default:
@@ -644,9 +644,9 @@ describe("read truncation golden harness", () => {
 		const session = createSession(fixture.root, settings, fixture.artifactDir);
 		session.enableLsp = false;
 		const previousPiVariant = Bun.env.PI_EDIT_VARIANT;
-		const previousGjcVariant = Bun.env.GJC_EDIT_VARIANT;
+		const previousVibVariant = Bun.env.VIB_EDIT_VARIANT;
 		Bun.env.PI_EDIT_VARIANT = "hashline";
-		Bun.env.GJC_EDIT_VARIANT = "hashline";
+		Bun.env.VIB_EDIT_VARIANT = "hashline";
 
 		try {
 			const readResult = (await new ReadTool(session).execute("anchor-roundtrip-read", {
@@ -682,8 +682,8 @@ describe("read truncation golden harness", () => {
 		} finally {
 			if (previousPiVariant === undefined) delete Bun.env.PI_EDIT_VARIANT;
 			else Bun.env.PI_EDIT_VARIANT = previousPiVariant;
-			if (previousGjcVariant === undefined) delete Bun.env.GJC_EDIT_VARIANT;
-			else Bun.env.GJC_EDIT_VARIANT = previousGjcVariant;
+			if (previousVibVariant === undefined) delete Bun.env.VIB_EDIT_VARIANT;
+			else Bun.env.VIB_EDIT_VARIANT = previousVibVariant;
 		}
 	});
 

@@ -12,13 +12,13 @@
  * `__`-prefixed fields not in the allowlist) is preserved verbatim.
  */
 import { describe, expect, it } from "bun:test";
-import { type SkillPromptDetails, stripInternalDetailsFields } from "@gajae-code/coding-agent/session/messages";
+import { type SkillPromptDetails, stripInternalDetailsFields } from "@vib-rato/coding-agent/session/messages";
 import {
 	type CustomMessageEntry,
 	getSessionMessageEntryId,
 	SessionManager,
 	transferSessionMessageIdentity,
-} from "@gajae-code/coding-agent/session/session-manager";
+} from "@vib-rato/coding-agent/session/session-manager";
 
 const SKILL_TYPE = "skill-prompt";
 
@@ -63,7 +63,7 @@ describe("SessionManager.appendCustomMessageEntry (allowlist strip + persistence
 				path: "/s.md",
 				args: "bar",
 				lineCount: 10,
-				__pendingDisplayTag: "gjc-cmd-1-0",
+				__pendingDisplayTag: "vib-cmd-1-0",
 			},
 			"user",
 		);
@@ -194,41 +194,41 @@ describe("SessionManager lifecycle-preallocated session id", () => {
 		}
 	}
 
-	it("adopts GJC_SESSION_ID as its header id when spawned via /session_create", () => {
-		withEnv({ GJC_LIFECYCLE_REQUEST_ID: "lc-test-1", GJC_SESSION_ID: "s-preallocated-1" }, () => {
+	it("adopts VIB_SESSION_ID as its header id when spawned via /session_create", () => {
+		withEnv({ VIB_LIFECYCLE_REQUEST_ID: "lc-test-1", VIB_SESSION_ID: "s-preallocated-1" }, () => {
 			const session = SessionManager.inMemory();
 			expect(session.getSessionId()).toBe("s-preallocated-1");
 		});
 	});
 
-	it("ignores GJC_SESSION_ID for normal launches (no lifecycle request id)", () => {
-		withEnv({ GJC_LIFECYCLE_REQUEST_ID: undefined, GJC_SESSION_ID: "s-should-be-ignored" }, () => {
+	it("ignores VIB_SESSION_ID for normal launches (no lifecycle request id)", () => {
+		withEnv({ VIB_LIFECYCLE_REQUEST_ID: undefined, VIB_SESSION_ID: "s-should-be-ignored" }, () => {
 			const session = SessionManager.inMemory();
 			expect(session.getSessionId()).not.toBe("s-should-be-ignored");
 		});
 	});
 
 	it("ignores an unsafe preallocated id even under a lifecycle request", () => {
-		withEnv({ GJC_LIFECYCLE_REQUEST_ID: "lc-test-2", GJC_SESSION_ID: "../bad/id" }, () => {
+		withEnv({ VIB_LIFECYCLE_REQUEST_ID: "lc-test-2", VIB_SESSION_ID: "../bad/id" }, () => {
 			const session = SessionManager.inMemory();
 			expect(session.getSessionId()).not.toBe("../bad/id");
 		});
 	});
 	it("consumes the preallocated id exactly once (newSession gets a fresh id)", async () => {
-		const prevReq = process.env.GJC_LIFECYCLE_REQUEST_ID;
-		const prevId = process.env.GJC_SESSION_ID;
+		const prevReq = process.env.VIB_LIFECYCLE_REQUEST_ID;
+		const prevId = process.env.VIB_SESSION_ID;
 		try {
-			process.env.GJC_LIFECYCLE_REQUEST_ID = "lc-test-3";
-			process.env.GJC_SESSION_ID = "s-once-1";
+			process.env.VIB_LIFECYCLE_REQUEST_ID = "lc-test-3";
+			process.env.VIB_SESSION_ID = "s-once-1";
 			const session = SessionManager.inMemory();
 			expect(session.getSessionId()).toBe("s-once-1");
 			await session.newSession();
 			expect(session.getSessionId()).not.toBe("s-once-1");
 		} finally {
-			if (prevReq === undefined) delete process.env.GJC_LIFECYCLE_REQUEST_ID;
-			else process.env.GJC_LIFECYCLE_REQUEST_ID = prevReq;
-			if (prevId === undefined) delete process.env.GJC_SESSION_ID;
-			else process.env.GJC_SESSION_ID = prevId;
+			if (prevReq === undefined) delete process.env.VIB_LIFECYCLE_REQUEST_ID;
+			else process.env.VIB_LIFECYCLE_REQUEST_ID = prevReq;
+			if (prevId === undefined) delete process.env.VIB_SESSION_ID;
+			else process.env.VIB_SESSION_ID = prevId;
 		}
 	});
 });

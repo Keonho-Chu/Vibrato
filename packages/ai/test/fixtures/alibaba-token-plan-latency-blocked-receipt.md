@@ -1,6 +1,6 @@
 # Alibaba Token Plan Header-Parity A/B — Blocked Live-Data Receipt
 
-**Issue:** gajae-code #3557
+**Issue:** vib-rato #3557
 **Harness:** `packages/ai/scripts/alibaba-token-plan-latency-ab.ts`
 **Date:** 2026-07-30
 
@@ -8,7 +8,7 @@
 
 A live Alibaba Token Plan A/B benchmark could not be run during this lane
 because **no `ALIBABA_TOKEN_PLAN_API_KEY` is present** in this host's process
-or login environment, and there is no Alibaba entry in `~/.gjc/agent/models.yml`.
+or login environment, and there is no Alibaba entry in `~/.vib/agent/models.yml`.
 
 Per the issue's latency-analysis requirements, live results were **not
 fabricated**. The harness is landed and validated against a deterministic local
@@ -20,7 +20,7 @@ This harness is a **synthetic loopback smoke test**, not a production-fidelity
 benchmark. It constructs raw `fetch` requests against an in-process local HTTP
 server (not the production OpenAI SDK request shape), so it validates the
 measurement machinery and the per-arm header-transport logic — it does **not**
-measure the real Gajae-Code vs Alibaba request fingerprint or establish
+measure the real Vibrato vs Alibaba request fingerprint or establish
 production latency impact. Production fingerprint parity is proven separately by
 the wire-capture unit tests
 (`packages/ai/test/alibaba-token-plan-headers.test.ts`), which exercise the
@@ -49,7 +49,7 @@ captured only as `Bearer <redacted>`.
 
 ## Running a bounded live A/B when credentials are available
 
-When a valid `ALIBABA_TOKEN_PLAN_API_KEY` is provisioned through the normal GJC
+When a valid `ALIBABA_TOKEN_PLAN_API_KEY` is provisioned through the normal Vibrato
 auth store, run the same harness pointed at the real endpoint. The harness must
 be extended to target `https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1`
 with the live key; keep endpoint/model/prompt/body/process/connection policy
@@ -59,7 +59,7 @@ presence/scheme only.
 
 ## Why local-only for now
 
-- No credential in env or GJC auth store → any live number would be fabricated.
+- No credential in env or Vibrato auth store → any live number would be fabricated.
 - The local server proves the harness is deterministic and correct.
 - The canonical header set itself is proven by the wire-capture unit tests
   (`packages/ai/test/alibaba-token-plan-headers.test.ts`), not by latency.

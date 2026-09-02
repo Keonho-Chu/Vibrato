@@ -4,7 +4,7 @@ import * as path from "node:path";
 import { pathToFileURL } from "node:url";
 import * as util from "node:util";
 
-import * as logger from "@gajae-code/utils/logger";
+import * as logger from "@vib-rato/utils/logger";
 
 import { ToolError } from "../../../tools/tool-errors";
 import { createHelpers, type HelperBundle } from "./helpers";
@@ -31,7 +31,7 @@ export interface RuntimeOptions {
 	/** Resolve hooks for the run currently in flight, or `null` if nothing is active. */
 	getHooks(): RuntimeHooks | null;
 	/**
-	 * Extra globals installed alongside `__gjc_helpers__` / prelude. Use for stable, lifetime-
+	 * Extra globals installed alongside `__vib_helpers__` / prelude. Use for stable, lifetime-
 	 * of-the-worker bindings (e.g. browser's `page`, `browser`). Per-run scope should be set
 	 * via `setRunScope()` instead.
 	 */
@@ -141,7 +141,7 @@ export class JsRuntime {
 
 	setCwd(cwd: string): void {
 		this.#cwd = cwd;
-		const session = (globalThis as { __gjc_session__?: { cwd?: string } }).__gjc_session__;
+		const session = (globalThis as { __vib_session__?: { cwd?: string } }).__vib_session__;
 		if (session) session.cwd = cwd;
 	}
 
@@ -209,14 +209,14 @@ export class JsRuntime {
 
 	#install(extraGlobals: Record<string, unknown> | undefined): void {
 		const injected: Record<string, unknown> = {
-			__gjc_session__: { cwd: this.#cwd, sessionId: this.sessionId },
-			__gjc_helpers__: this.helpers,
-			__gjc_call_tool__: async (name: string, args: unknown) => {
+			__vib_session__: { cwd: this.#cwd, sessionId: this.sessionId },
+			__vib_helpers__: this.helpers,
+			__vib_call_tool__: async (name: string, args: unknown) => {
 				const hooks = this.#getHooks();
 				if (!hooks) throw new ToolError("Tool calls are only valid inside an active run");
 				return await hooks.callTool(name, args);
 			},
-			__gjc_import__: async (source: string, options?: ImportCallOptions) => {
+			__vib_import__: async (source: string, options?: ImportCallOptions) => {
 				const target = resolveImportSpecifier(this.#cwd, source);
 				// Always invalidate cached module records for user-owned source files so edits
 				// between cells are picked up. Bun ignores query-string busting on `file:` URLs
@@ -227,17 +227,17 @@ export class JsRuntime {
 				}
 				return options !== undefined ? await import(target, options) : await import(target);
 			},
-			__gjc_emit_status__: (op: string, data: Record<string, unknown> = {}) => {
+			__vib_emit_status__: (op: string, data: Record<string, unknown> = {}) => {
 				const event: JsStatusEvent = { op, ...data };
 				this.#getHooks()?.onDisplay({ type: "status", event });
 			},
-			__gjc_log__: (level: string, ...args: unknown[]) => {
+			__vib_log__: (level: string, ...args: unknown[]) => {
 				const prefix = level === "error" ? "[error] " : level === "warn" ? "[warn] " : "";
 				const text = `${prefix}${formatConsoleArgs(args)}`;
 				this.#getHooks()?.onText(text.endsWith("\n") ? text : `${text}\n`);
 			},
-			__gjc_display__: (value: unknown) => this.displayValue(value),
-			__gjc_set_final_expr__: (value: unknown) => {
+			__vib_display__: (value: unknown) => this.displayValue(value),
+			__vib_set_final_expr__: (value: unknown) => {
 				this.#finalExpressionSet = true;
 				this.#finalExpressionValue = value;
 			},

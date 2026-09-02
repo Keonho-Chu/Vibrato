@@ -44,17 +44,17 @@ describe("Telegram onboarding docs", () => {
 		expect(onboarding).toContain(
 			"project config files are ignored, and runtime notification overrides\nare rejected",
 		);
-		expect(onboarding).toContain("`GJC_NOTIFY=off`, `0`, or `false`");
-		expect(onboarding).toContain("`GJC_NOTIFICATIONS=1` or `GJC_NOTIFICATIONS_TOKEN`");
-		expect(onboarding).toContain("GJC performs zero `getUpdates` discovery polls");
+		expect(onboarding).toContain("`VIB_NOTIFY=off`, `0`, or `false`");
+		expect(onboarding).toContain("`VIB_NOTIFICATIONS=1` or `VIB_NOTIFICATIONS_TOKEN`");
+		expect(onboarding).toContain("Vibrato performs zero `getUpdates` discovery polls");
 		expect(onboarding).toContain("does not poll, kill, reload, or take over the\nowner");
-		expect(onboarding).toContain("The raw token is never printed by GJC status/setup output after it is stored");
+		expect(onboarding).toContain("The raw token is never printed by Vibrato status/setup output after it is stored");
 		expect(onboarding).toContain(
-			"`gjc notify setup`, `gjc notify status`, `gjc notify health`, `gjc notify\ntest`, and `gjc notify recovery`",
+			"`vib notify setup`, `vib notify status`, `vib notify health`, `vib notify\ntest`, and `vib notify recovery`",
 		);
 
 		expect(sdk).toContain("The recommended interactive path is `/settings` → **Notifications**");
-		expect(sdk).toContain("`gjc notify setup` remains the authoritative CLI fallback for headless and");
+		expect(sdk).toContain("`vib notify setup` remains the authoritative CLI fallback for headless and");
 		expect(sdk).toContain("Project notification keys are\nignored and runtime notification overrides are rejected");
 		expect(sdk).toContain("A foreign or unknown owner is never killed, reloaded, or taken over");
 	});

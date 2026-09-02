@@ -2,13 +2,13 @@ import { afterEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { getBundledModel } from "@gajae-code/ai";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import type { CustomTool } from "@gajae-code/coding-agent/extensibility/custom-tools/types";
-import { createAgentSession, type ExtensionFactory } from "@gajae-code/coding-agent/sdk";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { Snowflake } from "@gajae-code/utils";
+import { getBundledModel } from "@vib-rato/ai";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import type { CustomTool } from "@vib-rato/coding-agent/extensibility/custom-tools/types";
+import { createAgentSession, type ExtensionFactory } from "@vib-rato/coding-agent/sdk";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { Snowflake } from "@vib-rato/utils";
 import * as z from "zod/v4";
 import { captureCursorEditTool } from "../src/sdk/session";
 
@@ -468,7 +468,7 @@ describe("createAgentSession defaultInactive tool activation", () => {
 		}
 	});
 
-	it("preserves inline and local GJC tools when MCP is not enabled", async () => {
+	it("preserves inline and local Vibrato tools when MCP is not enabled", async () => {
 		const tempDir = path.join(os.tmpdir(), `pi-sdk-tool-activation-${Snowflake.next()}`);
 		tempDirs.push(tempDir);
 		fs.mkdirSync(tempDir, { recursive: true });

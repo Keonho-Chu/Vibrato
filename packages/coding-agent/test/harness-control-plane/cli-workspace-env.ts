@@ -13,7 +13,7 @@ interface PackageManifest {
 	name?: unknown;
 }
 
-const WORKSPACE_NODE_MODULES_ENV = "GJC_HARNESS_TEST_NODE_MODULES";
+const WORKSPACE_NODE_MODULES_ENV = "VIB_HARNESS_TEST_NODE_MODULES";
 
 interface LinkedWorkspacePackage {
 	name: string;
@@ -41,7 +41,7 @@ function collectWorkspacePackages(repoRoot: string): LinkedWorkspacePackage[] {
 		if (!entry.isDirectory()) continue;
 		const packageDir = path.join(packagesDir, entry.name);
 		const name = readPackageName(path.join(packageDir, "package.json"));
-		if (!name?.startsWith("@gajae-code/")) continue;
+		if (!name?.startsWith("@vib-rato/")) continue;
 		packages.push({ name, packageDir });
 	}
 	return packages;
@@ -50,7 +50,7 @@ function collectWorkspacePackages(repoRoot: string): LinkedWorkspacePackage[] {
 function linkWorkspacePackages(scopeDir: string, packages: LinkedWorkspacePackage[]): void {
 	fs.mkdirSync(scopeDir, { recursive: true });
 	for (const pkg of packages) {
-		const unscopedName = pkg.name.slice("@gajae-code/".length);
+		const unscopedName = pkg.name.slice("@vib-rato/".length);
 		const linkPath = path.join(scopeDir, unscopedName);
 		try {
 			fs.symlinkSync(pkg.packageDir, linkPath, "dir");
@@ -61,9 +61,9 @@ function linkWorkspacePackages(scopeDir: string, packages: LinkedWorkspacePackag
 }
 
 export function createHarnessCliEnv(repoRoot: string, baseEnv: NodeJS.ProcessEnv = process.env): HarnessCliEnv {
-	const nodePathRoot = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-harness-node-path-"));
+	const nodePathRoot = fs.mkdtempSync(path.join(os.tmpdir(), "vib-harness-node-path-"));
 	const packages = collectWorkspacePackages(repoRoot);
-	linkWorkspacePackages(path.join(nodePathRoot, "@gajae-code"), packages);
+	linkWorkspacePackages(path.join(nodePathRoot, "@vib-rato"), packages);
 
 	const existingNodePath = baseEnv.NODE_PATH;
 	const env: NodeJS.ProcessEnv = {
@@ -96,7 +96,7 @@ export async function createHarnessCliEnvWithFixtureBroker(
 ): Promise<HarnessCliBrokerFixture> {
 	const agentDir = path.join(fixtureRoot, "agent");
 	const linked = createHarnessCliEnv(repoRoot, createFixtureBrokerEnvironment(fixtureRoot, agentDir));
-	linked.env.GJC_HARNESS_ROOT_REGISTRY_DIR = path.join(fixtureRoot, "root-registry");
+	linked.env.VIB_HARNESS_ROOT_REGISTRY_DIR = path.join(fixtureRoot, "root-registry");
 	try {
 		const started = await withFixtureBrokerEnvironment(() =>
 			startFixtureBrokerWithLeaseForTest({ agentDir, env: linked.env }),

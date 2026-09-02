@@ -1,10 +1,10 @@
 import { describe, expect, it } from "bun:test";
-import { agentLoopContinue } from "@gajae-code/agent-core/agent-loop";
-import { AppendOnlyContextManager } from "@gajae-code/agent-core/append-only-context";
-import type { AgentContext, AgentLoopConfig, AgentMessage, AgentTool, StreamFn } from "@gajae-code/agent-core/types";
-import type { Context, Message } from "@gajae-code/ai";
-import { createMockModel } from "@gajae-code/ai/providers/mock";
-import { AssistantMessageEventStream } from "@gajae-code/ai/utils/event-stream";
+import { agentLoopContinue } from "@vib-rato/agent-core/agent-loop";
+import { AppendOnlyContextManager } from "@vib-rato/agent-core/append-only-context";
+import type { AgentContext, AgentLoopConfig, AgentMessage, AgentTool, StreamFn } from "@vib-rato/agent-core/types";
+import type { Context, Message } from "@vib-rato/ai";
+import { createMockModel } from "@vib-rato/ai/providers/mock";
+import { AssistantMessageEventStream } from "@vib-rato/ai/utils/event-stream";
 import { createAssistantMessage, createUserMessage } from "./helpers";
 
 function makeContext(messages: AgentMessage[] = [createUserMessage("first")]): AgentContext {

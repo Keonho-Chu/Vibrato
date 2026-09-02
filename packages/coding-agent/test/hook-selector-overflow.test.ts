@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it, vi } from "bun:test";
-import { HookSelectorComponent } from "@gajae-code/coding-agent/modes/components/hook-selector";
-import { getThemeByName, setThemeInstance, theme } from "@gajae-code/coding-agent/modes/theme/theme";
-import { type TUI, visibleWidth } from "@gajae-code/tui";
+import { HookSelectorComponent } from "@vib-rato/coding-agent/modes/components/hook-selector";
+import { getThemeByName, setThemeInstance, theme } from "@vib-rato/coding-agent/modes/theme/theme";
+import { type TUI, visibleWidth } from "@vib-rato/tui";
 
 // =============================================================================
 // Helpers shared across required tests.

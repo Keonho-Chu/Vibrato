@@ -16,7 +16,7 @@ afterEach(async () => {
 
 describe("correlated steer production dispatch", () => {
 	it("persists normalized canonical correlation before one dispatch, replays, conflicts, and resolves both Q30 selectors", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-steer-production-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-steer-production-"));
 		roots.push(root);
 		host = await startProductionSdkHost(root);
 		const client = await SdkClient.connect(host.endpoint.url, host.endpoint.token);
@@ -63,7 +63,7 @@ describe("correlated steer production dispatch", () => {
 			expect(byCanonical).toMatchObject({ ok: true, result: durableStatus });
 			expect((byRef as { result: Record<string, unknown> }).result).not.toHaveProperty("sessionId");
 			expect((byCanonical as { result: Record<string, unknown> }).result).not.toHaveProperty("sessionId");
-			const reconciliationPath = path.join(root, ".gjc", "state", ".sdk-reconciliation", `${host.sessionId}.json`);
+			const reconciliationPath = path.join(root, ".vib", "state", ".sdk-reconciliation", `${host.sessionId}.json`);
 			const exists = await fs
 				.stat(reconciliationPath)
 				.then(() => true)

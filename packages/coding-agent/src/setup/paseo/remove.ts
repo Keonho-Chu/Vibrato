@@ -1,9 +1,9 @@
 /**
- * Provenance-gated rollback for `gjc setup paseo --remove`.
+ * Provenance-gated rollback for `vib setup paseo --remove`.
  *
  * Removal never deletes on value-equality alone. A key is removed only when
- * GJC's own ledger recorded creating it AND the current value still hashes to
- * what GJC wrote. A user who hand-authored the same value, or who edited ours
+ * Vibrato's own ledger recorded creating it AND the current value still hashes to
+ * what Vibrato wrote. A user who hand-authored the same value, or who edited ours
  * afterwards, keeps their content.
  *
  * Steps are undone in reverse of the install order (4 to 1). The first step
@@ -32,7 +32,7 @@ export interface RemoveOptions {
 }
 
 /**
- * Remove every target GJC can prove it owns.
+ * Remove every target Vibrato can prove it owns.
  *
  * Returns `nothing-to-remove` when the ledger holds no ownership at all, which
  * is distinct from removing zero keys because the user edited all of them.

@@ -41,7 +41,7 @@ const KEYS = [
 ] as const;
 const PAYLOADS = ["terminal.txt", "terminal-ansi.txt", "terminal.html", "metadata.json"] as const;
 const COMMAND =
-	"bun packages/coding-agent/scripts/capture-sticky-viewport-showcase.ts --out .gjc/qa/sticky-viewport-<run>";
+	"bun packages/coding-agent/scripts/capture-sticky-viewport-showcase.ts --out .vib/qa/sticky-viewport-<run>";
 const TIMESTAMP = "1970-01-01T00:00:00.000Z";
 const FIXTURE = "packages/coding-agent/test/fixtures/tui/sticky-viewport-showcase.ts";
 const DEFAULT_FOREGROUND = "#ffe7dc";
@@ -437,7 +437,7 @@ const ORACLE_SOURCES = [
 // therefore rejects an honest bundle before any evidence guard runs. This value is
 // environment-supplied rather than bundle-supplied, so a bundle author cannot
 // choose which commit vouches for the oracle.
-const ORACLE_COMMIT_ENV = "GJC_STICKY_VIEWPORT_ORACLE_COMMIT";
+const ORACLE_COMMIT_ENV = "VIB_STICKY_VIEWPORT_ORACLE_COMMIT";
 const verifyOracleIntegrity = async (gitHead: string, declaredProvenanceCommit: unknown) => {
 	// Authority is exactly one commit. Reachability is NOT authority: bytes
 	// committed on an unrelated local or remote-tracking ref are reachable via

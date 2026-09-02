@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
-import { Container, Text, TUI } from "@gajae-code/tui";
-import { __loaderPerfCounters, Loader } from "@gajae-code/tui/components/loader";
-import { visibleWidth } from "@gajae-code/tui/utils";
+import { Container, Text, TUI } from "@vib-rato/tui";
+import { __loaderPerfCounters, Loader } from "@vib-rato/tui/components/loader";
+import { visibleWidth } from "@vib-rato/tui/utils";
 import { __animationSchedulerTestHooks } from "../src/animation-scheduler";
 import { VirtualTerminal } from "./virtual-terminal";
 
@@ -22,7 +22,7 @@ const TERMINAL_TRANSPORT_ENV_KEYS = [
 	"TMUX_PANE",
 	"STY",
 	"ZELLIJ",
-	"GJC_TMUX_LAUNCHED",
+	"VIB_TMUX_LAUNCHED",
 	// TERM feeds the multiplexer predicate: tmux-*/screen-* values count as
 	// multiplexed and would route animated loaders back to the 80ms bucket.
 	"TERM",

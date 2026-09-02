@@ -5,7 +5,8 @@
 import type { Stats } from "node:fs";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { getAgentDir, getConfigRootDir, isEnoent } from "@gajae-code/utils";
+import { getAgentDir, getConfigRootDir, isEnoent } from "@vib-rato/utils";
+import { resolveReceiptSpoolDir } from "../harness-control-plane/receipt-spool";
 import type {
 	GcCollectResult,
 	GcContext,
@@ -14,9 +15,8 @@ import type {
 	GcRecord,
 	GcStoreAdapter,
 	GcWarning,
-} from "../gjc-runtime/gc-runtime";
-import { gcPidStatusLabel } from "../gjc-runtime/gc-runtime";
-import { resolveReceiptSpoolDir } from "../harness-control-plane/receipt-spool";
+} from "../vib-runtime/gc-runtime";
+import { gcPidStatusLabel } from "../vib-runtime/gc-runtime";
 import { readFileLockObservationForGc, removeFileLockDirForGc } from "./file-lock";
 
 const MAX_WALK_DEPTH = 6;
@@ -39,9 +39,9 @@ export interface FileLocksGcCollectOptions {
 	roots?: readonly string[];
 }
 
-// Global, env-aware GJC lock roots. Per the approved scope this covers the
-// user config root, the agent dir (honors GJC_CODING_AGENT_DIR), and the
-// configured receipt-spool dir — NOT the invocation cwd's project `.gjc`.
+// Global, env-aware Vibrato lock roots. Per the approved scope this covers the
+// user config root, the agent dir (honors VIB_CODING_AGENT_DIR), and the
+// configured receipt-spool dir — NOT the invocation cwd's project `.vib`.
 function knownFileLockRoots(ctx: GcContext): string[] {
 	const roots = [getConfigRootDir(), getAgentDir()];
 	const spoolDir = resolveReceiptSpoolDir(ctx.env);

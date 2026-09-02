@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from "bun:test";
-import { getOAuthProviders } from "@gajae-code/ai/utils/oauth";
-import { clearProviderAuthHealth, getProviderAuthHealth } from "@gajae-code/coding-agent/config/provider-auth-health";
-import { OAuthSelectorComponent } from "@gajae-code/coding-agent/modes/components/oauth-selector";
-import { getThemeByName, setThemeInstance } from "@gajae-code/coding-agent/modes/theme/theme";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
+import { getOAuthProviders } from "@vib-rato/ai/utils/oauth";
+import { clearProviderAuthHealth, getProviderAuthHealth } from "@vib-rato/coding-agent/config/provider-auth-health";
+import { OAuthSelectorComponent } from "@vib-rato/coding-agent/modes/components/oauth-selector";
+import { getThemeByName, setThemeInstance } from "@vib-rato/coding-agent/modes/theme/theme";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
 
 let testTheme = await getThemeByName("red-claw");
 

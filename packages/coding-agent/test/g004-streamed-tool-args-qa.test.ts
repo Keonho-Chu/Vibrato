@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
-import type { AgentTool } from "@gajae-code/agent-core";
-import type { TUI } from "@gajae-code/tui";
+import type { AgentTool } from "@vib-rato/agent-core";
+import type { TUI } from "@vib-rato/tui";
 import { resetSettingsForTest, Settings } from "../src/config/settings";
 import { ToolExecutionComponent } from "../src/modes/components/tool-execution";
 import { __eventControllerPerfCounters, EventController } from "../src/modes/controllers/event-controller";

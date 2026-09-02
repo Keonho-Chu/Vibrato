@@ -1,4 +1,4 @@
-import { $credentialEnv, $env, extractHttpStatusFromError, logger } from "@gajae-code/utils";
+import { $credentialEnv, $env, extractHttpStatusFromError, logger } from "@vib-rato/utils";
 import { APIConnectionTimeoutError, AzureOpenAI } from "openai";
 import type {
 	Tool as OpenAITool,
@@ -290,7 +290,7 @@ export function resolveAzureConfigForTest(
  *
  * `$env` merges the caller's `cwd/.env`, so reading the key there would let
  * repository content supply the credential this client authenticates with.
- * Provider credentials are resolved from the launching shell plus GJC/user-owned
+ * Provider credentials are resolved from the launching shell plus Vibrato/user-owned
  * `.env` files, never the project `.env` — this fallback now matches that rule.
  */
 function resolveAzureClientApiKey(apiKey: string): string | undefined {

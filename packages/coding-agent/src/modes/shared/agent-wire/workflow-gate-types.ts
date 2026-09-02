@@ -1,4 +1,4 @@
-import { deepInterviewCharacterCount } from "../../../gjc-runtime/deep-interview-state";
+import { deepInterviewCharacterCount } from "../../../vib-runtime/deep-interview-state";
 
 /** Transport-neutral workflow gate contract used by SDK workflow coordination. */
 

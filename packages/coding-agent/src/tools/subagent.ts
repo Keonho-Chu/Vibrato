@@ -1,6 +1,6 @@
 import * as path from "node:path";
-import type { AgentTool, AgentToolContext, AgentToolResult, AgentToolUpdateCallback } from "@gajae-code/agent-core";
-import { formatDuration, logger, prompt } from "@gajae-code/utils";
+import type { AgentTool, AgentToolContext, AgentToolResult, AgentToolUpdateCallback } from "@vib-rato/agent-core";
+import { formatDuration, logger, prompt } from "@vib-rato/utils";
 import * as z from "zod/v4";
 import { type AsyncJob, AsyncJobManager, jobElapsedMs, type SubagentRecord } from "../async";
 import subagentDescription from "../prompts/tools/subagent.md" with { type: "text" };
@@ -790,11 +790,11 @@ export class SubagentTool implements AgentTool<typeof subagentSchema, SubagentTo
 				// serialization defect, which re-issuing does NOT reproduce.
 				if (local.kind === "local_buffer_overflow") {
 					lines.push(
-						"This is a local gjc staging-buffer limit, not a provider or context-window failure; the same request reproduces it.",
+						"This is a local vib staging-buffer limit, not a provider or context-window failure; the same request reproduces it.",
 					);
 				} else if (local.kind === "local_snapshot_failure") {
 					lines.push(
-						"This is a local gjc event-serialization defect, not a provider failure; re-issuing is safe to retry.",
+						"This is a local vib event-serialization defect, not a provider failure; re-issuing is safe to retry.",
 					);
 				}
 			}

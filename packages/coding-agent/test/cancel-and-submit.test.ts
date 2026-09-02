@@ -1,15 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as path from "node:path";
-import { Agent, type AgentMessage, type StreamFn } from "@gajae-code/agent-core";
-import { getBundledModel } from "@gajae-code/ai";
-import { createMockModel } from "@gajae-code/ai/providers/mock";
-import { AssistantMessageEventStream } from "@gajae-code/ai/utils/event-stream";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { type AbortOutcome, AgentSession } from "@gajae-code/coding-agent/session/agent-session";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { logger, TempDir } from "@gajae-code/utils";
+import { Agent, type AgentMessage, type StreamFn } from "@vib-rato/agent-core";
+import { getBundledModel } from "@vib-rato/ai";
+import { createMockModel } from "@vib-rato/ai/providers/mock";
+import { AssistantMessageEventStream } from "@vib-rato/ai/utils/event-stream";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { type AbortOutcome, AgentSession } from "@vib-rato/coding-agent/session/agent-session";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { logger, TempDir } from "@vib-rato/utils";
 
 type Scenario = "mid-streaming" | "active tool" | "auto-retry" | "pre-existing steering+follow-up entries";
 type RollbackOutcome = Extract<AbortOutcome, { kind: "timeout" | "error" }>;
@@ -380,7 +380,7 @@ describe("AgentSession.cancelAndSubmit", () => {
 		await seedQueues(s, "mid-streaming");
 		const before = stores(s);
 		const preflight = Promise.withResolvers<void>();
-		vi.spyOn(s, "refreshGjcSubskillTools").mockImplementationOnce(() => preflight.promise);
+		vi.spyOn(s, "refreshVibSubskillTools").mockImplementationOnce(() => preflight.promise);
 		s.setCancelAndSubmitAbortOutcomeProviderForTests(async () => ({ kind: "settled" }));
 
 		const first = s.cancelAndSubmit("send now");
@@ -444,7 +444,7 @@ describe("AgentSession.cancelAndSubmit", () => {
 	it("preserves a message queued during the atomic window through commit", async () => {
 		const { contexts, session: s } = buildSession();
 		const preflight = Promise.withResolvers<void>();
-		vi.spyOn(s, "refreshGjcSubskillTools").mockImplementationOnce(() => preflight.promise);
+		vi.spyOn(s, "refreshVibSubskillTools").mockImplementationOnce(() => preflight.promise);
 		s.setCancelAndSubmitAbortOutcomeProviderForTests(async () => ({ kind: "settled" }));
 
 		const cancelling = s.cancelAndSubmit("send now");

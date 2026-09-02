@@ -12,7 +12,7 @@
  */
 import { vi } from "bun:test";
 import * as fs from "node:fs";
-import * as native from "@gajae-code/natives";
+import * as native from "@vib-rato/natives";
 
 export function publishFailure(code: string, reason: "io_failure" | "identity_violation") {
 	return {

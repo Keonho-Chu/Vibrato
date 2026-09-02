@@ -9,5 +9,5 @@
 export {};
 
 throw new Error(
-	"@gajae-code/coding-agent/cli/worktree-cli was deliberately removed: the legacy worktree cleanup API (listWorktrees/clearWorktrees) is gone. Inspect leftover managed worktrees under ~/.gjc/wt manually and use `git worktree remove` or `git worktree prune` instead.",
+	"@vib-rato/coding-agent/cli/worktree-cli was deliberately removed: the legacy worktree cleanup API (listWorktrees/clearWorktrees) is gone. Inspect leftover managed worktrees under ~/.vib/wt manually and use `git worktree remove` or `git worktree prune` instead.",
 );

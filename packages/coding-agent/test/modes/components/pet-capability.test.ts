@@ -5,8 +5,8 @@ import {
 	PET_CAPABILITY_SETTLE_MS,
 	setVerifiedItermPetAvailability,
 	warnWhenPetCapabilitySettled,
-} from "@gajae-code/coding-agent/modes/components/pet-capability";
-import { ImageProtocol, setTerminalImageProtocol, TERMINAL } from "@gajae-code/tui";
+} from "@vib-rato/coding-agent/modes/components/pet-capability";
+import { ImageProtocol, setTerminalImageProtocol, TERMINAL } from "@vib-rato/tui";
 
 const originalProtocol = TERMINAL.imageProtocol;
 const multiplexerEnvKeys = [
@@ -14,10 +14,10 @@ const multiplexerEnvKeys = [
 	"TMUX_PANE",
 	"STY",
 	"ZELLIJ",
-	"GJC_TMUX_LAUNCHED",
+	"VIB_TMUX_LAUNCHED",
 	"TERM",
 	"PI_FORCE_IMAGE_PROTOCOL",
-	"GJC_FORCE_IMAGE_PROTOCOL",
+	"VIB_FORCE_IMAGE_PROTOCOL",
 ] as const;
 const originalMultiplexerEnv = new Map(multiplexerEnvKeys.map(key => [key, Bun.env[key]] as const));
 

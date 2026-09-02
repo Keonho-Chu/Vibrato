@@ -35,10 +35,10 @@ import {
 } from "../bench/perf-threshold.ledger";
 
 const memoryControlKeys = [
-	"GJC_MEMORY_PROFILE",
-	"GJC_MEMORY_ITERATIONS",
-	"GJC_MEMORY_DURATION_MS",
-	"GJC_MEMORY_SURFACE_ORDER",
+	"VIB_MEMORY_PROFILE",
+	"VIB_MEMORY_ITERATIONS",
+	"VIB_MEMORY_DURATION_MS",
+	"VIB_MEMORY_SURFACE_ORDER",
 ] as const;
 const canonicalBenchmarkPath = path.resolve(import.meta.dir, "../bench/perf-corpus.bench.ts");
 const logicalBenchmarkPath = "packages/coding-agent/bench/perf-corpus.bench.ts";
@@ -96,9 +96,9 @@ describe("perf corpus schema + runner", () => {
 		expect(report.runner.closureManifest.length).toBeGreaterThan(0);
 		expect(report.runner.closureManifest).toEqual([...report.runner.closureManifest].sort());
 		expect(report.runner.environment).toEqual({
-			GJC_MEMORY_PROFILE: "short",
-			GJC_MEMORY_ITERATIONS: String(report.runner.iterationsTarget),
-			GJC_MEMORY_SURFACE_ORDER: REQUIRED_MEMORY_SURFACES.join(","),
+			VIB_MEMORY_PROFILE: "short",
+			VIB_MEMORY_ITERATIONS: String(report.runner.iterationsTarget),
+			VIB_MEMORY_SURFACE_ORDER: REQUIRED_MEMORY_SURFACES.join(","),
 		});
 		expect(report.runner.iterationsTarget).toBeGreaterThan(0);
 		expect(typeof report.runner.gcExposed).toBe("boolean");
@@ -134,7 +134,7 @@ describe("perf corpus schema + runner", () => {
 	] as const)("accepts the canonical direct invocation %s", (_name, execArguments) => {
 		const result = Bun.spawnSync([process.execPath, ...execArguments, canonicalBenchmarkPath], {
 			cwd: path.resolve(import.meta.dir, "../../.."),
-			env: { ...process.env, GJC_MEMORY_ITERATIONS: "1" },
+			env: { ...process.env, VIB_MEMORY_ITERATIONS: "1" },
 		});
 		expect(result.exitCode).toBe(0);
 		expect(new TextDecoder().decode(result.stderr)).toBe("");
@@ -160,7 +160,7 @@ describe("perf corpus schema + runner", () => {
 	});
 
 	test("rejects a dynamically imported wrapper that spoofs Bun.main and process.argv", async () => {
-		const wrapperDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-perf-corpus-wrapper-"));
+		const wrapperDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "vib-perf-corpus-wrapper-"));
 		const wrapperPath = path.join(wrapperDirectory, "alternate-wrapper.ts");
 		try {
 			await Bun.write(
@@ -215,7 +215,7 @@ describe("perf corpus schema + runner", () => {
 		}
 	});
 	test("fingerprints dirty file contents even when porcelain status is unchanged", async () => {
-		const repository = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-perf-fingerprint-"));
+		const repository = await fs.mkdtemp(path.join(os.tmpdir(), "vib-perf-fingerprint-"));
 		try {
 			const runGit = (args: string[]) => {
 				const result = Bun.spawnSync(["git", ...args], { cwd: repository });
@@ -226,9 +226,9 @@ describe("perf corpus schema + runner", () => {
 			runGit(["add", "tracked.txt"]);
 			runGit([
 				"-c",
-				"user.name=GJC Test",
+				"user.name=Vibrato Test",
 				"-c",
-				"user.email=gjc@example.invalid",
+				"user.email=vib@example.invalid",
 				"commit",
 				"--quiet",
 				"-m",
@@ -490,17 +490,17 @@ describe("perf corpus schema + runner", () => {
 	});
 
 	test("uses the canonical memory surface order for isolated runs without an explicit order", () => {
-		expect(process.env.GJC_MEMORY_SURFACE_ORDER).toBeUndefined();
+		expect(process.env.VIB_MEMORY_SURFACE_ORDER).toBeUndefined();
 		const report = runPerfCorpusBenchmark({ isolatedMemory: true });
 		const baselines = report.fixtures.flatMap(fixture => (fixture.memoryBaseline ? [fixture.memoryBaseline] : []));
 		expect(baselines.map(baseline => baseline.surface)).toEqual([...REQUIRED_MEMORY_SURFACES]);
 		expect(report.runner.memorySurfaceOrder).toEqual([...REQUIRED_MEMORY_SURFACES]);
-		expect(report.runner.environment.GJC_MEMORY_SURFACE_ORDER).toBe(REQUIRED_MEMORY_SURFACES.join(","));
+		expect(report.runner.environment.VIB_MEMORY_SURFACE_ORDER).toBe(REQUIRED_MEMORY_SURFACES.join(","));
 	}, 15_000);
 
 	test("isolates each memory surface in a fresh Bun process using the preregistered order", () => {
 		const customOrder = [...REQUIRED_MEMORY_SURFACES].reverse();
-		process.env.GJC_MEMORY_SURFACE_ORDER = customOrder.join(",");
+		process.env.VIB_MEMORY_SURFACE_ORDER = customOrder.join(",");
 		const report = runPerfCorpusBenchmark({ isolatedMemory: true });
 		const baselines = report.fixtures.flatMap(fixture => (fixture.memoryBaseline ? [fixture.memoryBaseline] : []));
 		expect(baselines).toHaveLength(REQUIRED_MEMORY_SURFACES.length);
@@ -510,9 +510,9 @@ describe("perf corpus schema + runner", () => {
 		expect(report.runner.argv).toEqual(expectedPublicRunnerArgv());
 		expect(report.runner.memoryChildExecArgv).toEqual(["--smol", "--expose-gc"]);
 		expect(report.runner.environment).toEqual({
-			GJC_MEMORY_PROFILE: "short",
-			GJC_MEMORY_ITERATIONS: String(report.runner.iterationsTarget),
-			GJC_MEMORY_SURFACE_ORDER: customOrder.join(","),
+			VIB_MEMORY_PROFILE: "short",
+			VIB_MEMORY_ITERATIONS: String(report.runner.iterationsTarget),
+			VIB_MEMORY_SURFACE_ORDER: customOrder.join(","),
 		});
 		expect(report.runner.gcExposed).toBe(typeof globalThis.gc === "function");
 		expect(report.runner.memoryChildGcExposed).toBe(true);
@@ -593,9 +593,9 @@ describe("perf corpus schema + runner", () => {
 			canonicalOrder.replace("agent-session", " agent-session"),
 		];
 		for (const malformedOrder of malformedOrders) {
-			process.env.GJC_MEMORY_SURFACE_ORDER = malformedOrder;
+			process.env.VIB_MEMORY_SURFACE_ORDER = malformedOrder;
 			expect(() => runPerfCorpusBenchmark({ isolatedMemory: true })).toThrow(
-				"GJC_MEMORY_SURFACE_ORDER must be an exact comma-separated permutation",
+				"VIB_MEMORY_SURFACE_ORDER must be an exact comma-separated permutation",
 			);
 		}
 	});
@@ -1122,9 +1122,9 @@ describe("perf corpus schema + runner", () => {
 		expect(validatePerfCorpusReport(profileMismatch).errors).toContain(
 			`fixture ${fixture.fixtureId}: memoryBaseline.profile must match runner.profile`,
 		);
-		const v2Schema = { ...report, schema: "gjc.perf-corpus/2" } as unknown as PerfCorpusReport;
+		const v2Schema = { ...report, schema: "vib.perf-corpus/2" } as unknown as PerfCorpusReport;
 		expect(validatePerfCorpusReport(v2Schema).errors).toContain(
-			'schema "gjc.perf-corpus/2" is incompatible with the v3 validator; expected "gjc.perf-corpus/3"',
+			'schema "vib.perf-corpus/2" is incompatible with the v3 validator; expected "vib.perf-corpus/3"',
 		);
 		const missingRunnerProfile = {
 			...report,
@@ -1138,9 +1138,9 @@ describe("perf corpus schema + runner", () => {
 				profile: "soak" as const,
 				durationTargetMs: 0,
 				environment: {
-					GJC_MEMORY_PROFILE: "soak",
-					GJC_MEMORY_ITERATIONS: String(report.runner.iterationsTarget),
-					GJC_MEMORY_DURATION_MS: "0",
+					VIB_MEMORY_PROFILE: "soak",
+					VIB_MEMORY_ITERATIONS: String(report.runner.iterationsTarget),
+					VIB_MEMORY_DURATION_MS: "0",
 				},
 			},
 		};
@@ -1244,7 +1244,7 @@ describe("perf corpus schema + runner", () => {
 				...report.runner,
 				environment: {
 					...report.runner.environment,
-					GJC_MEMORY_SURFACE_ORDER: [...REQUIRED_MEMORY_SURFACES].reverse().join(","),
+					VIB_MEMORY_SURFACE_ORDER: [...REQUIRED_MEMORY_SURFACES].reverse().join(","),
 				},
 			},
 		};
@@ -1256,7 +1256,7 @@ describe("perf corpus schema + runner", () => {
 			runner: {
 				...report.runner,
 				memoryIsolation: "process-per-surface" as const,
-				environment: { GJC_MEMORY_PROFILE: "soak", GJC_MEMORY_ITERATIONS: "1" },
+				environment: { VIB_MEMORY_PROFILE: "soak", VIB_MEMORY_ITERATIONS: "1" },
 			},
 		};
 		expect(validatePerfCorpusReport(mismatchedEnvironment).errors).toContain(

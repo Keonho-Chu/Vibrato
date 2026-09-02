@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
-import { hookFetch } from "@gajae-code/utils";
+import { hookFetch } from "@vib-rato/utils";
 import { ModelsConfigSchema } from "../../../src/config/models-config-schema";
 import { SETTINGS_SCHEMA } from "../../../src/config/settings-schema";
 import type { AuthStorage } from "../../../src/session/auth-storage";

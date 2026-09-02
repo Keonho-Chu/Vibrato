@@ -1,4 +1,4 @@
-import { getAgentDir, getSessionsDir } from "@gajae-code/utils";
+import { getAgentDir, getSessionsDir } from "@vib-rato/utils";
 import {
 	listManagedCandidates,
 	type ManagedCandidate,

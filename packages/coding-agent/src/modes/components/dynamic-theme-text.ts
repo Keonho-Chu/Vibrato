@@ -1,4 +1,4 @@
-import { type Component, Text } from "@gajae-code/tui";
+import { type Component, Text } from "@vib-rato/tui";
 
 /** Text whose styling is resolved at render time so live theme previews recolor open overlays. */
 export class DynamicThemeText implements Component {

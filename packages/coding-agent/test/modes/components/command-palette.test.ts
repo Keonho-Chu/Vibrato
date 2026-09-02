@@ -2,8 +2,8 @@ import { beforeAll, describe, expect, it } from "bun:test";
 import {
 	CommandPaletteComponent,
 	type CommandPaletteEntry,
-} from "@gajae-code/coding-agent/modes/components/command-palette";
-import { initTheme } from "@gajae-code/coding-agent/modes/theme/theme";
+} from "@vib-rato/coding-agent/modes/components/command-palette";
+import { initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
 
 const entries: CommandPaletteEntry[] = [
 	{

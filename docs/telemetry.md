@@ -1,6 +1,6 @@
 # Privacy-preserving telemetry
 
-GJC includes a minimal update and adoption telemetry path. It is **disabled by default** and sends nothing unless enabled in the user configuration.
+Vibrato includes a minimal update and adoption telemetry path. It is **disabled by default** and sends nothing unless enabled in the user configuration.
 
 ## What can be sent
 
@@ -35,21 +35,21 @@ The install ID is stored locally in the user agent directory as `telemetry-insta
 Enable or disable the feature with the normal settings surface:
 
 ```sh
-gjc config set telemetry.enabled true
-gjc config set telemetry.enabled false
-gjc config get telemetry.enabled
+vib config set telemetry.enabled true
+vib config set telemetry.enabled false
+vib config get telemetry.enabled
 ```
 
 The setting defaults to `false`. The emergency process-level kill switch always wins over the setting:
 
 ```sh
-GJC_DISABLE_TELEMETRY=1 gjc update
+VIB_DISABLE_TELEMETRY=1 vib update
 ```
 
 The kill switch accepts `1`, `true`, `yes`, or `on`. It is evaluated before an event is scheduled.
 
 ## Transport behavior
 
-Events are sent as HTTPS `POST` requests to `https://telemetry.gajae.dev/v1/events`. Transport is best effort: calls are scheduled without blocking the update command, at most two requests are in flight, and each request is bounded by a 1500 ms timeout. Disabled telemetry, queue saturation, offline failures, timeouts, non-success responses, and serializer failures do not affect GJC behavior and are not printed as arbitrary error text.
+Events are sent as HTTPS `POST` requests to `https://telemetry.vibrato.dev/v1/events`. Transport is best effort: calls are scheduled without blocking the update command, at most two requests are in flight, and each request is bounded by a 1500 ms timeout. Disabled telemetry, queue saturation, offline failures, timeouts, non-success responses, and serializer failures do not affect Vibrato behavior and are not printed as arbitrary error text.
 
 No local event queue or transcript is retained. Server-side retention and aggregate reporting are outside the client contract and must be documented by the service before production collection is enabled.

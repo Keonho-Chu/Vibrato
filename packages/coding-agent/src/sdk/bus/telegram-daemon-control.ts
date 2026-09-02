@@ -11,7 +11,7 @@
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { nativeProcessBindings } from "@gajae-code/utils/native-process";
+import { nativeProcessBindings } from "@vib-rato/utils/native-process";
 import type { Settings } from "../../config/settings";
 import type {
 	BuiltInDaemonController,
@@ -23,7 +23,7 @@ import type {
 	DaemonStatus,
 } from "../../daemon/control-types";
 import { OWNERSHIP_MISMATCH_MESSAGE, ownershipMismatchRecovery } from "../../daemon/operator-contract";
-import { resolveGjcRuntimeSpawnInfo } from "../../daemon/runtime";
+import { resolveVibRuntimeSpawnInfo } from "../../daemon/runtime";
 import { isProcessIncarnation } from "../broker/process-incarnation";
 
 import { getNotificationConfig, isTelegramComplete, tokenFingerprint } from "./config";
@@ -161,7 +161,7 @@ export interface TelegramDaemonControlDeps {
 	 * Stable process id encoded into freshly-spawned daemon owner ids.
 	 *
 	 * The daemon-internal entrypoint rejects numeric owner ids whose process is
-	 * already gone. `gjc daemon reload` is a short-lived CLI process, so using its
+	 * already gone. `vib daemon reload` is a short-lived CLI process, so using its
 	 * own pid can race the child startup and make the replacement exit immediately.
 	 */
 	ownerPid?: number;
@@ -204,7 +204,7 @@ export class TelegramDaemonController implements BuiltInDaemonController {
 	}
 
 	private runtimeInfo(): DaemonRuntimeInfo {
-		const rt = resolveGjcRuntimeSpawnInfo(this.deps.execPath ?? process.execPath);
+		const rt = resolveVibRuntimeSpawnInfo(this.deps.execPath ?? process.execPath);
 		return {
 			mode: rt.mode,
 			execPath: rt.execPath,
@@ -440,7 +440,7 @@ export class TelegramDaemonController implements BuiltInDaemonController {
 		attestedLegacyUpgrade = false,
 	): Promise<TelegramGenerationReloadResult> {
 		// A generation upgrade MUST replace an incompatible older-generation owner to
-		// avoid a permanent single-poller deadlock. Unlike a manual `gjc daemon
+		// avoid a permanent single-poller deadlock. Unlike a manual `vib daemon
 		// reload`, this automatic path force-escalates to SIGKILL when the old owner
 		// ignores the cooperative SIGTERM within the graceful timeout, so SDK startup
 		// self-recovers instead of failing closed and asking the operator to rerun

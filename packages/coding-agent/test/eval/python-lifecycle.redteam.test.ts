@@ -1,15 +1,15 @@
 import { afterEach, describe, expect, it } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { disposeAllKernelSessions, executePython, type PythonResult } from "@gajae-code/coding-agent/eval/py/executor";
+import { disposeAllKernelSessions, executePython, type PythonResult } from "@vib-rato/coding-agent/eval/py/executor";
 import type {
 	KernelExecuteOptions,
 	KernelExecuteResult,
 	KernelShutdownResult,
-} from "@gajae-code/coding-agent/eval/py/kernel";
-import { PythonKernel } from "@gajae-code/coding-agent/eval/py/kernel";
-import { ensurePythonRuntime } from "@gajae-code/coding-agent/eval/py/runtime";
-import { TempDir } from "@gajae-code/utils";
+} from "@vib-rato/coding-agent/eval/py/kernel";
+import { PythonKernel } from "@vib-rato/coding-agent/eval/py/kernel";
+import { ensurePythonRuntime } from "@vib-rato/coding-agent/eval/py/runtime";
+import { TempDir } from "@vib-rato/utils";
 
 const originalStart = PythonKernel.start;
 
@@ -134,7 +134,7 @@ function countAbortListeners(signal: AbortSignal): { readonly count: () => numbe
 describe("python eval lifecycle red-team", () => {
 	it("terminates the complete managed-runtime provisioning process group on cancellation", async () => {
 		if (process.platform === "win32") return;
-		using tempDir = TempDir.createSync("@gjc-python-lifecycle-redteam-");
+		using tempDir = TempDir.createSync("@vib-python-lifecycle-redteam-");
 		const binDir = path.join(tempDir.path(), "bin");
 		const pythonPath = path.join(binDir, "python3");
 		const childPidPath = path.join(tempDir.path(), "provision-child.pid");
@@ -175,7 +175,7 @@ describe("python eval lifecycle red-team", () => {
 
 	it("coalesces five concurrent first acquires for the same new session without orphan kernels", async () => {
 		Bun.env.PI_PYTHON_SKIP_CHECK = "1";
-		using tempDir = TempDir.createSync("@gjc-python-lifecycle-redteam-");
+		using tempDir = TempDir.createSync("@vib-python-lifecycle-redteam-");
 		const startup = Promise.withResolvers<void>();
 		const kernel = new FakeKernel();
 		let startCalls = 0;
@@ -209,7 +209,7 @@ describe("python eval lifecycle red-team", () => {
 		async () => {
 			if (process.platform === "win32") return;
 			Bun.env.PI_PYTHON_SKIP_CHECK = "1";
-			using tempDir = TempDir.createSync("@gjc-python-lifecycle-redteam-");
+			using tempDir = TempDir.createSync("@vib-python-lifecycle-redteam-");
 			const unrelated = Bun.spawn(["/bin/sh", "-c", "sleep 30"], { stdout: "ignore", stderr: "ignore" });
 			const startupGate = Promise.withResolvers<void>();
 			const startupCalled = Promise.withResolvers<void>();
@@ -264,7 +264,7 @@ describe("python eval lifecycle red-team", () => {
 		"rejects the startup handshake and cleans up when kernel startup fails",
 		async () => {
 			Bun.env.PI_PYTHON_SKIP_CHECK = "1";
-			using tempDir = TempDir.createSync("@gjc-python-lifecycle-redteam-");
+			using tempDir = TempDir.createSync("@vib-python-lifecycle-redteam-");
 			const unrelated = Bun.spawn([process.execPath, "-e", "setTimeout(() => {}, 30_000)"], {
 				stdout: "ignore",
 				stderr: "ignore",
@@ -306,7 +306,7 @@ describe("python eval lifecycle red-team", () => {
 		"retires a cancelled initializer before an uncancelled successor acquires a replacement",
 		async () => {
 			Bun.env.PI_PYTHON_SKIP_CHECK = "1";
-			using tempDir = TempDir.createSync("@gjc-python-lifecycle-redteam-");
+			using tempDir = TempDir.createSync("@vib-python-lifecycle-redteam-");
 			const controller = new AbortController();
 			const listeners = countAbortListeners(controller.signal);
 			const startup = Promise.withResolvers<void>();
@@ -360,7 +360,7 @@ describe("python eval lifecycle red-team", () => {
 		"settles an in-flight cell during shutdown without leaked abort listeners",
 		async () => {
 			Bun.env.PI_PYTHON_SKIP_CHECK = "1";
-			using tempDir = TempDir.createSync("@gjc-python-lifecycle-redteam-");
+			using tempDir = TempDir.createSync("@vib-python-lifecycle-redteam-");
 			const controller = new AbortController();
 			const listeners = countAbortListeners(controller.signal);
 			const kernelStarted = Promise.withResolvers<void>();
@@ -411,7 +411,7 @@ describe("python eval lifecycle red-team", () => {
 		"bounds failed readiness cleanup before the fixture deadline",
 		async () => {
 			Bun.env.PI_PYTHON_SKIP_CHECK = "1";
-			using tempDir = TempDir.createSync("@gjc-python-lifecycle-redteam-");
+			using tempDir = TempDir.createSync("@vib-python-lifecycle-redteam-");
 			const controller = new AbortController();
 			const startup = Promise.withResolvers<void>();
 			const startupCalled = Promise.withResolvers<void>();
@@ -464,7 +464,7 @@ describe("python eval lifecycle red-team", () => {
 
 	it("treats clean exit code 0 as confirmed and starts a fresh session instead of reinserting", async () => {
 		Bun.env.PI_PYTHON_SKIP_CHECK = "1";
-		using tempDir = TempDir.createSync("@gjc-python-lifecycle-redteam-");
+		using tempDir = TempDir.createSync("@vib-python-lifecycle-redteam-");
 		const firstKernel = new FakeKernel();
 		const secondKernel = new FakeKernel();
 		let startCalls = 0;

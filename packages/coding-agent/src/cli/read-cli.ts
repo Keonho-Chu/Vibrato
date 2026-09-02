@@ -1,11 +1,11 @@
 /**
  * Read CLI command handler.
  *
- * Handles `gjc read` — invokes the `read` agent tool against a path/URL and
+ * Handles `vib read` — invokes the `read` agent tool against a path/URL and
  * prints the resulting content blocks exactly as the model would receive them
  * (including truncation/limit notices appended by the meta-notice wrapper).
  */
-import { getProjectDir } from "@gajae-code/utils";
+import { getProjectDir } from "@vib-rato/utils";
 import chalk from "chalk";
 import { Settings } from "../config/settings";
 import type { ToolSession } from "../tools";
@@ -38,7 +38,7 @@ export async function runReadCommand(cmd: ReadCommandArgs): Promise<void> {
 	const tool = wrapToolWithMetaNotice(new ReadTool(session));
 
 	try {
-		const result = await tool.execute("gjc-read", { path: cmd.path, truncation: cmd.truncation });
+		const result = await tool.execute("vib-read", { path: cmd.path, truncation: cmd.truncation });
 
 		for (const block of result.content) {
 			if (block.type === "text") {

@@ -1,21 +1,21 @@
 /**
  * GitHub star reminder.
  *
- * On interactive launch, if `gh` is authenticated and the GJC repo is not
+ * On interactive launch, if `gh` is authenticated and the Vibrato repo is not
  * starred, the user is nudged to star it. Declining switches to a per-session
  * persuasion message injected at the before-agent-start point until the repo is
  * starred. Detection is `gh`-only: if `gh` is missing, unauthenticated, offline,
  * or fails for any non-404 reason, the feature stays completely silent.
  *
- * All state lives in a user-global file under the GJC config root and is updated
+ * All state lives in a user-global file under the Vibrato config root and is updated
  * under a file lock with atomic temp+rename writes and a monotonic merge that
  * never lets a stale "declined"/"unstarred" write clobber a confirmed star.
  */
 import { randomUUID } from "node:crypto";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import type { ImageContent, MessageAttribution } from "@gajae-code/ai/core";
-import { getConfigRootDir, isEnoent } from "@gajae-code/utils";
+import type { ImageContent, MessageAttribution } from "@vib-rato/ai/core";
+import { getConfigRootDir, isEnoent } from "@vib-rato/utils";
 import { withFileLock } from "../config/file-lock";
 import type { CustomMessage } from "../session/messages";
 import { type GhResult, type RunGh, runGhDefault } from "../utils/gh";
@@ -23,7 +23,7 @@ import { type GhResult, type RunGh, runGhDefault } from "../utils/gh";
 export type { GhResult, RunGh };
 export { runGhDefault };
 
-export const STAR_REMINDER_REPO = "Yeachan-Heo/gajae-code";
+export const STAR_REMINDER_REPO = "Keonho-Chu/Vibrato";
 export const STAR_REMINDER_CUSTOM_TYPE = "star-reminder";
 export const STARRED_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
@@ -239,7 +239,7 @@ export interface StarReminderPromptUI {
 	isIdle?: () => boolean;
 }
 
-const LAUNCH_PROMPT_TITLE = "Enjoying GJC?";
+const LAUNCH_PROMPT_TITLE = "Enjoying Vibrato?";
 const LAUNCH_PROMPT_MESSAGE = `Star ${STAR_REMINDER_REPO} on GitHub to support the project?`;
 
 /**

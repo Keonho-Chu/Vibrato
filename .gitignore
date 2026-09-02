@@ -43,28 +43,28 @@ coverage/
 packages/ai/test/.temp-images/
 
 # Project specific
-!.gjc/
-!.gjc/agents/
-!.gjc/agents/**
-!.gjc/skills/
-!.gjc/skills/**
-.gjc/plugins/
-.gjc/context/
-.gjc/interviews/
-.gjc/plans/
-.gjc/ralplan/
-.gjc/specs/
-.gjc/ultragoal/
-.gjc/verification/
-.gjc/logs/
-.gjc/rlm/
-**/.gjc/state/
-.gjc/_session-*/
-.gjc/rss-checkpoints/
-.gjc/metrics.json
-**/.gjc/settings.json.fallback-invalid
-**/.gjc/settings.json.config-root.fallback-invalid
-**/.gjc/settings.json.strict-invalid
+!.vib/
+!.vib/agents/
+!.vib/agents/**
+!.vib/skills/
+!.vib/skills/**
+.vib/plugins/
+.vib/context/
+.vib/interviews/
+.vib/plans/
+.vib/ralplan/
+.vib/specs/
+.vib/ultragoal/
+.vib/verification/
+.vib/logs/
+.vib/rlm/
+**/.vib/state/
+.vib/_session-*/
+.vib/rss-checkpoints/
+.vib/metrics.json
+**/.vib/settings.json.fallback-invalid
+**/.vib/settings.json.config-root.fallback-invalid
+**/.vib/settings.json.strict-invalid
 .pi_config/
 .opencode/
 .worktrees/
@@ -95,5 +95,5 @@ packages/coding-agent/binaries/
 .release-040-artifacts/
 
 # Python SDK build output
-python/gjc-sdk/build/
+python/vib-sdk/build/
 *.py[cod]

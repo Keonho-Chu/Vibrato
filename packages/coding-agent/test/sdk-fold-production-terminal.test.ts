@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import type { AgentSideConnection, ClientCapabilities } from "@agentclientprotocol/sdk";
-import { createMockModel, registerMockApi } from "@gajae-code/ai/providers/mock";
-import { TempDir } from "@gajae-code/utils";
+import { createMockModel, registerMockApi } from "@vib-rato/ai/providers/mock";
+import { TempDir } from "@vib-rato/utils";
 import { AsyncJobManager } from "../src/async";
 import { Settings } from "../src/config/settings";
 import { createAcpClientBridge } from "../src/modes/acp/acp-client-bridge";
@@ -35,7 +35,7 @@ describe("SDK production ACP fold path", () => {
 	});
 
 	test("creates, folds, wakes, and releases through the SDK ToolSession and ACP adapter", async () => {
-		tempDir = TempDir.createSync("@gjc-sdk-fold-acp-");
+		tempDir = TempDir.createSync("@vib-sdk-fold-acp-");
 		registerMockApi();
 		authStorage = await AuthStorage.create(`${tempDir.path()}/auth.db`);
 		const mock = createMockModel({ responses: [{ content: ["wake complete"] }] });

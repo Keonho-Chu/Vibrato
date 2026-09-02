@@ -1,4 +1,4 @@
-import { isEnoent, isKnownSinkPeerClosedError, logger, untilAborted } from "@gajae-code/utils";
+import { isEnoent, isKnownSinkPeerClosedError, logger, untilAborted } from "@vib-rato/utils";
 import { formatCrashDiagnosticNotice, writeCrashReport } from "../debug/crash-diagnostics";
 import { registerResourceOwner, spawnOwnedProcess } from "../runtime/process-lifecycle";
 import { ToolAbortError, throwIfAborted } from "../tools/tool-errors";

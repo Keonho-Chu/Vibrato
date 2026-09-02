@@ -1,5 +1,5 @@
 /**
- * Shared operator contract for the `gjc daemon` command surface.
+ * Shared operator contract for the `vib daemon` command surface.
  *
  * One source of truth for the beginner-safe operational vocabulary so the
  * guided human surface and the machine-readable JSON never drift:
@@ -39,7 +39,7 @@ export function resolveDaemonAction(token: string | undefined): DaemonAction | u
 	return DAEMON_ACTION_ALIASES[token];
 }
 
-/** Exit codes for `gjc daemon`. Backward compatible: success 0, any failure 1. */
+/** Exit codes for `vib daemon`. Backward compatible: success 0, any failure 1. */
 export const DAEMON_EXIT = { ok: 0, failure: 1 } as const;
 
 /** Human-facing headline when a spawn/reload is refused by a live foreign identity. */
@@ -52,8 +52,8 @@ export function ownershipMismatchRecovery(): DaemonRecovery {
 		reason: "ownership_mismatch",
 		summary: "A live Telegram daemon owned by a different bot token or chat already holds this workspace.",
 		steps: [
-			"Confirm the intended bot token and chat with `gjc notify` (or edit notifications.telegram in your config).",
-			"If the running daemon is stale or unwanted, stop it with `gjc daemon stop --force`, then rerun `gjc daemon restart`.",
+			"Confirm the intended bot token and chat with `vib notify` (or edit notifications.telegram in your config).",
+			"If the running daemon is stale or unwanted, stop it with `vib daemon stop --force`, then rerun `vib daemon restart`.",
 			"If it is the correct daemon, no action is needed — this workspace attaches automatically once the identities match.",
 		],
 	};

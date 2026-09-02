@@ -67,8 +67,8 @@ function install(world: SafeCleanupWorld): void {
 
 describe("runtime deletion guard: interceptable surfaces", () => {
 	test("fs.promises.rm refusal blocks the deletion and records the reason", async () => {
-		sandbox = tempDir("gjc-guard-sbx-");
-		const outside = tempDir("gjc-guard-outside-"); // inside os.tmpdir(), outside the guard's allowed root
+		sandbox = tempDir("vib-guard-sbx-");
+		const outside = tempDir("vib-guard-outside-"); // inside os.tmpdir(), outside the guard's allowed root
 		fs.mkdirSync(path.join(outside, "child"), { recursive: true });
 		install(sandboxWorld(sandbox));
 		await expect(fs.promises.rm(outside, { recursive: true, force: true })).rejects.toThrow(
@@ -81,7 +81,7 @@ describe("runtime deletion guard: interceptable surfaces", () => {
 	});
 
 	test("fs.promises.rm approves and completes inside the allowed root", async () => {
-		sandbox = tempDir("gjc-guard-sbx-");
+		sandbox = tempDir("vib-guard-sbx-");
 		const victim = path.join(sandbox, "victim");
 		fs.mkdirSync(victim, { recursive: true });
 		install(sandboxWorld(sandbox));
@@ -91,8 +91,8 @@ describe("runtime deletion guard: interceptable surfaces", () => {
 	});
 
 	test("CJS require('node:fs').rmSync refusal blocks the deletion", () => {
-		sandbox = tempDir("gjc-guard-sbx-");
-		const outside = tempDir("gjc-guard-outside-");
+		sandbox = tempDir("vib-guard-sbx-");
+		const outside = tempDir("vib-guard-outside-");
 		fs.mkdirSync(path.join(outside, "child"), { recursive: true });
 		install(sandboxWorld(sandbox));
 		expect(() => require("node:fs").rmSync(outside, { recursive: true, force: true })).toThrow(
@@ -104,8 +104,8 @@ describe("runtime deletion guard: interceptable surfaces", () => {
 	});
 
 	test("CJS require('node:fs/promises').rm refusal blocks the deletion", async () => {
-		sandbox = tempDir("gjc-guard-sbx-");
-		const outside = tempDir("gjc-guard-outside-");
+		sandbox = tempDir("vib-guard-sbx-");
+		const outside = tempDir("vib-guard-outside-");
 		fs.mkdirSync(path.join(outside, "child"), { recursive: true });
 		install(sandboxWorld(sandbox));
 		await expect(require("node:fs/promises").rm(outside, { recursive: true, force: true })).rejects.toThrow(
@@ -116,8 +116,8 @@ describe("runtime deletion guard: interceptable surfaces", () => {
 	});
 
 	test("non-recursive removals pass through unassessed", async () => {
-		sandbox = tempDir("gjc-guard-sbx-");
-		const outside = tempDir("gjc-guard-outside-");
+		sandbox = tempDir("vib-guard-sbx-");
+		const outside = tempDir("vib-guard-outside-");
 		const file = path.join(outside, "single.txt");
 		fs.writeFileSync(file, "x");
 		install(sandboxWorld(sandbox));
@@ -128,7 +128,7 @@ describe("runtime deletion guard: interceptable surfaces", () => {
 	});
 
 	test("a second install in the same process is a no-op (preload idempotence)", () => {
-		sandbox = tempDir("gjc-guard-sbx-");
+		sandbox = tempDir("vib-guard-sbx-");
 		const world = sandboxWorld(sandbox);
 		// Install directly (the helper swaps by design) to observe idempotence.
 		__uninstallRuntimeDeletionGuardForTests();
@@ -145,7 +145,7 @@ describe("runtime deletion guard: interceptable surfaces", () => {
 	});
 
 	test("uninstall removes the guard wrapping and is idempotent", () => {
-		sandbox = tempDir("gjc-guard-sbx-");
+		sandbox = tempDir("vib-guard-sbx-");
 		install(sandboxWorld(sandbox));
 		const wrapped = require("node:fs").rmSync;
 		expect(String(wrapped)).toContain("refusalFor");
@@ -190,9 +190,9 @@ describe("runtime deletion guard: real preload wiring (subprocess)", () => {
 	test.skipIf(process.platform !== "linux" || !isWritable("/dev/shm"))(
 		"bun test child aborts (exit 70) on an out-of-root recursive rm and deletes nothing",
 		() => {
-			const probe = fs.mkdtempSync("/dev/shm/gjc-guard-e2e-");
+			const probe = fs.mkdtempSync("/dev/shm/vib-guard-e2e-");
 			fs.mkdirSync(path.join(probe, "precious"), { recursive: true });
-			const result = runFixture("guard-violation-fixture.ts", { GJC_GUARD_PROBE_DIR: probe });
+			const result = runFixture("guard-violation-fixture.ts", { VIB_GUARD_PROBE_DIR: probe });
 			expect(result.exitCode).toBe(70);
 			expect(result.stderr).toContain("[safe-cleanup:test-preload]");
 			expect(result.stderr).toContain("REFUSED recursive deletion");
@@ -203,9 +203,9 @@ describe("runtime deletion guard: real preload wiring (subprocess)", () => {
 	);
 
 	test("bun test child completes normally for owned in-root cleanup", () => {
-		const probe = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-guard-pass-"));
+		const probe = fs.mkdtempSync(path.join(os.tmpdir(), "vib-guard-pass-"));
 		fs.mkdirSync(path.join(probe, "child"), { recursive: true });
-		const result = runFixture("guard-pass-fixture.ts", { GJC_GUARD_PROBE_DIR: probe });
+		const result = runFixture("guard-pass-fixture.ts", { VIB_GUARD_PROBE_DIR: probe });
 		expect(result.exitCode).toBe(0);
 		expect(fs.existsSync(probe)).toBe(false);
 	});
@@ -213,13 +213,13 @@ describe("runtime deletion guard: real preload wiring (subprocess)", () => {
 	test.skipIf(process.platform === "win32")(
 		"the child ignores an ambient fake HOME when resolving the real account home",
 		() => {
-			const fakeHome = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-guard-fakehome-"));
+			const fakeHome = fs.mkdtempSync(path.join(os.tmpdir(), "vib-guard-fakehome-"));
 			fs.mkdirSync(path.join(fakeHome, "identity"), { recursive: true });
 			// The fake home sits INSIDE the allowed tmp root, so only the
 			// captured home alias — not containment — can refuse it.
 			const result = runFixture("guard-env-home-fixture.ts", {
 				HOME: fakeHome,
-				GJC_GUARD_PROBE_DIR: fakeHome,
+				VIB_GUARD_PROBE_DIR: fakeHome,
 			});
 			expect(result.exitCode).toBe(0);
 			expect(fs.existsSync(fakeHome)).toBe(false);
@@ -231,13 +231,13 @@ describe("runtime deletion guard: real preload wiring (subprocess)", () => {
 		() => {
 			const realHome = getDefaultSafeCleanupWorld().homeAliases[0];
 			if (!realHome) throw new Error("Expected an independently resolved real home");
-			const fakeHome = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-guard-ambient-home-"));
-			const target = path.join(realHome, `.gjc-guard-ambient-${process.pid}-${Date.now()}`);
+			const fakeHome = fs.mkdtempSync(path.join(os.tmpdir(), "vib-guard-ambient-home-"));
+			const target = path.join(realHome, `.vib-guard-ambient-${process.pid}-${Date.now()}`);
 			try {
 				const result = runFixture("guard-violation-fixture.ts", {
 					HOME: fakeHome,
 					TMPDIR: realHome,
-					GJC_GUARD_PROBE_DIR: target,
+					VIB_GUARD_PROBE_DIR: target,
 				});
 				expect(result.exitCode).toBe(70);
 				expect(result.stderr).toContain("outside-allowed-roots");

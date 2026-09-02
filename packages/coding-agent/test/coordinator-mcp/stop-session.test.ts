@@ -35,18 +35,18 @@ async function createServer(
 		closeHandler?: (input: Record<string, unknown>) => Promise<Record<string, unknown>>;
 	} = {},
 ) {
-	const stateRoot = path.join(root, ".gjc", "coordinator-state");
+	const stateRoot = path.join(root, ".vib", "coordinator-state");
 	const agentDir = path.join(root, "agent-global");
 	const controls: BrokerControl[] = [];
 	let closeAttempts = 0;
 	const closedSessionIds = new Set<string>();
 	const env: NodeJS.ProcessEnv = {
-		GJC_COORDINATOR_MCP_WORKDIR_ROOTS: root,
-		GJC_COORDINATOR_MCP_STATE_ROOT: stateRoot,
-		GJC_COORDINATOR_MCP_MUTATIONS: "sessions",
-		GJC_COORDINATOR_MCP_PROFILE: "local",
-		GJC_COORDINATOR_MCP_REPO: "repo",
-		...(options.forceStop ? { GJC_COORDINATOR_MCP_FORCE_STOP: "1" } : {}),
+		VIB_COORDINATOR_MCP_WORKDIR_ROOTS: root,
+		VIB_COORDINATOR_MCP_STATE_ROOT: stateRoot,
+		VIB_COORDINATOR_MCP_MUTATIONS: "sessions",
+		VIB_COORDINATOR_MCP_PROFILE: "local",
+		VIB_COORDINATOR_MCP_REPO: "repo",
+		...(options.forceStop ? { VIB_COORDINATOR_MCP_FORCE_STOP: "1" } : {}),
 	};
 	const config = buildCoordinatorMcpConfig(env);
 	const registryFile = coordinatorStatePaths(stateRoot, config.namespace.identity).registry;
@@ -149,11 +149,11 @@ async function writeSession(
 		sessionId: id,
 		cwd: root,
 		env: {
-			GJC_COORDINATOR_MCP_WORKDIR_ROOTS: root,
-			GJC_COORDINATOR_MCP_STATE_ROOT: path.join(root, ".gjc", "coordinator-state"),
-			GJC_COORDINATOR_MCP_MUTATIONS: "sessions",
-			GJC_COORDINATOR_MCP_PROFILE: "local",
-			GJC_COORDINATOR_MCP_REPO: "repo",
+			VIB_COORDINATOR_MCP_WORKDIR_ROOTS: root,
+			VIB_COORDINATOR_MCP_STATE_ROOT: path.join(root, ".vib", "coordinator-state"),
+			VIB_COORDINATOR_MCP_MUTATIONS: "sessions",
+			VIB_COORDINATOR_MCP_PROFILE: "local",
+			VIB_COORDINATOR_MCP_REPO: "repo",
 		},
 		overrides,
 		...(activeTurn ? { activeTurn } : {}),
@@ -161,7 +161,7 @@ async function writeSession(
 	});
 }
 
-describe("gjc_coordinator_stop_session SDK lifecycle", () => {
+describe("vib_coordinator_stop_session SDK lifecycle", () => {
 	it("persists one endpoint-incarnation authority across WAL, projection, and broker close", async () => {
 		const root = await tempRoot();
 		const { server, controls } = await createServer(root);
@@ -170,11 +170,11 @@ describe("gjc_coordinator_stop_session SDK lifecycle", () => {
 			sessionId,
 			cwd: root,
 			env: {
-				GJC_COORDINATOR_MCP_WORKDIR_ROOTS: root,
-				GJC_COORDINATOR_MCP_STATE_ROOT: path.join(root, ".gjc", "coordinator-state"),
-				GJC_COORDINATOR_MCP_MUTATIONS: "sessions",
-				GJC_COORDINATOR_MCP_PROFILE: "local",
-				GJC_COORDINATOR_MCP_REPO: "repo",
+				VIB_COORDINATOR_MCP_WORKDIR_ROOTS: root,
+				VIB_COORDINATOR_MCP_STATE_ROOT: path.join(root, ".vib", "coordinator-state"),
+				VIB_COORDINATOR_MCP_MUTATIONS: "sessions",
+				VIB_COORDINATOR_MCP_PROFILE: "local",
+				VIB_COORDINATOR_MCP_REPO: "repo",
 			},
 			overrides: { ephemeral: true },
 		});
@@ -187,7 +187,7 @@ describe("gjc_coordinator_stop_session SDK lifecycle", () => {
 		expect(wal?.canonical.session.broker.endpoint_incarnation).toBe(expectedIncarnation);
 		expect(projection.endpoint_incarnation).toBe(expectedIncarnation);
 		expect(
-			await server.callTool("gjc_coordinator_stop_session", { session_id: sessionId, allow_mutation: true }),
+			await server.callTool("vib_coordinator_stop_session", { session_id: sessionId, allow_mutation: true }),
 		).toMatchObject({ ok: true, closed: true, session_id: sessionId });
 		expect(controls.filter(control => control.operation === "session.close")).toEqual([
 			expect.objectContaining({
@@ -207,7 +207,7 @@ describe("gjc_coordinator_stop_session SDK lifecycle", () => {
 		await writeSession(sessionFile("registered"), root, "registered");
 
 		expect(
-			await server.callTool("gjc_coordinator_stop_session", { session_id: "registered", allow_mutation: true }),
+			await server.callTool("vib_coordinator_stop_session", { session_id: "registered", allow_mutation: true }),
 		).toMatchObject({ ok: false, reason: "not_ephemeral", closed: false });
 		// #4731 moved the endpoint-authority preflight (session.list) ahead of the
 		// ephemeral refusal, so read-only index reads are expected; the contract is
@@ -221,7 +221,7 @@ describe("gjc_coordinator_stop_session SDK lifecycle", () => {
 		await writeSession(sessionFile("registered"), root, "registered");
 
 		expect(
-			await server.callTool("gjc_coordinator_stop_session", {
+			await server.callTool("vib_coordinator_stop_session", {
 				session_id: "registered",
 				force: true,
 				allow_mutation: true,
@@ -237,7 +237,7 @@ describe("gjc_coordinator_stop_session SDK lifecycle", () => {
 		expect(await Bun.file(registryFile).exists()).toBe(true);
 
 		expect(
-			await server.callTool("gjc_coordinator_stop_session", { session_id: "ephemeral", allow_mutation: true }),
+			await server.callTool("vib_coordinator_stop_session", { session_id: "ephemeral", allow_mutation: true }),
 		).toMatchObject({ ok: true, closed: true, session_id: "ephemeral" });
 		expect(controls.filter(control => control.operation === "session.close")).toEqual([
 			expect.objectContaining({
@@ -259,7 +259,7 @@ describe("gjc_coordinator_stop_session SDK lifecycle", () => {
 		await Bun.write(registryFile, "{}");
 
 		expect(
-			await server.callTool("gjc_coordinator_stop_session", { session_id: "malformed", allow_mutation: true }),
+			await server.callTool("vib_coordinator_stop_session", { session_id: "malformed", allow_mutation: true }),
 		).toMatchObject({ ok: false, error: { code: "unavailable" } });
 		expect(await Bun.file(sessionFile("malformed")).exists()).toBe(true);
 		expect(controls.filter(control => control.operation === "session.close")).toEqual([]);
@@ -271,7 +271,7 @@ describe("gjc_coordinator_stop_session SDK lifecycle", () => {
 		await writeSession(sessionFile("wedged"), root, "wedged", { ephemeral: true });
 
 		expect(
-			await server.callTool("gjc_coordinator_stop_session", { session_id: "wedged", allow_mutation: true }),
+			await server.callTool("vib_coordinator_stop_session", { session_id: "wedged", allow_mutation: true }),
 			// #4731 funnels broker close failures through the public error-code
 			// table; the raw broker code is no longer echoed verbatim.
 		).toMatchObject({ ok: false, reason: "close_failed", detail: "unavailable", closed: false });
@@ -297,7 +297,7 @@ describe("gjc_coordinator_stop_session SDK lifecycle", () => {
 		);
 
 		expect(
-			await server.callTool("gjc_coordinator_stop_session", { session_id: sessionId, allow_mutation: true }),
+			await server.callTool("vib_coordinator_stop_session", { session_id: sessionId, allow_mutation: true }),
 		).toMatchObject({ ok: false, reason: "active_turn", active_turn_id: turnId, closed: false });
 		expect(controls.filter(control => control.operation === "session.close")).toEqual([]);
 	});
@@ -352,14 +352,14 @@ describe("gjc_coordinator_stop_session SDK lifecycle", () => {
 				},
 			});
 			await writeSession(sessionFile("dr1-ok"), root, "dr1-ok", { ephemeral: true });
-			const res = await server.callTool("gjc_coordinator_stop_session", {
+			const res = await server.callTool("vib_coordinator_stop_session", {
 				session_id: "dr1-ok",
 				allow_mutation: true,
 			});
 			expect(res).toMatchObject({ ok: true, closed: true });
 			expect(await Bun.file(sessionFile("dr1-ok")).exists()).toBe(false);
 			// idempotent completed deletion receipt
-			const res2 = await server.callTool("gjc_coordinator_stop_session", {
+			const res2 = await server.callTool("vib_coordinator_stop_session", {
 				session_id: "dr1-ok",
 				allow_mutation: true,
 			});
@@ -379,7 +379,7 @@ describe("gjc_coordinator_stop_session SDK lifecycle", () => {
 				},
 			});
 			await writeSession(sessionFile("rotated"), root, "rotated", { ephemeral: true });
-			const res = await server.callTool("gjc_coordinator_stop_session", {
+			const res = await server.callTool("vib_coordinator_stop_session", {
 				session_id: "rotated",
 				allow_mutation: true,
 			});
@@ -400,7 +400,7 @@ describe("gjc_coordinator_stop_session SDK lifecycle", () => {
 				},
 			});
 			await writeSession(sessionFile("amb"), root, "amb", { ephemeral: true });
-			const res = await server.callTool("gjc_coordinator_stop_session", {
+			const res = await server.callTool("vib_coordinator_stop_session", {
 				session_id: "amb",
 				allow_mutation: true,
 			});
@@ -420,7 +420,7 @@ describe("gjc_coordinator_stop_session SDK lifecycle", () => {
 				},
 			});
 			await writeSession(sessionFile("still-live"), root, "still-live", { ephemeral: true });
-			const res = await server.callTool("gjc_coordinator_stop_session", {
+			const res = await server.callTool("vib_coordinator_stop_session", {
 				session_id: "still-live",
 				allow_mutation: true,
 			});

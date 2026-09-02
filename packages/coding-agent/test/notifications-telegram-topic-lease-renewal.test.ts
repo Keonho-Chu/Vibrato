@@ -28,7 +28,7 @@ type PersistedTopics = { topics: Record<string, PersistedTopic> };
 type RecordedCall = { method: string; body: Record<string, unknown> };
 
 function tempAgentDir(): string {
-	return fs.mkdtempSync(path.join(os.tmpdir(), "gjc-telegram-lease-4647-"));
+	return fs.mkdtempSync(path.join(os.tmpdir(), "vib-telegram-lease-4647-"));
 }
 
 function settings(agentDir: string): Settings {

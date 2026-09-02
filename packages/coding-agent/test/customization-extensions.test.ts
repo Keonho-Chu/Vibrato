@@ -1,7 +1,7 @@
 /**
  * Issue #4291 acceptance: `/extensions` umbrella local customization surface.
  *
- * Covers canonical project/global `.gjc` scope resolution, inventory/status
+ * Covers canonical project/global `.vib` scope resolution, inventory/status
  * provenance against the runtime contracts, Claude Code + Codex import
  * preview/apply with collision policy, redaction, unsupported semantics,
  * cancellation, transactional apply with rollback, idempotency, mutations,
@@ -17,17 +17,17 @@ import {
 	applyImport,
 	type BuildImportPreviewOptions,
 	buildImportPreview,
-} from "@gajae-code/coding-agent/customization/import";
-import { loadCustomizationInventory } from "@gajae-code/coding-agent/customization/inventory";
+} from "@vib-rato/coding-agent/customization/import";
+import { loadCustomizationInventory } from "@vib-rato/coding-agent/customization/inventory";
 import {
 	removeHookFile,
 	removeMcpServerEntry,
 	removeSkill,
 	setMcpServerEnabled,
 	setSkillEnabled,
-} from "@gajae-code/coding-agent/customization/mutations";
-import { resolveScopePaths } from "@gajae-code/coding-agent/customization/types";
-import { getAgentDir, setAgentDir } from "@gajae-code/utils";
+} from "@vib-rato/coding-agent/customization/mutations";
+import { resolveScopePaths } from "@vib-rato/coding-agent/customization/types";
+import { getAgentDir, setAgentDir } from "@vib-rato/utils";
 
 let tmpRoot: string;
 let projectDir: string;
@@ -35,7 +35,7 @@ let homeDir: string;
 let savedAgentDir: string;
 
 beforeEach(async () => {
-	tmpRoot = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-4291-"));
+	tmpRoot = await fs.mkdtemp(path.join(os.tmpdir(), "vib-4291-"));
 	projectDir = path.join(tmpRoot, "project");
 	homeDir = path.join(tmpRoot, "home");
 	await fs.mkdir(projectDir, { recursive: true });
@@ -43,7 +43,7 @@ beforeEach(async () => {
 	savedAgentDir = getAgentDir();
 	// Keep the global scope coherent: the canonical agent dir lives under the
 	// fixture home so management discovery and scope writes agree.
-	setAgentDir(path.join(homeDir, ".gjc", "agent"));
+	setAgentDir(path.join(homeDir, ".vib", "agent"));
 });
 
 afterEach(async () => {
@@ -82,15 +82,15 @@ function previewOptions(overrides: Partial<BuildImportPreviewOptions> = {}): Bui
 // ---------------------------------------------------------------------------
 
 describe("scope resolution", () => {
-	test("project scope resolves to <project>/.gjc", () => {
+	test("project scope resolves to <project>/.vib", () => {
 		const paths = resolveScopePaths("project", projectDir);
-		expect(paths.root).toBe(path.join(projectDir, ".gjc"));
-		expect(paths.skillsDir).toBe(path.join(projectDir, ".gjc", "skills"));
-		expect(paths.hooksDir).toBe(path.join(projectDir, ".gjc", "hooks"));
-		expect(paths.mcpConfigPath).toBe(path.join(projectDir, ".gjc", "mcp.json"));
+		expect(paths.root).toBe(path.join(projectDir, ".vib"));
+		expect(paths.skillsDir).toBe(path.join(projectDir, ".vib", "skills"));
+		expect(paths.hooksDir).toBe(path.join(projectDir, ".vib", "hooks"));
+		expect(paths.mcpConfigPath).toBe(path.join(projectDir, ".vib", "mcp.json"));
 	});
 
-	test("global scope resolves to the agent dir (~/.gjc/agent)", () => {
+	test("global scope resolves to the agent dir (~/.vib/agent)", () => {
 		const paths = resolveScopePaths("global", projectDir);
 		expect(paths.root).toBe(getAgentDir());
 		expect(paths.skillsDir).toBe(path.join(getAgentDir(), "skills"));
@@ -104,13 +104,13 @@ describe("scope resolution", () => {
 
 describe("customization inventory", () => {
 	test("one project SKILL.md is managed even with no extension modules installed", async () => {
-		await writeFile(path.join(projectDir, ".gjc", "skills", "fixture", "SKILL.md"), SKILL_MD);
+		await writeFile(path.join(projectDir, ".vib", "skills", "fixture", "SKILL.md"), SKILL_MD);
 		const inventory = await loadCustomizationInventory({ cwd: projectDir, home: homeDir });
 		const row = inventory.rows.find(r => r.surface === "skills" && r.name === "fixture");
 		expect(row).toBeDefined();
 		expect(row?.status).toBe("enabled");
 		expect(row?.scope).toBe("project");
-		expect(row?.path).toBe(path.join(projectDir, ".gjc", "skills", "fixture", "SKILL.md"));
+		expect(row?.path).toBe(path.join(projectDir, ".vib", "skills", "fixture", "SKILL.md"));
 	});
 
 	test("global skills surface under the global scope", async () => {
@@ -122,7 +122,7 @@ describe("customization inventory", () => {
 	});
 
 	test("invalid frontmatter is flagged with remediation diagnostics", async () => {
-		await writeFile(path.join(projectDir, ".gjc", "skills", "broken", "SKILL.md"), "no frontmatter here\n");
+		await writeFile(path.join(projectDir, ".vib", "skills", "broken", "SKILL.md"), "no frontmatter here\n");
 		const inventory = await loadCustomizationInventory({ cwd: projectDir, home: homeDir });
 		const row = inventory.rows.find(r => r.surface === "skills" && r.name === "broken");
 		expect(row?.status).toBe("invalid");
@@ -130,7 +130,7 @@ describe("customization inventory", () => {
 	});
 
 	test("native hooks are discovered from the canonical phase directories", async () => {
-		await writeFile(path.join(projectDir, ".gjc", "hooks", "pre", "bash.ts"), "export {}\n");
+		await writeFile(path.join(projectDir, ".vib", "hooks", "pre", "bash.ts"), "export {}\n");
 		await writeFile(path.join(getAgentDir(), "hooks", "pre", "bash.ts"), "export {}\n");
 		const inventory = await loadCustomizationInventory({ cwd: projectDir, home: homeDir });
 		const rows = inventory.rows.filter(r => r.surface === "hooks" && r.name === "bash.ts");
@@ -140,7 +140,7 @@ describe("customization inventory", () => {
 
 	test("project MCP server shadows the same global server; disabled markers union", async () => {
 		await writeFile(
-			path.join(projectDir, ".gjc", "mcp.json"),
+			path.join(projectDir, ".vib", "mcp.json"),
 			JSON.stringify({ mcpServers: { srv: { type: "stdio", command: "npx" } } }),
 		);
 		await writeFile(
@@ -159,7 +159,7 @@ describe("customization inventory", () => {
 
 	test("disabledServers from either scope make the effective server disabled", async () => {
 		await writeFile(
-			path.join(projectDir, ".gjc", "mcp.json"),
+			path.join(projectDir, ".vib", "mcp.json"),
 			JSON.stringify({ mcpServers: { srv: { type: "stdio", command: "npx" } } }),
 		);
 		await writeFile(path.join(getAgentDir(), "mcp.json"), JSON.stringify({ disabledServers: ["srv"] }));
@@ -168,7 +168,7 @@ describe("customization inventory", () => {
 	});
 
 	test("malformed MCP config surfaces as an invalid row, never raw JSON", async () => {
-		await writeFile(path.join(projectDir, ".gjc", "mcp.json"), "{ not json");
+		await writeFile(path.join(projectDir, ".vib", "mcp.json"), "{ not json");
 		const inventory = await loadCustomizationInventory({ cwd: projectDir, home: homeDir });
 		const row = inventory.rows.find(r => r.surface === "mcps" && r.status === "invalid");
 		expect(row).toBeDefined();
@@ -177,7 +177,7 @@ describe("customization inventory", () => {
 
 	test("MCP inventory rows never render env/header values or token assignments", async () => {
 		await writeFile(
-			path.join(projectDir, ".gjc", "mcp.json"),
+			path.join(projectDir, ".vib", "mcp.json"),
 			JSON.stringify({
 				mcpServers: {
 					srv: {
@@ -197,7 +197,7 @@ describe("customization inventory", () => {
 
 	test("MCP inventory raw projection drops nested auth and oauth secrets", async () => {
 		await writeFile(
-			path.join(projectDir, ".gjc", "mcp.json"),
+			path.join(projectDir, ".vib", "mcp.json"),
 			JSON.stringify({
 				mcpServers: {
 					srv: {
@@ -233,7 +233,7 @@ async function seedClaudeProject(): Promise<void> {
 	);
 }
 
-describe("import from Claude Code (project → project .gjc)", () => {
+describe("import from Claude Code (project → project .vib)", () => {
 	test("preview normalizes skills/hooks/MCPs and redacts secrets", async () => {
 		await seedClaudeProject();
 		const { preview } = await buildImportPreview(previewOptions());
@@ -251,19 +251,19 @@ describe("import from Claude Code (project → project .gjc)", () => {
 		expect(JSON.stringify(preview)).not.toContain("secret-value");
 	});
 
-	test("apply writes canonical .gjc files and marks provenance", async () => {
+	test("apply writes canonical .vib files and marks provenance", async () => {
 		await seedClaudeProject();
 		const plan = await buildImportPreview(previewOptions());
 		const result = await applyImport(plan, { cwd: projectDir });
 		expect(result.ok).toBe(true);
-		const skillPath = path.join(projectDir, ".gjc", "skills", "claude-skill", "SKILL.md");
+		const skillPath = path.join(projectDir, ".vib", "skills", "claude-skill", "SKILL.md");
 		const content = await fs.readFile(skillPath, "utf-8");
-		expect(content).toContain("x-gjc-imported-from");
+		expect(content).toContain("x-vib-imported-from");
 		expect(content).toContain("claude-code");
 		// Hooks land in the runtime-discovered phase layout.
-		await fs.stat(path.join(projectDir, ".gjc", "hooks", "pre", "bash.ts"));
-		await expect(fs.stat(path.join(projectDir, ".gjc", "hooks", "pre-bash.ts"))).rejects.toThrow();
-		const mcpConfig = JSON.parse(await fs.readFile(path.join(projectDir, ".gjc", "mcp.json"), "utf-8"));
+		await fs.stat(path.join(projectDir, ".vib", "hooks", "pre", "bash.ts"));
+		await expect(fs.stat(path.join(projectDir, ".vib", "hooks", "pre-bash.ts"))).rejects.toThrow();
+		const mcpConfig = JSON.parse(await fs.readFile(path.join(projectDir, ".vib", "mcp.json"), "utf-8"));
 		expect(mcpConfig.mcpServers["claude-server"].command).toBe("npx");
 		const inventory = await loadCustomizationInventory({ cwd: projectDir, home: homeDir });
 		const skillRow = inventory.rows.find(r => r.surface === "skills" && r.name === "claude-skill");
@@ -274,8 +274,8 @@ describe("import from Claude Code (project → project .gjc)", () => {
 	});
 });
 
-describe("import from Codex (user-global → global .gjc, explicit selection)", () => {
-	test("codex skills + toml MCP normalize into global .gjc only", async () => {
+describe("import from Codex (user-global → global .vib, explicit selection)", () => {
+	test("codex skills + toml MCP normalize into global .vib only", async () => {
 		await writeFile(path.join(homeDir, ".codex", "skills", "codex-skill", "SKILL.md"), SKILL_MD);
 		await writeFile(path.join(homeDir, ".codex", "hooks", "pre-bash.ts"), "export {}\n");
 		await writeFile(
@@ -296,13 +296,13 @@ describe("import from Codex (user-global → global .gjc, explicit selection)", 
 		]);
 		const result = await applyImport(plan, { cwd: projectDir });
 		expect(result.ok).toBe(true);
-		// Writes land only in the global .gjc scope, never the project.
+		// Writes land only in the global .vib scope, never the project.
 		await fs.stat(path.join(getAgentDir(), "skills", "codex-skill", "SKILL.md"));
 		await fs.stat(path.join(getAgentDir(), "hooks", "pre", "bash.ts"));
 		const mcpConfig = JSON.parse(await fs.readFile(path.join(getAgentDir(), "mcp.json"), "utf-8"));
 		expect(mcpConfig.mcpServers["codex-server"].command).toBe("uvx");
-		await expect(fs.stat(path.join(projectDir, ".gjc", "skills", "codex-skill"))).rejects.toThrow();
-		await expect(fs.stat(path.join(projectDir, ".gjc", "mcp.json"))).rejects.toThrow();
+		await expect(fs.stat(path.join(projectDir, ".vib", "skills", "codex-skill"))).rejects.toThrow();
+		await expect(fs.stat(path.join(projectDir, ".vib", "mcp.json"))).rejects.toThrow();
 	});
 });
 
@@ -314,7 +314,7 @@ describe("import collision policy and safety", () => {
 	async function seedSkillBothSides(): Promise<void> {
 		await writeFile(path.join(projectDir, ".claude", "skills", "dupe", "SKILL.md"), SKILL_MD);
 		await writeFile(
-			path.join(projectDir, ".gjc", "skills", "dupe", "SKILL.md"),
+			path.join(projectDir, ".vib", "skills", "dupe", "SKILL.md"),
 			`---\ndescription: Native version.\n---\n\nnative body\n`,
 		);
 	}
@@ -326,7 +326,7 @@ describe("import collision policy and safety", () => {
 		const result = await applyImport(plan, { cwd: projectDir });
 		expect(result.ok).toBe(true);
 		expect(result.entries[0].outcome).toBe("skipped");
-		const content = await fs.readFile(path.join(projectDir, ".gjc", "skills", "dupe", "SKILL.md"), "utf-8");
+		const content = await fs.readFile(path.join(projectDir, ".vib", "skills", "dupe", "SKILL.md"), "utf-8");
 		expect(content).toContain("Native version.");
 	});
 
@@ -337,16 +337,16 @@ describe("import collision policy and safety", () => {
 		const result = await applyImport(plan, { cwd: projectDir });
 		expect(result.ok).toBe(true);
 		expect(result.entries[0].outcome).toBe("renamed");
-		await fs.stat(path.join(projectDir, ".gjc", "skills", "dupe-imported", "SKILL.md"));
+		await fs.stat(path.join(projectDir, ".vib", "skills", "dupe-imported", "SKILL.md"));
 	});
 
 	test("rename rewrites an explicit skill frontmatter name to the destination identity", async () => {
 		const named = `---\nname: dupe\ndescription: Named skill.\n---\n\nbody\n`;
 		await writeFile(path.join(projectDir, ".claude", "skills", "dupe", "SKILL.md"), named);
-		await writeFile(path.join(projectDir, ".gjc", "skills", "dupe", "SKILL.md"), SKILL_MD);
+		await writeFile(path.join(projectDir, ".vib", "skills", "dupe", "SKILL.md"), SKILL_MD);
 		const plan = await buildImportPreview(previewOptions({ surfaces: ["skills"], collisionPolicy: "rename" }));
 		await applyImport(plan, { cwd: projectDir });
-		const imported = await fs.readFile(path.join(projectDir, ".gjc", "skills", "dupe-imported", "SKILL.md"), "utf-8");
+		const imported = await fs.readFile(path.join(projectDir, ".vib", "skills", "dupe-imported", "SKILL.md"), "utf-8");
 		expect(imported).toContain("name: dupe-imported");
 	});
 
@@ -360,14 +360,14 @@ describe("import collision policy and safety", () => {
 	test("rename never overwrites an occupied -imported destination", async () => {
 		await seedSkillBothSides();
 		// Pre-occupy every suffix the renamer might pick.
-		await writeFile(path.join(projectDir, ".gjc", "skills", "dupe-imported", "SKILL.md"), SKILL_MD);
-		await writeFile(path.join(projectDir, ".gjc", "skills", "dupe-imported-2", "SKILL.md"), SKILL_MD);
+		await writeFile(path.join(projectDir, ".vib", "skills", "dupe-imported", "SKILL.md"), SKILL_MD);
+		await writeFile(path.join(projectDir, ".vib", "skills", "dupe-imported-2", "SKILL.md"), SKILL_MD);
 		const plan = await buildImportPreview(previewOptions({ surfaces: ["skills"], collisionPolicy: "rename" }));
 		expect(plan.preview.entries[0].destinationName).toBe("dupe-imported-3");
 		const result = await applyImport(plan, { cwd: projectDir });
 		expect(result.ok).toBe(true);
-		await fs.stat(path.join(projectDir, ".gjc", "skills", "dupe-imported-3", "SKILL.md"));
-		const occupied = await fs.readFile(path.join(projectDir, ".gjc", "skills", "dupe-imported", "SKILL.md"), "utf-8");
+		await fs.stat(path.join(projectDir, ".vib", "skills", "dupe-imported-3", "SKILL.md"));
+		const occupied = await fs.readFile(path.join(projectDir, ".vib", "skills", "dupe-imported", "SKILL.md"), "utf-8");
 		expect(occupied).toBe(SKILL_MD);
 	});
 
@@ -377,7 +377,7 @@ describe("import collision policy and safety", () => {
 		expect(plan.preview.entries[0].status).toBe("overwrite");
 		const result = await applyImport(plan, { cwd: projectDir });
 		expect(result.entries[0].outcome).toBe("overwritten");
-		const content = await fs.readFile(path.join(projectDir, ".gjc", "skills", "dupe", "SKILL.md"), "utf-8");
+		const content = await fs.readFile(path.join(projectDir, ".vib", "skills", "dupe", "SKILL.md"), "utf-8");
 		expect(content).toContain("Fixture skill for tests.");
 	});
 
@@ -387,7 +387,7 @@ describe("import collision policy and safety", () => {
 			JSON.stringify({ mcpServers: { srv: { type: "stdio", command: "new", env: { TOKEN: "secret" } } } }),
 		);
 		await writeFile(
-			path.join(projectDir, ".gjc", "mcp.json"),
+			path.join(projectDir, ".vib", "mcp.json"),
 			JSON.stringify({ mcpServers: { srv: { type: "stdio", command: "old" } } }),
 		);
 		const plan = await buildImportPreview(previewOptions({ surfaces: ["mcps"], collisionPolicy: "overwrite" }));
@@ -495,24 +495,24 @@ describe("import collision policy and safety", () => {
 		expect(plan.preview.entries).toHaveLength(0);
 		const result = await applyImport(plan, { cwd: projectDir });
 		expect(result.ok).toBe(true);
-		await expect(fs.stat(path.join(projectDir, ".gjc", "mcp.json"))).rejects.toThrow();
+		await expect(fs.stat(path.join(projectDir, ".vib", "mcp.json"))).rejects.toThrow();
 	});
 
 	test("cancellation means no writes: building a preview never touches the destination", async () => {
 		await seedClaudeProject();
 		await buildImportPreview(previewOptions());
-		await expect(fs.stat(path.join(projectDir, ".gjc"))).rejects.toThrow();
+		await expect(fs.stat(path.join(projectDir, ".vib"))).rejects.toThrow();
 	});
 
 	test("malformed destination mcp.json aborts before any write (atomic pre-validation)", async () => {
 		await seedClaudeProject();
-		await writeFile(path.join(projectDir, ".gjc", "mcp.json"), "{ malformed");
+		await writeFile(path.join(projectDir, ".vib", "mcp.json"), "{ malformed");
 		const plan = await buildImportPreview(previewOptions());
 		// MCP entries are marked unsupported at preview time; skill/hook entries still apply.
 		expect(plan.preview.entries.filter(e => e.surface === "mcps").every(e => e.status === "unsupported")).toBe(true);
 		const result = await applyImport(plan, { cwd: projectDir });
 		expect(result.ok).toBe(true);
-		const mcpContent = await fs.readFile(path.join(projectDir, ".gjc", "mcp.json"), "utf-8");
+		const mcpContent = await fs.readFile(path.join(projectDir, ".vib", "mcp.json"), "utf-8");
 		expect(mcpContent).toBe("{ malformed");
 	});
 
@@ -521,13 +521,13 @@ describe("import collision policy and safety", () => {
 			path.join(projectDir, ".mcp.json"),
 			JSON.stringify({ mcpServers: { srv: { type: "stdio", command: "npx" } } }),
 		);
-		await writeFile(path.join(projectDir, ".gjc", "mcp.json"), JSON.stringify({ mcpServers: "corrupted" }));
+		await writeFile(path.join(projectDir, ".vib", "mcp.json"), JSON.stringify({ mcpServers: "corrupted" }));
 		const plan = await buildImportPreview(previewOptions({ surfaces: ["mcps"] }));
 		expect(plan.preview.entries.every(e => e.status === "unsupported")).toBe(true);
 		expect(plan.preview.warnings.join(" ")).toContain("non-object mcpServers");
 		const result = await applyImport(plan, { cwd: projectDir });
 		expect(result.ok).toBe(true);
-		const content = await fs.readFile(path.join(projectDir, ".gjc", "mcp.json"), "utf-8");
+		const content = await fs.readFile(path.join(projectDir, ".vib", "mcp.json"), "utf-8");
 		expect(content).toBe(JSON.stringify({ mcpServers: "corrupted" }));
 	});
 
@@ -538,14 +538,14 @@ describe("import collision policy and safety", () => {
 		// becomes read-only, so hook publication fails after the skill file was
 		// already written — full rollback. Pre-validation passes because reads
 		// still succeed; only the write fails.
-		await fs.mkdir(path.join(projectDir, ".gjc", "hooks"), { recursive: true });
-		await fs.chmod(path.join(projectDir, ".gjc", "hooks"), 0o555);
+		await fs.mkdir(path.join(projectDir, ".vib", "hooks"), { recursive: true });
+		await fs.chmod(path.join(projectDir, ".vib", "hooks"), 0o555);
 		const result = await applyImport(plan, { cwd: projectDir });
 		expect(result.ok).toBe(false);
 		expect(result.entries.some(e => e.outcome === "failed" && e.reason?.includes("rolled back"))).toBe(true);
 		// The skill file that was published first must be gone again.
-		await expect(fs.stat(path.join(projectDir, ".gjc", "skills", "claude-skill", "SKILL.md"))).rejects.toThrow();
-		await fs.chmod(path.join(projectDir, ".gjc", "hooks"), 0o755);
+		await expect(fs.stat(path.join(projectDir, ".vib", "skills", "claude-skill", "SKILL.md"))).rejects.toThrow();
+		await fs.chmod(path.join(projectDir, ".vib", "hooks"), 0o755);
 	});
 
 	test("rollback preserves a pre-existing symlink it never wrote", async () => {
@@ -553,25 +553,25 @@ describe("import collision policy and safety", () => {
 		// A dangling symlink at the skill destination makes the apply fail in
 		// pre-validation; rollback must not delete the symlink it never created.
 		const linkTarget = path.join(tmpRoot, "elsewhere");
-		await fs.mkdir(path.join(projectDir, ".gjc", "skills", "claude-skill"), { recursive: true });
-		await fs.symlink(linkTarget, path.join(projectDir, ".gjc", "skills", "claude-skill", "SKILL.md"));
+		await fs.mkdir(path.join(projectDir, ".vib", "skills", "claude-skill"), { recursive: true });
+		await fs.symlink(linkTarget, path.join(projectDir, ".vib", "skills", "claude-skill", "SKILL.md"));
 		const plan = await buildImportPreview(previewOptions({ surfaces: ["skills"] }));
 		expect(plan.preview.entries[0].status).toBe("conflict");
 		expect(plan.preview.entries[0].reason).toContain("unsafe");
 		const result = await applyImport(plan, { cwd: projectDir });
 		expect(result.ok).toBe(true);
 		expect(result.entries[0].outcome).toBe("skipped");
-		const stat = await fs.lstat(path.join(projectDir, ".gjc", "skills", "claude-skill", "SKILL.md"));
+		const stat = await fs.lstat(path.join(projectDir, ".vib", "skills", "claude-skill", "SKILL.md"));
 		expect(stat.isSymbolicLink()).toBe(true);
 	});
 
 	test("symlinked destination ancestor directories are refused", async () => {
 		await seedClaudeProject();
-		// `.gjc/skills` itself is a symlink to an external directory.
+		// `.vib/skills` itself is a symlink to an external directory.
 		const external = path.join(tmpRoot, "external-skills");
 		await fs.mkdir(external, { recursive: true });
-		await fs.mkdir(path.join(projectDir, ".gjc"), { recursive: true });
-		await fs.symlink(external, path.join(projectDir, ".gjc", "skills"));
+		await fs.mkdir(path.join(projectDir, ".vib"), { recursive: true });
+		await fs.symlink(external, path.join(projectDir, ".vib", "skills"));
 		const plan = await buildImportPreview(previewOptions({ surfaces: ["skills"] }));
 		const result = await applyImport(plan, { cwd: projectDir });
 		expect(result.ok).toBe(false);
@@ -586,8 +586,8 @@ describe("import collision policy and safety", () => {
 		);
 		const external = path.join(tmpRoot, "external-mcp.json");
 		await writeFile(external, JSON.stringify({ mcpServers: {} }));
-		await fs.mkdir(path.join(projectDir, ".gjc"), { recursive: true });
-		await fs.symlink(external, path.join(projectDir, ".gjc", "mcp.json"));
+		await fs.mkdir(path.join(projectDir, ".vib"), { recursive: true });
+		await fs.symlink(external, path.join(projectDir, ".vib", "mcp.json"));
 		const plan = await buildImportPreview(previewOptions({ surfaces: ["mcps"] }));
 		const result = await applyImport(plan, { cwd: projectDir });
 		expect(result.ok).toBe(true);
@@ -599,11 +599,11 @@ describe("import collision policy and safety", () => {
 		await seedSkillBothSides();
 		const plan = await buildImportPreview(previewOptions({ surfaces: ["skills"], collisionPolicy: "rename" }));
 		// Simulate a concurrent process occupying the chosen rename destination.
-		await writeFile(path.join(projectDir, ".gjc", "skills", "dupe-imported", "SKILL.md"), "different content\n");
+		await writeFile(path.join(projectDir, ".vib", "skills", "dupe-imported", "SKILL.md"), "different content\n");
 		const result = await applyImport(plan, { cwd: projectDir });
 		expect(result.ok).toBe(false);
 		expect(result.entries[0].reason).toContain("changed since preview");
-		const occupied = await fs.readFile(path.join(projectDir, ".gjc", "skills", "dupe-imported", "SKILL.md"), "utf-8");
+		const occupied = await fs.readFile(path.join(projectDir, ".vib", "skills", "dupe-imported", "SKILL.md"), "utf-8");
 		expect(occupied).toBe("different content\n");
 	});
 });
@@ -612,7 +612,7 @@ describe("import collision policy and safety", () => {
 // Mutations
 // ---------------------------------------------------------------------------
 
-describe("native .gjc mutations", () => {
+describe("native .vib mutations", () => {
 	test("skill enable/disable flows through the authoritative policy contract", () => {
 		const disabled = setSkillEnabled("fixture", false, []);
 		expect(disabled.ok).toBe(true);

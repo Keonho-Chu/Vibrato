@@ -144,7 +144,7 @@ export async function runChatDaemonInternal(
 	deps: RunChatDaemonInternalDeps = {},
 ): Promise<void> {
 	const agentDir =
-		argValue(argv, "--agent-dir") ?? process.env.GJC_CODING_AGENT_DIR ?? path.join(process.cwd(), ".gjc", "agent");
+		argValue(argv, "--agent-dir") ?? process.env.VIB_CODING_AGENT_DIR ?? path.join(process.cwd(), ".vib", "agent");
 	const ownerId = argValue(argv, "--owner-id");
 	if (!ownerId) throw new Error("missing --owner-id");
 	const pid = ownerPid(ownerId);

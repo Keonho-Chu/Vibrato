@@ -67,11 +67,11 @@ describe("parseEnvFile", () => {
 		});
 	});
 
-	it("keeps legacy GJC_ variables from becoming PI_ defaults", () => {
-		const filePath = writeTempEnv("GJC_FEATURE=enabled\nGJC_BAD=before\0after\n");
+	it("keeps legacy VIB_ variables from becoming PI_ defaults", () => {
+		const filePath = writeTempEnv("VIB_FEATURE=enabled\nVIB_BAD=before\0after\n");
 
 		expect(parseEnvFile(filePath)).toEqual({
-			GJC_FEATURE: "enabled",
+			VIB_FEATURE: "enabled",
 		});
 	});
 	it("accepts every assignment shape Bun's dotenv loader accepts", () => {
@@ -142,7 +142,7 @@ describe("$inheritedEnv", () => {
 	it("keeps the inherited shell snapshot stable while $env reflects later fallback overlay mutation", () => {
 		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "pi-utils-env-inherited-"));
 		tempDirs.push(dir);
-		fs.writeFileSync(path.join(dir, ".env"), "GJC_ENV_TEST_UNUSED=unused\n");
+		fs.writeFileSync(path.join(dir, ".env"), "VIB_ENV_TEST_UNUSED=unused\n");
 
 		const envSourceUrl = pathToFileURL(path.resolve(import.meta.dir, "../src/env.ts")).href;
 		runEnvIsolationScript(
@@ -155,19 +155,19 @@ function assertEqual(actual: string | undefined, expected: string | undefined, l
 	}
 }
 
-assertEqual($inheritedEnv("GJC_ENV_TEST_INHERITED_ONLY"), "shell-from-parent", "inherited shell value");
-assertEqual($env.GJC_ENV_TEST_INHERITED_ONLY, "shell-from-parent", "initial merged env value");
-Bun.env.GJC_ENV_TEST_INHERITED_ONLY = "overlay-after-import";
-assertEqual($inheritedEnv("GJC_ENV_TEST_INHERITED_ONLY"), "shell-from-parent", "stable inherited shell snapshot");
-assertEqual($env.GJC_ENV_TEST_INHERITED_ONLY, "overlay-after-import", "live $env overlay value");
-Bun.env.GJC_ENV_TEST_FALLBACK_ONLY = "fallback-after-import";
-assertEqual($inheritedEnv("GJC_ENV_TEST_FALLBACK_ONLY"), undefined, "absent inherited value");
-assertEqual($env.GJC_ENV_TEST_FALLBACK_ONLY, "fallback-after-import", "fallback remains available through $env");
-delete Bun.env.GJC_ENV_TEST_INHERITED_ONLY;
-assertEqual($inheritedEnv("GJC_ENV_TEST_INHERITED_ONLY"), undefined, "deleted key is no longer inherited");
-assertEqual($env.GJC_ENV_TEST_INHERITED_ONLY, undefined, "deleted key is gone from merged env");
+assertEqual($inheritedEnv("VIB_ENV_TEST_INHERITED_ONLY"), "shell-from-parent", "inherited shell value");
+assertEqual($env.VIB_ENV_TEST_INHERITED_ONLY, "shell-from-parent", "initial merged env value");
+Bun.env.VIB_ENV_TEST_INHERITED_ONLY = "overlay-after-import";
+assertEqual($inheritedEnv("VIB_ENV_TEST_INHERITED_ONLY"), "shell-from-parent", "stable inherited shell snapshot");
+assertEqual($env.VIB_ENV_TEST_INHERITED_ONLY, "overlay-after-import", "live $env overlay value");
+Bun.env.VIB_ENV_TEST_FALLBACK_ONLY = "fallback-after-import";
+assertEqual($inheritedEnv("VIB_ENV_TEST_FALLBACK_ONLY"), undefined, "absent inherited value");
+assertEqual($env.VIB_ENV_TEST_FALLBACK_ONLY, "fallback-after-import", "fallback remains available through $env");
+delete Bun.env.VIB_ENV_TEST_INHERITED_ONLY;
+assertEqual($inheritedEnv("VIB_ENV_TEST_INHERITED_ONLY"), undefined, "deleted key is no longer inherited");
+assertEqual($env.VIB_ENV_TEST_INHERITED_ONLY, undefined, "deleted key is gone from merged env");
 `,
-			{ GJC_ENV_TEST_INHERITED_ONLY: "shell-from-parent" },
+			{ VIB_ENV_TEST_INHERITED_ONLY: "shell-from-parent" },
 			dir,
 		);
 	});
@@ -194,7 +194,7 @@ import { $credentialEnv, $env } from ${JSON.stringify(envSourceUrl)};
 if ($env.DSN !== "postgres://project" || $env.AWS_ACCESS_KEY_ID !== "project-access" || $env.GOOGLE_APPLICATION_CREDENTIALS !== "/tmp/project-adc.json") throw new Error("colon dotenv values were not loaded");
 for (const key of ["DSN", "AWS_ACCESS_KEY_ID", "GOOGLE_APPLICATION_CREDENTIALS"]) if ($credentialEnv(key) !== undefined) throw new Error("project colon credential leaked");
 `,
-			{ HOME: home, GJC_CODING_AGENT_DIR: agentDir },
+			{ HOME: home, VIB_CODING_AGENT_DIR: agentDir },
 			dir,
 		);
 	});
@@ -212,7 +212,7 @@ for (const key of ["DSN", "AWS_ACCESS_KEY_ID", "GOOGLE_APPLICATION_CREDENTIALS"]
 import { $credentialEnv } from ${JSON.stringify(envSourceUrl)};
 if ($credentialEnv("LAYERED_PROVIDER_KEY") !== "inherited-trusted") throw new Error("static winning dotenv layer was tainted by a lower dynamic declaration");
 `,
-			{ HOME: home, GJC_CODING_AGENT_DIR: agentDir, LAYERED_PROVIDER_KEY: "inherited-trusted" },
+			{ HOME: home, VIB_CODING_AGENT_DIR: agentDir, LAYERED_PROVIDER_KEY: "inherited-trusted" },
 			dir,
 		);
 	});
@@ -231,7 +231,7 @@ if ($credentialEnv("LAYERED_PROVIDER_KEY") !== "inherited-trusted") throw new Er
 import { $credentialEnv } from ${JSON.stringify(envSourceUrl)};
 if ($credentialEnv("HOME_TRUSTED_KEY") !== "trusted-home") throw new Error("non-effective USERPROFILE changed trusted HOME selection");
 `,
-			{ HOME: home, GJC_CODING_AGENT_DIR: agentDir },
+			{ HOME: home, VIB_CODING_AGENT_DIR: agentDir },
 			dir,
 		);
 	});
@@ -251,7 +251,7 @@ import { $credentialEnv } from ${JSON.stringify(envSourceUrl)};
 if ($credentialEnv("HOSTILE_HOME_CREDENTIAL") !== undefined) throw new Error("hostile HOME credential was loaded");
 if ($credentialEnv("PRESERVED_OPERATOR_CREDENTIAL") !== "operator-value") throw new Error("inherited credential was dropped");
 `,
-			{ HOME: hostileHome, GJC_CODING_AGENT_DIR: agentDir, PRESERVED_OPERATOR_CREDENTIAL: "operator-value" },
+			{ HOME: hostileHome, VIB_CODING_AGENT_DIR: agentDir, PRESERVED_OPERATOR_CREDENTIAL: "operator-value" },
 			dir,
 		);
 	});
@@ -272,7 +272,7 @@ if ($credentialEnv("PRESERVED_OPERATOR_CREDENTIAL") !== "operator-value") throw 
 import { $credentialEnv } from ${JSON.stringify(envSourceUrl)};
 if ($credentialEnv("HOME_TRUSTED_KEY") !== "trusted-home") throw new Error("lowercase home declaration folded into HOME on POSIX");
 `,
-			{ HOME: home, GJC_CODING_AGENT_DIR: agentDir },
+			{ HOME: home, VIB_CODING_AGENT_DIR: agentDir },
 			dir,
 		);
 	});
@@ -299,7 +299,7 @@ assertEqual($credentialEnv("ANTHROPIC_API_KEY"), undefined, "provider credential
 `,
 			{
 				HOME: home,
-				GJC_CODING_AGENT_DIR: agentDir,
+				VIB_CODING_AGENT_DIR: agentDir,
 			},
 			dir,
 		);
@@ -323,7 +323,7 @@ if ($credentialEnv("ANTHROPIC_API_KEY") !== "inherited-key") {
 `,
 			{
 				HOME: home,
-				GJC_CODING_AGENT_DIR: agentDir,
+				VIB_CODING_AGENT_DIR: agentDir,
 				ANTHROPIC_API_KEY: "inherited-key",
 			},
 			dir,
@@ -351,7 +351,7 @@ if ($credentialEnv("ANTHROPIC_API_KEY") !== undefined) {
 `,
 			{
 				HOME: home,
-				GJC_CODING_AGENT_DIR: agentDir,
+				VIB_CODING_AGENT_DIR: agentDir,
 				ANTHROPIC_API_KEY: "same-key",
 			},
 			dir,
@@ -386,7 +386,7 @@ if ($credentialEnv("LIVE_PROVIDER_KEY") !== undefined) {
 `,
 			{
 				HOME: home,
-				GJC_CODING_AGENT_DIR: agentDir,
+				VIB_CODING_AGENT_DIR: agentDir,
 			},
 			dir,
 		);
@@ -428,7 +428,7 @@ if ($rotatingCredentialEnv("ROTATING_PROVIDER_KEY") !== undefined) {
 `,
 			{
 				HOME: home,
-				GJC_CODING_AGENT_DIR: agentDir,
+				VIB_CODING_AGENT_DIR: agentDir,
 				ROTATING_PROVIDER_KEY: "old-token",
 			},
 			dir,
@@ -456,7 +456,7 @@ if ($rotatingCredentialEnv("PROJECT_ONLY_PROVIDER_KEY") !== undefined) {
 `,
 			{
 				HOME: home,
-				GJC_CODING_AGENT_DIR: agentDir,
+				VIB_CODING_AGENT_DIR: agentDir,
 				SHELL_ONLY_PROVIDER_KEY: "shell-token",
 			},
 			dir,
@@ -484,7 +484,7 @@ if ($rotatingCredentialEnv("PINNED_PROVIDER_KEY") !== "rotated-agent-token") {
 `,
 			{
 				HOME: home,
-				GJC_CODING_AGENT_DIR: agentDir,
+				VIB_CODING_AGENT_DIR: agentDir,
 				PINNED_PROVIDER_KEY: "explicit-shell-token",
 			},
 			dir,
@@ -521,7 +521,7 @@ if ($rotatingCredentialEnv("UNSAFE_PROVIDER_KEY") !== undefined) {
 `,
 			{
 				HOME: home,
-				GJC_CODING_AGENT_DIR: agentDir,
+				VIB_CODING_AGENT_DIR: agentDir,
 				UNSAFE_PROVIDER_KEY: "old-token",
 			},
 			dir,
@@ -563,7 +563,7 @@ if (value !== "agent-second") {
 `,
 			{
 				HOME: home,
-				GJC_CODING_AGENT_DIR: agentDir,
+				VIB_CODING_AGENT_DIR: agentDir,
 			},
 			dir,
 		);
@@ -629,44 +629,44 @@ describe("$flag", () => {
 });
 
 describe("$pickflag", () => {
-	const GJC_NAME = "__GJC_UTILS_PICKFLAG_PROBE";
+	const VIB_NAME = "__VIB_UTILS_PICKFLAG_PROBE";
 	const PI_NAME = "__PI_UTILS_PICKFLAG_PROBE";
 	afterEach(() => {
-		delete process.env[GJC_NAME];
+		delete process.env[VIB_NAME];
 		delete process.env[PI_NAME];
 	});
 
-	it("prefers the GJC-first key when both are set", () => {
-		process.env[GJC_NAME] = "1";
+	it("prefers the Vibrato-first key when both are set", () => {
+		process.env[VIB_NAME] = "1";
 		process.env[PI_NAME] = "0";
-		expect($pickflag(GJC_NAME, PI_NAME)).toBe(true);
+		expect($pickflag(VIB_NAME, PI_NAME)).toBe(true);
 	});
 
-	it("lets a falsy GJC value win over a truthy PI value (first set key decides)", () => {
-		process.env[GJC_NAME] = "0";
+	it("lets a falsy Vibrato value win over a truthy PI value (first set key decides)", () => {
+		process.env[VIB_NAME] = "0";
 		process.env[PI_NAME] = "1";
-		expect($pickflag(GJC_NAME, PI_NAME)).toBe(false);
+		expect($pickflag(VIB_NAME, PI_NAME)).toBe(false);
 	});
 
-	it("falls back to the PI key when the GJC key is unset", () => {
+	it("falls back to the PI key when the Vibrato key is unset", () => {
 		process.env[PI_NAME] = "true";
-		expect($pickflag(GJC_NAME, PI_NAME)).toBe(true);
+		expect($pickflag(VIB_NAME, PI_NAME)).toBe(true);
 	});
 
 	it("returns false when neither key is set", () => {
-		expect($pickflag(GJC_NAME, PI_NAME)).toBe(false);
+		expect($pickflag(VIB_NAME, PI_NAME)).toBe(false);
 	});
 
 	it("applies TRUTHY case-insensitive matching per matched key", () => {
-		process.env[GJC_NAME] = "YES";
-		expect($pickflag(GJC_NAME, PI_NAME)).toBe(true);
-		process.env[GJC_NAME] = "enabled";
-		expect($pickflag(GJC_NAME, PI_NAME)).toBe(false);
+		process.env[VIB_NAME] = "YES";
+		expect($pickflag(VIB_NAME, PI_NAME)).toBe(true);
+		process.env[VIB_NAME] = "enabled";
+		expect($pickflag(VIB_NAME, PI_NAME)).toBe(false);
 	});
 });
 
 describe("$envpos", () => {
-	const NAME = "__GJC_UTILS_ENVPOS_PROBE";
+	const NAME = "__VIB_UTILS_ENVPOS_PROBE";
 
 	afterEach(() => {
 		delete process.env[NAME];
@@ -696,42 +696,42 @@ describe("$envpos", () => {
 });
 
 describe("$pickenvpos", () => {
-	const GJC_NAME = "__GJC_UTILS_PICKENVPOS_PROBE";
+	const VIB_NAME = "__VIB_UTILS_PICKENVPOS_PROBE";
 	const PI_NAME = "__PI_UTILS_PICKENVPOS_PROBE";
 	afterEach(() => {
-		delete process.env[GJC_NAME];
+		delete process.env[VIB_NAME];
 		delete process.env[PI_NAME];
 	});
 
-	it("prefers a positive GJC-first value when both are set", () => {
-		process.env[GJC_NAME] = "7";
+	it("prefers a positive Vibrato-first value when both are set", () => {
+		process.env[VIB_NAME] = "7";
 		process.env[PI_NAME] = "9";
-		expect($pickenvpos([GJC_NAME, PI_NAME], 100)).toBe(7);
+		expect($pickenvpos([VIB_NAME, PI_NAME], 100)).toBe(7);
 	});
 
-	it("falls back to the PI key when the GJC key is unset", () => {
+	it("falls back to the PI key when the Vibrato key is unset", () => {
 		process.env[PI_NAME] = "42";
-		expect($pickenvpos([GJC_NAME, PI_NAME], 100)).toBe(42);
+		expect($pickenvpos([VIB_NAME, PI_NAME], 100)).toBe(42);
 	});
 
 	it("returns the default when neither key is set", () => {
-		expect($pickenvpos([GJC_NAME, PI_NAME], 100)).toBe(100);
+		expect($pickenvpos([VIB_NAME, PI_NAME], 100)).toBe(100);
 	});
 
 	it("returns the default when the only set value is invalid", () => {
-		process.env[GJC_NAME] = "not-a-number";
-		expect($pickenvpos([GJC_NAME, PI_NAME], 100)).toBe(100);
+		process.env[VIB_NAME] = "not-a-number";
+		expect($pickenvpos([VIB_NAME, PI_NAME], 100)).toBe(100);
 	});
 
-	it("skips a set-but-invalid GJC key and falls through to a valid PI key", () => {
-		process.env[GJC_NAME] = "-5";
+	it("skips a set-but-invalid Vibrato key and falls through to a valid PI key", () => {
+		process.env[VIB_NAME] = "-5";
 		process.env[PI_NAME] = "3";
-		expect($pickenvpos([GJC_NAME, PI_NAME], 100)).toBe(3);
+		expect($pickenvpos([VIB_NAME, PI_NAME], 100)).toBe(3);
 	});
 
-	it("skips a partially parsed GJC value and falls through to a valid PI key", () => {
-		process.env[GJC_NAME] = "12oops";
+	it("skips a partially parsed Vibrato value and falls through to a valid PI key", () => {
+		process.env[VIB_NAME] = "12oops";
 		process.env[PI_NAME] = "3";
-		expect($pickenvpos([GJC_NAME, PI_NAME], 100)).toBe(3);
+		expect($pickenvpos([VIB_NAME, PI_NAME], 100)).toBe(3);
 	});
 });

@@ -3,7 +3,7 @@ import type * as net from "node:net";
 
 const PREFACE_LIMIT_BYTES = 4 * 1024;
 const PREFACE_TIMEOUT_MS = 1_000;
-const VERSION = "gjc-sdk-transport/1";
+const VERSION = "vib-sdk-transport/1";
 
 type AuthFailureCode =
 	| "auth_missing"
@@ -66,7 +66,7 @@ export async function authenticatePreface(socket: net.Socket, token: string): Pr
 			const remainder = buffer.subarray(newline + 1);
 			const prefix = `${VERSION} token=`;
 			if (!line.startsWith(prefix)) {
-				return fail(line.startsWith("gjc-sdk-transport/") ? "unsupported_version" : "auth_malformed");
+				return fail(line.startsWith("vib-sdk-transport/") ? "unsupported_version" : "auth_malformed");
 			}
 			const received = line.slice(prefix.length);
 			if (received.length === 0 || /\s/.test(received)) return fail("auth_malformed");

@@ -69,36 +69,34 @@ function workflowJob(workflow: string, name: string): string {
 	return workflow.slice(start, nextJob === -1 ? workflow.length : start + marker.length + nextJob);
 }
 
-describe("unscoped gajae-code package publication", () => {
-	test("manifest exposes gjc and depends on the scoped CLI package", async () => {
-		const aliasManifest = await readManifest("packages/gajae-code");
+describe("unscoped vib-rato package publication", () => {
+	test("manifest exposes vib and depends on the scoped CLI package", async () => {
+		const aliasManifest = await readManifest("packages/vib-rato");
 		const codingAgentManifest = await readManifest("packages/coding-agent");
 
 		expect(aliasManifest.private).toBeUndefined();
-		expect(aliasManifest.name).toBe("gajae-code");
+		expect(aliasManifest.name).toBe("vib-rato");
 		// The unscoped wrapper may carry a patch-only hotfix version when an
 		// immutable npm publish has to be superseded without republishing the
 		// scoped CLI. Its dependency remains catalog-backed so the release
-		// publisher resolves it to the current @gajae-code/coding-agent version.
+		// publisher resolves it to the current @vib-rato/coding-agent version.
 		expect(aliasManifest.version).toMatch(/^\d+\.\d+\.\d+$/);
 		expect(aliasManifest.version.split(".").slice(0, 2)).toEqual(codingAgentManifest.version.split(".").slice(0, 2));
 		expect(Number(aliasManifest.version.split(".")[2])).toBeGreaterThanOrEqual(
 			Number(codingAgentManifest.version.split(".")[2]),
 		);
-		expect(aliasManifest.bin).toEqual({ gjc: "bin/gjc.js", "가재씨": "bin/gajaessi.js" });
-		expect(aliasManifest.dependencies?.["@gajae-code/coding-agent"]).toBe("catalog:");
-		const wrapper = await Bun.file(path.join(repoRoot, "packages/gajae-code/bin/gjc.js")).text();
-		const aliasWrapper = await Bun.file(path.join(repoRoot, "packages/gajae-code/bin/gajaessi.js")).text();
-		expect(wrapper).toContain('import { runCli } from "@gajae-code/coding-agent/cli";');
+		expect(aliasManifest.bin).toEqual({ vib: "bin/vib.js" });
+		expect(aliasManifest.dependencies?.["@vib-rato/coding-agent"]).toBe("catalog:");
+		const wrapper = await Bun.file(path.join(repoRoot, "packages/vib-rato/bin/vib.js")).text();
+		expect(wrapper).toContain('import { runCli } from "@vib-rato/coding-agent/cli";');
 		expect(wrapper).toContain("await runCli(process.argv.slice(2));");
-		expect(aliasWrapper).toBe(wrapper);
 	});
 
 	test("release dependency normalization collapses repeated file prefixes", () => {
 		expect(normalizeFileDependencySpec("file:../packages/ai")).toBe("file:../packages/ai");
 		expect(normalizeFileDependencySpec("file:file:../packages/ai")).toBe("file:../packages/ai");
-		expect(normalizeFileDependencySpec("file:file:file:///tmp/gajae-code/packages/ai")).toBe(
-			"file:///tmp/gajae-code/packages/ai",
+		expect(normalizeFileDependencySpec("file:file:file:///tmp/vib-rato/packages/ai")).toBe(
+			"file:///tmp/vib-rato/packages/ai",
 		);
 		expect(normalizeFileDependencySpec("catalog:")).toBe("catalog:");
 	});
@@ -106,7 +104,7 @@ describe("unscoped gajae-code package publication", () => {
 	test("release publish order publishes the alias after its scoped dependency", async () => {
 		const releaseScript = await Bun.file(path.join(repoRoot, "scripts/ci-release-publish.ts")).text();
 		const codingAgentIndex = releaseScript.indexOf('dir: "packages/coding-agent"');
-		const aliasIndex = releaseScript.indexOf('dir: "packages/gajae-code"');
+		const aliasIndex = releaseScript.indexOf('dir: "packages/vib-rato"');
 
 		expect(codingAgentIndex).toBeGreaterThan(-1);
 		expect(aliasIndex).toBeGreaterThan(codingAgentIndex);
@@ -132,28 +130,28 @@ describe("unscoped gajae-code package publication", () => {
 		}
 	});
 
-	test("plans the real gajae-code wrapper edge before the wrapper is published", () => {
+	test("plans the real vib-rato wrapper edge before the wrapper is published", () => {
 		const records = canonicalEvidenceRecords();
-		const wrapper = records.find(record => record.name === "gajae-code")!;
-		wrapper.internal_dependencies = { "@gajae-code/coding-agent": "1.2.3" };
+		const wrapper = records.find(record => record.name === "vib-rato")!;
+		wrapper.internal_dependencies = { "@vib-rato/coding-agent": "1.2.3" };
 
 		const plannedNames = planExpectedEvidencePublication(records).map(record => record.name);
-		expect(plannedNames.indexOf("@gajae-code/coding-agent")).toBeLessThan(plannedNames.indexOf("gajae-code"));
+		expect(plannedNames.indexOf("@vib-rato/coding-agent")).toBeLessThan(plannedNames.indexOf("vib-rato"));
 	});
 
 	test("topologically moves an early declared package behind a late dependency", () => {
 		const records = canonicalEvidenceRecords();
-		const utils = records.find(record => record.name === "@gajae-code/utils")!;
-		utils.internal_dependencies = { "gajae-code": "1.2.3" };
+		const utils = records.find(record => record.name === "@vib-rato/utils")!;
+		utils.internal_dependencies = { "vib-rato": "1.2.3" };
 
 		const plannedNames = planExpectedEvidencePublication(records).map(record => record.name);
-		expect(plannedNames.indexOf("gajae-code")).toBeLessThan(plannedNames.indexOf("@gajae-code/utils"));
+		expect(plannedNames.indexOf("vib-rato")).toBeLessThan(plannedNames.indexOf("@vib-rato/utils"));
 	});
 
 	test("rejects a closed-set internal dependency cycle before registry publication begins", async () => {
 		const records = canonicalEvidenceRecords();
-		records.find(record => record.name === "@gajae-code/utils")!.internal_dependencies = { "@gajae-code/ai": "1.2.3" };
-		records.find(record => record.name === "@gajae-code/ai")!.internal_dependencies = { "@gajae-code/utils": "1.2.3" };
+		records.find(record => record.name === "@vib-rato/utils")!.internal_dependencies = { "@vib-rato/ai": "1.2.3" };
+		records.find(record => record.name === "@vib-rato/ai")!.internal_dependencies = { "@vib-rato/utils": "1.2.3" };
 		const published: string[] = [];
 
 		await expect(publishExpectedEvidencePackages(records, async (record) => {
@@ -172,13 +170,13 @@ describe("unscoped gajae-code package publication", () => {
 		});
 		const executedNames: string[] = [];
 		const platformNames = [
-			"@gajae-code/natives-darwin-arm64",
-			"@gajae-code/natives-darwin-x64",
-			"@gajae-code/natives-linux-arm64",
-			"@gajae-code/natives-linux-x64",
-			"@gajae-code/natives-win32-x64",
+			"@vib-rato/natives-darwin-arm64",
+			"@vib-rato/natives-darwin-x64",
+			"@vib-rato/natives-linux-arm64",
+			"@vib-rato/natives-linux-x64",
+			"@vib-rato/natives-win32-x64",
 		];
-		const nativesName = "@gajae-code/natives";
+		const nativesName = "@vib-rato/natives";
 
 		expect(serializedNames).toEqual([...serializedNames].sort());
 		for (const platformName of platformNames) {
@@ -201,12 +199,12 @@ describe("unscoped gajae-code package publication", () => {
 		// order, not evidence-array (name-sorted) order. The order is computed in
 		// the credential-free prepare job and sealed as an artifact.
 		const script = await Bun.file(path.join(repoRoot, "scripts/ci-release-publish.ts")).text();
-		expect(script).toContain('PUBLISH_ORDER_FILE = "gajae-release-publish-order-v1.json"');
+		expect(script).toContain('PUBLISH_ORDER_FILE = "vibrato-release-publish-order-v1.json"');
 		expect(script).toContain("planExpectedEvidencePublication(expected.packages)");
 
 		const workflow = await Bun.file(path.join(repoRoot, ".github/workflows/ci.yml")).text();
 		const publish = workflowJob(workflow, "publish");
-		expect(publish).toContain("gajae-release-publish-order-v1.json");
+		expect(publish).toContain("vibrato-release-publish-order-v1.json");
 		expect(publish).toContain("for name in $(jq -r '.order[]'");
 		// No direct evidence-array iteration may remain in the boundary.
 		expect(publish).not.toContain(".packages[$index]");
@@ -226,7 +224,7 @@ describe("unscoped gajae-code package publication", () => {
 		await expect(publishExpectedEvidencePackages(records.slice(1), publish)).rejects.toThrow("missing package record");
 		await expect(publishExpectedEvidencePackages([
 			...records,
-			{ ...records[0]!, dir: "packages/unexpected", name: "@gajae-code/unexpected" },
+			{ ...records[0]!, dir: "packages/unexpected", name: "@vib-rato/unexpected" },
 		], publish)).rejects.toThrow("unexpected package record");
 		expect(published).toEqual([]);
 	});
@@ -243,11 +241,11 @@ describe("unscoped gajae-code package publication", () => {
 		]);
 		expect(manifest.files?.some((entry) => entry === "native" || entry.endsWith(".node"))).toBe(false);
 		expect(manifest.optionalDependencies).toEqual({
-			"@gajae-code/natives-darwin-arm64": "workspace:*",
-			"@gajae-code/natives-darwin-x64": "workspace:*",
-			"@gajae-code/natives-linux-arm64": "workspace:*",
-			"@gajae-code/natives-linux-x64": "workspace:*",
-			"@gajae-code/natives-win32-x64": "workspace:*",
+			"@vib-rato/natives-darwin-arm64": "workspace:*",
+			"@vib-rato/natives-darwin-x64": "workspace:*",
+			"@vib-rato/natives-linux-arm64": "workspace:*",
+			"@vib-rato/natives-linux-x64": "workspace:*",
+			"@vib-rato/natives-win32-x64": "workspace:*",
 		});
 	});
 
@@ -411,13 +409,13 @@ describe("immutable stable release contracts", () => {
 			"--evidence-dir",
 			"release-evidence",
 			"--release-serialization-key",
-			"gajae-nightly-release",
+			"vibrato-nightly-release",
 			"--release-channel",
 			"nightly",
 		])).toEqual({
 			mode: "publish-from-evidence",
 			evidenceDir: "release-evidence",
-			releaseSerializationKey: "gajae-nightly-release",
+			releaseSerializationKey: "vibrato-nightly-release",
 			releaseChannel: "nightly",
 		});
 		expect(() => parseReleasePublishCli(["--dry-run", "--evidence-dir", "release-evidence"])).toThrow("cannot be combined");
@@ -471,7 +469,7 @@ describe("native release binary coverage", () => {
 		expect(workflow).not.toContain("{ os: macos-13, platform: darwin, arch: x64 }");
 		expect(workflow).toContain("{ os: macos-15-intel, platform: darwin, arch: x64, variant: baseline }");
 		expect(workflow).toContain("target_id: darwin-x64");
-		expect(workflow).toContain("binary_path: packages/coding-agent/binaries/gjc-darwin-x64");
+		expect(workflow).toContain("binary_path: packages/coding-agent/binaries/vib-darwin-x64");
 		expect(workflow).toContain("{ os: macos-14, platform: darwin, arch: arm64 }");
 		expect(workflow).toContain("target_id: darwin-arm64");
 		expect(workflow).toContain("pattern: pi-natives-${{ matrix.platform }}-${{ matrix.arch }}*");
@@ -509,13 +507,13 @@ describe("native release binary coverage", () => {
 
 		expect(finalize).toContain("softprops/action-gh-release");
 		expect(finalize).toContain("draft: false");
-		expect(finalize).toContain("release-binaries/gjc-*");
-		expect(finalize).toContain("gajae-release-binaries-v1.json");
-		expect(finalize).toContain("gajae-release-binaries.sha256");
+		expect(finalize).toContain("release-binaries/vib-*");
+		expect(finalize).toContain("vibrato-release-binaries-v1.json");
+		expect(finalize).toContain("vibrato-release-binaries.sha256");
 		expect(finalize).toContain("Publish binary checksum manifest");
 		expect(finalize.indexOf("Publish binary checksum manifest")).toBeLessThan(finalize.indexOf("Create GitHub Release"));
-		expect(finalize).toContain("gajae-release-packages-v1.json");
-		expect(finalize).toContain("gajae-release-channel-v1.json");
+		expect(finalize).toContain("vibrato-release-packages-v1.json");
+		expect(finalize).toContain("vibrato-release-channel-v1.json");
 		expect(finalize).toContain("fail_on_unmatched_files: true");
 		expect(finalize).toContain("Verify immutable GitHub Release");
 
@@ -552,8 +550,8 @@ describe("native release binary coverage", () => {
 	test("installer explains missing release assets with fallback guidance", async () => {
 		const installer = await Bun.file(path.join(repoRoot, "scripts/install.sh")).text();
 
-		expect(installer).toContain("No prebuilt GJC binary was found for ${PLATFORM}-${ARCH} in ${LATEST}.");
-		expect(installer).toContain("Re-run this installer with --source if you are developing GJC and already have Bun");
+		expect(installer).toContain("No prebuilt Vibrato binary was found for ${PLATFORM}-${ARCH} in ${LATEST}.");
+		expect(installer).toContain("Re-run this installer with --source if you are developing Vibrato and already have Bun");
 		expect(installer).toContain("Expected asset URL: $BINARY_URL");
 	});
 
@@ -561,11 +559,11 @@ describe("native release binary coverage", () => {
 		const installer = await Bun.file(path.join(repoRoot, "scripts/install-tests/run-ci.sh")).text();
 		expect(installer).toContain("stage_linux_x64_optional_package");
 		expect(installer).toContain(
-			"for pkg in utils natives-linux-x64 natives ai agent tui stats coding-agent gajae-code",
+			"for pkg in utils natives-linux-x64 natives ai agent tui stats coding-agent vib-rato",
 		);
 		expect(installer).not.toContain("bridge-client");
-		expect(installer).toContain("@gajae-code/natives-linux-x64");
-		expect(installer).toContain("gajae-code-natives-[0-9]*.tgz");
+		expect(installer).toContain("@vib-rato/natives-linux-x64");
+		expect(installer).toContain("vib-rato-natives-[0-9]*.tgz");
 	});
 });
 

@@ -9,7 +9,7 @@
  * are disabled via {@link AuthStorage.disableCredentialById} so the next
  * snapshot pull surfaces a clean delete on the client.
  */
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 import type { AuthStorage } from "../auth-storage";
 import { cleanReason } from "./redact";
 import { DEFAULT_REFRESH_INTERVAL_MS, DEFAULT_REFRESH_SKEW_MS } from "./types";

@@ -2,15 +2,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { AssistantMessage, UserMessage } from "@gajae-code/ai";
+import type { AssistantMessage, UserMessage } from "@vib-rato/ai";
 
-import { exportFromFile, exportSessionToHtml } from "@gajae-code/coding-agent/export/html";
-import { BlobStore, EphemeralBlobStore, externalizeImageDataSync } from "@gajae-code/coding-agent/session/blob-store";
-import { SessionManager, type SessionMessageEntry } from "@gajae-code/coding-agent/session/session-manager";
-import { getAgentDir, getResidentCacheRootDir, setAgentDir } from "@gajae-code/utils";
+import { exportFromFile, exportSessionToHtml } from "@vib-rato/coding-agent/export/html";
+import { BlobStore, EphemeralBlobStore, externalizeImageDataSync } from "@vib-rato/coding-agent/session/blob-store";
+import { SessionManager, type SessionMessageEntry } from "@vib-rato/coding-agent/session/session-manager";
+import { getAgentDir, getResidentCacheRootDir, setAgentDir } from "@vib-rato/utils";
 
 const originalAgentDir = getAgentDir();
-const originalAgentDirOverride = process.env.GJC_CODING_AGENT_DIR;
+const originalAgentDirOverride = process.env.VIB_CODING_AGENT_DIR;
 const tempDirs: string[] = [];
 beforeEach(() => {
 	setAgentDir(path.join(makeTempDir(), "agent"));
@@ -18,13 +18,13 @@ beforeEach(() => {
 afterEach(async () => {
 	vi.restoreAllMocks();
 	setAgentDir(originalAgentDir);
-	if (originalAgentDirOverride === undefined) delete process.env.GJC_CODING_AGENT_DIR;
-	else process.env.GJC_CODING_AGENT_DIR = originalAgentDirOverride;
+	if (originalAgentDirOverride === undefined) delete process.env.VIB_CODING_AGENT_DIR;
+	else process.env.VIB_CODING_AGENT_DIR = originalAgentDirOverride;
 	for (const dir of tempDirs.splice(0)) await fs.promises.rm(dir, { recursive: true, force: true });
 });
 
 function makeTempDir(): string {
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-resident-cache-"));
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-resident-cache-"));
 	tempDirs.push(dir);
 	return dir;
 }
@@ -87,7 +87,7 @@ function expectResidentPlaceholder(value: unknown): void {
 	expect(serialized).toContain("Session resident text blob missing");
 	expect(serialized).toContain("original content unavailable");
 	expect(serialized).not.toContain("blob:sha256:");
-	expect(serialized).not.toContain("__gjcResidentBlob");
+	expect(serialized).not.toContain("__vibResidentBlob");
 }
 
 async function expectFileContainsResidentPlaceholder(filePath: string): Promise<void> {
@@ -97,13 +97,13 @@ async function expectFileContainsResidentPlaceholder(filePath: string): Promise<
 	expect(decoded).toContain("Session resident text blob missing");
 	expect(decoded).toContain("original content unavailable");
 	expect(decoded).not.toContain("blob:sha256:");
-	expect(decoded).not.toContain("__gjcResidentBlob");
+	expect(decoded).not.toContain("__vibResidentBlob");
 }
 
 async function fileDoesNotContainBlobRef(filePath: string): Promise<void> {
 	const bytes = await Bun.file(filePath).text();
 	expect(bytes).not.toContain("blob:sha256:");
-	expect(bytes).not.toContain("__gjcResidentBlob");
+	expect(bytes).not.toContain("__vibResidentBlob");
 }
 
 describe("resident text cache missing-blob and reference hygiene", () => {
@@ -293,7 +293,7 @@ describe("resident text cache missing-blob and reference hygiene", () => {
 		expect(serialized).toContain("Session resident imageData blob missing");
 		expect(serialized).toContain("original content unavailable");
 		expect(serialized).not.toContain(ref);
-		expect(serialized).not.toContain("__gjcResidentBlob");
+		expect(serialized).not.toContain("__vibResidentBlob");
 		await reopened.close();
 	});
 });

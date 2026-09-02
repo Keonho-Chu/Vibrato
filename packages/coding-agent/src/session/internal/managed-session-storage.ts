@@ -8,8 +8,8 @@ import type {
 	NativeOwnerOnlySecurityResult,
 	RecoveryFsIdentity,
 	RecoveryFsRoot,
-} from "@gajae-code/natives";
-import { isEnoent, logger } from "@gajae-code/utils";
+} from "@vib-rato/natives";
+import { isEnoent, logger } from "@vib-rato/utils";
 import type { SessionStorageRangeSnapshot, SessionStorageStat } from "../session-storage";
 import {
 	classifyNativePublishOutcome,
@@ -19,7 +19,7 @@ import {
 } from "./native-publish-outcome";
 
 type NativeManagedSessionStorage = Pick<
-	typeof import("@gajae-code/natives"),
+	typeof import("@vib-rato/natives"),
 	| "applyOwnerOnlyFdSecurity"
 	| "applyOwnerOnlyPathSecurity"
 	| "exactRemoveDirectoryTree"
@@ -38,7 +38,7 @@ type NativeManagedSessionStorage = Pick<
 >;
 
 function nativeSessionStorage(): NativeManagedSessionStorage {
-	return require("@gajae-code/natives") as NativeManagedSessionStorage;
+	return require("@vib-rato/natives") as NativeManagedSessionStorage;
 }
 
 export const MANAGED_ARTIFACT_MAX_DEPTH = 32;
@@ -366,7 +366,7 @@ function asRecord(value: unknown): Record<string, unknown> | undefined {
 }
 
 function legacyReplacementCleanupReceiptBinding(name: string): { dev: bigint; ino: bigint } | undefined {
-	const match = /^\.gjc-replace-cleanup-([0-9a-f]+)-([0-9a-f]+)\.json$/.exec(name);
+	const match = /^\.vib-replace-cleanup-([0-9a-f]+)-([0-9a-f]+)\.json$/.exec(name);
 	if (!match?.[1] || !match[2]) return undefined;
 	const dev = parseLegacyHexU64(match[1]);
 	const ino = parseLegacyHexU64(match[2]);
@@ -417,7 +417,7 @@ function replacementCleanupReceiptBinding(
 	name: string,
 ): { predecessor: { dev: bigint; ino: bigint }; receipt: { dev: bigint; ino: bigint } } | undefined {
 	const match =
-		/^\.gjc-replace-cleanup-(0|[1-9a-f][0-9a-f]*)-(0|[1-9a-f][0-9a-f]*)-receipt-(0|[1-9a-f][0-9a-f]*)-(0|[1-9a-f][0-9a-f]*)\.json$/.exec(
+		/^\.vib-replace-cleanup-(0|[1-9a-f][0-9a-f]*)-(0|[1-9a-f][0-9a-f]*)-receipt-(0|[1-9a-f][0-9a-f]*)-(0|[1-9a-f][0-9a-f]*)\.json$/.exec(
 			name,
 		);
 	if (!match?.[1] || !match[2] || !match[3] || !match[4]) return undefined;
@@ -480,7 +480,7 @@ function replacementReceiptPath(
 ): string {
 	return path.join(
 		baseDir,
-		`.gjc-replace-cleanup-${predecessor.dev.toString(16)}-${predecessor.ino.toString(16)}-receipt-${receipt.dev.toString(16)}-${receipt.ino.toString(16)}.json`,
+		`.vib-replace-cleanup-${predecessor.dev.toString(16)}-${predecessor.ino.toString(16)}-receipt-${receipt.dev.toString(16)}-${receipt.ino.toString(16)}.json`,
 	);
 }
 
@@ -488,7 +488,7 @@ function replacementReceiptRetirementName(
 	receipt: { dev: bigint; ino: bigint },
 	predecessor: { dev: bigint; ino: bigint },
 ): string {
-	return `.gjc-receipt-remove-${receipt.dev.toString(16)}-${receipt.ino.toString(16)}-${predecessor.dev.toString(16)}-${predecessor.ino.toString(16)}`;
+	return `.vib-receipt-remove-${receipt.dev.toString(16)}-${receipt.ino.toString(16)}-${predecessor.dev.toString(16)}-${predecessor.ino.toString(16)}`;
 }
 
 function replacementReceiptPlaceholderRetirementName(
@@ -496,7 +496,7 @@ function replacementReceiptPlaceholderRetirementName(
 	predecessor: { dev: bigint; ino: bigint },
 	receipt: { dev: bigint; ino: bigint },
 ): string {
-	return `.gjc-receipt-placeholder-remove-${placeholder.dev.toString(16)}-${placeholder.ino.toString(16)}-${predecessor.dev.toString(16)}-${predecessor.ino.toString(16)}-${receipt.dev.toString(16)}-${receipt.ino.toString(16)}`;
+	return `.vib-receipt-placeholder-remove-${placeholder.dev.toString(16)}-${placeholder.ino.toString(16)}-${predecessor.dev.toString(16)}-${predecessor.ino.toString(16)}-${receipt.dev.toString(16)}-${receipt.ino.toString(16)}`;
 }
 
 /**
@@ -510,11 +510,11 @@ function replacementReceiptPlaceholderRetirementName(
  * per-mutation receipt scan and widening quarantine-collision windows.
  */
 const SCRUBBED_REMNANT_PREFIXES = [
-	".gjc-exact-unlink-placeholder-",
-	".gjc-exact-replace-destination-",
-	".gjc-receipt-remove-",
-	".gjc-receipt-placeholder-remove-",
-	".gjc-replace-retry-",
+	".vib-exact-unlink-placeholder-",
+	".vib-exact-replace-destination-",
+	".vib-receipt-remove-",
+	".vib-receipt-placeholder-remove-",
+	".vib-replace-retry-",
 ] as const;
 
 /** In-flight protocol steps complete in milliseconds; anything older is abandoned. */
@@ -1004,7 +1004,7 @@ export class ManagedSessionDescendantStore {
 			// For the root case (authorityBaseDir === baseDir, relative === ""), the
 			// stable identity() result carries the exact root dev/inode without
 			// snapshotting the entire live session tree. snapshotManagedTree("")
-			// walks every mutable descendant, so concurrent writers (other GJC
+			// walks every mutable descendant, so concurrent writers (other Vibrato
 			// processes appending jsonl/resident-cache/recovery data) make the
 			// snapshot return identity_mismatch (#3906). Mirrors #assertBound(),
 			// which already uses identity() for this same case. Nested descendants
@@ -1283,7 +1283,7 @@ export class ManagedSessionDescendantStore {
 		const parsed = parseLegacyReplacementCleanupReceipt(receipt.bytes);
 		const expectedPredecessor = path.join(
 			this.#baseDir,
-			`.gjc-exact-replace-destination-${binding.dev.toString(16)}-${binding.ino.toString(16)}`,
+			`.vib-exact-replace-destination-${binding.dev.toString(16)}-${binding.ino.toString(16)}`,
 		);
 		if (
 			!parsed ||
@@ -1303,7 +1303,7 @@ export class ManagedSessionDescendantStore {
 			size: parsed.identity.size,
 			mtimeNs: parsed.identity.mtimeNs,
 			sha256: parsed.identity.sha256,
-			quarantineName: `.gjc-replace-retry-${parsed.identity.dev.toString(16)}-${parsed.identity.ino.toString(16)}`,
+			quarantineName: `.vib-replace-retry-${parsed.identity.dev.toString(16)}-${parsed.identity.ino.toString(16)}`,
 		});
 		if (!exactUnlinkCompleted(retired) && retired.code !== "not_found")
 			throw new Error(`managed_replace_cleanup_pending:${retired.code ?? "unknown"}`);
@@ -1332,7 +1332,7 @@ export class ManagedSessionDescendantStore {
 			size: BigInt(currentReceipt.identity.size),
 			mtimeNs: currentReceipt.identity.mtimeNs,
 			sha256: currentReceipt.identity.sha256,
-			quarantineName: `.gjc-receipt-remove-${currentReceipt.identity.dev.toString(16)}-${currentReceipt.identity.ino.toString(16)}`,
+			quarantineName: `.vib-receipt-remove-${currentReceipt.identity.dev.toString(16)}-${currentReceipt.identity.ino.toString(16)}`,
 		});
 		if (!exactUnlinkCompleted(removed) && removed.code !== "not_found")
 			throw new Error(`managed_replace_receipt_cleanup_pending:${removed.code ?? "unknown"}`);
@@ -1404,12 +1404,12 @@ export class ManagedSessionDescendantStore {
 				let examined = 0;
 				for (let entry = directory.readSync(); entry; entry = directory.readSync()) {
 					const name = entry.name;
-					if (!name.startsWith(".gjc-replace-receipt-pending-") && !name.startsWith(".gjc-replace-cleanup-"))
+					if (!name.startsWith(".vib-replace-receipt-pending-") && !name.startsWith(".vib-replace-cleanup-"))
 						continue;
 					examined++;
 					if (examined > REPLACEMENT_CLEANUP_RECEIPT_SCAN_LIMIT)
 						throw new Error("managed_replace_cleanup_receipt_limit_exceeded");
-					if (name.startsWith(".gjc-replace-receipt-pending-")) {
+					if (name.startsWith(".vib-replace-receipt-pending-")) {
 						this.#reconcilePendingReplacementReceipt(path.join(this.#baseDir, name));
 						continue;
 					}
@@ -1891,7 +1891,7 @@ export class ManagedSessionDescendantStore {
 		if (!this.#authority) throw new Error("Managed descendant authority is unavailable");
 		const separator = relative.lastIndexOf("/");
 		const parent = separator < 0 ? "" : relative.slice(0, separator);
-		const temporaryName = `.gjc-publish-${process.pid}-${randomUUID()}`;
+		const temporaryName = `.vib-publish-${process.pid}-${randomUUID()}`;
 		const temporary = parent ? `${parent}/${temporaryName}` : temporaryName;
 		const created = this.#authority.createManaged(temporary, bytes);
 		if (!created.ok) throw new Error(created.code ?? "managed_publish_failed");
@@ -2219,7 +2219,7 @@ export class ManagedSessionDescendantStore {
 				sha256: expected.identity.sha256,
 				parentDev: parent.dev,
 				parentIno: parent.ino,
-				quarantineName: `.gjc-remove-${process.pid}-${randomUUID()}`,
+				quarantineName: `.vib-remove-${process.pid}-${randomUUID()}`,
 			});
 			if (
 				!removed.ok &&
@@ -3133,7 +3133,7 @@ function replaceManagedFileGeneratedSync(
 			const parentIdentity = fs.lstatSync(parent, { bigint: true });
 			if (Number(staged.size) !== generated.size) throw new Error("managed_replace_generated_size_changed");
 			const successor = expectedSuccessor;
-			const receiptStagingPath = path.join(parent, `.gjc-replace-receipt-pending-${randomUUID()}.json`);
+			const receiptStagingPath = path.join(parent, `.vib-replace-receipt-pending-${randomUUID()}.json`);
 			preserveStaging = true;
 			const publishedReceiptIdentity = publishManagedFileNoReplaceSync(
 				receiptStagingPath,
@@ -3571,7 +3571,7 @@ export async function acquireManagedLock(
 						size: BigInt(observed.snapshot.identity.size),
 						mtimeNs: observed.snapshot.identity.mtimeNs,
 						sha256: observed.snapshot.identity.sha256,
-						quarantineName: `.gjc-lock-${randomUUID()}.stale`,
+						quarantineName: `.vib-lock-${randomUUID()}.stale`,
 					});
 					if (removed.ok || removed.code === "cleanup_pending") fsyncDirectory(locksDirectory);
 				} catch {

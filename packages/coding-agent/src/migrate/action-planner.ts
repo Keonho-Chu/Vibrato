@@ -8,7 +8,7 @@
  */
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { isEnoent, parseFrontmatter } from "@gajae-code/utils";
+import { isEnoent, parseFrontmatter } from "@vib-rato/utils";
 import { readMCPConfigFile, validateServerName } from "../runtime-mcp/config-writer";
 import { mapMcpEntry } from "./mcp-mapper";
 import { slugify } from "./skill-normalizer";

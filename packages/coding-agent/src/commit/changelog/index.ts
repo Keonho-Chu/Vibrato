@@ -1,7 +1,7 @@
 import * as path from "node:path";
-import type { ThinkingLevel } from "@gajae-code/agent-core";
-import type { Api, Model } from "@gajae-code/ai/core";
-import { logger } from "@gajae-code/utils";
+import type { ThinkingLevel } from "@vib-rato/agent-core";
+import type { Api, Model } from "@vib-rato/ai/core";
+import { logger } from "@vib-rato/utils";
 import { CHANGELOG_CATEGORIES } from "../../commit/types";
 import * as git from "../../utils/git";
 import { detectChangelogBoundaries } from "./detect";

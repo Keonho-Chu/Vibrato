@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { getConfigRootDir, setAgentDir } from "@gajae-code/utils";
+import { getConfigRootDir, setAgentDir } from "@vib-rato/utils";
 import {
 	appendTransportFailureContext,
 	finalizeErrorMessage,
@@ -13,17 +13,17 @@ import {
 
 let previousAgentDir: string | undefined;
 let previousPiConfigDir: string | undefined;
-let previousGjcConfigDir: string | undefined;
+let previousVibConfigDir: string | undefined;
 let tempAgentDir: string | undefined;
 let tempConfigRoot: string | undefined;
 
 async function useTempAgentDir(): Promise<string> {
 	previousAgentDir = getConfigRootDir();
 	previousPiConfigDir = process.env.PI_CONFIG_DIR;
-	previousGjcConfigDir = process.env.GJC_CONFIG_DIR;
-	tempConfigRoot = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-http-inspector-"));
+	previousVibConfigDir = process.env.VIB_CONFIG_DIR;
+	tempConfigRoot = await fs.mkdtemp(path.join(os.tmpdir(), "vib-http-inspector-"));
 	process.env.PI_CONFIG_DIR = path.relative(os.homedir(), tempConfigRoot);
-	delete process.env.GJC_CONFIG_DIR;
+	delete process.env.VIB_CONFIG_DIR;
 	tempAgentDir = path.join(tempConfigRoot, "agent");
 	setAgentDir(tempAgentDir);
 	return tempAgentDir;
@@ -36,12 +36,12 @@ afterEach(async () => {
 		process.env.PI_CONFIG_DIR = previousPiConfigDir;
 	}
 	previousPiConfigDir = undefined;
-	if (previousGjcConfigDir === undefined) {
-		delete process.env.GJC_CONFIG_DIR;
+	if (previousVibConfigDir === undefined) {
+		delete process.env.VIB_CONFIG_DIR;
 	} else {
-		process.env.GJC_CONFIG_DIR = previousGjcConfigDir;
+		process.env.VIB_CONFIG_DIR = previousVibConfigDir;
 	}
-	previousGjcConfigDir = undefined;
+	previousVibConfigDir = undefined;
 	if (previousAgentDir) {
 		setAgentDir(previousAgentDir);
 		previousAgentDir = undefined;
@@ -172,8 +172,8 @@ describe("HTTP 400 error message safety (issue #438)", () => {
 		const message = await finalizeErrorMessage(error, unavailableModelDump());
 
 		expect(message).toContain("not available");
-		expect(message).toContain("gjc --list-models");
-		expect(message).toContain("gjc setup provider");
+		expect(message).toContain("vib --list-models");
+		expect(message).toContain("vib setup provider");
 		expect(message).toContain("codex-mini-latest");
 	});
 
@@ -194,7 +194,7 @@ describe("HTTP 400 error message safety (issue #438)", () => {
 	it("omits model/provider names from guidance when the dump is absent", () => {
 		const guidance = formatModelUnavailableGuidance(undefined);
 		expect(guidance).toContain("not available");
-		expect(guidance).toContain("gjc --list-models");
+		expect(guidance).toContain("vib --list-models");
 		expect(guidance).not.toContain("''");
 	});
 });

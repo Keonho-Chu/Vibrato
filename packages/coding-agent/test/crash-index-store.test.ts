@@ -9,7 +9,7 @@ import {
 	formatCrashEventLine,
 	formatCrashRecordMarker,
 	parseCrashEventLine,
-} from "@gajae-code/utils";
+} from "@vib-rato/utils";
 import {
 	applyCrashEvent,
 	CRASH_INDEX_ENTRY_MAX_BYTES,
@@ -30,11 +30,11 @@ function fingerprintFor(seed: number): string {
 }
 
 async function tempPaths(): Promise<CrashStatePaths> {
-	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-crash-index-"));
+	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-crash-index-"));
 	return {
-		index: path.join(dir, "gjc-crash-index.json"),
-		events: path.join(dir, "gjc-crash-events.jsonl"),
-		crashLog: path.join(dir, "gjc-crash.log"),
+		index: path.join(dir, "vib-crash-index.json"),
+		events: path.join(dir, "vib-crash-events.jsonl"),
+		crashLog: path.join(dir, "vib-crash.log"),
 	};
 }
 
@@ -107,9 +107,9 @@ describe("compactCrashIndex", () => {
 			relayedAt: NOW - 100,
 			relayedRecordId: firstRecordId,
 			reportedAt: NOW - 50,
-			reportedIssueUrl: `https://github.com/Yeachan-Heo/gajae-code/issues/${"r".repeat(180)}`,
+			reportedIssueUrl: `https://github.com/Keonho-Chu/Vibrato/issues/${"r".repeat(180)}`,
 			commentedIssues: [
-				`https://github.com/Yeachan-Heo/gajae-code/issues/${"x".repeat(180)}`,
+				`https://github.com/Keonho-Chu/Vibrato/issues/${"x".repeat(180)}`,
 				`https://x/${"y".repeat(50)}`,
 			],
 		};
@@ -303,7 +303,7 @@ describe("compactCrashIndex", () => {
 				kind: "reported",
 				fingerprint: retired.fingerprint,
 				at: NOW,
-				issueUrl: "https://github.com/Yeachan-Heo/gajae-code/issues/1",
+				issueUrl: "https://github.com/Keonho-Chu/Vibrato/issues/1",
 			},
 			{ paths, now: NOW },
 		);
@@ -364,7 +364,7 @@ describe("compactCrashIndex", () => {
 				kind: "reported",
 				fingerprint: retired.fingerprint,
 				at: NOW,
-				issueUrl: "https://github.com/Yeachan-Heo/gajae-code/issues/1",
+				issueUrl: "https://github.com/Keonho-Chu/Vibrato/issues/1",
 			},
 			{ paths, now: NOW },
 		);
@@ -521,7 +521,7 @@ describe("compactCrashIndex", () => {
 				kind: "reported",
 				fingerprint: fingerprintFor(5),
 				at: NOW,
-				issueUrl: "https://github.com/Yeachan-Heo/gajae-code/issues/1",
+				issueUrl: "https://github.com/Keonho-Chu/Vibrato/issues/1",
 			},
 			{ paths, now: NOW },
 		);
@@ -640,7 +640,7 @@ describe("parseCrashIndex", () => {
 			...valid.signatures[fingerprintFor(1)],
 			messageClass: "x".repeat(512),
 			commentedIssues: [
-				`https://github.com/Yeachan-Heo/gajae-code/issues/${"x".repeat(180)}`,
+				`https://github.com/Keonho-Chu/Vibrato/issues/${"x".repeat(180)}`,
 				`https://x/${"y".repeat(50)}`,
 			],
 		};
@@ -733,7 +733,7 @@ describe("relayed crash events", () => {
 	});
 
 	it("accepts a legacy relayed journal line without a record id", () => {
-		const line = `gjc-crash-event.v1 ${JSON.stringify({ k: "relayed", fp: fingerprint, at: NOW, e: eventId })}\n`;
+		const line = `vib-crash-event.v1 ${JSON.stringify({ k: "relayed", fp: fingerprint, at: NOW, e: eventId })}\n`;
 		expect(parseCrashEventLine(line)).toEqual({ kind: "relayed", fingerprint, at: NOW, eventId });
 	});
 
@@ -772,7 +772,7 @@ describe("relayed crash events", () => {
 		["uppercase hex", "0123456789ABCDEF0123456789ABCDEF"],
 		["non-hex", "0123456789abcdef0123456789abcdeg"],
 	])("rejects a relayed event id with %s", (_label, malformedEventId) => {
-		const line = `${"gjc-crash-event.v1"} ${JSON.stringify({ k: "relayed", fp: fingerprint, at: NOW, e: malformedEventId })}\n`;
+		const line = `${"vib-crash-event.v1"} ${JSON.stringify({ k: "relayed", fp: fingerprint, at: NOW, e: malformedEventId })}\n`;
 
 		expect(parseCrashEventLine(line)).toBeUndefined();
 	});

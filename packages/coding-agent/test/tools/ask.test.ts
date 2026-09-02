@@ -1,21 +1,21 @@
 import { afterEach, beforeAll, describe, expect, it, spyOn, vi } from "bun:test";
-import type { AgentToolContext } from "@gajae-code/agent-core";
-import { validateToolArguments } from "@gajae-code/ai/utils/validation";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import type { AppendOrMergeResult } from "@gajae-code/coding-agent/gjc-runtime/deep-interview-recorder";
-import * as deepInterviewRecorder from "@gajae-code/coding-agent/gjc-runtime/deep-interview-recorder";
-import { deepInterviewCharacterCount } from "@gajae-code/coding-agent/gjc-runtime/deep-interview-state";
-import { getThemeByName, initTheme } from "@gajae-code/coding-agent/modes/theme/theme";
+import type { AgentToolContext } from "@vib-rato/agent-core";
+import { validateToolArguments } from "@vib-rato/ai/utils/validation";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { getThemeByName, initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
 import type {
 	AskAnswerRequest,
 	AskAnswerSource,
 	AskRemoteReceipt,
 	AskSettlement,
 	ToolSession,
-} from "@gajae-code/coding-agent/tools";
-import { AskTool, askSchema, askToolRenderer } from "@gajae-code/coding-agent/tools/ask";
-import { ToolAbortError } from "@gajae-code/coding-agent/tools/tool-errors";
-import { logger } from "@gajae-code/utils";
+} from "@vib-rato/coding-agent/tools";
+import { AskTool, askSchema, askToolRenderer } from "@vib-rato/coding-agent/tools/ask";
+import { ToolAbortError } from "@vib-rato/coding-agent/tools/tool-errors";
+import type { AppendOrMergeResult } from "@vib-rato/coding-agent/vib-runtime/deep-interview-recorder";
+import * as deepInterviewRecorder from "@vib-rato/coding-agent/vib-runtime/deep-interview-recorder";
+import { deepInterviewCharacterCount } from "@vib-rato/coding-agent/vib-runtime/deep-interview-state";
+import { logger } from "@vib-rato/utils";
 
 function createSession(overrides: Partial<ToolSession> = {}): ToolSession {
 	return {
@@ -2528,13 +2528,13 @@ describe("AskTool deep-interview rendering middleware", () => {
 		const rawQuestion = [
 			"Starting deep interview. I'll show a clarity score after each answer.",
 			"",
-			'**Your idea:** "Refresh the GJC UX"',
+			'**Your idea:** "Refresh the Vibrato UX"',
 			"**Project type:** brownfield",
 			"",
 			"Round 0 | Topology confirmation | Ambiguity: not scored yet",
 			"",
 			"I'm currently reading the scope as these 2 top-level components.",
-			"1. Brand and theme system: red-claw/GJC default theme and semantic color separation.",
+			"1. Brand and theme system: red-claw/Vibrato default theme and semantic color separation.",
 			"2. Tool card UX: readability of ask/approval cards and tool output styling.",
 			"",
 			"Is that topology right? Should any component be added, removed, merged, split, or explicitly deferred?",
@@ -2563,10 +2563,12 @@ describe("AskTool deep-interview rendering middleware", () => {
 		expect(prompt).toContain("Ambiguity: not scored yet");
 		expect(prompt).toContain("Reading:");
 		expect(prompt).toContain("I'm currently reading the scope as these 2 top-level components.");
-		expect(prompt).toContain("1. Brand and theme system — red-claw/GJC default theme and semantic color separation.");
+		expect(prompt).toContain(
+			"1. Brand and theme system — red-claw/Vibrato default theme and semantic color separation.",
+		);
 		expect(prompt).toContain("Question:");
 		expect(prompt).not.toContain("Context:");
-		expect(prompt).not.toContain('**Your idea:** "Refresh the GJC UX"');
+		expect(prompt).not.toContain('**Your idea:** "Refresh the Vibrato UX"');
 		expect(prompt).not.toContain("Round 0 | Topology confirmation");
 	});
 

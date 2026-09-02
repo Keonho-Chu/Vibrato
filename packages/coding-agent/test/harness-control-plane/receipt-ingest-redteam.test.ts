@@ -16,10 +16,10 @@ function state(lifecycle: HarnessLifecycle = "finalizing"): SessionState {
 		schemaVersion: 1,
 		sessionId: "s",
 		lifecycle,
-		harness: "gajae-code",
+		harness: "vib-rato",
 		handle: {
 			sessionId: "s",
-			harness: "gajae-code",
+			harness: "vib-rato",
 			mode: "implement",
 			repo: "/repo",
 			workspace: "/ws",

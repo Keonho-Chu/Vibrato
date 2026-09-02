@@ -4,8 +4,8 @@ import * as path from "node:path";
 import { SessionManager } from "../../../src/session/session-manager";
 import { FileSessionStorage } from "../../../src/session/session-storage";
 
-const mode = process.env.GJC_SESSION_MEMORY_CRASH_MODE;
-const root = process.env.GJC_SESSION_MEMORY_CRASH_ROOT;
+const mode = process.env.VIB_SESSION_MEMORY_CRASH_MODE;
+const root = process.env.VIB_SESSION_MEMORY_CRASH_ROOT;
 if (!mode || !root) throw new Error("Missing crash worker mode/root");
 const sessionFile = path.join(root, "crash-session.jsonl");
 const storage = new FileSessionStorage();

@@ -1,10 +1,10 @@
 import { describe, expect, test, vi } from "bun:test";
-import { Agent, type AgentOptions } from "@gajae-code/agent-core";
-import type { Model, ProviderSessionState } from "@gajae-code/ai";
-import { createMockModel } from "@gajae-code/ai/providers/mock";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { AgentSession } from "@gajae-code/coding-agent/session/agent-session";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
+import { Agent, type AgentOptions } from "@vib-rato/agent-core";
+import type { Model, ProviderSessionState } from "@vib-rato/ai";
+import { createMockModel } from "@vib-rato/ai/providers/mock";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { AgentSession } from "@vib-rato/coding-agent/session/agent-session";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
 
 const model = { provider: "test", id: "model", api: "openai-responses", name: "model" } as Model;
 

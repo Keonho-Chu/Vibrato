@@ -1,19 +1,19 @@
 import { beforeEach, describe, expect, it } from "bun:test";
-import { IrcSplitViewComponent } from "@gajae-code/coding-agent/modes/components/irc-sidebar";
-import { IrcObservationLedger } from "@gajae-code/coding-agent/modes/irc-observation-ledger";
-import { initTheme, theme } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { InteractiveModeContext } from "@gajae-code/coding-agent/modes/types";
+import { IrcSplitViewComponent } from "@vib-rato/coding-agent/modes/components/irc-sidebar";
+import { IrcObservationLedger } from "@vib-rato/coding-agent/modes/irc-observation-ledger";
+import { initTheme, theme } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { InteractiveModeContext } from "@vib-rato/coding-agent/modes/types";
 import {
 	formatIrcMessageBlock,
 	type ParsedIrcMessage,
 	parseIrcMessage,
-} from "@gajae-code/coding-agent/modes/utils/irc-message";
-import { UiHelpers } from "@gajae-code/coding-agent/modes/utils/ui-helpers";
+} from "@vib-rato/coding-agent/modes/utils/irc-message";
+import { UiHelpers } from "@vib-rato/coding-agent/modes/utils/ui-helpers";
 import {
 	associateSessionMessageObservationId,
 	buildSessionContext,
-} from "@gajae-code/coding-agent/session/session-manager";
-import { Container } from "@gajae-code/tui";
+} from "@vib-rato/coding-agent/session/session-manager";
+import { Container } from "@vib-rato/tui";
 
 beforeEach(async () => {
 	await initTheme();

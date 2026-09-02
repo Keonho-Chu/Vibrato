@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { getAgentDir, logger, setAgentDir } from "@gajae-code/utils";
+import { getAgentDir, logger, setAgentDir } from "@vib-rato/utils";
 import { safeRm } from "../../../scripts/safe-cleanup";
 import { Settings } from "../src/config/settings";
 import { applyImport, type BuildImportPreviewOptions, buildImportPreview } from "../src/customization/import";
@@ -160,10 +160,10 @@ async function seedConvention(product: ImportedProduct, marker: string): Promise
 }
 
 async function seedNative(marker: string): Promise<void> {
-	await writeFile(path.join(projectDir, ".gjc", "skills", SKILL_NAME, "SKILL.md"), SKILL_CONTENT);
-	await writeFile(path.join(projectDir, ".gjc", "hooks", "pre", `${HOOK_TOOL}.ts`), hookContent(marker));
+	await writeFile(path.join(projectDir, ".vib", "skills", SKILL_NAME, "SKILL.md"), SKILL_CONTENT);
+	await writeFile(path.join(projectDir, ".vib", "hooks", "pre", `${HOOK_TOOL}.ts`), hookContent(marker));
 	await writeFile(
-		path.join(projectDir, ".gjc", "mcp.json"),
+		path.join(projectDir, ".vib", "mcp.json"),
 		JSON.stringify({
 			mcpServers: {
 				[MCP_NAME]: {
@@ -180,12 +180,12 @@ async function seedNative(marker: string): Promise<void> {
 
 async function seedCollisionBundle(marker: string): Promise<void> {
 	await writeFile(
-		path.join(projectDir, ".gjc", "skills", SKILL_NAME, "SKILL.md"),
+		path.join(projectDir, ".vib", "skills", SKILL_NAME, "SKILL.md"),
 		SKILL_CONTENT.replace("canonical runtime consumption", "pre-existing native authority"),
 	);
-	await writeFile(path.join(projectDir, ".gjc", "hooks", "pre", `${HOOK_TOOL}.ts`), hookContent(marker));
+	await writeFile(path.join(projectDir, ".vib", "hooks", "pre", `${HOOK_TOOL}.ts`), hookContent(marker));
 	await writeFile(
-		path.join(projectDir, ".gjc", "mcp.json"),
+		path.join(projectDir, ".vib", "mcp.json"),
 		JSON.stringify({ mcpServers: { [MCP_NAME]: { type: "stdio", command: "native-collision" } } }),
 	);
 }
@@ -231,7 +231,7 @@ async function consumeCanonicalBundle(marker: string): Promise<{
 		policy: { enabled: true, trustProjectSkills: true, trustUserSkills: true },
 	});
 	const discoveredSkill = trustedRuntimeSkills.candidates.find(candidate => candidate.name === SKILL_NAME);
-	expect(discoveredSkill?.path).toBe(path.join(projectDir, ".gjc", "skills", SKILL_NAME, "SKILL.md"));
+	expect(discoveredSkill?.path).toBe(path.join(projectDir, ".vib", "skills", SKILL_NAME, "SKILL.md"));
 
 	const loadedSkills = await loadSkills({
 		cwd: projectDir,
@@ -241,7 +241,7 @@ async function consumeCanonicalBundle(marker: string): Promise<{
 	});
 	const loadedSkill = loadedSkills.skills.find(skill => skill.name === SKILL_NAME);
 	expect(loadedSkill).toBeDefined();
-	expect(loadedSkill?.filePath).toBe(path.join(projectDir, ".gjc", "skills", SKILL_NAME, "SKILL.md"));
+	expect(loadedSkill?.filePath).toBe(path.join(projectDir, ".vib", "skills", SKILL_NAME, "SKILL.md"));
 	const body = await loadedSkill?.loadContent?.();
 	expect(body).toContain("canonical runtime consumption");
 	expect(body).not.toContain("foreign skill must stay inactive");
@@ -289,7 +289,7 @@ async function consumeCanonicalBundle(marker: string): Promise<{
 }
 
 beforeEach(async () => {
-	root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-issue-4508-"));
+	root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-issue-4508-"));
 	projectDir = path.join(root, "project");
 	homeDir = path.join(root, "home");
 	agentDir = path.join(root, "agent");
@@ -301,7 +301,7 @@ beforeEach(async () => {
 	originalAgentDir = getAgentDir();
 	vi.spyOn(os, "homedir").mockReturnValue(homeDir);
 	setAgentDir(agentDir);
-	logger.setTransports({ console: false, file: path.join(agentDir, "gjc-test.log") });
+	logger.setTransports({ console: false, file: path.join(agentDir, "vib-test.log") });
 	MCPManager.resetForTests();
 });
 
@@ -313,15 +313,15 @@ afterEach(async () => {
 	// config root; the fixture's contract is that no imported DEFINITION ever
 	// lands in the user scope, and that nothing else appears in the home directory.
 	const homeEntries = await fs.readdir(homeDir);
-	expect(homeEntries.filter(entry => entry !== ".gjc")).toEqual(homeBefore);
-	const userConfigEntries = await fs.readdir(path.join(homeDir, ".gjc")).catch(() => [] as string[]);
+	expect(homeEntries.filter(entry => entry !== ".vib")).toEqual(homeBefore);
+	const userConfigEntries = await fs.readdir(path.join(homeDir, ".vib")).catch(() => [] as string[]);
 	expect(userConfigEntries.filter(entry => USER_DEFINITION_SURFACES.has(entry))).toEqual([]);
 	await safeRm(root, { recursive: true, force: true });
 });
 
 describe("issue #4508 cross-convention canonical fixture", () => {
 	for (const convention of ["claude-code", "codex", "native"] as const) {
-		test(`${convention} bundle is consumed through canonical .gjc`, async () => {
+		test(`${convention} bundle is consumed through canonical .vib`, async () => {
 			const marker = path.join(root, `${convention}-hook-ran`);
 			const foreignMarker = path.join(root, `${convention}-foreign-hook-ran`);
 			if (convention === "native") {
@@ -335,16 +335,16 @@ describe("issue #4508 cross-convention canonical fixture", () => {
 				expect(collisionResult.ok).toBe(true);
 				expect(collisionResult.entries.filter(entry => entry.outcome === "skipped")).toHaveLength(4);
 				expect(
-					await fs.readFile(path.join(projectDir, ".gjc", "skills", SKILL_NAME, "SKILL.md"), "utf8"),
+					await fs.readFile(path.join(projectDir, ".vib", "skills", SKILL_NAME, "SKILL.md"), "utf8"),
 				).toContain("pre-existing native authority");
-				expect(await fs.readFile(path.join(projectDir, ".gjc", "hooks", "pre", "read.ts"), "utf8")).toContain(
+				expect(await fs.readFile(path.join(projectDir, ".vib", "hooks", "pre", "read.ts"), "utf8")).toContain(
 					"collision-hook-ran",
 				);
-				expect(await fs.readFile(path.join(projectDir, ".gjc", "mcp.json"), "utf8")).toContain("native-collision");
-				await safeRm(path.join(projectDir, ".gjc"), { recursive: true, force: true });
+				expect(await fs.readFile(path.join(projectDir, ".vib", "mcp.json"), "utf8")).toContain("native-collision");
+				await safeRm(path.join(projectDir, ".vib"), { recursive: true, force: true });
 				const plan = await buildImportPreview(previewOptions(convention));
 				const previewJson = JSON.stringify(plan.preview);
-				await expect(fs.stat(path.join(projectDir, ".gjc"))).rejects.toMatchObject({ code: "ENOENT" });
+				await expect(fs.stat(path.join(projectDir, ".vib"))).rejects.toMatchObject({ code: "ENOENT" });
 				expect(
 					plan.preview.entries.some(entry => entry.surface === "skills" && entry.destinationName === SKILL_NAME),
 				).toBe(true);
@@ -368,10 +368,10 @@ describe("issue #4508 cross-convention canonical fixture", () => {
 					expect(await fs.stat(sourceFile)).toBeTruthy();
 				}
 				expect(
-					await fs.readFile(path.join(projectDir, ".gjc", "skills", SKILL_NAME, "SKILL.md"), "utf8"),
-				).toContain("x-gjc-imported-from");
-				expect(await fs.stat(path.join(projectDir, ".gjc", "hooks", "pre", "read.ts"))).toBeTruthy();
-				expect(await fs.stat(path.join(projectDir, ".gjc", "mcp.json"))).toBeTruthy();
+					await fs.readFile(path.join(projectDir, ".vib", "skills", SKILL_NAME, "SKILL.md"), "utf8"),
+				).toContain("x-vib-imported-from");
+				expect(await fs.stat(path.join(projectDir, ".vib", "hooks", "pre", "read.ts"))).toBeTruthy();
+				expect(await fs.stat(path.join(projectDir, ".vib", "mcp.json"))).toBeTruthy();
 				await makeForeignHookDistinct(convention, foreignMarker);
 			}
 

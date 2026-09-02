@@ -4,8 +4,8 @@ import {
 	isAnthropicMaskedProxyRejection,
 	isAnthropicThinkingBlockMutationError,
 	isAnthropicThinkingSignatureInvalidError,
-} from "@gajae-code/ai/providers/anthropic";
-import type { AssistantMessage, Model, ToolResultMessage, UserMessage } from "@gajae-code/ai/types";
+} from "@vib-rato/ai/providers/anthropic";
+import type { AssistantMessage, Model, ToolResultMessage, UserMessage } from "@vib-rato/ai/types";
 
 const model: Model<"anthropic-messages"> = {
 	api: "anthropic-messages",

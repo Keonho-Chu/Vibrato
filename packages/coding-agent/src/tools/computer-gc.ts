@@ -2,10 +2,10 @@ import type { Dirent } from "node:fs";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 
 /** Prefix of every computer-use screenshot fallback directory created under the OS temp dir. */
-export const SCREENSHOT_FALLBACK_DIR_PREFIX = "gjc-computer-screenshots-";
+export const SCREENSHOT_FALLBACK_DIR_PREFIX = "vib-computer-screenshots-";
 
 let screenshotFallbackDirsCreated = false;
 
@@ -33,7 +33,7 @@ export interface ScreenshotGcOptions {
 
 /**
  * Disk-only GC for stale computer-use screenshot fallback directories. Scans the temp dir for
- * `gjc-computer-screenshots-*` directories and removes those whose mtime is older than `staleMs`.
+ * `vib-computer-screenshots-*` directories and removes those whose mtime is older than `staleMs`.
  * Never throws on a per-directory failure; the whole sweep is best-effort.
  */
 export async function cleanupStaleScreenshotFallbackDirs(

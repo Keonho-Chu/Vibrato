@@ -47,7 +47,7 @@ describe("CLI help load order", () => {
 
 	itWithTempRoot(
 		"loads the root help command without tripping config/model-registry cycles",
-		"gjc-help-load-order-",
+		"vib-help-load-order-",
 		async root => {
 			const home = path.join(root, "home");
 			const xdg = path.join(root, "xdg");
@@ -84,7 +84,7 @@ describe("CLI help load order", () => {
 
 	itWithTempRoot(
 		"renders --help offline without touching the provider/model path (issue #438)",
-		"gjc-help-offline-",
+		"vib-help-offline-",
 		async root => {
 			const home = path.join(root, "home");
 			const xdg = path.join(root, "xdg");
@@ -137,7 +137,7 @@ describe("CLI help load order", () => {
 
 	itWithTempRoot(
 		"renders contribute-pr --help without loading native-dependent commands",
-		"gjc-contribute-pr-help-native-",
+		"vib-contribute-pr-help-native-",
 		async root => {
 			const home = path.join(root, "home");
 			const xdg = path.join(root, "xdg");
@@ -155,7 +155,7 @@ describe("CLI help load order", () => {
 					HOME: home,
 					XDG_CONFIG_HOME: xdg,
 					XDG_DATA_HOME: xdg,
-					GJC_CODING_AGENT_DIR: agentDir,
+					VIB_CODING_AGENT_DIR: agentDir,
 					PI_CODING_AGENT_DIR: agentDir,
 					PI_NO_TITLE: "1",
 					NO_COLOR: "1",
@@ -171,7 +171,7 @@ describe("CLI help load order", () => {
 
 			expect(exitCode, combined).toBe(0);
 			expect(stdout).toContain("USAGE");
-			expect(stdout).toContain("$ gjc contribute-pr");
+			expect(stdout).toContain("$ vib contribute-pr");
 			expect(stdout).toContain("--no-spawn");
 			expect(combined).not.toContain("Failed to load pi_natives native addon");
 		},
@@ -180,7 +180,7 @@ describe("CLI help load order", () => {
 
 	itWithTempRoot(
 		"lists representative commands in root --help",
-		"gjc-help-commands-",
+		"vib-help-commands-",
 		async root => {
 			const home = path.join(root, "home");
 			const xdg = path.join(root, "xdg");
@@ -198,7 +198,7 @@ describe("CLI help load order", () => {
 					HOME: home,
 					XDG_CONFIG_HOME: xdg,
 					XDG_DATA_HOME: xdg,
-					GJC_CODING_AGENT_DIR: agentDir,
+					VIB_CODING_AGENT_DIR: agentDir,
 					PI_CODING_AGENT_DIR: agentDir,
 					PI_NO_TITLE: "1",
 					NO_COLOR: "1",
@@ -214,20 +214,20 @@ describe("CLI help load order", () => {
 
 			expect(exitCode, combined).toBe(0);
 			expect(stdout).toContain("Commands:");
-			expect(stdout).toContain("gjc setup");
-			expect(stdout).toContain("gjc session");
-			expect(stdout).toContain("gjc state");
-			expect(stdout).toContain("gjc harness");
-			expect(stdout).toContain("gjc config");
-			expect(stdout).toContain("gjc ralplan");
-			expect(stdout).toContain("gjc ultragoal");
-			expect(stdout).toContain("gjc mcp");
-			expect(stdout).toContain("gjc mcp-serve");
-			expect(stdout).toContain("gjc contribute-pr");
-			expect(stdout).toContain("gjc web-search");
-			expect(stdout).toContain("gjc codex-native-hook");
-			expect(stdout).toContain("gjc gc");
-			expect(stdout).toContain("gjc <command> --help");
+			expect(stdout).toContain("vib setup");
+			expect(stdout).toContain("vib session");
+			expect(stdout).toContain("vib state");
+			expect(stdout).toContain("vib harness");
+			expect(stdout).toContain("vib config");
+			expect(stdout).toContain("vib ralplan");
+			expect(stdout).toContain("vib ultragoal");
+			expect(stdout).toContain("vib mcp");
+			expect(stdout).toContain("vib mcp-serve");
+			expect(stdout).toContain("vib contribute-pr");
+			expect(stdout).toContain("vib web-search");
+			expect(stdout).toContain("vib codex-native-hook");
+			expect(stdout).toContain("vib gc");
+			expect(stdout).toContain("vib <command> --help");
 			expect(stdout).toContain("Available Tools");
 			expect(stdout).toContain("Useful Commands");
 			expect(stderr).toBe("");
@@ -237,7 +237,7 @@ describe("CLI help load order", () => {
 
 	itWithTempRoot(
 		"fast-paths root --tmux --help before runtime globals",
-		"gjc-tmux-help-fast-path-",
+		"vib-tmux-help-fast-path-",
 		async root => {
 			const home = path.join(root, "home");
 			const xdg = path.join(root, "xdg");
@@ -276,7 +276,7 @@ describe("CLI help load order", () => {
 
 	itWithTempRoot(
 		"fast-paths root --tmux --version before runtime globals",
-		"gjc-tmux-version-fast-path-",
+		"vib-tmux-version-fast-path-",
 		async root => {
 			const home = path.join(root, "home");
 			const xdg = path.join(root, "xdg");
@@ -308,7 +308,7 @@ describe("CLI help load order", () => {
 				]);
 
 				expect(exitCode).toBe(0);
-				expect(stdout).toMatch(/^gjc\/\d+\.\d+\.\d+\n$/);
+				expect(stdout).toMatch(/^vib\/\d+\.\d+\.\d+\n$/);
 				expect(stderr).toBe("");
 			}
 		},
@@ -316,7 +316,7 @@ describe("CLI help load order", () => {
 	);
 	itWithTempRoot(
 		"package bin wrapper executes CLI help when imported by a Bun global shim",
-		"gjc-bin-wrapper-help-",
+		"vib-bin-wrapper-help-",
 		async root => {
 			const home = path.join(root, "home");
 			const xdg = path.join(root, "xdg");
@@ -325,7 +325,7 @@ describe("CLI help load order", () => {
 			await fs.mkdir(xdg, { recursive: true });
 			await fs.mkdir(agentDir, { recursive: true });
 
-			const wrapperPath = path.join(repoRoot, "packages", "coding-agent", "bin", "gjc.js");
+			const wrapperPath = path.join(repoRoot, "packages", "coding-agent", "bin", "vib.js");
 			const proc = Bun.spawn([process.execPath, wrapperPath, "--help"], {
 				cwd: repoRoot,
 				stdout: "pipe",
@@ -335,7 +335,7 @@ describe("CLI help load order", () => {
 					HOME: home,
 					XDG_CONFIG_HOME: xdg,
 					XDG_DATA_HOME: xdg,
-					GJC_CODING_AGENT_DIR: agentDir,
+					VIB_CODING_AGENT_DIR: agentDir,
 					PI_CODING_AGENT_DIR: agentDir,
 					PI_NO_TITLE: "1",
 					NO_COLOR: "1",
@@ -351,7 +351,7 @@ describe("CLI help load order", () => {
 ${stderr}`;
 
 			expect(exitCode, combined).toBe(0);
-			expect(stdout).toContain("gjc v");
+			expect(stdout).toContain("vib v");
 			expect(stdout).toContain("USAGE");
 			expect(combined).not.toContain("Bun is a fast JavaScript runtime");
 		},

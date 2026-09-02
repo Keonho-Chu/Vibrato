@@ -15,7 +15,7 @@ const ROOT_TS = "1785573662.132329";
 
 /** Settings bound to a temp agent directory: the suite never resolves the real one. */
 async function isolatedSettings(): Promise<{ settings: Settings; cleanup: () => Promise<void> }> {
-	const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-notify-thread-"));
+	const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-notify-thread-"));
 	const base = Settings.isolated({});
 	const settings = new Proxy(base, {
 		get(target, property) {

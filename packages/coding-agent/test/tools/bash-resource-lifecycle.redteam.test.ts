@@ -2,20 +2,16 @@ import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { AsyncJobManager } from "@gajae-code/coding-agent/async";
-import { resetSettingsForTest, Settings } from "@gajae-code/coding-agent/config/settings";
-import {
-	disposeAllShellSessions,
-	executeBash,
-	getShellSessionCount,
-} from "@gajae-code/coding-agent/exec/bash-executor";
-import { ArtifactManager } from "@gajae-code/coding-agent/session/artifacts";
-import { DEFAULT_ARTIFACT_MAX_BYTES } from "@gajae-code/coding-agent/session/streaming-output";
-import type { ToolSession } from "@gajae-code/coding-agent/tools";
-import { BashTool } from "@gajae-code/coding-agent/tools/implementations";
+import { AsyncJobManager } from "@vib-rato/coding-agent/async";
+import { resetSettingsForTest, Settings } from "@vib-rato/coding-agent/config/settings";
+import { disposeAllShellSessions, executeBash, getShellSessionCount } from "@vib-rato/coding-agent/exec/bash-executor";
+import { ArtifactManager } from "@vib-rato/coding-agent/session/artifacts";
+import { DEFAULT_ARTIFACT_MAX_BYTES } from "@vib-rato/coding-agent/session/streaming-output";
+import type { ToolSession } from "@vib-rato/coding-agent/tools";
+import { BashTool } from "@vib-rato/coding-agent/tools/implementations";
 
 function makeTempDir(): string {
-	return fs.mkdtempSync(path.join(os.tmpdir(), "gjc-bash-redteam-"));
+	return fs.mkdtempSync(path.join(os.tmpdir(), "vib-bash-redteam-"));
 }
 
 function processExists(pid: number): boolean {

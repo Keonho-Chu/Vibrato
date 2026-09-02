@@ -3,7 +3,7 @@ import {
 	CURRENT_SESSION_VERSION,
 	type FileEntry,
 	migrateSessionEntries,
-} from "@gajae-code/coding-agent/session/session-manager";
+} from "@vib-rato/coding-agent/session/session-manager";
 
 describe("migrateSessionEntries", () => {
 	it("should add id/parentId to v1 entries", () => {

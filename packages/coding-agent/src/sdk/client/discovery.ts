@@ -36,7 +36,7 @@ export class SdkDiscoveryError extends Error {
 export type SdkSessionEndpointScope = "default" | "chat";
 
 export function endpointDirectory(repo: string, scope: SdkSessionEndpointScope = "default"): string {
-	return scope === "chat" ? path.join(repo, ".gjc", "state", "chat", "sdk") : path.join(repo, ".gjc", "state", "sdk");
+	return scope === "chat" ? path.join(repo, ".vib", "state", "chat", "sdk") : path.join(repo, ".vib", "state", "sdk");
 }
 function isUsableSessionId(sessionId: string): boolean {
 	return (

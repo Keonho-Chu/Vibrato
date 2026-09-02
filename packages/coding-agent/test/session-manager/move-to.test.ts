@@ -8,10 +8,10 @@ import {
 	type SessionHeader,
 	SessionManager,
 	syncSessionMoveDirectory,
-} from "@gajae-code/coding-agent/session/session-manager";
-import { stripOuterDoubleQuotes } from "@gajae-code/coding-agent/tools/path-utils";
-import * as native from "@gajae-code/natives";
-import { getConfigRootDir, getSessionsDir, setAgentDir } from "@gajae-code/utils";
+} from "@vib-rato/coding-agent/session/session-manager";
+import { stripOuterDoubleQuotes } from "@vib-rato/coding-agent/tools/path-utils";
+import * as native from "@vib-rato/natives";
+import { getConfigRootDir, getSessionsDir, setAgentDir } from "@vib-rato/utils";
 import { resolveManagedScope } from "../../src/session/internal/managed-session-scope";
 import { makeAssistantMessage } from "./helpers";
 
@@ -120,7 +120,7 @@ describe("SessionManager.moveTo", () => {
 	const fallbackAgentDir = path.join(getConfigRootDir(), "agent");
 
 	beforeEach(async () => {
-		testAgentDir = await fsp.mkdtemp(path.join(os.tmpdir(), "gjc-move-test-"));
+		testAgentDir = await fsp.mkdtemp(path.join(os.tmpdir(), "vib-move-test-"));
 		setAgentDir(testAgentDir);
 		cwdA = path.join(testAgentDir, "cwd-a");
 		cwdB = path.join(testAgentDir, "cwd-b");

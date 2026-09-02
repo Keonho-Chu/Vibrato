@@ -1,14 +1,14 @@
 import { afterEach, describe, expect, it } from "bun:test";
 import { normalizeResponsesToolCallId, resolveCacheRetention } from "../src/utils";
 
-const originalGjcCacheRetention = Bun.env.GJC_CACHE_RETENTION;
+const originalVibCacheRetention = Bun.env.VIB_CACHE_RETENTION;
 const originalPiCacheRetention = Bun.env.PI_CACHE_RETENTION;
 
 afterEach(() => {
-	if (originalGjcCacheRetention === undefined) {
-		delete Bun.env.GJC_CACHE_RETENTION;
+	if (originalVibCacheRetention === undefined) {
+		delete Bun.env.VIB_CACHE_RETENTION;
 	} else {
-		Bun.env.GJC_CACHE_RETENTION = originalGjcCacheRetention;
+		Bun.env.VIB_CACHE_RETENTION = originalVibCacheRetention;
 	}
 	if (originalPiCacheRetention === undefined) {
 		delete Bun.env.PI_CACHE_RETENTION;
@@ -86,36 +86,36 @@ describe("normalizeResponsesToolCallId", () => {
 });
 
 describe("resolveCacheRetention", () => {
-	it("uses documented GJC_CACHE_RETENTION for long retention", () => {
-		Bun.env.GJC_CACHE_RETENTION = "long";
+	it("uses documented VIB_CACHE_RETENTION for long retention", () => {
+		Bun.env.VIB_CACHE_RETENTION = "long";
 		delete Bun.env.PI_CACHE_RETENTION;
 
 		expect(resolveCacheRetention()).toBe("long");
 	});
 
 	it("prefers explicit cache retention over environment defaults", () => {
-		Bun.env.GJC_CACHE_RETENTION = "long";
+		Bun.env.VIB_CACHE_RETENTION = "long";
 		Bun.env.PI_CACHE_RETENTION = "long";
 
 		expect(resolveCacheRetention("none")).toBe("none");
 	});
 
 	it("falls back to legacy PI_CACHE_RETENTION when documented env is unset", () => {
-		delete Bun.env.GJC_CACHE_RETENTION;
+		delete Bun.env.VIB_CACHE_RETENTION;
 		Bun.env.PI_CACHE_RETENTION = "long";
 
 		expect(resolveCacheRetention()).toBe("long");
 	});
 
-	it("prefers GJC_CACHE_RETENTION over legacy PI_CACHE_RETENTION", () => {
-		Bun.env.GJC_CACHE_RETENTION = "short";
+	it("prefers VIB_CACHE_RETENTION over legacy PI_CACHE_RETENTION", () => {
+		Bun.env.VIB_CACHE_RETENTION = "short";
 		Bun.env.PI_CACHE_RETENTION = "long";
 
 		expect(resolveCacheRetention()).toBe("short");
 	});
 
 	it("returns the provided fallback when no request value or env override is set", () => {
-		delete Bun.env.GJC_CACHE_RETENTION;
+		delete Bun.env.VIB_CACHE_RETENTION;
 		delete Bun.env.PI_CACHE_RETENTION;
 
 		expect(resolveCacheRetention()).toBe("short");
@@ -123,7 +123,7 @@ describe("resolveCacheRetention", () => {
 	});
 
 	it("lets an explicit request value win over the fallback", () => {
-		delete Bun.env.GJC_CACHE_RETENTION;
+		delete Bun.env.VIB_CACHE_RETENTION;
 		delete Bun.env.PI_CACHE_RETENTION;
 
 		expect(resolveCacheRetention("short", "long")).toBe("short");
@@ -131,11 +131,11 @@ describe("resolveCacheRetention", () => {
 	});
 
 	it("lets env overrides win over the fallback", () => {
-		Bun.env.GJC_CACHE_RETENTION = "short";
+		Bun.env.VIB_CACHE_RETENTION = "short";
 		delete Bun.env.PI_CACHE_RETENTION;
 		expect(resolveCacheRetention(undefined, "long")).toBe("short");
 
-		delete Bun.env.GJC_CACHE_RETENTION;
+		delete Bun.env.VIB_CACHE_RETENTION;
 		Bun.env.PI_CACHE_RETENTION = "short";
 		expect(resolveCacheRetention(undefined, "long")).toBe("short");
 	});

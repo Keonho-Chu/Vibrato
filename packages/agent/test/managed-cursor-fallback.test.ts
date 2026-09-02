@@ -1,8 +1,8 @@
 import { describe, expect, it } from "bun:test";
-import { Agent, type AgentTool } from "@gajae-code/agent-core";
-import type { Model, SimpleStreamOptions } from "@gajae-code/ai";
-import { z } from "@gajae-code/ai";
-import { createMockModel } from "@gajae-code/ai/providers/mock";
+import { Agent, type AgentTool } from "@vib-rato/agent-core";
+import type { Model, SimpleStreamOptions } from "@vib-rato/ai";
+import { z } from "@vib-rato/ai";
+import { createMockModel } from "@vib-rato/ai/providers/mock";
 
 type CursorOptionSnapshot = {
 	hasCursorExecHandlers: boolean;

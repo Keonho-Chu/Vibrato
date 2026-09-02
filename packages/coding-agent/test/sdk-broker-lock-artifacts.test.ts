@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import path from "node:path";
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 import {
 	BROKER_LOCK_ARTIFACT_GRACE_MS,
 	Broker,
@@ -14,13 +14,13 @@ import { LifecycleLedger } from "../src/sdk/broker/lifecycle-ledger";
 
 const HOUR_MS = 60 * 60 * 1_000;
 
-/** Temp state roots created by this file; `~/.gjc` is never touched. */
+/** Temp state roots created by this file; `~/.vib` is never touched. */
 const roots: string[] = [];
 /** Paths chmod-ed to 0 that must be reopened before the temp root can be removed. */
 const restoreModes: string[] = [];
 
 async function makeAgentDir(): Promise<string> {
-	const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-artifacts-"));
+	const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-artifacts-"));
 	roots.push(dir);
 	await fs.mkdir(path.join(dir, "sdk"), { recursive: true, mode: 0o700 });
 	return dir;
@@ -219,7 +219,7 @@ describe("broker lock artifact reaper", () => {
 	});
 
 	it("returns empty for a state root that has no sdk directory yet", async () => {
-		const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-artifacts-"));
+		const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-artifacts-"));
 		roots.push(agentDir);
 
 		expect(await reapStaleBrokerLockArtifacts({ agentDir })).toEqual({ removed: [], retained: [] });
@@ -366,7 +366,7 @@ describe("lifecycle ledger quarantine bound", () => {
 		await new LifecycleLedger(agentDir, { maxCorruptBytes }).open();
 
 		const quarantined = await Bun.file(corrupt).text();
-		expect(quarantined).toContain("[gjc: quarantined row truncated at the corrupt-ledger cap]");
+		expect(quarantined).toContain("[vib: quarantined row truncated at the corrupt-ledger cap]");
 		expect(Bun.file(corrupt).size).toBeLessThan(maxCorruptBytes + 128);
 	});
 

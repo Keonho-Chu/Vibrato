@@ -11,7 +11,7 @@ import {
 } from "../src/sdk/broker/startup-failure";
 
 async function makeAgentDir(): Promise<string> {
-	return fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-lifecycle-"));
+	return fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-lifecycle-"));
 }
 
 test("write creates the marker at the expected path and read round-trips it", async () => {

@@ -1,18 +1,18 @@
 import type { Dirent } from "node:fs";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { sessionStateDir } from "../gjc-runtime/session-layout";
+import { sessionStateDir } from "../vib-runtime/session-layout";
 
-export const GJC_MCP_DELEGATE_FLOW_ACTIVATION = "$gjc-mcp-delegate-flow";
+export const VIB_MCP_DELEGATE_FLOW_ACTIVATION = "$vib-mcp-delegate-flow";
 
 const SESSION_ID_PATTERN = /^[A-Za-z0-9._-]{1,256}$/;
 const MAX_HOST_CONTEXT_BYTES = 8192;
 const MAX_HOST_CONTEXTS = 64;
-const ACTIVATION_PATTERN = /(?:^|[^A-Za-z0-9_-])\$gjc-mcp-delegate-flow(?=$|[^A-Za-z0-9_-])/;
+const ACTIVATION_PATTERN = /(?:^|[^A-Za-z0-9_-])\$vib-mcp-delegate-flow(?=$|[^A-Za-z0-9_-])/;
 
 export interface McpDelegateHostContextV1 {
 	schema_version: 1;
-	activation: typeof GJC_MCP_DELEGATE_FLOW_ACTIVATION;
+	activation: typeof VIB_MCP_DELEGATE_FLOW_ACTIVATION;
 	session_id: string | null;
 	thread_id: string | null;
 	turn_id: string | null;
@@ -35,7 +35,7 @@ function isMcpDelegateHostContextV1(value: unknown): value is McpDelegateHostCon
 	const context = value as Record<string, unknown>;
 	return (
 		context.schema_version === 1 &&
-		context.activation === GJC_MCP_DELEGATE_FLOW_ACTIVATION &&
+		context.activation === VIB_MCP_DELEGATE_FLOW_ACTIVATION &&
 		typeof context.session_id === "string" &&
 		SESSION_ID_PATTERN.test(context.session_id) &&
 		(typeof context.thread_id === "string" || context.thread_id === null) &&
@@ -69,7 +69,7 @@ export async function persistMcpDelegateHostContext(input: {
 	if (!sessionId) return null;
 	const context: McpDelegateHostContextV1 = {
 		schema_version: 1,
-		activation: GJC_MCP_DELEGATE_FLOW_ACTIVATION,
+		activation: VIB_MCP_DELEGATE_FLOW_ACTIVATION,
 		session_id: sessionId,
 		thread_id: optionalString(input.threadId),
 		turn_id: optionalString(input.turnId),
@@ -110,7 +110,7 @@ export async function listMcpDelegateHostContexts(
 ): Promise<{ contexts: McpDelegateHostContextV1[]; failures: number }> {
 	let entries: Dirent[];
 	try {
-		entries = await fs.readdir(path.join(cwd, ".gjc"), { withFileTypes: true });
+		entries = await fs.readdir(path.join(cwd, ".vib"), { withFileTypes: true });
 	} catch (error) {
 		if ((error as NodeJS.ErrnoException).code === "ENOENT") return { contexts: [], failures: 0 };
 		return { contexts: [], failures: 1 };
@@ -119,7 +119,7 @@ export async function listMcpDelegateHostContexts(
 	const candidates: Array<{ path: string; mtimeMs: number }> = [];
 	for (const entry of entries) {
 		if (!entry.isDirectory() || !entry.name.startsWith("_session-")) continue;
-		const contextPath = path.join(cwd, ".gjc", entry.name, "state", "mcp-delegate-host-context.json");
+		const contextPath = path.join(cwd, ".vib", entry.name, "state", "mcp-delegate-host-context.json");
 		try {
 			const stat = await fs.stat(contextPath);
 			if (stat.isFile() && stat.size <= MAX_HOST_CONTEXT_BYTES)

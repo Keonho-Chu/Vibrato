@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { ThinkingLevel } from "@gajae-code/agent-core";
-import type { Model } from "@gajae-code/ai";
+import { ThinkingLevel } from "@vib-rato/agent-core";
+import type { Model } from "@vib-rato/ai";
 import { activateModelProfile, prepareModelProfileActivation } from "../src/config/model-profile-activation";
 import type { ModelProfileDefinition } from "../src/config/model-profiles";
 import { BUILTIN_MODEL_PROFILES } from "../src/config/model-profiles";

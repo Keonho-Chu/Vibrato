@@ -3,16 +3,16 @@ import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 
-/** Stable code identity used by GJC's ad-hoc macOS development binaries. */
-export const GJC_MACOS_CODE_SIGNING_IDENTIFIER = "com.gajae-code.gjc";
+/** Stable code identity used by Vibrato's ad-hoc macOS development binaries. */
+export const VIB_MACOS_CODE_SIGNING_IDENTIFIER = "com.vib-rato.vib";
 
 /**
  * TCC stores the designated requirement, not only the display identifier.
  * An ad-hoc signature's default requirement is its changing CDHash, so every
  * rebuild otherwise looks like a new app to macOS privacy services.
  */
-export const GJC_MACOS_DESIGNATED_REQUIREMENT =
-	`designated => identifier "${GJC_MACOS_CODE_SIGNING_IDENTIFIER}"`;
+export const VIB_MACOS_DESIGNATED_REQUIREMENT =
+	`designated => identifier "${VIB_MACOS_CODE_SIGNING_IDENTIFIER}"`;
 
 export function buildMacOSAdHocCodeSignCommand(requirementPath: string, binaryPath: string): string[] {
 	return [
@@ -21,7 +21,7 @@ export function buildMacOSAdHocCodeSignCommand(requirementPath: string, binaryPa
 		"--sign",
 		"-",
 		"--identifier",
-		GJC_MACOS_CODE_SIGNING_IDENTIFIER,
+		VIB_MACOS_CODE_SIGNING_IDENTIFIER,
 		"--requirements",
 		requirementPath,
 		binaryPath,
@@ -39,8 +39,8 @@ export async function signMacOSBinary(
 	binaryPath: string,
 	runCommand: (command: string[]) => Promise<void>,
 ): Promise<void> {
-	const requirementPath = path.join(os.tmpdir(), `gjc-codesign-${process.pid}-${crypto.randomUUID()}.req`);
-	await Bun.write(requirementPath, `${GJC_MACOS_DESIGNATED_REQUIREMENT}\n`);
+	const requirementPath = path.join(os.tmpdir(), `vib-codesign-${process.pid}-${crypto.randomUUID()}.req`);
+	await Bun.write(requirementPath, `${VIB_MACOS_DESIGNATED_REQUIREMENT}\n`);
 	try {
 		await runCommand(buildMacOSAdHocCodeSignCommand(requirementPath, binaryPath));
 	} finally {

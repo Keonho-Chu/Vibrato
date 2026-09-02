@@ -4,14 +4,14 @@ These fixtures freeze the runtime-facing schema and observed behavior of upstrea
 Claude Code's `Monitor`, `CronCreate`, `CronList`, and `CronDelete` tools.
 
 They are the **parity oracle** used by `monitor-tool.test.ts` and the fixture
-validation test. GJC's inline `Monitor` tool must mirror the `monitor` surface
+validation test. Vibrato's inline `Monitor` tool must mirror the `monitor` surface
 exactly; any divergence there is a bug.
 
-> **Cron divergence:** GJC intentionally consolidates upstream's `CronCreate` /
+> **Cron divergence:** Vibrato intentionally consolidates upstream's `CronCreate` /
 > `CronList` / `CronDelete` into a single `cron` tool with an `op` discriminator
 > (`create` | `list` | `delete`). The three `cron-*.schema.json` fixtures are kept
 > as a historical record of the upstream surface; `claude-code-tools-fixtures.test.ts`
-> validates those frozen JSON records, not GJC's live `cron` tool shape.
+> validates those frozen JSON records, not Vibrato's live `cron` tool shape.
 
 ## Source
 
@@ -63,7 +63,7 @@ Per the ralplan consensus plan (Phase 0):
 
 - If upstream provides no monitor/BashOutput-like schema → stop and return to planning.
 - If upstream provides no cron/scheduler schema → stop and return to planning.
-- No fallback or GJC-original tool surface may ship.
+- No fallback or Vibrato-original tool surface may ship.
 
 These fixtures evidence that both Monitor and Cron* have stable upstream surfaces,
 so implementation may proceed.

@@ -1,6 +1,6 @@
 # GPT-5.6 Codex preset benchmark
 
-This report records descriptive local exact-edit evidence and the product judgments used to assign GPT-5.6 Sol, Terra, and Luna to GJC's built-in Codex-related model profiles.
+This report records descriptive local exact-edit evidence and the product judgments used to assign GPT-5.6 Sol, Terra, and Luna to Vibrato's built-in Codex-related model profiles.
 
 ## Decision summary
 
@@ -16,7 +16,7 @@ The edit benchmark does not measure default-agent interpretation, orchestration,
 ## Environment
 
 - Date: 2026-07-11
-- GJC provider: local `layofflabs` OpenAI Responses-compatible endpoint
+- Vibrato provider: local `layofflabs` OpenAI Responses-compatible endpoint
 - Models: `gpt-5.6-luna`, `gpt-5.6-terra`, `gpt-5.6-sol`
 - Benchmark: `packages/typescript-edit-benchmark`
 - Verification: exact expected-file comparison after formatting normalization

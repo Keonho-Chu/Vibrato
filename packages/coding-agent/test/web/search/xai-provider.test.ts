@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, setSystemTime, vi } from "bun:test";
-import type { AuthStorage } from "@gajae-code/ai";
-import { hookFetch } from "@gajae-code/utils";
+import type { AuthStorage } from "@vib-rato/ai";
+import { hookFetch } from "@vib-rato/utils";
 import { buildXaiRequestBody, searchXai, XaiProvider } from "../../../src/web/search/providers/xai";
 
 const originalPiModel = process.env.PI_XAI_WEB_SEARCH_MODEL;

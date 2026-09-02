@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
-import { convertAnthropicMessages } from "@gajae-code/ai/providers/anthropic";
-import { transformMessages } from "@gajae-code/ai/providers/transform-messages";
-import type { AssistantMessage, Model, UserMessage } from "@gajae-code/ai/types";
+import { convertAnthropicMessages } from "@vib-rato/ai/providers/anthropic";
+import { transformMessages } from "@vib-rato/ai/providers/transform-messages";
+import type { AssistantMessage, Model, UserMessage } from "@vib-rato/ai/types";
 
 /**
  * Regression: some Anthropic-routed models reject "assistant prefill" requests

@@ -1,6 +1,6 @@
-import type { AgentTool } from "@gajae-code/agent-core";
-import type { AssistantMessage } from "@gajae-code/ai";
-import type { TUI } from "@gajae-code/tui";
+import type { AgentTool } from "@vib-rato/agent-core";
+import type { AssistantMessage } from "@vib-rato/ai";
+import type { TUI } from "@vib-rato/tui";
 import { initTheme } from "../src/modes/theme/theme";
 import { AssistantMessageComponent } from "../src/modes/components/assistant-message";
 import { ToolExecutionComponent } from "../src/modes/components/tool-execution";

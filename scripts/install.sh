@@ -1,11 +1,11 @@
 #!/bin/sh
 set -e
 
-# GJC Coding Agent Installer (standalone binary, no Bun required)
+# Vibrato Coding Agent Installer (standalone binary, no Bun required)
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/Yeachan-Heo/gajae-code/main/scripts/install.sh | sh
-#   curl -fsSL https://raw.githubusercontent.com/Yeachan-Heo/gajae-code/main/scripts/install.sh | sh -s -- --channel nightly
-#   curl -fsSL https://raw.githubusercontent.com/Yeachan-Heo/gajae-code/main/scripts/install.sh | sh -s -- --ref v0.15.0
+#   curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/main/scripts/install.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/main/scripts/install.sh | sh -s -- --channel nightly
+#   curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/main/scripts/install.sh | sh -s -- --ref v0.15.0
 #
 # Options:
 #   --channel <stable|nightly>  Release channel (default: stable)
@@ -17,14 +17,14 @@ set -e
 # Bun is never detected, installed, or invoked on the default path.
 # --source requires a preinstalled Bun and never downloads one.
 
-REPO="Yeachan-Heo/gajae-code"
-PACKAGE="@gajae-code/coding-agent"
-INSTALL_DIR="${GJC_INSTALL_DIR:-$HOME/.local/bin}"
-GITHUB_API="${GJC_GITHUB_API:-https://api.github.com}"
-GITHUB_RELEASES="${GJC_GITHUB_RELEASES:-https://github.com/${REPO}/releases/download}"
+REPO="Keonho-Chu/Vibrato"
+PACKAGE="@vib-rato/coding-agent"
+INSTALL_DIR="${VIB_INSTALL_DIR:-$HOME/.local/bin}"
+GITHUB_API="${VIB_GITHUB_API:-https://api.github.com}"
+GITHUB_RELEASES="${VIB_GITHUB_RELEASES:-https://github.com/${REPO}/releases/download}"
 MIN_BUN_VERSION="1.3.14"
-BINARY_SHA256_ASSET="gajae-release-binaries.sha256"
-BINARY_MANIFEST_ASSET="gajae-release-binaries-v1.json"
+BINARY_SHA256_ASSET="vibrato-release-binaries.sha256"
+BINARY_MANIFEST_ASSET="vibrato-release-binaries-v1.json"
 
 MODE="binary"
 CHANNEL="stable"
@@ -39,10 +39,10 @@ SOURCE_CLONE_DIR=""
 
 usage() {
     cat <<'EOF'
-GJC installer — standalone binary (Bun is not required)
+Vibrato installer — standalone binary (Bun is not required)
 
 Usage:
-  curl -fsSL https://raw.githubusercontent.com/Yeachan-Heo/gajae-code/main/scripts/install.sh | sh
+  curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/main/scripts/install.sh | sh
   sh install.sh [--channel stable|nightly] [--ref <tag>]
   sh install.sh --source [--ref <tag>]
 
@@ -54,7 +54,7 @@ Options:
   -h, --help                  Show this help
 
 Environment:
-  GJC_INSTALL_DIR             Install directory (default: ~/.local/bin)
+  VIB_INSTALL_DIR             Install directory (default: ~/.local/bin)
   GITHUB_TOKEN / GH_TOKEN     Optional GitHub API token (rate limits)
 EOF
 }
@@ -163,16 +163,16 @@ require_official_github_origins() {
     releases=$(printf '%s' "$GITHUB_RELEASES" | sed 's:/*$::')
     expected_releases="https://github.com/${REPO}/releases/download"
     if [ "$api" != "https://api.github.com" ]; then
-        die "GJC_GITHUB_API must be https://api.github.com (got ${GITHUB_API})."
+        die "VIB_GITHUB_API must be https://api.github.com (got ${GITHUB_API})."
     fi
     if [ "$releases" != "$expected_releases" ]; then
-        die "GJC_GITHUB_RELEASES must be ${expected_releases} (got ${GITHUB_RELEASES})."
+        die "VIB_GITHUB_RELEASES must be ${expected_releases} (got ${GITHUB_RELEASES})."
     fi
 }
 
 prepare_github_auth_header() {
     token="$1"
-    exclusive_tmp "gjc.curlhdr" "${TMPDIR:-/tmp}"
+    exclusive_tmp "vib.curlhdr" "${TMPDIR:-/tmp}"
     AUTH_HDR="$LAST_EXCLUSIVE_TMP"
     old_umask=$(umask)
     umask 077
@@ -187,14 +187,14 @@ curl_github() {
     if [ -n "$token" ] && trusted_github_url "$url"; then
         prepare_github_auth_header "$token"
         curl -fsSL --retry 3 --retry-delay 1 \
-            -A "gjc-install" \
+            -A "vib-install" \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             -H "@${AUTH_HDR}" \
             -o "$out" "$url"
     else
         curl -fsSL --retry 3 --retry-delay 1 \
-            -A "gjc-install" \
+            -A "vib-install" \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             -o "$out" "$url"
@@ -208,13 +208,13 @@ curl_github_optional() {
     if [ -n "$token" ] && trusted_github_url "$url"; then
         prepare_github_auth_header "$token"
         curl -sSL --retry 2 --retry-delay 1 \
-            -A "gjc-install" \
+            -A "vib-install" \
             -H "Accept: application/octet-stream" \
             -H "@${AUTH_HDR}" \
             -o "$out" -w "%{http_code}" "$url"
     else
         curl -sSL --retry 2 --retry-delay 1 \
-            -A "gjc-install" \
+            -A "vib-install" \
             -H "Accept: application/octet-stream" \
             -o "$out" -w "%{http_code}" "$url"
     fi
@@ -361,7 +361,7 @@ detect_platform() {
         *)             die "Unsupported architecture: $ARCH. Prebuilt binaries exist for x64 and arm64." ;;
     esac
 
-    BINARY="gjc-${PLATFORM}-${ARCH}"
+    BINARY="vib-${PLATFORM}-${ARCH}"
 }
 
 try_publish_lock_file() {
@@ -370,7 +370,7 @@ try_publish_lock_file() {
 }
 
 acquire_lock() {
-    lock="${INSTALL_DIR}/.gjc-install.lock"
+    lock="${INSTALL_DIR}/.vib-install.lock"
     mkdir -p "$INSTALL_DIR"
     LOCK_NONCE=$(od -An -N8 -tx1 /dev/urandom 2>/dev/null | tr -d ' \n')
     [ -n "$LOCK_NONCE" ] || LOCK_NONCE="$$.$RANDOM"
@@ -378,11 +378,11 @@ acquire_lock() {
         LOCK_FILE="$lock"
         return 0
     fi
-    die "Another GJC installer is already running in ${INSTALL_DIR} (lock: ${lock}). Remove a leftover lock file only after confirming no installer is running."
+    die "Another Vibrato installer is already running in ${INSTALL_DIR} (lock: ${lock}). Remove a leftover lock file only after confirming no installer is running."
 }
 
 resolve_release_tag() {
-    exclusive_tmp "gjc-release"
+    exclusive_tmp "vib-release"
     json_tmp="$LAST_EXCLUSIVE_TMP"
 
     if [ -n "$REF" ]; then
@@ -424,9 +424,9 @@ For branch/commit source installs, re-run with --source --ref <git-ref> and an e
 verify_checksum() {
     asset_name="$1"
     downloaded="$2"
-    exclusive_tmp "gjc.sha256"
+    exclusive_tmp "vib.sha256"
     sums_tmp="$LAST_EXCLUSIVE_TMP"
-    exclusive_tmp "gjc.manifest"
+    exclusive_tmp "vib.manifest"
     manifest_tmp="$LAST_EXCLUSIVE_TMP"
     sums_url="${GITHUB_RELEASES}/${LATEST}/${BINARY_SHA256_ASSET}"
     http_code=$(curl_github_optional "$sums_url" "$sums_tmp") || die "Failed to fetch integrity asset $sums_url. Existing install was not changed."
@@ -481,7 +481,7 @@ verify_checksum() {
 restore_backup() {
     if [ -n "$BACKUP_PATH" ] && [ -f "$BACKUP_PATH" ] && [ -n "$DEST_PATH" ]; then
         mv -f "$BACKUP_PATH" "$DEST_PATH"
-        echo "Restored previous gjc binary at ${DEST_PATH}"
+        echo "Restored previous vib binary at ${DEST_PATH}"
     elif [ -n "$DEST_PATH" ] && [ ! -f "$BACKUP_PATH" ]; then
         rm -f "$DEST_PATH"
     fi
@@ -495,9 +495,9 @@ verify_installed_binary() {
         return 1
     fi
     reported=$("$dest" --version 2>/dev/null || true)
-    actual=$(printf '%s\n' "$reported" | sed -n 's|^gjc/\([^[:space:]]*\).*|\1|p')
+    actual=$(printf '%s\n' "$reported" | sed -n 's|^vib/\([^[:space:]]*\).*|\1|p')
     if [ "$actual" != "$expected" ]; then
-        echo "Installed binary --version mismatch (expected gjc/${expected}, got: ${reported:-<empty>})" >&2
+        echo "Installed binary --version mismatch (expected vib/${expected}, got: ${reported:-<empty>})" >&2
         return 1
     fi
     if ! "$dest" --smoke-test >/dev/null 2>&1; then
@@ -543,8 +543,8 @@ install_via_bun() {
         bun install -g "$PACKAGE" || die "Failed to install $PACKAGE"
     fi
     echo ""
-    echo "Installed gjc via bun (development/source mode)"
-    echo "Run 'gjc' to get started!"
+    echo "Installed vib via bun (development/source mode)"
+    echo "Run 'vib' to get started!"
 }
 
 install_binary() {
@@ -553,8 +553,8 @@ install_binary() {
     acquire_lock
     resolve_release_tag
 
-    DEST_PATH="${INSTALL_DIR}/gjc"
-    exclusive_tmp "gjc.download"
+    DEST_PATH="${INSTALL_DIR}/vib"
+    exclusive_tmp "vib.download"
     DOWNLOAD_TMP="$LAST_EXCLUSIVE_TMP"
     BACKUP_PATH=""
 
@@ -563,10 +563,10 @@ install_binary() {
     if ! curl_github "$BINARY_URL" "$DOWNLOAD_TMP"; then
         rm -f "$DOWNLOAD_TMP"
         echo ""
-        echo "No prebuilt GJC binary was found for ${PLATFORM}-${ARCH} in ${LATEST}."
+        echo "No prebuilt Vibrato binary was found for ${PLATFORM}-${ARCH} in ${LATEST}."
         echo "Fallback options:"
         echo "  - Choose a release that publishes ${BINARY}"
-        echo "  - Re-run this installer with --source if you are developing GJC and already have Bun"
+        echo "  - Re-run this installer with --source if you are developing Vibrato and already have Bun"
         echo "Expected asset URL: $BINARY_URL"
         exit 1
     fi
@@ -580,11 +580,11 @@ install_binary() {
     chmod +x "$DOWNLOAD_TMP"
 
     if [ -h "$DEST_PATH" ]; then
-        die "Refusing to replace symlink ${DEST_PATH} with a regular binary. Remove the symlink or set GJC_INSTALL_DIR."
+        die "Refusing to replace symlink ${DEST_PATH} with a regular binary. Remove the symlink or set VIB_INSTALL_DIR."
     fi
 
     if [ -e "$DEST_PATH" ]; then
-        exclusive_tmp "gjc.bak"
+        exclusive_tmp "vib.bak"
         BACKUP_PATH="$LAST_EXCLUSIVE_TMP"
         rm -f "$BACKUP_PATH"
         cp -p "$DEST_PATH" "$BACKUP_PATH"
@@ -604,11 +604,11 @@ install_binary() {
     BACKUP_PATH=""
 
     echo ""
-    echo "Installed gjc ${EXPECTED_VERSION} to ${DEST_PATH}"
+    echo "Installed vib ${EXPECTED_VERSION} to ${DEST_PATH}"
 
     case ":$PATH:" in
-        *":$INSTALL_DIR:"*) echo "Run 'gjc' to get started!" ;;
-        *) echo "Add ${INSTALL_DIR} to your PATH, then run 'gjc'" ;;
+        *":$INSTALL_DIR:"*) echo "Run 'vib' to get started!" ;;
+        *) echo "Add ${INSTALL_DIR} to your PATH, then run 'vib'" ;;
     esac
 }
 

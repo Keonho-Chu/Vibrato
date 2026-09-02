@@ -8,16 +8,16 @@
  * by driving the real `prepareCompaction` → `serializeConversation` → `compact`
  * path over a large persisted-history entry list, matching the production
  * failure mode ("Context overflow recovery failed: Object.entries requires
- * that input parameter not be null or undefined") observed on gjc/0.15.0 with
+ * that input parameter not be null or undefined") observed on vib/0.15.0 with
  * 2385-message sessions.
  */
 import { describe, expect, it } from "bun:test";
-import type { CompactionPreparation } from "@gajae-code/agent-core/compaction/compaction";
-import { compact, DEFAULT_COMPACTION_SETTINGS, prepareCompaction } from "@gajae-code/agent-core/compaction/compaction";
-import type { SessionEntry } from "@gajae-code/agent-core/compaction/entries";
-import { convertToLlm } from "@gajae-code/agent-core/compaction/messages";
-import { serializeConversation } from "@gajae-code/agent-core/compaction/utils";
-import type { Message } from "@gajae-code/ai/types";
+import type { CompactionPreparation } from "@vib-rato/agent-core/compaction/compaction";
+import { compact, DEFAULT_COMPACTION_SETTINGS, prepareCompaction } from "@vib-rato/agent-core/compaction/compaction";
+import type { SessionEntry } from "@vib-rato/agent-core/compaction/entries";
+import { convertToLlm } from "@vib-rato/agent-core/compaction/messages";
+import { serializeConversation } from "@vib-rato/agent-core/compaction/utils";
+import type { Message } from "@vib-rato/ai/types";
 
 /** Narrow AgentMessage[] to the LLM Message[] shape serializeConversation accepts. */
 function llmMessages(messages: CompactionPreparation["messagesToSummarize"]): Message[] {

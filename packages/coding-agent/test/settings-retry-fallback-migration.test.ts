@@ -2,9 +2,9 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { withFileLock } from "@gajae-code/coding-agent/config/file-lock";
-import { resetSettingsForTest, Settings } from "@gajae-code/coding-agent/config/settings";
-import { logger } from "@gajae-code/utils";
+import { withFileLock } from "@vib-rato/coding-agent/config/file-lock";
+import { resetSettingsForTest, Settings } from "@vib-rato/coding-agent/config/settings";
+import { logger } from "@vib-rato/utils";
 import { YAML } from "bun";
 
 let root = "";
@@ -27,7 +27,7 @@ async function readGlobalFallbackChains(): Promise<unknown> {
 
 beforeEach(async () => {
 	resetSettingsForTest();
-	root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-retry-fallback-migration-"));
+	root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-retry-fallback-migration-"));
 });
 
 afterEach(async () => {

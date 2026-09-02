@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
-import { estimateTextTokensHeuristic } from "@gajae-code/agent-core/compaction";
-import { toolWireSchema } from "@gajae-code/ai/utils/schema/wire";
-import { estimateToolSchemaTokens } from "@gajae-code/coding-agent/session/context-estimation";
+import { estimateTextTokensHeuristic } from "@vib-rato/agent-core/compaction";
+import { toolWireSchema } from "@vib-rato/ai/utils/schema/wire";
+import { estimateToolSchemaTokens } from "@vib-rato/coding-agent/session/context-estimation";
 import * as z from "zod/v4";
 
 const zodTool = {

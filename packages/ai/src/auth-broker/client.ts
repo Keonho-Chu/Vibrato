@@ -1,11 +1,11 @@
 /**
- * HTTP client for the gjc auth-broker server.
+ * HTTP client for the vib auth-broker server.
  *
  * Used by {@link RemoteAuthCredentialStore} (snapshot pulls) and by
- * `gjc auth-broker status` (liveness checks). All endpoints except
+ * `vib auth-broker status` (liveness checks). All endpoints except
  * `/v1/healthz` require a bearer token.
  */
-import { readSseEvents } from "@gajae-code/utils";
+import { readSseEvents } from "@vib-rato/utils";
 import type { ZodType, infer as zInfer } from "zod/v4";
 import type { AuthCredential } from "../auth-storage";
 import type { Provider } from "../types";
@@ -35,7 +35,7 @@ import {
 	usageResponseSchema,
 } from "./wire-schemas";
 
-export const AUTH_BROKER_EPOCH_HEADER = "X-GJC-Auth-Broker-Epoch";
+export const AUTH_BROKER_EPOCH_HEADER = "X-Vibrato-Auth-Broker-Epoch";
 
 export interface AuthBrokerClientOptions {
 	/** Base URL (e.g. `https://broker.tailnet:8765`). Trailing slashes are trimmed. */

@@ -51,7 +51,7 @@ const FINAL_ARTIFACT_PATTERNS: RegExp[] = [
 	/^\s*#{1,3}\s*(?:deep[ -]?interview\s+)?(?:final|approved|completed|완료|최종)\s+(?:spec(?:ification)?|transcript)\b/im,
 	/\b(?:final|approved|completed)\s+(?:deep[ -]?interview\s+)?(?:spec(?:ification)?|transcript)\b/i,
 	/\binterview\s+transcript\b/i,
-	/\.gjc\/specs\//i,
+	/\.vib\/specs\//i,
 	/최종\s*(?:명세|스펙|기록)/,
 ];
 

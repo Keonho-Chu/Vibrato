@@ -1,4 +1,4 @@
-# Contributing to Gajae-Code
+# Contributing to Vibrato
 Maintainers and their access are listed in [MAINTAINERS.md](./MAINTAINERS.md).
 
 Thanks for contributing. This guide is intentionally short so pull requests land on the right branch with enough context to review.
@@ -18,7 +18,7 @@ bun install
 bun run dev:doctor
 ```
 
-To run Gajae-Code from the checkout:
+To run Vibrato from the checkout:
 
 ```sh
 bun run dev
@@ -65,13 +65,13 @@ The `CI` workflow publishes a scheduled nightly prerelease from `main` at 04:23 
 
 ## Exact-head PR verdict gate
 
-Every pull request to `dev` must keep exactly one `gajae.pr-review-verdict.v1` line from the pull request template. The `PR contract / Validate exact-head PR contract` status is produced by a narrowly scoped `pull_request_target` workflow loaded from the trusted default branch. It has read-only permissions, receives no secrets, consumes no caches or artifacts, and executes only the base-owned validator while inspecting the event's immutable base and exact head. The validator recomputes the binary diff digest, requires the head to contain the base, runs the fast GJC state-writer scan against the PR-head bytes, and rejects `merge-approved` verdicts whose reviewer-id matches the PR author — no exception. The repository owner's solo path is the separately named `merge-self-approved` verdict (below). `needs-human` and `merge-blocked` are valid review states but intentionally keep the status red until an independent reviewer records `merge-approved` for the current head.
+Every pull request to `dev` must keep exactly one `vibrato.pr-review-verdict.v1` line from the pull request template. The `PR contract / Validate exact-head PR contract` status is produced by a narrowly scoped `pull_request_target` workflow loaded from the trusted default branch. It has read-only permissions, receives no secrets, consumes no caches or artifacts, and executes only the base-owned validator while inspecting the event's immutable base and exact head. The validator recomputes the binary diff digest, requires the head to contain the base, runs the fast Vibrato state-writer scan against the PR-head bytes, and rejects `merge-approved` verdicts whose reviewer-id matches the PR author — no exception. The repository owner's solo path is the separately named `merge-self-approved` verdict (below). `needs-human` and `merge-blocked` are valid review states but intentionally keep the status red until an independent reviewer records `merge-approved` for the current head.
 
 ### Risk-classified review policy (issue #4703, post-review semantics)
 
 The review requirement is classified by the change's real risk; the PR body must check **exactly one** risk class (zero or multiple checked boxes fail closed — a missing classification never waives the stricter tiers).
 
-- **Low-risk fix / ordinary maintenance** — the repository owner may merge through the explicitly named `merge-self-approved` verdict with a `gajae.pr-self-review.v1` risk-record comment bound to the exact base/head/digest. This is a deliberate solo force path: the verdict name itself, the bootstrap log line (`SELF-AUTHORIZED: merge-self-approved, no independent human review`), and the check output all record that no independent human reviewed the change. It exists to keep routine maintainer fixes unblocked, and it is named honestly instead of being dressed up as review.
+- **Low-risk fix / ordinary maintenance** — the repository owner may merge through the explicitly named `merge-self-approved` verdict with a `vibrato.pr-self-review.v1` risk-record comment bound to the exact base/head/digest. This is a deliberate solo force path: the verdict name itself, the bootstrap log line (`SELF-AUTHORIZED: merge-self-approved, no independent human review`), and the check output all record that no independent human reviewed the change. It exists to keep routine maintainer fixes unblocked, and it is named honestly instead of being dressed up as review.
 - **Fix with material regression risk** — requires one assigned independent domain reviewer selected from recent merged PR/commit ownership and demonstrated expertise in the touched files/contracts, whose authenticated exact-head `APPROVED` GitHub review the validator verifies (`extra:independent:<login>`; the token alone never satisfies the gate). The `extra:gpt-heavy` token was removed: an author-supplied claim with no authenticated run artifact behind it cannot substitute for review evidence.
 - **Large refactors, features, and materially high-risk changes** (security, auth, install, remove, public API, destructive lifecycle, architecture) — exactly one assigned independent domain reviewer, selected the same way and verified the same way (authenticated exact-head `APPROVED` review with write+ permission).
 
@@ -82,15 +82,15 @@ For every risk class, `merge-approved` requires an authenticated exact-head `APP
 For the owner's low-risk solo path (and to carry the risk classification for higher tiers), post the record as a **PR comment** (never in the PR body — body text cannot authorize anything):
 
 ```text
-gajae.pr-self-review.v1 verdict:merge-self-approved base:<40-hex event base> head:<40-hex exact head> sha256:<64-hex base...head diff digest> reviewer-id:<PR author login> risk:<low-risk|regression-risk|high-risk> extra:<none|independent:<login>> evidence:<review evidence>
+vibrato.pr-self-review.v1 verdict:merge-self-approved base:<40-hex event base> head:<40-hex exact head> sha256:<64-hex base...head diff digest> reviewer-id:<PR author login> risk:<low-risk|regression-risk|high-risk> extra:<none|independent:<login>> evidence:<review evidence>
 self-review-signature: sha256:<digest over the record above>
-Signed-off-by: gaebal-gajae (clawdbot) 🦞
+Signed-off-by: gaebal-vibrato (clawdbot) 🦞
 ```
 
-The `self-review-signature` is an **integrity digest, not authentication**: `sha256("gajae.pr-self-review.v1.signature-domain" + canonical record lines)`, generated with `bun scripts/verify-pr-verdict.ts --self-review-sign <verdict> <base> <head> <digest> <reviewer-id> <risk> <extra> <evidence>`. It proves the comment text matches what was posted for the bound head — tamper evidence, exactly like the diff digest. Authorization never rests on it: the same identity authors the PR and posts the record, so it could never prove independent review, and the contract does not pretend otherwise. The validator accepts the record only when all of the following hold; otherwise it fails closed:
+The `self-review-signature` is an **integrity digest, not authentication**: `sha256("vibrato.pr-self-review.v1.signature-domain" + canonical record lines)`, generated with `bun scripts/verify-pr-verdict.ts --self-review-sign <verdict> <base> <head> <digest> <reviewer-id> <risk> <extra> <evidence>`. It proves the comment text matches what was posted for the bound head — tamper evidence, exactly like the diff digest. Authorization never rests on it: the same identity authors the PR and posts the record, so it could never prove independent review, and the contract does not pretend otherwise. The validator accepts the record only when all of the following hold; otherwise it fails closed:
 
 - the record is fetched through the trusted workflow token from the GitHub issue-comments API (comment bytes are data; head-controlled code is never executed); only records from the PR author are eligible, every page is scanned and the **newest** record wins, and any API failure fails closed;
-- the record author is exactly the **repository owner account** (`author_association: OWNER`, the delegated maintainer identity gaebal-gajae operates) and matches `reviewer-id`, which must equal the PR author; members and collaborators cannot use the solo path;
+- the record author is exactly the **repository owner account** (`author_association: OWNER`, the delegated maintainer identity gaebal-vibrato operates) and matches `reviewer-id`, which must equal the PR author; members and collaborators cannot use the solo path;
 - base, head, and digest match the immutable event base, the exact PR head, and the recomputed `base...head` diff digest (stale values never authorize a newer head);
 - the integrity digest matches the record, so any post-hoc edit of verdict, head, digest, risk, extra, or evidence is detected;
 - the risk classification matches the PR body's exactly-one checked risk classification;
@@ -109,13 +109,13 @@ After the final commit and rebase, compute the digest with:
 git fetch origin dev
 git merge-base --is-ancestor origin/dev HEAD
 git diff --binary --full-index --no-ext-diff origin/dev...HEAD | sha256sum
-bun scripts/verify-gjc-state-writers.ts --fail
+bun scripts/verify-vib-state-writers.ts --fail
 ```
 
 The verdict line must use the resulting lowercase digest and name the GitHub reviewer whose effective `APPROVED` review targets the exact PR head — never the PR author. The owner's low-risk solo alternative is the explicitly named `merge-self-approved`:
 
 ```text
-gajae.pr-review-verdict.v1 merge-approved sha256:<64-hex-digest> reviewer:<architect|critic|human> reviewer-id:<identity> evidence:<review-or-CI-reference>
+vibrato.pr-review-verdict.v1 merge-approved sha256:<64-hex-digest> reviewer:<architect|critic|human> reviewer-id:<identity> evidence:<review-or-CI-reference>
 ```
 
-GJC users can opt into fast feedback before `gh pr create` by copying `docs/examples/gjc-hooks/pre/bash.ts` to this checkout's `.gjc/hooks/pre/bash.ts`. Keep the hook project-local: installing it under `~/.gjc/agent` would incorrectly impose this repository's policy on unrelated repositories. The local hook is advisory and bypassable; the server-side status check is authoritative and covers humans and other runtimes.
+Vibrato users can opt into fast feedback before `gh pr create` by copying `docs/examples/vib-hooks/pre/bash.ts` to this checkout's `.vib/hooks/pre/bash.ts`. Keep the hook project-local: installing it under `~/.vib/agent` would incorrectly impose this repository's policy on unrelated repositories. The local hook is advisory and bypassable; the server-side status check is authoritative and covers humans and other runtimes.

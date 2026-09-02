@@ -132,7 +132,7 @@ export declare class NotificationServer {
    * Create a server for `session_id` authenticated by `token`.
    *
    * `state_root` (when given) is where the endpoint discovery file is written
-   * (e.g. `<repo>/.gjc/state`). `resolver_available` defaults to `true`.
+   * (e.g. `<repo>/.vib/state`). `resolver_available` defaults to `true`.
    */
   constructor(sessionId: string, token: string, stateRoot?: string | undefined | null, resolverAvailable?: boolean | undefined | null)
   /** Register the reply callback. Must be called before [`Self::start`]. */
@@ -789,7 +789,7 @@ export interface ClipboardImage {
  * Requires the Screen & System Audio Recording permission. This is the
  * read-only `screenshot` primitive of the computer-use tool; input primitives
  * land behind the same surface once the Accessibility gate is satisfied in a
- * granted `gjc` process.
+ * granted `vib` process.
  *
  * # Errors
  * Returns an error when capture fails (e.g. Screen Recording not granted).
@@ -1360,7 +1360,7 @@ export interface InboundImageEvent {
 }
 
 /**
- * Installs a Rust panic hook only when `GJC_NATIVE_CRASH_DIAGNOSTICS` is set.
+ * Installs a Rust panic hook only when `VIB_NATIVE_CRASH_DIAGNOSTICS` is set.
  *
  * This is an opt-in structured panic report, not a minidump/signal handler.
  * It intentionally avoids always-on work and does not attempt to recover from

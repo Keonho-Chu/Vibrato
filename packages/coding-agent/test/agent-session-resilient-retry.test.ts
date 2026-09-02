@@ -1,19 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as path from "node:path";
 import { scheduler } from "node:timers/promises";
-import { Agent, type AgentTool, type StreamFn } from "@gajae-code/agent-core";
-import { type AssistantMessage, getBundledModel, type Model, type ToolCall } from "@gajae-code/ai";
-import { createMockModel } from "@gajae-code/ai/providers/mock";
-import { AssistantMessageEventStream } from "@gajae-code/ai/utils/event-stream";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { ExtensionRunner } from "@gajae-code/coding-agent/extensibility/extensions/runner";
-import type { Extension } from "@gajae-code/coding-agent/extensibility/extensions/types";
-import { createAgentSession } from "@gajae-code/coding-agent/sdk";
-import { AgentSession, type AgentSessionEvent } from "@gajae-code/coding-agent/session/agent-session";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { TempDir } from "@gajae-code/utils";
+import { Agent, type AgentTool, type StreamFn } from "@vib-rato/agent-core";
+import { type AssistantMessage, getBundledModel, type Model, type ToolCall } from "@vib-rato/ai";
+import { createMockModel } from "@vib-rato/ai/providers/mock";
+import { AssistantMessageEventStream } from "@vib-rato/ai/utils/event-stream";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { ExtensionRunner } from "@vib-rato/coding-agent/extensibility/extensions/runner";
+import type { Extension } from "@vib-rato/coding-agent/extensibility/extensions/types";
+import { createAgentSession } from "@vib-rato/coding-agent/sdk";
+import { AgentSession, type AgentSessionEvent } from "@vib-rato/coding-agent/session/agent-session";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { TempDir } from "@vib-rato/utils";
 import * as z from "zod/v4";
 import {
 	mintProviderSafetyStop,

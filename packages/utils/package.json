@@ -1,18 +1,18 @@
 {
 	"type": "module",
-	"name": "@gajae-code/utils",
+	"name": "@vib-rato/utils",
 	"version": "0.15.6",
 	"description": "Shared utilities for pi packages",
-	"homepage": "https://gajae-code.com",
+	"homepage": "https://vib-rato.com",
 	"author": "Yeachan-Heo",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/Yeachan-Heo/gajae-code.git",
+		"url": "git+https://github.com/Keonho-Chu/Vibrato.git",
 		"directory": "packages/utils"
 	},
 	"bugs": {
-		"url": "https://github.com/Yeachan-Heo/gajae-code/issues"
+		"url": "https://github.com/Keonho-Chu/Vibrato/issues"
 	},
 	"keywords": [
 		"utilities",
@@ -31,7 +31,7 @@
 		"fmt": "biome format --write ."
 	},
 	"dependencies": {
-		"@gajae-code/natives": "catalog:",
+		"@vib-rato/natives": "catalog:",
 		"beautiful-mermaid": "catalog:",
 		"handlebars": "catalog:",
 		"winston": "catalog:",

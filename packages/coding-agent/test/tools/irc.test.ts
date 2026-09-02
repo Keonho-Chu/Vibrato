@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it } from "bun:test";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { AgentRegistry } from "@gajae-code/coding-agent/registry/agent-registry";
-import type { AgentSession } from "@gajae-code/coding-agent/session/agent-session";
-import type { ToolSession } from "@gajae-code/coding-agent/tools";
-import { IrcTool } from "@gajae-code/coding-agent/tools/irc";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { AgentRegistry } from "@vib-rato/coding-agent/registry/agent-registry";
+import type { AgentSession } from "@vib-rato/coding-agent/session/agent-session";
+import type { ToolSession } from "@vib-rato/coding-agent/tools";
+import { IrcTool } from "@vib-rato/coding-agent/tools/irc";
 
 interface FakeSession {
 	session: AgentSession;

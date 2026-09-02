@@ -2,10 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { Effort } from "@gajae-code/ai";
-import type { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { onAppendOnlyModeChanged, resetSettingsForTest, Settings } from "@gajae-code/coding-agent/config/settings";
-import { resolveImageRoleModel } from "@gajae-code/coding-agent/tools/image-gen";
+import { Effort } from "@vib-rato/ai";
+import type { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { onAppendOnlyModeChanged, resetSettingsForTest, Settings } from "@vib-rato/coding-agent/config/settings";
+import { resolveImageRoleModel } from "@vib-rato/coding-agent/tools/image-gen";
 import {
 	getCustomThemesDir,
 	getDefaultTabWidth,
@@ -13,7 +13,7 @@ import {
 	logger,
 	Snowflake,
 	setDefaultTabWidth,
-} from "@gajae-code/utils";
+} from "@vib-rato/utils";
 import { YAML } from "bun";
 import { withFileLock } from "../src/config/file-lock";
 import { createLightweightDaemonSettings } from "../src/sdk/bus/telegram-daemon-cli";
@@ -671,7 +671,7 @@ describe("Settings", () => {
 					valid: false,
 					issues: [{ path: "config.yml", kind: "invalid" }],
 				});
-				expect(() => settings.getNotificationSettingsSnapshot()).toThrow("gjc_notify_daemon_invalid_configuration");
+				expect(() => settings.getNotificationSettingsSnapshot()).toThrow("vib_notify_daemon_invalid_configuration");
 				await expect(
 					settings.commitAtomicBatch([{ path: "theme.dark", op: "set", value: "red-claw" }]),
 				).rejects.toThrow("Repair config.yml");
@@ -881,7 +881,7 @@ describe("Settings", () => {
 			expect(settings.canWriteDurableConfig()).toBe(false);
 			expect(settings.get("theme.dark")).toBe("blue-crab");
 			expect(settings.getSchemaReport()).toMatchObject({ valid: false });
-			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("gjc_notify_daemon_invalid_configuration");
+			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("vib_notify_daemon_invalid_configuration");
 			expect(() => settings.set("theme.light", "blue-crab")).toThrow("Repair config.yml");
 		} finally {
 			settings.getStorage()?.close();
@@ -895,7 +895,7 @@ describe("Settings", () => {
 			await Bun.write(getConfigPath(), "notifications: [");
 			await settings.flush();
 
-			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("gjc_notify_daemon_invalid_configuration");
+			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("vib_notify_daemon_invalid_configuration");
 			expect(settings.get("theme.dark")).toBe("blue-crab");
 
 			await Bun.write(getConfigPath(), "");
@@ -921,7 +921,7 @@ describe("Settings", () => {
 			await expect(settings.flush()).rejects.toThrow();
 			expect(settings.canWriteDurableConfig()).toBe(false);
 			expect(settings.getSchemaReport()).toMatchObject({ valid: false });
-			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("gjc_notify_daemon_invalid_configuration");
+			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("vib_notify_daemon_invalid_configuration");
 			expect(() => settings.set("notifications.redact", true)).toThrow("Repair config.yml");
 		} finally {
 			settings.getStorage()?.close();
@@ -960,8 +960,8 @@ describe("Settings", () => {
 			const cloned = await source.cloneForCwd(clonedCwd);
 			expect(cloned.canWriteDurableConfig()).toBe(false);
 			expect(cloned.getSchemaReport()).toEqual(source.getSchemaReport());
-			expect(() => source.getNotificationSettingsSnapshot()).toThrow("gjc_notify_daemon_invalid_configuration");
-			expect(() => cloned.getNotificationSettingsSnapshot()).toThrow("gjc_notify_daemon_invalid_configuration");
+			expect(() => source.getNotificationSettingsSnapshot()).toThrow("vib_notify_daemon_invalid_configuration");
+			expect(() => cloned.getNotificationSettingsSnapshot()).toThrow("vib_notify_daemon_invalid_configuration");
 			expect(() => cloned.set("notifications.redact", true)).toThrow("Repair config.yml");
 			expect(await Bun.file(getConfigPath()).text()).toBe(malformed);
 		} finally {

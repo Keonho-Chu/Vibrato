@@ -1,8 +1,8 @@
 import { describe, expect, it, test, vi } from "bun:test";
-import { Agent, ThinkingLevel } from "@gajae-code/agent-core";
+import { Agent, ThinkingLevel } from "@vib-rato/agent-core";
 
-import type { Model } from "@gajae-code/ai";
-import { hookFetch, TempDir } from "@gajae-code/utils";
+import type { Model } from "@vib-rato/ai";
+import { hookFetch, TempDir } from "@vib-rato/utils";
 import {
 	activateModelProfile,
 	applyPreparedModelProfileActivation,
@@ -264,7 +264,7 @@ describe("model profile activation", () => {
 	});
 
 	test("built-in claude-opus skips a bundled Opus 5 absent from fresh live catalog evidence", async () => {
-		const tempDir = TempDir.createSync("@gjc-profile-live-catalog-");
+		const tempDir = TempDir.createSync("@vib-profile-live-catalog-");
 		const authStorage = await AuthStorage.create(`${tempDir.path()}/auth.db`);
 		try {
 			authStorage.setRuntimeApiKey("anthropic", "test-anthropic-key");
@@ -326,7 +326,7 @@ describe("model profile activation", () => {
 	});
 
 	test("built-in claude-opus retains bundled Opus 5 after live catalog discovery fails", async () => {
-		const tempDir = TempDir.createSync("@gjc-profile-stale-catalog-");
+		const tempDir = TempDir.createSync("@vib-profile-stale-catalog-");
 		const authStorage = await AuthStorage.create(`${tempDir.path()}/auth.db`);
 		try {
 			authStorage.setRuntimeApiKey("anthropic", "test-anthropic-key");
@@ -362,7 +362,7 @@ describe("model profile activation", () => {
 	});
 
 	test("fresh catalog omission does not exclude a same-id custom Anthropic replacement", async () => {
-		const tempDir = TempDir.createSync("@gjc-profile-custom-overlay-");
+		const tempDir = TempDir.createSync("@vib-profile-custom-overlay-");
 		const modelsPath = `${tempDir.path()}/models.yml`;
 		const authStorage = await AuthStorage.create(`${tempDir.path()}/auth.db`);
 		try {
@@ -1023,7 +1023,7 @@ describe("model profile activation", () => {
 	});
 
 	test("rollback from an unconfigured session restores its concrete chain without inventing a resume default", async () => {
-		const tempDir = TempDir.createSync("@gjc-profile-chain-rollback-");
+		const tempDir = TempDir.createSync("@vib-profile-chain-rollback-");
 		try {
 			const previousModel = model("provider-c", "default");
 			const manager = SessionManager.create(tempDir.path(), tempDir.path());
@@ -1069,7 +1069,7 @@ describe("model profile activation", () => {
 	});
 
 	test("restores a persisted AgentSession configured chain and activates its head on resume", async () => {
-		const tempDir = TempDir.createSync("@gjc-profile-chain-resume-");
+		const tempDir = TempDir.createSync("@vib-profile-chain-resume-");
 		try {
 			const head = model("provider-a", "default");
 			const fallback = model("provider-b", "executor");
@@ -2045,7 +2045,7 @@ describe("preset-equivalent profile activation", () => {
 	});
 
 	test("explicit user reselection prevents old sticky provider resurrection", async () => {
-		const tempDir = TempDir.createSync("@gjc-reselect-sticky-");
+		const tempDir = TempDir.createSync("@vib-reselect-sticky-");
 		try {
 			const manager = SessionManager.create(tempDir.path(), tempDir.path());
 			const oldProviderModel = model("provider-a", "default");
@@ -2359,7 +2359,7 @@ describe("preset-equivalent profile activation", () => {
 	});
 
 	test("successful activation leaves the new model sticky", async () => {
-		const tempDir = TempDir.createSync("@gjc-profile-sticky-success-");
+		const tempDir = TempDir.createSync("@vib-profile-sticky-success-");
 		try {
 			const manager = SessionManager.create(tempDir.path(), tempDir.path());
 			const profile: ModelProfileDefinition = {

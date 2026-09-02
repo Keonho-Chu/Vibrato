@@ -2,9 +2,9 @@
  * Minimal SDK Usage
  *
  * Uses all defaults: discovers skills, hooks, tools, context files
- * from cwd and ~/.gjc/agent. Model chosen from settings or first available.
+ * from cwd and ~/.vib/agent. Model chosen from settings or first available.
  */
-import { createAgentSession } from "@gajae-code/coding-agent";
+import { createAgentSession } from "@vib-rato/coding-agent";
 
 const { session } = await createAgentSession();
 

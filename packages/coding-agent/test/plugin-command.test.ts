@@ -2,12 +2,12 @@ import { afterEach, describe, expect, it } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { CliConfig } from "@gajae-code/utils/cli";
+import type { CliConfig } from "@vib-rato/utils/cli";
 import { safeRm } from "../../../scripts/safe-cleanup";
 import Plugin from "../src/commands/plugin";
 
 const TEST_CONFIG: CliConfig = {
-	bin: "gjc",
+	bin: "vib",
 	version: "0.0.0-test",
 	commands: new Map(),
 };
@@ -22,13 +22,13 @@ async function runPluginCommand(
 	agentDirOverride?: string,
 ): Promise<{ exitCode: number; stdout: string; stderr: string }> {
 	// Isolate the user scope: without this the child process reads the real
-	// ~/.gjc/agent registry and inherits whatever the developer has installed.
-	const agentDir = agentDirOverride ?? (await fs.mkdtemp(path.join(os.tmpdir(), "gjc-plugin-command-agent-")));
+	// ~/.vib/agent registry and inherits whatever the developer has installed.
+	const agentDir = agentDirOverride ?? (await fs.mkdtemp(path.join(os.tmpdir(), "vib-plugin-command-agent-")));
 	if (!agentDirOverride) agentDirs.push(agentDir);
 	const proc = Bun.spawn({
 		cmd: [process.execPath, path.join(import.meta.dir, "../src/cli.ts"), "plugin", ...args],
 		cwd,
-		env: { ...process.env, GJC_CODING_AGENT_DIR: agentDir },
+		env: { ...process.env, VIB_CODING_AGENT_DIR: agentDir },
 		stdout: "pipe",
 		stderr: "pipe",
 	});
@@ -41,7 +41,7 @@ async function runPluginCommand(
 }
 
 async function makeTempProject(): Promise<string> {
-	tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-plugin-command-"));
+	tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "vib-plugin-command-"));
 	return tempRoot;
 }
 
@@ -58,9 +58,9 @@ describe("Plugin command scope parsing", () => {
 		await expect(command.parse(Plugin)).rejects.toThrow(/Expected --scope to be one of: user, project/);
 	});
 
-	it("lists installed GJC plugin bundles in text and JSON output", async () => {
+	it("lists installed Vibrato plugin bundles in text and JSON output", async () => {
 		const cwd = await makeTempProject();
-		const fixture = path.join(import.meta.dir, "fixtures/gjc-plugins/valid-six-surface-bundle");
+		const fixture = path.join(import.meta.dir, "fixtures/vib-plugins/valid-six-surface-bundle");
 
 		const install = await runPluginCommand(["install", fixture, "--project"], cwd);
 		expect(install.exitCode).toBe(0);
@@ -69,41 +69,41 @@ describe("Plugin command scope parsing", () => {
 		const textList = await runPluginCommand(["list"], cwd);
 		expect(textList.exitCode).toBe(0);
 		expect(textList.stderr).toBe("");
-		expect(textList.stdout).toContain("GJC Plugin Bundles:");
+		expect(textList.stdout).toContain("Vibrato Plugin Bundles:");
 		expect(textList.stdout).toContain("valid-six-surface-bundle@1.0.0");
 		expect(textList.stdout).toContain("(project)");
 
 		const jsonList = await runPluginCommand(["list", "--json"], cwd);
 		expect(jsonList.exitCode).toBe(0);
 		expect(jsonList.stderr).toBe("");
-		// `gjc` now carries safe lifecycle summaries keyed by canonical identity
+		// `vib` now carries safe lifecycle summaries keyed by canonical identity
 		// (kind, scope, name) rather than raw registry entries.
 		const parsed = JSON.parse(jsonList.stdout) as {
-			gjc?: Array<{ identity: { kind: string; scope: string; name: string }; version: string }>;
+			vib?: Array<{ identity: { kind: string; scope: string; name: string }; version: string }>;
 		};
-		expect(parsed.gjc).toEqual([
+		expect(parsed.vib).toEqual([
 			expect.objectContaining({
-				identity: { kind: "gjc-bundle", scope: "project", name: "valid-six-surface-bundle" },
+				identity: { kind: "vib-bundle", scope: "project", name: "valid-six-surface-bundle" },
 				version: "1.0.0",
 			}),
 		]);
 		// Safe summaries never expose the raw source locator or the install path.
 		expect(jsonList.stdout).not.toContain("pluginRoot");
 		expect(jsonList.stdout).not.toContain("copiedFiles");
-		// Assert on the `gjc` envelope specifically. The sibling `npm` and
+		// Assert on the `vib` envelope specifically. The sibling `npm` and
 		// `marketplace` arrays are pre-existing surfaces owned elsewhere, so a
 		// whole-document scan would conflate their behavior with this one.
-		const listed = JSON.parse(jsonList.stdout) as { gjc?: unknown[] };
-		const gjcJson = JSON.stringify(listed.gjc ?? []);
-		expect(gjcJson).not.toContain("manifestPath");
-		expect(gjcJson).not.toContain(os.homedir());
-		expect(gjcJson).not.toMatch(/"uri"\s*:/);
+		const listed = JSON.parse(jsonList.stdout) as { vib?: unknown[] };
+		const vibJson = JSON.stringify(listed.vib ?? []);
+		expect(vibJson).not.toContain("manifestPath");
+		expect(vibJson).not.toContain(os.homedir());
+		expect(vibJson).not.toMatch(/"uri"\s*:/);
 	});
-	it("uninstalls a user-scoped GJC bundle instead of invoking npm", async () => {
-		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-plugin-command-agent-"));
+	it("uninstalls a user-scoped Vibrato bundle instead of invoking npm", async () => {
+		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-plugin-command-agent-"));
 		agentDirs.push(agentDir);
 		const cwd = await makeTempProject();
-		const fixture = path.join(import.meta.dir, "fixtures/gjc-plugins/valid-six-surface-bundle");
+		const fixture = path.join(import.meta.dir, "fixtures/vib-plugins/valid-six-surface-bundle");
 
 		const install = await runPluginCommand(["install", fixture, "--user"], cwd, agentDir);
 		expect(install.exitCode).toBe(0);
@@ -115,16 +115,16 @@ describe("Plugin command scope parsing", () => {
 
 		const listed = await runPluginCommand(["list", "--json"], cwd, agentDir);
 		expect(listed.exitCode).toBe(0);
-		expect(JSON.parse(listed.stdout)).toMatchObject({ gjc: [] });
+		expect(JSON.parse(listed.stdout)).toMatchObject({ vib: [] });
 	});
 
 	// An unqualified uninstall of a name present in both scopes must refuse
 	// rather than guess, and must not remove either copy.
 	it("refuses an ambiguous uninstall when the bundle is installed in both scopes", async () => {
-		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-plugin-command-agent-"));
+		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-plugin-command-agent-"));
 		agentDirs.push(agentDir);
 		const cwd = await makeTempProject();
-		const fixture = path.join(import.meta.dir, "fixtures/gjc-plugins/valid-six-surface-bundle");
+		const fixture = path.join(import.meta.dir, "fixtures/vib-plugins/valid-six-surface-bundle");
 
 		expect((await runPluginCommand(["install", fixture, "--user"], cwd, agentDir)).exitCode).toBe(0);
 		expect((await runPluginCommand(["install", fixture, "--project"], cwd, agentDir)).exitCode).toBe(0);
@@ -134,17 +134,17 @@ describe("Plugin command scope parsing", () => {
 		expect(ambiguous.stderr).toContain("installed in both scopes");
 
 		const listed = await runPluginCommand(["list", "--json"], cwd, agentDir);
-		const scopes = (JSON.parse(listed.stdout) as { gjc: Array<{ identity: { scope: string } }> }).gjc.map(
+		const scopes = (JSON.parse(listed.stdout) as { vib: Array<{ identity: { scope: string } }> }).vib.map(
 			bundle => bundle.identity.scope,
 		);
 		expect(scopes.toSorted()).toEqual(["project", "user"]);
 	});
 
 	it("scopes an explicit --project uninstall to the project copy", async () => {
-		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-plugin-command-agent-"));
+		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-plugin-command-agent-"));
 		agentDirs.push(agentDir);
 		const cwd = await makeTempProject();
-		const fixture = path.join(import.meta.dir, "fixtures/gjc-plugins/valid-six-surface-bundle");
+		const fixture = path.join(import.meta.dir, "fixtures/vib-plugins/valid-six-surface-bundle");
 
 		expect((await runPluginCommand(["install", fixture, "--user"], cwd, agentDir)).exitCode).toBe(0);
 		expect((await runPluginCommand(["install", fixture, "--project"], cwd, agentDir)).exitCode).toBe(0);
@@ -155,7 +155,7 @@ describe("Plugin command scope parsing", () => {
 
 		const listed = await runPluginCommand(["list", "--json"], cwd, agentDir);
 		expect(
-			(JSON.parse(listed.stdout) as { gjc: Array<{ identity: { scope: string } }> }).gjc.map(
+			(JSON.parse(listed.stdout) as { vib: Array<{ identity: { scope: string } }> }).vib.map(
 				bundle => bundle.identity.scope,
 			),
 		).toEqual(["user"]);
@@ -165,10 +165,10 @@ describe("Plugin command scope parsing", () => {
 	// uninstalled must be able to install the same bundle again without hitting
 	// `already_installed_use_upgrade` residue.
 	it("reinstalls the same bundle cleanly after an uninstall", async () => {
-		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-plugin-command-agent-"));
+		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-plugin-command-agent-"));
 		agentDirs.push(agentDir);
 		const cwd = await makeTempProject();
-		const fixture = path.join(import.meta.dir, "fixtures/gjc-plugins/valid-six-surface-bundle");
+		const fixture = path.join(import.meta.dir, "fixtures/vib-plugins/valid-six-surface-bundle");
 
 		expect((await runPluginCommand(["install", fixture, "--user"], cwd, agentDir)).exitCode).toBe(0);
 		expect(
@@ -182,42 +182,42 @@ describe("Plugin command scope parsing", () => {
 
 		const listed = await runPluginCommand(["list", "--json"], cwd, agentDir);
 		expect(JSON.parse(listed.stdout)).toMatchObject({
-			gjc: [
+			vib: [
 				expect.objectContaining({
-					identity: { kind: "gjc-bundle", scope: "user", name: "valid-six-surface-bundle" },
+					identity: { kind: "vib-bundle", scope: "user", name: "valid-six-surface-bundle" },
 				}),
 			],
 		});
 	});
-	it("fails closed on uninstall when the GJC registry is corrupt", async () => {
-		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-plugin-command-agent-"));
+	it("fails closed on uninstall when the Vibrato registry is corrupt", async () => {
+		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-plugin-command-agent-"));
 		agentDirs.push(agentDir);
 		const cwd = await makeTempProject();
-		const registryRoot = path.join(agentDir, "gjc-plugins");
+		const registryRoot = path.join(agentDir, "vib-plugins");
 		await fs.mkdir(registryRoot, { recursive: true });
 		await fs.writeFile(path.join(registryRoot, "registry.json"), "{");
 
-		const result = await runPluginCommand(["uninstall", "not-a-gjc-bundle"], cwd, agentDir);
+		const result = await runPluginCommand(["uninstall", "not-a-vib-bundle"], cwd, agentDir);
 
 		// Ownership is unknown while the registry is unreadable, so the command
-		// must refuse instead of falling through to a non-GJC uninstall.
+		// must refuse instead of falling through to a non-Vibrato uninstall.
 		expect(result.exitCode).toBe(3);
-		expect(`${result.stdout}${result.stderr}`).toContain("Could not read the GJC user plugin registry");
+		expect(`${result.stdout}${result.stderr}`).toContain("Could not read the Vibrato user plugin registry");
 	});
 
-	it("GJC install and upgrade failures never echo the source or its cause", async () => {
+	it("Vibrato install and upgrade failures never echo the source or its cause", async () => {
 		const cwd = await makeTempProject();
 		// A hostile locator carrying credentials, a query string, a fragment, and
-		// an absolute home path. None of it may reach stdout or stderr on any GJC
+		// an absolute home path. None of it may reach stdout or stderr on any Vibrato
 		// CLI surface, in text or JSON mode.
 		const hostile = "https://user:s3cr3t-token@example.invalid/owner/repo.git?auth=abc#frag";
 
 		// Install a real bundle from a source that is then deleted, so `upgrade`
-		// actually reaches the GJC lifecycle and fails re-resolving a stored
+		// actually reaches the Vibrato lifecycle and fails re-resolving a stored
 		// locator. Upgrading a name that is not installed would fall through to
 		// the marketplace and never exercise this surface at all.
 		const stagedSource = path.join(cwd, "staged-bundle");
-		await fs.cp(path.join(import.meta.dir, "fixtures/gjc-plugins/valid-six-surface-bundle"), stagedSource, {
+		await fs.cp(path.join(import.meta.dir, "fixtures/vib-plugins/valid-six-surface-bundle"), stagedSource, {
 			recursive: true,
 		});
 		const seeded = await runPluginCommand(["install", stagedSource, "--project"], cwd);

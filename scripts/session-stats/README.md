@@ -1,15 +1,15 @@
 # session-stats
 
 Ad-hoc analyses over the local agent session corpus
-(`~/.gjc/agent/sessions/`). SQLite-backed; data is synced once into the same
-`~/.gjc/stats.db` that `packages/stats` uses, then queried by short Python
+(`~/.vib/agent/sessions/`). SQLite-backed; data is synced once into the same
+`~/.vib/stats.db` that `packages/stats` uses, then queried by short Python
 scripts.
 
 ## Layout
 
 ```
 scripts/session-stats/
-  sync.py       # walks ~/.gjc/agent/sessions/ and populates ss_* tables
+  sync.py       # walks ~/.vib/agent/sessions/ and populates ss_* tables
   analyze.py    # tools | edits | followups subcommands over the synced db
 ```
 

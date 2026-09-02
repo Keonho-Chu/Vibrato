@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
-import { type Component, CURSOR_MARKER, TUI } from "@gajae-code/tui";
+import { type Component, CURSOR_MARKER, TUI } from "@vib-rato/tui";
 import { VirtualTerminal } from "./virtual-terminal";
 
 class LineComponent implements Component {
@@ -92,7 +92,7 @@ describe("TUI overlays", () => {
 	let previousSty: string | undefined;
 	let previousZellij: string | undefined;
 	let previousTmuxPane: string | undefined;
-	let previousGjcTmuxLaunched: string | undefined;
+	let previousVibTmuxLaunched: string | undefined;
 	let previousTerm: string | undefined;
 	let previousLegacyFullRender: string | undefined;
 	let previousImeCursor: string | undefined;
@@ -103,16 +103,16 @@ describe("TUI overlays", () => {
 		previousZellij = Bun.env.ZELLIJ;
 		previousLegacyFullRender = Bun.env.PI_TUI_LEGACY_MULTIPLEXER_FULL_RENDER;
 		previousTmuxPane = Bun.env.TMUX_PANE;
-		previousGjcTmuxLaunched = Bun.env.GJC_TMUX_LAUNCHED;
+		previousVibTmuxLaunched = Bun.env.VIB_TMUX_LAUNCHED;
 		previousTerm = Bun.env.TERM;
-		previousImeCursor = Bun.env.GJC_TUI_IME_CURSOR;
+		previousImeCursor = Bun.env.VIB_TUI_IME_CURSOR;
 		delete Bun.env.TMUX;
 		delete Bun.env.STY;
 		delete Bun.env.ZELLIJ;
 		delete Bun.env.PI_TUI_LEGACY_MULTIPLEXER_FULL_RENDER;
 		delete Bun.env.TMUX_PANE;
-		delete Bun.env.GJC_TMUX_LAUNCHED;
-		delete Bun.env.GJC_TUI_IME_CURSOR;
+		delete Bun.env.VIB_TMUX_LAUNCHED;
+		delete Bun.env.VIB_TUI_IME_CURSOR;
 		Bun.env.TERM = "xterm-256color";
 	});
 
@@ -233,10 +233,10 @@ describe("TUI overlays", () => {
 		} else {
 			Bun.env.TMUX_PANE = previousTmuxPane;
 		}
-		if (previousGjcTmuxLaunched === undefined) {
-			delete Bun.env.GJC_TMUX_LAUNCHED;
+		if (previousVibTmuxLaunched === undefined) {
+			delete Bun.env.VIB_TMUX_LAUNCHED;
 		} else {
-			Bun.env.GJC_TMUX_LAUNCHED = previousGjcTmuxLaunched;
+			Bun.env.VIB_TMUX_LAUNCHED = previousVibTmuxLaunched;
 		}
 		if (previousTerm === undefined) {
 			delete Bun.env.TERM;
@@ -244,9 +244,9 @@ describe("TUI overlays", () => {
 			Bun.env.TERM = previousTerm;
 		}
 		if (previousImeCursor === undefined) {
-			delete Bun.env.GJC_TUI_IME_CURSOR;
+			delete Bun.env.VIB_TUI_IME_CURSOR;
 		} else {
-			Bun.env.GJC_TUI_IME_CURSOR = previousImeCursor;
+			Bun.env.VIB_TUI_IME_CURSOR = previousImeCursor;
 		}
 	});
 
@@ -468,7 +468,7 @@ describe("TUI overlays", () => {
 	});
 
 	it("anchors macOS IME cursor-only updates with a steady block cursor in soft-cursor mode", async () => {
-		Bun.env.GJC_TUI_IME_CURSOR = "1";
+		Bun.env.VIB_TUI_IME_CURSOR = "1";
 		const term = new VirtualTerminal(40, 6);
 		const tui = new TUI(term, false);
 		const component = new CursorOnlyComponent();

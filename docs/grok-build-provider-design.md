@@ -10,19 +10,19 @@ This is not an authorization claim for xAI endpoints, not a final naming decisio
 
 Implementation should remain blocked until the owner signs off on these gates:
 
-1. **Authorized use / ToS** — confirm that GJC may use `cli-chat-proxy.grok.com` and the xAI CLI OAuth public client from a third-party tool. A public OAuth client id is not proof that this use is authorized.
+1. **Authorized use / ToS** — confirm that Vibrato may use `cli-chat-proxy.grok.com` and the xAI CLI OAuth public client from a third-party tool. A public OAuth client id is not proof that this use is authorized.
 2. **Bundled-loading trust boundary** — confirm whether a source-controlled bundled provider may load even when ordinary user extension discovery is disabled.
 3. **Public selector naming** — choose the stable provider selector prefix: `grok-cli`, `grok-build`, or another owner-selected id.
-4. **Trademark/display-name** — confirm whether GJC may present the provider/profile using `Grok Build` or should use a more neutral owner-approved label.
+4. **Trademark/display-name** — confirm whether Vibrato may present the provider/profile using `Grok Build` or should use a more neutral owner-approved label.
 
 If gate 1 is not accepted, the Grok Build provider implementation should not ship against `cli-chat-proxy.grok.com`. The fallback direction would be a documented user-supplied xAI/API-key provider or a different officially authorized integration path.
 
 ## Problem
 
-GJC can load third-party extensions, but the first-run interactive path needs a maintainer-owned decision before a bundled Grok Build provider can be accepted. The desired product flow is:
+Vibrato can load third-party extensions, but the first-run interactive path needs a maintainer-owned decision before a bundled Grok Build provider can be accepted. The desired product flow is:
 
 ```text
-gjc -> /login -> OAuth -> Grok Build -> browser xAI login -> /model -> <provider-id>/grok-composer-2.5-fast
+vib -> /login -> OAuth -> Grok Build -> browser xAI login -> /model -> <provider-id>/grok-composer-2.5-fast
 ```
 
 The previously proposed implementation touched bundled extension loading, OAuth registration, model profiles, vendor code, usage reporting, and tests in one PR. That is too much surface for review without first agreeing on the provider contract and the owner sign-off gates above.
@@ -64,7 +64,7 @@ These are candidate values for owner review, not final commitments:
 
 ## Authorized-use and ToS caveat
 
-`cli-chat-proxy.grok.com` and the xAI CLI OAuth public client appear to be designed for xAI/Grok CLI traffic. Reusing them from GJC may be technically possible but still unauthorized or contrary to xAI terms.
+`cli-chat-proxy.grok.com` and the xAI CLI OAuth public client appear to be designed for xAI/Grok CLI traffic. Reusing them from Vibrato may be technically possible but still unauthorized or contrary to xAI terms.
 
 Before implementation, the owner should explicitly decide one of:
 
@@ -215,9 +215,9 @@ Optional observability PR:
 
 ## Open maintainer decisions
 
-- Is using `cli-chat-proxy.grok.com` plus the xAI CLI OAuth client from GJC authorized and acceptable for this project?
+- Is using `cli-chat-proxy.grok.com` plus the xAI CLI OAuth client from Vibrato authorized and acceptable for this project?
 - Should bundled provider defaults load while `disableExtensionDiscovery: true`, and under which guardrails?
 - Should the final public provider id be `grok-cli`, `grok-build`, or another id?
-- May GJC use `Grok Build` as the display/profile name, or should the integration use a neutral owner-selected label?
+- May Vibrato use `Grok Build` as the display/profile name, or should the integration use a neutral owner-selected label?
 - Should `grok-pro` be a built-in profile or documented as a user profile?
 - Should usage reporting be included in the initial provider PR or kept as a separate follow-up?

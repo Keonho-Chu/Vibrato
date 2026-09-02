@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
-import type { AssistantMessage } from "@gajae-code/ai";
-import { transportFailureFacts } from "@gajae-code/ai/utils/fallback-transport";
-import { classifyContextOverflow, isContextOverflow } from "@gajae-code/ai/utils/overflow";
+import type { AssistantMessage } from "@vib-rato/ai";
+import { transportFailureFacts } from "@vib-rato/ai/utils/fallback-transport";
+import { classifyContextOverflow, isContextOverflow } from "@vib-rato/ai/utils/overflow";
 
 function createErrorMessage(errorMessage: string): AssistantMessage {
 	return {

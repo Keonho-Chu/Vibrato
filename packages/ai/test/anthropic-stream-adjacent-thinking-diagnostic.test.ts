@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
 import { Messages } from "@anthropic-ai/sdk/resources/messages/messages";
-import * as utils from "@gajae-code/utils";
+import * as utils from "@vib-rato/utils";
 import { streamAnthropic } from "../src/providers/anthropic";
 import type { AssistantMessageEvent, Context, Model } from "../src/types";
 

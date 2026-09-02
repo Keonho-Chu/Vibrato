@@ -1,22 +1,22 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { Agent } from "@gajae-code/agent-core";
-import * as compactionModule from "@gajae-code/agent-core/compaction";
-import type { AssistantMessage, ToolCall } from "@gajae-code/ai";
-import { getBundledModel } from "@gajae-code/ai/models";
-import { createMockModel } from "@gajae-code/ai/providers/mock";
-import { createAppendOnlyContextManager } from "@gajae-code/coding-agent/append-only-mode";
-import { AsyncJobManager } from "@gajae-code/coding-agent/async/job-manager";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { ExtensionRunner, loadExtensions } from "@gajae-code/coding-agent/extensibility/extensions";
-import * as internalUrls from "@gajae-code/coding-agent/internal-urls";
-import { AgentSession, type AgentSessionEvent } from "@gajae-code/coding-agent/session/agent-session";
-import { ArtifactManager } from "@gajae-code/coding-agent/session/artifacts";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { TempDir } from "@gajae-code/utils";
+import { Agent } from "@vib-rato/agent-core";
+import * as compactionModule from "@vib-rato/agent-core/compaction";
+import type { AssistantMessage, ToolCall } from "@vib-rato/ai";
+import { getBundledModel } from "@vib-rato/ai/models";
+import { createMockModel } from "@vib-rato/ai/providers/mock";
+import { createAppendOnlyContextManager } from "@vib-rato/coding-agent/append-only-mode";
+import { AsyncJobManager } from "@vib-rato/coding-agent/async/job-manager";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { ExtensionRunner, loadExtensions } from "@vib-rato/coding-agent/extensibility/extensions";
+import * as internalUrls from "@vib-rato/coding-agent/internal-urls";
+import { AgentSession, type AgentSessionEvent } from "@vib-rato/coding-agent/session/agent-session";
+import { ArtifactManager } from "@vib-rato/coding-agent/session/artifacts";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { TempDir } from "@vib-rato/utils";
 
 describe("AgentSession handoff", () => {
 	let tempDir: TempDir;

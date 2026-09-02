@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { hookFetch } from "@gajae-code/utils";
+import { hookFetch } from "@vib-rato/utils";
 import type { AuthStorage } from "../../../src/session/auth-storage";
 import { OpenAICompatibleSearchProvider } from "../../../src/web/search/providers/openai-compatible";
 import type { ActiveSearchModelContext } from "../../../src/web/search/types";
@@ -15,7 +15,7 @@ const ctx: ActiveSearchModelContext = {
 	modelId: "gpt-redteam",
 	api: "openai-completions",
 	baseUrl: "https://proxy.example/v1",
-	headers: { "X-Trace": "redteam", "X-Client": "gjc" },
+	headers: { "X-Trace": "redteam", "X-Client": "vib" },
 };
 
 function searchParams(activeModelContext: ActiveSearchModelContext = ctx) {
@@ -209,14 +209,14 @@ describe("OpenAI-compatible responses-first red-team", () => {
 				method: "POST",
 				authorization: "Bearer sk-proxy",
 				trace: "redteam",
-				client: "gjc",
+				client: "vib",
 			},
 			{
 				url: "https://proxy.example/v1/chat/completions",
 				method: "POST",
 				authorization: "Bearer sk-proxy",
 				trace: "redteam",
-				client: "gjc",
+				client: "vib",
 			},
 		]);
 	});

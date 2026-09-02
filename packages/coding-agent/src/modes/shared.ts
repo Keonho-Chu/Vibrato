@@ -1,4 +1,4 @@
-import type { TabBarTheme } from "@gajae-code/tui";
+import type { TabBarTheme } from "@vib-rato/tui";
 import { theme } from "./theme/theme";
 
 // ═══════════════════════════════════════════════════════════════════════════

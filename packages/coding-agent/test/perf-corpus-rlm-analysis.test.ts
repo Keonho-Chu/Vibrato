@@ -30,7 +30,7 @@ const pinnedBunVersion = readPinnedBunVersion(await Bun.file(driverPath).text())
 function runPerfCorpusBenchmark(): PerfCorpusReport {
 	const result = Bun.spawnSync([process.execPath, ...process.execArgv, canonicalBenchmarkPath], {
 		cwd: path.resolve(import.meta.dir, "../../.."),
-		env: { ...process.env, GJC_MEMORY_ITERATIONS: process.env.GJC_MEMORY_ITERATIONS ?? "1" },
+		env: { ...process.env, VIB_MEMORY_ITERATIONS: process.env.VIB_MEMORY_ITERATIONS ?? "1" },
 	});
 	if (result.exitCode !== 0) {
 		throw new Error(decoder.decode(result.stderr));
@@ -496,11 +496,11 @@ function reportFor(
 		};
 	});
 	const environment: Record<string, string> = {
-		GJC_MEMORY_PROFILE: schedule.profile,
-		GJC_MEMORY_ITERATIONS: String(profileConfig.iterationsTarget),
-		GJC_MEMORY_SURFACE_ORDER: schedule.surfaceOrder.join(","),
+		VIB_MEMORY_PROFILE: schedule.profile,
+		VIB_MEMORY_ITERATIONS: String(profileConfig.iterationsTarget),
+		VIB_MEMORY_SURFACE_ORDER: schedule.surfaceOrder.join(","),
 	};
-	if (schedule.profile === "soak") environment.GJC_MEMORY_DURATION_MS = String(profileConfig.durationTargetMs);
+	if (schedule.profile === "soak") environment.VIB_MEMORY_DURATION_MS = String(profileConfig.durationTargetMs);
 	const command = "bun packages/coding-agent/bench/perf-corpus.bench.ts";
 	const argv = ["bun", "packages/coding-agent/bench/perf-corpus.bench.ts"];
 	const closureManifest = [`packages/coding-agent/bench/perf-corpus.bench.ts:${"a".repeat(64)}`];
@@ -531,7 +531,7 @@ function reportFor(
 	};
 	runner.runtimeControlIdentity = memoryRuntimeControlIdentity(runner);
 	return {
-		schema: "gjc.perf-corpus/3",
+		schema: "vib.perf-corpus/3",
 		generatedAt: new Date(Date.UTC(2026, 6, 27, 0, 0, blockIndex)).toISOString(),
 		gitSha,
 		gitDirty: false,
@@ -612,7 +612,7 @@ async function writeCorpus(
 	}
 	const sealedAt = new Date(cursorMs).toISOString();
 	const ledgerPayload: JsonObject = {
-		schema: "gjc.perf-corpus-attempt-ledger/1",
+		schema: "vib.perf-corpus-attempt-ledger/1",
 		version: 1,
 		complete: true,
 		sealedAt,
@@ -635,7 +635,7 @@ async function writeCorpus(
 	};
 	const ledgerRaw = await writeSealedJson(path.join(directory, "perf-corpus-attempt-ledger.json"), ledgerPayload);
 	const manifestPayload: JsonObject = {
-		schema: "gjc.perf-corpus-raw-manifest/1",
+		schema: "vib.perf-corpus-raw-manifest/1",
 		version: 1,
 		complete: true,
 		sealedAt,
@@ -752,25 +752,25 @@ function invoke(
 				env: {
 					...process.env,
 					...(options.pythonPath === undefined ? {} : { PYTHONPATH: options.pythonPath }),
-					GJC_PERF_CORPUS_BUNDLE_DIR: options.bundleDir ?? bundleDirectory,
-					GJC_PERF_CORPUS_INPUT_DIR: inputDirectory,
-					GJC_PERF_CORPUS_OUTPUT_DIR: outputDirectory,
-					GJC_PERF_CORPUS_EXPECTED_GIT_SHA: options.expectedGitSha ?? gitSha,
-					GJC_PERF_CORPUS_EXPECTED_TREE_SHA: options.expectedTreeSha ?? treeSha,
-					GJC_PERF_CORPUS_EXPECTED_CLOSURE_DIGEST: options.expectedClosureDigest ?? expectedClosureDigest,
-					GJC_PERF_CORPUS_EXPECTED_WORKTREE_FINGERPRINT:
+					VIB_PERF_CORPUS_BUNDLE_DIR: options.bundleDir ?? bundleDirectory,
+					VIB_PERF_CORPUS_INPUT_DIR: inputDirectory,
+					VIB_PERF_CORPUS_OUTPUT_DIR: outputDirectory,
+					VIB_PERF_CORPUS_EXPECTED_GIT_SHA: options.expectedGitSha ?? gitSha,
+					VIB_PERF_CORPUS_EXPECTED_TREE_SHA: options.expectedTreeSha ?? treeSha,
+					VIB_PERF_CORPUS_EXPECTED_CLOSURE_DIGEST: options.expectedClosureDigest ?? expectedClosureDigest,
+					VIB_PERF_CORPUS_EXPECTED_WORKTREE_FINGERPRINT:
 						options.expectedWorktreeFingerprint ?? worktreeFingerprint,
-					GJC_PERF_CORPUS_EXPECTED_RUNTIME_CONTROL_IDENTITY:
+					VIB_PERF_CORPUS_EXPECTED_RUNTIME_CONTROL_IDENTITY:
 						options.expectedRuntimeControlIdentity ?? captureRuntimeControlIdentity,
-					GJC_PERF_CORPUS_EXPECTED_CAPTURE_ID: options.expectedCaptureId ?? captureId,
-					GJC_PERF_CORPUS_EXPECTED_SCHEDULE_DIGEST: options.expectedScheduleDigest ?? expectedScheduleDigest,
-					GJC_PERF_CORPUS_EXPECTED_PROTOCOL_DIGEST: options.expectedProtocolDigest ?? expectedProtocolDigest,
-					GJC_PERF_CORPUS_TEMPLATE_SHA256: launcher.templateSha256,
-					GJC_PERF_CORPUS_DRIVER_SHA256: options.driverDigest ?? driverSha256,
-					GJC_PERF_CORPUS_PREREGISTRATION_SHA256: options.preregistrationDigest ?? preregistrationSha256,
-					GJC_PERF_CORPUS_ATTEMPT_LEDGER_SHA256: sealedDigests.attemptLedgerSha256,
-					GJC_PERF_CORPUS_RAW_MANIFEST_SHA256: sealedDigests.rawManifestSha256,
-					GJC_PERF_CORPUS_INPUT_MOUNT_READ_ONLY: options.readOnlyAttestation ?? launcher.immutableMountAttestation,
+					VIB_PERF_CORPUS_EXPECTED_CAPTURE_ID: options.expectedCaptureId ?? captureId,
+					VIB_PERF_CORPUS_EXPECTED_SCHEDULE_DIGEST: options.expectedScheduleDigest ?? expectedScheduleDigest,
+					VIB_PERF_CORPUS_EXPECTED_PROTOCOL_DIGEST: options.expectedProtocolDigest ?? expectedProtocolDigest,
+					VIB_PERF_CORPUS_TEMPLATE_SHA256: launcher.templateSha256,
+					VIB_PERF_CORPUS_DRIVER_SHA256: options.driverDigest ?? driverSha256,
+					VIB_PERF_CORPUS_PREREGISTRATION_SHA256: options.preregistrationDigest ?? preregistrationSha256,
+					VIB_PERF_CORPUS_ATTEMPT_LEDGER_SHA256: sealedDigests.attemptLedgerSha256,
+					VIB_PERF_CORPUS_RAW_MANIFEST_SHA256: sealedDigests.rawManifestSha256,
+					VIB_PERF_CORPUS_INPUT_MOUNT_READ_ONLY: options.readOnlyAttestation ?? launcher.immutableMountAttestation,
 				},
 			},
 		);
@@ -803,7 +803,7 @@ function validationCodes(result: ValidationResult): string[] {
 }
 
 beforeAll(async () => {
-	temporaryRoot = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-perf-corpus-rlm-"));
+	temporaryRoot = await fs.mkdtemp(path.join(os.tmpdir(), "vib-perf-corpus-rlm-"));
 	const [driverBytes, preregistrationBytes, launcher] = await Promise.all([
 		fs.readFile(driverPath),
 		fs.readFile(preregistrationPath),
@@ -833,27 +833,27 @@ describe("trusted perf-corpus RLM analysis driver", () => {
 		const output = path.join(temporaryRoot, "producer-contract-output");
 		const surfaceOrder = preregistration.captureControls.admissionRows.short[0]!.surfaceOrder;
 		const previousEnvironment = {
-			profile: process.env.GJC_MEMORY_PROFILE,
-			duration: process.env.GJC_MEMORY_DURATION_MS,
-			iterations: process.env.GJC_MEMORY_ITERATIONS,
-			surfaceOrder: process.env.GJC_MEMORY_SURFACE_ORDER,
+			profile: process.env.VIB_MEMORY_PROFILE,
+			duration: process.env.VIB_MEMORY_DURATION_MS,
+			iterations: process.env.VIB_MEMORY_ITERATIONS,
+			surfaceOrder: process.env.VIB_MEMORY_SURFACE_ORDER,
 		};
 		let report: PerfCorpusReport;
 		try {
-			process.env.GJC_MEMORY_PROFILE = "short";
-			delete process.env.GJC_MEMORY_DURATION_MS;
-			process.env.GJC_MEMORY_ITERATIONS = String(preregistration.cohort.profiles.short.iterationsTarget);
-			process.env.GJC_MEMORY_SURFACE_ORDER = surfaceOrder.join(",");
+			process.env.VIB_MEMORY_PROFILE = "short";
+			delete process.env.VIB_MEMORY_DURATION_MS;
+			process.env.VIB_MEMORY_ITERATIONS = String(preregistration.cohort.profiles.short.iterationsTarget);
+			process.env.VIB_MEMORY_SURFACE_ORDER = surfaceOrder.join(",");
 			report = runPerfCorpusBenchmark();
 		} finally {
-			if (previousEnvironment.profile === undefined) delete process.env.GJC_MEMORY_PROFILE;
-			else process.env.GJC_MEMORY_PROFILE = previousEnvironment.profile;
-			if (previousEnvironment.duration === undefined) delete process.env.GJC_MEMORY_DURATION_MS;
-			else process.env.GJC_MEMORY_DURATION_MS = previousEnvironment.duration;
-			if (previousEnvironment.iterations === undefined) delete process.env.GJC_MEMORY_ITERATIONS;
-			else process.env.GJC_MEMORY_ITERATIONS = previousEnvironment.iterations;
-			if (previousEnvironment.surfaceOrder === undefined) delete process.env.GJC_MEMORY_SURFACE_ORDER;
-			else process.env.GJC_MEMORY_SURFACE_ORDER = previousEnvironment.surfaceOrder;
+			if (previousEnvironment.profile === undefined) delete process.env.VIB_MEMORY_PROFILE;
+			else process.env.VIB_MEMORY_PROFILE = previousEnvironment.profile;
+			if (previousEnvironment.duration === undefined) delete process.env.VIB_MEMORY_DURATION_MS;
+			else process.env.VIB_MEMORY_DURATION_MS = previousEnvironment.duration;
+			if (previousEnvironment.iterations === undefined) delete process.env.VIB_MEMORY_ITERATIONS;
+			else process.env.VIB_MEMORY_ITERATIONS = previousEnvironment.iterations;
+			if (previousEnvironment.surfaceOrder === undefined) delete process.env.VIB_MEMORY_SURFACE_ORDER;
+			else process.env.VIB_MEMORY_SURFACE_ORDER = previousEnvironment.surfaceOrder;
 		}
 
 		const baselines = report.fixtures.flatMap(fixture =>
@@ -1659,7 +1659,7 @@ describe("trusted perf-corpus RLM analysis driver", () => {
 		const raw = await fs.readFile(early, "utf8");
 		await fs.writeFile(
 			early,
-			raw.replace('"schema":"gjc.perf-corpus/3"', '"schema":"gjc.perf-corpus/3","schema":"gjc.perf-corpus/3"'),
+			raw.replace('"schema":"vib.perf-corpus/3"', '"schema":"vib.perf-corpus/3","schema":"vib.perf-corpus/3"'),
 		);
 		await mutateReport(input, "soak-24.json", report => {
 			report.runner.memorySurfaceOrder = [...report.runner.memorySurfaceOrder].reverse();
@@ -1814,7 +1814,7 @@ describe("trusted perf-corpus RLM analysis driver", () => {
 			"try: raw=os.read(fd, 1024*1024)",
 			"finally: os.close(fd)",
 			"assert hashlib.sha256(raw).hexdigest()==expected",
-			"namespace={'__name__':'gjc_unit_only','__file__':'<verified-unit-driver>'}",
+			"namespace={'__name__':'vib_unit_only','__file__':'<verified-unit-driver>'}",
 			"exec(compile(raw, namespace['__file__'], 'exec', dont_inherit=True), namespace)",
 			`print(json.dumps(namespace['_unit_only_bca_reference']([${boundary}]*24), sort_keys=True))`,
 		].join("\n");
@@ -1937,7 +1937,7 @@ describe("trusted perf-corpus RLM analysis driver", () => {
 		const driver = await fs.readFile(driverPath, "utf8");
 		expect(driver).not.toContain("--test-mode");
 		expect(driver).not.toContain("--resamples");
-		expect(driver).not.toContain("GJC_PERF_CORPUS_RLM_TEST_ONLY");
+		expect(driver).not.toContain("VIB_PERF_CORPUS_RLM_TEST_ONLY");
 	});
 
 	test("keeps ps and unavailable sampler/value combinations consistent", async () => {

@@ -1,4 +1,4 @@
-import { isCompiledBinary, logger, Snowflake } from "@gajae-code/utils";
+import { isCompiledBinary, logger, Snowflake } from "@vib-rato/utils";
 import { registerResourceOwner } from "../../runtime/process-lifecycle";
 import type { ToolSession } from "../../tools";
 import { ToolAbortError, ToolError } from "../../tools/tool-errors";
@@ -510,7 +510,7 @@ async function spawnJsWorker(): Promise<WorkerHandle> {
 			: new Worker(new URL("./worker-entry.ts", import.meta.url).href, { type: "module" });
 		return wrapBunWorker(worker);
 	} catch (err) {
-		if (process.env.GAJAE_CODE_JS_EVAL_INLINE_WORKER === "1") {
+		if (process.env.VIBRATO_JS_EVAL_INLINE_WORKER === "1") {
 			logger.warn("Bun Worker spawn failed; using test-only inline JS eval worker", {
 				error: err instanceof Error ? err.message : String(err),
 			});

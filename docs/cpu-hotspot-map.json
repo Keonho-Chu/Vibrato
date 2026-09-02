@@ -1,7 +1,7 @@
 {
-  "schema": "gjc.hotspot-map/1",
+  "schema": "vib.hotspot-map/1",
   "generatedBy": "ultragoal G001+G002",
-  "spec": ".gjc/specs/deep-interview-cpu-hotspots-rust-optimization.md",
+  "spec": ".vib/specs/deep-interview-cpu-hotspots-rust-optimization.md",
   "method": "static structural ranking (algorithmic complexity x trigger frequency); CPU self-time to be measured by the agreed profiling corpus during optimization. Already-native pi-natives surfaces excluded.",
   "alreadyNativeExcluded": [
     "grep",

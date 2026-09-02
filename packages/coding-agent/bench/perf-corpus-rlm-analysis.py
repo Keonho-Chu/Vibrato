@@ -20,9 +20,9 @@ from pathlib import Path
 from statistics import NormalDist
 from typing import Any, Sequence
 
-ANALYSIS_SCHEMA = "gjc.perf-corpus-rlm-analysis/1"
-REPORT_SCHEMA = "gjc.perf-corpus/3"
-PREREG_SCHEMA = "gjc.perf-corpus-preregistration/1"
+ANALYSIS_SCHEMA = "vib.perf-corpus-rlm-analysis/1"
+REPORT_SCHEMA = "vib.perf-corpus/3"
+PREREG_SCHEMA = "vib.perf-corpus-preregistration/1"
 SURFACES = ("cli", "agent-session", "blob-store", "worker", "telegram-daemon", "tui", "shared-native")
 ELIGIBLE_SURFACES = ("agent-session", "tui")
 EXTREMA_DOMAINS = ("rssBytes", "heapUsedBytes", "externalBytes", "arrayBuffersBytes")
@@ -121,7 +121,7 @@ BASELINE_FIELDS = {
     "parentPid",
     "captureSemanticsId",
 }
-CAPTURE_SEMANTICS_ID = "gjc.memory-baseline.capture/3"
+CAPTURE_SEMANTICS_ID = "vib.memory-baseline.capture/3"
 BUN_VERSION = "1.4.0"
 LOGICAL_BUN_EXECUTABLE = "bun"
 RESULT_JSON = "perf-corpus-rlm-result.json"
@@ -129,8 +129,8 @@ RESULT_MARKDOWN = "perf-corpus-rlm-result.md"
 NORMAL = NormalDist()
 MAX_SAFE_INTEGER = 9_007_199_254_740_991
 CANONICAL_RESAMPLES = 10_000
-ATTEMPT_LEDGER_SCHEMA = "gjc.perf-corpus-attempt-ledger/1"
-RAW_MANIFEST_SCHEMA = "gjc.perf-corpus-raw-manifest/1"
+ATTEMPT_LEDGER_SCHEMA = "vib.perf-corpus-attempt-ledger/1"
+RAW_MANIFEST_SCHEMA = "vib.perf-corpus-raw-manifest/1"
 ATTEMPT_LEDGER_FILENAME = "perf-corpus-attempt-ledger.json"
 RAW_MANIFEST_FILENAME = "perf-corpus-raw-manifest.json"
 FIXTURE_CLASSES = ("startup-session-load", "streaming-ttft", "large-transcript", "high-output-tool", "edit-diff")
@@ -874,12 +874,12 @@ def _validate_report(value: Any, schedule: dict[str, Any], prereg: dict[str, Any
         raise EvidenceError(f"{filename}: preregistered memory surface order mismatch")
     environment = _expect_dict(runner.get("environment"), f"{filename}.runner.environment")
     expected_controls = {
-        "GJC_MEMORY_PROFILE": profile,
-        "GJC_MEMORY_ITERATIONS": str(profile_config["iterationsTarget"]),
-        "GJC_MEMORY_SURFACE_ORDER": ",".join(expected_order),
+        "VIB_MEMORY_PROFILE": profile,
+        "VIB_MEMORY_ITERATIONS": str(profile_config["iterationsTarget"]),
+        "VIB_MEMORY_SURFACE_ORDER": ",".join(expected_order),
     }
     if profile == "soak":
-        expected_controls["GJC_MEMORY_DURATION_MS"] = str(profile_config["durationTargetMs"])
+        expected_controls["VIB_MEMORY_DURATION_MS"] = str(profile_config["durationTargetMs"])
     if environment != expected_controls:
         raise EvidenceError(f"{filename}: runner.environment exact controls drift")
     identity_source = {

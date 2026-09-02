@@ -2,7 +2,7 @@
 // Spawned with a controlled cwd so the caller can plant a project `.env`: the env
 // module parses `projectEnv` at load time from `process.cwd()`, so the trust
 // boundary can only be exercised from a separate process.
-import { resolveAzureClientApiKeyForTest } from "@gajae-code/ai/providers/azure-openai-responses";
+import { resolveAzureClientApiKeyForTest } from "@vib-rato/ai/providers/azure-openai-responses";
 
 console.log(
 	JSON.stringify({

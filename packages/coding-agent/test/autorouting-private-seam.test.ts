@@ -19,7 +19,7 @@ describe("autorouting private seam boundary", () => {
 		const manifest = JSON.parse(await Bun.file(path.join(packageRoot, "package.json")).text()) as {
 			exports: Record<string, unknown>;
 		};
-		// A null entry is what prevents `import "@gajae-code/coding-agent/sdk/host/internal-autorouting-state"`.
+		// A null entry is what prevents `import "@vib-rato/coding-agent/sdk/host/internal-autorouting-state"`.
 		expect(manifest.exports["./sdk/host/internal-autorouting-state"]).toBeNull();
 		expect(manifest.exports["./sdk/host/internal-autorouting-state.js"]).toBeNull();
 	});

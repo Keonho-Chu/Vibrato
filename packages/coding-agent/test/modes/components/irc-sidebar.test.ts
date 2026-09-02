@@ -7,11 +7,11 @@ import {
 	IrcLeftLaneComponent,
 	type IrcSidebarTheme,
 	IrcSplitViewComponent,
-} from "@gajae-code/coding-agent/modes/components/irc-sidebar";
+} from "@vib-rato/coding-agent/modes/components/irc-sidebar";
 import {
 	IRC_OBSERVATION_LEDGER_MAX_RETAINED_UTF8_BYTES,
 	IrcObservationLedger,
-} from "@gajae-code/coding-agent/modes/irc-observation-ledger";
+} from "@vib-rato/coding-agent/modes/irc-observation-ledger";
 import {
 	type Component,
 	Container,
@@ -22,7 +22,7 @@ import {
 	Text,
 	TUI,
 	visibleWidth,
-} from "@gajae-code/tui";
+} from "@vib-rato/tui";
 import { VirtualTerminal } from "../../../../tui/test/virtual-terminal";
 
 const sidebarTheme = {

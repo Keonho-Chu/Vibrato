@@ -9,11 +9,11 @@ import {
 	readFileLockObservationForGc,
 	removeFileLockDirForGc,
 	withFileLock,
-} from "@gajae-code/coding-agent/config/file-lock";
-import { fileLocksGcAdapter } from "@gajae-code/coding-agent/config/file-lock-gc";
-import type { GcContext, GcPidProbe, GcRecord } from "@gajae-code/coding-agent/gjc-runtime/gc-runtime";
-import * as native from "@gajae-code/natives";
-import { snapshotDirectoryTree } from "@gajae-code/natives";
+} from "@vib-rato/coding-agent/config/file-lock";
+import { fileLocksGcAdapter } from "@vib-rato/coding-agent/config/file-lock-gc";
+import type { GcContext, GcPidProbe, GcRecord } from "@vib-rato/coding-agent/vib-runtime/gc-runtime";
+import * as native from "@vib-rato/natives";
+import { snapshotDirectoryTree } from "@vib-rato/natives";
 
 const DEAD_PID = 525_252;
 const LIVE_PID = 636_363;
@@ -58,7 +58,7 @@ function ctxWith(spoolDir: string, probe: GcPidProbe): GcContext {
 	return {
 		probe,
 		force: false,
-		env: { ...process.env, GJC_RECEIPT_SPOOL_DIR: spoolDir },
+		env: { ...process.env, VIB_RECEIPT_SPOOL_DIR: spoolDir },
 		cwd: spoolDir,
 	};
 }

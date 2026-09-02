@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { MCPManager, withinDeclaredConnectionWindow } from "../../src/runtime-mcp/manager";
 
-// `gjc mcp add --timeout` writes a per-server `timeout`, and `connectToServer`
+// `vib mcp add --timeout` writes a per-server `timeout`, and `connectToServer`
 // honors it. Startup used to discard it anyway: one batch-wide timer decided
 // every server's fate, so a server that declared 90s and a server that declared
 // nothing were both killed at the same millisecond once the short ceiling

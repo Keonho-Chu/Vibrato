@@ -10,11 +10,11 @@ import {
 } from "../src/sdk/bus/telegram-daemon-orphan-reap";
 
 function tempAgentDir(): string {
-	return fs.mkdtempSync(path.join(os.tmpdir(), "gjc-legacy-stray-test-"));
+	return fs.mkdtempSync(path.join(os.tmpdir(), "vib-legacy-stray-test-"));
 }
 
 const AGENT_DIR_ARGS = (agentDir: string) => [
-	"/old/workspace/dist/gjc",
+	"/old/workspace/dist/vib",
 	"notify",
 	"daemon-internal",
 	"--owner-id",
@@ -24,7 +24,7 @@ const AGENT_DIR_ARGS = (agentDir: string) => [
 ];
 
 describe("legacy stray daemon argv signature", () => {
-	const agentDir = "/home/u/.gjc/agent";
+	const agentDir = "/home/u/.vib/agent";
 
 	test("matches the exact daemon-internal invocation for this agent dir", () => {
 		expect(isLegacyStrayDaemonArgs(AGENT_DIR_ARGS(agentDir), agentDir)).toBe(true);
@@ -32,15 +32,15 @@ describe("legacy stray daemon argv signature", () => {
 
 	test("rejects near-miss invocations", () => {
 		// Different agent dir.
-		expect(isLegacyStrayDaemonArgs(AGENT_DIR_ARGS("/home/u/.gjc/other"), agentDir)).toBe(false);
+		expect(isLegacyStrayDaemonArgs(AGENT_DIR_ARGS("/home/u/.vib/other"), agentDir)).toBe(false);
 		// Subcommand tokens not adjacent.
 		expect(
-			isLegacyStrayDaemonArgs(["gjc", "notify", "health", "daemon-internal", "--agent-dir", agentDir], agentDir),
+			isLegacyStrayDaemonArgs(["vib", "notify", "health", "daemon-internal", "--agent-dir", agentDir], agentDir),
 		).toBe(false);
 		// Substring lookalikes are not token matches.
-		expect(isLegacyStrayDaemonArgs(["gjc", "notify-daemon-internal", "--agent-dir", agentDir], agentDir)).toBe(false);
+		expect(isLegacyStrayDaemonArgs(["vib", "notify-daemon-internal", "--agent-dir", agentDir], agentDir)).toBe(false);
 		// Missing --agent-dir binding.
-		expect(isLegacyStrayDaemonArgs(["gjc", "notify", "daemon-internal"], agentDir)).toBe(false);
+		expect(isLegacyStrayDaemonArgs(["vib", "notify", "daemon-internal"], agentDir)).toBe(false);
 	});
 });
 

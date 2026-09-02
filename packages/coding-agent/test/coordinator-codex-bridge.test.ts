@@ -19,7 +19,7 @@ import {
 const tempDirs: string[] = [];
 
 async function tempRoot(): Promise<string> {
-	const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-coordinator-codex-bridge-"));
+	const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-coordinator-codex-bridge-"));
 	tempDirs.push(root);
 	return root;
 }
@@ -31,9 +31,9 @@ afterEach(async () => {
 function namespaceDir(root: string): string {
 	return coordinatorNamespacePath(
 		buildCoordinatorMcpConfig({
-			GJC_COORDINATOR_MCP_STATE_ROOT: path.join(root, ".gjc", "coordinator-state"),
-			GJC_COORDINATOR_MCP_PROFILE: "local",
-			GJC_COORDINATOR_MCP_REPO: "repo",
+			VIB_COORDINATOR_MCP_STATE_ROOT: path.join(root, ".vib", "coordinator-state"),
+			VIB_COORDINATOR_MCP_PROFILE: "local",
+			VIB_COORDINATOR_MCP_REPO: "repo",
 		}),
 	);
 }
@@ -89,12 +89,12 @@ function createServer(
 	const control = typeof status === "string" ? { status } : status;
 	return createCoordinatorMcpServer({
 		env: {
-			GJC_COORDINATOR_MCP_WORKDIR_ROOTS: root,
-			GJC_COORDINATOR_MCP_STATE_ROOT: path.join(root, ".gjc", "coordinator-state"),
-			GJC_COORDINATOR_MCP_CODEX_TOKEN_ROOT: path.join(root, ".gjc", "codex-tokens"),
-			GJC_COORDINATOR_MCP_PROFILE: "local",
-			GJC_COORDINATOR_MCP_REPO: "repo",
-			GJC_COORDINATOR_MCP_MUTATIONS: "sessions",
+			VIB_COORDINATOR_MCP_WORKDIR_ROOTS: root,
+			VIB_COORDINATOR_MCP_STATE_ROOT: path.join(root, ".vib", "coordinator-state"),
+			VIB_COORDINATOR_MCP_CODEX_TOKEN_ROOT: path.join(root, ".vib", "codex-tokens"),
+			VIB_COORDINATOR_MCP_PROFILE: "local",
+			VIB_COORDINATOR_MCP_REPO: "repo",
+			VIB_COORDINATOR_MCP_MUTATIONS: "sessions",
 		},
 		services: {
 			codexTransportFactory: async () => {
@@ -149,7 +149,7 @@ async function createSession(root: string, server: CoordinatorMcpServer, session
 }
 
 async function writeManagedToken(root: string, token = "test-token"): Promise<string> {
-	const tokenRoot = path.join(root, ".gjc", "codex-tokens");
+	const tokenRoot = path.join(root, ".vib", "codex-tokens");
 	await fs.mkdir(tokenRoot, { recursive: true, mode: 0o700 });
 	await fs.chmod(tokenRoot, 0o700);
 	const tokenFile = path.join(tokenRoot, "codex-token");
@@ -160,7 +160,7 @@ async function writeManagedToken(root: string, token = "test-token"): Promise<st
 
 async function registerHandoff(server: CoordinatorMcpServer, root: string) {
 	const tokenFile = await writeManagedToken(root);
-	return server.callTool("gjc_coordinator_register_codex_handoff", {
+	return server.callTool("vib_coordinator_register_codex_handoff", {
 		session_id: "session-1",
 		thread_id: "thread-1",
 		endpoint: { kind: "unix", path: "/tmp/codex-app-server.sock" },
@@ -186,7 +186,7 @@ describe("Coordinator Codex resume bridge", () => {
 			},
 			heartbeat: { supported: false, reason: "automation_update_unavailable" },
 		});
-		const publicHandoff = await server.callTool("gjc_coordinator_read_codex_handoff", { session_id: "session-1" });
+		const publicHandoff = await server.callTool("vib_coordinator_read_codex_handoff", { session_id: "session-1" });
 		expect(publicHandoff).toMatchObject({
 			ok: true,
 			handoff: { thread_id: "thread-1", token_configured: true },
@@ -206,7 +206,7 @@ describe("Coordinator Codex resume bridge", () => {
 		expect(publicHandoff.handoff).not.toHaveProperty("token_file");
 		expect(publicHandoff.handoff).not.toHaveProperty("token_file_identity");
 		await expect(
-			server.callTool("gjc_coordinator_register_codex_handoff", {
+			server.callTool("vib_coordinator_register_codex_handoff", {
 				session_id: "session-1",
 				thread_id: "thread-1",
 				endpoint: { kind: "tcp", host: "10.0.0.1", port: 8123 },
@@ -215,7 +215,7 @@ describe("Coordinator Codex resume bridge", () => {
 			}),
 		).resolves.toEqual({ ok: false, error: { code: "codex_endpoint_not_loopback" } });
 		await expect(
-			server.callTool("gjc_coordinator_register_codex_handoff", {
+			server.callTool("vib_coordinator_register_codex_handoff", {
 				session_id: "session-1",
 				thread_id: "thread-1",
 				endpoint: { kind: "unix", path: "/tmp/codex-app-server.sock" },
@@ -241,7 +241,7 @@ describe("Coordinator Codex resume bridge", () => {
 		server.config.allowedRoots = [narrowed];
 
 		await expect(
-			server.callTool("gjc_coordinator_register_codex_handoff", {
+			server.callTool("vib_coordinator_register_codex_handoff", {
 				session_id: "session-1",
 				thread_id: "thread-1",
 				endpoint: { kind: "unix", path: "/tmp/codex-app-server.sock" },
@@ -250,10 +250,10 @@ describe("Coordinator Codex resume bridge", () => {
 			}),
 		).resolves.toMatchObject({ ok: false });
 		await expect(
-			server.callTool("gjc_coordinator_read_codex_handoff", { session_id: "session-1" }),
+			server.callTool("vib_coordinator_read_codex_handoff", { session_id: "session-1" }),
 		).resolves.toMatchObject({ ok: false });
 		await expect(
-			server.callTool("gjc_coordinator_ack_codex_handoff", {
+			server.callTool("vib_coordinator_ack_codex_handoff", {
 				session_id: "session-1",
 				wake_key: `session-1:${event.seq}`,
 				idempotency_key: "narrowed-ack",
@@ -268,7 +268,7 @@ describe("Coordinator Codex resume bridge", () => {
 		const server = createServer(root, "idle", requests);
 		await createSession(root, server);
 		await expect(
-			server.callTool("gjc_coordinator_register_codex_handoff", {
+			server.callTool("vib_coordinator_register_codex_handoff", {
 				session_id: "session-1",
 				thread_id: "thread-1",
 				endpoint: { kind: "unix", path: "/tmp/codex-app-server.sock" },
@@ -279,7 +279,7 @@ describe("Coordinator Codex resume bridge", () => {
 		).resolves.toEqual({ ok: false, error: { code: "token_material_not_allowed" } });
 
 		const tokenFile = await writeManagedToken(root, "bounded-token");
-		const response = await server.callTool("gjc_coordinator_register_codex_handoff", {
+		const response = await server.callTool("vib_coordinator_register_codex_handoff", {
 			session_id: "session-1",
 			thread_id: "thread-1",
 			endpoint: { kind: "unix", path: "/tmp/codex-app-server.sock", ignored: "ignored" },
@@ -321,7 +321,7 @@ describe("Coordinator Codex resume bridge", () => {
 		const server = createServer(root, "idle", requests);
 		await createSession(root, server);
 
-		const rejection = await server.callTool("gjc_coordinator_register_codex_handoff", {
+		const rejection = await server.callTool("vib_coordinator_register_codex_handoff", {
 			session_id: "session-1",
 			thread_id: "thread-1",
 			endpoint: { kind: "unix", path: "/tmp/codex-app-server.sock" },
@@ -337,7 +337,7 @@ describe("Coordinator Codex resume bridge", () => {
 		await assertIdempotencyDirectoryClean(root);
 
 		// Exact same-key retry replays the sealed rejection instead of re-running it.
-		const replay = await server.callTool("gjc_coordinator_register_codex_handoff", {
+		const replay = await server.callTool("vib_coordinator_register_codex_handoff", {
 			session_id: "session-1",
 			thread_id: "thread-1",
 			endpoint: { kind: "unix", path: "/tmp/codex-app-server.sock" },
@@ -350,7 +350,7 @@ describe("Coordinator Codex resume bridge", () => {
 		// A restart (fresh server over the same state root) still replays it.
 		const restarted = createServer(root, "idle", requests);
 		await expect(
-			restarted.callTool("gjc_coordinator_register_codex_handoff", {
+			restarted.callTool("vib_coordinator_register_codex_handoff", {
 				session_id: "session-1",
 				thread_id: "thread-1",
 				endpoint: { kind: "unix", path: "/tmp/codex-app-server.sock" },
@@ -363,7 +363,7 @@ describe("Coordinator Codex resume bridge", () => {
 
 		// Reusing the rejected key with a different request conflicts, never re-runs.
 		await expect(
-			server.callTool("gjc_coordinator_register_codex_handoff", {
+			server.callTool("vib_coordinator_register_codex_handoff", {
 				session_id: "session-1",
 				thread_id: "thread-1",
 				endpoint: { kind: "unix", path: "/tmp/codex-app-server.sock" },
@@ -385,7 +385,7 @@ describe("Coordinator Codex resume bridge", () => {
 		const tokenFile = await writeManagedToken(root);
 
 		const attempt = (sessionId: string, idempotencyKey: string) =>
-			server.callTool("gjc_coordinator_register_codex_handoff", {
+			server.callTool("vib_coordinator_register_codex_handoff", {
 				session_id: sessionId,
 				thread_id: `thread-${sessionId}`,
 				endpoint: { kind: "unix", path: "/tmp/codex-app-server.sock" },
@@ -414,7 +414,7 @@ describe("Coordinator Codex resume bridge", () => {
 		expect(records.map(record => record.key_digest).sort()).toHaveLength(4);
 		const restarted = createServer(root, "idle", requests);
 		await expect(
-			restarted.callTool("gjc_coordinator_register_codex_handoff", {
+			restarted.callTool("vib_coordinator_register_codex_handoff", {
 				session_id: "session-1",
 				thread_id: "thread-session-1",
 				endpoint: { kind: "unix", path: "/tmp/codex-app-server.sock" },
@@ -433,7 +433,7 @@ describe("Coordinator Codex resume bridge", () => {
 		await createSession(root, server);
 		await registerHandoff(server, root);
 
-		const finalResponseSentinel = "FINAL-RESPONSE-SENTINEL-9c41 full GJC answer body";
+		const finalResponseSentinel = "FINAL-RESPONSE-SENTINEL-9c41 full Vibrato answer body";
 		await fs.mkdir(path.join(namespaceDir(root), "turns"), { recursive: true });
 		await Bun.write(
 			path.join(namespaceDir(root), "turns", "turn-11111111-2222-4333-8444-555555555555.json"),
@@ -452,19 +452,19 @@ describe("Coordinator Codex resume bridge", () => {
 			summary: "Terminal coordinator event",
 		});
 		await awaitCodexWakePublishesForTest(namespaceDir(root));
-		const read = await server.callTool("gjc_coordinator_read_codex_handoff", { session_id: "session-1" });
+		const read = await server.callTool("vib_coordinator_read_codex_handoff", { session_id: "session-1" });
 		expect(read).toMatchObject({
 			wake_events: [
 				{
 					key: `session-1:${event.seq}`,
 					status: "published",
-					client_user_message_id: `gjc-wake-session-1:${event.seq}`,
+					client_user_message_id: `vib-wake-session-1:${event.seq}`,
 				},
 			],
 		});
 		expect(requests.map(request => request.method)).toEqual(["initialize", "thread/resume", "turn/start"]);
 		const start = requests.find(request => request.method === "turn/start");
-		expect(start?.params).toMatchObject({ clientUserMessageId: `gjc-wake-session-1:${event.seq}` });
+		expect(start?.params).toMatchObject({ clientUserMessageId: `vib-wake-session-1:${event.seq}` });
 		expect(String((start?.params.input as Array<{ text: string }> | undefined)?.[0]?.text)).not.toContain(
 			finalResponseSentinel,
 		);
@@ -482,7 +482,7 @@ describe("Coordinator Codex resume bridge", () => {
 		});
 		expect(duplicate.created).toBe(false);
 		await expect(
-			restarted.callTool("gjc_coordinator_read_codex_handoff", { session_id: "session-1" }),
+			restarted.callTool("vib_coordinator_read_codex_handoff", { session_id: "session-1" }),
 		).resolves.toMatchObject({
 			handoff: { thread_id: "thread-1" },
 			wake_events: [{ key: `session-1:${event.seq}` }],
@@ -505,7 +505,7 @@ describe("Coordinator Codex resume bridge", () => {
 		});
 		await awaitCodexWakePublishesForTest(namespaceDir(root));
 		await expect(
-			server.callTool("gjc_coordinator_read_codex_handoff", { session_id: "session-1" }),
+			server.callTool("vib_coordinator_read_codex_handoff", { session_id: "session-1" }),
 		).resolves.toMatchObject({
 			pending_wake_events: [
 				{ key: `session-1:${event.seq}`, status: "pending", lifecycle: "requested", attempts: 1 },
@@ -513,7 +513,7 @@ describe("Coordinator Codex resume bridge", () => {
 		});
 		expect(requests.map(request => request.method)).toEqual(["initialize", "thread/resume"]);
 		await expect(
-			server.callTool("gjc_coordinator_ack_codex_handoff", {
+			server.callTool("vib_coordinator_ack_codex_handoff", {
 				session_id: "session-1",
 				wake_key: `session-1:${event.seq}`,
 				idempotency_key: "ack-codex-wake",
@@ -521,7 +521,7 @@ describe("Coordinator Codex resume bridge", () => {
 			}),
 		).resolves.toMatchObject({ ok: true, wake_event: { status: "acked", lifecycle: "acknowledged" } });
 		await expect(
-			server.callTool("gjc_coordinator_read_codex_handoff", { session_id: "session-1" }),
+			server.callTool("vib_coordinator_read_codex_handoff", { session_id: "session-1" }),
 		).resolves.toMatchObject({
 			pending_wake_events: [],
 		});
@@ -546,7 +546,7 @@ describe("Coordinator Codex resume bridge", () => {
 		await awaitCodexWakePublishesForTest(namespaceDir(root));
 
 		await expect(
-			server.callTool("gjc_coordinator_read_codex_handoff", { session_id: "session-1" }),
+			server.callTool("vib_coordinator_read_codex_handoff", { session_id: "session-1" }),
 		).resolves.toMatchObject({
 			wake_events: [
 				{
@@ -592,7 +592,7 @@ describe("Coordinator Codex resume bridge", () => {
 		await fs.writeFile(path.join(namespaceDir(root), "codex-handoffs", "session-1.json"), "{invalid json");
 
 		await expect(
-			server.callTool("gjc_coordinator_list_questions", { session_id: "session-1" }),
+			server.callTool("vib_coordinator_list_questions", { session_id: "session-1" }),
 		).resolves.toMatchObject({
 			ok: false,
 			error: {
@@ -600,7 +600,7 @@ describe("Coordinator Codex resume bridge", () => {
 				message: "Coordinator resource is no longer available.",
 			},
 		});
-		expect((await fs.readdir(path.join(root, ".gjc", "coordinator-state", "v1"))).length).toBeGreaterThan(0);
+		expect((await fs.readdir(path.join(root, ".vib", "coordinator-state", "v1"))).length).toBeGreaterThan(0);
 	});
 
 	it("retries pending wakes when a later Codex wake finds the thread idle", async () => {
@@ -626,7 +626,7 @@ describe("Coordinator Codex resume bridge", () => {
 		});
 		await awaitCodexWakePublishesForTest(namespaceDir(root));
 
-		const read = (await server.callTool("gjc_coordinator_read_codex_handoff", {
+		const read = (await server.callTool("vib_coordinator_read_codex_handoff", {
 			session_id: "session-1",
 		})) as { wake_events: Array<{ key: string; status: string; attempts: number }> };
 		expect(read.wake_events.find(event => event.key === `session-1:${pending.seq}`)).toMatchObject({
@@ -658,7 +658,7 @@ describe("Coordinator Codex resume bridge", () => {
 		});
 		await awaitCodexWakePublishesForTest(namespaceDir(root));
 		expect(requests.filter(request => request.method === "turn/start")).toHaveLength(2);
-		const read = (await server.callTool("gjc_coordinator_read_codex_handoff", {
+		const read = (await server.callTool("vib_coordinator_read_codex_handoff", {
 			session_id: "session-1",
 		})) as { wake_events: Array<{ key: string; status: string; attempts: number }> };
 		expect(read.wake_events.find(event => event.key === `session-1:${failed.seq}`)).toMatchObject({
@@ -666,7 +666,7 @@ describe("Coordinator Codex resume bridge", () => {
 			attempts: 2,
 		});
 
-		await server.callTool("gjc_coordinator_ack_codex_handoff", {
+		await server.callTool("vib_coordinator_ack_codex_handoff", {
 			session_id: "session-1",
 			wake_key: `session-1:${published.seq}`,
 			idempotency_key: "ack-published-wake",
@@ -688,10 +688,10 @@ describe("Coordinator Codex resume bridge", () => {
 		const secondStarted = Promise.withResolvers<void>();
 		const server = createCoordinatorMcpServer({
 			env: {
-				GJC_COORDINATOR_MCP_WORKDIR_ROOTS: root,
-				GJC_COORDINATOR_MCP_STATE_ROOT: path.join(root, ".gjc", "coordinator-state"),
-				GJC_COORDINATOR_MCP_PROFILE: "local",
-				GJC_COORDINATOR_MCP_REPO: "repo",
+				VIB_COORDINATOR_MCP_WORKDIR_ROOTS: root,
+				VIB_COORDINATOR_MCP_STATE_ROOT: path.join(root, ".vib", "coordinator-state"),
+				VIB_COORDINATOR_MCP_PROFILE: "local",
+				VIB_COORDINATOR_MCP_REPO: "repo",
 			},
 			services: {
 				codexTransportFactory: async endpoint => ({
@@ -779,10 +779,10 @@ describe("Coordinator Codex resume bridge", () => {
 		let startCount = 0;
 		const server = createCoordinatorMcpServer({
 			env: {
-				GJC_COORDINATOR_MCP_WORKDIR_ROOTS: root,
-				GJC_COORDINATOR_MCP_STATE_ROOT: path.join(root, ".gjc", "coordinator-state"),
-				GJC_COORDINATOR_MCP_PROFILE: "local",
-				GJC_COORDINATOR_MCP_REPO: "repo",
+				VIB_COORDINATOR_MCP_WORKDIR_ROOTS: root,
+				VIB_COORDINATOR_MCP_STATE_ROOT: path.join(root, ".vib", "coordinator-state"),
+				VIB_COORDINATOR_MCP_PROFILE: "local",
+				VIB_COORDINATOR_MCP_REPO: "repo",
 			},
 			services: {
 				codexTransportFactory: async () => ({
@@ -841,15 +841,15 @@ describe("Coordinator Codex resume bridge", () => {
 			const id = String(request.params.clientUserMessageId);
 			startsByWake.set(id, (startsByWake.get(id) ?? 0) + 1);
 		}
-		expect(startsByWake.get(`gjc-wake-session-1:${first.seq}`)).toBe(1);
-		expect(startsByWake.get(`gjc-wake-session-2:${second.seq}`)).toBe(1);
-		expect(startsByWake.get(`gjc-wake-session-2:${later.seq}`)).toBe(1);
+		expect(startsByWake.get(`vib-wake-session-1:${first.seq}`)).toBe(1);
+		expect(startsByWake.get(`vib-wake-session-2:${second.seq}`)).toBe(1);
+		expect(startsByWake.get(`vib-wake-session-2:${later.seq}`)).toBe(1);
 		expect([...startsByWake.values()].every(count => count === 1)).toBe(true);
 		expect(
 			[...startsByWake.keys()].filter(id =>
-				[`gjc-wake-session-1:${first.seq}`, `gjc-wake-session-2:${second.seq}`].includes(id),
+				[`vib-wake-session-1:${first.seq}`, `vib-wake-session-2:${second.seq}`].includes(id),
 			),
-		).toEqual([`gjc-wake-session-1:${first.seq}`, `gjc-wake-session-2:${second.seq}`]);
+		).toEqual([`vib-wake-session-1:${first.seq}`, `vib-wake-session-2:${second.seq}`]);
 		expect((await listCodexWakeEvents(namespace)).find(event => event.key === pending?.key)).toMatchObject({
 			status: "published",
 		});
@@ -862,10 +862,10 @@ describe("Coordinator Codex resume bridge", () => {
 		let threadBusy = true;
 		const server = createCoordinatorMcpServer({
 			env: {
-				GJC_COORDINATOR_MCP_WORKDIR_ROOTS: root,
-				GJC_COORDINATOR_MCP_STATE_ROOT: path.join(root, ".gjc", "coordinator-state"),
-				GJC_COORDINATOR_MCP_PROFILE: "local",
-				GJC_COORDINATOR_MCP_REPO: "repo",
+				VIB_COORDINATOR_MCP_WORKDIR_ROOTS: root,
+				VIB_COORDINATOR_MCP_STATE_ROOT: path.join(root, ".vib", "coordinator-state"),
+				VIB_COORDINATOR_MCP_PROFILE: "local",
+				VIB_COORDINATOR_MCP_REPO: "repo",
 			},
 			services: {
 				codexTransportFactory: async () => ({
@@ -911,7 +911,7 @@ describe("Coordinator Codex resume bridge", () => {
 		const starts = requests
 			.filter(request => request.method === "turn/start")
 			.map(request => String(request.params.clientUserMessageId));
-		expect(starts).toEqual([`gjc-wake-session-2:${blocked.seq}`, `gjc-wake-session-1:${sibling.seq}`]);
+		expect(starts).toEqual([`vib-wake-session-2:${blocked.seq}`, `vib-wake-session-1:${sibling.seq}`]);
 		expect((await listCodexWakeEvents(namespace, "session-2"))[0]?.status).toBe("published");
 	});
 });

@@ -12,7 +12,7 @@ export interface OptionalRuntimeServices {
 	workspaceTree: LazyService<WorkspaceTreeRuntime>;
 	networkPrewarm: LazyService<NetworkPrewarmRuntime>;
 	// Later milestones add: notifications, history, lsp, pythonEval, javascriptEval,
-	// stt, gjcPlugins, nativeSyntax.
+	// stt, vibPlugins, nativeSyntax.
 }
 
 /** Caller-provided runtime services; omitted entries receive their defaults. */

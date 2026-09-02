@@ -1,12 +1,12 @@
 import { Database } from "bun:sqlite";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import type { AgentTool, AgentToolContext, AgentToolResult, AgentToolUpdateCallback } from "@gajae-code/agent-core";
-import type { ImageContent, TextContent } from "@gajae-code/ai/core";
-import type { SummaryResult } from "@gajae-code/natives";
-import type { Component } from "@gajae-code/tui";
-import { Text } from "@gajae-code/tui";
-import { getRemoteDir, logger, prompt, readImageMetadata, untilAborted } from "@gajae-code/utils";
+import type { AgentTool, AgentToolContext, AgentToolResult, AgentToolUpdateCallback } from "@vib-rato/agent-core";
+import type { ImageContent, TextContent } from "@vib-rato/ai/core";
+import type { SummaryResult } from "@vib-rato/natives";
+import type { Component } from "@vib-rato/tui";
+import { Text } from "@vib-rato/tui";
+import { getRemoteDir, logger, prompt, readImageMetadata, untilAborted } from "@vib-rato/utils";
 import * as z from "zod/v4";
 import { getFileReadCache } from "../edit/file-read-cache";
 import { isNotebookPath, readEditableNotebookText } from "../edit/notebook";
@@ -96,11 +96,11 @@ import {
 import { ToolAbortError, ToolError, throwIfAborted } from "./tool-errors";
 import { toolResult } from "./tool-result";
 
-type NativeReadBindings = Pick<typeof import("@gajae-code/natives"), "glob" | "summarizeCode">;
+type NativeReadBindings = Pick<typeof import("@vib-rato/natives"), "glob" | "summarizeCode">;
 let nativeReadBindingsLoad: Promise<NativeReadBindings> | undefined;
 
 async function nativeRead(): Promise<NativeReadBindings> {
-	nativeReadBindingsLoad ??= Promise.resolve(require("@gajae-code/natives") as NativeReadBindings);
+	nativeReadBindingsLoad ??= Promise.resolve(require("@vib-rato/natives") as NativeReadBindings);
 	return await nativeReadBindingsLoad;
 }
 
@@ -2680,7 +2680,7 @@ export class ReadTool implements AgentTool<typeof readSchema, ReadToolDetails> {
 			);
 		}
 
-		// Handle internal URLs (agent://, artifact://, memory://, rule://, local://, gjc://, issue://, pr://).
+		// Handle internal URLs (agent://, artifact://, memory://, rule://, local://, vib://, issue://, pr://).
 		// Use the internal-URL-aware splitter so malformed selectors are peeled
 		// off the URL and surfaced via parseSel rather than confusing handlers.
 		const internalRouter = InternalUrlRouter.instance();

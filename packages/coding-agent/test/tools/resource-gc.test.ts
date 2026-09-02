@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from "bun:
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { getProjectAgentDir, Snowflake } from "@gajae-code/utils";
+import { getProjectAgentDir, Snowflake } from "@vib-rato/utils";
 import { YAML } from "bun";
 import { resetSettingsForTest, Settings } from "../../src/config/settings";
 import type { TabGcSnapshot } from "../../src/tools/browser/tab-supervisor";
@@ -133,7 +133,7 @@ describe("Linux cgroup memory sampling", () => {
 	}
 
 	it("fails over from an unreadable containing mount to a later compatible mount", async () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-cgroup-failover-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-cgroup-failover-"));
 		try {
 			const first = path.join(root, "first");
 			const second = path.join(root, "second");
@@ -155,7 +155,7 @@ describe("Linux cgroup memory sampling", () => {
 	});
 
 	it("compares pressure across every compatible containing mount", async () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-cgroup-multi-mount-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-cgroup-multi-mount-"));
 		try {
 			const narrow = path.join(root, "narrow");
 			const broad = path.join(root, "broad");
@@ -176,7 +176,7 @@ describe("Linux cgroup memory sampling", () => {
 	});
 
 	it("preserves distinct ancestor chains that resolve to the same leaf path", async () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-cgroup-shared-leaf-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-cgroup-shared-leaf-"));
 		try {
 			const broad = path.join(root, "shared");
 			const leaf = path.join(broad, "parent", "child");
@@ -195,7 +195,7 @@ describe("Linux cgroup memory sampling", () => {
 		}
 	});
 	it("uses the namespace-relative fallback after containment candidates are exhausted", async () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-cgroup-namespace-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-cgroup-namespace-"));
 		try {
 			const mountPoint = path.join(root, "memory");
 			writeCounters(path.join(mountPoint, "app"), "2000", "600");
@@ -215,7 +215,7 @@ describe("Linux cgroup memory sampling", () => {
 	});
 
 	it("samples the mount root and selects the ancestor nearest to pressure", async () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-cgroup-ancestor-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-cgroup-ancestor-"));
 		try {
 			const mountPoint = path.join(root, "memory");
 			const child = path.join(mountPoint, "parent", "child");
@@ -266,7 +266,7 @@ describe("Linux cgroup memory sampling", () => {
 	});
 
 	it("ignores zero and malformed counters while preserving valid unlimited usage", async () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-cgroup-counters-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-cgroup-counters-"));
 		try {
 			const invalidMount = path.join(root, "invalid");
 			writeCounters(path.join(invalidMount, "app"), "0", "malformed");
@@ -1183,7 +1183,7 @@ describe("resource GC settings precedence", () => {
 		projectDir = path.join(testDir, "project");
 		fs.mkdirSync(agentDir, { recursive: true });
 		fs.mkdirSync(getProjectAgentDir(projectDir), { recursive: true });
-		fs.mkdirSync(path.join(projectDir, ".gjc"), { recursive: true });
+		fs.mkdirSync(path.join(projectDir, ".vib"), { recursive: true });
 	});
 
 	afterEach(() => {
@@ -1191,10 +1191,10 @@ describe("resource GC settings precedence", () => {
 		fs.rmSync(testDir, { recursive: true, force: true });
 	});
 
-	it("lets project .gjc/settings.json override the user config.yml", async () => {
+	it("lets project .vib/settings.json override the user config.yml", async () => {
 		fs.writeFileSync(path.join(agentDir, "config.yml"), YAML.stringify({ browser: { gc: { idleMs: 111_111 } } }));
 		fs.writeFileSync(
-			path.join(projectDir, ".gjc", "settings.json"),
+			path.join(projectDir, ".vib", "settings.json"),
 			JSON.stringify({ browser: { gc: { idleMs: 222_222 } } }),
 		);
 

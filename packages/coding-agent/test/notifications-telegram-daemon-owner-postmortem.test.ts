@@ -20,7 +20,7 @@ import { processIncarnation } from "../src/sdk/broker/process-incarnation";
 import { daemonPaths, markDaemonOwnerStopped, readDaemonState } from "../src/sdk/bus/telegram-daemon";
 
 function tempAgentDir(): string {
-	return fs.mkdtempSync(path.join(os.tmpdir(), "gjc-tg-postmortem-"));
+	return fs.mkdtempSync(path.join(os.tmpdir(), "vib-tg-postmortem-"));
 }
 
 /**

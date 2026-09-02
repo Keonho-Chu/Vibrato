@@ -49,7 +49,7 @@ function publicSessionArgs(args: string[]): string[] {
 }
 
 async function runCli(repo: string, agentDir: string, args: string[]): Promise<CliResult> {
-	const captureDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-sdk-cli-capture-"));
+	const captureDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-sdk-cli-capture-"));
 	const stdoutPath = path.join(captureDir, "stdout");
 	const stderrPath = path.join(captureDir, "stderr");
 	const stdoutFd = openSync(stdoutPath, "w");
@@ -57,7 +57,7 @@ async function runCli(repo: string, agentDir: string, args: string[]): Promise<C
 	try {
 		const child = Bun.spawn([process.execPath, "run", cliEntrypoint, ...publicSessionArgs(args)], {
 			cwd: repo,
-			env: { ...process.env, GJC_CODING_AGENT_DIR: agentDir },
+			env: { ...process.env, VIB_CODING_AGENT_DIR: agentDir },
 			stdout: stdoutFd,
 			stderr: stderrFd,
 		});
@@ -129,10 +129,10 @@ describe("SDK session CLI", () => {
 		wireLog = [];
 		transcriptRows = [];
 		lastReplayPayload = "";
-		root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-sdk-cli-"));
+		root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-sdk-cli-"));
 		await initializeTestRepository(root);
 		agentDir = path.join(root, "agent");
-		stateRoot = path.join(root, ".gjc", "state");
+		stateRoot = path.join(root, ".vib", "state");
 		const token = "session-token";
 		endpointServer = Bun.serve({
 			hostname: "127.0.0.1",

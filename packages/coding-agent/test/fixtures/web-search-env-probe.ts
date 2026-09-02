@@ -3,9 +3,9 @@
 // module parses `projectEnv` at load time from `process.cwd()`, so the trust
 // boundary can only be exercised from a separate process.
 
-import { resolveKimiSearchBaseUrlForTest } from "@gajae-code/coding-agent/web/search/providers/kimi";
-import { resolveXaiSearchBaseUrlForTest } from "@gajae-code/coding-agent/web/search/providers/xai";
-import { $credentialEnv } from "@gajae-code/utils";
+import { resolveKimiSearchBaseUrlForTest } from "@vib-rato/coding-agent/web/search/providers/kimi";
+import { resolveXaiSearchBaseUrlForTest } from "@vib-rato/coding-agent/web/search/providers/xai";
+import { $credentialEnv } from "@vib-rato/utils";
 
 console.log(
 	JSON.stringify({

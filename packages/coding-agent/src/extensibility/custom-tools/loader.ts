@@ -1,12 +1,12 @@
 /**
  * Custom tool loader - loads TypeScript tool modules using native Bun import.
  *
- * Dependencies (the zod-backed typebox shim and gajae-code) are injected via the
+ * Dependencies (the zod-backed typebox shim and vib-rato) are injected via the
  * CustomToolAPI to avoid import resolution issues with custom tools loaded from user directories.
  */
 import * as path from "node:path";
-import type { AgentToolResult } from "@gajae-code/agent-core";
-import { logger } from "@gajae-code/utils";
+import type { AgentToolResult } from "@vib-rato/agent-core";
+import { logger } from "@vib-rato/utils";
 import * as z from "zod/v4";
 import { toolCapability } from "../../capability/tool";
 import { type CustomTool, loadCapability } from "../../discovery";
@@ -89,7 +89,7 @@ export class CustomToolLoader {
 	#seenNames: Set<string>;
 
 	constructor(
-		pi: typeof import("@gajae-code/coding-agent"),
+		pi: typeof import("@vib-rato/coding-agent"),
 		cwd: string,
 		builtInToolNames: string[],
 		pushPendingAction?: (action: {
@@ -183,7 +183,7 @@ export async function loadCustomTools(
 	beforeImport?: CustomToolImportGuard,
 ) {
 	const loader = new CustomToolLoader(
-		await import("@gajae-code/coding-agent"),
+		await import("@vib-rato/coding-agent"),
 		cwd,
 		builtInToolNames,
 		pushPendingAction,
@@ -201,7 +201,7 @@ export async function loadCustomTools(
 /**
  * Discover and load tools from standard locations via capability system:
  * 1. User and project tools discovered by capability providers
- * 2. Installed plugins (~/.gjc/plugins/node_modules/*)
+ * 2. Installed plugins (~/.vib/plugins/node_modules/*)
  * 3. Explicitly configured paths from settings or CLI
  *
  * @param configuredPaths - Explicit paths from settings.json and CLI --tool flags
@@ -241,7 +241,7 @@ export async function discoverAndLoadCustomTools(
 		});
 	}
 
-	// 2. Plugin tools: ~/.gjc/plugins/node_modules/*/
+	// 2. Plugin tools: ~/.vib/plugins/node_modules/*/
 	for (const pluginPath of await getAllPluginToolPaths(cwd)) {
 		addPath(pluginPath, { provider: "plugin", providerName: "Plugin", level: "user" });
 	}

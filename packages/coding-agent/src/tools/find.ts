@@ -1,18 +1,18 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import type { AgentTool, AgentToolContext, AgentToolResult, AgentToolUpdateCallback } from "@gajae-code/agent-core";
-import type * as natives from "@gajae-code/natives";
+import type { AgentTool, AgentToolContext, AgentToolResult, AgentToolUpdateCallback } from "@vib-rato/agent-core";
+import type * as natives from "@vib-rato/natives";
 
-let findNativesLoad: Promise<typeof import("@gajae-code/natives")> | undefined;
+let findNativesLoad: Promise<typeof import("@vib-rato/natives")> | undefined;
 
-async function findNatives(): Promise<typeof import("@gajae-code/natives")> {
-	findNativesLoad ??= Promise.resolve(require("@gajae-code/natives") as typeof import("@gajae-code/natives"));
+async function findNatives(): Promise<typeof import("@vib-rato/natives")> {
+	findNativesLoad ??= Promise.resolve(require("@vib-rato/natives") as typeof import("@vib-rato/natives"));
 	return await findNativesLoad;
 }
 
-import type { Component } from "@gajae-code/tui";
-import { Text } from "@gajae-code/tui";
-import { isEnoent, prompt, untilAborted } from "@gajae-code/utils";
+import type { Component } from "@vib-rato/tui";
+import { Text } from "@vib-rato/tui";
+import { isEnoent, prompt, untilAborted } from "@vib-rato/utils";
 import * as z from "zod/v4";
 import type { RenderResultOptions } from "../extensibility/custom-tools/types";
 import { InternalUrlRouter } from "../internal-urls";

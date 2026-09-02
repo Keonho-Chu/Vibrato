@@ -7,11 +7,11 @@
  */
 import * as fs from "node:fs/promises";
 import path from "node:path";
-import type { AgentMessage } from "@gajae-code/agent-core";
-import type { ImageContent } from "@gajae-code/ai/core";
-import type { glob as globFn } from "@gajae-code/natives";
-import { fuzzyMatch } from "@gajae-code/tui";
-import { formatAge, formatBytes, readImageMetadata } from "@gajae-code/utils";
+import type { AgentMessage } from "@vib-rato/agent-core";
+import type { ImageContent } from "@vib-rato/ai/core";
+import type { glob as globFn } from "@vib-rato/natives";
+import { fuzzyMatch } from "@vib-rato/tui";
+import { formatAge, formatBytes, readImageMetadata } from "@vib-rato/utils";
 import { formatHashLines } from "../hashline/hash";
 import type { FileMentionMessage } from "../session/messages";
 import {
@@ -26,7 +26,7 @@ import { formatDimensionNote, resizeImage } from "./image-resize";
 let fileMentionGlobLoad: Promise<typeof globFn> | undefined;
 
 async function fileMentionGlob(): Promise<typeof globFn> {
-	fileMentionGlobLoad ??= Promise.resolve((require("@gajae-code/natives") as { glob: typeof globFn }).glob);
+	fileMentionGlobLoad ??= Promise.resolve((require("@vib-rato/natives") as { glob: typeof globFn }).glob);
 	return await fileMentionGlobLoad;
 }
 

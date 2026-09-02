@@ -1,13 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { getBundledModel } from "@gajae-code/ai";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { createAgentSession } from "@gajae-code/coding-agent/sdk";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { TempDir } from "@gajae-code/utils";
+import { getBundledModel } from "@vib-rato/ai";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { createAgentSession } from "@vib-rato/coding-agent/sdk";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { TempDir } from "@vib-rato/utils";
 
 const originalFetch = global.fetch;
 const originalOpenAIBaseUrl = Bun.env.OPENAI_BASE_URL;

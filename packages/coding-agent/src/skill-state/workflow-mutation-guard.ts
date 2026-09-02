@@ -1,37 +1,37 @@
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { AgentTool } from "@gajae-code/agent-core";
-import { logger } from "@gajae-code/utils";
+import type { AgentTool } from "@vib-rato/agent-core";
+import { logger } from "@vib-rato/utils";
 import { isAutoresearchAuthorizedResearchPath } from "../autoresearch/git";
 import { expandApplyPatchToEntries } from "../edit/modes/apply-patch";
-import { GJC_SESSION_PREFIX, modeStatePath as sessionModeStatePath } from "../gjc-runtime/session-layout";
-import { resolveGjcSessionForRead } from "../gjc-runtime/session-resolution";
-import { ModeStateSchema } from "../gjc-runtime/state-schema";
-import { getSkillManifest } from "../gjc-runtime/workflow-manifest";
 import { LocalProtocolHandler, resolveLocalUrlToPath } from "../internal-urls/local-protocol";
 import { resolveToCwd } from "../tools/path-utils";
 import { ToolError } from "../tools/tool-errors";
+import { modeStatePath as sessionModeStatePath, VIB_SESSION_PREFIX } from "../vib-runtime/session-layout";
+import { resolveVibSessionForRead } from "../vib-runtime/session-resolution";
+import { ModeStateSchema } from "../vib-runtime/state-schema";
+import { getSkillManifest } from "../vib-runtime/workflow-manifest";
 import { listActiveSkills, readVisibleSkillActiveState, type SkillActiveEntry } from "./active-state";
 import {
-	type CanonicalGjcWorkflowSkill,
+	type CanonicalVibWorkflowSkill,
 	sanctionedWorkflowStateCommand,
 	workflowModeStateFileName,
 } from "./workflow-state-contract";
 
 export const DEEP_INTERVIEW_MUTATION_BLOCK_MESSAGE =
-	"Deep-interview phase boundary: continue gathering context/questions/risks and emit a handoff/spec before code edits. Mutation tools and patch execution are blocked while deep-interview is active; finalize specs through `gjc deep-interview --write --stage final` or hand off to an execution phase.";
+	"Deep-interview phase boundary: continue gathering context/questions/risks and emit a handoff/spec before code edits. Mutation tools and patch execution are blocked while deep-interview is active; finalize specs through `vib deep-interview --write --stage final` or hand off to an execution phase.";
 export const WORKFLOW_STATE_MUTATION_BLOCK_MESSAGE =
-	".gjc workflow state and artifacts are runtime-owned. Agent mutation tools cannot edit `.gjc/**`; use the sanctioned `gjc` CLI instead.";
+	".vib workflow state and artifacts are runtime-owned. Agent mutation tools cannot edit `.vib/**`; use the sanctioned `vib` CLI instead.";
 export const RALPLAN_MUTATION_BLOCK_MESSAGE =
-	"Ralplan planning phase boundary: keep refining the consensus plan and persist plan artifacts through `gjc ralplan --write` (stage scratch files under a temp dir if needed). Product-code mutation tools and patch execution are blocked while ralplan is active; mutate only after the plan is approved and execution begins.";
+	"Ralplan planning phase boundary: keep refining the consensus plan and persist plan artifacts through `vib ralplan --write` (stage scratch files under a temp dir if needed). Product-code mutation tools and patch execution are blocked while ralplan is active; mutate only after the plan is approved and execution begins.";
 export const ULTRAGOAL_GOAL_PLANNING_MUTATION_BLOCK_MESSAGE =
-	"Ultragoal goal-planning phase boundary: finish goal planning and record goals through `gjc ultragoal` before editing code. Product-code mutation tools and patch execution are blocked until goal planning completes and execution begins.";
+	"Ultragoal goal-planning phase boundary: finish goal planning and record goals through `vib ultragoal` before editing code. Product-code mutation tools and patch execution are blocked until goal planning completes and execution begins.";
 export const AUTORESEARCH_MUTATION_BLOCK_MESSAGE =
-	"Autoresearch research-only boundary: this workflow produces findings, evidence, and a verdict — never product code. Product-code mutation tools and patch execution are blocked everywhere, on every branch. Mission research artifacts (`autoresearch.sh` at the workdir root and mission state through the sanctioned `gjc autoresearch` CLI) stay writable; run experiments through the `python` tool, or finish the mission and hand off to an approved implementation workflow.";
+	"Autoresearch research-only boundary: this workflow produces findings, evidence, and a verdict — never product code. Product-code mutation tools and patch execution are blocked everywhere, on every branch. Mission research artifacts (`autoresearch.sh` at the workdir root and mission state through the sanctioned `vib autoresearch` CLI) stay writable; run experiments through the `python` tool, or finish the mission and hand off to an approved implementation workflow.";
 
 /** Resolve the phase-boundary block message for the active planning skill. */
-function planningPhaseBlockMessage(skill: CanonicalGjcWorkflowSkill): string {
+function planningPhaseBlockMessage(skill: CanonicalVibWorkflowSkill): string {
 	if (skill === "ralplan") return RALPLAN_MUTATION_BLOCK_MESSAGE;
 	if (skill === "autoresearch") return AUTORESEARCH_MUTATION_BLOCK_MESSAGE;
 	if (skill === "ultragoal") return ULTRAGOAL_GOAL_PLANNING_MUTATION_BLOCK_MESSAGE;
@@ -151,7 +151,7 @@ async function resolveBoundarySessionId(cwd: string, sessionId?: string): Promis
 	const normalizedSessionId = sessionId?.trim();
 	if (normalizedSessionId) return normalizedSessionId;
 	try {
-		return (await resolveGjcSessionForRead(cwd, { envSessionId: process.env.GJC_SESSION_ID })).gjcSessionId;
+		return (await resolveVibSessionForRead(cwd, { envSessionId: process.env.VIB_SESSION_ID })).vibSessionId;
 	} catch {
 		return null;
 	}
@@ -162,7 +162,7 @@ function modeStatePath(cwd: string, skill: string, sessionId: string): string {
 }
 
 function warnInvalidModeState(filePath: string, error: string): void {
-	logger.warn(`gjc skill-state: invalid mode-state at ${filePath}: ${error}`);
+	logger.warn(`vib skill-state: invalid mode-state at ${filePath}: ${error}`);
 }
 
 async function readValidatedModeState(filePath: string): Promise<ModeState | null> {
@@ -1045,7 +1045,7 @@ function resolveRawPath(cwd: string, rawPath: string): { absolutePath?: string; 
 	}
 }
 
-function relativeGjcSegments(cwd: string, rawPath: string): string[] | null {
+function relativeVibSegments(cwd: string, rawPath: string): string[] | null {
 	const { absolutePath, unknown } = resolveRawPath(cwd, rawPath);
 	if (unknown || !absolutePath) return null;
 	const relative = path.relative(path.resolve(cwd), path.resolve(absolutePath));
@@ -1053,10 +1053,10 @@ function relativeGjcSegments(cwd: string, rawPath: string): string[] | null {
 	return normalizePosix(relative).split("/").filter(Boolean);
 }
 
-function blockedWorkflowStateSkill(cwd: string, rawPath: string): CanonicalGjcWorkflowSkill | null {
-	const segments = relativeGjcSegments(cwd, rawPath);
-	if (segments?.[0] !== ".gjc") return null;
-	const generatedRoot = segments[1]?.startsWith(GJC_SESSION_PREFIX) ? segments[2] : segments[1];
+function blockedWorkflowStateSkill(cwd: string, rawPath: string): CanonicalVibWorkflowSkill | null {
+	const segments = relativeVibSegments(cwd, rawPath);
+	if (segments?.[0] !== ".vib") return null;
+	const generatedRoot = segments[1]?.startsWith(VIB_SESSION_PREFIX) ? segments[2] : segments[1];
 	if (generatedRoot === "specs" || generatedRoot === "plans") return null;
 	if (generatedRoot !== "state") return null;
 	const fileName = segments.at(-1) ?? "";
@@ -1067,7 +1067,7 @@ function blockedWorkflowStateSkill(cwd: string, rawPath: string): CanonicalGjcWo
 	return null;
 }
 
-function firstBlockedWorkflowStateSkill(cwd: string, targets: ExtractedTargets): CanonicalGjcWorkflowSkill | null {
+function firstBlockedWorkflowStateSkill(cwd: string, targets: ExtractedTargets): CanonicalVibWorkflowSkill | null {
 	for (const rawPath of targets.paths) {
 		const skill = blockedWorkflowStateSkill(cwd, rawPath);
 		if (skill) return skill;
@@ -1076,18 +1076,18 @@ function firstBlockedWorkflowStateSkill(cwd: string, targets: ExtractedTargets):
 }
 
 function isAllowlistedPath(cwd: string, rawPath: string): boolean {
-	const segments = relativeGjcSegments(cwd, rawPath);
-	if (segments?.[0] !== ".gjc") return false;
-	const generatedRoot = segments[1]?.startsWith(GJC_SESSION_PREFIX) ? segments[2] : segments[1];
+	const segments = relativeVibSegments(cwd, rawPath);
+	if (segments?.[0] !== ".vib") return false;
+	const generatedRoot = segments[1]?.startsWith(VIB_SESSION_PREFIX) ? segments[2] : segments[1];
 	return generatedRoot === "specs" || generatedRoot === "plans";
 }
-function isBlockedGjcPath(cwd: string, rawPath: string): boolean {
-	const segments = relativeGjcSegments(cwd, rawPath);
-	return segments?.[0] === ".gjc";
+function isBlockedVibPath(cwd: string, rawPath: string): boolean {
+	const segments = relativeVibSegments(cwd, rawPath);
+	return segments?.[0] === ".vib";
 }
 
-function hasBlockedGjcTarget(cwd: string, targets: ExtractedTargets): boolean {
-	return targets.paths.some(rawPath => isBlockedGjcPath(cwd, rawPath));
+function hasBlockedVibTarget(cwd: string, targets: ExtractedTargets): boolean {
+	return targets.paths.some(rawPath => isBlockedVibPath(cwd, rawPath));
 }
 
 function allTargetsAllowlisted(cwd: string, targets: ExtractedTargets): boolean {
@@ -1147,11 +1147,11 @@ async function canonicalizeForContainment(absolutePath: string): Promise<string>
 /**
  * A neutral scratch path the planning-phase block tolerates: it resolves to a
  * system temp directory and lives OUTSIDE the project cwd. Files inside the
- * project tree (product code, `.gjc/**`) are never neutral, even when the cwd
+ * project tree (product code, `.vib/**`) are never neutral, even when the cwd
  * itself is rooted under a temp dir. The lexical checks run first; a canonical
  * (symlink/alias-resolved) re-check then ensures the REAL target is still outside
  * the project and inside a real temp root, defeating a temp symlink that points
- * back into the repo or `.gjc/`.
+ * back into the repo or `.vib/`.
  */
 async function isNeutralTempPath(cwd: string, rawPath: string): Promise<boolean> {
 	const { absolutePath, unknown } = resolveRawPath(cwd, rawPath);
@@ -1183,11 +1183,11 @@ export async function assertWorkflowMutationRawPathsAllowed(input: {
 	guardContext?: WorkflowGuardContext;
 }): Promise<void> {
 	const targets: ExtractedTargets = { paths: input.rawPaths, unknown: input.rawPaths.length === 0 };
-	// Always-on `.gjc/**` runtime-owned block, ahead of forceOverride.
-	// A deferred ast_edit apply must not reach `.gjc/**` either.
-	if (hasBlockedGjcTarget(input.cwd, targets)) {
+	// Always-on `.vib/**` runtime-owned block, ahead of forceOverride.
+	// A deferred ast_edit apply must not reach `.vib/**` either.
+	if (hasBlockedVibTarget(input.cwd, targets)) {
 		const stateSkill = firstBlockedWorkflowStateSkill(input.cwd, targets);
-		const command = stateSkill ? sanctionedWorkflowStateCommand(stateSkill) : "gjc <workflow-command>";
+		const command = stateSkill ? sanctionedWorkflowStateCommand(stateSkill) : "vib <workflow-command>";
 		throw new ToolError(`${WORKFLOW_STATE_MUTATION_BLOCK_MESSAGE}\nUse: ${command}`);
 	}
 	if (input.forceOverride) return;
@@ -1205,14 +1205,14 @@ export async function getWorkflowMutationDecision(
 ): Promise<WorkflowMutationDecision> {
 	if (!BLOCKED_TOOL_NAMES.has(input.tool.name)) return { blocked: false, targets: [] };
 	const targets = extractTargets(input.tool, input.args);
-	if (input.tool.name !== "bash" && input.enforceWorkflowState !== false && hasBlockedGjcTarget(input.cwd, targets)) {
+	if (input.tool.name !== "bash" && input.enforceWorkflowState !== false && hasBlockedVibTarget(input.cwd, targets)) {
 		const stateSkill = firstBlockedWorkflowStateSkill(input.cwd, targets);
-		const command = stateSkill ? sanctionedWorkflowStateCommand(stateSkill) : "gjc <workflow-command>";
+		const command = stateSkill ? sanctionedWorkflowStateCommand(stateSkill) : "vib <workflow-command>";
 		return {
 			blocked: true,
 			message: `${WORKFLOW_STATE_MUTATION_BLOCK_MESSAGE}\nUse: ${command}`,
 			targets: targets.paths,
-			reason: stateSkill ? "workflow-state-target" : "gjc-target",
+			reason: stateSkill ? "workflow-state-target" : "vib-target",
 			command,
 		};
 	}
@@ -1224,7 +1224,7 @@ export async function getWorkflowMutationDecision(
 	// Autoresearch is research-only: it never edits product code, on any branch.
 	// The only agent-writable surface is the mission's own research artifact —
 	// the `autoresearch.sh` harness at the workdir root (mission state under
-	// `.gjc/**` is runtime-owned and only the sanctioned CLI writes it). A branch
+	// `.vib/**` is runtime-owned and only the sanctioned CLI writes it). A branch
 	// name is not authorization: an `autoresearch/*` branch isolates keep/discard
 	// bookkeeping, it does not turn product edits into research.
 	if (
@@ -1246,8 +1246,8 @@ export async function getWorkflowMutationDecision(
 		};
 	}
 	// Neutral temp scratch (outside the project tree) stays writable so agents can
-	// stage artifacts and feed their path to the sanctioned `gjc ... --write` CLIs.
-	// Read-only / `gjc` bash extract no targets and fall through to allowed here.
+	// stage artifacts and feed their path to the sanctioned `vib ... --write` CLIs.
+	// Read-only / `vib` bash extract no targets and fall through to allowed here.
 	const blockedTargets = await planningBlockedTargets(input.cwd, targets);
 	if (blockedTargets.length === 0) {
 		return { blocked: false, targets: targets.paths };

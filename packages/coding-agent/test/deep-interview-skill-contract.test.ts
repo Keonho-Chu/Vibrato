@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const skillPath = join(dirname(fileURLToPath(import.meta.url)), "../src/defaults/gjc/skills/deep-interview/SKILL.md");
+const skillPath = join(dirname(fileURLToPath(import.meta.url)), "../src/defaults/vib/skills/deep-interview/SKILL.md");
 
 const skill = readFileSync(skillPath, "utf8");
 
@@ -71,8 +71,8 @@ describe("deep-interview simple-request escape hatch", () => {
 
 		const suitabilityGate = steps.slice(suitabilityGateIndex, initializeIndex);
 		expect(suitabilityGate).toMatch(/clear,\s+bounded,\s+low-risk/i);
-		expect(suitabilityGate).toContain("gjc deep-interview read --json");
-		expect(suitabilityGate).toContain("gjc deep-interview clear --force");
+		expect(suitabilityGate).toContain("vib deep-interview read --json");
+		expect(suitabilityGate).toContain("vib deep-interview clear --force");
 		expect(suitabilityGate).toMatch(/newly seeded empty interview/i);
 		expect(suitabilityGate).toMatch(/no recorded `rounds`[\s\S]*no `spec_path`[\s\S]*no `handoff_from`/i);
 		expect(suitabilityGate).toMatch(/If state already contains rounds[\s\S]*do not clear it/i);

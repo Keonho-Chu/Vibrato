@@ -15,7 +15,7 @@ import {
 } from "../src/utils/npm-registry";
 
 const HOME = "/home/tester";
-const PACKAGE = "@gajae-code/coding-agent";
+const PACKAGE = "@vib-rato/coding-agent";
 const userNpmrc = path.join(HOME, ".npmrc");
 
 const tempDirs: string[] = [];
@@ -343,7 +343,7 @@ describe("resolveNpmRegistry precedence", () => {
 				files: {
 					[userNpmrc]: [
 						"registry=https://generic.example.com",
-						"@gajae-code:registry=https://scoped.example.com",
+						"@vib-rato:registry=https://scoped.example.com",
 					].join("\n"),
 				},
 			}),
@@ -357,7 +357,7 @@ describe("resolveNpmRegistry precedence", () => {
 			PACKAGE,
 			environment({
 				env: { npm_config_registry: "https://generic-env.example.com" },
-				files: { [userNpmrc]: "@gajae-code:registry=https://scoped-user.example.com" },
+				files: { [userNpmrc]: "@vib-rato:registry=https://scoped-user.example.com" },
 			}),
 		);
 
@@ -396,7 +396,7 @@ describe("resolveNpmRegistry precedence", () => {
 
 	it("resolves unscoped package names against the generic registry", async () => {
 		const resolved = await resolveNpmRegistry(
-			"gajae-code",
+			"vib-rato",
 			environment({ files: { [userNpmrc]: "registry=https://generic.example.com" } }),
 		);
 
@@ -692,7 +692,7 @@ describe("repository-controlled configuration is not consulted", () => {
 	});
 
 	it("never even asks for a .npmrc in the current working directory", async () => {
-		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-npmrc-cwd-"));
+		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-npmrc-cwd-"));
 		tempDirs.push(dir);
 		await fs.writeFile(
 			path.join(dir, ".npmrc"),
@@ -725,8 +725,8 @@ describe("repository-controlled configuration is not consulted", () => {
 	});
 
 	it("reads the real cwd .npmrc through the shipped reader only if the layer is reintroduced", async () => {
-		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-npmrc-cwd-real-"));
-		const home = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-npmrc-home-empty-"));
+		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-npmrc-cwd-real-"));
+		const home = await fs.mkdtemp(path.join(os.tmpdir(), "vib-npmrc-home-empty-"));
 		tempDirs.push(dir, home);
 		await fs.writeFile(path.join(dir, ".npmrc"), "registry=https://collect.attacker.example\n");
 
@@ -751,12 +751,12 @@ describe("repository-controlled configuration is not consulted", () => {
 describe("buildRegistryPackageUrl", () => {
 	it("keeps the scoped package slash unencoded and collapses trailing slashes", () => {
 		expect(buildRegistryPackageUrl("https://nexus.example.com/repository/npm-all/", PACKAGE, "latest")).toBe(
-			"https://nexus.example.com/repository/npm-all/@gajae-code/coding-agent/latest",
+			"https://nexus.example.com/repository/npm-all/@vib-rato/coding-agent/latest",
 		);
 	});
 
 	it("addresses the packument when no spec is given", () => {
-		expect(buildRegistryPackageUrl(DEFAULT_NPM_REGISTRY, "gajae-code")).toBe("https://registry.npmjs.org/gajae-code");
+		expect(buildRegistryPackageUrl(DEFAULT_NPM_REGISTRY, "vib-rato")).toBe("https://registry.npmjs.org/vib-rato");
 	});
 });
 
@@ -794,7 +794,7 @@ describe("fetchLatestPackageVersion", () => {
 			warnings: [],
 		});
 		expect(seen).toHaveLength(1);
-		expect(seen[0]?.url).toBe("https://nexus.example.com/repository/npm-all/@gajae-code/coding-agent/latest");
+		expect(seen[0]?.url).toBe("https://nexus.example.com/repository/npm-all/@vib-rato/coding-agent/latest");
 		expect(seen[0]?.headers?.Authorization).toBe("Bearer tok-123");
 		expect(seen[0]?.headers?.Accept).toContain("application/vnd.npm.install-v1+json");
 	});
@@ -810,8 +810,8 @@ describe("fetchLatestPackageVersion", () => {
 
 		expect(result.version).toBe("1.2.3");
 		expect(seen).toEqual([
-			"https://nexus.example.com/npm/@gajae-code/coding-agent/latest",
-			"https://nexus.example.com/npm/@gajae-code/coding-agent",
+			"https://nexus.example.com/npm/@vib-rato/coding-agent/latest",
+			"https://nexus.example.com/npm/@vib-rato/coding-agent",
 		]);
 	});
 
@@ -821,7 +821,7 @@ describe("fetchLatestPackageVersion", () => {
 		);
 
 		await expect(failing).rejects.toThrow(
-			"https://nexus.example.com/@gajae-code/coding-agent responded 404 Not Found (registry from $npm_config_registry)",
+			"https://nexus.example.com/@vib-rato/coding-agent responded 404 Not Found (registry from $npm_config_registry)",
 		);
 	});
 
@@ -831,7 +831,7 @@ describe("fetchLatestPackageVersion", () => {
 		);
 
 		await expect(failing).rejects.toThrow(
-			`https://nexus.example.com/@gajae-code/coding-agent/latest responded 503 (registry from ${userNpmrc})`,
+			`https://nexus.example.com/@vib-rato/coding-agent/latest responded 503 (registry from ${userNpmrc})`,
 		);
 	});
 
@@ -854,7 +854,7 @@ describe("fetchLatestPackageVersion", () => {
 			lookup({}, async () => respond(null, { ok: false, status: 500, statusText: "Server Error" })),
 		);
 
-		expect(message).toBe("https://registry.npmjs.org/@gajae-code/coding-agent/latest responded 500 Server Error");
+		expect(message).toBe("https://registry.npmjs.org/@vib-rato/coding-agent/latest responded 500 Server Error");
 	});
 
 	it("reports a timeout as a timeout", async () => {
@@ -889,7 +889,7 @@ describe("fetchLatestPackageVersion", () => {
 
 describe("default environment wiring", () => {
 	it("reads a real .npmrc from disk through the shipped file reader", async () => {
-		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-npmrc-home-"));
+		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-npmrc-home-"));
 		tempDirs.push(dir);
 		await fs.writeFile(path.join(dir, ".npmrc"), "registry=https://real-file.example.com\n");
 
@@ -904,7 +904,7 @@ describe("default environment wiring", () => {
 	});
 
 	it("returns the default registry when the home directory holds no npmrc", async () => {
-		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-npmrc-empty-"));
+		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-npmrc-empty-"));
 		tempDirs.push(dir);
 
 		const resolved = await resolveNpmRegistry(PACKAGE, {

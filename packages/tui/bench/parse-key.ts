@@ -1,4 +1,4 @@
-import { parseKey as nativeParseKey } from "@gajae-code/natives";
+import { parseKey as nativeParseKey } from "@vib-rato/natives";
 import * as native from "../src/keys";
 import * as js from "./_jskey";
 

@@ -1,7 +1,7 @@
 /**
- * Telegram HTML formatting helpers for the Gajae-Code SDK.
+ * Telegram HTML formatting helpers for the Vibrato SDK.
  *
- * All Gajae-Code SDK Telegram output is sent with `parse_mode: "HTML"`. This
+ * All Vibrato SDK Telegram output is sent with `parse_mode: "HTML"`. This
  * module is the single source of truth for: escaping dynamic text, converting a
  * bounded markdown subset into Telegram HTML, safely truncating a finished
  * message to Telegram's 4096-char limit without breaking tags/entities, and

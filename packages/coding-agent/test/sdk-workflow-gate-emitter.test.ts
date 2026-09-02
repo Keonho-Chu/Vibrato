@@ -2,13 +2,11 @@ import { afterEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { AgentToolContext } from "@gajae-code/agent-core";
-import { getBundledModel } from "@gajae-code/ai";
-import { validateToolArguments } from "@gajae-code/ai/utils/validation";
-import { createAgentSession } from "@gajae-code/coding-agent/sdk";
+import type { AgentToolContext } from "@vib-rato/agent-core";
+import { getBundledModel } from "@vib-rato/ai";
+import { validateToolArguments } from "@vib-rato/ai/utils/validation";
+import { createAgentSession } from "@vib-rato/coding-agent/sdk";
 import { Settings } from "../src/config/settings";
-import { createDeepInterviewIntentManifest } from "../src/gjc-runtime/deep-interview-state";
-import { activeEntryPath, modeStatePath, sessionStateDir } from "../src/gjc-runtime/session-layout";
 import {
 	BrokerWorkflowGateEmitter,
 	FileGateStore,
@@ -24,6 +22,8 @@ import { SKILL_PROMPT_MESSAGE_TYPE } from "../src/session/messages";
 import { SessionManager } from "../src/session/session-manager";
 import { getSkillActiveStatePaths, syncSkillActiveState } from "../src/skill-state/active-state";
 import { registerWorkflowGateEmitterListener } from "../src/tools/ask-answer-registry";
+import { createDeepInterviewIntentManifest } from "../src/vib-runtime/deep-interview-state";
+import { activeEntryPath, modeStatePath, sessionStateDir } from "../src/vib-runtime/session-layout";
 
 function attachTerminalController(emitter: WorkflowGateEmitter): void {
 	emitter.registerGateTerminalController?.({
@@ -44,7 +44,7 @@ describe("SDK ToolSession forwards getWorkflowGateEmitter", () => {
 
 	it("makes the real ask tool emit a workflow_gate when an emitter is attached to the session", async () => {
 		await initTheme(false);
-		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-g011-"));
+		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-g011-"));
 		tempDirs.push(tempDir);
 		const { session } = await createAgentSession({
 			cwd: tempDir,
@@ -101,7 +101,7 @@ describe("SDK ToolSession forwards getWorkflowGateEmitter", () => {
 		}
 	}, 15_000);
 	it("late-registers ask when a headless session receives a workflow gate emitter", async () => {
-		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-g011-headless-"));
+		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-g011-headless-"));
 		tempDirs.push(tempDir);
 		const { session } = await createAgentSession({
 			cwd: tempDir,
@@ -161,7 +161,7 @@ describe("SDK ToolSession forwards getWorkflowGateEmitter", () => {
 		}
 	}, 15_000);
 	it("attaches ask when a newly registered emitter reports a pending gate", async () => {
-		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-g011-pending-gate-"));
+		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-g011-pending-gate-"));
 		tempDirs.push(tempDir);
 		const { session } = await createAgentSession({
 			cwd: tempDir,
@@ -202,7 +202,7 @@ describe("SDK ToolSession forwards getWorkflowGateEmitter", () => {
 		}
 	});
 	it("conservatively attaches ask when pending-gate introspection throws", async () => {
-		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-g011-throwing-pending-gates-"));
+		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-g011-throwing-pending-gates-"));
 		tempDirs.push(tempDir);
 		const { session } = await createAgentSession({
 			cwd: tempDir,
@@ -234,7 +234,7 @@ describe("SDK ToolSession forwards getWorkflowGateEmitter", () => {
 		}
 	});
 	it("attaches ask when a canonical workflow skill prompt starts", async () => {
-		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-g011-workflow-skill-"));
+		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-g011-workflow-skill-"));
 		tempDirs.push(tempDir);
 		const { session } = await createAgentSession({
 			cwd: tempDir,
@@ -271,7 +271,7 @@ describe("SDK ToolSession forwards getWorkflowGateEmitter", () => {
 		}
 	});
 	it("restores ask for durable workflow state without carrying it into a fresh session", async () => {
-		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-g011-workflow-resume-"));
+		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-g011-workflow-resume-"));
 		tempDirs.push(tempDir);
 		const settings = Settings.isolated({ "mcp.discoveryMode": "mcp-only" });
 		const sessionManager = SessionManager.create(tempDir, tempDir);
@@ -432,7 +432,7 @@ describe("SDK ToolSession forwards getWorkflowGateEmitter", () => {
 		}
 	}, 60_000);
 	it("does not restore deep-interview authority from a stale top-level snapshot", async () => {
-		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-g011-stale-workflow-snapshot-"));
+		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-g011-stale-workflow-snapshot-"));
 		tempDirs.push(tempDir);
 		const sessionManager = SessionManager.create(tempDir, tempDir);
 		await sessionManager.ensureOnDisk();
@@ -497,7 +497,7 @@ describe("SDK ToolSession forwards getWorkflowGateEmitter", () => {
 		}
 	}, 60_000);
 	it("does not restore deep-interview authority from a sessionless durable entry", async () => {
-		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-g011-sessionless-workflow-entry-"));
+		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-g011-sessionless-workflow-entry-"));
 		tempDirs.push(tempDir);
 		const sessionManager = SessionManager.create(tempDir, tempDir);
 		await sessionManager.ensureOnDisk();
@@ -541,7 +541,7 @@ describe("SDK ToolSession forwards getWorkflowGateEmitter", () => {
 		}
 	}, 60_000);
 	it("keeps workflow-gate restoration settled after factory return and dispose", async () => {
-		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-g011-restoration-settlement-"));
+		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-g011-restoration-settlement-"));
 		tempDirs.push(tempDir);
 		const { session } = await createAgentSession({
 			cwd: tempDir,
@@ -568,7 +568,7 @@ describe("SDK ToolSession forwards getWorkflowGateEmitter", () => {
 		await expect(session.workflowGateToolRestoration).resolves.toBeUndefined();
 	}, 60_000);
 	it("attaches ask for a canonical workflow skill even when state sync fails", async () => {
-		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-g011-workflow-skill-statefail-"));
+		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-g011-workflow-skill-statefail-"));
 		tempDirs.push(tempDir);
 		const { session } = await createAgentSession({
 			cwd: tempDir,
@@ -584,11 +584,11 @@ describe("SDK ToolSession forwards getWorkflowGateEmitter", () => {
 			slashCommands: [],
 		});
 		try {
-			// Poison the durable skill-state location AFTER session boot: `.gjc`
+			// Poison the durable skill-state location AFTER session boot: `.vib`
 			// replaced by a FILE makes the observational state-sync writes throw
 			// while attach must still succeed.
-			fs.rmSync(path.join(tempDir, ".gjc"), { recursive: true, force: true });
-			fs.writeFileSync(path.join(tempDir, ".gjc"), "not-a-directory");
+			fs.rmSync(path.join(tempDir, ".vib"), { recursive: true, force: true });
+			fs.writeFileSync(path.join(tempDir, ".vib"), "not-a-directory");
 			expect(session.getActiveToolNames()).not.toContain("ask");
 			session.agent.emitExternalEvent({
 				type: "message_start",
@@ -610,7 +610,7 @@ describe("SDK ToolSession forwards getWorkflowGateEmitter", () => {
 		}
 	}, 60_000);
 	it("provides a durable SDK-native emitter without extension injection", async () => {
-		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-g011-production-"));
+		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-g011-production-"));
 		tempDirs.push(tempDir);
 		const { session } = await createAgentSession({
 			cwd: tempDir,
@@ -659,7 +659,7 @@ describe("SDK ToolSession forwards getWorkflowGateEmitter", () => {
 		}
 	});
 	it("keeps in-memory gates ephemeral while persistent sessions use the durable store", async () => {
-		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-g011-store-boundary-"));
+		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-g011-store-boundary-"));
 		tempDirs.push(tempDir);
 
 		const { session: inMemorySession } = await createAgentSession({
@@ -717,7 +717,7 @@ describe("SDK ToolSession forwards getWorkflowGateEmitter", () => {
 		}
 	});
 	it("keeps a canonical subagent emitter local without publishing or persisting it", async () => {
-		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-g011-local-subagent-emitter-"));
+		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-g011-local-subagent-emitter-"));
 		tempDirs.push(tempDir);
 		const sessionManager = SessionManager.create(tempDir, tempDir);
 		const { session } = await createAgentSession({
@@ -778,7 +778,7 @@ describe("SDK ToolSession forwards getWorkflowGateEmitter", () => {
 	});
 	// Real persisted-session rotation performs disk load, emitter fencing, and authority reminting; keep a local budget without weakening the suite default.
 	it("fences old workflow gates and remints authority after a session switch", async () => {
-		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-g011-session-switch-"));
+		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-g011-session-switch-"));
 		tempDirs.push(tempDir);
 		const sessionManager = SessionManager.create(tempDir, tempDir);
 		const targetSessionManager = SessionManager.create(tempDir, tempDir);
@@ -860,7 +860,7 @@ describe("SDK ToolSession forwards getWorkflowGateEmitter", () => {
 		}
 	}, 15_000);
 	it("restores suspended predecessor gate authority when a session switch rolls back", async () => {
-		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-g011-switch-rollback-"));
+		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-g011-switch-rollback-"));
 		tempDirs.push(tempDir);
 		const { session } = await createAgentSession({
 			cwd: tempDir,
@@ -897,7 +897,7 @@ describe("SDK ToolSession forwards getWorkflowGateEmitter", () => {
 	});
 
 	it("fences accepted-unadvanced gates and settles every shutdown waiter", async () => {
-		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-g011-fence-"));
+		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-g011-fence-"));
 		tempDirs.push(tempDir);
 		const emitter = new BrokerWorkflowGateEmitter(
 			"emitter-fence",
@@ -933,7 +933,7 @@ describe("SDK ToolSession forwards getWorkflowGateEmitter", () => {
 		).rejects.toThrow("unavailable");
 	});
 	it("recovers an accepted same-process gate through the emitter recovery hook", async () => {
-		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-g011-recovery-"));
+		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-g011-recovery-"));
 		tempDirs.push(tempDir);
 		let failAdvance = true;
 		const store = new FileGateStore(path.join(tempDir, "recovery.json"));
@@ -969,7 +969,7 @@ describe("SDK ToolSession forwards getWorkflowGateEmitter", () => {
 		expect(emitter.listPendingGates()).toHaveLength(1);
 	});
 	it("quarantines a terminalization failure before advancement and settles its presentation waiter", async () => {
-		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-g011-terminalization-failure-"));
+		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-g011-terminalization-failure-"));
 		tempDirs.push(tempDir);
 		const store = new FileGateStore(path.join(tempDir, "gates.json"));
 		let advances = 0;
@@ -1013,7 +1013,7 @@ describe("SDK ToolSession forwards getWorkflowGateEmitter", () => {
 		});
 	});
 	it("rejects the original waiter when an uncertain accepted write quarantines its continuation", async () => {
-		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-g011-uncertain-waiter-"));
+		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-g011-uncertain-waiter-"));
 		tempDirs.push(tempDir);
 		let syncs = 0;
 		const store = new FileGateStore(path.join(tempDir, "gates.json"), () => {
@@ -1048,7 +1048,7 @@ describe("SDK ToolSession forwards getWorkflowGateEmitter", () => {
 		});
 	});
 	it("quarantines instead of advancing when no terminal controller is attached", async () => {
-		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-g011-no-terminal-controller-"));
+		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-g011-no-terminal-controller-"));
 		tempDirs.push(tempDir);
 		const store = new FileGateStore(path.join(tempDir, "gates.json"));
 		let advances = 0;
@@ -1074,7 +1074,7 @@ describe("SDK ToolSession forwards getWorkflowGateEmitter", () => {
 	it("cancels the bounded recovery grace timer when the emitter is fenced", () => {
 		vi.useFakeTimers();
 		try {
-			const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-g011-recovery-dispose-"));
+			const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-g011-recovery-dispose-"));
 			tempDirs.push(tempDir);
 			const emitter = new BrokerWorkflowGateEmitter(
 				"emitter-recovery-dispose",
@@ -1092,7 +1092,7 @@ describe("SDK ToolSession forwards getWorkflowGateEmitter", () => {
 		}
 	});
 	it("quarantines restart records instead of replaying them to listeners", () => {
-		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-g011-restart-"));
+		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-g011-restart-"));
 		tempDirs.push(tempDir);
 		const store = path.join(tempDir, "workflow-gates.json");
 		const first = new BrokerWorkflowGateEmitter("durable-session", new FileGateStore(store));

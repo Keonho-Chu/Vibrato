@@ -40,7 +40,7 @@ describe("startup imports", () => {
 	it("importing utils does not synchronously load winston or handlebars", async () => {
 		await expect(
 			runBunEval(importProbe("./packages/utils/src/index.ts", ["node_modules/winston", "node_modules/handlebars"]), {
-				GJC_CONFIG_DIR: `.gjc-startup-imports-${Date.now()}`,
+				VIB_CONFIG_DIR: `.vib-startup-imports-${Date.now()}`,
 			}),
 		).resolves.toContain("ok");
 	});
@@ -48,19 +48,19 @@ describe("startup imports", () => {
 	it("importing the fetch tool does not synchronously load linkedom", async () => {
 		await expect(
 			runBunEval(importProbe("./packages/coding-agent/src/tools/fetch.ts", ["node_modules/linkedom"]), {
-				GJC_CONFIG_DIR: `.gjc-startup-imports-${Date.now()}`,
+				VIB_CONFIG_DIR: `.vib-startup-imports-${Date.now()}`,
 			}),
 		).resolves.toContain("ok");
 	});
 
 	it("buffers the first synchronous log write until winston transports are ready", async () => {
-		const logDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-logger-startup-"));
+		const logDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-logger-startup-"));
 		const source = `
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { logger } from "./packages/utils/src/index.ts";
 
-const logDir = process.env.GJC_TEST_LOG_DIR;
+const logDir = process.env.VIB_TEST_LOG_DIR;
 logger.setTransports({ file: logDir, console: false });
 logger.info("startup-first-line", { marker: "first" });
 
@@ -81,7 +81,7 @@ while (Date.now() < deadline) {
 console.error(content || "no log content");
 process.exit(1);
 `;
-		const output = await runBunEval(source, { GJC_TEST_LOG_DIR: logDir });
+		const output = await runBunEval(source, { VIB_TEST_LOG_DIR: logDir });
 		expect(output).toContain("startup-first-line");
 		expect(output).toContain('"marker":"first"');
 	});

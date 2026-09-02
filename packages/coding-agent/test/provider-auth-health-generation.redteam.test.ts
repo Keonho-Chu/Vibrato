@@ -1,16 +1,16 @@
 import { afterEach, beforeEach, describe, expect, type Mock, test, vi } from "bun:test";
-import type { Model } from "@gajae-code/ai";
-import type { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
+import type { Model } from "@vib-rato/ai";
+import type { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
 import {
 	clearProviderAuthHealth,
 	getProviderAuthHealth,
 	recordProviderAuthHealth,
-} from "@gajae-code/coding-agent/config/provider-auth-health";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { ModelSelectorComponent } from "@gajae-code/coding-agent/modes/components/model-selector";
-import { getThemeByName, setThemeInstance } from "@gajae-code/coding-agent/modes/theme/theme";
-import { AuthStorage, type AuthStorage as AuthStorageType } from "@gajae-code/coding-agent/session/auth-storage";
-import type { TUI } from "@gajae-code/tui";
+} from "@vib-rato/coding-agent/config/provider-auth-health";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { ModelSelectorComponent } from "@vib-rato/coding-agent/modes/components/model-selector";
+import { getThemeByName, setThemeInstance } from "@vib-rato/coding-agent/modes/theme/theme";
+import { AuthStorage, type AuthStorage as AuthStorageType } from "@vib-rato/coding-agent/session/auth-storage";
+import type { TUI } from "@vib-rato/tui";
 
 const model = (provider: string, id: string): Model =>
 	({ provider, id, name: id, api: "openai-responses", contextWindow: 1000, maxTokens: 1000 }) as Model;

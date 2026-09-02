@@ -1,18 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { Agent } from "@gajae-code/agent-core";
-import { getBundledModel } from "@gajae-code/ai";
-import { AsyncJobManager } from "@gajae-code/coding-agent/async/job-manager";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import * as internalUrls from "@gajae-code/coding-agent/internal-urls";
-import { AgentSession } from "@gajae-code/coding-agent/session/agent-session";
-import { ArtifactManager } from "@gajae-code/coding-agent/session/artifacts";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { lookupOwnedRegistration, registerOwnedRegistration } from "@gajae-code/coding-agent/session/terminal-abort";
-import { TempDir } from "@gajae-code/utils";
+import { Agent } from "@vib-rato/agent-core";
+import { getBundledModel } from "@vib-rato/ai";
+import { AsyncJobManager } from "@vib-rato/coding-agent/async/job-manager";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import * as internalUrls from "@vib-rato/coding-agent/internal-urls";
+import { AgentSession } from "@vib-rato/coding-agent/session/agent-session";
+import { ArtifactManager } from "@vib-rato/coding-agent/session/artifacts";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { lookupOwnedRegistration, registerOwnedRegistration } from "@vib-rato/coding-agent/session/terminal-abort";
+import { TempDir } from "@vib-rato/utils";
 
 const CLEANUP_NOTICE =
 	"Unable to confirm owned subagent cleanup; session was not replaced. Wait for or inspect remaining subagents, then retry /new.";
@@ -48,7 +48,7 @@ describe("AgentSession Issue #2261 /new owner-subagent cancellation", () => {
 	let manager: AsyncJobManager | undefined;
 
 	beforeEach(async () => {
-		tempDir = TempDir.createSync("@gjc-issue-2261-");
+		tempDir = TempDir.createSync("@vib-issue-2261-");
 		authStorage = await AuthStorage.create(path.join(tempDir.path(), "auth.db"));
 		const model = getBundledModel("anthropic", "claude-sonnet-4-5");
 		if (!model) throw new Error("Expected bundled test model");

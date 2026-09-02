@@ -1,6 +1,6 @@
 # Cursor Composer profile tiers
 
-This note records the evidence used to update GJC's `cursor-eco`, `cursor-medium`, and `cursor-pro` profiles. The previous profiles all selected Composer 1.5 and differed only by effort suffixes that the Cursor RPC could not transport. The measurements below are descriptive single attempts, not statistically significant rankings.
+This note records the evidence used to update Vibrato's `cursor-eco`, `cursor-medium`, and `cursor-pro` profiles. The previous profiles all selected Composer 1.5 and differed only by effort suffixes that the Cursor RPC could not transport. The measurements below are descriptive single attempts, not statistically significant rankings.
 
 ## Decision summary
 
@@ -17,7 +17,7 @@ Eco minimizes token price. Medium retains the standard model for ordinary and pl
 ## Environment and live observation
 
 - Date: 2026-08-02
-- GJC: 0.12.8 installed binary
+- Vibrato: 0.12.8 installed binary
 - Provider: Cursor authenticated `GetUsableModels` catalog and `cursor-agent` RPC
 - Attempts: one per model on the same no-tools TypeScript review fixture
 - Fixture requirements: concurrent start, first success, aggregate all failures, abort only losers after success, empty-input handling, and no unhandled rejections
@@ -35,15 +35,15 @@ Cursor documents Composer 2.5 at $0.50 input and $2.50 output per million tokens
 
 ## Reasoning transport contract
 
-Cursor's protobuf currently defines `ThinkingDetails` as an empty message. GJC's request construction sends `modelId`, `displayModelId`, and `displayName`; there is no strength value to populate. Authenticated discovery also exposes Composer 2.5 and Composer 2.5 Fast as non-reasoning models.
+Cursor's protobuf currently defines `ThinkingDetails` as an empty message. Vibrato's request construction sends `modelId`, `displayModelId`, and `displayName`; there is no strength value to populate. Authenticated discovery also exposes Composer 2.5 and Composer 2.5 Fast as non-reasoning models.
 
 Therefore the profiles use the two exact server model IDs and remove `:minimal` through `:xhigh` suffixes. This keeps the profile preview aligned with what the RPC actually sends.
 
 ## Reproduction shape
 
 ```sh
-gjc -p --model cursor/composer-2.5 --no-tools --no-skills --no-rules --no-session "<review fixture>"
-gjc -p --model cursor/composer-2.5-fast --no-tools --no-skills --no-rules --no-session "<review fixture>"
+vib -p --model cursor/composer-2.5 --no-tools --no-skills --no-rules --no-session "<review fixture>"
+vib -p --model cursor/composer-2.5-fast --no-tools --no-skills --no-rules --no-session "<review fixture>"
 ```
 
 Raw authenticated event streams are not committed because they contain account-scoped session metadata and local paths. The aggregate timings and observed defects above preserve the evidence used for the mapping.
@@ -58,5 +58,5 @@ Raw authenticated event streams are not committed because they contain account-s
 ## Sources
 
 - [Cursor Composer 2.5 documentation](https://cursor.com/docs/models/cursor-composer-2-5)
-- Cursor authenticated `GetUsableModels` response, observed through `gjc --list-models cursor` on 2026-08-02
-- GJC Cursor protobuf and request construction in `packages/ai/src/providers/cursor/`
+- Cursor authenticated `GetUsableModels` response, observed through `vib --list-models cursor` on 2026-08-02
+- Vibrato Cursor protobuf and request construction in `packages/ai/src/providers/cursor/`

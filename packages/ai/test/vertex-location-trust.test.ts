@@ -30,7 +30,7 @@ interface Resolved {
 const tempDirs: string[] = [];
 
 function tempDir(): string {
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-vertex-location-trust-"));
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-vertex-location-trust-"));
 	tempDirs.push(dir);
 	return dir;
 }
@@ -51,10 +51,10 @@ async function resolveIn(cwd: string, overrides: Record<string, string> = {}): P
 		if (value !== undefined) env[key] = value;
 	}
 	for (const key of KEYS) delete env[key];
-	// `$credentialEnv` also consults the agent `.env`, the GJC config `.env`,
+	// `$credentialEnv` also consults the agent `.env`, the Vibrato config `.env`,
 	// `~/.env` and the login shell rc files; keep all of them neutral.
 	env.HOME = tempDir();
-	env.GJC_CODING_AGENT_DIR = tempDir();
+	env.VIB_CODING_AGENT_DIR = tempDir();
 	Object.assign(env, overrides);
 
 	const proc = Bun.spawn([process.execPath, PROBE], { cwd, env, stdout: "pipe", stderr: "pipe" });

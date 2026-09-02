@@ -2,10 +2,10 @@ import * as os from "node:os";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
 import { spawnSync } from "node:child_process";
-import type { AssistantMessage, Message, TextContent, ToolCall, ToolResultMessage, Usage } from "@gajae-code/ai";
+import type { AssistantMessage, Message, TextContent, ToolCall, ToolResultMessage, Usage } from "@vib-rato/ai";
 import { SessionManager } from "../src/session/session-manager";
 
-const PACKAGE_NAME = "@gajae-code/coding-agent";
+const PACKAGE_NAME = "@vib-rato/coding-agent";
 const BENCH_NAME = "session-resident-rss";
 const WARMUP_SAMPLES = 5;
 const MEASURE_SAMPLES = 20;
@@ -164,7 +164,7 @@ function toolResultMessage(index: number, content: string): ToolResultMessage<un
 }
 
 async function createFixture(): Promise<SessionManager> {
-	const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-session-rss-"));
+	const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-session-rss-"));
 	const sessionDir = path.join(root, "sessions");
 	const manager = SessionManager.create(root, sessionDir);
 	manager.appendMessage({ role: "user", content: "rss fixture", timestamp: Date.now() });

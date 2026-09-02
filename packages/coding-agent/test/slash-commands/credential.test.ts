@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { AuthStorage, type OAuthCredential, SqliteAuthCredentialStore } from "@gajae-code/ai/core";
+import { AuthStorage, type OAuthCredential, SqliteAuthCredentialStore } from "@vib-rato/ai/core";
 import { Settings } from "../../src/config/settings";
 import type { AgentSession } from "../../src/session/agent-session";
 import type { SessionManager } from "../../src/session/session-manager";

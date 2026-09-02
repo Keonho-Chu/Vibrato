@@ -5,19 +5,19 @@
  * They provide a unified system for extensions, custom tools, commands, and more.
  *
  * Extension files are discovered from:
- * - ~/.gjc/agent/extensions/ (legacy: ~/.pi/agent/extensions/)
- * - <cwd>/.gjc/extensions/ (legacy: <cwd>/.pi/extensions/)
+ * - ~/.vib/agent/extensions/ (legacy: ~/.pi/agent/extensions/)
+ * - <cwd>/.vib/extensions/ (legacy: <cwd>/.pi/extensions/)
  * - Paths specified in settings.json "extensions" array
  * - Paths passed via --extension CLI flag
  *
  * An extension is a TypeScript file that exports a default function:
  *   export default function (pi: ExtensionAPI) { ... }
  */
-import { createAgentSession, SessionManager } from "@gajae-code/coding-agent";
+import { createAgentSession, SessionManager } from "@vib-rato/coding-agent";
 
 // Extensions are loaded from disk, not passed inline to createAgentSession.
 // Use the discovery mechanism:
-//   1. Place extension files in ~/.gjc/agent/extensions/ or .gjc/extensions/
+//   1. Place extension files in ~/.vib/agent/extensions/ or .vib/extensions/
 //   2. Add paths to settings.json: { "extensions": ["./my-extension.ts"] }
 //   3. Use --extension flag: pi --extension ./my-extension.ts
 
@@ -38,7 +38,7 @@ console.log();
 
 // Example extension file (./my-logging-extension.ts):
 /*
-import type { ExtensionAPI } from "@gajae-code/coding-agent";
+import type { ExtensionAPI } from "@vib-rato/coding-agent";
 
 export default function (pi: ExtensionAPI) {
 	const { z } = pi.zod;

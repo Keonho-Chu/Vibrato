@@ -1,8 +1,8 @@
 import { describe, expect, it } from "bun:test";
-import { classifyStateArgv } from "../../src/gjc-runtime/state-argv";
 import { checkBashAllowedPrefixes } from "../../src/tools/bash-allowed-prefixes";
+import { classifyStateArgv } from "../../src/vib-runtime/state-argv";
 
-const ROLE_AGENT_PREFIXES = ["gjc ralplan --write", "gjc state"] as const;
+const ROLE_AGENT_PREFIXES = ["vib ralplan --write", "vib state"] as const;
 describe("shared state argv classification", () => {
 	it("preserves argv and runtime first-occurrence precedence", () => {
 		const argv = ["write", "--mode", "", "--mode", "ralplan", "--input", "{}"];
@@ -61,19 +61,19 @@ describe("shared state argv classification", () => {
 	it("keeps classifier-effective actions and restricted policy decisions conformant", () => {
 		const cases = [
 			{
-				command: "gjc state read --mode ralplan --json",
+				command: "vib state read --mode ralplan --json",
 				argv: ["read", "--mode", "ralplan", "--json"],
 				effectiveAction: "read",
 				allowed: true,
 			},
 			{
-				command: "gjc state ralplan read --migrate --force --json",
+				command: "vib state ralplan read --migrate --force --json",
 				argv: ["ralplan", "read", "--migrate", "--force", "--json"],
 				effectiveAction: "migrate",
 				allowed: false,
 			},
 			{
-				command: "gjc state clear --mode ralplan --json",
+				command: "vib state clear --mode ralplan --json",
 				argv: ["clear", "--mode", "ralplan", "--json"],
 				effectiveAction: "clear",
 				allowed: false,
@@ -91,7 +91,7 @@ describe("checkBashAllowedPrefixes", () => {
 	it("allows ralplan artifact writes for role agents", () => {
 		expect(
 			checkBashAllowedPrefixes(
-				"gjc ralplan --write --stage architect --stage_n 1 --artifact 'Architect verdict'",
+				"vib ralplan --write --stage architect --stage_n 1 --artifact 'Architect verdict'",
 				ROLE_AGENT_PREFIXES,
 			),
 		).toEqual({ allowed: true });
@@ -100,33 +100,33 @@ describe("checkBashAllowedPrefixes", () => {
 	it("allows ralplan artifact env writes for role agents", () => {
 		expect(
 			checkBashAllowedPrefixes(
-				"gjc ralplan --write --stage critic --stage_n 1 --artifact-env GJC_RALPLAN_ARTIFACT --json",
+				"vib ralplan --write --stage critic --stage_n 1 --artifact-env VIB_RALPLAN_ARTIFACT --json",
 				ROLE_AGENT_PREFIXES,
 			),
 		).toEqual({ allowed: true });
 	});
 
 	it("blocks non-write ralplan commands", () => {
-		const result = checkBashAllowedPrefixes("gjc ralplan --consensus 'task'", ROLE_AGENT_PREFIXES);
+		const result = checkBashAllowedPrefixes("vib ralplan --consensus 'task'", ROLE_AGENT_PREFIXES);
 
 		expect(result.allowed).toBe(false);
-		expect(result.reason).toContain("gjc ralplan --write");
+		expect(result.reason).toContain("vib ralplan --write");
 	});
 
-	it("allows GJC state writes through the sanctioned workflow CLI", () => {
+	it("allows Vibrato state writes through the sanctioned workflow CLI", () => {
 		expect(
 			checkBashAllowedPrefixes(
-				'gjc state ralplan write --input \'{"current_phase":"handoff"}\' --json',
+				'vib state ralplan write --input \'{"current_phase":"handoff"}\' --json',
 				ROLE_AGENT_PREFIXES,
 			),
 		).toEqual({ allowed: true });
 	});
-	it("allows canonical GJC state reads, writes, and contracts", () => {
+	it("allows canonical Vibrato state reads, writes, and contracts", () => {
 		const commands = [
-			"gjc state deep-interview",
-			"gjc state read --mode ralplan --json",
-			'gjc state ultragoal write --input \'{"current_phase":"handoff"}\' --json',
-			"gjc state autoresearch contract",
+			"vib state deep-interview",
+			"vib state read --mode ralplan --json",
+			'vib state ultragoal write --input \'{"current_phase":"handoff"}\' --json',
+			"vib state autoresearch contract",
 		];
 
 		for (const command of commands) {
@@ -134,8 +134,8 @@ describe("checkBashAllowedPrefixes", () => {
 		}
 	});
 
-	it("blocks bare or unknown GJC state targets", () => {
-		const commands = ["gjc state", "gjc state unknown write --json", "gjc state write --mode unknown --input '{}'"];
+	it("blocks bare or unknown Vibrato state targets", () => {
+		const commands = ["vib state", "vib state unknown write --json", "vib state write --mode unknown --input '{}'"];
 
 		for (const command of commands) {
 			const result = checkBashAllowedPrefixes(command, ROLE_AGENT_PREFIXES);
@@ -144,29 +144,29 @@ describe("checkBashAllowedPrefixes", () => {
 		}
 	});
 	it("blocks equals-form state modes that the runtime does not recognize", () => {
-		const result = checkBashAllowedPrefixes("gjc state write --mode=ralplan --input '{}'", ROLE_AGENT_PREFIXES);
+		const result = checkBashAllowedPrefixes("vib state write --mode=ralplan --input '{}'", ROLE_AGENT_PREFIXES);
 
 		expect(result.allowed).toBe(false);
-		expect(result.reason).toContain("documented `gjc state` action shapes");
+		expect(result.reason).toContain("documented `vib state` action shapes");
 	});
 
 	it("blocks destructive state clears", () => {
-		const result = checkBashAllowedPrefixes("gjc state ralplan clear --json", ROLE_AGENT_PREFIXES);
+		const result = checkBashAllowedPrefixes("vib state ralplan clear --json", ROLE_AGENT_PREFIXES);
 
 		expect(result.allowed).toBe(false);
-		expect(result.reason).toContain("gjc state clear");
+		expect(result.reason).toContain("vib state clear");
 	});
 
-	it("blocks direct GJC state handoffs", () => {
-		const result = checkBashAllowedPrefixes("gjc state ralplan handoff --to team --json", ROLE_AGENT_PREFIXES);
+	it("blocks direct Vibrato state handoffs", () => {
+		const result = checkBashAllowedPrefixes("vib state ralplan handoff --to team --json", ROLE_AGENT_PREFIXES);
 
 		expect(result.allowed).toBe(false);
-		expect(result.reason).toContain("gjc state handoff");
+		expect(result.reason).toContain("vib state handoff");
 	});
 	it("preserves empty quoted argv values when classifying destructive state actions", () => {
 		const commands = [
-			'gjc state --thread-id "" handoff ralplan --to team --session-id SESSION --json',
-			"gjc state --thread-id '' clear ralplan --session-id SESSION --json",
+			'vib state --thread-id "" handoff ralplan --to team --session-id SESSION --json',
+			"vib state --thread-id '' clear ralplan --session-id SESSION --json",
 		];
 
 		for (const command of commands) {
@@ -177,15 +177,15 @@ describe("checkBashAllowedPrefixes", () => {
 	});
 
 	it("blocks state modifiers that change the runtime-effective action", () => {
-		const result = checkBashAllowedPrefixes("gjc state ralplan read --migrate --force --json", ROLE_AGENT_PREFIXES);
+		const result = checkBashAllowedPrefixes("vib state ralplan read --migrate --force --json", ROLE_AGENT_PREFIXES);
 
 		expect(result.allowed).toBe(false);
-		expect(result.reason).toContain("gjc state migrate");
+		expect(result.reason).toContain("vib state migrate");
 	});
 
 	it("allows agreeing canonical state targets across distinct selector sources", () => {
 		const result = checkBashAllowedPrefixes(
-			`gjc state ralplan write --input '{"mode":"ralplan","current_phase":"handoff"}' --json`,
+			`vib state ralplan write --input '{"mode":"ralplan","current_phase":"handoff"}' --json`,
 			ROLE_AGENT_PREFIXES,
 		);
 
@@ -193,8 +193,8 @@ describe("checkBashAllowedPrefixes", () => {
 	});
 	it("fails closed when canonical state target selectors conflict", () => {
 		const commands = [
-			"gjc state ralplan write --mode team --input '{}'",
-			"gjc state write --mode ralplan --mode team --input '{}'",
+			"vib state ralplan write --mode team --input '{}'",
+			"vib state write --mode ralplan --mode team --input '{}'",
 		];
 
 		for (const command of commands) {
@@ -205,13 +205,13 @@ describe("checkBashAllowedPrefixes", () => {
 	});
 	it("rejects repeated selectors when runtime first-occurrence precedence differs", () => {
 		const commands = [
-			`gjc state write --mode "" --mode ralplan --input '{"current_phase":"handoff"}' --json`,
-			`gjc state write --input '{}' --input '{"mode":"ralplan","current_phase":"handoff"}' --json`,
-			"gjc state write --mode '' --mode ralplan --input '{}'",
-			"gjc state write --mode ralplan --mode ralplan --input '{}'",
-			"gjc state write --mode ralplan --input '{}' --input '{}'",
-			"gjc state write --mode ralplan --input \"\" --input '{}'",
-			"gjc state write --mode ralplan --input '' --input '{}'",
+			`vib state write --mode "" --mode ralplan --input '{"current_phase":"handoff"}' --json`,
+			`vib state write --input '{}' --input '{"mode":"ralplan","current_phase":"handoff"}' --json`,
+			"vib state write --mode '' --mode ralplan --input '{}'",
+			"vib state write --mode ralplan --mode ralplan --input '{}'",
+			"vib state write --mode ralplan --input '{}' --input '{}'",
+			"vib state write --mode ralplan --input \"\" --input '{}'",
+			"vib state write --mode ralplan --input '' --input '{}'",
 		];
 
 		for (const command of commands) {
@@ -223,8 +223,8 @@ describe("checkBashAllowedPrefixes", () => {
 
 	it("rejects selectors that disagree with runtime precedence", () => {
 		const commands = [
-			"gjc state write team --mode ralplan --input '{}'",
-			'gjc state write --mode ralplan --input \'{"mode":"team"}\'',
+			"vib state write team --mode ralplan --input '{}'",
+			'vib state write --mode ralplan --input \'{"mode":"team"}\'',
 		];
 
 		for (const command of commands) {
@@ -236,20 +236,20 @@ describe("checkBashAllowedPrefixes", () => {
 
 	it("rejects unknown and malformed state flags", () => {
 		const commands = [
-			"gjc state ralplan read --unknown",
-			"gjc state ralplan write --mode",
-			"gjc state ralplan write --input",
+			"vib state ralplan read --unknown",
+			"vib state ralplan write --mode",
+			"vib state ralplan write --input",
 		];
 
 		for (const command of commands) {
 			const result = checkBashAllowedPrefixes(command, ROLE_AGENT_PREFIXES);
 			expect(result.allowed).toBe(false);
-			expect(result.reason).toContain("documented `gjc state` action shapes");
+			expect(result.reason).toContain("documented `vib state` action shapes");
 		}
 	});
 	it("rejects file-backed state input", () => {
 		const result = checkBashAllowedPrefixes(
-			"gjc state write --mode ralplan --input @payload.json",
+			"vib state write --mode ralplan --input @payload.json",
 			ROLE_AGENT_PREFIXES,
 		);
 
@@ -265,7 +265,7 @@ describe("checkBashAllowedPrefixes", () => {
 			for (const selector of selectors) {
 				for (const empty of quoteForms) {
 					const suffix = action === "handoff" ? "--to team" : "--json";
-					const command = `gjc state ${selector} ${empty} ${action} ralplan ${suffix}`;
+					const command = `vib state ${selector} ${empty} ${action} ralplan ${suffix}`;
 					expect(checkBashAllowedPrefixes(command, ROLE_AGENT_PREFIXES).allowed).toBe(false);
 				}
 			}
@@ -273,7 +273,7 @@ describe("checkBashAllowedPrefixes", () => {
 	});
 
 	it("blocks shell expansion that could synthesize a state action", () => {
-		const result = checkBashAllowedPrefixes("gjc state ralplan $ACTION --json", ROLE_AGENT_PREFIXES);
+		const result = checkBashAllowedPrefixes("vib state ralplan $ACTION --json", ROLE_AGENT_PREFIXES);
 
 		expect(result.allowed).toBe(false);
 		expect(result.reason).toContain("shell expansion character");
@@ -282,7 +282,7 @@ describe("checkBashAllowedPrefixes", () => {
 	it("blocks double-quoted shell expansion that could synthesize a state action", () => {
 		const dollar = "$";
 		const result = checkBashAllowedPrefixes(
-			`gjc state "${dollar}{X:-handoff}" --mode ralplan --to team`,
+			`vib state "${dollar}{X:-handoff}" --mode ralplan --to team`,
 			ROLE_AGENT_PREFIXES,
 		);
 
@@ -409,22 +409,22 @@ describe("checkBashAllowedPrefixes", () => {
 	});
 
 	it("blocks backslash escape smuggling", () => {
-		const result = checkBashAllowedPrefixes("gjc state ralplan\\ clear --json", ROLE_AGENT_PREFIXES);
+		const result = checkBashAllowedPrefixes("vib state ralplan\\ clear --json", ROLE_AGENT_PREFIXES);
 
 		expect(result.allowed).toBe(false);
 		expect(result.reason).toContain("backslash escapes");
 	});
 
 	it("blocks malformed or unknown state action shapes", () => {
-		const result = checkBashAllowedPrefixes("gjc state ralplan nope --json", ROLE_AGENT_PREFIXES);
+		const result = checkBashAllowedPrefixes("vib state ralplan nope --json", ROLE_AGENT_PREFIXES);
 
 		expect(result.allowed).toBe(false);
-		expect(result.reason).toContain("documented `gjc state` action shapes");
+		expect(result.reason).toContain("documented `vib state` action shapes");
 	});
 
 	it("blocks shell chaining that could smuggle destructive commands", () => {
 		const result = checkBashAllowedPrefixes(
-			"gjc ralplan --write --stage critic --artifact ok; rm -rf .gjc",
+			"vib ralplan --write --stage critic --artifact ok; rm -rf .vib",
 			ROLE_AGENT_PREFIXES,
 		);
 

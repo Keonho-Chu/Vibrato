@@ -9,7 +9,7 @@ import {
 	openVerifiedSidecarCacheInstanceDir,
 	ResidentCacheTrustError,
 	sweepResidentCacheRoot,
-} from "@gajae-code/coding-agent/session/blob-store";
+} from "@vib-rato/coding-agent/session/blob-store";
 
 const temporaryDirectories: string[] = [];
 const DEAD_PID = 2_147_483_647;
@@ -30,7 +30,7 @@ interface ResidentCacheOwner {
 }
 
 function makeTempDir(): string {
-	const directory = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-resident-cache-gc-"));
+	const directory = fs.mkdtempSync(path.join(os.tmpdir(), "vib-resident-cache-gc-"));
 	temporaryDirectories.push(directory);
 	return directory;
 }

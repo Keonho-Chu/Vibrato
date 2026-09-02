@@ -9,7 +9,7 @@ import {
 } from "../src/sdk/broker/operation-receipt-ledger";
 
 async function fixture(): Promise<{ agentDir: string; ledger: OperationReceiptLedger }> {
-	const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-operation-receipts-"));
+	const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-operation-receipts-"));
 	const ledger = new OperationReceiptLedger(agentDir);
 	await ledger.open();
 	return { agentDir, ledger };

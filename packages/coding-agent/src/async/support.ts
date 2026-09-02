@@ -1,5 +1,5 @@
 import * as path from "node:path";
-import { resolveEquivalentPath } from "@gajae-code/utils";
+import { resolveEquivalentPath } from "@vib-rato/utils";
 import type { Settings } from "../config/settings";
 
 export function isBackgroundJobSupportEnabled(settings: Pick<Settings, "get">): boolean {

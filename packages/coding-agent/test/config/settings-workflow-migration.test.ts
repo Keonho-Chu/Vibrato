@@ -12,7 +12,7 @@ const PROBE = path.join(import.meta.dir, "../fixtures/settings-workflow-migratio
 const temporaryDirectories: string[] = [];
 
 async function tempDir(): Promise<string> {
-	const directory = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-migration-"));
+	const directory = await fs.mkdtemp(path.join(os.tmpdir(), "vib-migration-"));
 	temporaryDirectories.push(directory);
 	return directory;
 }
@@ -52,15 +52,15 @@ async function runProbe(
 		env: {
 			...process.env,
 			HOME: options.home,
-			GJC_CONFIG_DIR: options.configDir ?? ".gjc",
-			GJC_CODING_AGENT_DIR: undefined,
+			VIB_CONFIG_DIR: options.configDir ?? ".vib",
+			VIB_CODING_AGENT_DIR: undefined,
 			PI_CODING_AGENT_DIR: undefined,
 			PI_CONFIG_DIR: undefined,
 			XDG_DATA_HOME: undefined,
 			XDG_STATE_HOME: undefined,
 			XDG_CACHE_HOME: undefined,
 			XDG_CONFIG_HOME: undefined,
-			...(options.codingAgentDir ? { GJC_CODING_AGENT_DIR: options.codingAgentDir } : {}),
+			...(options.codingAgentDir ? { VIB_CODING_AGENT_DIR: options.codingAgentDir } : {}),
 			...(options.env ?? {}),
 		},
 		stdout: "pipe",
@@ -89,7 +89,7 @@ describe("config-root workflow settings migration", () => {
 		const home = await tempDir();
 		const cwd = await tempDir();
 		const { source } = await setupHome(home, ".myconfig");
-		await fs.writeFile(source, JSON.stringify({ "gjc.ralplan.maxIterations": 7 }));
+		await fs.writeFile(source, JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
 
 		const first = await runProbe(cwd, { home, configDir: ".myconfig" });
 		expect(first.markerStatus).toBe("complete");
@@ -107,7 +107,7 @@ describe("config-root workflow settings migration", () => {
 		const home = await tempDir();
 		const cwd = await tempDir();
 		const { source } = await setupHome(home, ".myconfig");
-		const original = JSON.stringify({ "gjc.ralplan.maxIterations": 7 });
+		const original = JSON.stringify({ "vib.ralplan.maxIterations": 7 });
 		await fs.writeFile(source, original);
 
 		const first = await runProbe(cwd, { home, configDir: ".myconfig" });
@@ -129,7 +129,7 @@ describe("config-root workflow settings migration", () => {
 		const home = await tempDir();
 		const cwd = await tempDir();
 		const { source, agentDir } = await setupHome(home, ".myconfig");
-		const original = JSON.stringify({ "gjc.ralplan.maxIterations": 7 });
+		const original = JSON.stringify({ "vib.ralplan.maxIterations": 7 });
 		await fs.writeFile(source, original);
 
 		const first = await runProbe(cwd, { home, configDir: ".myconfig" });
@@ -144,8 +144,8 @@ describe("config-root workflow settings migration", () => {
 		const backupRaw = await fs.readFile(`${source}.bak`, "utf8");
 		await fs.writeFile(source, backupRaw);
 		const target = path.join(agentDir, "config.yml");
-		const targetDoc = YAML.parse(await fs.readFile(target, "utf8")) as { gjc?: Record<string, unknown> };
-		delete (targetDoc.gjc as Record<string, unknown>).ralplan;
+		const targetDoc = YAML.parse(await fs.readFile(target, "utf8")) as { vib?: Record<string, unknown> };
+		delete (targetDoc.vib as Record<string, unknown>).ralplan;
 		await fs.writeFile(target, YAML.stringify(targetDoc, null, 2));
 
 		const second = await runProbe(cwd, { home, configDir: ".myconfig" });
@@ -162,33 +162,33 @@ describe("config-root workflow settings migration", () => {
 		// source's invalid strict value must still surface through evidence so the
 		// config-only resolver keeps exit-2 observable.
 		await fs.writeFile(path.join(agentDir, "config.yml"), YAML.stringify({ configSchemaVersion: 9999 }, null, 2));
-		await fs.writeFile(source, JSON.stringify({ "gjc.ralplan.maxIterations": "bad" }));
+		await fs.writeFile(source, JSON.stringify({ "vib.ralplan.maxIterations": "bad" }));
 
 		const result = await runProbe(cwd, { home, configDir: ".myconfig" });
 		expect(result.strictInvalidEvidenceExists).toBe(true);
-		expect(result.strictInvalidEvidenceKeys).toEqual(["gjc.ralplan.maxIterations"]);
+		expect(result.strictInvalidEvidenceKeys).toEqual(["vib.ralplan.maxIterations"]);
 		expect(result.targetValue).toBeNull(); // future-schema target untouched
 	});
 
 	test("does not retire the config-root source when it is also the project source", async () => {
 		const home = await tempDir();
-		// cwd = home -> the project .gjc/settings.json IS the config-root source.
-		await fs.mkdir(path.join(home, ".gjc"), { recursive: true });
-		const original = JSON.stringify({ "gjc.ralplan.maxIterations": 7, theme: { dark: "red-claw" } });
-		await fs.writeFile(path.join(home, ".gjc", "settings.json"), original);
+		// cwd = home -> the project .vib/settings.json IS the config-root source.
+		await fs.mkdir(path.join(home, ".vib"), { recursive: true });
+		const original = JSON.stringify({ "vib.ralplan.maxIterations": 7, theme: { dark: "red-claw" } });
+		await fs.writeFile(path.join(home, ".vib", "settings.json"), original);
 
-		const result = await runProbe(home, { home, configDir: ".gjc" });
+		const result = await runProbe(home, { home, configDir: ".vib" });
 		// The colliding source is preserved (it is the project source): the
 		// config-root migration defers to the project migration, so non-workflow
 		// project settings stay discoverable and a tracked dotfiles copy survives.
 		expect(result.sourceExists).toBe(true);
 		expect(result.markerStatus).toBeNull(); // no config-root completion marker
-		expect(await fs.readFile(path.join(home, ".gjc", "settings.json"), "utf8")).toBe(original);
+		expect(await fs.readFile(path.join(home, ".vib", "settings.json"), "utf8")).toBe(original);
 		// The workflow keys still migrate - into the PROJECT config.yml.
-		const projectConfig = YAML.parse(await fs.readFile(path.join(home, ".gjc", "config.yml"), "utf8")) as {
-			gjc?: { ralplan?: Record<string, unknown> };
+		const projectConfig = YAML.parse(await fs.readFile(path.join(home, ".vib", "config.yml"), "utf8")) as {
+			vib?: { ralplan?: Record<string, unknown> };
 		};
-		expect(projectConfig.gjc?.ralplan?.maxIterations).toBe(7);
+		expect(projectConfig.vib?.ralplan?.maxIterations).toBe(7);
 	});
 
 	test("a future-schema target retains STRUCTURAL malformation evidence", async () => {
@@ -215,7 +215,7 @@ describe("config-root workflow settings migration", () => {
 		// the agent-dir migration skips and would leave the orphan source's
 		// workflow keys unmigrated.
 		await fs.writeFile(path.join(configRoot, "config.yml"), YAML.stringify({ theme: { dark: "red-claw" } }, null, 2));
-		await fs.writeFile(path.join(configRoot, "settings.json"), JSON.stringify({ "gjc.ralplan.maxIterations": 7 }));
+		await fs.writeFile(path.join(configRoot, "settings.json"), JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
 
 		const result = await runProbe(cwd, { home, configDir: ".myconfig", codingAgentDir: configRoot });
 		expect(result.markerStatus).toBe("complete");
@@ -225,29 +225,29 @@ describe("config-root workflow settings migration", () => {
 	test("a config-root collision reconciles fallback state against the agent target", async () => {
 		const home = await tempDir();
 		const cwd = await tempDir();
-		const { source } = await setupHome(home, ".gjc");
+		const { source } = await setupHome(home, ".vib");
 		// Evidence path occupied -> the config-root fallback lands in the AGENT
 		// config.yml with the config-root marker namespace.
 		await fs.mkdir(`${source}.strict-invalid`, { recursive: true });
-		await fs.writeFile(source, JSON.stringify({ "gjc.ralplan.maxIterations": "bad" }));
+		await fs.writeFile(source, JSON.stringify({ "vib.ralplan.maxIterations": "bad" }));
 
-		await runProbe(cwd, { home, configDir: ".gjc" });
-		const agentConfig = YAML.parse(await fs.readFile(path.join(home, ".gjc", "agent", "config.yml"), "utf8")) as {
-			gjc?: { ralplan?: Record<string, unknown> };
+		await runProbe(cwd, { home, configDir: ".vib" });
+		const agentConfig = YAML.parse(await fs.readFile(path.join(home, ".vib", "agent", "config.yml"), "utf8")) as {
+			vib?: { ralplan?: Record<string, unknown> };
 		};
-		expect(agentConfig.gjc?.ralplan?.maxIterations).toBe("bad");
+		expect(agentConfig.vib?.ralplan?.maxIterations).toBe("bad");
 
 		// Repair the source, then run from HOME (the config-root source is now
 		// also the project source): the collision deferral must clean the AGENT
 		// config.yml fallback - the project migration only cleans the project
 		// config.yml and its own marker namespace.
 		await fs.writeFile(source, "{}");
-		await runProbe(home, { home, configDir: ".gjc" });
+		await runProbe(home, { home, configDir: ".vib" });
 
 		const agentConfigAfter = YAML.parse(
-			await fs.readFile(path.join(home, ".gjc", "agent", "config.yml"), "utf8"),
-		) as { gjc?: { ralplan?: Record<string, unknown> } };
-		expect(agentConfigAfter.gjc?.ralplan?.maxIterations).toBeUndefined();
+			await fs.readFile(path.join(home, ".vib", "agent", "config.yml"), "utf8"),
+		) as { vib?: { ralplan?: Record<string, unknown> } };
+		expect(agentConfigAfter.vib?.ralplan?.maxIterations).toBeUndefined();
 		expect(await fs.lstat(`${source}.config-root.fallback-invalid`).catch(() => null)).toBeNull();
 	});
 
@@ -256,13 +256,13 @@ describe("config-root workflow settings migration", () => {
 		const cwd = await tempDir();
 		const { source } = await setupHome(home, ".myconfig");
 		await fs.mkdir(`${source}.strict-invalid`, { recursive: true });
-		await fs.writeFile(source, JSON.stringify({ "gjc.ralplan.maxIterations": "bad" }));
+		await fs.writeFile(source, JSON.stringify({ "vib.ralplan.maxIterations": "bad" }));
 
 		await runProbe(cwd, { home, configDir: ".myconfig" });
 		const agentConfig = YAML.parse(
 			await fs.readFile(path.join(home, ".myconfig", "agent", "config.yml"), "utf8"),
-		) as { gjc?: { ralplan?: Record<string, unknown> } };
-		expect(agentConfig.gjc?.ralplan?.maxIterations).toBe("bad");
+		) as { vib?: { ralplan?: Record<string, unknown> } };
+		expect(agentConfig.vib?.ralplan?.maxIterations).toBe("bad");
 
 		// The user fixes the invalid value by DELETING settings.json: the stale
 		// fallback must be reconciled even though there is nothing left to migrate
@@ -271,9 +271,9 @@ describe("config-root workflow settings migration", () => {
 		await runProbe(cwd, { home, configDir: ".myconfig" });
 
 		const after = YAML.parse(await fs.readFile(path.join(home, ".myconfig", "agent", "config.yml"), "utf8")) as {
-			gjc?: { ralplan?: Record<string, unknown> };
+			vib?: { ralplan?: Record<string, unknown> };
 		};
-		expect(after.gjc?.ralplan?.maxIterations).toBeUndefined();
+		expect(after.vib?.ralplan?.maxIterations).toBeUndefined();
 		expect(await fs.lstat(`${source}.config-root.fallback-invalid`).catch(() => null)).toBeNull();
 	});
 
@@ -285,20 +285,20 @@ describe("config-root workflow settings migration", () => {
 		// Legacy agent-dir settings.json with a workflow key and a non-workflow key.
 		await fs.writeFile(
 			path.join(agentDir, "settings.json"),
-			JSON.stringify({ "gjc.ralplan.maxIterations": 5, theme: { dark: "red-claw" } }),
+			JSON.stringify({ "vib.ralplan.maxIterations": 5, theme: { dark: "red-claw" } }),
 		);
 		// Config-root source with a workflow key.
-		await fs.writeFile(source, JSON.stringify({ "gjc.ralplan.maxIterations": 7 }));
+		await fs.writeFile(source, JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
 
 		const result = await runProbe(cwd, { home, configDir: ".myconfig" });
 		// The agent-dir legacy settings merged into config.yml (not ignored because
 		// the config-root migration created the file first); the non-workflow
 		// legacy value is preserved.
 		const config = YAML.parse(await fs.readFile(path.join(agentDir, "config.yml"), "utf8")) as {
-			gjc?: { ralplan?: Record<string, unknown> };
+			vib?: { ralplan?: Record<string, unknown> };
 			theme?: Record<string, unknown>;
 		};
-		expect(config.gjc?.ralplan?.maxIterations).toBe(5); // agent-dir value landed first
+		expect(config.vib?.ralplan?.maxIterations).toBe(5); // agent-dir value landed first
 		expect(config.theme?.dark).toBe("red-claw");
 		// The config-root source was still migrated and retired.
 		expect(result.markerStatus).toBe("complete");
@@ -310,12 +310,12 @@ describe("config-root workflow settings migration", () => {
 		const { agentDir } = await setupHome(home, ".myconfig");
 		await fs.mkdir(agentDir, { recursive: true });
 		// config.yml already exists (as if a workflow migration created it) with a
-		// `gjc` object; the legacy database holds a NESTED sibling under `gjc` and
+		// `vib` object; the legacy database holds a NESTED sibling under `vib` and
 		// a top-level key, which must merge at the LEAF, not be skipped wholesale
-		// because `gjc` exists.
+		// because `vib` exists.
 		await fs.writeFile(
 			path.join(agentDir, "config.yml"),
-			YAML.stringify({ gjc: { ralplan: { maxIterations: 7 } } }, null, 2),
+			YAML.stringify({ vib: { ralplan: { maxIterations: 7 } } }, null, 2),
 		);
 		const db = new Database(path.join(agentDir, "agent.db"));
 		db.run(
@@ -323,7 +323,7 @@ describe("config-root workflow settings migration", () => {
 		);
 		db.run("CREATE TABLE schema_version (version INTEGER PRIMARY KEY)");
 		db.run("INSERT INTO schema_version (version) VALUES (5)");
-		db.run("INSERT INTO settings (key, value, updated_at) VALUES ('gjc', ?, 0)", [
+		db.run("INSERT INTO settings (key, value, updated_at) VALUES ('vib', ?, 0)", [
 			JSON.stringify({ ultragoal: { nudgeBudget: 10 } }),
 		]);
 		db.run("INSERT INTO settings (key, value, updated_at) VALUES ('theme.dark', ?, 0)", [JSON.stringify("red-claw")]);
@@ -331,11 +331,11 @@ describe("config-root workflow settings migration", () => {
 
 		await runProbe(cwd, { home, configDir: ".myconfig" });
 		const config = YAML.parse(await fs.readFile(path.join(agentDir, "config.yml"), "utf8")) as {
-			gjc?: { ralplan?: Record<string, unknown>; ultragoal?: Record<string, unknown> };
+			vib?: { ralplan?: Record<string, unknown>; ultragoal?: Record<string, unknown> };
 			theme?: Record<string, unknown>;
 		};
-		expect(config.gjc?.ralplan?.maxIterations).toBe(7); // pre-existing value preserved
-		expect(config.gjc?.ultragoal?.nudgeBudget).toBe(10); // nested db sibling merged at the leaf
+		expect(config.vib?.ralplan?.maxIterations).toBe(7); // pre-existing value preserved
+		expect(config.vib?.ultragoal?.nudgeBudget).toBe(10); // nested db sibling merged at the leaf
 		expect(config.theme?.dark).toBe("red-claw");
 	});
 
@@ -347,7 +347,7 @@ describe("config-root workflow settings migration", () => {
 		// config.yml already has NESTED modern values for the same settings.
 		await fs.writeFile(
 			path.join(agentDir, "config.yml"),
-			YAML.stringify({ theme: { dark: "red-claw" }, gjc: { ralplan: { maxIterations: 7 } } }, null, 2),
+			YAML.stringify({ theme: { dark: "red-claw" }, vib: { ralplan: { maxIterations: 7 } } }, null, 2),
 		);
 		const db = new Database(path.join(agentDir, "agent.db"));
 		db.run(
@@ -357,20 +357,20 @@ describe("config-root workflow settings migration", () => {
 		db.run("INSERT INTO schema_version (version) VALUES (5)");
 		// FLAT dotted rows (the database's key format).
 		db.run("INSERT INTO settings (key, value, updated_at) VALUES ('theme.dark', ?, 0)", [JSON.stringify("blue")]);
-		db.run("INSERT INTO settings (key, value, updated_at) VALUES ('gjc.ralplan.maxIterations', ?, 0)", [
+		db.run("INSERT INTO settings (key, value, updated_at) VALUES ('vib.ralplan.maxIterations', ?, 0)", [
 			JSON.stringify(3),
 		]);
 		db.close();
 
 		await runProbe(cwd, { home, configDir: ".myconfig" });
 		const config = YAML.parse(await fs.readFile(path.join(agentDir, "config.yml"), "utf8")) as {
-			gjc?: { ralplan?: Record<string, unknown> };
+			vib?: { ralplan?: Record<string, unknown> };
 			theme?: Record<string, unknown>;
 		};
 		// The absent-only merge compares the flat keys against the NESTED paths, so
 		// the modern values survive (the legacy rows are then cleared).
 		expect(config.theme?.dark).toBe("red-claw");
-		expect(config.gjc?.ralplan?.maxIterations).toBe(7);
+		expect(config.vib?.ralplan?.maxIterations).toBe(7);
 	});
 
 	test("preserves literal dotted member keys inside legacy record settings", async () => {
@@ -449,46 +449,46 @@ describe("config-root workflow settings migration", () => {
 	test("a shadowed invalid strict key is recorded as owned so an unset falls through", async () => {
 		const cwd = await tempDir();
 		const home = await tempDir();
-		const agentDir = path.join(home, ".gjc", "agent");
+		const agentDir = path.join(home, ".vib", "agent");
 		// The retained project settings.json holds an INVALID strict value while
 		// the project config.yml holds a VALID value for the same key (the
 		// shadow case: the valid target wins, so no strict evidence is written).
 		// The migration must still record the key as owned - without ownership,
-		// a later `gjc config unset` of the target value would resurrect the
+		// a later `vib config unset` of the target value would resurrect the
 		// invalid legacy value and exit 2 instead of falling through to
 		// defaults (mirroring the config-root path, where the source is retired).
-		await fs.mkdir(path.join(cwd, ".gjc", "state"), { recursive: true });
+		await fs.mkdir(path.join(cwd, ".vib", "state"), { recursive: true });
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "config.yml"),
-			YAML.stringify({ gjc: { ralplan: { maxIterations: 7 } } }, null, 2),
+			path.join(cwd, ".vib", "config.yml"),
+			YAML.stringify({ vib: { ralplan: { maxIterations: 7 } } }, null, 2),
 		);
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "settings.json"),
-			JSON.stringify({ "gjc.ralplan.maxIterations": "invalid" }),
+			path.join(cwd, ".vib", "settings.json"),
+			JSON.stringify({ "vib.ralplan.maxIterations": "invalid" }),
 		);
 		await fs.mkdir(agentDir, { recursive: true });
 
 		// The project migration runs during Settings.load (probe child process).
-		await runProbe(cwd, { home, configDir: ".gjc" });
+		await runProbe(cwd, { home, configDir: ".vib" });
 
 		// The migrated-keys ownership marker records the shadowed key.
 		const marker = JSON.parse(
-			await fs.readFile(path.join(cwd, ".gjc", "state", "settings.json.migrated-keys"), "utf8"),
+			await fs.readFile(path.join(cwd, ".vib", "state", "settings.json.migrated-keys"), "utf8"),
 		) as string[];
-		expect(marker).toContain("gjc.ralplan.maxIterations");
-		// Simulate `gjc config unset`: remove the key from the project config.
-		await fs.writeFile(path.join(cwd, ".gjc", "config.yml"), YAML.stringify({ theme: { dark: "red" } }, null, 2));
+		expect(marker).toContain("vib.ralplan.maxIterations");
+		// Simulate `vib config unset`: remove the key from the project config.
+		await fs.writeFile(path.join(cwd, ".vib", "config.yml"), YAML.stringify({ theme: { dark: "red" } }, null, 2));
 
 		// A strict ralplan caller must fall through to the default instead of
 		// exiting 2 on the resurrected invalid legacy value.
 		const wsProbe = path.join(import.meta.dir, "../fixtures/workflow-settings-probe.ts");
-		const proc = Bun.spawn([process.execPath, wsProbe, "gjc.ralplan.maxIterations", "--strict"], {
+		const proc = Bun.spawn([process.execPath, wsProbe, "vib.ralplan.maxIterations", "--strict"], {
 			cwd,
 			env: {
 				...process.env,
 				HOME: home,
-				GJC_CONFIG_DIR: ".gjc",
-				GJC_CODING_AGENT_DIR: agentDir,
+				VIB_CONFIG_DIR: ".vib",
+				VIB_CODING_AGENT_DIR: agentDir,
 				PI_CODING_AGENT_DIR: undefined,
 			},
 			stdout: "pipe",
@@ -570,7 +570,7 @@ describe("config-root workflow settings migration", () => {
 		db.run("INSERT INTO settings (key, value, updated_at) VALUES ('theme.dark', ?, 0)", [JSON.stringify("red-claw")]);
 		// One malformed row makes the whole legacy read fail: the load must fail
 		// (actionable) instead of silently continuing without the valid rows.
-		db.run("INSERT INTO settings (key, value, updated_at) VALUES ('gjc.ralplan.maxIterations', '{broken', 0)");
+		db.run("INSERT INTO settings (key, value, updated_at) VALUES ('vib.ralplan.maxIterations', '{broken', 0)");
 		db.close();
 
 		const result = await runProbe(cwd, { home, configDir: ".myconfig" });
@@ -597,7 +597,7 @@ describe("config-root workflow settings migration", () => {
 		);
 		db.run("CREATE TABLE schema_version (version INTEGER PRIMARY KEY)");
 		db.run("INSERT INTO schema_version (version) VALUES (5)");
-		db.run("INSERT INTO settings (key, value, updated_at) VALUES ('gjc.ralplan.maxIterations', '{broken', 0)");
+		db.run("INSERT INTO settings (key, value, updated_at) VALUES ('vib.ralplan.maxIterations', '{broken', 0)");
 		db.close();
 
 		const result = await runProbe(cwd, { home, configDir: ".myconfig" });
@@ -608,13 +608,13 @@ describe("config-root workflow settings migration", () => {
 		expect(await fs.stat(path.join(agentDir, "settings.json.bak")).catch(() => null)).toBeNull();
 	});
 
-	test("gjc ultragoal --help renders help without running the settings migration", async () => {
+	test("vib ultragoal --help renders help without running the settings migration", async () => {
 		const cwd = await tempDir();
 		const home = await tempDir();
 		// A legacy config-root source the migration would consume if it ran.
-		await fs.mkdir(path.join(home, ".gjc"), { recursive: true });
-		const legacySource = path.join(home, ".gjc", "settings.json");
-		const sourceRaw = JSON.stringify({ "gjc.ralplan.maxIterations": 7 });
+		await fs.mkdir(path.join(home, ".vib"), { recursive: true });
+		const legacySource = path.join(home, ".vib", "settings.json");
+		const sourceRaw = JSON.stringify({ "vib.ralplan.maxIterations": 7 });
 		await fs.writeFile(legacySource, sourceRaw);
 
 		const probe = path.join(import.meta.dir, "../fixtures/ultragoal-help-probe.ts");
@@ -623,7 +623,7 @@ describe("config-root workflow settings migration", () => {
 			env: {
 				...process.env,
 				HOME: home,
-				GJC_CONFIG_DIR: ".gjc",
+				VIB_CONFIG_DIR: ".vib",
 			},
 			stdout: "pipe",
 			stderr: "pipe",
@@ -634,35 +634,35 @@ describe("config-root workflow settings migration", () => {
 		// The read-only help request performed no migration: the legacy source
 		// is untouched and no agent config.yml was created.
 		expect(await fs.readFile(legacySource, "utf8")).toBe(sourceRaw);
-		expect(await fs.stat(path.join(home, ".gjc", "agent", "config.yml")).catch(() => null)).toBeNull();
+		expect(await fs.stat(path.join(home, ".vib", "agent", "config.yml")).catch(() => null)).toBeNull();
 	});
 
 	test("project fallback ownership survives the config-root collision reconcile", async () => {
 		const home = await tempDir();
-		await fs.mkdir(path.join(home, ".gjc"), { recursive: true });
-		const source = path.join(home, ".gjc", "settings.json");
+		await fs.mkdir(path.join(home, ".vib"), { recursive: true });
+		const source = path.join(home, ".vib", "settings.json");
 		// The project evidence path is occupied -> the PROJECT migration falls
 		// back into the project config.yml with the project marker name.
-		await fs.mkdir(path.join(home, ".gjc", "state", "settings.json.strict-invalid"), { recursive: true });
-		await fs.writeFile(source, JSON.stringify({ "gjc.ralplan.maxIterations": "bad" }));
+		await fs.mkdir(path.join(home, ".vib", "state", "settings.json.strict-invalid"), { recursive: true });
+		await fs.writeFile(source, JSON.stringify({ "vib.ralplan.maxIterations": "bad" }));
 
 		// Run from HOME (collision): only the project migration writes a fallback.
-		await runProbe(home, { home, configDir: ".gjc" });
-		const projectConfig = YAML.parse(await fs.readFile(path.join(home, ".gjc", "config.yml"), "utf8")) as {
-			gjc?: { ralplan?: Record<string, unknown> };
+		await runProbe(home, { home, configDir: ".vib" });
+		const projectConfig = YAML.parse(await fs.readFile(path.join(home, ".vib", "config.yml"), "utf8")) as {
+			vib?: { ralplan?: Record<string, unknown> };
 		};
-		expect(projectConfig.gjc?.ralplan?.maxIterations).toBe("bad");
+		expect(projectConfig.vib?.ralplan?.maxIterations).toBe("bad");
 
 		// Repair the source: the config-root collision reconcile must NOT delete
 		// the project's marker (it owns the project config.yml fallback), so the
 		// project cleanup can still remove the value.
 		await fs.writeFile(source, "{}");
-		await runProbe(home, { home, configDir: ".gjc" });
+		await runProbe(home, { home, configDir: ".vib" });
 
-		const projectAfter = YAML.parse(await fs.readFile(path.join(home, ".gjc", "config.yml"), "utf8")) as {
-			gjc?: { ralplan?: Record<string, unknown> };
+		const projectAfter = YAML.parse(await fs.readFile(path.join(home, ".vib", "config.yml"), "utf8")) as {
+			vib?: { ralplan?: Record<string, unknown> };
 		};
-		expect(projectAfter.gjc?.ralplan?.maxIterations).toBeUndefined();
+		expect(projectAfter.vib?.ralplan?.maxIterations).toBeUndefined();
 		expect(await fs.lstat(`${source}.fallback-invalid`).catch(() => null)).toBeNull();
 	});
 
@@ -672,7 +672,7 @@ describe("config-root workflow settings migration", () => {
 		const { source, agentDir } = await setupHome(home, ".myconfig");
 		await fs.mkdir(agentDir, { recursive: true });
 		await fs.writeFile(path.join(agentDir, "config.yml"), YAML.stringify({ theme: { dark: "red-claw" } }, null, 2));
-		await fs.writeFile(source, JSON.stringify({ "gjc.ralplan.maxIterations": 7 }));
+		await fs.writeFile(source, JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
 
 		const result = await runProbe(cwd, { home, configDir: ".myconfig" });
 		expect(result.markerStatus).toBe("complete");
@@ -687,9 +687,9 @@ describe("config-root workflow settings migration", () => {
 		await fs.mkdir(agentDir, { recursive: true });
 		await fs.writeFile(
 			path.join(agentDir, "config.yml"),
-			YAML.stringify({ gjc: { ralplan: { maxIterations: 9 } } }, null, 2),
+			YAML.stringify({ vib: { ralplan: { maxIterations: 9 } } }, null, 2),
 		);
-		await fs.writeFile(source, JSON.stringify({ "gjc.ralplan.maxIterations": 7 }));
+		await fs.writeFile(source, JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
 
 		const result = await runProbe(cwd, { home, configDir: ".myconfig" });
 		expect(result.targetValue).toBe(9); // modern nested target wins
@@ -721,7 +721,7 @@ describe("config-root workflow settings migration", () => {
 		expect(result.strictInvalidEvidenceMalformed).toBe(true);
 
 		// Repairing the source clears the malformed evidence and migrates.
-		await fs.writeFile(source, JSON.stringify({ "gjc.ralplan.maxIterations": 7 }));
+		await fs.writeFile(source, JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
 		const repaired = await runProbe(cwd, { home, configDir: ".myconfig" });
 		expect(repaired.markerStatus).toBe("complete");
 		expect(repaired.strictInvalidEvidenceExists).toBe(false);
@@ -732,7 +732,7 @@ describe("config-root workflow settings migration", () => {
 		const cwd = await tempDir();
 		const otherAgent = await tempDir();
 		const { source } = await setupHome(home, ".myconfig");
-		await fs.writeFile(source, JSON.stringify({ "gjc.ralplan.maxIterations": 7 }));
+		await fs.writeFile(source, JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
 
 		const result = await runProbe(cwd, { home, configDir: ".myconfig", agentDir: otherAgent });
 		expect(result.markerExists).toBe(false);
@@ -747,9 +747,9 @@ describe("config-root workflow settings migration", () => {
 		const { source, configRoot } = await setupHome(home, ".myconfig");
 		const customAgent = path.join(configRoot, "custom-agent");
 		await fs.mkdir(customAgent, { recursive: true });
-		await fs.writeFile(source, JSON.stringify({ "gjc.ralplan.maxIterations": 7 }));
+		await fs.writeFile(source, JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
 
-		// GJC_CODING_AGENT_DIR selects a supported non-default global profile; it
+		// VIB_CODING_AGENT_DIR selects a supported non-default global profile; it
 		// is not a temporary explicit agentDir, so the machine-global source must
 		// migrate into that profile's config.yml.
 		const result = await runProbe(cwd, { home, configDir: ".myconfig", codingAgentDir: customAgent });
@@ -765,7 +765,7 @@ describe("config-root workflow settings migration", () => {
 		await fs.mkdir(agentDir, { recursive: true });
 		// Block the sqlite path so AgentStorage.open rejects the full load.
 		await fs.mkdir(path.join(agentDir, "agent.db"), { recursive: true });
-		await fs.writeFile(source, JSON.stringify({ "gjc.ralplan.maxIterations": 7 }));
+		await fs.writeFile(source, JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
 
 		const result = await runProbe(cwd, { home, configDir: ".myconfig" });
 		expect(result.loadFailed).toBe(true); // the full load failed on the database
@@ -777,7 +777,7 @@ describe("config-root workflow settings migration", () => {
 		const home = await tempDir();
 		const cwd = await tempDir();
 		const { source } = await setupHome(home, ".myconfig");
-		await fs.writeFile(source, JSON.stringify({ "gjc.ralplan.maxIterations": 7 }));
+		await fs.writeFile(source, JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
 		await fs.writeFile(`${source}.bak`, "pre-existing backup");
 
 		const result = await runProbe(cwd, { home, configDir: ".myconfig" });
@@ -790,7 +790,7 @@ describe("config-root workflow settings migration", () => {
 		const home = await tempDir();
 		const cwd = await tempDir();
 		const { source } = await setupHome(home, ".myconfig");
-		await fs.writeFile(source, JSON.stringify({ "gjc.ralplan.maxIterations": 7 }));
+		await fs.writeFile(source, JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
 
 		const [first, second] = await Promise.all([
 			runProbe(cwd, { home, configDir: ".myconfig" }),
@@ -806,13 +806,13 @@ describe("config-root workflow settings migration", () => {
 		const home = await tempDir();
 		const cwd = await tempDir();
 		const { source, agentDir } = await setupHome(home, ".myconfig");
-		const sourceRaw = JSON.stringify({ "gjc.ralplan.maxIterations": 7 });
+		const sourceRaw = JSON.stringify({ "vib.ralplan.maxIterations": 7 });
 		const sourceSha256 = nodeCrypto.createHash("sha256").update(sourceRaw).digest("hex");
 		await fs.mkdir(agentDir, { recursive: true });
 		// Simulate a crash after the patch and source move but before finalization.
 		await fs.writeFile(
 			path.join(agentDir, "config.yml"),
-			YAML.stringify({ gjc: { ralplan: { maxIterations: 7 } } }, null, 2),
+			YAML.stringify({ vib: { ralplan: { maxIterations: 7 } } }, null, 2),
 		);
 		await fs.writeFile(source, sourceRaw);
 		await fs.rename(source, `${source}.bak`);
@@ -827,7 +827,7 @@ describe("config-root workflow settings migration", () => {
 				canonicalTargetDir: await fs.realpath(agentDir),
 				canonicalTargetIdentity: `${(await fs.stat(agentDir)).dev}:${(await fs.stat(agentDir)).ino}`,
 				sourceSha256,
-				migratedKeys: ["gjc.ralplan.maxIterations"],
+				migratedKeys: ["vib.ralplan.maxIterations"],
 				startedAt: new Date().toISOString(),
 			}),
 		);
@@ -845,12 +845,12 @@ describe("config-root workflow settings migration", () => {
 		const home = await tempDir();
 		const cwd = await tempDir();
 		const { source, agentDir } = await setupHome(home, ".myconfig");
-		const sourceRaw = JSON.stringify({ "gjc.ralplan.maxIterations": 7 });
+		const sourceRaw = JSON.stringify({ "vib.ralplan.maxIterations": 7 });
 		const sourceSha256 = nodeCrypto.createHash("sha256").update(sourceRaw).digest("hex");
 		await fs.mkdir(agentDir, { recursive: true });
 		await fs.writeFile(
 			path.join(agentDir, "config.yml"),
-			YAML.stringify({ gjc: { ralplan: { maxIterations: 7 } } }, null, 2),
+			YAML.stringify({ vib: { ralplan: { maxIterations: 7 } } }, null, 2),
 		);
 		await fs.writeFile(source, sourceRaw);
 		await fs.rename(source, `${source}.bak`);
@@ -865,7 +865,7 @@ describe("config-root workflow settings migration", () => {
 				canonicalTargetDir: await fs.realpath(agentDir),
 				canonicalTargetIdentity: `${(await fs.stat(agentDir)).dev}:${(await fs.stat(agentDir)).ino}`,
 				sourceSha256,
-				migratedKeys: ["gjc.ralplan.maxIterations"],
+				migratedKeys: ["vib.ralplan.maxIterations"],
 				startedAt: new Date().toISOString(),
 			}),
 		);
@@ -888,7 +888,7 @@ describe("config-root workflow settings migration", () => {
 		const home = await tempDir();
 		const cwd = await tempDir();
 		const { source } = await setupHome(home, ".myconfig");
-		await fs.writeFile(source, '{"gjc.ralplan.maxIterations":7}');
+		await fs.writeFile(source, '{"vib.ralplan.maxIterations":7}');
 		const backup = `${source}.bak`;
 		const sentinel = "external-backup-content";
 
@@ -913,7 +913,7 @@ describe("config-root workflow settings migration", () => {
 		const { source, agentDir } = await setupHome(home, ".myconfig");
 		await fs.mkdir(agentDir, { recursive: true });
 		await fs.writeFile(path.join(agentDir, "config.yml"), JSON.stringify(["a", "b"]));
-		await fs.writeFile(source, JSON.stringify({ "gjc.ralplan.maxIterations": 7 }));
+		await fs.writeFile(source, JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
 
 		const result = await runProbe(cwd, { home, configDir: ".myconfig" });
 		expect(result.markerExists).toBe(false);
@@ -924,7 +924,7 @@ describe("config-root workflow settings migration", () => {
 		const home = await tempDir();
 		const cwd = await tempDir();
 		const { source, agentDir } = await setupHome(home, ".myconfig");
-		const sourceRaw = JSON.stringify({ "gjc.ralplan.maxIterations": 7 });
+		const sourceRaw = JSON.stringify({ "vib.ralplan.maxIterations": 7 });
 		const sourceSha256 = nodeCrypto.createHash("sha256").update(sourceRaw).digest("hex");
 		await fs.mkdir(agentDir, { recursive: true });
 		// Target exists but the patch never applied (e.g. a user-created backup
@@ -943,7 +943,7 @@ describe("config-root workflow settings migration", () => {
 				canonicalTargetDir: await fs.realpath(agentDir),
 				canonicalTargetIdentity: `${(await fs.stat(agentDir)).dev}:${(await fs.stat(agentDir)).ino}`,
 				sourceSha256,
-				migratedKeys: ["gjc.ralplan.maxIterations"],
+				migratedKeys: ["vib.ralplan.maxIterations"],
 				startedAt: new Date().toISOString(),
 			}),
 		);
@@ -958,7 +958,7 @@ describe("config-root workflow settings migration", () => {
 		const home = await tempDir();
 		const cwd = await tempDir();
 		const { source } = await setupHome(home, ".myconfig");
-		const sourceRaw = JSON.stringify({ "gjc.ralplan.maxIterations": 7 });
+		const sourceRaw = JSON.stringify({ "vib.ralplan.maxIterations": 7 });
 		const sourceSha256 = nodeCrypto.createHash("sha256").update(sourceRaw).digest("hex");
 		// Stale marker pointing at a different config-root layout.
 		await fs.writeFile(source, sourceRaw);
@@ -971,7 +971,7 @@ describe("config-root workflow settings migration", () => {
 				backupPath: "/elsewhere/settings.json.bak",
 				targetPath: "/elsewhere/agent/config.yml",
 				sourceSha256,
-				migratedKeys: ["gjc.ralplan.maxIterations"],
+				migratedKeys: ["vib.ralplan.maxIterations"],
 				startedAt: new Date().toISOString(),
 				completedAt: new Date().toISOString(),
 			}),
@@ -988,7 +988,7 @@ describe("config-root workflow settings migration", () => {
 		const home = await tempDir();
 		const cwd = await tempDir();
 		const { source } = await setupHome(home, ".myconfig");
-		await fs.writeFile(source, JSON.stringify({ "gjc.ralplan.maxIterations": 7 }));
+		await fs.writeFile(source, JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
 		await fs.writeFile(`${source}.migrated`, "{ not valid json");
 
 		const result = await runProbe(cwd, { home, configDir: ".myconfig" });
@@ -1012,9 +1012,9 @@ describe("config-root workflow settings migration", () => {
 		// the valid legacy value is migrated to the nested path.
 		await fs.writeFile(
 			path.join(agentDir, "config.yml"),
-			YAML.stringify({ "gjc.ralplan.maxIterations": "bad" }, null, 2),
+			YAML.stringify({ "vib.ralplan.maxIterations": "bad" }, null, 2),
 		);
-		await fs.writeFile(source, JSON.stringify({ "gjc.ralplan.maxIterations": 7 }));
+		await fs.writeFile(source, JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
 
 		const result = await runProbe(cwd, { home, configDir: ".myconfig" });
 		expect(result.markerStatus).toBe("complete");
@@ -1025,7 +1025,7 @@ describe("config-root workflow settings migration", () => {
 			string,
 			unknown
 		>;
-		expect(Object.hasOwn(parsed, "gjc.ralplan.maxIterations")).toBe(false);
+		expect(Object.hasOwn(parsed, "vib.ralplan.maxIterations")).toBe(false);
 	});
 	test("invalid legacy values are not copied into the durable config.yml", async () => {
 		const home = await tempDir();
@@ -1034,7 +1034,7 @@ describe("config-root workflow settings migration", () => {
 		await fs.mkdir(agentDir, { recursive: true });
 		await fs.writeFile(
 			source,
-			JSON.stringify({ "gjc.ultragoal.nudgeBudget": "bad", "gjc.ralplan.maxIterations": 7 }),
+			JSON.stringify({ "vib.ultragoal.nudgeBudget": "bad", "vib.ralplan.maxIterations": 7 }),
 		);
 
 		const result = await runProbe(cwd, { home, configDir: ".myconfig" });
@@ -1046,15 +1046,15 @@ describe("config-root workflow settings migration", () => {
 			string,
 			unknown
 		>;
-		const gjc = parsed.gjc as Record<string, unknown> | undefined;
-		expect(gjc?.ultragoal).toBeUndefined();
+		const vib = parsed.vib as Record<string, unknown> | undefined;
+		expect(vib?.ultragoal).toBeUndefined();
 	});
 	test("a malformed target config.yml does not abort settings load when there is nothing to migrate", async () => {
 		const home = await tempDir();
 		const cwd = await tempDir();
 		const { agentDir } = await setupHome(home, ".myconfig");
 		await fs.mkdir(agentDir, { recursive: true });
-		await fs.writeFile(path.join(agentDir, "config.yml"), "gjc: [unclosed", "utf8");
+		await fs.writeFile(path.join(agentDir, "config.yml"), "vib: [unclosed", "utf8");
 
 		const result = await runProbe(cwd, { home, configDir: ".myconfig" });
 		// Load must succeed (no throw from the migration), with no marker/backup.
@@ -1068,8 +1068,8 @@ describe("config-root workflow settings migration", () => {
 		const cwd = await tempDir();
 		const { source, agentDir } = await setupHome(home, ".myconfig");
 		await fs.mkdir(agentDir, { recursive: true });
-		await fs.writeFile(path.join(agentDir, "config.yml"), "gjc: [unclosed", "utf8");
-		await fs.writeFile(source, JSON.stringify({ "gjc.ralplan.maxIterations": 7 }));
+		await fs.writeFile(path.join(agentDir, "config.yml"), "vib: [unclosed", "utf8");
+		await fs.writeFile(source, JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
 
 		const result = await runProbe(cwd, { home, configDir: ".myconfig" });
 		// Load survives; the migration warns and leaves source/backup/marker untouched.
@@ -1086,9 +1086,9 @@ describe("config-root workflow settings migration", () => {
 		// Target has an INVALID value for the strict key; the legacy source has a valid one.
 		await fs.writeFile(
 			path.join(agentDir, "config.yml"),
-			YAML.stringify({ gjc: { ralplan: { maxIterations: "not-a-number" } } }, null, 2),
+			YAML.stringify({ vib: { ralplan: { maxIterations: "not-a-number" } } }, null, 2),
 		);
-		await fs.writeFile(source, JSON.stringify({ "gjc.ralplan.maxIterations": 7 }));
+		await fs.writeFile(source, JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
 
 		const result = await runProbe(cwd, { home, configDir: ".myconfig" });
 		expect(result.markerStatus).toBe("complete");
@@ -1101,22 +1101,22 @@ describe("config-root workflow settings migration", () => {
 		const { source, agentDir } = await setupHome(home, ".myconfig");
 		await fs.mkdir(agentDir, { recursive: true });
 		// Invalid STRICT key: consuming the source would silently fall back to
-		// defaults instead of letting gjc ralplan fail loudly (exit 2).
-		await fs.writeFile(source, JSON.stringify({ "gjc.ralplan.maxIterations": "bad" }));
+		// defaults instead of letting vib ralplan fail loudly (exit 2).
+		await fs.writeFile(source, JSON.stringify({ "vib.ralplan.maxIterations": "bad" }));
 
 		const result = await runProbe(cwd, { home, configDir: ".myconfig" });
 		expect(result.sourceExists).toBe(true); // source kept active
 		expect(result.backupExists).toBe(false);
 		expect(result.markerExists).toBe(false);
 		expect(result.strictInvalidEvidenceExists).toBe(true); // strict evidence recorded
-		expect(result.strictInvalidEvidenceKeys).toEqual(["gjc.ralplan.maxIterations"]);
+		expect(result.strictInvalidEvidenceKeys).toEqual(["vib.ralplan.maxIterations"]);
 	});
 	test("repairing the retained source clears the strict-invalid evidence", async () => {
 		const home = await tempDir();
 		const cwd = await tempDir();
 		const { source, agentDir } = await setupHome(home, ".myconfig");
 		await fs.mkdir(agentDir, { recursive: true });
-		await fs.writeFile(source, JSON.stringify({ "gjc.ralplan.maxIterations": "bad" }));
+		await fs.writeFile(source, JSON.stringify({ "vib.ralplan.maxIterations": "bad" }));
 
 		const first = await runProbe(cwd, { home, configDir: ".myconfig" });
 		expect(first.strictInvalidEvidenceExists).toBe(true);
@@ -1124,7 +1124,7 @@ describe("config-root workflow settings migration", () => {
 
 		// User repairs the invalid value: the next load migrates it, retires the
 		// source, and clears the evidence so strict resolution stops throwing.
-		await fs.writeFile(source, JSON.stringify({ "gjc.ralplan.maxIterations": 7 }));
+		await fs.writeFile(source, JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
 		const second = await runProbe(cwd, { home, configDir: ".myconfig" });
 		expect(second.markerStatus).toBe("complete");
 		expect(second.sourceExists).toBe(false); // retired after completion
@@ -1139,7 +1139,7 @@ describe("config-root workflow settings migration", () => {
 			path.join(agentDir, "config.yml"),
 			YAML.stringify({ configSchemaVersion: 999, theme: { dark: "red-claw" } }, null, 2),
 		);
-		await fs.writeFile(source, JSON.stringify({ "gjc.ralplan.maxIterations": 7 }));
+		await fs.writeFile(source, JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
 
 		const result = await runProbe(cwd, { home, configDir: ".myconfig" });
 		expect(result.sourceExists).toBe(true); // legacy source stays active
@@ -1155,9 +1155,9 @@ describe("config-root workflow settings migration", () => {
 		// so it neither overwrites this target nor treats the legacy value oddly.
 		await fs.writeFile(
 			path.join(agentDir, "config.yml"),
-			YAML.stringify({ gjc: { ralplan: { maxIterations: "9" } } }, null, 2),
+			YAML.stringify({ vib: { ralplan: { maxIterations: "9" } } }, null, 2),
 		);
-		await fs.writeFile(source, JSON.stringify({ "gjc.ralplan.maxIterations": 7 }));
+		await fs.writeFile(source, JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
 
 		const result = await runProbe(cwd, { home, configDir: ".myconfig" });
 		expect(result.markerStatus).toBe("complete");
@@ -1174,11 +1174,11 @@ describe("config-root workflow settings migration", () => {
 		// it and must still migrate the other valid legacy keys.
 		await fs.writeFile(
 			path.join(agentDir, "config.yml"),
-			YAML.stringify({ gjc: { ralplan: { maxIterations: 9 } } }, null, 2),
+			YAML.stringify({ vib: { ralplan: { maxIterations: 9 } } }, null, 2),
 		);
 		await fs.writeFile(
 			source,
-			JSON.stringify({ "gjc.ralplan.maxIterations": "bad", "gjc.ultragoal.nudgeBudget": 3 }),
+			JSON.stringify({ "vib.ralplan.maxIterations": "bad", "vib.ultragoal.nudgeBudget": 3 }),
 		);
 
 		const result = await runProbe(cwd, { home, configDir: ".myconfig" });
@@ -1194,7 +1194,7 @@ describe("config-root workflow settings migration", () => {
 		// YAML `null`/`~` root: #loadYaml treats it as malformed (read-only), so
 		// the migration must not write into it or consume the legacy source.
 		await fs.writeFile(path.join(agentDir, "config.yml"), "null\n", "utf8");
-		await fs.writeFile(source, JSON.stringify({ "gjc.ralplan.maxIterations": 7 }));
+		await fs.writeFile(source, JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
 
 		const result = await runProbe(cwd, { home, configDir: ".myconfig" });
 		expect(result.sourceExists).toBe(true);
@@ -1206,7 +1206,7 @@ describe("config-root workflow settings migration", () => {
 		const cwd = await tempDir();
 		const { source, agentDir } = await setupHome(home, ".myconfig");
 		await fs.mkdir(agentDir, { recursive: true });
-		await fs.writeFile(source, JSON.stringify({ "gjc.ralplan.maxIterations": "7" }));
+		await fs.writeFile(source, JSON.stringify({ "vib.ralplan.maxIterations": "7" }));
 
 		const result = await runProbe(cwd, { home, configDir: ".myconfig" });
 		expect(result.markerStatus).toBe("complete");
@@ -1234,10 +1234,10 @@ describe("config-root workflow settings migration", () => {
 		await fs.mkdir(agentDir, { recursive: true });
 		const target = path.join(agentDir, "config.yml");
 		// A crashed run patched the OLD legacy value into config.yml...
-		await fs.writeFile(target, YAML.stringify({ gjc: { ralplan: { maxIterations: 7 } } }, null, 2));
+		await fs.writeFile(target, YAML.stringify({ vib: { ralplan: { maxIterations: 7 } } }, null, 2));
 		// ...and the user edited settings.json before the next load.
-		await fs.writeFile(source, '{"gjc.ralplan.maxIterations":9}', "utf8");
-		const oldSourceHash = nodeCrypto.createHash("sha256").update('{"gjc.ralplan.maxIterations":7}').digest("hex");
+		await fs.writeFile(source, '{"vib.ralplan.maxIterations":9}', "utf8");
+		const oldSourceHash = nodeCrypto.createHash("sha256").update('{"vib.ralplan.maxIterations":7}').digest("hex");
 		// The pending marker records the OLD source hash (from the crashed run).
 		await fs.writeFile(
 			path.join(home, ".myconfig", "settings.json.migrated"),
@@ -1250,7 +1250,7 @@ describe("config-root workflow settings migration", () => {
 				canonicalTargetDir: await fs.realpath(agentDir),
 				canonicalTargetIdentity: `${(await fs.stat(agentDir)).dev}:${(await fs.stat(agentDir)).ino}`,
 				sourceSha256: oldSourceHash,
-				migratedKeys: ["gjc.ralplan.maxIterations"],
+				migratedKeys: ["vib.ralplan.maxIterations"],
 				startedAt: new Date().toISOString(),
 			}),
 		);
@@ -1268,7 +1268,7 @@ describe("config-root workflow settings migration", () => {
 		const cwd = await tempDir();
 		const { source, agentDir } = await setupHome(home, ".myconfig");
 		await fs.mkdir(agentDir, { recursive: true });
-		await fs.writeFile(source, JSON.stringify({ "gjc.ralplan.maxIterations": 7 }));
+		await fs.writeFile(source, JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
 
 		const result = await runProbe(cwd, { home, configDir: ".myconfig" });
 		expect(result.markerStatus).toBe("complete");
@@ -1278,7 +1278,7 @@ describe("config-root workflow settings migration", () => {
 		const marker = JSON.parse(await fs.readFile(path.join(home, ".myconfig", "settings.json.migrated"), "utf8")) as {
 			sourceSha256: string;
 		};
-		await fs.writeFile(source, JSON.stringify({ "gjc.ralplan.maxIterations": 99 }), "utf8");
+		await fs.writeFile(source, JSON.stringify({ "vib.ralplan.maxIterations": 99 }), "utf8");
 		const backupRaw = await fs.readFile(`${source}.bak`, "utf8");
 		expect(nodeCrypto.createHash("sha256").update(backupRaw).digest("hex")).toBe(marker.sourceSha256);
 	});
@@ -1289,10 +1289,10 @@ describe("config-root workflow settings migration", () => {
 		await fs.mkdir(agentDir, { recursive: true });
 		const target = path.join(agentDir, "config.yml");
 		// A crashed run patched maxIterations 7 into config.yml...
-		await fs.writeFile(target, YAML.stringify({ gjc: { ralplan: { maxIterations: 7 } } }, null, 2));
+		await fs.writeFile(target, YAML.stringify({ vib: { ralplan: { maxIterations: 7 } } }, null, 2));
 		// ...and the user REMOVED the key from settings.json before the next load.
 		await fs.writeFile(source, "{}", "utf8");
-		const oldSourceHash = nodeCrypto.createHash("sha256").update('{"gjc.ralplan.maxIterations":7}').digest("hex");
+		const oldSourceHash = nodeCrypto.createHash("sha256").update('{"vib.ralplan.maxIterations":7}').digest("hex");
 		await fs.writeFile(
 			path.join(home, ".myconfig", "settings.json.migrated"),
 			JSON.stringify({
@@ -1304,7 +1304,7 @@ describe("config-root workflow settings migration", () => {
 				canonicalTargetDir: await fs.realpath(agentDir),
 				canonicalTargetIdentity: `${(await fs.stat(agentDir)).dev}:${(await fs.stat(agentDir)).ino}`,
 				sourceSha256: oldSourceHash,
-				migratedKeys: ["gjc.ralplan.maxIterations"],
+				migratedKeys: ["vib.ralplan.maxIterations"],
 				startedAt: new Date().toISOString(),
 			}),
 		);
@@ -1324,9 +1324,9 @@ describe("config-root workflow settings migration", () => {
 		const target = path.join(agentDir, "config.yml");
 		// config.yml already carried a valid USER value for maxIterations, so the
 		// crashed migration did NOT record that key; the source is then edited.
-		await fs.writeFile(target, YAML.stringify({ gjc: { ralplan: { maxIterations: 9 } } }, null, 2));
-		await fs.writeFile(source, '{"gjc.ralplan.maxIterations":11}');
-		const oldSourceHash = nodeCrypto.createHash("sha256").update('{"gjc.ralplan.maxIterations":7}').digest("hex");
+		await fs.writeFile(target, YAML.stringify({ vib: { ralplan: { maxIterations: 9 } } }, null, 2));
+		await fs.writeFile(source, '{"vib.ralplan.maxIterations":11}');
+		const oldSourceHash = nodeCrypto.createHash("sha256").update('{"vib.ralplan.maxIterations":7}').digest("hex");
 		await fs.writeFile(
 			path.join(home, ".myconfig", "settings.json.migrated"),
 			JSON.stringify({
@@ -1338,7 +1338,7 @@ describe("config-root workflow settings migration", () => {
 				canonicalTargetDir: await fs.realpath(agentDir),
 				canonicalTargetIdentity: `${(await fs.stat(agentDir)).dev}:${(await fs.stat(agentDir)).ino}`,
 				sourceSha256: oldSourceHash,
-				migratedKeys: ["gjc.ultragoal.nudgeBudget"], // NOT maxIterations
+				migratedKeys: ["vib.ultragoal.nudgeBudget"], // NOT maxIterations
 				startedAt: new Date().toISOString(),
 			}),
 		);
@@ -1355,9 +1355,9 @@ describe("config-root workflow settings migration", () => {
 		const target = path.join(agentDir, "config.yml");
 		// The crashed run wrote nudgeBudget 7 into config.yml; the user then set
 		// the source nudgeBudget to an INVALID value before the retry.
-		await fs.writeFile(target, YAML.stringify({ gjc: { ultragoal: { nudgeBudget: 7 } } }, null, 2));
-		await fs.writeFile(source, '{"gjc.ultragoal.nudgeBudget":"bad"}');
-		const oldSourceHash = nodeCrypto.createHash("sha256").update('{"gjc.ultragoal.nudgeBudget":7}').digest("hex");
+		await fs.writeFile(target, YAML.stringify({ vib: { ultragoal: { nudgeBudget: 7 } } }, null, 2));
+		await fs.writeFile(source, '{"vib.ultragoal.nudgeBudget":"bad"}');
+		const oldSourceHash = nodeCrypto.createHash("sha256").update('{"vib.ultragoal.nudgeBudget":7}').digest("hex");
 		await fs.writeFile(
 			path.join(home, ".myconfig", "settings.json.migrated"),
 			JSON.stringify({
@@ -1369,7 +1369,7 @@ describe("config-root workflow settings migration", () => {
 				canonicalTargetDir: await fs.realpath(agentDir),
 				canonicalTargetIdentity: `${(await fs.stat(agentDir)).dev}:${(await fs.stat(agentDir)).ino}`,
 				sourceSha256: oldSourceHash,
-				migratedKeys: ["gjc.ultragoal.nudgeBudget"],
+				migratedKeys: ["vib.ultragoal.nudgeBudget"],
 				startedAt: new Date().toISOString(),
 			}),
 		);
@@ -1378,7 +1378,7 @@ describe("config-root workflow settings migration", () => {
 		expect(result.markerStatus).toBe("complete");
 		// The stale target patch must be gone so the tolerant runtime falls back.
 		const parsed = YAML.parse(await fs.readFile(target, "utf8")) as Record<string, unknown>;
-		const ultragoal = (parsed.gjc as Record<string, unknown> | undefined)?.ultragoal as
+		const ultragoal = (parsed.vib as Record<string, unknown> | undefined)?.ultragoal as
 			| Record<string, unknown>
 			| undefined;
 		expect(ultragoal?.nudgeBudget).toBe(7); // unverifiable without a backup: kept
@@ -1393,10 +1393,10 @@ describe("config-root workflow settings migration", () => {
 		// The crashed run wrote maxIterations 7; the user then set the source to
 		// an INVALID strict value, so the migration must abort but FIRST remove
 		// the stale target patch (otherwise the stale valid value would shadow
-		// the invalid legacy source and gjc ralplan would not exit 2).
-		await fs.writeFile(target, YAML.stringify({ gjc: { ralplan: { maxIterations: 7 } } }, null, 2));
-		await fs.writeFile(source, '{"gjc.ralplan.maxIterations":"bad"}');
-		const oldSourceHash = nodeCrypto.createHash("sha256").update('{"gjc.ralplan.maxIterations":7}').digest("hex");
+		// the invalid legacy source and vib ralplan would not exit 2).
+		await fs.writeFile(target, YAML.stringify({ vib: { ralplan: { maxIterations: 7 } } }, null, 2));
+		await fs.writeFile(source, '{"vib.ralplan.maxIterations":"bad"}');
+		const oldSourceHash = nodeCrypto.createHash("sha256").update('{"vib.ralplan.maxIterations":7}').digest("hex");
 		await fs.writeFile(
 			path.join(home, ".myconfig", "settings.json.migrated"),
 			JSON.stringify({
@@ -1408,7 +1408,7 @@ describe("config-root workflow settings migration", () => {
 				canonicalTargetDir: await fs.realpath(agentDir),
 				canonicalTargetIdentity: `${(await fs.stat(agentDir)).dev}:${(await fs.stat(agentDir)).ino}`,
 				sourceSha256: oldSourceHash,
-				migratedKeys: ["gjc.ralplan.maxIterations"],
+				migratedKeys: ["vib.ralplan.maxIterations"],
 				startedAt: new Date().toISOString(),
 			}),
 		);
@@ -1416,7 +1416,7 @@ describe("config-root workflow settings migration", () => {
 		const result = await runProbe(cwd, { home, configDir: ".myconfig" });
 		expect(result.sourceExists).toBe(true); // strict failure preserved
 		const parsed = YAML.parse(await fs.readFile(target, "utf8")) as Record<string, unknown>;
-		const ralplan = (parsed.gjc as Record<string, unknown> | undefined)?.ralplan as
+		const ralplan = (parsed.vib as Record<string, unknown> | undefined)?.ralplan as
 			| Record<string, unknown>
 			| undefined;
 		expect(ralplan?.maxIterations).toBe(7); // unverifiable without a backup: kept
@@ -1432,15 +1432,15 @@ describe("config-root workflow settings migration", () => {
 		await fs.writeFile(
 			target,
 			YAML.stringify(
-				{ gjc: { deepInterview: { ambiguityThreshold: 0.9 }, ralplan: { maxIterations: 7 } } },
+				{ vib: { deepInterview: { ambiguityThreshold: 0.9 }, ralplan: { maxIterations: 7 } } },
 				null,
 				2,
 			),
 		);
-		await fs.writeFile(source, '{"gjc.ralplan.maxIterations":"bad"}');
+		await fs.writeFile(source, '{"vib.ralplan.maxIterations":"bad"}');
 		const oldSourceHash = nodeCrypto
 			.createHash("sha256")
-			.update('{"gjc.deepInterview.ambiguityThreshold":0.9,"gjc.ralplan.maxIterations":7}')
+			.update('{"vib.deepInterview.ambiguityThreshold":0.9,"vib.ralplan.maxIterations":7}')
 			.digest("hex");
 		await fs.writeFile(
 			path.join(home, ".myconfig", "settings.json.migrated"),
@@ -1453,7 +1453,7 @@ describe("config-root workflow settings migration", () => {
 				canonicalTargetDir: await fs.realpath(agentDir),
 				canonicalTargetIdentity: `${(await fs.stat(agentDir)).dev}:${(await fs.stat(agentDir)).ino}`,
 				sourceSha256: oldSourceHash,
-				migratedKeys: ["gjc.deepInterview.ambiguityThreshold", "gjc.ralplan.maxIterations"],
+				migratedKeys: ["vib.deepInterview.ambiguityThreshold", "vib.ralplan.maxIterations"],
 				startedAt: new Date().toISOString(),
 			}),
 		);
@@ -1461,10 +1461,10 @@ describe("config-root workflow settings migration", () => {
 		const result = await runProbe(cwd, { home, configDir: ".myconfig" });
 		expect(result.sourceExists).toBe(true); // strict failure preserved
 		const parsed = YAML.parse(await fs.readFile(target, "utf8")) as Record<string, unknown>;
-		const gjc = parsed.gjc as Record<string, unknown> | undefined;
-		const ralplan = gjc?.ralplan as Record<string, unknown> | undefined;
+		const vib = parsed.vib as Record<string, unknown> | undefined;
+		const ralplan = vib?.ralplan as Record<string, unknown> | undefined;
 		expect(ralplan?.maxIterations).toBe(7); // unverifiable without a backup: kept
-		const deepInterview = gjc?.deepInterview as Record<string, unknown> | undefined;
+		const deepInterview = vib?.deepInterview as Record<string, unknown> | undefined;
 		// The removed threshold's ownership is unverifiable without a backup
 		// (W6MMR): it is left untouched rather than blindly unset.
 		expect(deepInterview?.ambiguityThreshold).toBe(0.9);
@@ -1479,14 +1479,14 @@ describe("config-root workflow settings migration", () => {
 		// key); the edited source also adds an UNRECORDED threshold (processed
 		// even earlier, so its SET is queued) - the strict abort must commit the
 		// autoHandoff repair but NOT the unrecorded threshold.
-		await fs.writeFile(target, YAML.stringify({ gjc: { ralplan: { autoHandoff: "ultragoal" } } }, null, 2));
+		await fs.writeFile(target, YAML.stringify({ vib: { ralplan: { autoHandoff: "ultragoal" } } }, null, 2));
 		await fs.writeFile(
 			source,
-			'{"gjc.deepInterview.ambiguityThreshold":0.8,"gjc.ralplan.autoHandoff":"off","gjc.ralplan.maxIterations":"bad"}',
+			'{"vib.deepInterview.ambiguityThreshold":0.8,"vib.ralplan.autoHandoff":"off","vib.ralplan.maxIterations":"bad"}',
 		);
 		const oldSourceHash = nodeCrypto
 			.createHash("sha256")
-			.update('{"gjc.ralplan.autoHandoff":"ultragoal"}')
+			.update('{"vib.ralplan.autoHandoff":"ultragoal"}')
 			.digest("hex");
 		await fs.writeFile(
 			path.join(home, ".myconfig", "settings.json.migrated"),
@@ -1499,7 +1499,7 @@ describe("config-root workflow settings migration", () => {
 				canonicalTargetDir: await fs.realpath(agentDir),
 				canonicalTargetIdentity: `${(await fs.stat(agentDir)).dev}:${(await fs.stat(agentDir)).ino}`,
 				sourceSha256: oldSourceHash,
-				migratedKeys: ["gjc.ralplan.autoHandoff"],
+				migratedKeys: ["vib.ralplan.autoHandoff"],
 				startedAt: new Date().toISOString(),
 			}),
 		);
@@ -1507,11 +1507,11 @@ describe("config-root workflow settings migration", () => {
 		const result = await runProbe(cwd, { home, configDir: ".myconfig" });
 		expect(result.sourceExists).toBe(true); // strict failure preserved
 		const parsed = YAML.parse(await fs.readFile(target, "utf8")) as Record<string, unknown>;
-		const gjc = parsed.gjc as Record<string, unknown> | undefined;
-		const ralplan = gjc?.ralplan as Record<string, unknown> | undefined;
+		const vib = parsed.vib as Record<string, unknown> | undefined;
+		const ralplan = vib?.ralplan as Record<string, unknown> | undefined;
 		expect(ralplan?.autoHandoff).toBe("ultragoal"); // unverifiable without a backup: kept
 		expect(ralplan?.maxIterations).toBeUndefined();
-		const deepInterview = gjc?.deepInterview as Record<string, unknown> | undefined;
+		const deepInterview = vib?.deepInterview as Record<string, unknown> | undefined;
 		expect(deepInterview?.ambiguityThreshold).toBeUndefined(); // unrecorded key NOT committed
 	});
 	test("a crash then a source edit recovers via the changed-source repair", async () => {
@@ -1520,10 +1520,10 @@ describe("config-root workflow settings migration", () => {
 		const { source, agentDir } = await setupHome(home, ".myconfig");
 		await fs.mkdir(agentDir, { recursive: true });
 		const target = path.join(agentDir, "config.yml");
-		const oldRaw = '{"gjc.ralplan.maxIterations":7}';
-		await fs.writeFile(target, YAML.stringify({ gjc: { ralplan: { maxIterations: 7 } } }, null, 2));
+		const oldRaw = '{"vib.ralplan.maxIterations":7}';
+		await fs.writeFile(target, YAML.stringify({ vib: { ralplan: { maxIterations: 7 } } }, null, 2));
 		await fs.writeFile(`${source}.bak`, oldRaw); // backup matches the marker
-		await fs.writeFile(source, '{"gjc.ralplan.maxIterations":9}'); // user edited the source
+		await fs.writeFile(source, '{"vib.ralplan.maxIterations":9}'); // user edited the source
 		const oldSourceHash = nodeCrypto.createHash("sha256").update(oldRaw).digest("hex");
 		await fs.writeFile(
 			path.join(home, ".myconfig", "settings.json.migrated"),
@@ -1536,7 +1536,7 @@ describe("config-root workflow settings migration", () => {
 				canonicalTargetDir: await fs.realpath(agentDir),
 				canonicalTargetIdentity: `${(await fs.stat(agentDir)).dev}:${(await fs.stat(agentDir)).ino}`,
 				sourceSha256: oldSourceHash,
-				migratedKeys: ["gjc.ralplan.maxIterations"],
+				migratedKeys: ["vib.ralplan.maxIterations"],
 				startedAt: new Date().toISOString(),
 			}),
 		);
@@ -1556,12 +1556,12 @@ describe("config-root workflow settings migration", () => {
 		const { source, agentDir } = await setupHome(home, ".myconfig");
 		await fs.mkdir(agentDir, { recursive: true });
 		const target = path.join(agentDir, "config.yml");
-		const oldRaw = '{"gjc.ralplan.maxIterations":7}';
+		const oldRaw = '{"vib.ralplan.maxIterations":7}';
 		// The user edited the TARGET to 11 AFTER the migration...
-		await fs.writeFile(target, YAML.stringify({ gjc: { ralplan: { maxIterations: 11 } } }, null, 2));
+		await fs.writeFile(target, YAML.stringify({ vib: { ralplan: { maxIterations: 11 } } }, null, 2));
 		await fs.writeFile(`${source}.bak`, oldRaw); // migration copy (old value 7)
 		// ...and the legacy source to 9.
-		await fs.writeFile(source, '{"gjc.ralplan.maxIterations":9}');
+		await fs.writeFile(source, '{"vib.ralplan.maxIterations":9}');
 		const oldSourceHash = nodeCrypto.createHash("sha256").update(oldRaw).digest("hex");
 		await fs.writeFile(
 			path.join(home, ".myconfig", "settings.json.migrated"),
@@ -1574,7 +1574,7 @@ describe("config-root workflow settings migration", () => {
 				canonicalTargetDir: await fs.realpath(agentDir),
 				canonicalTargetIdentity: `${(await fs.stat(agentDir)).dev}:${(await fs.stat(agentDir)).ino}`,
 				sourceSha256: oldSourceHash,
-				migratedKeys: ["gjc.ralplan.maxIterations"],
+				migratedKeys: ["vib.ralplan.maxIterations"],
 				startedAt: new Date().toISOString(),
 				completedAt: new Date().toISOString(),
 			}),
@@ -1591,7 +1591,7 @@ describe("config-root workflow settings migration", () => {
 		const cwd = await tempDir();
 		const { source, agentDir } = await setupHome(home, ".myconfig");
 		await fs.mkdir(agentDir, { recursive: true });
-		await fs.writeFile(source, '{"gjc":{"ralplan":"broken"}}'); // non-mapping parent
+		await fs.writeFile(source, '{"vib":{"ralplan":"broken"}}'); // non-mapping parent
 
 		const result = await runProbe(cwd, { home, configDir: ".myconfig" });
 		// The source stays active (strict ralplan fails on it) - no completion.
@@ -1607,8 +1607,8 @@ describe("config-root workflow settings migration", () => {
 		const { source, agentDir } = await setupHome(home, ".myconfig");
 		await fs.mkdir(agentDir, { recursive: true });
 		const target = path.join(agentDir, "config.yml");
-		const oldRaw = '{"gjc.ralplan.maxIterations":7}';
-		await fs.writeFile(target, YAML.stringify({ gjc: { ralplan: { maxIterations: 7 } } }, null, 2));
+		const oldRaw = '{"vib.ralplan.maxIterations":7}';
+		await fs.writeFile(target, YAML.stringify({ vib: { ralplan: { maxIterations: 7 } } }, null, 2));
 		await fs.writeFile(`${source}.bak`, oldRaw);
 		await fs.writeFile(source, "null"); // edited to an invalid root
 		const oldSourceHash = nodeCrypto.createHash("sha256").update(oldRaw).digest("hex");
@@ -1623,7 +1623,7 @@ describe("config-root workflow settings migration", () => {
 				canonicalTargetDir: await fs.realpath(agentDir),
 				canonicalTargetIdentity: `${(await fs.stat(agentDir)).dev}:${(await fs.stat(agentDir)).ino}`,
 				sourceSha256: oldSourceHash,
-				migratedKeys: ["gjc.ralplan.maxIterations"],
+				migratedKeys: ["vib.ralplan.maxIterations"],
 				startedAt: new Date().toISOString(),
 				completedAt: new Date().toISOString(),
 			}),
@@ -1641,10 +1641,10 @@ describe("config-root workflow settings migration", () => {
 		const { source, agentDir } = await setupHome(home, ".myconfig");
 		await fs.mkdir(agentDir, { recursive: true });
 		const target = path.join(agentDir, "config.yml");
-		const oldRaw = '{"gjc.ultragoal.nudgeBudget":7}';
-		await fs.writeFile(target, YAML.stringify({ gjc: { ultragoal: { nudgeBudget: 7 } } }, null, 2));
+		const oldRaw = '{"vib.ultragoal.nudgeBudget":7}';
+		await fs.writeFile(target, YAML.stringify({ vib: { ultragoal: { nudgeBudget: 7 } } }, null, 2));
 		await fs.writeFile(`${source}.bak`, oldRaw);
-		await fs.writeFile(source, '{"gjc.ultragoal.nudgeBudget":"bad"}'); // invalid edit
+		await fs.writeFile(source, '{"vib.ultragoal.nudgeBudget":"bad"}'); // invalid edit
 		const oldSourceHash = nodeCrypto.createHash("sha256").update(oldRaw).digest("hex");
 		await fs.writeFile(
 			path.join(home, ".myconfig", "settings.json.migrated"),
@@ -1657,7 +1657,7 @@ describe("config-root workflow settings migration", () => {
 				canonicalTargetDir: await fs.realpath(agentDir),
 				canonicalTargetIdentity: `${(await fs.stat(agentDir)).dev}:${(await fs.stat(agentDir)).ino}`,
 				sourceSha256: oldSourceHash,
-				migratedKeys: ["gjc.ultragoal.nudgeBudget"],
+				migratedKeys: ["vib.ultragoal.nudgeBudget"],
 				startedAt: new Date().toISOString(),
 				completedAt: new Date().toISOString(),
 			}),
@@ -1667,7 +1667,7 @@ describe("config-root workflow settings migration", () => {
 		// The invalid value is NOT written; the stale migration-write stays and
 		// the marker is not updated (the legacy layer stays reactivated).
 		const parsed = YAML.parse(await fs.readFile(target, "utf8")) as Record<string, unknown>;
-		const ultragoal = (parsed.gjc as Record<string, unknown> | undefined)?.ultragoal as
+		const ultragoal = (parsed.vib as Record<string, unknown> | undefined)?.ultragoal as
 			| Record<string, unknown>
 			| undefined;
 		expect(ultragoal?.nudgeBudget).toBe(7); // the migration-write, not "bad"
@@ -1681,14 +1681,14 @@ describe("config-root workflow settings migration", () => {
 		await fs.mkdir(agentDir, { recursive: true });
 		const target = path.join(agentDir, "config.yml");
 		const oldRaw = JSON.stringify({
-			"gjc.ralplan.maxIterations": 7,
-			"gjc.ultragoal.nudgeBudget": 5,
+			"vib.ralplan.maxIterations": 7,
+			"vib.ultragoal.nudgeBudget": 5,
 		});
 		// The crashed migration wrote both values. The user then changed only
 		// maxIterations before the legacy source became an unusable null root.
 		await fs.writeFile(
 			target,
-			YAML.stringify({ gjc: { ralplan: { maxIterations: 11 }, ultragoal: { nudgeBudget: 5 } } }, null, 2),
+			YAML.stringify({ vib: { ralplan: { maxIterations: 11 }, ultragoal: { nudgeBudget: 5 } } }, null, 2),
 		);
 		await fs.writeFile(source, "null", "utf8");
 		await fs.writeFile(`${source}.bak`, oldRaw);
@@ -1704,15 +1704,15 @@ describe("config-root workflow settings migration", () => {
 				canonicalTargetDir: await fs.realpath(agentDir),
 				canonicalTargetIdentity: `${(await fs.stat(agentDir)).dev}:${(await fs.stat(agentDir)).ino}`,
 				sourceSha256: oldSourceHash,
-				migratedKeys: ["gjc.ralplan.maxIterations", "gjc.ultragoal.nudgeBudget"],
+				migratedKeys: ["vib.ralplan.maxIterations", "vib.ultragoal.nudgeBudget"],
 				startedAt: new Date().toISOString(),
 			}),
 		);
 
 		const result = await runProbe(cwd, { home, configDir: ".myconfig" });
 		const parsed = YAML.parse(await fs.readFile(target, "utf8")) as Record<string, unknown>;
-		const gjc = parsed.gjc as Record<string, unknown>;
-		const ultragoal = gjc.ultragoal as Record<string, unknown> | undefined;
+		const vib = parsed.vib as Record<string, unknown>;
+		const ultragoal = vib.ultragoal as Record<string, unknown> | undefined;
 		// The post-crash user override is not equal to the verified backup value.
 		expect(result.targetValue).toBe(11);
 		// The unchanged target still matches the migration-owned backup value.
@@ -1727,10 +1727,10 @@ describe("config-root workflow settings migration", () => {
 		const { source, agentDir } = await setupHome(home, ".myconfig");
 		await fs.mkdir(agentDir, { recursive: true });
 		const target = path.join(agentDir, "config.yml");
-		const oldRaw = '{"gjc.ralplan.maxIterations":7}';
+		const oldRaw = '{"vib.ralplan.maxIterations":7}';
 		// Crash after patch+backup; the user then set 11 via config set and
 		// deleted the source.
-		await fs.writeFile(target, YAML.stringify({ gjc: { ralplan: { maxIterations: 11 } } }, null, 2));
+		await fs.writeFile(target, YAML.stringify({ vib: { ralplan: { maxIterations: 11 } } }, null, 2));
 		await fs.writeFile(`${source}.bak`, oldRaw);
 		const oldSourceHash = nodeCrypto.createHash("sha256").update(oldRaw).digest("hex");
 		await fs.writeFile(
@@ -1744,7 +1744,7 @@ describe("config-root workflow settings migration", () => {
 				canonicalTargetDir: await fs.realpath(agentDir),
 				canonicalTargetIdentity: `${(await fs.stat(agentDir)).dev}:${(await fs.stat(agentDir)).ino}`,
 				sourceSha256: oldSourceHash,
-				migratedKeys: ["gjc.ralplan.maxIterations"],
+				migratedKeys: ["vib.ralplan.maxIterations"],
 				startedAt: new Date().toISOString(),
 			}),
 		);
@@ -1761,11 +1761,11 @@ describe("config-root workflow settings migration", () => {
 		const { source, agentDir } = await setupHome(home, ".myconfig");
 		await fs.mkdir(agentDir, { recursive: true });
 		const target = path.join(agentDir, "config.yml");
-		const sourceRaw = '{"gjc.ralplan.maxIterations":7}';
+		const sourceRaw = '{"vib.ralplan.maxIterations":7}';
 		// The crashed run wrote its pending marker but an editor changed
 		// config.yml (9) before the target patch; no backup exists because the
 		// source move happens only after the patch commits.
-		await fs.writeFile(target, YAML.stringify({ gjc: { ralplan: { maxIterations: 9 } } }, null, 2));
+		await fs.writeFile(target, YAML.stringify({ vib: { ralplan: { maxIterations: 9 } } }, null, 2));
 		await fs.writeFile(source, sourceRaw);
 		await fs.writeFile(
 			`${source}.migrated`,
@@ -1778,7 +1778,7 @@ describe("config-root workflow settings migration", () => {
 				canonicalTargetDir: await fs.realpath(agentDir),
 				canonicalTargetIdentity: `${(await fs.stat(agentDir)).dev}:${(await fs.stat(agentDir)).ino}`,
 				sourceSha256: nodeCrypto.createHash("sha256").update(sourceRaw).digest("hex"),
-				migratedKeys: ["gjc.ralplan.maxIterations"],
+				migratedKeys: ["vib.ralplan.maxIterations"],
 				startedAt: new Date().toISOString(),
 			}),
 		);
@@ -1802,11 +1802,11 @@ describe("config-root workflow settings migration", () => {
 		const { source, agentDir } = await setupHome(home, ".myconfig");
 		await fs.mkdir(agentDir, { recursive: true });
 		const target = path.join(agentDir, "config.yml");
-		const oldRaw = '{"gjc.ralplan.maxIterations":7}';
+		const oldRaw = '{"vib.ralplan.maxIterations":7}';
 		const agentIdentity = await fs.stat(agentDir);
 		// The crash left the migration-written value 7; the user then set 9 via
 		// config set AND removed the key from the legacy source.
-		await fs.writeFile(target, YAML.stringify({ gjc: { ralplan: { maxIterations: 9 } } }, null, 2));
+		await fs.writeFile(target, YAML.stringify({ vib: { ralplan: { maxIterations: 9 } } }, null, 2));
 		await fs.writeFile(`${source}.bak`, oldRaw);
 		await fs.writeFile(source, "{}"); // key removed from source
 		await fs.writeFile(
@@ -1820,7 +1820,7 @@ describe("config-root workflow settings migration", () => {
 				canonicalTargetDir: await fs.realpath(agentDir),
 				canonicalTargetIdentity: `${agentIdentity.dev}:${agentIdentity.ino}`,
 				sourceSha256: nodeCrypto.createHash("sha256").update(oldRaw).digest("hex"),
-				migratedKeys: ["gjc.ralplan.maxIterations"],
+				migratedKeys: ["vib.ralplan.maxIterations"],
 				startedAt: new Date().toISOString(),
 			}),
 		);
@@ -1840,13 +1840,13 @@ describe("config-root workflow settings migration", () => {
 		const { source, agentDir } = await setupHome(home, ".myconfig");
 		await fs.mkdir(agentDir, { recursive: true });
 		const target = path.join(agentDir, "config.yml");
-		const oldRaw = '{"gjc.ralplan.maxIterations":7}';
+		const oldRaw = '{"vib.ralplan.maxIterations":7}';
 		// A (possibly replaced) profile holds a genuine value matching the old
 		// backup; an identity-less pending marker from an older build cannot
 		// prove this value is migration-owned, so recovery must refuse its claims.
-		await fs.writeFile(target, YAML.stringify({ gjc: { ralplan: { maxIterations: 7 } } }, null, 2));
+		await fs.writeFile(target, YAML.stringify({ vib: { ralplan: { maxIterations: 7 } } }, null, 2));
 		await fs.writeFile(`${source}.bak`, oldRaw);
-		await fs.writeFile(source, '{"gjc.ralplan.maxIterations":9}'); // edited legacy source
+		await fs.writeFile(source, '{"vib.ralplan.maxIterations":9}'); // edited legacy source
 		await fs.writeFile(
 			`${source}.migrated`,
 			JSON.stringify({
@@ -1856,7 +1856,7 @@ describe("config-root workflow settings migration", () => {
 				backupPath: `${source}.bak`,
 				targetPath: target,
 				sourceSha256: nodeCrypto.createHash("sha256").update(oldRaw).digest("hex"),
-				migratedKeys: ["gjc.ralplan.maxIterations"],
+				migratedKeys: ["vib.ralplan.maxIterations"],
 				startedAt: new Date().toISOString(),
 			}),
 		);
@@ -1875,7 +1875,7 @@ describe("config-root workflow settings migration", () => {
 		const { source, agentDir } = await setupHome(home, ".myconfig");
 		await fs.mkdir(agentDir, { recursive: true });
 		const target = path.join(agentDir, "config.yml");
-		const sourceRaw = '{"gjc.ralplan.maxIterations":7}';
+		const sourceRaw = '{"vib.ralplan.maxIterations":7}';
 		await fs.writeFile(source, sourceRaw);
 		// A crashed run's pending marker records an identity that no longer
 		// matches the current agent directory (deleted/recreated or repointed).
@@ -1890,7 +1890,7 @@ describe("config-root workflow settings migration", () => {
 				canonicalTargetDir: agentDir,
 				canonicalTargetIdentity: "replaced:0",
 				sourceSha256: nodeCrypto.createHash("sha256").update(sourceRaw).digest("hex"),
-				migratedKeys: ["gjc.ralplan.maxIterations"],
+				migratedKeys: ["vib.ralplan.maxIterations"],
 				startedAt: new Date().toISOString(),
 			}),
 		);
@@ -1908,7 +1908,7 @@ describe("config-root workflow settings migration", () => {
 		const cwd = await tempDir();
 		const { source, agentDir } = await setupHome(home, ".myconfig");
 		await fs.mkdir(agentDir, { recursive: true });
-		await fs.writeFile(source, '{"gjc.ralplan.maxIterations":7}');
+		await fs.writeFile(source, '{"vib.ralplan.maxIterations":7}');
 		const backup = `${source}.bak`;
 		const sentinel = "external-backup-content";
 		// Simulate another process: as soon as this run publishes its pending
@@ -1960,7 +1960,7 @@ describe("config-root workflow settings migration", () => {
 		const home = await tempDir();
 		const cwd = await tempDir();
 		const { source } = await setupHome(home, ".myconfig");
-		await fs.writeFile(source, '{"gjc.ralplan.maxIterations":7}');
+		await fs.writeFile(source, '{"vib.ralplan.maxIterations":7}');
 		const backup = `${source}.bak`;
 		const sentinel = "external-backup-content";
 
@@ -1987,7 +1987,7 @@ describe("config-root workflow settings migration", () => {
 		const home = await tempDir();
 		const cwd = await tempDir();
 		const { source } = await setupHome(home, ".myconfig");
-		await fs.writeFile(source, '{"gjc.ralplan.maxIterations":7}');
+		await fs.writeFile(source, '{"vib.ralplan.maxIterations":7}');
 		const backup = `${source}.bak`;
 		const sentinel = "external-backup-content";
 
@@ -2014,11 +2014,11 @@ describe("config-root workflow settings migration", () => {
 		const { source, agentDir } = await setupHome(home, ".myconfig");
 		await fs.mkdir(agentDir, { recursive: true });
 		const target = path.join(agentDir, "config.yml");
-		const oldRaw = '{"gjc.ralplan.maxIterations":7}';
+		const oldRaw = '{"vib.ralplan.maxIterations":7}';
 		// A (possibly replaced) profile holds a value matching the old backup; an
 		// identity-less complete marker from an older build cannot prove this
 		// value is migration-owned, so deletion recovery must refuse its claims.
-		await fs.writeFile(target, YAML.stringify({ gjc: { ralplan: { maxIterations: 7 } } }, null, 2));
+		await fs.writeFile(target, YAML.stringify({ vib: { ralplan: { maxIterations: 7 } } }, null, 2));
 		await fs.writeFile(`${source}.bak`, oldRaw);
 		// The legacy source was deleted after completion.
 		await fs.writeFile(
@@ -2030,7 +2030,7 @@ describe("config-root workflow settings migration", () => {
 				backupPath: `${source}.bak`,
 				targetPath: target,
 				sourceSha256: nodeCrypto.createHash("sha256").update(oldRaw).digest("hex"),
-				migratedKeys: ["gjc.ralplan.maxIterations"],
+				migratedKeys: ["vib.ralplan.maxIterations"],
 				startedAt: new Date().toISOString(),
 				completedAt: new Date().toISOString(),
 			}),
@@ -2049,12 +2049,12 @@ describe("config-root workflow settings migration", () => {
 		const { source, agentDir } = await setupHome(home, ".myconfig");
 		await fs.mkdir(agentDir, { recursive: true });
 		const target = path.join(agentDir, "config.yml");
-		const oldRaw = '{"gjc.ralplan.maxIterations":7}';
+		const oldRaw = '{"vib.ralplan.maxIterations":7}';
 		// The replacement profile holds the old migration-copied value.
-		await fs.writeFile(target, YAML.stringify({ gjc: { ralplan: { maxIterations: 7 } } }, null, 2));
+		await fs.writeFile(target, YAML.stringify({ vib: { ralplan: { maxIterations: 7 } } }, null, 2));
 		await fs.writeFile(`${source}.bak`, oldRaw);
 		// The user EDITED the legacy source after the migration.
-		await fs.writeFile(source, '{"gjc.ralplan.maxIterations":12}');
+		await fs.writeFile(source, '{"vib.ralplan.maxIterations":12}');
 		// The completed marker records an identity that no longer matches the
 		// current agent directory (deleted/recreated or repointed).
 		await fs.writeFile(
@@ -2068,7 +2068,7 @@ describe("config-root workflow settings migration", () => {
 				canonicalTargetDir: agentDir,
 				canonicalTargetIdentity: "replaced:0",
 				sourceSha256: nodeCrypto.createHash("sha256").update(oldRaw).digest("hex"),
-				migratedKeys: ["gjc.ralplan.maxIterations"],
+				migratedKeys: ["vib.ralplan.maxIterations"],
 				startedAt: new Date().toISOString(),
 				completedAt: new Date().toISOString(),
 			}),
@@ -2089,13 +2089,13 @@ describe("config-root workflow settings migration", () => {
 		const { source, agentDir } = await setupHome(home, ".myconfig");
 		await fs.mkdir(agentDir, { recursive: true });
 		const target = path.join(agentDir, "config.yml");
-		const originalRaw = '{"gjc.ralplan.maxIterations":7}';
-		const proposedRaw = '{"gjc.ralplan.maxIterations":9}';
+		const originalRaw = '{"vib.ralplan.maxIterations":7}';
+		const proposedRaw = '{"vib.ralplan.maxIterations":9}';
 		const hash = (value: unknown): string =>
 			nodeCrypto.createHash("sha256").update(JSON.stringify(value)).digest("hex");
 		// The process crashed after durable pending-marker publication but before
 		// it applied the repair. An editor then chose the same proposed value.
-		await fs.writeFile(target, YAML.stringify({ gjc: { ralplan: { maxIterations: 9 } } }, null, 2));
+		await fs.writeFile(target, YAML.stringify({ vib: { ralplan: { maxIterations: 9 } } }, null, 2));
 		await fs.writeFile(`${source}.bak`, originalRaw);
 		await fs.writeFile(
 			`${source}.migrated`,
@@ -2109,9 +2109,9 @@ describe("config-root workflow settings migration", () => {
 				canonicalTargetIdentity: `${(await fs.stat(agentDir)).dev}:${(await fs.stat(agentDir)).ino}`,
 				sourceSha256: nodeCrypto.createHash("sha256").update(proposedRaw).digest("hex"),
 				priorSourceSha256: nodeCrypto.createHash("sha256").update(originalRaw).digest("hex"),
-				migratedKeys: ["gjc.ralplan.maxIterations"],
-				repairValueHashes: { "gjc.ralplan.maxIterations": hash(9) },
-				preRepairTargetHashes: { "gjc.ralplan.maxIterations": hash(7) },
+				migratedKeys: ["vib.ralplan.maxIterations"],
+				repairValueHashes: { "vib.ralplan.maxIterations": hash(9) },
+				preRepairTargetHashes: { "vib.ralplan.maxIterations": hash(7) },
 				repairsApplied: false,
 				startedAt: new Date().toISOString(),
 			}),
@@ -2123,7 +2123,7 @@ describe("config-root workflow settings migration", () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Project workflow-settings migration (`.gjc/settings.json` -> `.gjc/config.yml`)
+// Project workflow-settings migration (`.vib/settings.json` -> `.vib/config.yml`)
 // ─────────────────────────────────────────────────────────────────────────────
 
 const PROJECT_PROBE = path.join(import.meta.dir, "../fixtures/project-workflow-migration-probe.ts");
@@ -2133,16 +2133,16 @@ type ProjectProbeResult = {
 	sourceExists: boolean;
 	maxIterations: unknown;
 	maxReviewPassesPerLane: unknown;
-	gjcValueType?: string | null;
+	vibValueType?: string | null;
 	configYmlRootType?: string | null;
 	strictInvalidEvidenceExists?: boolean;
 	strictInvalidEvidenceKeys?: string[];
 	strictInvalidEvidenceMalformed?: boolean;
 	/** Child-process stderr, so tests can assert migration warnings surface. */
 	stderr?: string;
-	/** Opt-in isolated log content (GJC_PROBE_LOG); empty when not requested. */
+	/** Opt-in isolated log content (VIB_PROBE_LOG); empty when not requested. */
 	migrationLog?: string;
-	/** Generic settings API value for gjc.ralplan.maxIterations after load. */
+	/** Generic settings API value for vib.ralplan.maxIterations after load. */
 	settingsGetMaxIterations?: unknown;
 };
 
@@ -2161,14 +2161,14 @@ async function runProjectProbe(
 		env: {
 			...process.env,
 			// A runner's real agent config must never leak into these probes.
-			GJC_CODING_AGENT_DIR: undefined,
+			VIB_CODING_AGENT_DIR: undefined,
 			PI_CODING_AGENT_DIR: undefined,
-			GJC_CONFIG_DIR: undefined,
+			VIB_CONFIG_DIR: undefined,
 			PI_CONFIG_DIR: undefined,
 			// Isolate the config root (and the migration log) in a temp home when
 			// the test asserts warning text.
 			HOME: options.home ?? process.env.HOME,
-			...(options.home ? { GJC_PROBE_LOG: "1" } : {}),
+			...(options.home ? { VIB_PROBE_LOG: "1" } : {}),
 			...(options.env ?? {}),
 		},
 		stdout: "pipe",
@@ -2180,12 +2180,12 @@ async function runProjectProbe(
 }
 
 describe("project workflow settings migration", () => {
-	test("copies project .gjc/settings.json workflow keys into project config.yml and preserves the source", async () => {
+	test("copies project .vib/settings.json workflow keys into project config.yml and preserves the source", async () => {
 		const cwd = await tempDir();
-		await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
+		await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "settings.json"),
-			JSON.stringify({ "gjc.ralplan.maxIterations": 7, "gjc.ralplan.maxReviewPassesPerLane": 2 }),
+			path.join(cwd, ".vib", "settings.json"),
+			JSON.stringify({ "vib.ralplan.maxIterations": 7, "vib.ralplan.maxReviewPassesPerLane": 2 }),
 		);
 
 		const result = await runProjectProbe(cwd);
@@ -2196,10 +2196,10 @@ describe("project workflow settings migration", () => {
 
 	test("does not overwrite an existing nested config.yml value (absent-only)", async () => {
 		const cwd = await tempDir();
-		await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
-		const target = path.join(cwd, ".gjc", "config.yml");
-		await fs.writeFile(target, YAML.stringify({ gjc: { ralplan: { maxIterations: 9 } } }, null, 2));
-		await fs.writeFile(path.join(cwd, ".gjc", "settings.json"), JSON.stringify({ "gjc.ralplan.maxIterations": 7 }));
+		await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
+		const target = path.join(cwd, ".vib", "config.yml");
+		await fs.writeFile(target, YAML.stringify({ vib: { ralplan: { maxIterations: 9 } } }, null, 2));
+		await fs.writeFile(path.join(cwd, ".vib", "settings.json"), JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
 
 		const result = await runProjectProbe(cwd);
 		expect(result.maxIterations).toBe(9); // modern nested target wins
@@ -2207,8 +2207,8 @@ describe("project workflow settings migration", () => {
 
 	test("does not write a config.yml when the source has no workflow keys", async () => {
 		const cwd = await tempDir();
-		await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
-		await fs.writeFile(path.join(cwd, ".gjc", "settings.json"), JSON.stringify({ theme: { dark: "red-claw" } }));
+		await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
+		await fs.writeFile(path.join(cwd, ".vib", "settings.json"), JSON.stringify({ theme: { dark: "red-claw" } }));
 
 		const result = await runProjectProbe(cwd);
 		expect(result.sourceExists).toBe(true);
@@ -2218,8 +2218,8 @@ describe("project workflow settings migration", () => {
 
 	test("leaves a malformed source untouched", async () => {
 		const cwd = await tempDir();
-		await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
-		await fs.writeFile(path.join(cwd, ".gjc", "settings.json"), "{ not json");
+		await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
+		await fs.writeFile(path.join(cwd, ".vib", "settings.json"), "{ not json");
 
 		const result = await runProjectProbe(cwd);
 		expect(result.sourceExists).toBe(true);
@@ -2228,12 +2228,12 @@ describe("project workflow settings migration", () => {
 
 	test("skips a future-schema config.yml instead of patching it", async () => {
 		const cwd = await tempDir();
-		await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
+		await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "config.yml"),
-			YAML.stringify({ configSchemaVersion: 9999, gjc: { ralplan: { maxIterations: 9 } } }, null, 2),
+			path.join(cwd, ".vib", "config.yml"),
+			YAML.stringify({ configSchemaVersion: 9999, vib: { ralplan: { maxIterations: 9 } } }, null, 2),
 		);
-		await fs.writeFile(path.join(cwd, ".gjc", "settings.json"), JSON.stringify({ "gjc.ralplan.maxIterations": 7 }));
+		await fs.writeFile(path.join(cwd, ".vib", "settings.json"), JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
 
 		const result = await runProjectProbe(cwd);
 		expect(result.maxIterations).toBe(9); // future-schema target is read-only
@@ -2241,43 +2241,43 @@ describe("project workflow settings migration", () => {
 
 	test("aborts on a malformed project config.yml parent instead of replacing it", async () => {
 		const cwd = await tempDir();
-		await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
-		await fs.writeFile(path.join(cwd, ".gjc", "config.yml"), 'gjc: "repair-me"\n');
-		await fs.writeFile(path.join(cwd, ".gjc", "settings.json"), JSON.stringify({ "gjc.ralplan.maxIterations": 7 }));
+		await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
+		await fs.writeFile(path.join(cwd, ".vib", "config.yml"), 'vib: "repair-me"\n');
+		await fs.writeFile(path.join(cwd, ".vib", "settings.json"), JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
 
 		const result = await runProjectProbe(cwd);
 		// The malformed scalar parent is user data; the migration must leave it
 		// untouched instead of replacing it with an object.
-		expect(result.gjcValueType).toBe("string");
+		expect(result.vibValueType).toBe("string");
 		expect(result.maxIterations).toBeNull();
 		expect(result.sourceExists).toBe(true);
 	});
 
 	test("records project strict-invalid evidence for an invalid strict ralplan legacy value", async () => {
 		const cwd = await tempDir();
-		await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
+		await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "settings.json"),
-			JSON.stringify({ "gjc.ralplan.maxIterations": "bad" }),
+			path.join(cwd, ".vib", "settings.json"),
+			JSON.stringify({ "vib.ralplan.maxIterations": "bad" }),
 		);
 
 		const result = await runProjectProbe(cwd);
 		expect(result.strictInvalidEvidenceExists).toBe(true);
-		expect(result.strictInvalidEvidenceKeys).toEqual(["gjc.ralplan.maxIterations"]);
+		expect(result.strictInvalidEvidenceKeys).toEqual(["vib.ralplan.maxIterations"]);
 		expect(result.maxIterations).toBeNull(); // never copied into config.yml
 		expect(result.sourceExists).toBe(true);
 	});
 
 	test("a valid project config.yml override suppresses project strict-invalid evidence", async () => {
 		const cwd = await tempDir();
-		await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
+		await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "config.yml"),
-			YAML.stringify({ gjc: { ralplan: { maxIterations: 7 } } }, null, 2),
+			path.join(cwd, ".vib", "config.yml"),
+			YAML.stringify({ vib: { ralplan: { maxIterations: 7 } } }, null, 2),
 		);
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "settings.json"),
-			JSON.stringify({ "gjc.ralplan.maxIterations": "bad" }),
+			path.join(cwd, ".vib", "settings.json"),
+			JSON.stringify({ "vib.ralplan.maxIterations": "bad" }),
 		);
 
 		const result = await runProjectProbe(cwd);
@@ -2287,16 +2287,16 @@ describe("project workflow settings migration", () => {
 
 	test("repairing the invalid project source clears the project evidence", async () => {
 		const cwd = await tempDir();
-		await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
+		await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "settings.json"),
-			JSON.stringify({ "gjc.ralplan.maxIterations": "bad" }),
+			path.join(cwd, ".vib", "settings.json"),
+			JSON.stringify({ "vib.ralplan.maxIterations": "bad" }),
 		);
 
 		const first = await runProjectProbe(cwd);
 		expect(first.strictInvalidEvidenceExists).toBe(true);
 
-		await fs.writeFile(path.join(cwd, ".gjc", "settings.json"), JSON.stringify({ "gjc.ralplan.maxIterations": 7 }));
+		await fs.writeFile(path.join(cwd, ".vib", "settings.json"), JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
 		const second = await runProjectProbe(cwd);
 		expect(second.strictInvalidEvidenceExists).toBe(false);
 		expect(second.maxIterations).toBe(7); // now migrated into config.yml
@@ -2304,8 +2304,8 @@ describe("project workflow settings migration", () => {
 
 	test("records malformed-source evidence for a malformed project settings.json", async () => {
 		const cwd = await tempDir();
-		await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
-		await fs.writeFile(path.join(cwd, ".gjc", "settings.json"), "{ not json");
+		await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
+		await fs.writeFile(path.join(cwd, ".vib", "settings.json"), "{ not json");
 
 		const result = await runProjectProbe(cwd);
 		expect(result.strictInvalidEvidenceExists).toBe(true);
@@ -2313,7 +2313,7 @@ describe("project workflow settings migration", () => {
 		expect(result.sourceExists).toBe(true);
 
 		// Repairing the source clears the malformed evidence and migrates normally.
-		await fs.writeFile(path.join(cwd, ".gjc", "settings.json"), JSON.stringify({ "gjc.ralplan.maxIterations": 7 }));
+		await fs.writeFile(path.join(cwd, ".vib", "settings.json"), JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
 		const repaired = await runProjectProbe(cwd);
 		expect(repaired.strictInvalidEvidenceExists).toBe(false);
 		expect(repaired.maxIterations).toBe(7);
@@ -2321,8 +2321,8 @@ describe("project workflow settings migration", () => {
 
 	test("records malformed evidence for a malformed project workflow parent", async () => {
 		const cwd = await tempDir();
-		await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
-		await fs.writeFile(path.join(cwd, ".gjc", "settings.json"), '{"gjc":{"ralplan":"broken"}}');
+		await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
+		await fs.writeFile(path.join(cwd, ".vib", "settings.json"), '{"vib":{"ralplan":"broken"}}');
 
 		const result = await runProjectProbe(cwd);
 		expect(result.strictInvalidEvidenceExists).toBe(true);
@@ -2331,7 +2331,7 @@ describe("project workflow settings migration", () => {
 		expect(result.maxIterations).toBeNull();
 
 		// Repairing the parent clears the evidence and migrates normally.
-		await fs.writeFile(path.join(cwd, ".gjc", "settings.json"), JSON.stringify({ "gjc.ralplan.maxIterations": 7 }));
+		await fs.writeFile(path.join(cwd, ".vib", "settings.json"), JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
 		const repaired = await runProjectProbe(cwd);
 		expect(repaired.strictInvalidEvidenceExists).toBe(false);
 		expect(repaired.maxIterations).toBe(7);
@@ -2339,10 +2339,10 @@ describe("project workflow settings migration", () => {
 
 	test("a tolerant malformed project parent does not poison strict keys", async () => {
 		const cwd = await tempDir();
-		await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
+		await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "settings.json"),
-			'{"gjc":{"deepInterview":"broken","ralplan":{"maxIterations":7}}}',
+			path.join(cwd, ".vib", "settings.json"),
+			'{"vib":{"deepInterview":"broken","ralplan":{"maxIterations":7}}}',
 		);
 
 		const result = await runProjectProbe(cwd);
@@ -2354,18 +2354,18 @@ describe("project workflow settings migration", () => {
 
 	test("owned keys suppress malformed evidence publication for a corrupted source", async () => {
 		const cwd = await tempDir();
-		await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
+		await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
 		// Every strict ralplan key is already owned by config.yml (the
 		// migrated-keys marker records them all); the retained source is later
 		// corrupted. A stale global malformed marker must NOT be published: a
-		// deliberate `gjc config unset` of an owned key must keep falling through
+		// deliberate `vib config unset` of an owned key must keep falling through
 		// to the lower layer/default instead of exiting 2.
-		await fs.mkdir(path.join(cwd, ".gjc", "state"), { recursive: true });
+		await fs.mkdir(path.join(cwd, ".vib", "state"), { recursive: true });
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "state", "settings.json.migrated-keys"),
-			JSON.stringify(["gjc.ralplan.maxIterations", "gjc.ralplan.autoHandoff", "gjc.ralplan.maxReviewPassesPerLane"]),
+			path.join(cwd, ".vib", "state", "settings.json.migrated-keys"),
+			JSON.stringify(["vib.ralplan.maxIterations", "vib.ralplan.autoHandoff", "vib.ralplan.maxReviewPassesPerLane"]),
 		);
-		await fs.writeFile(path.join(cwd, ".gjc", "settings.json"), "{ corrupted");
+		await fs.writeFile(path.join(cwd, ".vib", "settings.json"), "{ corrupted");
 
 		const result = await runProjectProbe(cwd);
 		expect(result.strictInvalidEvidenceExists).toBe(false);
@@ -2373,37 +2373,37 @@ describe("project workflow settings migration", () => {
 
 	test("keeps evidence for every unresolved strict key (multi-key project source)", async () => {
 		const cwd = await tempDir();
-		await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
+		await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
 		// Two invalid strict keys; config.yml carries a VALID override for the
 		// later one only. The evidence must keep the unresolved autoHandoff and
 		// must not be deleted by the maxIterations override's cleanup.
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "config.yml"),
-			YAML.stringify({ gjc: { ralplan: { maxIterations: 7 } } }, null, 2),
+			path.join(cwd, ".vib", "config.yml"),
+			YAML.stringify({ vib: { ralplan: { maxIterations: 7 } } }, null, 2),
 		);
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "settings.json"),
-			JSON.stringify({ "gjc.ralplan.autoHandoff": "bad", "gjc.ralplan.maxIterations": "bad" }),
+			path.join(cwd, ".vib", "settings.json"),
+			JSON.stringify({ "vib.ralplan.autoHandoff": "bad", "vib.ralplan.maxIterations": "bad" }),
 		);
 
 		const result = await runProjectProbe(cwd);
 		expect(result.strictInvalidEvidenceExists).toBe(true);
-		expect(result.strictInvalidEvidenceKeys).toEqual(["gjc.ralplan.autoHandoff"]);
+		expect(result.strictInvalidEvidenceKeys).toEqual(["vib.ralplan.autoHandoff"]);
 		expect(result.maxIterations).toBe(7); // valid override wins and is migrated
 	});
 
 	test("removing a migrated key from config.yml does not re-import the stale legacy value", async () => {
 		const cwd = await tempDir();
-		await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
-		await fs.writeFile(path.join(cwd, ".gjc", "settings.json"), JSON.stringify({ "gjc.ralplan.maxIterations": 7 }));
+		await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
+		await fs.writeFile(path.join(cwd, ".vib", "settings.json"), JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
 
 		const first = await runProjectProbe(cwd);
 		expect(first.maxIterations).toBe(7); // migrated once into config.yml
 
-		// Simulate `gjc config unset gjc.ralplan.maxIterations`: the target key
+		// Simulate `vib config unset vib.ralplan.maxIterations`: the target key
 		// is removed while the legacy source is retained.
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "config.yml"),
+			path.join(cwd, ".vib", "config.yml"),
 			YAML.stringify({ theme: { dark: "red-claw" } }, null, 2),
 		);
 
@@ -2415,25 +2415,25 @@ describe("project workflow settings migration", () => {
 
 	test("records pre-existing config-owned keys so a later unset sticks (mixed migration)", async () => {
 		const cwd = await tempDir();
-		await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
+		await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
 		// config.yml already holds a valid maxIterations (pre-existing); only
 		// autoHandoff is missing. Both keys are in the legacy source.
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "config.yml"),
-			YAML.stringify({ gjc: { ralplan: { maxIterations: 9 } } }, null, 2),
+			path.join(cwd, ".vib", "config.yml"),
+			YAML.stringify({ vib: { ralplan: { maxIterations: 9 } } }, null, 2),
 		);
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "settings.json"),
-			JSON.stringify({ "gjc.ralplan.maxIterations": 7, "gjc.ralplan.autoHandoff": "off" }),
+			path.join(cwd, ".vib", "settings.json"),
+			JSON.stringify({ "vib.ralplan.maxIterations": 7, "vib.ralplan.autoHandoff": "off" }),
 		);
 
 		const first = await runProjectProbe(cwd);
 		expect(first.maxIterations).toBe(9); // the pre-existing valid value wins
 
-		// Remove the PRE-EXISTING key (simulate `gjc config unset
-		// gjc.ralplan.maxIterations`): it was never copied by this run.
+		// Remove the PRE-EXISTING key (simulate `vib config unset
+		// vib.ralplan.maxIterations`): it was never copied by this run.
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "config.yml"),
+			path.join(cwd, ".vib", "config.yml"),
 			YAML.stringify({ theme: { dark: "red-claw" } }, null, 2),
 		);
 
@@ -2445,14 +2445,14 @@ describe("project workflow settings migration", () => {
 
 	test("a marker-failure rollback preserves independently valid strict evidence", async () => {
 		const cwd = await tempDir();
-		await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
+		await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
 		// The migrated-key marker path is occupied by a directory, so only the
 		// marker write fails (the evidence file is unaffected).
-		await fs.mkdir(path.join(cwd, ".gjc", "state", "settings.json.migrated-keys"), { recursive: true });
+		await fs.mkdir(path.join(cwd, ".vib", "state", "settings.json.migrated-keys"), { recursive: true });
 		// An invalid strict key (evidence) plus a valid key (would be copied).
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "settings.json"),
-			JSON.stringify({ "gjc.ralplan.autoHandoff": "bad", "gjc.ralplan.maxIterations": 7 }),
+			path.join(cwd, ".vib", "settings.json"),
+			JSON.stringify({ "vib.ralplan.autoHandoff": "bad", "vib.ralplan.maxIterations": 7 }),
 		);
 
 		const result = await runProjectProbe(cwd, { expectLoadFailure: true });
@@ -2465,16 +2465,16 @@ describe("project workflow settings migration", () => {
 
 	test("an unreadable ownership marker leaves an absent config.yml absent so the fallback stays active", async () => {
 		const cwd = await tempDir();
-		await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
+		await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
 		// The migrated-key marker path is occupied by a directory, so only the
 		// marker write fails. config.yml does NOT exist yet: the rollback would
 		// otherwise leave an empty authoritative config.yml behind and silently
 		// disable the retained settings.json fallback while the marker stays
 		// unwritable.
-		await fs.mkdir(path.join(cwd, ".gjc", "state", "settings.json.migrated-keys"), { recursive: true });
+		await fs.mkdir(path.join(cwd, ".vib", "state", "settings.json.migrated-keys"), { recursive: true });
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "settings.json"),
-			JSON.stringify({ "gjc.ralplan.maxIterations": 7, "gjc.ralplan.maxReviewPassesPerLane": 2 }),
+			path.join(cwd, ".vib", "settings.json"),
+			JSON.stringify({ "vib.ralplan.maxIterations": 7, "vib.ralplan.maxReviewPassesPerLane": 2 }),
 		);
 
 		const result = await runProjectProbe(cwd, { home: await tempDir(), expectLoadFailure: true });
@@ -2489,13 +2489,13 @@ describe("project workflow settings migration", () => {
 
 	test("clears fallback-invalid values from config.yml when the source no longer holds them", async () => {
 		const cwd = await tempDir();
-		await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
+		await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
 		// The strict-evidence path is occupied by a directory, so the evidence
 		// write fails and the invalid value falls back into config.yml.
-		await fs.mkdir(path.join(cwd, ".gjc", "state", "settings.json.strict-invalid"), { recursive: true });
+		await fs.mkdir(path.join(cwd, ".vib", "state", "settings.json.strict-invalid"), { recursive: true });
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "settings.json"),
-			JSON.stringify({ "gjc.ralplan.maxIterations": "bad" }),
+			path.join(cwd, ".vib", "settings.json"),
+			JSON.stringify({ "vib.ralplan.maxIterations": "bad" }),
 		);
 
 		const first = await runProjectProbe(cwd);
@@ -2504,7 +2504,7 @@ describe("project workflow settings migration", () => {
 		expect(first.maxIterations).toBe("bad");
 
 		// Repair the legacy source by removing the invalid key.
-		await fs.writeFile(path.join(cwd, ".gjc", "settings.json"), "{}");
+		await fs.writeFile(path.join(cwd, ".vib", "settings.json"), "{}");
 
 		const second = await runProjectProbe(cwd);
 		// The tracked fallback value is removed from config.yml; exit 2 does not
@@ -2514,21 +2514,21 @@ describe("project workflow settings migration", () => {
 
 	test("fallback cleanup preserves a user's newer config.yml override", async () => {
 		const cwd = await tempDir();
-		await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
-		await fs.mkdir(path.join(cwd, ".gjc", "state", "settings.json.strict-invalid"), { recursive: true });
+		await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
+		await fs.mkdir(path.join(cwd, ".vib", "state", "settings.json.strict-invalid"), { recursive: true });
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "settings.json"),
-			JSON.stringify({ "gjc.ralplan.maxIterations": "bad" }),
+			path.join(cwd, ".vib", "settings.json"),
+			JSON.stringify({ "vib.ralplan.maxIterations": "bad" }),
 		);
 
 		const first = await runProjectProbe(cwd);
 		expect(first.maxIterations).toBe("bad"); // fallback written
 
 		// Repair the source AND replace the fallback value with a valid override.
-		await fs.writeFile(path.join(cwd, ".gjc", "settings.json"), "{}");
+		await fs.writeFile(path.join(cwd, ".vib", "settings.json"), "{}");
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "config.yml"),
-			YAML.stringify({ gjc: { ralplan: { maxIterations: 9 } } }, null, 2),
+			path.join(cwd, ".vib", "config.yml"),
+			YAML.stringify({ vib: { ralplan: { maxIterations: 9 } } }, null, 2),
 		);
 
 		const second = await runProjectProbe(cwd);
@@ -2539,22 +2539,22 @@ describe("project workflow settings migration", () => {
 
 	test("persists malformed-source strict fallback into config.yml when the evidence cannot be written", async () => {
 		const cwd = await tempDir();
-		await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
+		await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
 		// The strict-evidence path is occupied by a directory, so the evidence
 		// write fails; the malformed source must still keep the ralplan exit-2
 		// error observable through guaranteed-invalid placeholder values in
 		// config.yml (the only surface the strict resolver reads).
-		await fs.mkdir(path.join(cwd, ".gjc", "state", "settings.json.strict-invalid"), { recursive: true });
-		await fs.writeFile(path.join(cwd, ".gjc", "settings.json"), "{ not json");
+		await fs.mkdir(path.join(cwd, ".vib", "state", "settings.json.strict-invalid"), { recursive: true });
+		await fs.writeFile(path.join(cwd, ".vib", "settings.json"), "{ not json");
 
 		const first = await runProjectProbe(cwd);
 		expect(first.maxIterations).toBe(-1);
 		expect(first.maxReviewPassesPerLane).toBe(-1);
-		const fallbackMarker = path.join(cwd, ".gjc", "settings.json.fallback-invalid");
+		const fallbackMarker = path.join(cwd, ".vib", "settings.json.fallback-invalid");
 		expect(await fs.lstat(fallbackMarker).catch(() => null)).not.toBeNull();
 
 		// Repairing the source clears the tracked placeholders and migrates normally.
-		await fs.writeFile(path.join(cwd, ".gjc", "settings.json"), JSON.stringify({ "gjc.ralplan.maxIterations": 7 }));
+		await fs.writeFile(path.join(cwd, ".vib", "settings.json"), JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
 		const repaired = await runProjectProbe(cwd);
 		expect(repaired.maxIterations).toBe(7);
 		expect(repaired.maxReviewPassesPerLane).toBeNull();
@@ -2562,16 +2562,16 @@ describe("project workflow settings migration", () => {
 
 	test("a malformed-source fallback skips keys with a valid config.yml override", async () => {
 		const cwd = await tempDir();
-		await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
-		await fs.mkdir(path.join(cwd, ".gjc", "state", "settings.json.strict-invalid"), { recursive: true });
+		await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
+		await fs.mkdir(path.join(cwd, ".vib", "state", "settings.json.strict-invalid"), { recursive: true });
 		// A valid explicit config.yml value must win over the malformed source:
 		// no placeholder overwrites it, and the unresolved strict keys still get
 		// their invalid placeholders so exit 2 stays observable for them.
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "config.yml"),
-			YAML.stringify({ gjc: { ralplan: { maxIterations: 9 } } }, null, 2),
+			path.join(cwd, ".vib", "config.yml"),
+			YAML.stringify({ vib: { ralplan: { maxIterations: 9 } } }, null, 2),
 		);
-		await fs.writeFile(path.join(cwd, ".gjc", "settings.json"), "{ not json");
+		await fs.writeFile(path.join(cwd, ".vib", "settings.json"), "{ not json");
 
 		const result = await runProjectProbe(cwd);
 		expect(result.maxIterations).toBe(9); // valid override preserved
@@ -2580,23 +2580,23 @@ describe("project workflow settings migration", () => {
 
 	test("a malformed-source fallback never overwrites a user's present invalid config.yml value", async () => {
 		const cwd = await tempDir();
-		await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
-		await fs.mkdir(path.join(cwd, ".gjc", "state", "settings.json.strict-invalid"), { recursive: true });
+		await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
+		await fs.mkdir(path.join(cwd, ".vib", "state", "settings.json.strict-invalid"), { recursive: true });
 		// The user's pre-existing INVALID value already keeps the exit-2 error
 		// observable on its own, so the fallback must not replace it with a
 		// placeholder (a later unset/cleanup would then delete user data).
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "config.yml"),
-			YAML.stringify({ gjc: { ralplan: { maxIterations: "user-mistake" } } }, null, 2),
+			path.join(cwd, ".vib", "config.yml"),
+			YAML.stringify({ vib: { ralplan: { maxIterations: "user-mistake" } } }, null, 2),
 		);
-		await fs.writeFile(path.join(cwd, ".gjc", "settings.json"), "{ not json");
+		await fs.writeFile(path.join(cwd, ".vib", "settings.json"), "{ not json");
 
 		const first = await runProjectProbe(cwd);
 		expect(first.maxIterations).toBe("user-mistake"); // pre-existing value preserved
 		expect(first.maxReviewPassesPerLane).toBe(-1); // unresolved absent key still gets a placeholder
 
 		// Repairing the source migrates the valid value over the user's invalid one.
-		await fs.writeFile(path.join(cwd, ".gjc", "settings.json"), JSON.stringify({ "gjc.ralplan.maxIterations": 7 }));
+		await fs.writeFile(path.join(cwd, ".vib", "settings.json"), JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
 		const repaired = await runProjectProbe(cwd);
 		expect(repaired.maxIterations).toBe(7);
 		expect(repaired.maxReviewPassesPerLane).toBeNull();
@@ -2604,16 +2604,16 @@ describe("project workflow settings migration", () => {
 
 	test("an all-present migration surfaces a migrated-keys marker failure instead of silent completion", async () => {
 		const cwd = await tempDir();
-		await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
+		await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
 		// config.yml already holds every valid source key (all-present); the
 		// migrated-keys marker path is occupied by a directory so ownership
 		// cannot be durably recorded.
-		await fs.mkdir(path.join(cwd, ".gjc", "state", "settings.json.migrated-keys"), { recursive: true });
+		await fs.mkdir(path.join(cwd, ".vib", "state", "settings.json.migrated-keys"), { recursive: true });
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "config.yml"),
-			YAML.stringify({ gjc: { ralplan: { maxIterations: 9 } } }, null, 2),
+			path.join(cwd, ".vib", "config.yml"),
+			YAML.stringify({ vib: { ralplan: { maxIterations: 9 } } }, null, 2),
 		);
-		await fs.writeFile(path.join(cwd, ".gjc", "settings.json"), JSON.stringify({ "gjc.ralplan.maxIterations": 7 }));
+		await fs.writeFile(path.join(cwd, ".vib", "settings.json"), JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
 
 		const result = await runProjectProbe(cwd, { home: await tempDir(), expectLoadFailure: true });
 		// The unreadable marker (EISDIR on the occupied path) ABORTS the
@@ -2626,20 +2626,20 @@ describe("project workflow settings migration", () => {
 	test("a marker re-read failure after publication rolls the committed values back", async () => {
 		const cwd = await tempDir();
 		const home = await tempDir();
-		await fs.mkdir(path.join(cwd, ".gjc", "state"), { recursive: true });
+		await fs.mkdir(path.join(cwd, ".vib", "state"), { recursive: true });
 		// The marker is readable for the initial read; the seam replaces it
 		// with a DIRECTORY before the post-publication re-read.
-		await fs.writeFile(path.join(cwd, ".gjc", "state", "settings.json.migrated-keys"), JSON.stringify([]));
+		await fs.writeFile(path.join(cwd, ".vib", "state", "settings.json.migrated-keys"), JSON.stringify([]));
 		// A VALID key that is actually published (so the post-publication marker
 		// re-read hook is reached) plus an INVALID strict key, whose evidence is
 		// current and must survive the rollback.
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "settings.json"),
-			JSON.stringify({ "gjc.ralplan.maxIterations": 7, "gjc.ralplan.autoHandoff": "bad" }),
+			path.join(cwd, ".vib", "settings.json"),
+			JSON.stringify({ "vib.ralplan.maxIterations": 7, "vib.ralplan.autoHandoff": "bad" }),
 		);
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "state", "settings.json.strict-invalid"),
-			JSON.stringify({ version: 2, keys: [{ key: "gjc.ralplan.autoHandoff", value: "bad" }] }),
+			path.join(cwd, ".vib", "state", "settings.json.strict-invalid"),
+			JSON.stringify({ version: 2, keys: [{ key: "vib.ralplan.autoHandoff", value: "bad" }] }),
 		);
 
 		const result = await runProjectProbe(cwd, {
@@ -2659,7 +2659,7 @@ describe("project workflow settings migration", () => {
 		// The strict-invalid evidence is PRESERVED (cleared only when the
 		// SOURCE changed, not for ownership-marker failures).
 		expect(result.strictInvalidEvidenceExists).toBe(true);
-		expect(result.strictInvalidEvidenceKeys).toEqual(["gjc.ralplan.autoHandoff"]);
+		expect(result.strictInvalidEvidenceKeys).toEqual(["vib.ralplan.autoHandoff"]);
 	});
 
 	test("a pending retirement marker is completed by the next load after an interrupted migration", async () => {
@@ -2672,9 +2672,9 @@ describe("project workflow settings migration", () => {
 		// completed before the process exited.
 		await fs.writeFile(
 			path.join(agentDir, "config.yml"),
-			YAML.stringify({ gjc: { ralplan: { maxIterations: 7 } } }, null, 2),
+			YAML.stringify({ vib: { ralplan: { maxIterations: 7 } } }, null, 2),
 		);
-		const sourceRaw = JSON.stringify({ "gjc.ralplan.maxIterations": 7 });
+		const sourceRaw = JSON.stringify({ "vib.ralplan.maxIterations": 7 });
 		await fs.writeFile(path.join(agentDir, "settings.json"), sourceRaw);
 		await fs.writeFile(
 			path.join(agentDir, "settings.json.pending-retirement"),
@@ -2700,9 +2700,9 @@ describe("project workflow settings migration", () => {
 		// recovery must NOT replay the stale source value (7) over the target.
 		await fs.writeFile(
 			path.join(agentDir, "config.yml"),
-			YAML.stringify({ gjc: { ralplan: { maxIterations: 9 } } }, null, 2),
+			YAML.stringify({ vib: { ralplan: { maxIterations: 9 } } }, null, 2),
 		);
-		const sourceRaw = JSON.stringify({ "gjc.ralplan.maxIterations": 7 });
+		const sourceRaw = JSON.stringify({ "vib.ralplan.maxIterations": 7 });
 		await fs.writeFile(path.join(agentDir, "settings.json"), sourceRaw);
 		await fs.writeFile(
 			path.join(agentDir, "settings.json.pending-retirement"),
@@ -2713,9 +2713,9 @@ describe("project workflow settings migration", () => {
 		expect(result.loadFailed).toBe(false);
 		// The target's newer surface edit is preserved (no set-patch replay).
 		const target = YAML.parse(await fs.readFile(path.join(agentDir, "config.yml"), "utf8")) as {
-			gjc?: { ralplan?: { maxIterations?: unknown } };
+			vib?: { ralplan?: { maxIterations?: unknown } };
 		};
-		expect(target.gjc?.ralplan?.maxIterations).toBe(9);
+		expect(target.vib?.ralplan?.maxIterations).toBe(9);
 	});
 
 	test("a literal dotted member survives the pending-retirement recovery", async () => {
@@ -2754,18 +2754,18 @@ describe("project workflow settings migration", () => {
 		await fs.mkdir(agentDir, { recursive: true });
 		await fs.writeFile(
 			path.join(agentDir, "config.yml"),
-			YAML.stringify({ gjc: { ralplan: { maxIterations: 7 } } }, null, 2),
+			YAML.stringify({ vib: { ralplan: { maxIterations: 7 } } }, null, 2),
 		);
 		// The pending marker records an OLDER revision; the current source holds
 		// the user's NEWER edit (9). The recovery RE-READS the source and
 		// REPUBLISHES its current values (set patches), so the edit is never
 		// lost to the target's older value; the source is then retired.
-		await fs.writeFile(path.join(agentDir, "settings.json"), JSON.stringify({ "gjc.ralplan.maxIterations": 9 }));
+		await fs.writeFile(path.join(agentDir, "settings.json"), JSON.stringify({ "vib.ralplan.maxIterations": 9 }));
 		await fs.writeFile(
 			path.join(agentDir, "settings.json.pending-retirement"),
 			nodeCrypto
 				.createHash("sha256")
-				.update(JSON.stringify({ "gjc.ralplan.maxIterations": 7 }))
+				.update(JSON.stringify({ "vib.ralplan.maxIterations": 7 }))
 				.digest("hex"),
 		);
 
@@ -2773,9 +2773,9 @@ describe("project workflow settings migration", () => {
 		expect(result.loadFailed).toBe(false);
 		// The user's edit was republished into the target.
 		const target = YAML.parse(await fs.readFile(path.join(agentDir, "config.yml"), "utf8")) as {
-			gjc?: { ralplan?: { maxIterations?: unknown } };
+			vib?: { ralplan?: { maxIterations?: unknown } };
 		};
-		expect(target.gjc?.ralplan?.maxIterations).toBe(9);
+		expect(target.vib?.ralplan?.maxIterations).toBe(9);
 		// The source was retired after the successful republication.
 		expect(await fs.stat(path.join(agentDir, "settings.json")).catch(() => null)).toBeNull();
 		expect(await fs.stat(path.join(agentDir, "settings.json.bak")).catch(() => null)).not.toBeNull();
@@ -2811,10 +2811,10 @@ describe("project workflow settings migration", () => {
 		const cwd = await tempDir();
 		const { agentDir } = await setupHome(home, ".myconfig");
 		await fs.mkdir(agentDir, { recursive: true });
-		const sourceRaw = JSON.stringify({ "gjc.ralplan.maxIterations": 7 });
+		const sourceRaw = JSON.stringify({ "vib.ralplan.maxIterations": 7 });
 		await fs.writeFile(
 			path.join(agentDir, "config.yml"),
-			YAML.stringify({ gjc: { ralplan: { maxIterations: 7 } } }, null, 2),
+			YAML.stringify({ vib: { ralplan: { maxIterations: 7 } } }, null, 2),
 		);
 		await fs.writeFile(path.join(agentDir, "settings.json"), sourceRaw);
 		// The .bak destination is occupied by a DIRECTORY: the rename fails.
@@ -2838,9 +2838,9 @@ describe("project workflow settings migration", () => {
 		await fs.mkdir(agentDir, { recursive: true });
 		await fs.writeFile(
 			path.join(agentDir, "config.yml"),
-			YAML.stringify({ gjc: { ralplan: { maxIterations: 7 } } }, null, 2),
+			YAML.stringify({ vib: { ralplan: { maxIterations: 7 } } }, null, 2),
 		);
-		await fs.writeFile(path.join(agentDir, "settings.json"), JSON.stringify({ "gjc.ralplan.maxIterations": 7 }));
+		await fs.writeFile(path.join(agentDir, "settings.json"), JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
 
 		const result = await runProbe(cwd, { home, configDir: ".myconfig" });
 		// No pending marker: the file is the user's own and stays untouched.
@@ -2852,12 +2852,12 @@ describe("project workflow settings migration", () => {
 	test("excludes retired workflow keys from project settings discovery after a config.yml removal", async () => {
 		const cwd = await tempDir();
 		const home = await tempDir();
-		await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
+		await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
 		// Nested form, so the stale value is reachable through the generic
 		// settings.get() nested lookup once merged from the retained settings.json.
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "settings.json"),
-			JSON.stringify({ gjc: { ralplan: { maxIterations: 7 } } }),
+			path.join(cwd, ".vib", "settings.json"),
+			JSON.stringify({ vib: { ralplan: { maxIterations: 7 } } }),
 		);
 
 		const first = await runProjectProbe(cwd, { home });
@@ -2867,14 +2867,14 @@ describe("project workflow settings migration", () => {
 		// one default-returning cycle).
 		expect(first.settingsGetMaxIterations).toBe(7);
 
-		// Simulate `gjc config unset gjc.ralplan.maxIterations`.
+		// Simulate `vib config unset vib.ralplan.maxIterations`.
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "config.yml"),
+			path.join(cwd, ".vib", "config.yml"),
 			YAML.stringify({ theme: { dark: "red-claw" } }, null, 2),
 		);
 
 		const second = await runProjectProbe(cwd, { home });
-		// The retained .gjc/settings.json workflow key must not leak through the
+		// The retained .vib/settings.json workflow key must not leak through the
 		// generic settings API after the removal (the resolver no longer reads it):
 		// with the strip settings.get returns the schema default 5, without it the
 		// stale 7.
@@ -2894,10 +2894,10 @@ describe("project workflow settings migration", () => {
 		// The evidence sidecar could not be written; invalid placeholders land in
 		// the agent config.yml so the strict resolver keeps exit-2 observable.
 		const parsed = YAML.parse(await fs.readFile(path.join(agentDir, "config.yml"), "utf8")) as {
-			gjc?: { ralplan?: Record<string, unknown> };
+			vib?: { ralplan?: Record<string, unknown> };
 		};
-		expect(parsed.gjc?.ralplan?.maxIterations).toBe(-1);
-		expect(parsed.gjc?.ralplan?.maxReviewPassesPerLane).toBe(-1);
+		expect(parsed.vib?.ralplan?.maxIterations).toBe(-1);
+		expect(parsed.vib?.ralplan?.maxReviewPassesPerLane).toBe(-1);
 	});
 
 	test("a config-root invalid-value fallback never overwrites a user's present invalid agent config.yml value", async () => {
@@ -2910,30 +2910,30 @@ describe("project workflow settings migration", () => {
 		// its own; the fallback must not overwrite it.
 		await fs.writeFile(
 			path.join(agentDir, "config.yml"),
-			YAML.stringify({ gjc: { ralplan: { maxIterations: "user-mistake" } } }, null, 2),
+			YAML.stringify({ vib: { ralplan: { maxIterations: "user-mistake" } } }, null, 2),
 		);
-		await fs.writeFile(source, JSON.stringify({ "gjc.ralplan.maxIterations": "bad" }));
+		await fs.writeFile(source, JSON.stringify({ "vib.ralplan.maxIterations": "bad" }));
 
 		await runProbe(cwd, { home, configDir: ".myconfig" });
 		const parsed = YAML.parse(await fs.readFile(path.join(agentDir, "config.yml"), "utf8")) as {
-			gjc?: { ralplan?: Record<string, unknown> };
+			vib?: { ralplan?: Record<string, unknown> };
 		};
-		expect(parsed.gjc?.ralplan?.maxIterations).toBe("user-mistake");
+		expect(parsed.vib?.ralplan?.maxIterations).toBe("user-mistake");
 	});
 
 	test("a project invalid-value fallback never overwrites a user's present invalid config.yml value", async () => {
 		const cwd = await tempDir();
-		await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
+		await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
 		// The strict-evidence path is occupied by a directory, so the evidence
 		// write fails and the invalid value would fall back into config.yml.
-		await fs.mkdir(path.join(cwd, ".gjc", "state", "settings.json.strict-invalid"), { recursive: true });
+		await fs.mkdir(path.join(cwd, ".vib", "state", "settings.json.strict-invalid"), { recursive: true });
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "config.yml"),
-			YAML.stringify({ gjc: { ralplan: { maxIterations: "user-mistake" } } }, null, 2),
+			path.join(cwd, ".vib", "config.yml"),
+			YAML.stringify({ vib: { ralplan: { maxIterations: "user-mistake" } } }, null, 2),
 		);
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "settings.json"),
-			JSON.stringify({ "gjc.ralplan.maxIterations": "bad" }),
+			path.join(cwd, ".vib", "settings.json"),
+			JSON.stringify({ "vib.ralplan.maxIterations": "bad" }),
 		);
 
 		const result = await runProjectProbe(cwd);
@@ -2945,13 +2945,13 @@ describe("project workflow settings migration", () => {
 
 	test("merges existing fallback-invalid marker entries across loads", async () => {
 		const cwd = await tempDir();
-		await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
+		await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
 		// The strict-evidence path is occupied by a directory, so the fallback
 		// path stays active across every load.
-		await fs.mkdir(path.join(cwd, ".gjc", "state", "settings.json.strict-invalid"), { recursive: true });
+		await fs.mkdir(path.join(cwd, ".vib", "state", "settings.json.strict-invalid"), { recursive: true });
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "settings.json"),
-			JSON.stringify({ "gjc.ralplan.maxIterations": "badA" }),
+			path.join(cwd, ".vib", "settings.json"),
+			JSON.stringify({ "vib.ralplan.maxIterations": "badA" }),
 		);
 
 		const first = await runProjectProbe(cwd);
@@ -2959,42 +2959,42 @@ describe("project workflow settings migration", () => {
 
 		// A later source adds a second invalid key while the first stays invalid.
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "settings.json"),
-			JSON.stringify({ "gjc.ralplan.maxIterations": "badA", "gjc.ralplan.autoHandoff": "badB" }),
+			path.join(cwd, ".vib", "settings.json"),
+			JSON.stringify({ "vib.ralplan.maxIterations": "badA", "vib.ralplan.autoHandoff": "badB" }),
 		);
 		const second = await runProjectProbe(cwd);
 		expect(second.maxIterations).toBe("badA"); // pre-existing fallback value untouched
 		// maxIterations is now present in config.yml (fallback), so only
 		// autoHandoff is newly written; the marker must MERGE, keeping
 		// maxIterations tracked instead of replacing the marker with just B.
-		const markerPath = path.join(cwd, ".gjc", "settings.json.fallback-invalid");
+		const markerPath = path.join(cwd, ".vib", "settings.json.fallback-invalid");
 		const markerEntries = JSON.parse(await fs.readFile(markerPath, "utf8")) as { key: string }[];
 		expect(markerEntries.map(entry => entry.key).sort()).toEqual([
-			"gjc.ralplan.autoHandoff",
-			"gjc.ralplan.maxIterations",
+			"vib.ralplan.autoHandoff",
+			"vib.ralplan.maxIterations",
 		]);
 
 		// Repair the source: BOTH tracked fallback values must be removed from
 		// config.yml (without the merge, the untracked maxIterations fallback
 		// would persist forever).
-		await fs.writeFile(path.join(cwd, ".gjc", "settings.json"), JSON.stringify({ "gjc.ralplan.autoHandoff": "off" }));
+		await fs.writeFile(path.join(cwd, ".vib", "settings.json"), JSON.stringify({ "vib.ralplan.autoHandoff": "off" }));
 		const repaired = await runProjectProbe(cwd);
 		expect(repaired.maxIterations).toBeNull();
 	});
 
 	test("a partial repair prunes strict evidence to the still-unresolved keys", async () => {
 		const cwd = await tempDir();
-		await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
+		await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
 		// Two unresolved strict keys -> one evidence file recording both.
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "settings.json"),
-			JSON.stringify({ "gjc.ralplan.maxIterations": "bad", "gjc.ralplan.autoHandoff": "bad2" }),
+			path.join(cwd, ".vib", "settings.json"),
+			JSON.stringify({ "vib.ralplan.maxIterations": "bad", "vib.ralplan.autoHandoff": "bad2" }),
 		);
 
 		const first = await runProjectProbe(cwd);
 		expect([...(first.strictInvalidEvidenceKeys ?? [])].sort()).toEqual([
-			"gjc.ralplan.autoHandoff",
-			"gjc.ralplan.maxIterations",
+			"vib.ralplan.autoHandoff",
+			"vib.ralplan.maxIterations",
 		]);
 
 		// Repair ONLY maxIterations; the target config.yml has a malformed
@@ -3002,38 +3002,38 @@ describe("project workflow settings migration", () => {
 		// evidence - the start-of-load prune must retain autoHandoff's entry
 		// (a whole-file clear would silently lose its exit-2).
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "settings.json"),
-			JSON.stringify({ "gjc.ralplan.maxIterations": 7, "gjc.ralplan.autoHandoff": "bad2" }),
+			path.join(cwd, ".vib", "settings.json"),
+			JSON.stringify({ "vib.ralplan.maxIterations": 7, "vib.ralplan.autoHandoff": "bad2" }),
 		);
-		await fs.writeFile(path.join(cwd, ".gjc", "config.yml"), YAML.stringify({ gjc: { ralplan: [] } }, null, 2));
+		await fs.writeFile(path.join(cwd, ".vib", "config.yml"), YAML.stringify({ vib: { ralplan: [] } }, null, 2));
 
 		const second = await runProjectProbe(cwd);
-		expect(second.strictInvalidEvidenceKeys).toEqual(["gjc.ralplan.autoHandoff"]);
+		expect(second.strictInvalidEvidenceKeys).toEqual(["vib.ralplan.autoHandoff"]);
 	});
 
 	test("a future-schema project config.yml still retains strict errors", async () => {
 		const cwd = await tempDir();
-		await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
-		await fs.writeFile(path.join(cwd, ".gjc", "config.yml"), YAML.stringify({ configSchemaVersion: 9999 }, null, 2));
+		await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
+		await fs.writeFile(path.join(cwd, ".vib", "config.yml"), YAML.stringify({ configSchemaVersion: 9999 }, null, 2));
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "settings.json"),
-			JSON.stringify({ "gjc.ralplan.maxIterations": "bad" }),
+			path.join(cwd, ".vib", "settings.json"),
+			JSON.stringify({ "vib.ralplan.maxIterations": "bad" }),
 		);
 
 		const result = await runProjectProbe(cwd);
 		expect(result.strictInvalidEvidenceExists).toBe(true);
-		expect(result.strictInvalidEvidenceKeys).toEqual(["gjc.ralplan.maxIterations"]);
+		expect(result.strictInvalidEvidenceKeys).toEqual(["vib.ralplan.maxIterations"]);
 		expect(result.maxIterations).toBeNull(); // future-schema target untouched
 	});
 
 	test("fallback cleanup leaves future-schema targets and markers untouched", async () => {
 		const cwd = await tempDir();
-		await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
-		await fs.mkdir(path.join(cwd, ".gjc", "state", "settings.json.strict-invalid"), { recursive: true });
+		await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
+		await fs.mkdir(path.join(cwd, ".vib", "state", "settings.json.strict-invalid"), { recursive: true });
 		// Fallback path: source invalid -> config.yml fallback value + marker.
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "settings.json"),
-			JSON.stringify({ "gjc.ralplan.maxIterations": "badA" }),
+			path.join(cwd, ".vib", "settings.json"),
+			JSON.stringify({ "vib.ralplan.maxIterations": "badA" }),
 		);
 		const first = await runProjectProbe(cwd);
 		expect(first.maxIterations).toBe("badA");
@@ -3042,33 +3042,33 @@ describe("project workflow settings migration", () => {
 		// is repaired. The cleanup must NOT unset the recorded key or touch the
 		// marker (an older binary treats future-schema config as read-only).
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "config.yml"),
-			YAML.stringify({ configSchemaVersion: 9999, gjc: { ralplan: { maxIterations: "badA" } } }, null, 2),
+			path.join(cwd, ".vib", "config.yml"),
+			YAML.stringify({ configSchemaVersion: 9999, vib: { ralplan: { maxIterations: "badA" } } }, null, 2),
 		);
-		await fs.writeFile(path.join(cwd, ".gjc", "settings.json"), "{}");
+		await fs.writeFile(path.join(cwd, ".vib", "settings.json"), "{}");
 
 		const second = await runProjectProbe(cwd);
 		expect(second.maxIterations).toBe("badA"); // future-schema target untouched
-		const markerPath = path.join(cwd, ".gjc", "settings.json.fallback-invalid");
+		const markerPath = path.join(cwd, ".vib", "settings.json.fallback-invalid");
 		const markerEntries = JSON.parse(await fs.readFile(markerPath, "utf8")) as { key: string }[];
-		expect(markerEntries.map(entry => entry.key)).toEqual(["gjc.ralplan.maxIterations"]);
+		expect(markerEntries.map(entry => entry.key)).toEqual(["vib.ralplan.maxIterations"]);
 	});
 
 	test("a future-schema migration surfaces evidence-write failures", async () => {
 		const cwd = await tempDir();
 		const home = await tempDir();
-		await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
-		// .gjc/state is a FILE, so the project evidence cannot be written; the
+		await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
+		// .vib/state is a FILE, so the project evidence cannot be written; the
 		// read-only future-schema target cannot carry fallback placeholders.
-		await fs.writeFile(path.join(cwd, ".gjc", "state"), "occupied");
-		await fs.writeFile(path.join(cwd, ".gjc", "config.yml"), YAML.stringify({ configSchemaVersion: 9999 }, null, 2));
+		await fs.writeFile(path.join(cwd, ".vib", "state"), "occupied");
+		await fs.writeFile(path.join(cwd, ".vib", "config.yml"), YAML.stringify({ configSchemaVersion: 9999 }, null, 2));
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "settings.json"),
-			JSON.stringify({ "gjc.ralplan.maxIterations": "bad" }),
+			path.join(cwd, ".vib", "settings.json"),
+			JSON.stringify({ "vib.ralplan.maxIterations": "bad" }),
 		);
 
 		const result = await runProjectProbe(cwd, { home, expectLoadFailure: true });
-		// The unreadable marker (ENOTDIR: .gjc/state is a FILE) ABORTS the
+		// The unreadable marker (ENOTDIR: .vib/state is a FILE) ABORTS the
 		// migration instead of reimporting the stale value with an empty
 		// ownership set; the read-only future-schema target is left untouched.
 		expect(result.loadFailed).toBe(true);
@@ -3077,34 +3077,34 @@ describe("project workflow settings migration", () => {
 	test("an unreadable ownership marker aborts the project migration without touching the user's configuration", async () => {
 		const cwd = await tempDir();
 		const home = await tempDir();
-		await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
+		await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
 		// The migrated-key marker path is occupied by a directory, so the marker
 		// read fails (EISDIR) and the migration aborts.
-		await fs.mkdir(path.join(cwd, ".gjc", "state", "settings.json.migrated-keys"), { recursive: true });
+		await fs.mkdir(path.join(cwd, ".vib", "state", "settings.json.migrated-keys"), { recursive: true });
 		// config.yml already contains a PRESENT-but-invalid maxIterations value
 		// (user data) and the source holds the valid legacy value that repairs it.
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "config.yml"),
-			YAML.stringify({ gjc: { ralplan: { maxIterations: "user-mistake" } } }, null, 2),
+			path.join(cwd, ".vib", "config.yml"),
+			YAML.stringify({ vib: { ralplan: { maxIterations: "user-mistake" } } }, null, 2),
 		);
-		await fs.writeFile(path.join(cwd, ".gjc", "settings.json"), JSON.stringify({ "gjc.ralplan.maxIterations": 7 }));
+		await fs.writeFile(path.join(cwd, ".vib", "settings.json"), JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
 
 		const result = await runProjectProbe(cwd, { home, expectLoadFailure: true });
 		// The UNREADABLE marker ABORTS the migration (fail closed) instead of
 		// proceeding with an empty ownership set that would reimport the stale
 		// value: the user's configuration is left untouched for repair.
 		expect(result.loadFailed).toBe(true);
-		const retained = YAML.parse(await fs.readFile(path.join(cwd, ".gjc", "config.yml"), "utf8")) as {
-			gjc?: { ralplan?: { maxIterations?: unknown } };
+		const retained = YAML.parse(await fs.readFile(path.join(cwd, ".vib", "config.yml"), "utf8")) as {
+			vib?: { ralplan?: { maxIterations?: unknown } };
 		};
-		expect(retained.gjc?.ralplan?.maxIterations).toBe("user-mistake");
+		expect(retained.vib?.ralplan?.maxIterations).toBe("user-mistake");
 	});
 
 	test("a scalar project config.yml root is not replaced by the migration", async () => {
 		const cwd = await tempDir();
-		await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
-		await fs.writeFile(path.join(cwd, ".gjc", "config.yml"), "just a scalar\n");
-		await fs.writeFile(path.join(cwd, ".gjc", "settings.json"), JSON.stringify({ "gjc.ralplan.maxIterations": 7 }));
+		await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
+		await fs.writeFile(path.join(cwd, ".vib", "config.yml"), "just a scalar\n");
+		await fs.writeFile(path.join(cwd, ".vib", "settings.json"), JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
 
 		const result = await runProjectProbe(cwd);
 		// The malformed scalar root is user data; the migration aborts instead of
@@ -3115,19 +3115,19 @@ describe("project workflow settings migration", () => {
 
 	test("an all-present first load still records ownership so a later unset sticks", async () => {
 		const cwd = await tempDir();
-		await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
+		await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "config.yml"),
-			YAML.stringify({ gjc: { ralplan: { maxIterations: 9 } } }, null, 2),
+			path.join(cwd, ".vib", "config.yml"),
+			YAML.stringify({ vib: { ralplan: { maxIterations: 9 } } }, null, 2),
 		);
-		await fs.writeFile(path.join(cwd, ".gjc", "settings.json"), JSON.stringify({ "gjc.ralplan.maxIterations": 7 }));
+		await fs.writeFile(path.join(cwd, ".vib", "settings.json"), JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
 
 		const first = await runProjectProbe(cwd);
 		expect(first.maxIterations).toBe(9); // pre-existing valid value wins (all-present)
 
-		// Remove the key (simulate `gjc config unset gjc.ralplan.maxIterations`).
+		// Remove the key (simulate `vib config unset vib.ralplan.maxIterations`).
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "config.yml"),
+			path.join(cwd, ".vib", "config.yml"),
 			YAML.stringify({ theme: { dark: "red-claw" } }, null, 2),
 		);
 
@@ -3139,13 +3139,13 @@ describe("project workflow settings migration", () => {
 
 	test("an initially unreadable project source keeps the strict error observable", async () => {
 		const cwd = await tempDir();
-		await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
+		await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
 		await fs.writeFile(
-			path.join(cwd, ".gjc", "settings.json"),
-			JSON.stringify({ "gjc.ralplan.maxIterations": "bad" }),
+			path.join(cwd, ".vib", "settings.json"),
+			JSON.stringify({ "vib.ralplan.maxIterations": "bad" }),
 		);
 		// Mode 000: an EXISTING but unreadable source must still fail loudly.
-		await fs.chmod(path.join(cwd, ".gjc", "settings.json"), 0o000);
+		await fs.chmod(path.join(cwd, ".vib", "settings.json"), 0o000);
 
 		const result = await runProjectProbe(cwd);
 		expect(result.strictInvalidEvidenceExists).toBe(true);
@@ -3155,8 +3155,8 @@ describe("project workflow settings migration", () => {
 
 	test("ensureWorkflowSettingsMigrated triggers the migration from the direct-command path", async () => {
 		const cwd = await tempDir();
-		await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
-		await fs.writeFile(path.join(cwd, ".gjc", "settings.json"), JSON.stringify({ "gjc.ralplan.maxIterations": 7 }));
+		await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
+		await fs.writeFile(path.join(cwd, ".vib", "settings.json"), JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
 
 		const result = await runProjectProbe(cwd, { viaTrigger: true });
 		expect(result.maxIterations).toBe(7);

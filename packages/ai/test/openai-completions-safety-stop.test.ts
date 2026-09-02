@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "bun:test";
-import { streamOpenAICompletions } from "@gajae-code/ai/providers/openai-completions";
-import type { AssistantMessageEvent, Context, Model } from "@gajae-code/ai/types";
+import { streamOpenAICompletions } from "@vib-rato/ai/providers/openai-completions";
+import type { AssistantMessageEvent, Context, Model } from "@vib-rato/ai/types";
 import { withProviderSafetyStopAdapterInvocation } from "../src/adapter-internals/provider-safety-stop";
 import { getBundledModel } from "../src/models";
 import { isProviderSafetyStopAuthenticated } from "../src/utils/provider-safety-stop";

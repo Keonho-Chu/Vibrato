@@ -5,7 +5,7 @@ import path from "node:path";
 import { Broker } from "../src/sdk/broker/broker";
 import { LifecycleLedger, type LifecycleLedgerEntry } from "../src/sdk/broker/lifecycle-ledger";
 
-const temp = () => fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-terminal-evidence-"));
+const temp = () => fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-terminal-evidence-"));
 const ledgerFile = (agentDir: string) => path.join(agentDir, "sdk", "lifecycle-ledger.jsonl");
 
 async function ledgerRows(agentDir: string): Promise<LifecycleLedgerEntry[]> {
@@ -104,8 +104,8 @@ it("withholds proof when a row follows a proven terminal outcome", async () => {
 
 it("returns the real terminal outcome when a slow spawn is stamped by a concurrent recovery", async () => {
 	const agentDir = await temp();
-	const previousCommand = process.env.GJC_SDK_SESSION_COMMAND;
-	process.env.GJC_SDK_SESSION_COMMAND = "/bin/sleep 60";
+	const previousCommand = process.env.VIB_SDK_SESSION_COMMAND;
+	process.env.VIB_SDK_SESSION_COMMAND = "/bin/sleep 60";
 	const broker = new Broker({ agentDir });
 	await broker.start();
 	try {
@@ -140,8 +140,8 @@ it("returns the real terminal outcome when a slow spawn is stamped by a concurre
 			rows.filter(row => JSON.stringify(row.response ?? "").includes("terminal evidence could not be verified")),
 		).toHaveLength(0);
 	} finally {
-		if (previousCommand === undefined) delete process.env.GJC_SDK_SESSION_COMMAND;
-		else process.env.GJC_SDK_SESSION_COMMAND = previousCommand;
+		if (previousCommand === undefined) delete process.env.VIB_SDK_SESSION_COMMAND;
+		else process.env.VIB_SDK_SESSION_COMMAND = previousCommand;
 		await broker.stop();
 		await fs.rm(agentDir, { recursive: true, force: true });
 	}

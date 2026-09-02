@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import type { Model } from "@gajae-code/ai";
+import type { Model } from "@vib-rato/ai";
 import { resolveTaskRouting } from "../src/config/autorouting";
 import { validateAutoroutingEffective } from "../src/config/autorouting-contract";
 import { canonicalJsonBytes, generateTierChains } from "../src/config/autorouting-generator";

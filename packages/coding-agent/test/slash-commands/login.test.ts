@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
-import { OAuthManualInputManager } from "@gajae-code/coding-agent/modes/oauth-manual-input";
-import type { InteractiveModeContext } from "@gajae-code/coding-agent/modes/types";
-import { executeBuiltinSlashCommand } from "@gajae-code/coding-agent/slash-commands/builtin-registry";
+import { OAuthManualInputManager } from "@vib-rato/coding-agent/modes/oauth-manual-input";
+import type { InteractiveModeContext } from "@vib-rato/coding-agent/modes/types";
+import { executeBuiltinSlashCommand } from "@vib-rato/coding-agent/slash-commands/builtin-registry";
 
 type RuntimeHarness = {
 	runtime: { ctx: InteractiveModeContext; handleBackgroundCommand: () => void };

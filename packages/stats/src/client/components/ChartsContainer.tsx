@@ -17,15 +17,26 @@ import { formatRangeTick, rangeMeta } from "./range-meta";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 
-const MODEL_COLORS = [
-	"#a78bfa", // violet
-	"#22d3ee", // cyan
-	"#ec4899", // pink
-	"#4ade80", // green
-	"#fbbf24", // amber
-	"#f87171", // red
-	"#60a5fa", // blue
-];
+const MODEL_COLORS = {
+	light: [
+		"#002f6d", // brand blue
+		"#4f6fa3", // steel blue
+		"#7a8ca8", // blue-gray
+		"#4ade80", // green
+		"#fbbf24", // amber
+		"#f87171", // red
+		"#8fb3e8", // light blue
+	],
+	dark: [
+		"#7fa6e6", // brand blue tint
+		"#8fb3e8", // steel blue tint
+		"#a9b7cc", // blue-gray tint
+		"#4ade80", // green
+		"#fbbf24", // amber
+		"#f87171", // red
+		"#60a5fa", // blue
+	],
+} as const;
 
 const CHART_THEMES = {
 	dark: {
@@ -62,8 +73,8 @@ export function ChartsContainer({ modelSeries, timeRange }: ChartsContainerProps
 		datasets: chartData.series.map((seriesName, index) => ({
 			label: seriesName,
 			data: chartData.data.map(d => d[seriesName] ?? 0),
-			borderColor: MODEL_COLORS[index % MODEL_COLORS.length],
-			backgroundColor: `${MODEL_COLORS[index % MODEL_COLORS.length]}20`,
+			borderColor: MODEL_COLORS[theme][index % MODEL_COLORS[theme].length],
+			backgroundColor: `${MODEL_COLORS[theme][index % MODEL_COLORS[theme].length]}20`,
 			fill: true,
 			tension: 0.4,
 			pointRadius: 0,

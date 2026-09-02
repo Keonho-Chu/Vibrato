@@ -10,7 +10,7 @@ import {
 	type AppendOnlyContextManager,
 	INTENT_FIELD,
 	ThinkingLevel,
-} from "@gajae-code/agent-core";
+} from "@vib-rato/agent-core";
 import {
 	type AssistantMessage,
 	type AttemptScopeRef,
@@ -24,8 +24,8 @@ import {
 	type SimpleStreamOptions,
 	streamSimple,
 	type ToolResultMessage,
-} from "@gajae-code/ai/core";
-import type { Component } from "@gajae-code/tui";
+} from "@vib-rato/ai/core";
+import type { Component } from "@vib-rato/tui";
 import {
 	$flag,
 	getAgentDbPath,
@@ -36,7 +36,7 @@ import {
 	prompt,
 	Snowflake,
 	setProjectDir,
-} from "@gajae-code/utils";
+} from "@vib-rato/utils";
 import {
 	createAppendOnlyContextManager,
 	providerSupportsAppendOnlyAuto,
@@ -75,8 +75,8 @@ import type { BashRestrictionProfile } from "../tools/bash-allowed-prefixes";
 import { SearchTool } from "../tools/search";
 import "../discovery";
 import { resolveConfigValue } from "../config/resolve-config-value";
-import { getEmbeddedDefaultGjcSkills } from "../defaults/gjc-defaults";
-import { BUNDLED_GROK_BUILD_EXTENSION_ID, getBundledGrokBuildExtensionFactory } from "../defaults/gjc-grok-cli";
+import { getEmbeddedDefaultVibSkills } from "../defaults/vib-defaults";
+import { BUNDLED_GROK_BUILD_EXTENSION_ID, getBundledGrokBuildExtensionFactory } from "../defaults/vib-grok-cli";
 import { initializeWithSettings, releaseSettingsScope } from "../discovery";
 import { clearPluginRootsAndCaches, resolveActiveProjectRegistryPath } from "../discovery/helpers";
 import { TtsrManager } from "../export/ttsr";
@@ -96,25 +96,25 @@ import {
 	wrapRegisteredTools,
 } from "../extensibility/extensions";
 import { ExtensionRuntime } from "../extensibility/extensions/loader";
-import { type ConstrainedPluginHook, loadConstrainedPluginHooks } from "../extensibility/gjc-plugins/constrained-hooks";
-import { resolveCurrentPhaseForParent } from "../extensibility/gjc-plugins/injection";
-import { currentActivationFingerprint } from "../extensibility/gjc-plugins/lifecycle";
-import {
-	buildPluginMcpConfigs,
-	getGjcPluginToolDeclarations,
-	loadAlwaysOnPluginTools,
-	renderAlwaysOnSystemAppendices,
-} from "../extensibility/gjc-plugins/runtime-adapters";
-import {
-	GjcRuntimeFindingAccumulator,
-	type GjcRuntimeSnapshotProvider,
-	GjcRuntimeSnapshotStore,
-	gjcActivationGenerationFor,
-} from "../extensibility/gjc-plugins/runtime-quarantine";
-import { loadActiveSubskillTools } from "../extensibility/gjc-plugins/tools";
 import { discoverAndLoadHookExtensions } from "../extensibility/hooks/loader";
 import { loadSkills, type Skill, type SkillWarning, setActiveSkills } from "../extensibility/skills";
 import type { FileSlashCommand } from "../extensibility/slash-commands";
+import { type ConstrainedPluginHook, loadConstrainedPluginHooks } from "../extensibility/vib-plugins/constrained-hooks";
+import { resolveCurrentPhaseForParent } from "../extensibility/vib-plugins/injection";
+import { currentActivationFingerprint } from "../extensibility/vib-plugins/lifecycle";
+import {
+	buildPluginMcpConfigs,
+	getVibPluginToolDeclarations,
+	loadAlwaysOnPluginTools,
+	renderAlwaysOnSystemAppendices,
+} from "../extensibility/vib-plugins/runtime-adapters";
+import {
+	VibRuntimeFindingAccumulator,
+	type VibRuntimeSnapshotProvider,
+	VibRuntimeSnapshotStore,
+	vibActivationGenerationFor,
+} from "../extensibility/vib-plugins/runtime-quarantine";
+import { loadActiveSubskillTools } from "../extensibility/vib-plugins/tools";
 import type { HindsightSessionState } from "../hindsight/state";
 import { normalizePluginHook } from "../hooks/normalize";
 import { initializeLocalRoot, LocalProtocolHandler, type LocalProtocolOptions } from "../internal-urls";
@@ -423,7 +423,7 @@ function resolveAgentRosterLabel(label: string | undefined, agentId: string, dis
 export interface CreateAgentSessionOptions {
 	/** Working directory for project-local discovery. Default: getProjectDir() */
 	cwd?: string;
-	/** Global config directory. Default: ~/.gjc/agent */
+	/** Global config directory. Default: ~/.vib/agent */
 	agentDir?: string;
 	/** Spawns to allow. Default: "*" */
 	spawns?: string;
@@ -472,8 +472,8 @@ export interface CreateAgentSessionOptions {
 	 * AbortSignal. A matching custom or extension tool is rejected.
 	 */
 	automationTools?: AutomationTools;
-	/** Explicit parent/phase used to load active GJC sub-skill tools for this session. */
-	gjcSubskillToolContext?: { parent: string; phase: string; sessionId?: string; cwd?: string };
+	/** Explicit parent/phase used to load active Vibrato sub-skill tools for this session. */
+	vibSubskillToolContext?: { parent: string; phase: string; sessionId?: string; cwd?: string };
 	/** Inline extensions (merged with discovery). */
 	extensions?: ExtensionFactory[];
 	/** Additional extension paths to load (merged with discovery). */
@@ -491,7 +491,7 @@ export interface CreateAgentSessionOptions {
 	/** Shared event bus for tool/extension communication. Default: creates new bus. */
 	eventBus?: EventBus;
 
-	/** Skills. Default: bundled GJC defaults, plus filesystem skills when enabled */
+	/** Skills. Default: bundled Vibrato defaults, plus filesystem skills when enabled */
 	skills?: Skill[];
 	/** Rules. Default: discovered from multiple locations */
 	rules?: Rule[];
@@ -499,7 +499,7 @@ export interface CreateAgentSessionOptions {
 	contextFiles?: Array<{ path: string; content: string }>;
 	/** Pre-built workspace tree (skips re-scanning; passed by parents to subagents). */
 	workspaceTree?: WorkspaceTree;
-	/** Prompt templates. Default: discovered from cwd/.gjc/prompts/ + agentDir/prompts/ */
+	/** Prompt templates. Default: discovered from cwd/.vib/prompts/ + agentDir/prompts/ */
 	promptTemplates?: PromptTemplate[];
 	/** File-based slash commands. Default: discovered from commands/ directories */
 	slashCommands?: FileSlashCommand[];
@@ -514,8 +514,8 @@ export interface CreateAgentSessionOptions {
 	mcpConfigPath?: string;
 	/**
 	 * Whether conventional MCP autoload is enabled for a top-level standalone
-	 * session (default: true). When false, native user `~/.gjc/agent/mcp.json`
-	 * and project `.gjc/mcp.json` registrations are not discovered or connected
+	 * session (default: true). When false, native user `~/.vib/agent/mcp.json`
+	 * and project `.vib/mcp.json` registrations are not discovered or connected
 	 * at startup. Plugin-bundle MCPs and `mcpConfigPath` exact-file sessions
 	 * are unaffected. CLI: `--no-mcp`.
 	 */
@@ -642,10 +642,10 @@ export interface CreateAgentSessionResult {
 	/** Shared event bus for tool/extension communication */
 	eventBus: EventBus;
 	/**
-	 * Read-only view of GJC bundle runtime evidence for the activation generation
-	 * this session published. Undefined when no GJC bundles participated.
+	 * Read-only view of Vibrato bundle runtime evidence for the activation generation
+	 * this session published. Undefined when no Vibrato bundles participated.
 	 */
-	gjcRuntimeSnapshot?: GjcRuntimeSnapshotProvider;
+	vibRuntimeSnapshot?: VibRuntimeSnapshotProvider;
 }
 
 export interface DeferredMcpConfigStartupResult {
@@ -684,7 +684,7 @@ function getDefaultAgentDir(): string {
  *
  * Default: local SQLite store at `<agentDir>/agent.db`.
  *
- * Broker mode: when `GJC_AUTH_BROKER_URL` is set, credentials are pulled from
+ * Broker mode: when `VIB_AUTH_BROKER_URL` is set, credentials are pulled from
  * a remote auth-broker over the wire. Refresh tokens never leave the broker;
  * the client receives access tokens with `refresh = "__remote__"` and calls
  * back into the broker through the {@link AuthStorageOptions.refreshOAuthCredential}
@@ -1071,7 +1071,7 @@ function buildMCPPromptCommands(manager: MCPManager): LoadedCustomCommand[] {
  * const { session } = await createAgentSession();
  *
  * // With explicit model
- * import { getModel } from '@gajae-code/ai/core';
+ * import { getModel } from '@vib-rato/ai/core';
  * const { session } = await createAgentSession({
  *   model: getModel('anthropic', 'Anthropic model-opus-4-5'),
  *   thinkingLevel: 'high',
@@ -1094,12 +1094,12 @@ function buildMCPPromptCommands(manager: MCPManager): LoadedCustomCommand[] {
  * ```
  */
 
-function withEmbeddedDefaultGjcSkills(skills: Skill[]): Skill[] {
+function withEmbeddedDefaultVibSkills(skills: Skill[]): Skill[] {
 	const byName = new Map(skills.map(skill => [skill.name, skill]));
-	// The four public GJC workflow skills are a product invariant: even if a
+	// The four public Vibrato workflow skills are a product invariant: even if a
 	// caller-supplied or filesystem skill shares a name, the bundled definition
 	// wins so workflow routing can never be silently hijacked.
-	for (const defaultSkill of getEmbeddedDefaultGjcSkills()) {
+	for (const defaultSkill of getEmbeddedDefaultVibSkills()) {
 		byName.set(defaultSkill.name, defaultSkill);
 	}
 	return [...byName.values()];
@@ -1911,11 +1911,11 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 		let skills: Skill[];
 		let skillWarnings: SkillWarning[];
 		if (options.skills !== undefined) {
-			// The four public GJC workflow skills are a product invariant, not
+			// The four public Vibrato workflow skills are a product invariant, not
 			// ordinary filesystem-discovered skills. Keep them available even for
 			// explicit SDK skill lists so startup and command routing survive
-			// accidental `.gjc` deletion or overzealous caller filtering.
-			skills = withEmbeddedDefaultGjcSkills(options.skills);
+			// accidental `.vib` deletion or overzealous caller filtering.
+			skills = withEmbeddedDefaultVibSkills(options.skills);
 			skillWarnings = [];
 		} else if (settings.get("skills.enabled")) {
 			const skillsResult = await logger.time("loadSkills", loadSkills, {
@@ -1924,14 +1924,14 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 				cwd,
 				disabledExtensions: settings.get("disabledExtensions"),
 			});
-			skills = withEmbeddedDefaultGjcSkills(skillsResult.skills);
+			skills = withEmbeddedDefaultVibSkills(skillsResult.skills);
 			skillWarnings = skillsResult.warnings;
 		} else {
-			// GJC's four public workflow skills are bundled into the binary so the
-			// default workflow surface survives accidental .gjc deletion. Filesystem
+			// Vibrato's four public workflow skills are bundled into the binary so the
+			// default workflow surface survives accidental .vib deletion. Filesystem
 			// skill discovery is enabled by default (`skills.enabled`), so this
 			// branch only runs when the user explicitly disabled it.
-			skills = getEmbeddedDefaultGjcSkills();
+			skills = getEmbeddedDefaultVibSkills();
 			skillWarnings = [];
 		}
 
@@ -2184,12 +2184,12 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 					"Cannot rescope a session with caller-owned MCP authority; recreate the session at the target cwd.",
 				);
 			}
-			await session.refreshGjcSubskillTools();
+			await session.refreshVibSubskillTools();
 			const previousCwdCapturing = [...cwdCapturingToolNames];
 			const nextCwdCapturing: string[] = [];
 			const nextCustomTools: CustomTool[] = [];
 			try {
-				const declarations = await getGjcPluginToolDeclarations(to);
+				const declarations = await getVibPluginToolDeclarations(to);
 				const pluginToolResult = await loadAlwaysOnPluginTools({
 					cwd: to,
 					reservedToolNames: session.getAllToolNames().filter(name => !previousCwdCapturing.includes(name)),
@@ -2226,7 +2226,7 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 						...Object.fromEntries(
 							Object.keys(pluginConfigs).map(name => [
 								name,
-								{ provider: "gjc-plugins", providerName: "GJC plugin bundle", level: "project" as const },
+								{ provider: "vib-plugins", providerName: "Vibrato plugin bundle", level: "project" as const },
 							]),
 						),
 					};
@@ -2285,7 +2285,7 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 						cwd: to,
 						disabledExtensions: settings.get("disabledExtensions"),
 					});
-					skills = withEmbeddedDefaultGjcSkills(reloaded.skills);
+					skills = withEmbeddedDefaultVibSkills(reloaded.skills);
 					if (!options.parentTaskPrefix) setActiveSkills(skills);
 					await session?.replaceSkills(skills);
 				} catch (error) {
@@ -2760,8 +2760,8 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 
 		// A top-level session loads MCP tools from three bounded surfaces: a
 		// caller-supplied exact config (`--mcp-config`), conventional native
-		// user/project registrations (`~/.gjc/agent/mcp.json` and `.gjc/mcp.json`
-		// written by `gjc mcp add`; disabled by `--no-mcp`), and plugin-bundle
+		// user/project registrations (`~/.vib/agent/mcp.json` and `.vib/mcp.json`
+		// written by `vib mcp add`; disabled by `--no-mcp`), and plugin-bundle
 		// MCP servers (created below after `customTools` is populated). Existing
 		// caller-supplied managers remain available for legacy in-process callers.
 		const customTools: CustomTool[] = [];
@@ -2793,15 +2793,15 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 		// Registry load performs v1-to-v2 metadata migration without importing
 		// plugin implementations. Keep this declaration phase before any subskill
 		// tool activation so an entry cannot be live on both paths.
-		const gjcToolDeclarations = await getGjcPluginToolDeclarations(cwd);
+		const vibToolDeclarations = await getVibPluginToolDeclarations(cwd);
 
-		const gjcSubskillToolContext = options.gjcSubskillToolContext;
-		if (gjcSubskillToolContext?.parent.trim() && gjcSubskillToolContext.phase.trim()) {
+		const vibSubskillToolContext = options.vibSubskillToolContext;
+		if (vibSubskillToolContext?.parent.trim() && vibSubskillToolContext.phase.trim()) {
 			const pluginTools = await loadActiveSubskillTools({
-				cwd: gjcSubskillToolContext.cwd ?? cwd,
-				sessionId: gjcSubskillToolContext.sessionId ?? logicalSessionId,
-				parent: gjcSubskillToolContext.parent,
-				phase: gjcSubskillToolContext.phase,
+				cwd: vibSubskillToolContext.cwd ?? cwd,
+				sessionId: vibSubskillToolContext.sessionId ?? logicalSessionId,
+				parent: vibSubskillToolContext.parent,
+				phase: vibSubskillToolContext.phase,
 				reservedToolNames: getReservedSubskillToolNames(),
 			});
 			if (pluginTools.length > 0) {
@@ -2827,43 +2827,43 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 			}
 		}
 
-		// GJC bundle runtime evidence for this activation. Producers below return
+		// Vibrato bundle runtime evidence for this activation. Producers below return
 		// findings into this caller-owned accumulator and never publish; exactly one
 		// complete snapshot is published once every producer has run.
-		const gjcRuntimeStore = new GjcRuntimeSnapshotStore();
-		let gjcProducersComplete = true;
-		let gjcActivationGeneration = 0;
+		const vibRuntimeStore = new VibRuntimeSnapshotStore();
+		let vibProducersComplete = true;
+		let vibActivationGeneration = 0;
 		try {
-			gjcActivationGeneration = gjcActivationGenerationFor(await currentActivationFingerprint({ cwd }));
+			vibActivationGeneration = vibActivationGenerationFor(await currentActivationFingerprint({ cwd }));
 		} catch (error) {
 			// Without a readable activation generation no snapshot can be proven
 			// current, so publish nothing rather than a snapshot consumers cannot
 			// validate against.
-			gjcProducersComplete = false;
-			logger.warn("Failed to derive GJC bundle activation generation", { error: safeErrorForLog(error) });
+			vibProducersComplete = false;
+			logger.warn("Failed to derive Vibrato bundle activation generation", { error: safeErrorForLog(error) });
 		}
-		const gjcFindings = new GjcRuntimeFindingAccumulator(gjcActivationGeneration);
+		const vibFindings = new VibRuntimeFindingAccumulator(vibActivationGeneration);
 
-		// Always-on GJC plugin bundle tools (validated registry surfaces). This is
+		// Always-on Vibrato plugin bundle tools (validated registry surfaces). This is
 		// additive and a no-op when no plugins are installed for the cwd. Surfaces
 		// are hash-verified and collision-checked; declared names are authoritative.
 		try {
 			const pluginToolResult = await loadAlwaysOnPluginTools({
 				cwd,
 				reservedToolNames: [...getReservedSubskillToolNames(), ...customTools.map(tool => tool.name)],
-				declarations: gjcToolDeclarations,
+				declarations: vibToolDeclarations,
 			});
 			if (pluginToolResult.tools.length > 0) {
 				customTools.push(...pluginToolResult.tools);
 				cwdCapturingToolNames.push(...pluginToolResult.tools.map(tool => tool.name));
 			}
 			for (const q of pluginToolResult.quarantine) {
-				gjcFindings.add({ identity: q.identity, surfaceId: q.surfaceId, code: q.code, message: q.message });
-				logger.warn("Quarantined GJC plugin surface", { plugin: q.plugin, surface: q.surfaceId, code: q.code });
+				vibFindings.add({ identity: q.identity, surfaceId: q.surfaceId, code: q.code, message: q.message });
+				logger.warn("Quarantined Vibrato plugin surface", { plugin: q.plugin, surface: q.surfaceId, code: q.code });
 			}
 		} catch (error) {
-			gjcProducersComplete = false;
-			logger.warn("Failed to load always-on GJC plugin tools", { error: safeErrorForLog(error) });
+			vibProducersComplete = false;
+			logger.warn("Failed to load always-on Vibrato plugin tools", { error: safeErrorForLog(error) });
 		}
 
 		const preExactCustomToolNames = customTools.map(tool => tool.name);
@@ -2893,12 +2893,12 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 			}
 		} else if (!mcpManager && !isCanonicalSubSession) {
 			// Conventional MCP autoload: top-level standalone sessions consume
-			// enabled registrations from GJC's own native configs — project
-			// `.gjc/mcp.json` and user `~/.gjc/agent/mcp.json` (written by
-			// `gjc mcp add`). Native project scope wins over native user scope on
+			// enabled registrations from Vibrato's own native configs — project
+			// `.vib/mcp.json` and user `~/.vib/agent/mcp.json` (written by
+			// `vib mcp add`). Native project scope wins over native user scope on
 			// name collisions (capability priority), and plugin-bundle MCPs below
 			// override conventional entries with the same name. Claude Code/Codex
-			// MCP files are explicit import sources into `.gjc` (#4291), never
+			// MCP files are explicit import sources into `.vib` (#4291), never
 			// implicit runtime authorities here. `--no-mcp` opts a session out;
 			// `--mcp-config` exact-file sessions never reach here. The owned manager's
 			// tools are surfaced as always-on custom tools (like plugin MCPs), so an
@@ -2909,7 +2909,7 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 				try {
 					const loaded = await loadAllMCPConfigs(cwd, {
 						// User scope is this session's agent directory, the same file
-						// `gjc mcp add` (user scope) writes; an SDK embedder that runs on
+						// `vib mcp add` (user scope) writes; an SDK embedder that runs on
 						// its own agent directory autoloads its own registrations.
 						agentDir,
 						// Project-scope native config loads by default; only an
@@ -2920,9 +2920,9 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 							? settings.get("mcp.enableProjectConfig")
 							: true,
 						autoloadOnly: true,
-						// Runtime authority is GJC's native `.gjc` config in both scopes;
+						// Runtime authority is Vibrato's native `.vib` config in both scopes;
 						// Claude Code/Codex MCP files are explicit import sources into
-						// `.gjc`, not implicit competing runtime authorities.
+						// `.vib`, not implicit competing runtime authorities.
 						nativeOnly: true,
 						settings,
 					});
@@ -2938,7 +2938,7 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 					logger.warn("Failed to discover conventional MCP servers", { error: safeErrorForLog(error) });
 				}
 			}
-			// Always-on GJC plugin-bundle MCP servers, merged over conventional
+			// Always-on Vibrato plugin-bundle MCP servers, merged over conventional
 			// servers on name collisions. Top-level sessions own a manager and
 			// connect the validated servers; subagents inherit the parent's manager
 			// via options.mcpManager and never spawn their own (prevents duplicate
@@ -2948,8 +2948,8 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 			try {
 				const { configs, quarantine } = await buildPluginMcpConfigs({ cwd });
 				for (const q of quarantine) {
-					gjcFindings.add({ identity: q.identity, surfaceId: q.surfaceId, code: q.code, message: q.message });
-					logger.warn("Quarantined GJC plugin MCP", { plugin: q.plugin, surface: q.surfaceId, code: q.code });
+					vibFindings.add({ identity: q.identity, surfaceId: q.surfaceId, code: q.code, message: q.message });
+					logger.warn("Quarantined Vibrato plugin MCP", { plugin: q.plugin, surface: q.surfaceId, code: q.code });
 				}
 				const pluginNames = new Set(Object.keys(configs));
 				const mergedConfigs = { ...conventionalConfigs, ...configs };
@@ -2958,7 +2958,7 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 					...Object.fromEntries(
 						Object.keys(configs).map(name => [
 							name,
-							{ provider: "gjc-plugins", providerName: "GJC plugin bundle", level: "project" as const },
+							{ provider: "vib-plugins", providerName: "Vibrato plugin bundle", level: "project" as const },
 						]),
 					),
 				};
@@ -2972,8 +2972,8 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 							// A server that failed to connect leaves this generation
 							// incomplete: its surfaces produced no evidence, so publishing
 							// would present a partial pass as a clear one.
-							gjcProducersComplete = false;
-							logger.warn("GJC plugin MCP connect failed", {
+							vibProducersComplete = false;
+							logger.warn("Vibrato plugin MCP connect failed", {
 								path: `mcp:${server}`,
 								error: safeErrorForLog(err),
 							});
@@ -3038,9 +3038,9 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 				}
 			} catch (error) {
 				if (safeIsInstanceOf(error, McpManagerCleanupError)) throw error;
-				gjcProducersComplete = false;
+				vibProducersComplete = false;
 				const cleanupDiagnostic = safeReadCleanupDiagnostic(error);
-				logger.warn("Failed to wire GJC plugin MCP servers", {
+				logger.warn("Failed to wire Vibrato plugin MCP servers", {
 					error: safeErrorForLog(error),
 					cleanupDiagnostic: safeCleanupDiagnosticForLog(cleanupDiagnostic),
 				});
@@ -3098,12 +3098,12 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 				inlineExtensions.push(createPluginHooksExtension(pluginHookResult.hooks));
 			}
 			for (const q of pluginHookResult.quarantine) {
-				gjcFindings.add({ identity: q.identity, surfaceId: q.surfaceId, code: q.code, message: q.message });
-				logger.warn("Quarantined GJC plugin hook", { plugin: q.plugin, surface: q.surfaceId, code: q.code });
+				vibFindings.add({ identity: q.identity, surfaceId: q.surfaceId, code: q.code, message: q.message });
+				logger.warn("Quarantined Vibrato plugin hook", { plugin: q.plugin, surface: q.surfaceId, code: q.code });
 			}
 		} catch (error) {
-			gjcProducersComplete = false;
-			logger.warn("Failed to load constrained GJC plugin hooks", { error: safeErrorForLog(error) });
+			vibProducersComplete = false;
+			logger.warn("Failed to load constrained Vibrato plugin hooks", { error: safeErrorForLog(error) });
 		}
 
 		let notificationCfg: NotificationConfig | undefined;
@@ -3113,14 +3113,14 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 			notificationCfg = undefined;
 		}
 		const isTopLevelSdkSession = !isCanonicalSubSession;
-		// Consume the GJC spawn-provenance marker: read it once, then remove it
+		// Consume the Vibrato spawn-provenance marker: read it once, then remove it
 		// from this process's env so it is never re-inherited by children this
-		// session later spawns (marker is per-spawn, not dynastic — each GJC child
+		// session later spawns (marker is per-spawn, not dynastic — each Vibrato child
 		// spawn site sets it explicitly). Suppression under `sessionScope=primary`
 		// keeps auto-spawned children (team workers, harness owners) silent while
-		// explicit SDK session opt-in (GJC_NOTIFICATIONS=1) still wins.
+		// explicit SDK session opt-in (VIB_NOTIFICATIONS=1) still wins.
 		const spawnProvenance = process.env[SPAWN_PROVENANCE_ENV];
-		const spawnedByGjc = typeof spawnProvenance === "string" && spawnProvenance.trim().length > 0;
+		const spawnedByVib = typeof spawnProvenance === "string" && spawnProvenance.trim().length > 0;
 		delete process.env[SPAWN_PROVENANCE_ENV];
 		const notificationHostEligible = isGenericNotificationHostEligible({
 			env: process.env,
@@ -3129,12 +3129,12 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 			parentTaskPrefix: options.parentTaskPrefix,
 			currentAgentType: options.currentAgentType,
 			sessionScope: notificationCfg?.sessionScope,
-			spawnedByGjc,
+			spawnedByVib,
 		});
 		const notificationSessionController = new NotificationSessionController({
 			eligible: notificationHostEligible,
 			getConfig: () => getNotificationConfig(settings),
-			spawnedByGjc,
+			spawnedByVib,
 		});
 		const notificationsExtensionEligible = Boolean(
 			lifecycleStartupCapability ||
@@ -3144,7 +3144,7 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 					taskDepth,
 					parentTaskPrefix: options.parentTaskPrefix,
 					currentAgentType: options.currentAgentType,
-					spawnedByGjc,
+					spawnedByVib,
 				}),
 		);
 		const sdkHostEligible =
@@ -3161,15 +3161,15 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 				try {
 					if (autoroutingInactive) markAutoroutingInactive(api);
 					if (lifecycleStartupCapability) attachLifecycleStartupCapability(api, lifecycleStartupCapability);
-					if (lifecycleStartupCapability && process.env.GJC_SDK_TEST_FACTORY_FAILURE === cwd)
-						throw new Error(process.env.GJC_SDK_TEST_FACTORY_SECRET ?? "Lifecycle factory test failure.");
+					if (lifecycleStartupCapability && process.env.VIB_SDK_TEST_FACTORY_FAILURE === cwd)
+						throw new Error(process.env.VIB_SDK_TEST_FACTORY_SECRET ?? "Lifecycle factory test failure.");
 					if (notificationsExtensionEligible) {
 						const createNotificationsExtension = await notificationAdapterService.get("session-extension");
 						createNotificationsExtension(api, {
 							settings,
 
 							controller: notificationSessionController,
-							spawnedByGjc,
+							spawnedByVib,
 							sdkHostModeSupported: options.sdkHostModeSupported,
 							// INTERNAL terminal-abort seams, threaded directly from the
 							// owning session (NOT on the public extension context).
@@ -3698,7 +3698,7 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 			// throw in between cannot leave stale evidence readable. The reserved
 			// epoch additionally fences overlapping rebuilds, so a slower earlier
 			// pass cannot publish over a newer one.
-			const gjcPassEpoch = gjcRuntimeStore.beginPass();
+			const vibPassEpoch = vibRuntimeStore.beginPass();
 			toolContextStore.setToolNames(toolNames);
 			const promptTools = (() => {
 				const previousPromptMetadataModel = promptMetadataModel;
@@ -3735,17 +3735,17 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 			try {
 				pluginSystemAppendices = await renderAlwaysOnSystemAppendices({ cwd: getLiveCwd() });
 			} catch (error) {
-				gjcProducersComplete = false;
-				logger.warn("Failed to render GJC plugin system appendices", { error: safeErrorForLog(error) });
+				vibProducersComplete = false;
+				logger.warn("Failed to render Vibrato plugin system appendices", { error: safeErrorForLog(error) });
 			}
 
-			// Publication point for GJC bundle runtime evidence. Appendix rendering
+			// Publication point for Vibrato bundle runtime evidence. Appendix rendering
 			// is the last producer, so only here is the generation complete.
 			//
 			// The previous generation was already retired at callback entry, so a
 			// partial pass simply never republishes and consumers keep reading
 			// `unavailable` rather than a stale generation.
-			if (gjcProducersComplete) gjcRuntimeStore.publish(gjcFindings.snapshot(), gjcPassEpoch);
+			if (vibProducersComplete) vibRuntimeStore.publish(vibFindings.snapshot(), vibPassEpoch);
 			const defaultPrompt = await buildSystemPromptInternal({
 				// Live cwd: the prompt is rebuilt after a rescope, and describing the
 				// retired launcher root there is what makes the model pick wrong paths.
@@ -4413,7 +4413,7 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 			// branch. Statically-traceable require keeps it lazy AND bundled in
 			// compiled binaries (#1939 pattern).
 			const { getOpenAICodexTransportDetails, prewarmOpenAICodexResponses } =
-				require("@gajae-code/ai/providers/openai-codex-responses") as typeof import("@gajae-code/ai/providers/openai-codex-responses");
+				require("@vib-rato/ai/providers/openai-codex-responses") as typeof import("@vib-rato/ai/providers/openai-codex-responses");
 			const codexTransport = getOpenAICodexTransportDetails(codexModel, {
 				sessionId: providerSessionId,
 				baseUrl: codexModel.baseUrl,
@@ -4611,8 +4611,8 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 		// Expose the published evidence on the session itself so UI surfaces that
 		// only hold a session (Settings) can consume it without threading the
 		// creation result through every controller.
-		session.gjcRuntimeSnapshot = gjcRuntimeStore;
-		session.gjcActivationGeneration = gjcActivationGeneration;
+		session.vibRuntimeSnapshot = vibRuntimeStore;
+		session.vibActivationGeneration = vibActivationGeneration;
 		return {
 			session,
 			extensionsResult,
@@ -4623,7 +4623,7 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 			modelFallbackMessage,
 			lspServers,
 			eventBus,
-			gjcRuntimeSnapshot: gjcRuntimeStore,
+			vibRuntimeSnapshot: vibRuntimeStore,
 		};
 	} catch (error) {
 		// Release the subscription if the throw happened after install but before the

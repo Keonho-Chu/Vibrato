@@ -1,9 +1,9 @@
 import { describe, expect, it } from "bun:test";
-import { parseCodexError } from "@gajae-code/ai/providers/openai-codex/response-handler";
-import { convertOpenAICodexResponsesTools } from "@gajae-code/ai/providers/openai-codex-responses";
-import { convertTools } from "@gajae-code/ai/providers/openai-responses";
-import type { Model, Tool } from "@gajae-code/ai/types";
-import { isInvalidPromptError } from "@gajae-code/ai/utils";
+import { parseCodexError } from "@vib-rato/ai/providers/openai-codex/response-handler";
+import { convertOpenAICodexResponsesTools } from "@vib-rato/ai/providers/openai-codex-responses";
+import { convertTools } from "@vib-rato/ai/providers/openai-responses";
+import type { Model, Tool } from "@vib-rato/ai/types";
+import { isInvalidPromptError } from "@vib-rato/ai/utils";
 import { createCodexModel } from "./helpers";
 
 // Regression: bare "Request Blocked" on codex models. The chatgpt.com

@@ -1,4 +1,4 @@
-import { type Component, padding, Text, truncateToWidth, visibleWidth } from "@gajae-code/tui";
+import { type Component, padding, Text, truncateToWidth, visibleWidth } from "@vib-rato/tui";
 import type { RenderResultOptions } from "../extensibility/custom-tools/types";
 import type { Theme, ThemeColor } from "../modes/theme/theme";
 import { renderStatusLine } from "../tui";

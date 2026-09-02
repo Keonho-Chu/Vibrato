@@ -164,7 +164,7 @@ export async function stageNightlyVersion(repoRoot: string, version: string, sou
 	const rootManifest = JSON.parse(rootContent) as RootManifest;
 	const catalog = rootManifest.workspaces?.catalog;
 	if (catalog === undefined) throw new Error("Root package.json has no workspace catalog");
-	for (const definition of PUBLIC_PACKAGE_DEFINITIONS.filter(candidate => candidate.name.startsWith("@gajae-code/"))) {
+	for (const definition of PUBLIC_PACKAGE_DEFINITIONS.filter(candidate => candidate.name.startsWith("@vib-rato/"))) {
 		assertCurrentVersion(catalog[definition.name], version, `root catalog ${definition.name}`);
 		const pattern = new RegExp(`^(\\s*"${escapeRegExp(definition.name)}"\\s*:\\s*)"[^"]+"`, "gmu");
 		rootContent = replaceSingle(rootContent, pattern, `$1"${version}"`, `root catalog ${definition.name}`);

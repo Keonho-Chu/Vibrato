@@ -2,15 +2,15 @@ import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from "bu
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { UNK_CONTEXT_WINDOW, UNK_MAX_TOKENS } from "@gajae-code/ai";
-import type { ModelRegistry, ProviderDiscoveryState } from "@gajae-code/coding-agent/config/model-registry";
-import { ModelRegistry as ModelRegistryImpl } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { ModelSelectorComponent } from "@gajae-code/coding-agent/modes/components/model-selector";
-import { getThemeByName, setThemeInstance } from "@gajae-code/coding-agent/modes/theme/theme";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import type { TUI } from "@gajae-code/tui";
-import { hookFetch, Snowflake } from "@gajae-code/utils";
+import { UNK_CONTEXT_WINDOW, UNK_MAX_TOKENS } from "@vib-rato/ai";
+import type { ModelRegistry, ProviderDiscoveryState } from "@vib-rato/coding-agent/config/model-registry";
+import { ModelRegistry as ModelRegistryImpl } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { ModelSelectorComponent } from "@vib-rato/coding-agent/modes/components/model-selector";
+import { getThemeByName, setThemeInstance } from "@vib-rato/coding-agent/modes/theme/theme";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import type { TUI } from "@vib-rato/tui";
+import { hookFetch, Snowflake } from "@vib-rato/utils";
 
 function normalizeRenderedText(text: string): string {
 	return text

@@ -1,7 +1,7 @@
-import { Container, PET_SKIN_IDS, PET_SKINS, type SelectList } from "@gajae-code/tui";
+import { Container, PET_SKIN_IDS, PET_SKINS, type SelectList } from "@vib-rato/tui";
 import { FramedSelect } from "./chrome";
-import type { PetMode } from "./gajae-pet-widget";
 import { createPetSelectItems } from "./pet-capability";
+import type { PetMode } from "./vibrato-pet-widget";
 
 const PET_OPTIONS: { value: PetMode; label: string; description: string }[] = [
 	{ value: "off", label: "Off", description: "No pet" },
@@ -13,7 +13,7 @@ const PET_OPTIONS: { value: PetMode; label: string; description: string }[] = [
 ];
 
 /**
- * Theme-style picker for the gajae pet skin (Off / RedGajae / BlueGajae). Preview
+ * Theme-style picker for the vibrato pet skin (Off / RedVibrato / BlueVibrato). Preview
  * fires as the selection moves; select commits, cancel restores.
  */
 export class PetSelectorComponent extends Container {

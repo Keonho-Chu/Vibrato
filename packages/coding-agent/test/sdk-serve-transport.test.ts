@@ -4,7 +4,7 @@ import * as net from "node:net";
 import * as os from "node:os";
 import path from "node:path";
 import { PassThrough, Writable } from "node:stream";
-import { CliParseError, renderCommandHelp } from "@gajae-code/utils/cli";
+import { CliParseError, renderCommandHelp } from "@vib-rato/utils/cli";
 import type { ServerWebSocket } from "bun";
 import Sdk, { parseSdkInternalArgv } from "../src/commands/sdk.js";
 import { SdkClientError } from "../src/sdk/client/client.js";
@@ -358,9 +358,9 @@ describe("SDK socket serve", () => {
 		const handle = await startSocketServe({ url: fake.url, token, pendingCeilingBytes: 256 * 1024, socketPath });
 		try {
 			for (const preface of [
-				"gjc-sdk-transport/1 token=wrong\n",
+				"vib-sdk-transport/1 token=wrong\n",
 				"garbage\n",
-				"gjc-sdk-transport/2 token=test-token\n",
+				"vib-sdk-transport/2 token=test-token\n",
 				`${"x".repeat(4097)}\n`,
 			] as const) {
 				const client = await socketConnect(socketPath);
@@ -391,7 +391,7 @@ describe("SDK socket serve", () => {
 			});
 			const client = await socketConnect(socketPath);
 			try {
-				client.write(`gjc-sdk-transport/1 token=${token}\n`);
+				client.write(`vib-sdk-transport/1 token=${token}\n`);
 				const ws = await waitFor(() => StalledWebSocket.latest, "upstream dial");
 				client.write('{"received":"during-dial"}\n');
 				ws.open();
@@ -415,7 +415,7 @@ describe("SDK socket serve", () => {
 				webSocketFactory: () => new StalledWebSocket(""),
 			});
 			const client = await socketConnect(socketPath);
-			client.write(`gjc-sdk-transport/1 token=${token}\n`);
+			client.write(`vib-sdk-transport/1 token=${token}\n`);
 			const ws = await waitFor(() => StalledWebSocket.latest, "stalled upstream dial");
 			await handle.close();
 			await handle.done;
@@ -434,8 +434,8 @@ describe("SDK socket serve", () => {
 			expect((await fs.stat(socketPath)).mode & 0o777).toBe(0o600);
 			const a = await socketConnect(socketPath);
 			const b = await socketConnect(socketPath);
-			a.write(`gjc-sdk-transport/1 token=${token}\n{ "client": "a" }\n`);
-			b.write(`gjc-sdk-transport/1 token=${token}\n{ "client": "b" }\n`);
+			a.write(`vib-sdk-transport/1 token=${token}\n{ "client": "a" }\n`);
+			b.write(`vib-sdk-transport/1 token=${token}\n{ "client": "b" }\n`);
 			await waitFor(
 				() =>
 					fake.connections.length === 2 &&
@@ -453,7 +453,7 @@ describe("SDK socket serve", () => {
 			b.write('{"still":"running"}\n');
 			expect(await waitFor(() => fake.connections[1]?.messages[1], "remaining pair")).toBe('{"still":"running"}');
 			const c = await socketConnect(socketPath);
-			c.write(`gjc-sdk-transport/1 token=${token}\n`);
+			c.write(`vib-sdk-transport/1 token=${token}\n`);
 			await waitFor(() => (fake.connections.length === 3 ? fake.connections : undefined), "listener remains active");
 			await closeSocket(c);
 			await closeSocket(b);
@@ -502,7 +502,7 @@ describe("SDK serve CLI and discovery", () => {
 			return true;
 		};
 		try {
-			renderCommandHelp("gjc", "sdk", Sdk);
+			renderCommandHelp("vib", "sdk", Sdk);
 		} finally {
 			(process.stdout as unknown as { write: typeof stdout }).write = stdout;
 		}
@@ -525,7 +525,7 @@ describe("SDK serve CLI and discovery", () => {
 
 	test("parses stale tombstones and fails endpoint selection closed", async () => {
 		const repo = await tempDir();
-		const state = path.join(repo, ".gjc", "state", "sdk");
+		const state = path.join(repo, ".vib", "state", "sdk");
 		await fs.mkdir(state, { recursive: true });
 		await fs.writeFile(
 			path.join(state, "stale.json"),

@@ -1,6 +1,6 @@
-import { ThinkingLevel } from "@gajae-code/agent-core";
-import type { Api, Model } from "@gajae-code/ai/core";
-import { logger } from "@gajae-code/utils";
+import { ThinkingLevel } from "@vib-rato/agent-core";
+import type { Api, Model } from "@vib-rato/ai/core";
+import { logger } from "@vib-rato/utils";
 import type { AgentSession, DefaultFallbackRuntimeState } from "../session/agent-session";
 import { clampExplicitThinkingLevelForModel, formatClampedModelSelector } from "../thinking";
 import { validateModelProfileName } from "./model-profile-contract";
@@ -16,11 +16,11 @@ import {
 export { resolveModelProfileName } from "./model-profile-contract";
 
 import {
-	GJC_MODEL_ASSIGNMENT_TARGETS,
-	type GjcModelAssignmentTargetId,
 	isAuthenticated,
 	kNoAuth,
 	type ModelRegistry,
+	VIB_MODEL_ASSIGNMENT_TARGETS,
+	type VibModelAssignmentTargetId,
 } from "./model-registry";
 import {
 	formatModelSelectorValue,
@@ -189,7 +189,7 @@ export interface MaterializeModelProfileAssignmentOptions {
 		| "clearProfileInstalledOverrides"
 	>;
 	settings: Pick<Settings, "clearOverride" | "get" | "getGlobal" | "getOverride" | "override" | "set" | "unset">;
-	role: GjcModelAssignmentTargetId;
+	role: VibModelAssignmentTargetId;
 	selector: string;
 }
 
@@ -211,22 +211,22 @@ export interface MaterializeModelProfileAssignmentsOptions {
 		| "clearProfileInstalledOverrides"
 	>;
 	settings: Pick<Settings, "clearOverride" | "get" | "getGlobal" | "getOverride" | "override" | "set" | "unset">;
-	assignments: ReadonlyMap<GjcModelAssignmentTargetId, string> | Partial<Record<GjcModelAssignmentTargetId, string>>;
+	assignments: ReadonlyMap<VibModelAssignmentTargetId, string> | Partial<Record<VibModelAssignmentTargetId, string>>;
 }
 
 function isReadonlyAssignmentMap(
-	assignments: ReadonlyMap<GjcModelAssignmentTargetId, string> | Partial<Record<GjcModelAssignmentTargetId, string>>,
-): assignments is ReadonlyMap<GjcModelAssignmentTargetId, string> {
+	assignments: ReadonlyMap<VibModelAssignmentTargetId, string> | Partial<Record<VibModelAssignmentTargetId, string>>,
+): assignments is ReadonlyMap<VibModelAssignmentTargetId, string> {
 	return typeof (assignments as { entries?: unknown }).entries === "function";
 }
 
 function getMaterializedAssignments(
-	assignments: ReadonlyMap<GjcModelAssignmentTargetId, string> | Partial<Record<GjcModelAssignmentTargetId, string>>,
-): Array<[GjcModelAssignmentTargetId, string]> {
+	assignments: ReadonlyMap<VibModelAssignmentTargetId, string> | Partial<Record<VibModelAssignmentTargetId, string>>,
+): Array<[VibModelAssignmentTargetId, string]> {
 	if (isReadonlyAssignmentMap(assignments)) return [...assignments.entries()];
-	const assignmentRecord: Partial<Record<GjcModelAssignmentTargetId, string>> = assignments;
-	const result: Array<[GjcModelAssignmentTargetId, string]> = [];
-	for (const role of Object.keys(assignmentRecord) as GjcModelAssignmentTargetId[]) {
+	const assignmentRecord: Partial<Record<VibModelAssignmentTargetId, string>> = assignments;
+	const result: Array<[VibModelAssignmentTargetId, string]> = [];
+	for (const role of Object.keys(assignmentRecord) as VibModelAssignmentTargetId[]) {
 		const selector = assignmentRecord[role];
 		if (selector !== undefined) result.push([role, selector]);
 	}
@@ -398,7 +398,7 @@ export function materializeActiveModelProfileAssignment(options: MaterializeMode
 
 	const nextModelRoles = { ...options.settings.get("modelRoles") };
 	const nextAgentModelOverrides = { ...options.settings.get("task.agentModelOverrides") };
-	const target = GJC_MODEL_ASSIGNMENT_TARGETS[options.role];
+	const target = VIB_MODEL_ASSIGNMENT_TARGETS[options.role];
 
 	if (options.role === "default") {
 		nextModelRoles.default = options.selector;
@@ -435,7 +435,7 @@ export function materializeActiveModelProfileAssignments(options: MaterializeMod
 	}
 
 	for (const [role, selector] of materializedAssignments) {
-		const target = GJC_MODEL_ASSIGNMENT_TARGETS[role];
+		const target = VIB_MODEL_ASSIGNMENT_TARGETS[role];
 		if (target.settingsPath === "modelRoles") {
 			nextModelRoles[role] = selector;
 		} else {
@@ -544,7 +544,7 @@ export function resolveProxyProviderId(settings: Pick<Settings, "get"> | undefin
 	if (config.status === "unset") return undefined;
 	if (config.status === "invalid") {
 		throw new Error(
-			`modelProfile.proxyProvider must be a lowercase provider id (got "${config.value}"). Configure an OpenAI-compatible proxy with \`gjc setup provider\`, then set its id here.`,
+			`modelProfile.proxyProvider must be a lowercase provider id (got "${config.value}"). Configure an OpenAI-compatible proxy with \`vib setup provider\`, then set its id here.`,
 		);
 	}
 	return config.id;
@@ -999,7 +999,7 @@ export async function prepareModelProfileActivation(
 			const configuredProxyProviders = options.modelRegistry.getConfiguredProviderIds?.();
 			if (!configuredProxyProviders?.includes(proxyProvider)) {
 				throw new Error(
-					`modelProfile.proxyProvider "${proxyProvider}" is not configured. Configure it with \`gjc setup provider\` before activating a preset.`,
+					`modelProfile.proxyProvider "${proxyProvider}" is not configured. Configure it with \`vib setup provider\` before activating a preset.`,
 				);
 			}
 		}
@@ -1120,7 +1120,7 @@ export async function prepareModelProfileActivation(
 
 		const modelRoles: Record<string, ModelSelectorValue> = {};
 		for (const [role, selectorValue] of Object.entries(bindings.modelRoles) as [
-			GjcModelAssignmentTargetId,
+			VibModelAssignmentTargetId,
 			ModelSelectorValue,
 		][]) {
 			modelRoles[role] = await resolveAndClampSelectorValue(
@@ -1141,7 +1141,7 @@ export async function prepareModelProfileActivation(
 
 		const agentModelOverrides: Record<string, ModelSelectorValue> = {};
 		for (const [role, selectorValue] of Object.entries(bindings.agentModelOverrides) as [
-			GjcModelAssignmentTargetId,
+			VibModelAssignmentTargetId,
 			ModelSelectorValue,
 		][]) {
 			agentModelOverrides[role] = await resolveAndClampSelectorValue(

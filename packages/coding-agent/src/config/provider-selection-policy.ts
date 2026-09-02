@@ -1,4 +1,5 @@
-import type { Api, Model } from "@gajae-code/ai/core";
+import type { Api, Model } from "@vib-rato/ai/core";
+import { isProviderSelectable } from "./provider-allowlist";
 
 /**
  * Effective credential provenance for a provider, derived from credential
@@ -154,6 +155,8 @@ export function buildProviderSelectionCatalog(models: readonly Model<Api>[]): Pr
 	const seenModels = new Set<string>();
 	for (const model of models) {
 		const providerKey = model.provider.trim().toLowerCase();
+		// Hidden providers are never auto-routed to, even when credentials exist.
+		if (!isProviderSelectable(providerKey)) continue;
 		if (providerKey && !seenProviders.has(providerKey)) {
 			seenProviders.add(providerKey);
 			catalogProviders.push(providerKey);

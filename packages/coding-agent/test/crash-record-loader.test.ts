@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { computeCrashFingerprint, formatCrashRecordMarker } from "@gajae-code/utils";
+import { computeCrashFingerprint, formatCrashRecordMarker } from "@vib-rato/utils";
 import { findLatestRecord, parseCrashRecords, parseRecoverableCrashRecords } from "../src/crash/record-loader";
 
 const FP_A = "a".repeat(32);

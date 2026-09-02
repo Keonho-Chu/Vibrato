@@ -187,7 +187,7 @@ describe("SessionSdkHost", () => {
 	test("hosts root sessions unless explicitly disabled", () => {
 		expect(shouldHostSdk({ notifications: { enabled: false } }, true, {})).toBe(true);
 		expect(shouldHostSdk({}, false, {})).toBe(false);
-		expect(shouldHostSdk({}, true, { GJC_SDK_DISABLE: "1" })).toBe(false);
+		expect(shouldHostSdk({}, true, { VIB_SDK_DISABLE: "1" })).toBe(false);
 	});
 
 	test("routes reverse ingress with Rust-aligned frames and records session readiness", async () => {
@@ -276,7 +276,7 @@ describe("SessionSdkHost", () => {
 		let failSends = 0;
 		const host = new SessionSdkHost({
 			sessionId: "sess-disconnect",
-			stateRoot: "/tmp/gjc-sdk-host-disconnect",
+			stateRoot: "/tmp/vib-sdk-host-disconnect",
 			token: "tok",
 			sendFrame: () => {
 				// Fail the success response and the subsequent structured-error delivery.

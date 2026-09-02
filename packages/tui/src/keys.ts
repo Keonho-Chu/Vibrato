@@ -18,13 +18,13 @@
  * - isKittyProtocolActive() - Query global Kitty protocol state
  */
 
-import type { KeyEventType } from "@gajae-code/natives";
+import type { KeyEventType } from "@vib-rato/natives";
 
-type NativeKeyBindings = Pick<typeof import("@gajae-code/natives"), "matchesKey" | "parseKey" | "parseKittySequence">;
+type NativeKeyBindings = Pick<typeof import("@vib-rato/natives"), "matchesKey" | "parseKey" | "parseKittySequence">;
 let nativeKeyBindings: NativeKeyBindings | undefined;
 
 function nativeKeys(): NativeKeyBindings {
-	if (!nativeKeyBindings) nativeKeyBindings = require("@gajae-code/natives") as NativeKeyBindings;
+	if (!nativeKeyBindings) nativeKeyBindings = require("@vib-rato/natives") as NativeKeyBindings;
 	return nativeKeyBindings;
 }
 
@@ -337,7 +337,7 @@ export function isKeyId(value: string): value is KeyId {
  * is literally `"enter"`); the value of `Key` over a bag of magic strings is
  * that each property is typed to the exact `KeyId` literal it produces and the
  * modifier methods return precisely-typed concatenations (e.g. `Key.ctrl("c")`
- * The canonical modifier helpers mirror the upstream `@mariozechner/pi-tui` `Key` export so plugins built against any scope alias (`@mariozechner`, `@earendil-works`, `@gajae-code`) keep working once the specifier shim remaps them to this package. The additional `option`/`command` helpers normalize macOS naming to the portable `alt`/`super` identifiers.
+ * The canonical modifier helpers mirror the upstream `@mariozechner/pi-tui` `Key` export so plugins built against any scope alias (`@mariozechner`, `@earendil-works`, `@vib-rato`) keep working once the specifier shim remaps them to this package. The additional `option`/`command` helpers normalize macOS naming to the portable `alt`/`super` identifiers.
  */
 export const Key = {
 	escape: "escape",

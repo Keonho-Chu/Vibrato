@@ -12,6 +12,6 @@ console.log(
 		configRoot: getConfigRootDir(),
 		pluginsDir: getPluginsDir(),
 		pythonGatewayDir: getPythonGatewayDir(),
-		probeValue: $credentialEnv("GJC_TRUST_PROBE_VALUE") ?? null,
+		probeValue: $credentialEnv("VIB_TRUST_PROBE_VALUE") ?? null,
 	}),
 );

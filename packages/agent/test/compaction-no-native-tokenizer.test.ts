@@ -11,7 +11,7 @@ describe("compaction native tokenizer absence", () => {
 
 		expect(source).not.toContain("createRequire");
 		expect(source).not.toContain("countTokens");
-		expect(source).not.toContain("@gajae-code/natives");
+		expect(source).not.toContain("@vib-rato/natives");
 		expect(source).not.toContain("countMessageTokensNativeO200k");
 		expect(source).not.toContain("nativeTokenizerEntrypoint");
 		expect(source).not.toContain("estimateTokens =");

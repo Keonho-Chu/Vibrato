@@ -76,10 +76,10 @@ type Frame = { type: string; connectionId?: string; phase?: string; text?: strin
 const cleanupRoots: FixtureRootCleanup[] = [];
 const openSockets: WebSocket[] = [];
 const envKeys = [
-	"GJC_NOTIFICATIONS",
-	"GJC_NOTIFICATIONS_STREAM",
-	"GJC_NOTIFICATIONS_STREAM_INTERVAL_MS",
-	"GJC_NOTIFICATIONS_TURN_MAX",
+	"VIB_NOTIFICATIONS",
+	"VIB_NOTIFICATIONS_STREAM",
+	"VIB_NOTIFICATIONS_STREAM_INTERVAL_MS",
+	"VIB_NOTIFICATIONS_TURN_MAX",
 ] as const;
 let savedEnv: Record<string, string | undefined> = {};
 
@@ -165,8 +165,8 @@ async function bootSession(
 		registerCommand: () => {},
 		sendUserMessage: () => {},
 	} as never;
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-notif-stream-"));
-	const agentDir = path.join(cwd, ".gjc", "agent");
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-notif-stream-"));
+	const agentDir = path.join(cwd, ".vib", "agent");
 	const cleanup = await createNotificationFixtureRoot(cwd, agentDir);
 	cleanupRoots.push(cleanup);
 	const botToken = settingsOverrides["notifications.telegram.botToken"];
@@ -219,7 +219,7 @@ async function bootSession(
 	});
 	await handlers.get("session_start")!({ type: "session_start" }, ctx);
 	await handlers.get("turn_start")!({ type: "turn_start", turnIndex: 0 }, ctx);
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sid}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sid}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), 4000, "endpoint file");
 	const { url, token } = readTestSdkEndpoint(endpointFile);
 
@@ -267,7 +267,7 @@ async function bootSession(
 const assistant = (content: string) => ({ type: "message_update", message: { role: "assistant", content } });
 
 test("lean suppresses live frames even when streaming is enabled", async () => {
-	setEnv({ GJC_NOTIFICATIONS: "1", GJC_NOTIFICATIONS_STREAM: "1", GJC_NOTIFICATIONS_STREAM_INTERVAL_MS: "1" });
+	setEnv({ VIB_NOTIFICATIONS: "1", VIB_NOTIFICATIONS_STREAM: "1", VIB_NOTIFICATIONS_STREAM_INTERVAL_MS: "1" });
 	const { handlers, ctx, frames } = await bootSession({ "notifications.verbosity": "lean" });
 	const streams = () => frames.filter(f => f.type === "turn_stream");
 
@@ -287,7 +287,7 @@ test("lean suppresses live frames even when streaming is enabled", async () => {
 }, 15_000);
 
 test("message_update emits a live turn_stream whose messageRef matches the finalized turn", async () => {
-	setEnv({ GJC_NOTIFICATIONS: "1", GJC_NOTIFICATIONS_STREAM: "1", GJC_NOTIFICATIONS_STREAM_INTERVAL_MS: "100000" });
+	setEnv({ VIB_NOTIFICATIONS: "1", VIB_NOTIFICATIONS_STREAM: "1", VIB_NOTIFICATIONS_STREAM_INTERVAL_MS: "100000" });
 	const { handlers, ctx, frames } = await bootSession();
 	const streams = () => frames.filter(f => f.type === "turn_stream");
 
@@ -308,7 +308,7 @@ test("message_update emits a live turn_stream whose messageRef matches the final
 }, 15_000);
 
 test("rapid live updates are throttled to a single frame within the interval", async () => {
-	setEnv({ GJC_NOTIFICATIONS: "1", GJC_NOTIFICATIONS_STREAM: "1", GJC_NOTIFICATIONS_STREAM_INTERVAL_MS: "100000" });
+	setEnv({ VIB_NOTIFICATIONS: "1", VIB_NOTIFICATIONS_STREAM: "1", VIB_NOTIFICATIONS_STREAM_INTERVAL_MS: "100000" });
 	const { handlers, ctx, frames } = await bootSession();
 	const live = () => frames.filter(f => f.type === "turn_stream" && f.phase === "live");
 
@@ -321,7 +321,7 @@ test("rapid live updates are throttled to a single frame within the interval", a
 }, 15_000);
 
 test("a deferred ownership preflight never holds reconciliation and the turn finalizes once on the live ref", async () => {
-	setEnv({ GJC_NOTIFICATIONS: "1", GJC_NOTIFICATIONS_STREAM_INTERVAL_MS: "100000" });
+	setEnv({ VIB_NOTIFICATIONS: "1", VIB_NOTIFICATIONS_STREAM_INTERVAL_MS: "100000" });
 	let deferEnsure = false;
 	const ensureEntered = Promise.withResolvers<void>();
 	const releaseEnsure = Promise.withResolvers<void>();
@@ -372,7 +372,7 @@ test("a deferred ownership preflight never holds reconciliation and the turn fin
 }, 20_000);
 
 test("a durable Telegram streaming disable before the first live frame leaves the final keyless", async () => {
-	setEnv({ GJC_NOTIFICATIONS: "1", GJC_NOTIFICATIONS_STREAM_INTERVAL_MS: "100000" });
+	setEnv({ VIB_NOTIFICATIONS: "1", VIB_NOTIFICATIONS_STREAM_INTERVAL_MS: "100000" });
 	const { handlers, ctx, frames } = await bootSession({
 		"notifications.enabled": true,
 		"notifications.telegram.botToken": "123456:secret-token",
@@ -398,7 +398,7 @@ test("a durable Telegram streaming disable before the first live frame leaves th
 }, 15_000);
 
 test("a configured Telegram destination enables durable streaming by default", async () => {
-	setEnv({ GJC_NOTIFICATIONS: "1", GJC_NOTIFICATIONS_STREAM_INTERVAL_MS: "100000" });
+	setEnv({ VIB_NOTIFICATIONS: "1", VIB_NOTIFICATIONS_STREAM_INTERVAL_MS: "100000" });
 	const { handlers, ctx, frames } = await bootSession({
 		"notifications.enabled": true,
 		"notifications.telegram.botToken": "123456:secret-token",
@@ -418,9 +418,9 @@ test("a configured Telegram destination enables durable streaming by default", a
 
 test("an explicit streaming environment disable takes precedence over the durable Telegram default", async () => {
 	setEnv({
-		GJC_NOTIFICATIONS: "1",
-		GJC_NOTIFICATIONS_STREAM: "off",
-		GJC_NOTIFICATIONS_STREAM_INTERVAL_MS: "100000",
+		VIB_NOTIFICATIONS: "1",
+		VIB_NOTIFICATIONS_STREAM: "off",
+		VIB_NOTIFICATIONS_STREAM_INTERVAL_MS: "100000",
 	});
 	const { handlers, ctx, frames } = await bootSession({
 		"notifications.enabled": true,
@@ -446,7 +446,7 @@ test("an explicit streaming environment disable takes precedence over the durabl
 }, 15_000);
 
 test("a mid-turn disable retains the streamed message for its authoritative final, then cleanly restarts next turn", async () => {
-	setEnv({ GJC_NOTIFICATIONS: "1", GJC_NOTIFICATIONS_STREAM_INTERVAL_MS: "100000" });
+	setEnv({ VIB_NOTIFICATIONS: "1", VIB_NOTIFICATIONS_STREAM_INTERVAL_MS: "100000" });
 	const { handlers, ctx, frames, settings, controller } = await bootSession({
 		"notifications.enabled": true,
 		"notifications.telegram.botToken": "123456:secret-token",
@@ -486,7 +486,7 @@ test("a mid-turn disable retains the streamed message for its authoritative fina
 }, 15_000);
 
 test("an atomic redact-and-disable refresh suppresses all later turn content", async () => {
-	setEnv({ GJC_NOTIFICATIONS: "1", GJC_NOTIFICATIONS_STREAM_INTERVAL_MS: "100000" });
+	setEnv({ VIB_NOTIFICATIONS: "1", VIB_NOTIFICATIONS_STREAM_INTERVAL_MS: "100000" });
 	const { handlers, ctx, frames, settings, controller } = await bootSession({
 		"notifications.enabled": true,
 		"notifications.telegram.botToken": "123456:secret-token",
@@ -544,8 +544,8 @@ class FakeBotApi {
 }
 
 async function bootDaemon() {
-	const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-stream-daemon-"));
-	const agentDir = path.join(root, ".gjc", "agent");
+	const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-stream-daemon-"));
+	const agentDir = path.join(root, ".vib", "agent");
 	cleanupRoots.push(await createNotificationFixtureRoot(root, agentDir));
 	const bot = new FakeBotApi();
 	const daemon = new TelegramNotificationDaemon({
@@ -559,7 +559,7 @@ async function bootDaemon() {
 	await daemon.handleSessionMessage(session as never, {
 		type: "identity_header",
 		sessionId: "S",
-		repo: "gajae-code",
+		repo: "vib-rato",
 		branch: "dev",
 	});
 	return { daemon, bot, session };
@@ -620,7 +620,7 @@ test("a finalized turn frame without a messageRef posts a fresh message (no in-p
 // ---------------------------------------------------------------------------
 // 4) Finalized turn-text cap: default lets full turns reach split-capable
 //    clients (Telegram daemon / Slack bridge) instead of being truncated;
-//    GJC_NOTIFICATIONS_TURN_MAX can lower the cap for summary-style mirrors.
+//    VIB_NOTIFICATIONS_TURN_MAX can lower the cap for summary-style mirrors.
 // ---------------------------------------------------------------------------
 
 const longAssistantTurn = (chars: number) => ({
@@ -641,35 +641,35 @@ async function finalizedTextFor(
 }
 
 test("finalized turn text defaults to full-turn delivery for split-capable clients", async () => {
-	const text = await finalizedTextFor({ GJC_NOTIFICATIONS: "1" });
+	const text = await finalizedTextFor({ VIB_NOTIFICATIONS: "1" });
 	expect(text.length).toBe(5000); // full turn, untruncated
 	expect(text.endsWith("…")).toBe(false);
 }, 60_000);
 
-test("GJC_NOTIFICATIONS_TURN_MAX can lower the finalized cap for summary mirrors", async () => {
-	const text = await finalizedTextFor({ GJC_NOTIFICATIONS: "1", GJC_NOTIFICATIONS_TURN_MAX: "3500" });
+test("VIB_NOTIFICATIONS_TURN_MAX can lower the finalized cap for summary mirrors", async () => {
+	const text = await finalizedTextFor({ VIB_NOTIFICATIONS: "1", VIB_NOTIFICATIONS_TURN_MAX: "3500" });
 	expect(text.length).toBeLessThanOrEqual(3500);
 	expect(text.endsWith("…")).toBe(true); // truncated with an ellipsis
 }, 60_000);
 
-test("GJC_NOTIFICATIONS_TURN_MAX is clamped to a finite ceiling (never unbounded)", async () => {
-	const text = await finalizedTextFor({ GJC_NOTIFICATIONS: "1", GJC_NOTIFICATIONS_TURN_MAX: "10000000" }, 45000);
+test("VIB_NOTIFICATIONS_TURN_MAX is clamped to a finite ceiling (never unbounded)", async () => {
+	const text = await finalizedTextFor({ VIB_NOTIFICATIONS: "1", VIB_NOTIFICATIONS_TURN_MAX: "10000000" }, 45000);
 	expect(text.length).toBe(40000); // clamped to TURN_TEXT_MAX_CEILING, not the requested 10M
 	expect(text.endsWith("…")).toBe(true); // still truncated at the ceiling
 }, 60_000);
 
-test("non-finite GJC_NOTIFICATIONS_TURN_MAX falls back to the full-turn ceiling", async () => {
-	const text = await finalizedTextFor({ GJC_NOTIFICATIONS: "1", GJC_NOTIFICATIONS_TURN_MAX: "Infinity" });
+test("non-finite VIB_NOTIFICATIONS_TURN_MAX falls back to the full-turn ceiling", async () => {
+	const text = await finalizedTextFor({ VIB_NOTIFICATIONS: "1", VIB_NOTIFICATIONS_TURN_MAX: "Infinity" });
 	expect(text.length).toBe(5000); // invalid env does not force summary truncation
 	expect(text.endsWith("…")).toBe(false);
 }, 60_000);
 
 test("live frames are NOT raised by the turn cap (stay one editable preview)", async () => {
 	setEnv({
-		GJC_NOTIFICATIONS: "1",
-		GJC_NOTIFICATIONS_STREAM: "1",
-		GJC_NOTIFICATIONS_STREAM_INTERVAL_MS: "100000",
-		GJC_NOTIFICATIONS_TURN_MAX: "40000",
+		VIB_NOTIFICATIONS: "1",
+		VIB_NOTIFICATIONS_STREAM: "1",
+		VIB_NOTIFICATIONS_STREAM_INTERVAL_MS: "100000",
+		VIB_NOTIFICATIONS_TURN_MAX: "40000",
 	});
 	const { handlers, ctx, frames } = await bootSession();
 	await handlers.get("message_update")!(assistant("가".repeat(5000)), ctx);

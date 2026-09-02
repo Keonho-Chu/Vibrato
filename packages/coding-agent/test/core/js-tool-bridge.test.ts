@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "bun:test";
-import type { AgentTool, AgentToolResult } from "@gajae-code/agent-core";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import type { ToolSession } from "@gajae-code/coding-agent/tools";
+import type { AgentTool, AgentToolResult } from "@vib-rato/agent-core";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import type { ToolSession } from "@vib-rato/coding-agent/tools";
 import * as z from "zod/v4";
 import { callSessionTool } from "../../src/eval/js/tool-bridge";
 

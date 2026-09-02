@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { sanitizeText } from "@gajae-code/utils";
+import { sanitizeText } from "@vib-rato/utils";
 import { getThemeByName } from "../../src/modes/theme/theme";
 import { searchToolRenderer } from "../../src/tools/search";
 

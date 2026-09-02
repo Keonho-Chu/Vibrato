@@ -2,17 +2,17 @@ import { describe, expect, test, vi } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { Api, Model } from "@gajae-code/ai";
-import { kNoAuth, ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
+import type { Api, Model } from "@vib-rato/ai";
+import { kNoAuth, ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
 import {
 	type ModelLookupRegistry,
 	resolveModelOverrideWithAuthFallback,
-} from "@gajae-code/coding-agent/config/model-resolver";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
+} from "@vib-rato/coding-agent/config/model-resolver";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
 import {
 	type ConfiguredFallbackChain,
 	FallbackChainController,
-} from "@gajae-code/coding-agent/session/fallback-chain-controller";
+} from "@vib-rato/coding-agent/session/fallback-chain-controller";
 
 /**
  * Regression test for #985.
@@ -387,7 +387,7 @@ describe("preset-equivalent alias boundaries with the real registry", () => {
 	};
 
 	async function createRealRegistry(): Promise<{ registry: ModelRegistry; cleanup: () => void }> {
-		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-985-alias-"));
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-985-alias-"));
 		const authStorage = await AuthStorage.create(path.join(dir, "auth.db"));
 		authStorage.setRuntimeApiKey("alias-provider", "test-key");
 		const registry = new ModelRegistry(authStorage, path.join(dir, "models.yml"));

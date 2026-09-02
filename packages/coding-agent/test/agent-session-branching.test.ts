@@ -11,16 +11,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { Agent } from "@gajae-code/agent-core";
-import { getBundledModel } from "@gajae-code/ai";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import * as internalUrls from "@gajae-code/coding-agent/internal-urls";
-import { AgentSession } from "@gajae-code/coding-agent/session/agent-session";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { createTools, type ToolSession } from "@gajae-code/coding-agent/tools";
-import { Snowflake } from "@gajae-code/utils";
+import { Agent } from "@vib-rato/agent-core";
+import { getBundledModel } from "@vib-rato/ai";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import * as internalUrls from "@vib-rato/coding-agent/internal-urls";
+import { AgentSession } from "@vib-rato/coding-agent/session/agent-session";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { createTools, type ToolSession } from "@vib-rato/coding-agent/tools";
+import { Snowflake } from "@vib-rato/utils";
 import { e2eApiKey } from "./utilities";
 
 describe.skipIf(!e2eApiKey("ANTHROPIC_API_KEY"))("AgentSession branching", () => {
@@ -250,7 +250,7 @@ async function evictOldBranchMessage(sessionManager: SessionManager, marker: str
 
 describe("successor readiness", () => {
 	it("keeps the predecessor active when branch readiness fails", async () => {
-		const tempDir = path.join(os.tmpdir(), `gjc-branch-readiness-${Snowflake.next()}`);
+		const tempDir = path.join(os.tmpdir(), `vib-branch-readiness-${Snowflake.next()}`);
 		fs.mkdirSync(tempDir, { recursive: true });
 		let session: AgentSession | undefined;
 		let authStorage: AuthStorage | undefined;
@@ -289,7 +289,7 @@ describe("successor readiness", () => {
 
 describe("AgentSession tree navigation local identity", () => {
 	it("keeps local identity and initialized artifacts in place without credentials", async () => {
-		const tempDir = path.join(os.tmpdir(), `gjc-tree-local-identity-${Snowflake.next()}`);
+		const tempDir = path.join(os.tmpdir(), `vib-tree-local-identity-${Snowflake.next()}`);
 		fs.mkdirSync(tempDir, { recursive: true });
 		let session: AgentSession | undefined;
 		let authStorage: AuthStorage | undefined;
@@ -337,7 +337,7 @@ describe("AgentSession tree navigation local identity", () => {
 
 describe("AgentSession branching fidelity", () => {
 	it("uses original pre-compaction user text for branch selectedText", async () => {
-		const tempDir = path.join(os.tmpdir(), `gjc-branch-selected-fidelity-${Snowflake.next()}`);
+		const tempDir = path.join(os.tmpdir(), `vib-branch-selected-fidelity-${Snowflake.next()}`);
 		fs.mkdirSync(tempDir, { recursive: true });
 		let session: AgentSession | undefined;
 		let authStorage: AuthStorage | undefined;
@@ -361,7 +361,7 @@ describe("AgentSession branching fidelity", () => {
 	});
 
 	it("lists evicted user messages with original text in the branch picker", async () => {
-		const tempDir = path.join(os.tmpdir(), `gjc-branch-picker-fidelity-${Snowflake.next()}`);
+		const tempDir = path.join(os.tmpdir(), `vib-branch-picker-fidelity-${Snowflake.next()}`);
 		fs.mkdirSync(tempDir, { recursive: true });
 		let session: AgentSession | undefined;
 		let authStorage: AuthStorage | undefined;

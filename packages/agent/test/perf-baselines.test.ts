@@ -1,8 +1,8 @@
 // Advisory perf baselines: recording only; hard gating deferred to perf-gates.test.ts.
 import { describe, expect, it } from "bun:test";
-import type { AgentContext, AgentEvent, AgentLoopConfig, AgentMessage } from "@gajae-code/agent-core/types";
-import type { AssistantMessage, Message, Model } from "@gajae-code/ai";
-import { AssistantMessageEventStream } from "@gajae-code/ai/utils/event-stream";
+import type { AgentContext, AgentEvent, AgentLoopConfig, AgentMessage } from "@vib-rato/agent-core/types";
+import type { AssistantMessage, Message, Model } from "@vib-rato/ai";
+import { AssistantMessageEventStream } from "@vib-rato/ai/utils/event-stream";
 import { createAssistantMessage, createUserMessage } from "./helpers";
 
 function identityConverter(messages: AgentMessage[]): Message[] {
@@ -74,7 +74,7 @@ describe("agent loop advisory performance baselines", () => {
 		let providerMessageEvents = 0;
 		const config = createConfig(() => providerMessageEvents++);
 		const events: AgentEvent[] = [];
-		const { agentLoop } = await import("@gajae-code/agent-core/agent-loop");
+		const { agentLoop } = await import("@vib-rato/agent-core/agent-loop");
 		const stream = agentLoop(
 			[createUserMessage("stream deterministic deltas")],
 			createContext(),

@@ -56,12 +56,12 @@ async function managedWorkspace(
 	if (resolved.kind !== "resolved") throw new Error(resolved.message);
 	const scopeDir = SessionManager.getDefaultSessionDir(cwd, agentDir);
 	expect(scopeDir).toBe(resolved.scope.directoryPath);
-	const previousRequestId = process.env.GJC_LIFECYCLE_REQUEST_ID;
-	const previousSessionId = process.env.GJC_SESSION_ID;
+	const previousRequestId = process.env.VIB_LIFECYCLE_REQUEST_ID;
+	const previousSessionId = process.env.VIB_SESSION_ID;
 	try {
 		// This is setup only: parallel ingress requests never inherit these variables.
-		process.env.GJC_LIFECYCLE_REQUEST_ID = `prepare-${name.toLowerCase()}-${sessionId}`;
-		process.env.GJC_SESSION_ID = sessionId;
+		process.env.VIB_LIFECYCLE_REQUEST_ID = `prepare-${name.toLowerCase()}-${sessionId}`;
+		process.env.VIB_SESSION_ID = sessionId;
 		const session = SessionManager.create(cwd, SessionManager.managedDestination(cwd, agentDir));
 		await session.ensureOnDisk();
 		const sourcePath = session.getSessionFile();
@@ -69,7 +69,7 @@ async function managedWorkspace(
 		expect(session.getSessionId()).toBe(sessionId);
 		expect(path.dirname(sourcePath)).toBe(resolved.scope.directoryPath);
 		await expect(
-			fs.access(path.join(resolved.scope.directoryPath, ".gjc-managed-session-scope.v2.json")),
+			fs.access(path.join(resolved.scope.directoryPath, ".vib-managed-session-scope.v2.json")),
 		).resolves.toBeNull();
 		const inventory = await listManagedSessionCandidates({ scope: resolved.scope });
 		expect(inventory.kind).toBe("complete");
@@ -80,15 +80,15 @@ async function managedWorkspace(
 		expect(candidates).toHaveLength(1);
 		return {
 			cwd,
-			stateRoot: path.join(cwd, ".gjc", "state"),
+			stateRoot: path.join(cwd, ".vib", "state"),
 			scope: resolved.scope,
 			source: { id: sessionId, path: sourcePath, bytes: await fs.readFile(sourcePath) },
 		};
 	} finally {
-		if (previousRequestId === undefined) delete process.env.GJC_LIFECYCLE_REQUEST_ID;
-		else process.env.GJC_LIFECYCLE_REQUEST_ID = previousRequestId;
-		if (previousSessionId === undefined) delete process.env.GJC_SESSION_ID;
-		else process.env.GJC_SESSION_ID = previousSessionId;
+		if (previousRequestId === undefined) delete process.env.VIB_LIFECYCLE_REQUEST_ID;
+		else process.env.VIB_LIFECYCLE_REQUEST_ID = previousRequestId;
+		if (previousSessionId === undefined) delete process.env.VIB_SESSION_ID;
+		else process.env.VIB_SESSION_ID = previousSessionId;
 	}
 }
 
@@ -99,7 +99,7 @@ export async function createSharedLifecycleFixture(
 		B: "shared-b-source",
 	},
 ): Promise<SharedLifecycleFixture> {
-	const root = await fs.mkdtemp(path.join(tmpdir(), "gjc-sdk-shared-lifecycle-"));
+	const root = await fs.mkdtemp(path.join(tmpdir(), "vib-sdk-shared-lifecycle-"));
 	const agentDir = path.join(root, "agent");
 	const environment = createFixtureBrokerEnvironment(root, agentDir);
 	const started = await startFixtureBrokerWithLeaseForTest({ agentDir, env: environment });
@@ -231,9 +231,9 @@ function success(result: BrokerResult): Record<string, unknown> {
 
 /** Exercises G03-G07 through a supplied shipped-interface invocation, never a direct adapter. */
 export async function createLifecycleFixture(): Promise<LifecycleFixture> {
-	const repo = await fs.mkdtemp(path.join(tmpdir(), "gjc-sdk-machine-lifecycle-"));
-	const agentDir = path.join(repo, ".gjc", "agent");
-	const stateRoot = path.join(repo, ".gjc", "state");
+	const repo = await fs.mkdtemp(path.join(tmpdir(), "vib-sdk-machine-lifecycle-"));
+	const agentDir = path.join(repo, ".vib", "agent");
+	const stateRoot = path.join(repo, ".vib", "state");
 	const environment = createFixtureBrokerEnvironment(repo, agentDir);
 	const fixtureSessionDir = SessionManager.getDefaultSessionDir(repo, agentDir);
 	const started = await startFixtureBrokerWithLeaseForTest({ agentDir, env: environment });
@@ -289,7 +289,7 @@ export async function createLifecycleFixture(): Promise<LifecycleFixture> {
 			if (!sourcePath) throw new Error("Product session API did not create a saved session path.");
 			expect(path.dirname(sourcePath)).toBe(resolved.scope.directoryPath);
 			await expect(
-				fs.access(path.join(resolved.scope.directoryPath, ".gjc-managed-session-scope.v2.json")),
+				fs.access(path.join(resolved.scope.directoryPath, ".vib-managed-session-scope.v2.json")),
 			).resolves.toBeNull();
 			const inventory = await listManagedSessionCandidates({ scope: resolved.scope });
 			expect(inventory.kind).toBe("complete");

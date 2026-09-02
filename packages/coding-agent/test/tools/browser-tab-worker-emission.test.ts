@@ -114,7 +114,7 @@ function createFakeBrowser(page: Page): Browser {
 const initPayload: WorkerInitPayload = {
 	mode: "attach",
 	browserWSEndpoint: "ws://fake",
-	safeDir: "/tmp/gjc-puppeteer-test",
+	safeDir: "/tmp/vib-puppeteer-test",
 	targetId: "target-1",
 	runtimeDiagnostics: true,
 };

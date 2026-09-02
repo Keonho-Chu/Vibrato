@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, setDefaultTimeout } from "bun:test";
 import * as path from "node:path";
 import type { AgentSideConnection, SessionNotification } from "@agentclientprotocol/sdk";
-import { AcpAgent } from "@gajae-code/coding-agent/modes/acp/acp-agent";
-import { TempDir } from "@gajae-code/utils";
+import { AcpAgent } from "@vib-rato/coding-agent/modes/acp/acp-agent";
+import { TempDir } from "@vib-rato/utils";
 import { writeBrokerDiscovery } from "../../src/sdk/broker/discovery";
 import {
 	type ExactSessionAuthorityFixture,
@@ -42,7 +42,7 @@ function updateMeta(notification: SessionNotification): Record<string, unknown> 
 
 function skipBoundaries(notifications: SessionNotification[]): unknown[] {
 	return notifications
-		.map(notification => updateMeta(notification)?.gjcTranscriptReplaySkipped)
+		.map(notification => updateMeta(notification)?.vibTranscriptReplaySkipped)
 		.filter(value => value !== undefined);
 }
 
@@ -306,7 +306,7 @@ describe("ACP transcript replay continuation recovery", () => {
 		await waitFor(
 			() =>
 				updates.some(update => update.update.sessionUpdate === "available_commands_update") &&
-				updates.some(update => updateMeta(update)?.gjcPhase === "idle"),
+				updates.some(update => updateMeta(update)?.vibPhase === "idle"),
 			"the new session bootstrap",
 		);
 		updates.length = 0;

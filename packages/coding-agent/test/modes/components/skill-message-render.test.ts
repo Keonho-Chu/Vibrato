@@ -1,12 +1,12 @@
 import { beforeAll, describe, expect, it } from "bun:test";
-import { resetSettingsForTest, Settings } from "@gajae-code/coding-agent/config/settings";
-import { SkillMessageComponent } from "@gajae-code/coding-agent/modes/components/skill-message";
-import * as themeModule from "@gajae-code/coding-agent/modes/theme/theme";
+import { resetSettingsForTest, Settings } from "@vib-rato/coding-agent/config/settings";
+import { SkillMessageComponent } from "@vib-rato/coding-agent/modes/components/skill-message";
+import * as themeModule from "@vib-rato/coding-agent/modes/theme/theme";
 import {
 	type CustomMessage,
 	SKILL_PROMPT_MESSAGE_TYPE,
 	type SkillPromptDetails,
-} from "@gajae-code/coding-agent/session/messages";
+} from "@vib-rato/coding-agent/session/messages";
 
 beforeAll(async () => {
 	resetSettingsForTest();
@@ -36,7 +36,7 @@ function render(message: CustomMessage<SkillPromptDetails>, expanded: boolean, w
 
 const DETAILS: SkillPromptDetails = {
 	name: "deep-interview",
-	path: "embedded:gjc/skills/deep-interview/SKILL.md",
+	path: "embedded:vib/skills/deep-interview/SKILL.md",
 	lineCount: 858,
 };
 
@@ -51,7 +51,7 @@ describe("SkillMessageComponent rendering", () => {
 		expect(out).not.toContain("Skill:");
 		expect(out).not.toContain("Args:");
 		expect(out).not.toContain("Path:");
-		expect(out).not.toContain("embedded:gjc/skills/deep-interview/SKILL.md");
+		expect(out).not.toContain("embedded:vib/skills/deep-interview/SKILL.md");
 		expect(out).not.toContain("858 lines");
 		expect(out).not.toContain("PROMPT BODY TEXT");
 	});
@@ -66,14 +66,14 @@ describe("SkillMessageComponent rendering", () => {
 	it("collapsed view preserves multi-line args in a bounded preview", () => {
 		const args = [
 			"to re-architect our problem banks into source-based architecture, and",
-			"make sure gaebal-gajae skill-invocation modal does not truncate skill args,",
+			"make sure gaebal-vibrato skill-invocation modal does not truncate skill args,",
 			"even though we need few lines to use.",
 		].join("\n");
 		const out = render(makeMessage({ ...DETAILS, args }, "BODY"), false);
 
 		expect(out).toContain("[skill] deep-interview");
 		expect(out).toContain("to re-architect our problem banks");
-		expect(out).toContain("make sure gaebal-gajae skill-invocation modal");
+		expect(out).toContain("make sure gaebal-vibrato skill-invocation modal");
 		expect(out).toContain("even though we need few lines to use.");
 	});
 
@@ -110,7 +110,7 @@ describe("SkillMessageComponent rendering", () => {
 		expect(out).toContain("Arguments");
 		expect(out).toContain("fix the login bug");
 		expect(out).toContain("Path:");
-		expect(out).toContain("embedded:gjc/skills/deep-interview/SKILL.md");
+		expect(out).toContain("embedded:vib/skills/deep-interview/SKILL.md");
 		expect(out).toContain("858 lines");
 		expect(out).toContain("Prompt");
 		expect(out).toContain("PROMPT BODY TEXT");

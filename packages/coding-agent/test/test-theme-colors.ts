@@ -1,4 +1,4 @@
-import { initTheme, theme } from "@gajae-code/coding-agent/modes/theme/theme";
+import { initTheme, theme } from "@vib-rato/coding-agent/modes/theme/theme";
 
 // Initialize with dark theme explicitly
 Bun.env.COLORTERM = "truecolor";

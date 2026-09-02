@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from "bun:test";
-import { visibleWidth } from "@gajae-code/tui";
+import { visibleWidth } from "@vib-rato/tui";
 import { KEYBINDINGS, KeybindingsManager } from "../src/config/keybindings";
 import { ActionRegistry } from "../src/modes/action-registry";
 import { CommandPalette } from "../src/modes/components/command-palette";

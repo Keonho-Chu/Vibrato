@@ -1,4 +1,4 @@
-import { Args, Command, Flags } from "@gajae-code/utils/cli";
+import { Args, Command, Flags } from "@vib-rato/utils/cli";
 import {
 	COORDINATOR_MCP_PROTOCOL_VERSION,
 	COORDINATOR_MCP_SERVER_NAME,
@@ -36,7 +36,7 @@ function coordinatorDoctorPayload(): {
 		id: "workdir_roots",
 		status: config.allowedRoots.length > 0 ? "pass" : "fail",
 		detail:
-			config.allowedRoots.length > 0 ? config.allowedRoots.join(":") : "GJC_COORDINATOR_MCP_WORKDIR_ROOTS is empty",
+			config.allowedRoots.length > 0 ? config.allowedRoots.join(":") : "VIB_COORDINATOR_MCP_WORKDIR_ROOTS is empty",
 	});
 	checks.push({
 		id: "session_mutations",
@@ -48,7 +48,7 @@ function coordinatorDoctorPayload(): {
 		status: config.sessionCommand ? "pass" : "warn",
 		detail:
 			config.sessionCommand ??
-			"GJC_COORDINATOR_MCP_SESSION_COMMAND is unset; registration can still reuse visible sessions",
+			"VIB_COORDINATOR_MCP_SESSION_COMMAND is unset; registration can still reuse visible sessions",
 	});
 	checks.push({
 		id: "namespace",
@@ -73,7 +73,7 @@ function coordinatorDoctorPayload(): {
 }
 
 export default class Coordinator extends Command {
-	static description = "Inspect GJC coordinator MCP bridge contracts";
+	static description = "Inspect Vibrato coordinator MCP bridge contracts";
 	static strict = false;
 
 	static args = {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
-import { getBundledModel } from "@gajae-code/ai/models";
-import { convertMessages } from "@gajae-code/ai/providers/openai-completions";
-import type { AssistantMessage, Context, Model, OpenAICompat, ToolResultMessage, Usage } from "@gajae-code/ai/types";
+import { getBundledModel } from "@vib-rato/ai/models";
+import { convertMessages } from "@vib-rato/ai/providers/openai-completions";
+import type { AssistantMessage, Context, Model, OpenAICompat, ToolResultMessage, Usage } from "@vib-rato/ai/types";
 
 const emptyUsage: Usage = {
 	input: 0,

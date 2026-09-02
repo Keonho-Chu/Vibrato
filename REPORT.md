@@ -78,7 +78,7 @@ The width-measurement layer crosses the N-API boundary one line at a time: `trun
 **Suggestion:** add batched natives (e.g. `truncateLinesToWidth(lines[], width)` / `visibleWidths(lines[])`) so a frame's normalization is one FFI call over the array; consolidate on one width implementation; hoist tab width to a module-level cached value invalidated on settings change.
 
 ### 10. perf(session): sidecar runtime-state writer does sync read + pretty-print JSON write per state event — P2
-`packages/coding-agent/src/gjc-runtime/session-state-sidecar.ts:139-300`
+`packages/coding-agent/src/vib-runtime/session-state-sidecar.ts:139-300`
 
 `persistCoordinatorRuntimeStateFromEvent` runs for every session event via `#emitSessionEvent` (agent-session.ts:1777-1786, 1812). For events that map to a state (agent_start/turn_start/agent_end) it calls `readPreviousPayload` which is a **synchronous** `fsSync.readFileSync` + JSON.parse (:139-145) on the event/render path, then writes `JSON.stringify(payload, null, 2)` (:272-276). turn_start fires per agent turn, so during multi-turn tool loops this sync read happens repeatedly while the TUI is animating.
 
@@ -251,7 +251,7 @@ Pipeline overview: `bun build --compile` via `scripts/ci-release-build-binaries.
 2. **HIGH / medium effort** — Stop embedding both modern+baseline native addons in x64 binaries; only one is ever loaded. `packages/natives/scripts/embed-native.ts:61-96`
 3. **HIGH / small effort** — Introduce a stripped `dist` Rust profile for shipped addons. Shipped .node files use `[profile.ci]` with strip=none + line tables + thin LTO; the tuned `[profile.release]` is never used for distribution. 20–40% addon shrink plausible. `Cargo.toml:25-36`
 4. **MED-HIGH / medium effort** — Lazy-resolve session image blobs instead of materializing all history base64 on resume; images can be pinned 3x. `packages/coding-agent/src/session/session-manager.ts:1002-1028`
-5. **MEDIUM / medium effort** — Defer eager heavy imports (1.6MB models.json, 1.1MB docs index, winston/handlebars/xterm/linkedom); fixed ~10-20MB parse-time heap paid by every process including subagent fan-out. `packages/ai/src/models.ts:2`, `packages/coding-agent/src/internal-urls/gjc-protocol.ts:11`, `packages/utils/src/logger.ts:13-16`
+5. **MEDIUM / medium effort** — Defer eager heavy imports (1.6MB models.json, 1.1MB docs index, winston/handlebars/xterm/linkedom); fixed ~10-20MB parse-time heap paid by every process including subagent fan-out. `packages/ai/src/models.ts:2`, `packages/coding-agent/src/internal-urls/vib-protocol.ts:11`, `packages/utils/src/logger.ts:13-16`
 
 ## Findings
 
@@ -277,9 +277,9 @@ Root Cargo.toml defines a well-tuned `[profile.release]` (:17-23: opt-level 3, l
 **Fix:** add a `dist` profile: `inherits = "release"`, `panic = "unwind"`, `strip = true` (or `"debuginfo"`), optionally `lto = "fat"`; have build-native.ts select it for release tags; keep `ci` for test builds.
 
 ### 4. [Size/Memory] 1.1 MB docs corpus embedded as a TS module in the eagerly-imported internal-urls barrel — MEDIUM, small/medium effort
-`packages/coding-agent/src/internal-urls/gjc-protocol.ts:11`
+`packages/coding-agent/src/internal-urls/vib-protocol.ts:11`
 
-`generate-docs-index.ts:46-67` inlines the full text of every `docs/**/*.md` (76+ files) into `docs-index.generated.ts` — 1.1 MB of string literals. Statically imported by gjc-protocol.ts:11, re-exported from the barrel (index.ts:13), imported by sdk.ts:85. Cost: +1.1 MB in every compiled binary and npm package, and the whole corpus is parsed into JS heap at startup of every session — including subagent runs that never resolve a `gjc://docs` URL.
+`generate-docs-index.ts:46-67` inlines the full text of every `docs/**/*.md` (76+ files) into `docs-index.generated.ts` — 1.1 MB of string literals. Statically imported by vib-protocol.ts:11, re-exported from the barrel (index.ts:13), imported by sdk.ts:85. Cost: +1.1 MB in every compiled binary and npm package, and the whole corpus is parsed into JS heap at startup of every session — including subagent runs that never resolve a `vib://docs` URL.
 
 **Fix:** (1) lazy `await import("./docs-index.generated")` inside the resolve handler; (2) better: emit docs as embedded assets or a gzipped archive (like packages/stats' `embedded-client.generated.txt` pattern), decompressed on demand — markdown compresses ~4x.
 
@@ -321,12 +321,12 @@ One flat `chatContainer` only ever grows within a conversation (addChild sites: 
 ### 10. [Memory] Eagerly-imported heavy TS deps (winston, handlebars, xterm-headless, linkedom) inflate baseline RSS of every process — MEDIUM, medium effort
 `packages/utils/src/logger.ts:13-16`
 
-- logger.ts:14-15 — winston + winston-daily-rotate-file imported statically; rotating-file logger constructed at module load. `@gajae-code/utils` is imported by every package — universal cost before a single log line.
+- logger.ts:14-15 — winston + winston-daily-rotate-file imported statically; rotating-file logger constructed at module load. `@vib-rato/utils` is imported by every package — universal cost before a single log line.
 - prompt.ts:1-2 — handlebars (full compiler, ~1MB parsed) statically imported in the same universal package.
 - bash-interactive.ts:15 — `@xterm/headless` (full terminal emulator) at module scope even when interactive bash never runs.
 - fetch.ts:8 + 6 scrapers — linkedom statically imported even when fetch/browser tools are never invoked.
 
-Together O(10MB) baseline RSS per gjc process, multiplied by subagent/team fan-out. In compiled binaries all get bundled (only mupdf is `--external`). The lazy pattern is already proven in-repo (puppeteer-core, markit-ai, turndown).
+Together O(10MB) baseline RSS per vib process, multiplied by subagent/team fan-out. In compiled binaries all get bundled (only mupdf is `--external`). The lazy pattern is already proven in-repo (puppeteer-core, markit-ai, turndown).
 
 **Fix:** lazy `await import()` behind first use; logger transport created on first write; consider replacing winston with a tiny append-only JSONL writer (format is already hand-rolled JSON, logger.ts:27-43).
 

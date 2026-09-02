@@ -1,7 +1,7 @@
 /**
  * Four-step install saga with reverse-order compensation.
  *
- * GJC writes to four files it does not own, across two applications, with no
+ * Vibrato writes to four files it does not own, across two applications, with no
  * distributed lock available. Nothing here can be made atomic across files, so
  * the design is instead: refuse early, record enough to recover, and undo in
  * reverse on failure.
@@ -10,9 +10,9 @@
  *   1. `~/.paseo/config.json` provider entry + provider-key provenance
  *   2. `~/.paseo/orchestration-preferences.json` seeded roles + seeded-key provenance
  *   3. `<agentDir>/paseo-skills/` symlink bridge
- *   4. `~/.gjc/agent/config.yml` `skills.customDirectories` append
+ *   4. `~/.vib/agent/config.yml` `skills.customDirectories` append
  *
- * Steps 1 and 2 each mutate a Paseo file AND the GJC provenance ledger. Those
+ * Steps 1 and 2 each mutate a Paseo file AND the Vibrato provenance ledger. Those
  * are separate files, so a durable intent record is written BEFORE either one,
  * carrying preflight and expected-post identities for BOTH. Recovery classifies
  * each file independently and refuses whenever the ledger diverged.
@@ -193,7 +193,7 @@ export async function runJsonStep(input: JsonStepInput): Promise<JsonStepOutput>
 				if (observed !== successIdentity) {
 					return {
 						status: "conflict",
-						detail: `${input.targetPath} changed after GJC wrote it; GJC will not overwrite the newer contents`,
+						detail: `${input.targetPath} changed after Vibrato wrote it; Vibrato will not overwrite the newer contents`,
 						retained: [input.provenancePath, ...(backupPath ? [backupPath] : [])],
 					};
 				}
@@ -228,7 +228,7 @@ export function receiptStep(label: string, receipt: CasReceipt): CompletedStep {
 			if (restored.status === "conflict") {
 				return {
 					status: "conflict",
-					detail: `config.yml changed at ${restored.paths.join(", ")} since GJC appended to it`,
+					detail: `config.yml changed at ${restored.paths.join(", ")} since Vibrato appended to it`,
 					retained: [],
 				};
 			}

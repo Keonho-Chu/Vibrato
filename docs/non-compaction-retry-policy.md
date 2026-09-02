@@ -110,10 +110,10 @@ Flow (`#handleRetryableError`):
 `--prefer-credential <selector>` gives one active stored OAuth credential first priority without pinning it:
 
 ```bash
-gjc --prefer-credential id:15
-gjc --prefer-credential email:name@example.com
-gjc --prefer-credential anthropic/id:15
-gjc --resume --prefer-credential id:15
+vib --prefer-credential id:15
+vib --prefer-credential email:name@example.com
+vib --prefer-credential anthropic/id:15
+vib --resume --prefer-credential id:15
 ```
 
 The selector works for any provider backed by a multi-account OAuth credential pool; it is not Anthropic-specific. API-key credentials and runtime `--api-key` overrides are intentionally outside this soft-selection path, and `--credential` (the hard pin) and `--prefer-credential` are mutually exclusive.

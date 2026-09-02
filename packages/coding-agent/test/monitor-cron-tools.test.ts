@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import type { AgentToolContext, AgentToolResult } from "@gajae-code/agent-core";
+import type { AgentToolContext, AgentToolResult } from "@vib-rato/agent-core";
 import * as z from "zod/v4";
 import { AsyncJobManager } from "../src/async/job-manager";
 import { Settings } from "../src/config/settings";

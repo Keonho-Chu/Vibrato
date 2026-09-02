@@ -32,7 +32,7 @@ import {
 	hasProviderConflict,
 	providerEntryHash,
 	providerKeyFor,
-	resolveGjcCommand,
+	resolveVibCommand,
 } from "../src/setup/paseo/provider-config";
 import { removePaseoSetup } from "../src/setup/paseo/remove";
 import { checkExitCode, type SetupCheckStatus } from "../src/setup/paseo/result-types";
@@ -63,7 +63,7 @@ afterEach(async () => {
 });
 
 async function makeRoot(): Promise<string> {
-	const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-paseo-test-"));
+	const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-paseo-test-"));
 	tempRoots.push(root);
 	return root;
 }
@@ -80,7 +80,7 @@ interface Fixture {
  * Build a fully isolated fixture.
  *
  * Every path points inside a temp root, so no test can reach the real
- * `~/.paseo`, `~/.agents`, or `~/.gjc`. `runProviderLs` is injected rather than
+ * `~/.paseo`, `~/.agents`, or `~/.vib`. `runProviderLs` is injected rather than
  * mocked at module scope, which is why this suite needs no `mock.module()`.
  */
 async function makeFixture(outcome: PaseoLsOutcome = { kind: "timeout", timeoutMs: 5_000 }): Promise<Fixture> {
@@ -100,7 +100,7 @@ async function makeFixture(outcome: PaseoLsOutcome = { kind: "timeout", timeoutM
 		bridgeDir: path.join(agentDir, "paseo-skills"),
 		provenanceLedger: path.join(agentDir, "paseo", "provenance.json"),
 		intentRecord: path.join(agentDir, "paseo", "intent.json"),
-		gjcSkillsDir: path.join(agentDir, "skills"),
+		vibSkillsDir: path.join(agentDir, "skills"),
 	};
 
 	const probes: number[] = [];
@@ -172,7 +172,7 @@ describe("byte preservation (AC-3)", () => {
 		expect(current.raw).toBe(original);
 
 		const plan = planPublish(current, draft => {
-			providersOf(draft).gjc = { enabled: true };
+			providersOf(draft).vib = { enabled: true };
 		});
 		await publishPlan(paths.configJson, plan, {
 			expectedIdentity: current.identity,
@@ -239,7 +239,7 @@ describe("compare-and-swap", () => {
 		await seedConfig(paths);
 		const current = await readTarget(paths.configJson);
 		const plan = planPublish(current, draft => {
-			providersOf(draft).gjc = { enabled: true };
+			providersOf(draft).vib = { enabled: true };
 		});
 
 		// Another writer lands between our read and our publish.
@@ -260,7 +260,7 @@ describe("backup safety", () => {
 
 		const current = await readTarget(paths.orchestrationPreferences);
 		const plan = planPublish(current, draft => {
-			draft.providers = { impl: "gjc" };
+			draft.providers = { impl: "vib" };
 		});
 		const result = await publishPlan(paths.orchestrationPreferences, plan, {
 			expectedIdentity: current.identity,
@@ -285,17 +285,17 @@ describe("backup safety", () => {
 
 describe("executable resolution", () => {
 	function withChannel<T>(channel: string | undefined, compiled: boolean, fn: () => T): T {
-		const priorChannel = process.env.GJC_BUILD_CHANNEL;
+		const priorChannel = process.env.VIB_BUILD_CHANNEL;
 		const priorCompiled = process.env.PI_COMPILED;
-		if (channel === undefined) delete process.env.GJC_BUILD_CHANNEL;
-		else process.env.GJC_BUILD_CHANNEL = channel;
+		if (channel === undefined) delete process.env.VIB_BUILD_CHANNEL;
+		else process.env.VIB_BUILD_CHANNEL = channel;
 		if (compiled) process.env.PI_COMPILED = "true";
 		else delete process.env.PI_COMPILED;
 		try {
 			return fn();
 		} finally {
-			if (priorChannel === undefined) delete process.env.GJC_BUILD_CHANNEL;
-			else process.env.GJC_BUILD_CHANNEL = priorChannel;
+			if (priorChannel === undefined) delete process.env.VIB_BUILD_CHANNEL;
+			else process.env.VIB_BUILD_CHANNEL = priorChannel;
 			if (priorCompiled === undefined) delete process.env.PI_COMPILED;
 			else process.env.PI_COMPILED = priorCompiled;
 		}
@@ -305,36 +305,36 @@ describe("executable resolution", () => {
 	// resolveBuildMetadata reads the explicit channel first, so it never reports
 	// "compiled". Grouping release/dev/compiled is the fix for that defect.
 	test.each(["release", "dev"])("channel %s resolves to the running executable", (channel: string) => {
-		const resolution = withChannel(channel, true, () => resolveGjcCommand());
+		const resolution = withChannel(channel, true, () => resolveVibCommand());
 		expect(resolution.ok).toBe(true);
 		if (resolution.ok) expect(resolution.command).toEqual([process.execPath, "acp"]);
 	});
 
 	test("unknown channel is a hard failure naming the channel", () => {
-		const resolution = withChannel("unknown", false, () => resolveGjcCommand());
+		const resolution = withChannel("unknown", false, () => resolveVibCommand());
 		expect(resolution.ok).toBe(false);
 		if (!resolution.ok) expect(resolution.channel).toBe("unknown");
 	});
 
-	test("no resolution ever emits a bare gjc string", () => {
+	test("no resolution ever emits a bare vib string", () => {
 		for (const channel of ["release", "dev", "unknown", undefined]) {
 			const compiled = channel === "release" || channel === "dev";
-			const resolution = withChannel(channel, compiled, () => resolveGjcCommand());
-			if (resolution.ok) expect(resolution.command[0]).not.toBe("gjc");
+			const resolution = withChannel(channel, compiled, () => resolveVibCommand());
+			if (resolution.ok) expect(resolution.command[0]).not.toBe("vib");
 		}
 	});
 });
 
 describe("provider entry", () => {
 	test("permission mode is always prompt, with and without an mpreset", () => {
-		expect(buildProviderEntry(["/bin/gjc", "acp"]).env.GJC_ACP_PERMISSION_MODE).toBe("prompt");
-		expect(buildProviderEntry(["/bin/gjc", "acp"], "codex-pro").env.GJC_ACP_PERMISSION_MODE).toBe("prompt");
+		expect(buildProviderEntry(["/bin/vib", "acp"]).env.VIB_ACP_PERMISSION_MODE).toBe("prompt");
+		expect(buildProviderEntry(["/bin/vib", "acp"], "codex-pro").env.VIB_ACP_PERMISSION_MODE).toBe("prompt");
 	});
 
 	test("mpreset changes the key and the command tail", () => {
-		expect(providerKeyFor()).toBe("gjc");
-		expect(providerKeyFor("codex-pro")).toBe("gjc-codex-pro");
-		expect(buildProviderEntry(["/bin/gjc", "acp"], "codex-pro").command.slice(-3)).toEqual([
+		expect(providerKeyFor()).toBe("vib");
+		expect(providerKeyFor("codex-pro")).toBe("vib-codex-pro");
+		expect(buildProviderEntry(["/bin/vib", "acp"], "codex-pro").command.slice(-3)).toEqual([
 			"acp",
 			"--mpreset",
 			"codex-pro",
@@ -342,15 +342,15 @@ describe("provider entry", () => {
 	});
 
 	test("an absent key is not a conflict", () => {
-		const entry = buildProviderEntry(["/bin/gjc", "acp"]);
-		expect(hasProviderConflict({ agents: { providers: {} } }, "gjc", entry).conflict).toBe(false);
+		const entry = buildProviderEntry(["/bin/vib", "acp"]);
+		expect(hasProviderConflict({ agents: { providers: {} } }, "vib", entry).conflict).toBe(false);
 	});
 
 	test("an identical entry is not a conflict, a differing one is", () => {
-		const entry = buildProviderEntry(["/bin/gjc", "acp"]);
-		expect(hasProviderConflict({ agents: { providers: { gjc: entry } } }, "gjc", entry).conflict).toBe(false);
+		const entry = buildProviderEntry(["/bin/vib", "acp"]);
+		expect(hasProviderConflict({ agents: { providers: { vib: entry } } }, "vib", entry).conflict).toBe(false);
 		expect(
-			hasProviderConflict({ agents: { providers: { gjc: { ...entry, label: "mine" } } } }, "gjc", entry).conflict,
+			hasProviderConflict({ agents: { providers: { vib: { ...entry, label: "mine" } } } }, "vib", entry).conflict,
 		).toBe(true);
 	});
 });
@@ -372,7 +372,7 @@ describe("orchestration seeding (AC-15)", () => {
 		seed.mutate(draft);
 		const roles = draft.providers as Record<string, unknown>;
 		expect(roles.impl).toBe("mine");
-		expect(roles.ui).toBe("gjc");
+		expect(roles.ui).toBe("vib");
 		expect(draft.preferences).toEqual(["keep"]);
 	});
 
@@ -406,18 +406,18 @@ describe("four-state check (AC-16, AC-17, AC-18)", () => {
 		for (const name of SKILL_NAMES) {
 			await fs.symlink(path.join(fixture.paths.agentsSkillsDir, name), path.join(fixture.paths.bridgeDir, name));
 		}
-		const resolution = resolveGjcCommand();
+		const resolution = resolveVibCommand();
 		const command = resolution.ok ? resolution.command : [process.execPath, "acp"];
-		await seedConfig(fixture.paths, { gjc: buildProviderEntry(command) });
+		await seedConfig(fixture.paths, { vib: buildProviderEntry(command) });
 		await fs.writeFile(
 			fixture.paths.orchestrationPreferences,
-			serializeJson({ providers: { impl: "gjc", ui: "gjc", research: "gjc", planning: "gjc", audit: "gjc" } }),
+			serializeJson({ providers: { impl: "vib", ui: "vib", research: "vib", planning: "vib", audit: "vib" } }),
 		);
 		return fixture;
 	}
 
 	test("a dirty L1 is drift regardless of the daemon, and exits 1", async () => {
-		const fixture = await makeFixture(lsOk("gjc"));
+		const fixture = await makeFixture(lsOk("vib"));
 		await seedConfig(fixture.paths);
 		const result = await checkPaseoSetup(fixture.deps);
 		expect(result.status).toBe("drift");
@@ -425,7 +425,7 @@ describe("four-state check (AC-16, AC-17, AC-18)", () => {
 	});
 
 	test("clean L1 plus a daemon listing the provider is pass", async () => {
-		const fixture = await cleanL1(lsOk("gjc"));
+		const fixture = await cleanL1(lsOk("vib"));
 		const result = await checkPaseoSetup(fixture.deps);
 		expect(result.status).toBe("pass");
 		expect(checkExitCode(result)).toBe(0);
@@ -456,7 +456,7 @@ describe("four-state check (AC-16, AC-17, AC-18)", () => {
 
 	test("the status union never leaves the four locked values", async () => {
 		const seen = new Set<SetupCheckStatus>();
-		const outcomes: PaseoLsOutcome[] = [lsOk("gjc"), lsOk(), { kind: "timeout", timeoutMs: 1 }];
+		const outcomes: PaseoLsOutcome[] = [lsOk("vib"), lsOk(), { kind: "timeout", timeoutMs: 1 }];
 		for (const outcome of outcomes) {
 			const fixture = await cleanL1(outcome);
 			seen.add((await checkPaseoSetup(fixture.deps)).status);
@@ -472,8 +472,8 @@ describe("four-state check (AC-16, AC-17, AC-18)", () => {
 	test("a listed but unavailable provider is stale, not pass", async () => {
 		const fixture = await cleanL1({
 			kind: "ok",
-			providerIds: ["gjc"],
-			rows: [{ id: "gjc", status: "unavailable" }],
+			providerIds: ["vib"],
+			rows: [{ id: "vib", status: "unavailable" }],
 		});
 		const result = await checkPaseoSetup(fixture.deps);
 		expect(result.status).toBe("stale");
@@ -481,7 +481,7 @@ describe("four-state check (AC-16, AC-17, AC-18)", () => {
 	});
 
 	test("a row without a status is trusted as available", async () => {
-		const fixture = await cleanL1({ kind: "ok", providerIds: ["gjc"], rows: [{ id: "gjc" }] });
+		const fixture = await cleanL1({ kind: "ok", providerIds: ["vib"], rows: [{ id: "vib" }] });
 		expect((await checkPaseoSetup(fixture.deps)).status).toBe("pass");
 	});
 
@@ -543,16 +543,16 @@ describe("skills bridge", () => {
 	test("both protected skill trees are byte-identical across install and check (AC-8, AC-19)", async () => {
 		const fixture = await makeFixture();
 		await seedSkills(fixture.paths, ["context-search"]);
-		await fs.writeFile(path.join(fixture.paths.gjcSkillsDir, "mine.md"), "# mine\n");
+		await fs.writeFile(path.join(fixture.paths.vibSkillsDir, "mine.md"), "# mine\n");
 
 		const agentsBefore = await snapshotTree(fixture.paths.agentsSkillsDir);
-		const gjcBefore = await snapshotTree(fixture.paths.gjcSkillsDir);
+		const vibBefore = await snapshotTree(fixture.paths.vibSkillsDir);
 
 		await installSkillsBridge(await preflightSkillsBridge(fixture.deps));
 		await checkPaseoSetup(fixture.deps);
 
 		expect(await snapshotTree(fixture.paths.agentsSkillsDir)).toBe(agentsBefore);
-		expect(await snapshotTree(fixture.paths.gjcSkillsDir)).toBe(gjcBefore);
+		expect(await snapshotTree(fixture.paths.vibSkillsDir)).toBe(vibBefore);
 	});
 });
 
@@ -561,12 +561,12 @@ describe("provenance-gated removal (AC-19)", () => {
 		const fixture = await makeFixture();
 		await seedSkills(fixture.paths);
 		const entry = buildProviderEntry([process.execPath, "acp"]);
-		await seedConfig(fixture.paths, { gjc: entry });
-		await fs.writeFile(fixture.paths.orchestrationPreferences, serializeJson({ providers: { impl: "gjc" } }));
+		await seedConfig(fixture.paths, { vib: entry });
+		await fs.writeFile(fixture.paths.orchestrationPreferences, serializeJson({ providers: { impl: "vib" } }));
 		await writeProvenance(fixture.paths.provenanceLedger, {
 			version: 1,
-			providerKeys: { gjc: providerEntryHash(entry) },
-			seededOrchestrationKeys: { impl: "gjc" },
+			providerKeys: { vib: providerEntryHash(entry) },
+			seededOrchestrationKeys: { impl: "vib" },
 		});
 		return fixture;
 	}
@@ -576,14 +576,14 @@ describe("provenance-gated removal (AC-19)", () => {
 		const result = await removePaseoSetup(fixture.deps, { now: new Date() });
 		expect(result.outcome).toBe("removed");
 		const after = await readTarget(fixture.paths.configJson);
-		expect(providersOf(after.parsed).gjc).toBeUndefined();
+		expect(providersOf(after.parsed).vib).toBeUndefined();
 	});
 
 	test("a user-edited key survives removal", async () => {
 		const fixture = await installedFixture();
 		const current = await readTarget(fixture.paths.configJson);
 		const plan = planPublish(current, draft => {
-			const entry = providersOf(draft).gjc as Record<string, unknown>;
+			const entry = providersOf(draft).vib as Record<string, unknown>;
 			entry.label = "MY OWN LABEL";
 		});
 		await publishPlan(fixture.paths.configJson, plan, {
@@ -595,7 +595,7 @@ describe("provenance-gated removal (AC-19)", () => {
 		await removePaseoSetup(fixture.deps, { now: new Date() });
 
 		const after = await readTarget(fixture.paths.configJson);
-		const survivor = providersOf(after.parsed).gjc as Record<string, unknown> | undefined;
+		const survivor = providersOf(after.parsed).vib as Record<string, unknown> | undefined;
 		expect(survivor?.label).toBe("MY OWN LABEL");
 	});
 
@@ -630,18 +630,18 @@ describe("provenance-gated removal (AC-19)", () => {
 	test("a never-provenanced key that coincidentally matches is untouched", async () => {
 		const fixture = await makeFixture();
 		const entry = buildProviderEntry([process.execPath, "acp"]);
-		await seedConfig(fixture.paths, { gjc: entry });
-		// The ledger records a different key, so `gjc` was never ours.
+		await seedConfig(fixture.paths, { vib: entry });
+		// The ledger records a different key, so `vib` was never ours.
 		await writeProvenance(fixture.paths.provenanceLedger, {
 			version: 1,
-			providerKeys: { "gjc-other": "deadbeef" },
+			providerKeys: { "vib-other": "deadbeef" },
 			seededOrchestrationKeys: {},
 		});
 
 		await removePaseoSetup(fixture.deps, { now: new Date() });
 
 		const after = await readTarget(fixture.paths.configJson);
-		expect(providersOf(after.parsed).gjc).toBeDefined();
+		expect(providersOf(after.parsed).vib).toBeDefined();
 	});
 
 	test("nothing recorded means nothing to remove", async () => {
@@ -651,19 +651,19 @@ describe("provenance-gated removal (AC-19)", () => {
 		expect(result.outcome).toBe("nothing-to-remove");
 	});
 
-	test("all provenanced gjc keys from repeated mpreset runs are enumerated", () => {
+	test("all provenanced vib keys from repeated mpreset runs are enumerated", () => {
 		const ledger = {
 			version: 1,
-			providerKeys: { gjc: "a", "gjc-codex-pro": "b", "gjc-fast": "c" },
+			providerKeys: { vib: "a", "vib-codex-pro": "b", "vib-fast": "c" },
 			seededOrchestrationKeys: {},
 		};
-		expect(provenancedProviderKeys(ledger)).toEqual(["gjc", "gjc-codex-pro", "gjc-fast"]);
+		expect(provenancedProviderKeys(ledger)).toEqual(["vib", "vib-codex-pro", "vib-fast"]);
 	});
 
 	test("ownership requires both a record and a matching value hash", () => {
-		const ledger = { version: 1, providerKeys: { gjc: "hash-a" }, seededOrchestrationKeys: {} };
-		expect(isProvenancedProvider(ledger, "gjc", "hash-a")).toBe(true);
-		expect(isProvenancedProvider(ledger, "gjc", "hash-b")).toBe(false);
+		const ledger = { version: 1, providerKeys: { vib: "hash-a" }, seededOrchestrationKeys: {} };
+		expect(isProvenancedProvider(ledger, "vib", "hash-a")).toBe(true);
+		expect(isProvenancedProvider(ledger, "vib", "hash-b")).toBe(false);
 		expect(isProvenancedProvider(ledger, "absent", "hash-a")).toBe(false);
 	});
 });
@@ -678,7 +678,7 @@ describe("intent recovery", () => {
 			version: INTENT_VERSION,
 			step: "provider-config",
 			targetPath: fixture.paths.configJson,
-			ownedKeys: ["agents.providers.gjc"],
+			ownedKeys: ["agents.providers.vib"],
 			targetPreflightIdentity: await currentIdentity(fixture.paths.configJson),
 			targetExpectedIdentity: hashBytes(serializeJson({ after: true })),
 			provenancePath: fixture.paths.provenanceLedger,
@@ -740,12 +740,12 @@ describe("intent recovery", () => {
 		await fs.writeFile(fixture.paths.configJson, serializeJson({ after: true }));
 		await writeIntent(fixture.paths.intentRecord, {
 			...intent,
-			provenancePayload: { version: 1, providerKeys: {}, seededOrchestrationKeys: { ui: "gjc" } },
+			provenancePayload: { version: 1, providerKeys: {}, seededOrchestrationKeys: { ui: "vib" } },
 		});
 
 		const recovery = await recoverIntent(fixture.paths.intentRecord, { repair: true });
 		expect(recovery?.recovered).toBe(true);
-		expect((await readProvenance(fixture.paths.provenanceLedger)).seededOrchestrationKeys.ui).toBe("gjc");
+		expect((await readProvenance(fixture.paths.provenanceLedger)).seededOrchestrationKeys.ui).toBe("vib");
 		expect(await readIntent(fixture.paths.intentRecord)).toBeUndefined();
 	});
 
@@ -862,21 +862,21 @@ describe("provider probe parsing", () => {
 	// rejected as malformed -- making pass/stale unreachable against a real daemon.
 	test("parses the real paseo provider ls shape", () => {
 		const outcome = parseProviderLs(
-			'[{"provider":"gjc","label":"Gajae Code","status":"available","enabled":"Enabled"}]',
+			'[{"provider":"vib","label":"Vibrato","status":"available","enabled":"Enabled"}]',
 		);
 		expect(outcome.kind).toBe("ok");
 		if (outcome.kind === "ok") {
-			expect([...outcome.providerIds]).toEqual(["gjc"]);
+			expect([...outcome.providerIds]).toEqual(["vib"]);
 			expect(outcome.rows[0]?.status).toBe("available");
 		}
 	});
 
 	test.each([
-		['["gjc","claude"]', ["gjc", "claude"]],
-		['{"providers":["gjc"]}', ["gjc"]],
-		['{"providers":[{"id":"gjc"}]}', ["gjc"]],
-		['{"providers":[{"name":"gjc"}]}', ["gjc"]],
-		['[{"provider":"gjc"}]', ["gjc"]],
+		['["vib","claude"]', ["vib", "claude"]],
+		['{"providers":["vib"]}', ["vib"]],
+		['{"providers":[{"id":"vib"}]}', ["vib"]],
+		['{"providers":[{"name":"vib"}]}', ["vib"]],
+		['[{"provider":"vib"}]', ["vib"]],
 	])("parses %s", (input: string, expected: string[]) => {
 		const outcome = parseProviderLs(input);
 		expect(outcome.kind).toBe("ok");

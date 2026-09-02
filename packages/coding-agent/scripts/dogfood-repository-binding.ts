@@ -1,7 +1,7 @@
 /**
  * Product-surface dogfood for #2901 repository binding.
  *
- * Creates two sibling git repos, runs real `gjc ultragoal` / `gjc ralplan`
+ * Creates two sibling git repos, runs real `vib ultragoal` / `vib ralplan`
  * CLI entrypoints from source, and prints fail-closed mismatch evidence.
  *
  * Usage (from monorepo root):
@@ -16,8 +16,8 @@ import {
 	assertPathUnderRepositoryBinding,
 	parseRepositoryBinding,
 	resolveTaskRepositoryBinding,
-} from "../src/gjc-runtime/repository-binding";
-import { readUltragoalPlan, startNextUltragoalGoal } from "../src/gjc-runtime/ultragoal-runtime";
+} from "../src/vib-runtime/repository-binding";
+import { readUltragoalPlan, startNextUltragoalGoal } from "../src/vib-runtime/ultragoal-runtime";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const cli = path.join(repoRoot, "packages/coding-agent/src/cli.ts");
@@ -53,14 +53,14 @@ async function runCli(
 }
 
 async function main(): Promise<void> {
-	const dogfoodRoot = await fsp.mkdtemp(path.join(os.tmpdir(), "gjc-dogfood-2901-"));
-	const left = path.join(dogfoodRoot, "gajae-code");
+	const dogfoodRoot = await fsp.mkdtemp(path.join(os.tmpdir(), "vib-dogfood-2901-"));
+	const left = path.join(dogfoodRoot, "vib-rato");
 	const right = path.join(dogfoodRoot, "oh-my-openagent-senpi");
 	await initRepo(left);
 	await initRepo(right);
 
 	const sessionId = `dogfood-2901-${process.pid}`;
-	const env = { ...process.env, GJC_SESSION_ID: sessionId };
+	const env = { ...process.env, VIB_SESSION_ID: sessionId };
 
 	console.log("# Dogfood: repository binding (#2901)");
 	console.log(`root=${dogfoodRoot}`);
@@ -86,7 +86,7 @@ async function main(): Promise<void> {
 		],
 		env,
 	);
-	console.log("## 1) gjc ultragoal create-goals (LEFT)");
+	console.log("## 1) vib ultragoal create-goals (LEFT)");
 	console.log(`exit=${create.code}`);
 	console.log(create.stdout.trim() || create.stderr.trim());
 	if (create.code !== 0) process.exit(1);
@@ -146,12 +146,12 @@ async function main(): Promise<void> {
 
 	// 6) Ralplan seed stamps binding via product CLI
 	console.log();
-	console.log("## 7) gjc ralplan seed (LEFT)");
+	console.log("## 7) vib ralplan seed (LEFT)");
 	const ralplan = await runCli(left, ["ralplan", "--json", "dogfood multi-repo binding"], env);
 	console.log(`exit=${ralplan.code}`);
 	console.log(ralplan.stdout.trim() || ralplan.stderr.trim());
 	if (ralplan.code !== 0) process.exit(1);
-	const statePath = path.join(left, ".gjc", `_session-${sessionId}`, "state", "ralplan-state.json");
+	const statePath = path.join(left, ".vib", `_session-${sessionId}`, "state", "ralplan-state.json");
 	const state = JSON.parse(await fsp.readFile(statePath, "utf8")) as {
 		repository_binding?: unknown;
 		run_id?: string;
@@ -166,7 +166,7 @@ async function main(): Promise<void> {
 
 	// 7) Ralplan stage write on LEFT succeeds and echoes repository_binding
 	console.log();
-	console.log("## 9) gjc ralplan --write planner on LEFT (match)");
+	console.log("## 9) vib ralplan --write planner on LEFT (match)");
 	const notePath = path.join(left, "dogfood-planner.md");
 	await fsp.writeFile(notePath, "# dogfood planner\n");
 	const writeLeft = await runCli(
@@ -186,7 +186,7 @@ async function main(): Promise<void> {
 	// 8) Copy seed authority into RIGHT session layout → stage write fails closed
 	console.log();
 	console.log("## 10) ralplan --write on RIGHT with LEFT binding (fail-closed)");
-	const rightStateDir = path.join(right, ".gjc", `_session-${sessionId}`, "state");
+	const rightStateDir = path.join(right, ".vib", `_session-${sessionId}`, "state");
 	await fsp.mkdir(rightStateDir, { recursive: true });
 	await fsp.copyFile(statePath, path.join(rightStateDir, "ralplan-state.json"));
 	const writeRight = await runCli(

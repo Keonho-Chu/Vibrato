@@ -13,8 +13,8 @@ import {
 	type TUI,
 	truncateToWidth,
 	visibleWidth,
-} from "@gajae-code/tui";
-import { sanitizeText } from "@gajae-code/utils";
+} from "@vib-rato/tui";
+import { sanitizeText } from "@vib-rato/utils";
 import { theme } from "../../modes/theme/theme";
 import type { TruncationMeta } from "../../tools/output-meta";
 import {

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 import { lifecycleRequestTimeoutMs } from "../broker/startup-budget";
 import { type SdkClient, SdkClientError } from "../client";
 import type { AbortScope } from "../host/control/operations";
@@ -372,7 +372,7 @@ export class AcpSdkAdapter {
 	 * exact causal owned work (background Bash/task jobs, detached subagents) so
 	 * an external client can terminate everything a turn spawned. Paseo keeps
 	 * owned cancels through its provider config env
-	 * (`GJC_ACP_ABORT_SCOPE=owned`) without source changes. A fresh bounded
+	 * (`VIB_ACP_ABORT_SCOPE=owned`) without source changes. A fresh bounded
 	 * idempotency key per call keeps terminal-abort replay deterministic across
 	 * retries.
 	 */
@@ -518,11 +518,11 @@ export class AcpSdkAdapter {
 
 	/** Dispatches the ACP extension method names without exposing endpoint credentials. */
 	async handle(method: string, params: JsonObject = {}): Promise<unknown> {
-		if (method === "_gjc/sdk/control")
+		if (method === "_vib/sdk/control")
 			return await this.sdkControl(params as { operation: string; input?: JsonObject });
-		if (method === "_gjc/sdk/query")
+		if (method === "_vib/sdk/query")
 			return await this.sdkQuery(params as { query: string; input?: JsonObject; cursor?: string });
-		if (method === "_gjc/sdk/global") {
+		if (method === "_vib/sdk/global") {
 			if (typeof params.operation === "string" && isLifecycleOperation(params.operation))
 				throw new AcpSdkAdapterError(
 					"operation_prohibited",
@@ -641,7 +641,7 @@ export class AcpSdkAdapter {
 		if (disposition === "provider_only")
 			throw new AcpSdkAdapterError(
 				"provider_required",
-				`${sdkId} must be invoked through ACP provider registration, not _gjc/sdk/${kind}.`,
+				`${sdkId} must be invoked through ACP provider registration, not _vib/sdk/${kind}.`,
 			);
 		if (disposition === "machine_only")
 			throw new AcpSdkAdapterError(

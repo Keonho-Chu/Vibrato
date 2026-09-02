@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
-import { Agent } from "@gajae-code/agent-core";
-import type { AssistantMessage } from "@gajae-code/ai";
-import { getBundledModel } from "@gajae-code/ai";
-import { AssistantMessageEventStream } from "@gajae-code/ai/utils/event-stream";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { AgentSession } from "@gajae-code/coding-agent/session/agent-session";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
+import { Agent } from "@vib-rato/agent-core";
+import type { AssistantMessage } from "@vib-rato/ai";
+import { getBundledModel } from "@vib-rato/ai";
+import { AssistantMessageEventStream } from "@vib-rato/ai/utils/event-stream";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { AgentSession } from "@vib-rato/coding-agent/session/agent-session";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
 
 function assistantMessage(text: string): AssistantMessage {
 	const model = getBundledModel("anthropic", "claude-sonnet-4-5");

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "bun:test";
-import type { Api, Model } from "@gajae-code/ai";
-import { clearToolChoiceIncapabilityRegistryForTests, markToolChoiceIncapability } from "@gajae-code/ai";
-import { buildNamedToolChoiceResult } from "@gajae-code/coding-agent/utils/tool-choice";
+import type { Api, Model } from "@vib-rato/ai";
+import { clearToolChoiceIncapabilityRegistryForTests, markToolChoiceIncapability } from "@vib-rato/ai";
+import { buildNamedToolChoiceResult } from "@vib-rato/coding-agent/utils/tool-choice";
 
 function model<TApi extends Api>(api: TApi, compat?: Model<TApi>["compat"]): Model<TApi> {
 	return {

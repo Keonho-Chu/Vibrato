@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { getProjectDir, setProjectDir } from "@gajae-code/utils";
+import { getProjectDir, setProjectDir } from "@vib-rato/utils";
 import { resetSettingsForTest, Settings, settings } from "../src/config/settings";
 import { StatusLineComponent } from "../src/modes/components/tool-status-header";
 import { buildStatusLineSettings } from "../src/modes/controllers/selector-controller";
@@ -78,7 +78,7 @@ describe("status line preview/cancel restore (statusLine.maxRows)", () => {
 	// Persist an overflow-prone single-row layout as the "saved" state.
 	function persistSavedLayout(): void {
 		settings.set("statusLine.preset", "custom");
-		settings.set("statusLine.leftSegments", ["gajae", "session"]);
+		settings.set("statusLine.leftSegments", ["vibrato", "session"]);
 		settings.set("statusLine.rightSegments", ["session_name", "time"]);
 		settings.set("statusLine.separator", "pipe");
 		settings.set("statusLine.sessionAccent", false);

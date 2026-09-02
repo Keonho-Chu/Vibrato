@@ -1,14 +1,14 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from "bun:test";
-import type { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { resetSettingsForTest, type SettingPath, Settings, settings } from "@gajae-code/coding-agent/config/settings";
+import type { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { resetSettingsForTest, type SettingPath, Settings, settings } from "@vib-rato/coding-agent/config/settings";
 import {
 	ProviderOrderContext,
 	type ProviderOrderSnapshot,
-} from "@gajae-code/coding-agent/modes/components/provider-order-context";
-import { ProviderOrderEditorComponent } from "@gajae-code/coding-agent/modes/components/provider-order-editor";
-import { SettingsSelectorComponent } from "@gajae-code/coding-agent/modes/components/settings-selector";
-import { initTheme } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
+} from "@vib-rato/coding-agent/modes/components/provider-order-context";
+import { ProviderOrderEditorComponent } from "@vib-rato/coding-agent/modes/components/provider-order-editor";
+import { SettingsSelectorComponent } from "@vib-rato/coding-agent/modes/components/settings-selector";
+import { initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
 
 interface Fixture {
 	settings: Settings;

@@ -28,7 +28,7 @@
   },
   "synchronizedOutputAB": {
     "defaultEnabled": true,
-    "optOut": "GJC_TUI_SYNCHRONIZED_OUTPUT=0",
+    "optOut": "VIB_TUI_SYNCHRONIZED_OUTPUT=0",
     "enabledBalanced": true,
     "optOutSequenceCount": 0,
     "automatedByteIdentityEvidence": "resize-replay-storm.test.ts compares identical write count/order and payload after exact wrapper stripping",
@@ -98,8 +98,8 @@
       "multiplexer": "byobu 7.15 with tmux 3.7b backend",
       "paneSize": "100x30",
       "candidate": {
-        "command": "GJC_TUI_WRITE_LOG=/tmp/gjc-3798-input-live.log GJC_TUI_SYNCHRONIZED_OUTPUT=1 bun /tmp/gjc-3798-byobu-harness.ts input 60000",
-        "controller": "bun /tmp/gjc-3798-input-controller.ts gjc3798-input:0.0 /tmp/gjc-3798-input-live.log",
+        "command": "VIB_TUI_WRITE_LOG=/tmp/vib-3798-input-live.log VIB_TUI_SYNCHRONIZED_OUTPUT=1 bun /tmp/vib-3798-byobu-harness.ts input 60000",
+        "controller": "bun /tmp/vib-3798-input-controller.ts vib3798-input:0.0 /tmp/vib-3798-input-live.log",
         "p50Ms": 8.501917,
         "p95Ms": 10.923417,
         "maxMs": 17.886292,
@@ -142,8 +142,8 @@
       },
       "upstreamDevBaseline": {
         "head": "55f13956042b8ed74d2279ca7d8bce6519502502",
-        "command": "GJC_TUI_WRITE_LOG=/tmp/gjc-3798-input-baseline.log GJC_TUI_SYNCHRONIZED_OUTPUT=1 bun /tmp/gjc-3798-byobu-baseline-harness.ts 60000",
-        "controller": "bun /tmp/gjc-3798-input-controller.ts gjc3798-baseline:0.0 /tmp/gjc-3798-input-baseline.log",
+        "command": "VIB_TUI_WRITE_LOG=/tmp/vib-3798-input-baseline.log VIB_TUI_SYNCHRONIZED_OUTPUT=1 bun /tmp/vib-3798-byobu-baseline-harness.ts 60000",
+        "controller": "bun /tmp/vib-3798-input-controller.ts vib3798-baseline:0.0 /tmp/vib-3798-input-baseline.log",
         "p50Ms": 7.870167,
         "p95Ms": 10.179125,
         "maxMs": 12.000208,
@@ -216,7 +216,7 @@
     "paneSize": "100x30",
     "deterministicEvidence": "terminal-appearance.test.ts covers DA1-negative, queued Mode 2031, delayed DA1 after positive OSC, and late OSC",
     "liveNoPushNegativeDa1": {
-      "command": "bun /tmp/gjc-3798-byobu-harness.ts osc 8000",
+      "command": "bun /tmp/vib-3798-byobu-harness.ts osc 8000",
       "injectedReplies": [
         "DA1 ESC[?1;2c after startup query"
       ],
@@ -231,7 +231,7 @@
       "verdict": "passed"
     },
     "liveMode2031Recovery": {
-      "command": "bun /tmp/gjc-3798-byobu-harness.ts osc 8000",
+      "command": "bun /tmp/vib-3798-byobu-harness.ts osc 8000",
       "rawCapturePath": "packages/tui/artifacts/issue-3798-osc-mode.pty",
       "rawCaptureFormat": "combined active-harness pane output and timestamped raw injected-input events",
       "queryCountDerivation": "exact byte counts over the PANE_OUTPUT section: OSC 11 query ESC]11;?BEL and DA1 query ESC[c",

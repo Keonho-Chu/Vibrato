@@ -36,8 +36,8 @@ export async function renderKernelDisplay(content: Record<string, unknown>): Pro
 	const outputs: KernelDisplayOutput[] = [];
 
 	// Status events bypass the text path entirely — they exist only for TUI hooks.
-	if (data["application/x-gjc-status"] !== undefined) {
-		const statusData = data["application/x-gjc-status"];
+	if (data["application/x-vib-status"] !== undefined) {
+		const statusData = data["application/x-vib-status"];
 		if (statusData && typeof statusData === "object" && "op" in statusData) {
 			outputs.push({ type: "status", event: statusData as PythonStatusEvent });
 		}

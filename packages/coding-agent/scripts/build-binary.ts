@@ -5,7 +5,7 @@ import { signMacOSBinary } from "../../../scripts/macos-code-signing";
 import { buildDevCompileArgs } from "./compile-args";
 
 const packageDir = path.join(import.meta.dir, "..");
-const outputPath = path.join(packageDir, "dist", "gjc");
+const outputPath = path.join(packageDir, "dist", "vib");
 const nativeDir = path.join(packageDir, "..", "natives", "native");
 
 function shouldAdhocSignDarwinBinary(): boolean {

@@ -5,7 +5,7 @@ import { Broker } from "../src/sdk/broker/broker";
 
 describe("SDK broker restart", () => {
 	it("takes over a stale lock and rotates discovery token", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-restart-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-restart-"));
 		const a = new Broker({ agentDir: dir });
 		const first = await a.start();
 		await a.stop();
@@ -15,7 +15,7 @@ describe("SDK broker restart", () => {
 		await b.stop();
 	});
 	it("reclaims repeated identical stale locks into distinct tombstones", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-restart-repeat-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-restart-repeat-"));
 		const lock = path.join(dir, "sdk", "broker.lock");
 		const owner = JSON.stringify({ version: 1, ownerId: "stale-owner", pid: 999_999_999, acquiredAt: 0 });
 		await fs.mkdir(lock, { recursive: true });
@@ -46,7 +46,7 @@ describe("SDK broker restart", () => {
 	});
 
 	it("allows one owner during simultaneous primary lock takeover", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-restart-race-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-restart-race-"));
 		const lock = path.join(dir, "sdk", "broker.lock");
 		await fs.mkdir(lock, { recursive: true });
 		await fs.writeFile(
@@ -68,7 +68,7 @@ describe("SDK broker restart", () => {
 	});
 
 	it("takes over a legacy regular-file stale lock", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-restart-legacy-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-restart-legacy-"));
 		const lock = path.join(dir, "sdk", "broker.lock");
 		await fs.mkdir(path.dirname(lock), { recursive: true });
 		await fs.writeFile(lock, JSON.stringify({ ownerId: "stale-owner", pid: 999_999_999, ts: 0 }));

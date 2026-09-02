@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import type { ToolResultMessage } from "@gajae-code/ai";
+import type { ToolResultMessage } from "@vib-rato/ai";
 import type { SessionEntry, SessionMessageEntry } from "../src/compaction/entries";
 import { DEFAULT_PRUNE_CONFIG, pruneAssistantToolArguments } from "../src/compaction/pruning";
 import { applyToolOutputPrune as pruneToolOutputs } from "./pruning-test-utils";

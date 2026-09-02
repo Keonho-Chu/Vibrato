@@ -15,19 +15,19 @@ section() {
 }
 
 smoke_cli() {
-	local gjc_bin="$1"
+	local vib_bin="$1"
 	local runtime_dir
 	runtime_dir="$(mktemp -d "$WORK_DIR/compiled-runtime.XXXXXX")"
-	XDG_DATA_HOME="$runtime_dir/xdg" HOME="$runtime_dir/home" "$gjc_bin" --version
-	XDG_DATA_HOME="$runtime_dir/xdg" HOME="$runtime_dir/home" "$gjc_bin" --help >/dev/null
-	XDG_DATA_HOME="$runtime_dir/xdg" HOME="$runtime_dir/home" "$gjc_bin" stats --help >/dev/null
+	XDG_DATA_HOME="$runtime_dir/xdg" HOME="$runtime_dir/home" "$vib_bin" --version
+	XDG_DATA_HOME="$runtime_dir/xdg" HOME="$runtime_dir/home" "$vib_bin" --help >/dev/null
+	XDG_DATA_HOME="$runtime_dir/xdg" HOME="$runtime_dir/home" "$vib_bin" stats --help >/dev/null
 	# Spawns the stats sync worker via `new Worker(...)` and waits for a pong.
 	# Regression probe for #1011 (browser tab worker) and #1027 (stats sync
 	# worker) — both broke silently in compiled binaries because the `with
 	# { type: "file" }` import pattern only copies the worker as a raw asset
 	# without bundling its imports. `stats --summary` doesn't catch this on a
 	# fresh install (no session files = no Worker spawn).
-	XDG_DATA_HOME="$runtime_dir/xdg" HOME="$runtime_dir/home" "$gjc_bin" --smoke-test
+	XDG_DATA_HOME="$runtime_dir/xdg" HOME="$runtime_dir/home" "$vib_bin" --smoke-test
 }
 
 find_tarball() {
@@ -51,8 +51,8 @@ bun --cwd=packages/coding-agent run build
 
 BINARY_DIR="$WORK_DIR/binary-bin"
 mkdir -p "$BINARY_DIR"
-cp packages/coding-agent/dist/gjc "$BINARY_DIR/gjc"
-smoke_cli "$BINARY_DIR/gjc"
+cp packages/coding-agent/dist/vib "$BINARY_DIR/vib"
+smoke_cli "$BINARY_DIR/vib"
 
 section "Source install smoke"
 SOURCE_BUN_HOME="$WORK_DIR/bun-source"
@@ -60,7 +60,7 @@ SOURCE_BUN_HOME="$WORK_DIR/bun-source"
 	export BUN_INSTALL="$SOURCE_BUN_HOME"
 	export PATH="$BUN_INSTALL/bin:$PATH"
 	bun --cwd="$ROOT_DIR/packages/coding-agent" link
-	smoke_cli "$BUN_INSTALL/bin/gjc"
+	smoke_cli "$BUN_INSTALL/bin/vib"
 )
 
 stage_linux_x64_optional_package() {
@@ -74,22 +74,22 @@ section "Tarball install smoke"
 TARBALL_DIR="$WORK_DIR/tarballs"
 mkdir -p "$TARBALL_DIR"
 stage_linux_x64_optional_package
-for pkg in utils natives-linux-x64 natives ai agent tui stats coding-agent gajae-code; do
+for pkg in utils natives-linux-x64 natives ai agent tui stats coding-agent vib-rato; do
 	(
 		cd "$ROOT_DIR/packages/$pkg"
 		bun pm pack --destination "$TARBALL_DIR" --quiet >/dev/null
 	)
 done
 
-utils_tgz="$(find_tarball "$TARBALL_DIR"/gajae-code-utils-*.tgz)"
-natives_tgz="$(find_tarball "$TARBALL_DIR"/gajae-code-natives-[0-9]*.tgz)"
-natives_linux_x64_tgz="$(find_tarball "$TARBALL_DIR"/gajae-code-natives-linux-x64-*.tgz)"
-ai_tgz="$(find_tarball "$TARBALL_DIR"/gajae-code-ai-*.tgz)"
-agent_tgz="$(find_tarball "$TARBALL_DIR"/gajae-code-agent-core-*.tgz)"
-tui_tgz="$(find_tarball "$TARBALL_DIR"/gajae-code-tui-*.tgz)"
-stats_tgz="$(find_tarball "$TARBALL_DIR"/gajae-code-stats-*.tgz)"
-coding_agent_tgz="$(find_tarball "$TARBALL_DIR"/gajae-code-coding-agent-*.tgz)"
-wrapper_tgz="$(find_tarball "$TARBALL_DIR"/gajae-code-[0-9]*.tgz)"
+utils_tgz="$(find_tarball "$TARBALL_DIR"/vib-rato-utils-*.tgz)"
+natives_tgz="$(find_tarball "$TARBALL_DIR"/vib-rato-natives-[0-9]*.tgz)"
+natives_linux_x64_tgz="$(find_tarball "$TARBALL_DIR"/vib-rato-natives-linux-x64-*.tgz)"
+ai_tgz="$(find_tarball "$TARBALL_DIR"/vib-rato-ai-*.tgz)"
+agent_tgz="$(find_tarball "$TARBALL_DIR"/vib-rato-agent-core-*.tgz)"
+tui_tgz="$(find_tarball "$TARBALL_DIR"/vib-rato-tui-*.tgz)"
+stats_tgz="$(find_tarball "$TARBALL_DIR"/vib-rato-stats-*.tgz)"
+coding_agent_tgz="$(find_tarball "$TARBALL_DIR"/vib-rato-coding-agent-*.tgz)"
+wrapper_tgz="$(find_tarball "$TARBALL_DIR"/vib-rato-[0-9]*.tgz)"
 
 TARBALL_APP_DIR="$WORK_DIR/tarball-install"
 mkdir -p "$TARBALL_APP_DIR"
@@ -102,20 +102,20 @@ mkdir -p "$TARBALL_APP_DIR"
 	node -e "
 		const pkg = JSON.parse(require('fs').readFileSync('package.json', 'utf8'));
 		pkg.overrides = {
-			'@gajae-code/utils': '$utils_tgz',
-			'@gajae-code/natives': '$natives_tgz',
-			'@gajae-code/natives-linux-x64': '$natives_linux_x64_tgz',
-			'@gajae-code/ai': '$ai_tgz',
-			'@gajae-code/agent-core': '$agent_tgz',
-			'@gajae-code/tui': '$tui_tgz',
-			'@gajae-code/stats': '$stats_tgz',
-			'@gajae-code/coding-agent': '$coding_agent_tgz'
+			'@vib-rato/utils': '$utils_tgz',
+			'@vib-rato/natives': '$natives_tgz',
+			'@vib-rato/natives-linux-x64': '$natives_linux_x64_tgz',
+			'@vib-rato/ai': '$ai_tgz',
+			'@vib-rato/agent-core': '$agent_tgz',
+			'@vib-rato/tui': '$tui_tgz',
+			'@vib-rato/stats': '$stats_tgz',
+			'@vib-rato/coding-agent': '$coding_agent_tgz'
 		};
 		require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2));
 	"
 
 	bun add "$utils_tgz" "$natives_linux_x64_tgz" "$natives_tgz" "$ai_tgz" "$agent_tgz" "$tui_tgz" "$stats_tgz" "$coding_agent_tgz" "$wrapper_tgz"
-	smoke_cli ./node_modules/.bin/gjc
+	smoke_cli ./node_modules/.bin/vib
 )
 
 echo ""

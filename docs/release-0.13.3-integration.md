@@ -3,7 +3,7 @@
 ## Authority and immutable base
 
 - Integration branch: `release/0.13.3`
-- Authorized repository: `Yeachan-Heo/gajae-code`
+- Authorized repository: `Keonho-Chu/Vibrato`
 - Exact base: `origin/main` at `5666472818b71a1c37615408d9b4d3b5a77b7fa3`
 - Delivery mode: coherent cherry-pick groups pushed directly to the existing release branch
 - Explicitly not authorized here: version bump, `main` mutation, PR creation, tag, publish, or release execution
@@ -68,7 +68,7 @@ CHANGELOG conflicts were resolved by retaining the released 0.13.2 history and e
 
 - General settings, MCP, or customization migrations beyond the minimum cohesive pet dependencies listed above
 - SDK lifecycle or notification architecture
-- GJC master/supervisor work
+- Vibrato master/supervisor work
 - Autorouting
 - Autoresearch
 - macOS TCC/signing change #4275 pending dedicated release-build and permission-identity validation

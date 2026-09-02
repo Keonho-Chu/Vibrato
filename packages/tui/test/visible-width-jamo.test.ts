@@ -18,7 +18,7 @@ import {
 	visibleWidth,
 	visibleWidths,
 	wrapTextWithAnsi,
-} from "@gajae-code/tui/utils";
+} from "@vib-rato/tui/utils";
 
 describe("visibleWidth — Hangul width parity", () => {
 	it("single compatibility jamo is 2 cells", () => {

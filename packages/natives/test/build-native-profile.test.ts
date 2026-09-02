@@ -87,7 +87,7 @@ describe("native build Rust toolchain integration", () => {
 	it.skipIf(process.platform === "win32")(
 		"resolves cargo through CARGO_HOME rustup when neither rustup nor cargo is on PATH",
 		async () => {
-			const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-rustup-path-"));
+			const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-rustup-path-"));
 			const cargoHome = path.join(tempDir, "cargo-home");
 			const cargoBinary = path.join(cargoHome, "toolchains", "nightly", "bin", "cargo");
 			const rustupBinary = path.join(cargoHome, "bin", "rustup");
@@ -136,7 +136,7 @@ describe("native build failure cleanup", () => {
 	it.skipIf(process.platform === "win32")(
 		"does not create a native .build directory when Cargo is unavailable",
 		async () => {
-			const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-missing-cargo-"));
+			const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-missing-cargo-"));
 			const before = await listNativeBuildDirs();
 
 			try {

@@ -2,9 +2,9 @@ import { afterEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { AgentEvent } from "@gajae-code/agent-core";
-import type { AssistantMessage } from "@gajae-code/ai";
-import { getAgentDir, setAgentDir } from "@gajae-code/utils";
+import type { AgentEvent } from "@vib-rato/agent-core";
+import type { AssistantMessage } from "@vib-rato/ai";
+import { getAgentDir, setAgentDir } from "@vib-rato/utils";
 import { AsyncJobManager } from "../../src/async/job-manager";
 import { kNoAuth } from "../../src/config/model-registry";
 import { Settings } from "../../src/config/settings";
@@ -101,7 +101,7 @@ describe("runSubprocess managed child resume", () => {
 	});
 
 	it("opens a trusted child session inside managed storage for resume", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-managed-child-resume-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-managed-child-resume-"));
 		cleanupRoots.push(root);
 		const agentDir = path.join(root, "agent");
 		const cwd = path.join(root, "repo");

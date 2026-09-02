@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import type { AssistantMessage, Model, StopReason, ToolCall } from "@gajae-code/ai";
-import { AssistantMessageEventStream } from "@gajae-code/ai/utils/event-stream";
+import type { AssistantMessage, Model, StopReason, ToolCall } from "@vib-rato/ai";
+import { AssistantMessageEventStream } from "@vib-rato/ai/utils/event-stream";
 import * as z from "zod/v4";
 import { Agent } from "../src/agent";
 import {

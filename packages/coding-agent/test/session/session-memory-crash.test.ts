@@ -16,8 +16,8 @@ function runWorker(worker: string, root: string, mode: string) {
 		cmd: [process.execPath, worker],
 		env: {
 			...process.env,
-			GJC_SESSION_MEMORY_CRASH_MODE: mode,
-			GJC_SESSION_MEMORY_CRASH_ROOT: root,
+			VIB_SESSION_MEMORY_CRASH_MODE: mode,
+			VIB_SESSION_MEMORY_CRASH_ROOT: root,
 		},
 		stdout: "pipe",
 		stderr: "pipe",
@@ -35,7 +35,7 @@ describe("session memory physical crash recovery", () => {
 		{ crashMode: "crash-after-marker-directory-fsync", restoreTail: false },
 	]) {
 		it(`recovers authoritative append after ${crashMode}`, () => {
-			const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-session-crash-"));
+			const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-session-crash-"));
 			const worker = path.join(import.meta.dir, "fixtures", "session-memory-crash-worker.ts");
 			try {
 				const setup = runWorker(worker, root, "setup");
@@ -79,7 +79,7 @@ describe("session memory first-marker physical crash recovery", () => {
 		"create-crash-after-marker-directory-fsync",
 	]) {
 		it(`recovers first checked marker publication after ${crashMode}`, () => {
-			const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-session-create-crash-"));
+			const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-session-create-crash-"));
 			const worker = path.join(import.meta.dir, "fixtures", "session-memory-crash-worker.ts");
 			try {
 				const setup = runWorker(worker, root, "setup-raw");

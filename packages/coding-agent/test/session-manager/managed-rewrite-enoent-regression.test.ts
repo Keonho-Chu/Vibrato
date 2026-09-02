@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
 import { ManagedSessionDescendantStore } from "../../src/session/internal/managed-session-storage";
 import { makeAssistantMessage } from "./helpers";
 
@@ -16,7 +16,7 @@ describe("managed rewrite ENOENT regression (P0)", () => {
 	let cwd: string;
 
 	beforeEach(() => {
-		root = tempDir("gjc-managed-enoent-");
+		root = tempDir("vib-managed-enoent-");
 		agentDir = path.join(root, "agent");
 		cwd = path.join(root, "work");
 		fs.mkdirSync(cwd, { recursive: true });

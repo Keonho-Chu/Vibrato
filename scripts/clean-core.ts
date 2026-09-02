@@ -43,7 +43,7 @@ export const cleanPatterns: readonly CleanPattern[] = [
  * state, or test evidence. A glob that resolves into one of these is a bug, so it
  * fails loudly instead of being silently skipped.
  */
-const protectedSegments: ReadonlySet<string> = new Set([".git", ".gjc", "artifacts", "node_modules"]);
+const protectedSegments: ReadonlySet<string> = new Set([".git", ".vib", "artifacts", "node_modules"]);
 
 export function scopesFor(options: CleanOptions): ReadonlySet<CleanScope> {
 	const scopes: CleanScope[] = ["default"];

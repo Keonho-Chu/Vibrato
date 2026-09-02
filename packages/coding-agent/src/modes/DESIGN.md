@@ -232,7 +232,7 @@ for the canonical states, localized English/Korean/Japanese/Chinese content,
 viewports, and matrix. The required capture command is:
 
 ```sh
-bun packages/coding-agent/scripts/capture-notifications-settings-showcase.ts --output .gjc/qa/issue-2050-notifications
+bun packages/coding-agent/scripts/capture-notifications-settings-showcase.ts --output .vib/qa/issue-2050-notifications
 ```
 
 The baseline consists of every canonical state at `80x24`, `120x36`, and
@@ -258,7 +258,7 @@ capture timestamp, rendering assumptions, wrapping policy, and capture mode.
 
 Regenerate captures, inspect all relevant scroll positions, and obtain an
 independent-review receipt at
-`.gjc/qa/issue-2050-notifications/independent-review.json`. The reviewer must
+`.vib/qa/issue-2050-notifications/independent-review.json`. The reviewer must
 not be the implementing executor. That receipt must use the plan's schema and
 record both manifest counts as 108 plus CJK review results.
 
@@ -354,7 +354,7 @@ first-party harness that starts the production `TUI` over a `VirtualTerminal`.
 It constructs transcript, status, hooks, and the real composer as children,
 then drives the live/manual viewport path before capturing the terminal frame.
 Capture with `bun packages/coding-agent/scripts/capture-sticky-viewport-showcase.ts
---out .gjc/qa/sticky-viewport-<run>` and verify with the paired `--root` script.
+--out .vib/qa/sticky-viewport-<run>` and verify with the paired `--root` script.
 The immutable matrix has exactly 20 keys: `live-overflow`, `manual-history`,
 `manual-new-output`, `multiline-editor-hooks-pet`, `capacity-many`,
 `capacity-one`, `capacity-zero`, and `selection-boundary` at both 80x24 and
@@ -364,9 +364,9 @@ The immutable matrix has exactly 20 keys: `live-overflow`, `manual-history`,
 `narrow-cjk/48x10/unicode-color`. Do not add or replace a manual-follow case.
 
 Each key has only `terminal.txt`, ANSI-preserving `terminal-ansi.txt`, `terminal.html`, and `metadata.json`; the manifest records SHA-256 and byte length. Per-key metadata binds immutable font/render assumptions and the ANSI-aware wrapping/truncation policy. `VirtualTerminal` reconstructs ANSI from visible xterm cells, including cell padding, palette/RGB colors, attributes, and inverse video; plain text is always the stripped reconstruction. The verifier owns an independent literal 20-key oracle and fails closed unless stripped ANSI equals text, `terminal.html` equals the exported canonical `ansiToHtml(terminal-ansi.txt)` byte-for-byte (including its complete document envelope and global CSS), HTML independently preserves the ANSI style-run text, every retained row has the exact `Bun.stringWidth` cell width (including trailing spaces), and `ansi_mode` agrees with required Unicode color SGR or ASCII/no-color output. Every metadata entry has exact CJK phrase-boundary metadata: the narrow-CJK key has only the three canonical boundaries in order and every other key has `[]`. Manual captures prove successful production wheel and PageUp paths and retain observable historical transcript-row evidence. It validates exact payload paths (no duplicates or traversal), immutable source/output revisions, state/status/suffix order, notice cardinality, capacity, actual mouse-copied transcript-only selection, composer, CJK, and provenance invariants. `review-input.json` binds the exact manifest digest, capture author/executor identity, acceptance/design versions, required artifacts, narrow-CJK boundaries, and deterministic host matrix. `--require-independent-review` requires an attestation with an exact root key set; exact per-key result and artifact-check key sets; exact defect `{ description, accepted }` keys with a trimmed, nonblank description; canonical trimmed reviewer identity distinct from both bound identities; the independent-terminal-reviewer role; fixture revision; expected and observed counts of 20; exact checked keys; accepted per-key artifact-check/notes results; accepted artifact/CJK/host decisions; bound digest; and final `accept`. Any malformed, incomplete, or extra attestation content fails closed.
-## GJC Bundles
+## Vibrato Bundles
 
-GJC Bundles is a directly hosted Settings surface using the existing framed-list
+Vibrato Bundles is a directly hosted Settings surface using the existing framed-list
 grammar. A bundle identity is always displayed as its name plus `(user)` or
 `(project)`. Same-name rows in opposite scopes are distinct identities and are
 never merged, selected together, or mutated through one another.

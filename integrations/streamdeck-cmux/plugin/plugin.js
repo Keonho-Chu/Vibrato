@@ -5,7 +5,7 @@ import { homedir } from "node:os";
 import { ANSWER_SLOT_COUNT, optionIndexForSlot, pageAction, pageCount, pendingAsk, sdkMessages, usesPagedLayout } from "./sdk-ask-state.js";
 import { nextSelectedSessionId } from "./focus-state.js";
 
-const PLUGIN_UUID = "dev.gajae.streamdeck";
+const PLUGIN_UUID = "dev.vibrato.streamdeck";
 const SESSION_ACTION = `${PLUGIN_UUID}.session`;
 const REFRESH_ACTION = `${PLUGIN_UUID}.refresh`;
 const STEER_ACTION = `${PLUGIN_UUID}.steer`;
@@ -17,11 +17,11 @@ const LAUNCH_ACTION = `${PLUGIN_UUID}.launch-preset`;
 const STATUS_ACTION = `${PLUGIN_UUID}.focused-status`;
 const CONTROL_ACTION = `${PLUGIN_UUID}.control`;
 const ROOTS = [join(homedir(), "Documents", "Workspace"), join(homedir(), "tmp")];
-const GJC = process.env.GJC_STREAMDECK_GJC || join(homedir(), ".local", "bin", "gjc");
-const WORKTREE_LAUNCHER = process.env.GJC_STREAMDECK_WORKTREE || join(import.meta.dir, "bin", "worktree-session");
-const KEYBINDINGS_PATH = process.env.GJC_AGENT_DIR ? join(process.env.GJC_AGENT_DIR, "keybindings.json") : join(homedir(), ".gjc", "agent", "keybindings.json");
-const CMUX = process.env.GJC_STREAMDECK_CMUX || "/Applications/cmux.app/Contents/Resources/bin/cmux";
-const LOG = process.env.GJC_STREAMDECK_LOG || join(homedir(), "Library", "Logs", "GajaeStreamDeck.log");
+const Vibrato = process.env.VIB_STREAMDECK_VIB || join(homedir(), ".local", "bin", "vib");
+const WORKTREE_LAUNCHER = process.env.VIB_STREAMDECK_WORKTREE || join(import.meta.dir, "bin", "worktree-session");
+const KEYBINDINGS_PATH = process.env.VIB_AGENT_DIR ? join(process.env.VIB_AGENT_DIR, "keybindings.json") : join(homedir(), ".vib", "agent", "keybindings.json");
+const CMUX = process.env.VIB_STREAMDECK_CMUX || "/Applications/cmux.app/Contents/Resources/bin/cmux";
+const LOG = process.env.VIB_STREAMDECK_LOG || join(homedir(), "Library", "Logs", "VibratoStreamDeck.log");
 const IMAGES = join(import.meta.dir, "images");
 
 const argv = Object.fromEntries(Array.from({ length: process.argv.length - 2 }, (_, i) => process.argv[i + 2]).reduce((pairs, value, i, all) => {
@@ -84,17 +84,17 @@ function alive(pid) {
 }
 
 async function endpointDirsForProject(project) {
-  const dirs = [join(project, ".gjc", "state", "sdk")];
+  const dirs = [join(project, ".vib", "state", "sdk")];
   try {
     for (const item of await readdir(join(project, ".worktrees"), { withFileTypes: true }))
-      if (item.isDirectory()) dirs.push(join(project, ".worktrees", item.name, ".gjc", "state", "sdk"));
+      if (item.isDirectory()) dirs.push(join(project, ".worktrees", item.name, ".vib", "state", "sdk"));
   } catch {}
   return dirs;
 }
 
-async function activeGjcProjectDirs() {
+async function activeVibProjectDirs() {
   const { stdout } = await run("/bin/ps", ["-axo", "pid=,command="], homedir());
-  const pids = stdout.split("\n").map(line => line.trim().match(/^(\d+)\s+(.+)$/)).filter(match => match && /(?:^|\/)gjc(?:\s|$)/.test(match[2])).map(match => Number(match[1]));
+  const pids = stdout.split("\n").map(line => line.trim().match(/^(\d+)\s+(.+)$/)).filter(match => match && /(?:^|\/)vib(?:\s|$)/.test(match[2])).map(match => Number(match[1]));
   const dirs = await Promise.all(pids.map(async pid => {
     const cwd = await run("/usr/sbin/lsof", ["-a", "-p", String(pid), "-d", "cwd", "-Fn"], homedir());
     return cwd.stdout.split("\n").find(line => line.startsWith("n"))?.slice(1);
@@ -113,7 +113,7 @@ async function discoverEndpoints() {
       for (const dir of await endpointDirsForProject(join(root, project.name))) endpointDirs.add(dir);
     }
   }
-  for (const project of await activeGjcProjectDirs()) endpointDirs.add(join(project, ".gjc", "state", "sdk"));
+  for (const project of await activeVibProjectDirs()) endpointDirs.add(join(project, ".vib", "state", "sdk"));
   const endpoints = new Map();
   for (const dir of endpointDirs) {
     let files = [];
@@ -130,11 +130,11 @@ async function discoverEndpoints() {
 }
 
 function canonicalProjectPath(value) {
-  return String(value || "").replace(/(?:\.gajae-code-worktrees|\.worktrees)\/[^/]+$/, "");
+  return String(value || "").replace(/(?:\.vib-rato-worktrees|\.worktrees)\/[^/]+$/, "");
 }
 
 async function discoverFrequentProjects() {
-  const result = await run(GJC, ["sdk", "session", "list"], homedir(), 30000);
+  const result = await run(Vibrato, ["sdk", "session", "list"], homedir(), 30000);
   if (result.exitCode !== 0) { log(`frequent project list failed exit=${result.exitCode} ${result.stderr}`); return []; }
   try {
     const payload = JSON.parse(result.stdout);
@@ -160,7 +160,7 @@ async function discoverFrequentProjects() {
 }
 
 async function savedSessionProjectCounts() {
-  const root = join(process.env.GJC_AGENT_DIR || join(homedir(), ".gjc", "agent"), "sessions");
+  const root = join(process.env.VIB_AGENT_DIR || join(homedir(), ".vib", "agent"), "sessions");
   const counts = new Map();
   let buckets = [];
   try { buckets = await readdir(root, { withFileTypes: true }); } catch { return counts; }
@@ -326,10 +326,10 @@ async function cmuxTopology() {
     const surface = line.match(/surface (surface:\d+) \[([^\]]+)\] "([^"]*)"(.*)$/);
     if (surface) {
       const tty = surface[4].match(/tty=(\S+)/)?.[1];
-      const row = { surface: surface[1], type: surface[2], title: surface[3].replace(/^GJC:\s*/, ""), rawTitle: surface[3], tty, pane: paneRef, workspace: workspaceRef, window: windowRef, order: allSurfaces.length };
+      const row = { surface: surface[1], type: surface[2], title: surface[3].replace(/^Vibrato:\s*/, ""), rawTitle: surface[3], tty, pane: paneRef, workspace: workspaceRef, window: windowRef, order: allSurfaces.length };
       allSurfaces.push(row);
       if (tty) byTty.set(tty, row);
-      if (tty && row.type === "terminal" && /^GJC:\s*/i.test(row.rawTitle)) surfaces.push(row);
+      if (tty && row.type === "terminal" && /^Vibrato:\s*/i.test(row.rawTitle)) surfaces.push(row);
       if (line.includes("◀ here")) { currentSurface = row.surface; selectedTty = tty ?? selectedTty; }
       else if (!currentSurface && line.includes("[selected]") && line.includes("◀ active")) { currentSurface = row.surface; selectedTty = tty ?? selectedTty; }
     }
@@ -352,7 +352,7 @@ async function cmuxTopology() {
 }
 
 async function sdkMetadata(session) {
-  const result = await run(GJC, ["daemon", "session", "query", session.sessionId, "--query=session.metadata"], session.repo, 8000);
+  const result = await run(Vibrato, ["daemon", "session", "query", session.sessionId, "--query=session.metadata"], session.repo, 8000);
   if (result.exitCode !== 0) return null;
   try {
     const payload = JSON.parse(result.stdout);
@@ -427,12 +427,12 @@ async function refresh() {
 
 function sessionTitle(session) {
   const mode = session.surface ? (session.sessionId ? "SDK+CMUX" : "CMUX") : "SDK";
-  const name = String(session.name || "GJC").replace(/^GJC:\s*/i, "").replace(/\s+/g, " ").trim();
+  const name = String(session.name || "Vibrato").replace(/^Vibrato:\s*/i, "").replace(/\s+/g, " ").trim();
   return `${mode}\n${name.slice(0, 14)}`;
 }
 
 function wrapKeyText(value, maxUnits = 12, maxLines = 3) {
-  const text = String(value || "GJC").replace(/^GJC:\s*/i, "").replace(/\s+/g, " ").trim();
+  const text = String(value || "Vibrato").replace(/^Vibrato:\s*/i, "").replace(/\s+/g, " ").trim();
   const lines = [];
   let line = "";
   let units = 0;
@@ -473,8 +473,8 @@ async function renderContext(context, state) {
     return;
   }
   if (action === STATUS_ACTION) {
-    const focused = focusedGjcSurface(topologyState);
-    title(context, focused ? `GJC FOCUS\n${wrapKeyText(focused.title)}` : "NOT GJC\nFOCUSED\nTAB");
+    const focused = focusedVibSurface(topologyState);
+    title(context, focused ? `Vibrato FOCUS\n${wrapKeyText(focused.title)}` : "NOT Vibrato\nFOCUSED\nTAB");
     await image(context, "focused-text");
     return;
   }
@@ -484,8 +484,8 @@ async function renderContext(context, state) {
     return;
   }
   if (action === SKILL_ACTION) {
-    const focused = focusedGjcSurface(topologyState);
-    title(context, focused ? `GJC READY\n${String(settings.skill || "SKILL").toUpperCase()}` : "NOT GJC FOCUS");
+    const focused = focusedVibSurface(topologyState);
+    title(context, focused ? `Vibrato READY\n${String(settings.skill || "SKILL").toUpperCase()}` : "NOT Vibrato FOCUS");
     await image(context, `skill-${settings.skill}`);
     return;
   }
@@ -526,7 +526,7 @@ async function renderContext(context, state) {
     if (settings.type === "frequentProject") {
       const slot = Number(settings.slot ?? 0);
       const project = slot === 2 ? { path: homedir(), label: "HOME", sessionCount: null } : frequentProjects[slot];
-      title(context, project ? (project.sessionCount === null ? "HOME" : `${wrapKeyText(project.label, 12, 2)}\n${project.sessionCount} SESSIONS`) : "NO GJC\nPROJECT");
+      title(context, project ? (project.sessionCount === null ? "HOME" : `${wrapKeyText(project.label, 12, 2)}\n${project.sessionCount} SESSIONS`) : "NO Vibrato\nPROJECT");
       await image(context, `control-repo-${slot}`);
       return;
     }
@@ -539,10 +539,10 @@ async function renderContext(context, state) {
     await image(context, `control-${settings.name}`);
     return;
   }
-  const focused = focusedGjcSurface(topologyState);
+  const focused = focusedVibSurface(topologyState);
   if (action === REFRESH_ACTION) { title(context, `${sessions.length} LIVE\nREFRESH`); await image(context, "refresh"); }
-  if (action === STEER_ACTION) { title(context, focused ? "GJC FOCUSED\nESC + ENTER" : "NOT GJC FOCUS"); await image(context, "steer"); }
-  if (action === FOLLOW_ACTION) { title(context, focused ? "GJC FOCUSED\nFOLLOW" : "NOT GJC FOCUS"); await image(context, "follow"); }
+  if (action === STEER_ACTION) { title(context, focused ? "Vibrato FOCUSED\nESC + ENTER" : "NOT Vibrato FOCUS"); await image(context, "steer"); }
+  if (action === FOLLOW_ACTION) { title(context, focused ? "Vibrato FOCUSED\nFOLLOW" : "NOT Vibrato FOCUS"); await image(context, "follow"); }
   if (action === ABORT_ACTION) { title(context, ""); await image(context, "abort-esc2"); }
 }
 
@@ -550,9 +550,9 @@ async function renderAll() {
   await Promise.all([...contexts].map(([context, state]) => renderContext(context, state)));
 }
 
-function focusedGjcSurface(topology) {
+function focusedVibSurface(topology) {
   const focused = (topology.allSurfaces ?? []).find(row => row.surface === topology.currentSurface);
-  return focused && /^GJC:\s*/i.test(focused.rawTitle) ? focused : null;
+  return focused && /^Vibrato:\s*/i.test(focused.rawTitle) ? focused : null;
 }
 
 function relativeItem(items, current, field, delta) {
@@ -582,15 +582,15 @@ async function performCmuxNav(op, context) {
   ok(context);
 }
 
-async function focusedGjcTarget(context) {
+async function focusedVibTarget(context) {
   const topology = await cmuxTopology();
-  const surface = focusedGjcSurface(topology);
-  if (!surface) { alert(context); log("focused cmux surface is not GJC"); return null; }
+  const surface = focusedVibSurface(topology);
+  if (!surface) { alert(context); log("focused cmux surface is not Vibrato"); return null; }
   return surface;
 }
 
-async function sendFocusedGjcText(text, context, submit = true) {
-  const surface = await focusedGjcTarget(context);
+async function sendFocusedVibText(text, context, submit = true) {
+  const surface = await focusedVibTarget(context);
   if (!surface) return;
   const target = ["--surface", surface.surface, "--workspace", surface.workspace, "--window", surface.window];
   const sent = await run(CMUX, ["send", ...target, text], homedir());
@@ -600,16 +600,16 @@ async function sendFocusedGjcText(text, context, submit = true) {
   if (submitted.exitCode === 0) ok(context); else { alert(context); log(`cmux enter failed ${submitted.stderr}`); }
 }
 
-async function sendFocusedGjcKey(key, context) {
-  const surface = await focusedGjcTarget(context);
+async function sendFocusedVibKey(key, context) {
+  const surface = await focusedVibTarget(context);
   if (!surface) return false;
   const result = await run(CMUX, ["send-key", "--surface", surface.surface, "--workspace", surface.workspace, "--window", surface.window, key], homedir());
   if (result.exitCode !== 0) { alert(context); log(`cmux key ${key} failed ${result.stderr}`); return false; }
   return true;
 }
 
-async function sendFocusedGjcShortcut(shortcut, context) {
-  const surface = await focusedGjcTarget(context);
+async function sendFocusedVibShortcut(shortcut, context) {
+  const surface = await focusedVibTarget(context);
   if (!surface) return false;
   const normalized = String(shortcut).toLowerCase();
   let text;
@@ -630,8 +630,8 @@ async function sendFocusedGjcShortcut(shortcut, context) {
   return true;
 }
 
-async function toggleFocusedGjcVoice(context) {
-  const surface = await focusedGjcTarget(context);
+async function toggleFocusedVibVoice(context) {
+  const surface = await focusedVibTarget(context);
   if (!surface) return;
   const session = sessions.find(row => row.tty === topologyState?.selectedTty);
   const changedAt = await stat(KEYBINDINGS_PATH).then(value => value.mtimeMs).catch(() => Number.POSITIVE_INFINITY);
@@ -648,7 +648,7 @@ async function launchProgram(program, args, context, label) {
   const topology = await cmuxTopology();
   const surface = topology.allSurfaces.find(row => row.surface === topology.currentSurface);
   if (!surface || surface.type !== "terminal") { alert(context); log(`${label} requires a focused terminal tab`); return; }
-  if (/^GJC:\s*/i.test(surface.rawTitle)) {
+  if (/^Vibrato:\s*/i.test(surface.rawTitle)) {
     const session = sessions.find(row => row.tty === topology.selectedTty);
     await createTerminalTab(session?.repo || homedir(), [program, ...args].join(" "), context, label);
     return;
@@ -702,7 +702,7 @@ async function openFrequentProject(settings, context) {
   await createTerminalTab(project.path, null, context, null);
 }
 
-async function openNewGjcSession(context) {
+async function openNewVibSession(context) {
   await createTerminalTab(null, shellQuote(WORKTREE_LAUNCHER), context, null);
 }
 
@@ -740,7 +740,7 @@ async function sdkControl(operation, input, context, confirm = false) {
   if (!session?.sessionId) { alert(context); log(`sdk ${operation} unavailable for ${selectedSessionId ?? "no selection"}`); return; }
   const args = ["daemon", "session", "control", session.sessionId, `--op=${operation}`, `--json-input=${JSON.stringify(input)}`];
   if (confirm) args.push("--confirm");
-  const result = await run(GJC, args, session.repo, 12000);
+  const result = await run(Vibrato, args, session.repo, 12000);
   if (result.exitCode === 0) ok(context);
   else { alert(context); log(`sdk ${operation} failed: ${result.stderr || result.stdout}`); }
 }
@@ -753,40 +753,40 @@ async function keyUp(context, state, heldMs) {
     return;
   }
   if (action === CMUX_NAV_ACTION) { await performCmuxNav(settings.op, context); return; }
-  if (action === STATUS_ACTION) { await sendFocusedGjcText("proceed", context, true); return; }
+  if (action === STATUS_ACTION) { await sendFocusedVibText("proceed", context, true); return; }
   if (action === LAUNCH_ACTION) { await launchPreset(settings.preset, context); return; }
-  if (action === SKILL_ACTION) { await sendFocusedGjcText(`/skill:${settings.skill}`, context, false); return; }
+  if (action === SKILL_ACTION) { await sendFocusedVibText(`/skill:${settings.skill}`, context, false); return; }
   if (action === CONTROL_ACTION) {
     if (settings.answerSlot !== undefined && focusedPendingAsk()) { await answerFocusedAsk(Number(settings.answerSlot), { ...context, heldMs }); return; }
     if (settings.type === "cmuxClose") { await closeFocusedCmuxTab(context); return; }
     if (settings.type === "fixedFolder") { await openFixedFolder(settings, context); return; }
     if (settings.type === "frequentProject") { await openFrequentProject(settings, context); return; }
-    if (settings.type === "newGjcTab") { await openNewGjcSession(context); return; }
-    if (settings.type === "voice") { await toggleFocusedGjcVoice(context); return; }
-    if (settings.type === "command") { await sendFocusedGjcText(settings.value, context, settings.submit !== false); return; }
+    if (settings.type === "newVibTab") { await openNewVibSession(context); return; }
+    if (settings.type === "voice") { await toggleFocusedVibVoice(context); return; }
+    if (settings.type === "command") { await sendFocusedVibText(settings.value, context, settings.submit !== false); return; }
     if (settings.type === "worktree") { await launchProgram(WORKTREE_LAUNCHER, [], context, "worktree"); return; }
-    if (settings.type === "launch" && Array.isArray(settings.value)) { await launchProgram(GJC, settings.value, context, settings.name || "GJC"); return; }
-    if (settings.type === "key") { if (await sendFocusedGjcShortcut(settings.value, context)) ok(context); return; }
+    if (settings.type === "launch" && Array.isArray(settings.value)) { await launchProgram(Vibrato, settings.value, context, settings.name || "Vibrato"); return; }
+    if (settings.type === "key") { if (await sendFocusedVibShortcut(settings.value, context)) ok(context); return; }
     alert(context);
     return;
   }
   if (action === REFRESH_ACTION) { await refresh(); ok(context); return; }
   if (action === STEER_ACTION) {
-    if (!await sendFocusedGjcKey("escape", context)) return;
+    if (!await sendFocusedVibKey("escape", context)) return;
     await Bun.sleep(100);
-    if (await sendFocusedGjcKey("enter", context)) ok(context);
+    if (await sendFocusedVibKey("enter", context)) ok(context);
     return;
   }
   if (action === FOLLOW_ACTION) {
     const text = await clipboardText();
     if (!text) { alert(context); return; }
-    await sendFocusedGjcText(text, context);
+    await sendFocusedVibText(text, context);
     return;
   }
   if (action === ABORT_ACTION) {
-    if (!await sendFocusedGjcKey("escape", context)) return;
+    if (!await sendFocusedVibKey("escape", context)) return;
     await Bun.sleep(100);
-    if (await sendFocusedGjcKey("escape", context)) ok(context);
+    if (await sendFocusedVibKey("escape", context)) ok(context);
   }
 }
 

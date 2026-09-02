@@ -1,18 +1,18 @@
 import { beforeAll, describe, expect, it } from "bun:test";
-import type { AssistantMessage } from "@gajae-code/ai";
-import { resetSettingsForTest, Settings } from "@gajae-code/coding-agent/config/settings";
-import { AssistantMessageComponent } from "@gajae-code/coding-agent/modes/components/assistant-message";
-import { BashExecutionComponent } from "@gajae-code/coding-agent/modes/components/bash-execution";
-import { CustomEditor } from "@gajae-code/coding-agent/modes/components/custom-editor";
-import { EvalExecutionComponent } from "@gajae-code/coding-agent/modes/components/eval-execution";
-import { FooterComponent } from "@gajae-code/coding-agent/modes/components/footer";
-import { STATUS_LINE_PRESETS } from "@gajae-code/coding-agent/modes/components/status-line/presets";
-import { UserMessageComponent } from "@gajae-code/coding-agent/modes/components/user-message";
-import { WelcomeComponent } from "@gajae-code/coding-agent/modes/components/welcome";
-import { resolveWelcomeLogoMode } from "@gajae-code/coding-agent/modes/interactive-mode";
-import { getEditorTheme, initTheme } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { AgentSession } from "@gajae-code/coding-agent/session/agent-session";
-import { type TUI, visibleWidth } from "@gajae-code/tui";
+import type { AssistantMessage } from "@vib-rato/ai";
+import { resetSettingsForTest, Settings } from "@vib-rato/coding-agent/config/settings";
+import { AssistantMessageComponent } from "@vib-rato/coding-agent/modes/components/assistant-message";
+import { BashExecutionComponent } from "@vib-rato/coding-agent/modes/components/bash-execution";
+import { CustomEditor } from "@vib-rato/coding-agent/modes/components/custom-editor";
+import { EvalExecutionComponent } from "@vib-rato/coding-agent/modes/components/eval-execution";
+import { FooterComponent } from "@vib-rato/coding-agent/modes/components/footer";
+import { STATUS_LINE_PRESETS } from "@vib-rato/coding-agent/modes/components/status-line/presets";
+import { UserMessageComponent } from "@vib-rato/coding-agent/modes/components/user-message";
+import { WelcomeComponent } from "@vib-rato/coding-agent/modes/components/welcome";
+import { resolveWelcomeLogoMode } from "@vib-rato/coding-agent/modes/interactive-mode";
+import { getEditorTheme, initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { AgentSession } from "@vib-rato/coding-agent/session/agent-session";
+import { type TUI, visibleWidth } from "@vib-rato/tui";
 import { StatusLineComponent } from "../../../src/modes/components/tool-status-header";
 
 interface FooterUsageStatistics {
@@ -103,17 +103,17 @@ beforeAll(async () => {
 });
 
 describe("redesigned interactive shell chrome", () => {
-	it("renders opencode-style minimal user and gajae turns", () => {
+	it("renders opencode-style minimal user and vibrato turns", () => {
 		const user = Bun.stripANSI(new UserMessageComponent("hello").render(80).join("\n"));
 		const assistant = Bun.stripANSI(
 			new AssistantMessageComponent(createAssistantMessage("hi")).render(80).join("\n"),
 		);
 
 		expect(user).toContain("user");
-		expect(assistant).toContain("gajae");
+		expect(assistant).toContain("vibrato");
 		expect(user).not.toContain("operator input");
 		expect(assistant).not.toContain("assistant");
-		expect(assistant).not.toContain("gajae reply");
+		expect(assistant).not.toContain("vibrato reply");
 		expect(user).not.toContain("▸");
 		expect(assistant).not.toContain("▌");
 	});
@@ -145,14 +145,14 @@ describe("redesigned interactive shell chrome", () => {
 		}
 	});
 
-	it("keeps the GJC forge launch surface responsive", () => {
+	it("keeps the Vibrato forge launch surface responsive", () => {
 		const component = new WelcomeComponent("1.2.3", "gpt-5.5", "openai");
 		const lines = component.render(54);
 		const rendered = Bun.stripANSI(lines.join("\n"));
 
-		expect(rendered).toContain("GJC Forge");
-		expect(rendered).toContain("╭────────────────╮        ╭────────╮");
-		expect(rendered).toContain("╰────────────────╯        ╰────────╯");
+		expect(rendered).toContain("Vibrato Forge");
+		expect(rendered).toContain("╭──╮        ╭──╮  ╭────╮  ╭───────╮");
+		expect(rendered).toContain("╰──────╯      ╰────╯  ╰───────╯");
 		expect(rendered).not.toContain("●");
 		for (const line of lines) {
 			expect(visibleWidth(line)).toBeLessThanOrEqual(54);
@@ -169,7 +169,7 @@ describe("redesigned interactive shell chrome", () => {
 		expect(visibleWidth(narrowTop)).toBe(100);
 		expect(visibleWidth(wideTop)).toBe(160);
 		expect(visibleWidth(wideTop)).toBeGreaterThan(visibleWidth(narrowTop));
-		expect(wideTop).toContain("GJC Forge");
+		expect(wideTop).toContain("Vibrato Forge");
 		for (const line of wideLines) {
 			expect(visibleWidth(line)).toBeLessThanOrEqual(160);
 		}
@@ -180,9 +180,9 @@ describe("redesigned interactive shell chrome", () => {
 		const lines = component.render(54);
 		const rendered = Bun.stripANSI(lines.join("\n"));
 
-		expect(rendered).toContain("+----------------+        +--------+");
-		expect(rendered).toContain("+------+      +--+     +--+  +-----+");
-		expect(rendered).not.toContain("╭────────────────╮");
+		expect(rendered).toContain("+--+        +--+  +----+  +-------+");
+		expect(rendered).toContain("+----+       +----+  +-------+");
+		expect(rendered).not.toContain("╭──╮        ╭──╮");
 		for (const line of lines) {
 			expect(visibleWidth(line)).toBeLessThanOrEqual(54);
 		}
@@ -193,10 +193,10 @@ describe("redesigned interactive shell chrome", () => {
 		const lines = component.render(54);
 		const rendered = Bun.stripANSI(lines.join("\n"));
 
-		expect(rendered).toContain("┌────────────────┐        ┌────────┐");
-		expect(rendered).toContain("└────────────────┘        └────────┘");
-		expect(rendered).not.toContain("╭────────────────╮");
-		expect(rendered).not.toContain("+----------------+");
+		expect(rendered).toContain("┌──┐        ┌──┐  ┌────┐  ┌───────┐");
+		expect(rendered).toContain("└──────┘      └────┘  └───────┘");
+		expect(rendered).not.toContain("╭──╮        ╭──╮");
+		expect(rendered).not.toContain("+--+        +--+");
 		for (const line of lines) {
 			expect(visibleWidth(line)).toBeLessThanOrEqual(54);
 		}
@@ -327,13 +327,13 @@ describe("redesigned interactive shell chrome", () => {
 		expect(rendered).toContain("↑1.2K ↓567 R89 W12 $0.123");
 	});
 
-	it("keeps public status presets on the GJC identity", () => {
+	it("keeps public status presets on the Vibrato identity", () => {
 		for (const [name, preset] of Object.entries(STATUS_LINE_PRESETS)) {
 			expect(preset.leftSegments, name).not.toContain("pi");
 		}
 
-		expect(STATUS_LINE_PRESETS.full.leftSegments).toContain("gajae");
-		expect(STATUS_LINE_PRESETS.nerd.leftSegments).toContain("gajae");
+		expect(STATUS_LINE_PRESETS.full.leftSegments).toContain("vibrato");
+		expect(STATUS_LINE_PRESETS.nerd.leftSegments).toContain("vibrato");
 	});
 
 	it("keeps the default status preset dense and pulse-forward", () => {

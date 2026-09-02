@@ -24,9 +24,9 @@ const utilsDirectory = path.join(import.meta.dir, "..");
 /**
  * Every scenario here deliberately crashes a real subprocess, and the fatal
  * handler writes to whatever `getCrashLogPath()` resolves to. Without an
- * override that is the developer's own `~/.gjc/agent/gjc-crash.log`, so a test
+ * override that is the developer's own `~/.vib/agent/vib-crash.log`, so a test
  * run injected a dozen `fixture: ...` signatures into their real crash store --
- * visible in `gjc crash list`, offered up by `gjc crash report`, eligible for
+ * visible in `vib crash list`, offered up by `vib crash report`, eligible for
  * the opt-in upstream relay, and competing for the log's fixed byte cap against
  * the genuine crash they might actually need to file.
  *
@@ -35,12 +35,12 @@ const utilsDirectory = path.join(import.meta.dir, "..");
  * not created here because the crash writer already does `mkdirSync` on its
  * target's parent.
  */
-const fixtureAgentDir = path.join(os.tmpdir(), `gjc-postmortem-agent-${process.pid}-${Date.now()}`);
+const fixtureAgentDir = path.join(os.tmpdir(), `vib-postmortem-agent-${process.pid}-${Date.now()}`);
 
 async function captureProcess(command: string[], cwd: string): Promise<ScenarioResult> {
 	const proc = Bun.spawn(command, {
 		cwd,
-		env: { ...process.env, GJC_CODING_AGENT_DIR: fixtureAgentDir },
+		env: { ...process.env, VIB_CODING_AGENT_DIR: fixtureAgentDir },
 		stdout: "pipe",
 		stderr: "pipe",
 	});
@@ -379,7 +379,7 @@ describe("postmortem fixture crash-store isolation", () => {
 		expect(result.stderr).not.toContain("[object Object]");
 
 		const fixtureLog = await Bun.file(getCrashLogPath(fixtureAgentDir)).text();
-		expect(fixtureLog).toContain("gjc-crash-record.v1 ");
+		expect(fixtureLog).toContain("vib-crash-record.v1 ");
 		const fixtureEventLines = (await Bun.file(getCrashEventsPath(fixtureAgentDir)).text())
 			.split("\n")
 			.filter(Boolean);

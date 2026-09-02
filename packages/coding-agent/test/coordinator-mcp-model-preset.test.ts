@@ -23,7 +23,7 @@ function loaderWithProfiles(...profiles: CoordinatorModelProfile[]): Coordinator
 
 describe("resolveCoordinatorMpreset", () => {
 	it("binds the default profile loader to the router agent directory", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-coordinator-profile-scope-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-coordinator-profile-scope-"));
 		const first = path.join(root, "first");
 		const second = path.join(root, "second");
 		await fs.mkdir(first, { recursive: true });

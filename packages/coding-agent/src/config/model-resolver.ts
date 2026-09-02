@@ -2,16 +2,16 @@
  * Model resolution, scoping, and initial selection
  */
 
-import { ThinkingLevel } from "@gajae-code/agent-core";
+import { ThinkingLevel } from "@vib-rato/agent-core";
 import {
 	type Api,
 	DEFAULT_MODEL_PER_PROVIDER,
 	type KnownProvider,
 	type Model,
 	modelsAreEqual,
-} from "@gajae-code/ai/core";
+} from "@vib-rato/ai/core";
 
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 import chalk from "chalk";
 import { parseThinkingLevel, resolveThinkingLevelForModel, splitSelectorThinkingSuffix } from "../thinking";
 import { isAuthenticatedOrKeyless } from "./model-auth";

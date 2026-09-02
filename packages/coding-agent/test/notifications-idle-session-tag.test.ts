@@ -16,7 +16,7 @@ import { TelegramNotificationDaemon } from "../src/sdk/bus/telegram-daemon";
 // ---------------------------------------------------------------------------
 
 function tempAgentDir(): string {
-	return fs.mkdtempSync(path.join(os.tmpdir(), "gjc-tg-idletag-"));
+	return fs.mkdtempSync(path.join(os.tmpdir(), "vib-tg-idletag-"));
 }
 
 function settings(agentDir: string): Settings {

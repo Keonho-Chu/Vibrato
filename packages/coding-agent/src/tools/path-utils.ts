@@ -2,7 +2,7 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import * as url from "node:url";
-import { isEnoent } from "@gajae-code/utils/fs-error";
+import { isEnoent } from "@vib-rato/utils/fs-error";
 import { InternalUrlRouter } from "../internal-urls";
 import type { MCPManager } from "../runtime-mcp/manager";
 import { ToolError } from "./tool-errors";
@@ -23,7 +23,7 @@ const INTERNAL_SCHEMES_WITH_UNAMBIGUOUS_AUTHORITIES: Record<string, true> = {
 };
 const INTERNAL_SCHEMES_WITH_SELECTORS: Record<string, true> = {
 	...INTERNAL_SCHEMES_WITH_UNAMBIGUOUS_AUTHORITIES,
-	gjc: true,
+	vib: true,
 	local: true,
 	rule: true,
 	skill: true,

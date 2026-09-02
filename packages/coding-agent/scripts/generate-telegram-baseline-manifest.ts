@@ -5,11 +5,11 @@ import { Glob } from "bun";
 import { type Manifest, validateManifest } from "./manifest-schema";
 
 const repoRoot = path.resolve(import.meta.dir, "..", "..", "..");
-const testDirectory = process.env.GJC_TELEGRAM_BASELINE_TEST_DIR
-	? path.resolve(process.env.GJC_TELEGRAM_BASELINE_TEST_DIR)
+const testDirectory = process.env.VIB_TELEGRAM_BASELINE_TEST_DIR
+	? path.resolve(process.env.VIB_TELEGRAM_BASELINE_TEST_DIR)
 	: path.join(repoRoot, "packages", "coding-agent", "test");
-const manifestPath = process.env.GJC_TELEGRAM_BASELINE_MANIFEST
-	? path.resolve(process.env.GJC_TELEGRAM_BASELINE_MANIFEST)
+const manifestPath = process.env.VIB_TELEGRAM_BASELINE_MANIFEST
+	? path.resolve(process.env.VIB_TELEGRAM_BASELINE_MANIFEST)
 	: path.join(testDirectory, "manifests", "telegram-baseline-v1.json");
 const reviewedExclusions: Manifest["excluded"] = [];
 

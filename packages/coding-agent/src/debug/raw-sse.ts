@@ -1,5 +1,5 @@
-import { type Component, matchesKey, padding, replaceTabs, truncateToWidth, visibleWidth } from "@gajae-code/tui";
-import { sanitizeText } from "@gajae-code/utils";
+import { type Component, matchesKey, padding, replaceTabs, truncateToWidth, visibleWidth } from "@vib-rato/tui";
+import { sanitizeText } from "@vib-rato/utils";
 import { theme } from "../modes/theme/theme";
 import { copyToClipboard } from "../utils/clipboard";
 import { formatRawSseIsoTime, type RawSseDebugBuffer, rawSseRecordLines } from "./raw-sse-buffer";
@@ -126,7 +126,7 @@ export class RawSseViewerComponent implements Component {
 			lines.push(
 				theme.fg(
 					"warning",
-					`: gjc-debug-dropped records=${snapshot.droppedRecords} chars=${snapshot.droppedChars}`,
+					`: vib-debug-dropped records=${snapshot.droppedRecords} chars=${snapshot.droppedChars}`,
 				),
 			);
 			lines.push("");
@@ -136,7 +136,7 @@ export class RawSseViewerComponent implements Component {
 				lines.push(sanitizeFrameLine(line, innerWidth));
 			}
 			if (record.kind === "event" && record.truncated) {
-				lines.push(theme.fg("warning", `: gjc-debug-event-truncated originalChars=${record.originalChars}`));
+				lines.push(theme.fg("warning", `: vib-debug-event-truncated originalChars=${record.originalChars}`));
 			}
 			lines.push("");
 		}

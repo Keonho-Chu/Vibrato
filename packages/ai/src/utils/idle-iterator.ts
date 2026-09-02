@@ -1,4 +1,4 @@
-import { $env } from "@gajae-code/utils";
+import { $env } from "@vib-rato/utils";
 import { STREAM_FIRST_EVENT_TIMEOUT_PROVIDER_CODE } from "./fallback-transport";
 
 const DEFAULT_STREAM_IDLE_TIMEOUT_MS = 120_000;
@@ -55,7 +55,7 @@ function normalizeIdleTimeoutMs(value: string | undefined, fallback: number): nu
 /**
  * Returns the idle timeout used for provider streaming transports.
  *
- * `GJC_OPENAI_STREAM_IDLE_TIMEOUT_MS` is honored first; `PI_OPENAI_STREAM_IDLE_TIMEOUT_MS` is a backward-compatible alias.
+ * `VIB_OPENAI_STREAM_IDLE_TIMEOUT_MS` is honored first; `PI_OPENAI_STREAM_IDLE_TIMEOUT_MS` is a backward-compatible alias.
  * Set `PI_STREAM_IDLE_TIMEOUT_MS=0` to disable the watchdog.
  *
  * Providers that legitimately stream much slower than the global default can pass
@@ -64,7 +64,7 @@ function normalizeIdleTimeoutMs(value: string | undefined, fallback: number): nu
  */
 export function getStreamIdleTimeoutMs(fallbackMs: number = DEFAULT_STREAM_IDLE_TIMEOUT_MS): number | undefined {
 	return normalizeIdleTimeoutMs(
-		$env.GJC_OPENAI_STREAM_IDLE_TIMEOUT_MS ?? $env.PI_STREAM_IDLE_TIMEOUT_MS ?? $env.PI_OPENAI_STREAM_IDLE_TIMEOUT_MS,
+		$env.VIB_OPENAI_STREAM_IDLE_TIMEOUT_MS ?? $env.PI_STREAM_IDLE_TIMEOUT_MS ?? $env.PI_OPENAI_STREAM_IDLE_TIMEOUT_MS,
 		fallbackMs,
 	);
 }
@@ -72,14 +72,14 @@ export function getStreamIdleTimeoutMs(fallbackMs: number = DEFAULT_STREAM_IDLE_
 /**
  * Returns the idle timeout used for OpenAI-family streaming transports.
  *
- * Honors `GJC_OPENAI_STREAM_IDLE_TIMEOUT_MS` first (`PI_OPENAI_STREAM_IDLE_TIMEOUT_MS` is the legacy alias). Set `=0` to disable.
+ * Honors `VIB_OPENAI_STREAM_IDLE_TIMEOUT_MS` first (`PI_OPENAI_STREAM_IDLE_TIMEOUT_MS` is the legacy alias). Set `=0` to disable.
  * When `provider` is given, long-reasoning hosts (xAI Grok and Grok Build) use that floor instead of the 120s default.
  * Grok models reached through other OpenAI-compatible hosts (`openrouter/x-ai/grok-*`, kilo, litellm, …) get the
  * same floor keyed on the model id, because long-reasoning silence is a property of the model (#4797).
  */
 export function getOpenAIStreamIdleTimeoutMs(provider?: string, modelId?: string): number | undefined {
 	return normalizeIdleTimeoutMs(
-		$env.GJC_OPENAI_STREAM_IDLE_TIMEOUT_MS ?? $env.PI_STREAM_IDLE_TIMEOUT_MS ?? $env.PI_OPENAI_STREAM_IDLE_TIMEOUT_MS,
+		$env.VIB_OPENAI_STREAM_IDLE_TIMEOUT_MS ?? $env.PI_STREAM_IDLE_TIMEOUT_MS ?? $env.PI_OPENAI_STREAM_IDLE_TIMEOUT_MS,
 		getProviderStreamIdleTimeoutFallbackMs(provider ?? "") ??
 			(isGrokModelId(modelId) ? ANTHROPIC_STREAM_IDLE_TIMEOUT_MS : undefined) ??
 			DEFAULT_STREAM_IDLE_TIMEOUT_MS,

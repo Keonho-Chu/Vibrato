@@ -2,7 +2,7 @@ import { afterEach, describe, expect, test } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { exactReplacePath } from "@gajae-code/natives";
+import { exactReplacePath } from "@vib-rato/natives";
 import { YAML } from "bun";
 import {
 	AtomicYamlConflictError,
@@ -17,7 +17,7 @@ import { FileLockTestHooks } from "../../src/config/file-lock";
 const temporaryDirectories: string[] = [];
 
 async function configPathForTest(): Promise<string> {
-	const directory = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-atomic-yaml-"));
+	const directory = await fs.mkdtemp(path.join(os.tmpdir(), "vib-atomic-yaml-"));
 	temporaryDirectories.push(directory);
 	return path.join(directory, "config.yml");
 }
@@ -143,7 +143,7 @@ describe("atomic YAML patches", () => {
 
 	test("rejects ambiguous undefined set patches", () => {
 		const patch = { path: "feature.enabled", op: "set", value: undefined } as unknown as AtomicYamlPatch;
-		expect(() => applyAtomicYamlPatches("/tmp/gjc-atomic-invalid.yml", [patch])).toThrow(TypeError);
+		expect(() => applyAtomicYamlPatches("/tmp/vib-atomic-invalid.yml", [patch])).toThrow(TypeError);
 	});
 
 	test("keeps the old complete file and removes the temp file when the exchange fails", async () => {
@@ -282,16 +282,16 @@ describe("atomic YAML patches", () => {
 		const configPath = await configPathForTest();
 		await fs.writeFile(
 			configPath,
-			YAML.stringify({ "gjc.ralplan.maxIterations": "bad", gjc: { ralplan: { maxIterations: 7 } } }, null, 2),
+			YAML.stringify({ "vib.ralplan.maxIterations": "bad", vib: { ralplan: { maxIterations: 7 } } }, null, 2),
 		);
 
 		await withAtomicYamlConfigTransaction(configPath, async tx => {
-			const receipt = await tx.removeTopLevelKeys(["gjc.ralplan.maxIterations"]);
+			const receipt = await tx.removeTopLevelKeys(["vib.ralplan.maxIterations"]);
 			expect((await receipt.restore()).status).toBe("not-restorable");
 			return "done";
 		});
 
-		expect(YAML.parse(await fs.readFile(configPath, "utf8"))).toEqual({ gjc: { ralplan: { maxIterations: 7 } } });
+		expect(YAML.parse(await fs.readFile(configPath, "utf8"))).toEqual({ vib: { ralplan: { maxIterations: 7 } } });
 	});
 	test("transaction replaces the whole document atomically", async () => {
 		const configPath = await configPathForTest();
@@ -467,7 +467,7 @@ describe("atomic YAML patches", () => {
 	});
 
 	test("follows a symlinked config.yml during exact replacement", async () => {
-		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-atomic-yaml-symlink-"));
+		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "vib-atomic-yaml-symlink-"));
 		temporaryDirectories.push(directory);
 		const realTarget = path.join(directory, "real-config.yml");
 		const configPath = path.join(directory, "config.yml");
@@ -489,7 +489,7 @@ describe("atomic YAML patches", () => {
 	});
 
 	test("publishes a first write through a dangling config.yml symlink", async () => {
-		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-atomic-yaml-dangling-"));
+		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "vib-atomic-yaml-dangling-"));
 		temporaryDirectories.push(directory);
 		const realTarget = path.join(directory, "real-config.yml");
 		const configPath = path.join(directory, "config.yml");
@@ -542,7 +542,7 @@ describe("atomic YAML patches", () => {
 	});
 
 	test("rejects a config.yml symlink retarget before publication", async () => {
-		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-atomic-yaml-retarget-"));
+		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "vib-atomic-yaml-retarget-"));
 		temporaryDirectories.push(directory);
 		const realTarget = path.join(directory, "real-config.yml");
 		const otherTarget = path.join(directory, "other-config.yml");
@@ -575,7 +575,7 @@ describe("atomic YAML patches", () => {
 	});
 
 	test("publishes a first write beneath a symlinked parent directory", async () => {
-		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-atomic-yaml-parent-link-"));
+		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "vib-atomic-yaml-parent-link-"));
 		temporaryDirectories.push(directory);
 		const realDir = path.join(directory, "realdir");
 		await fs.mkdir(realDir);
@@ -596,7 +596,7 @@ describe("atomic YAML patches", () => {
 	});
 
 	test("rejects a repointed parent symlink for an absent config.yml", async () => {
-		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-atomic-yaml-parent-retarget-"));
+		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "vib-atomic-yaml-parent-retarget-"));
 		temporaryDirectories.push(directory);
 		const realDir = path.join(directory, "realdir");
 		const otherDir = path.join(directory, "otherdir");
@@ -629,7 +629,7 @@ describe("atomic YAML patches", () => {
 		expect(await fs.readdir(otherDir)).toEqual([]);
 	});
 	test("rejects a repointed parent symlink for a dangling config.yml symlink", async () => {
-		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-atomic-yaml-dangling-parent-retarget-"));
+		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "vib-atomic-yaml-dangling-parent-retarget-"));
 		temporaryDirectories.push(directory);
 		const realDir = path.join(directory, "realdir");
 		const otherDir = path.join(directory, "otherdir");
@@ -666,7 +666,7 @@ describe("atomic YAML patches", () => {
 		expect(await fs.readdir(otherDir)).toEqual([]);
 	});
 	test("rejects a config.yml symlink repointed during the native exchange", async () => {
-		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-atomic-yaml-post-exchange-retarget-"));
+		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "vib-atomic-yaml-post-exchange-retarget-"));
 		temporaryDirectories.push(directory);
 		const realTarget = path.join(directory, "real-config.yml");
 		const otherTarget = path.join(directory, "other-config.yml");
@@ -715,7 +715,7 @@ describe("atomic YAML patches", () => {
 		expect(await readYaml(otherTarget)).toEqual({ other: true });
 	});
 	test("removes a retargeted first-write publication from the inactive target", async () => {
-		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-atomic-yaml-first-write-retarget-"));
+		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "vib-atomic-yaml-first-write-retarget-"));
 		temporaryDirectories.push(directory);
 		const realTarget = path.join(directory, "real-config.yml");
 		const otherTarget = path.join(directory, "other-config.yml");
@@ -767,7 +767,7 @@ describe("atomic YAML patches", () => {
 	});
 
 	test("preserves a concurrent replacement when the first-write rollback conflicts", async () => {
-		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-atomic-yaml-first-write-conflict-"));
+		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "vib-atomic-yaml-first-write-conflict-"));
 		temporaryDirectories.push(directory);
 		const realTarget = path.join(directory, "real-config.yml");
 		const otherTarget = path.join(directory, "other-config.yml");
@@ -819,7 +819,7 @@ describe("atomic YAML patches", () => {
 	});
 
 	test("preserves a concurrent replacement when the exchange rollback conflicts", async () => {
-		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-atomic-yaml-exchange-conflict-"));
+		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "vib-atomic-yaml-exchange-conflict-"));
 		temporaryDirectories.push(directory);
 		const realTarget = path.join(directory, "real-config.yml");
 		const otherTarget = path.join(directory, "other-config.yml");

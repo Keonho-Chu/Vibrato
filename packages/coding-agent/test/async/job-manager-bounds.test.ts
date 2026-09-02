@@ -1,15 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import {
-	AsyncJobManager,
-	type ResumeDescriptor,
-	type SubagentRecord,
-} from "@gajae-code/coding-agent/async/job-manager";
+import { AsyncJobManager, type ResumeDescriptor, type SubagentRecord } from "@vib-rato/coding-agent/async/job-manager";
 import {
 	lookupOwnedRegistration,
 	registerOwnedRegistration,
 	resetTerminalAbortRegistriesForTests,
 	type TurnRegistrationKey,
-} from "@gajae-code/coding-agent/session/terminal-abort";
+} from "@vib-rato/coding-agent/session/terminal-abort";
 
 function subagentRecord(subagentId: string, currentJobId: string, status: SubagentRecord["status"]): SubagentRecord {
 	return {

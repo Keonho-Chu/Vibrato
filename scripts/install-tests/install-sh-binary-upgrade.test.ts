@@ -8,26 +8,26 @@ const repoRoot = path.join(import.meta.dir, "..", "..");
 const installScript = path.join(repoRoot, "scripts", "install.sh");
 const rootInstallScript = path.join(repoRoot, "install.sh");
 
-const EXISTING_BINARY = '#!/bin/sh\necho "gjc 0.8.1 (existing install)"\n';
+const EXISTING_BINARY = '#!/bin/sh\necho "vib 0.8.1 (existing install)"\n';
 const VERSION = "0.9.0";
 const TAG = `v${VERSION}`;
 
 function hostBinaryName(): string {
 	const osName = process.platform === "darwin" ? "darwin" : "linux";
 	const arch = process.arch === "arm64" ? "arm64" : "x64";
-	return `gjc-${osName}-${arch}`;
+	return `vib-${osName}-${arch}`;
 }
 
 function sha256(content: string | Buffer): string {
 	return crypto.createHash("sha256").update(content).digest("hex");
 }
 
-function fakeGjcScript(options: { version: string; smokeFails?: boolean; truncated?: boolean }): string {
+function fakeVibScript(options: { version: string; smokeFails?: boolean; truncated?: boolean }): string {
 	if (options.truncated) return "truncated";
 	const smoke = options.smokeFails ? "exit 1" : "exit 0";
 	return [
 		"#!/bin/sh",
-		`if [ "$1" = "--version" ]; then echo "gjc/${options.version}"; exit 0; fi`,
+		`if [ "$1" = "--version" ]; then echo "vib/${options.version}"; exit 0; fi`,
 		`if [ "$1" = "--smoke-test" ]; then ${smoke}; fi`,
 		"echo new-binary",
 		"exit 0",
@@ -123,7 +123,7 @@ if fixture.get("emptyDownload") and not name.endswith(".sha256") and not name.en
 assets = fixture.get("assets", {})
 if name in assets:
     write(__import__("base64").b64decode(assets[name]))
-if name.endswith(".sha256") or name.endswith("gajae-release-binaries-v1.json"):
+if name.endswith(".sha256") or name.endswith("vibrato-release-binaries-v1.json"):
     write(b"", 0, "404")
 sys.exit(22)
 PY
@@ -147,7 +147,7 @@ async function runInstaller(
 		env: {
 			...process.env,
 			PATH: `${sandbox.shimDir}:/usr/bin:/bin`,
-			GJC_INSTALL_DIR: sandbox.installDir,
+			VIB_INSTALL_DIR: sandbox.installDir,
 			HOME: sandbox.root,
 			GITHUB_TOKEN: "",
 			GH_TOKEN: "",
@@ -165,7 +165,7 @@ async function runInstaller(
 }
 
 beforeEach(() => {
-	const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-install-sh-"));
+	const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-install-sh-"));
 	const shimDir = path.join(root, "shim-bin");
 	const installDir = path.join(root, "install");
 	fs.mkdirSync(shimDir, { recursive: true });
@@ -187,37 +187,37 @@ describe("install.sh binary-first contract", () => {
 		expect(installer).not.toContain("Default: use bun if available");
 
 		const binaryName = hostBinaryName();
-		const payload = fakeGjcScript({ version: VERSION });
+		const payload = fakeVibScript({ version: VERSION });
 		writeCurlShim(sandbox.shimDir, {
 			assets: {
 				[binaryName]: payload,
-				"gajae-release-binaries.sha256": `${sha256(payload)}  ${binaryName}\n`,
+				"vibrato-release-binaries.sha256": `${sha256(payload)}  ${binaryName}\n`,
 			},
 		});
 		const result = await runInstaller([]);
 		expect(result.stderr).not.toContain("bun should not run");
 		expect(result.exitCode).toBe(0);
-		expect(fs.readFileSync(path.join(sandbox.installDir, "gjc"), "utf8")).toBe(payload);
+		expect(fs.readFileSync(path.join(sandbox.installDir, "vib"), "utf8")).toBe(payload);
 	});
 
 	test("root install.sh execs the canonical scripts/install.sh from a clone", async () => {
 		const root = await Bun.file(rootInstallScript).text();
 		expect(root).toContain("scripts/install.sh");
-		expect(root).toContain("https://raw.githubusercontent.com/Yeachan-Heo/gajae-code/main/scripts/install.sh");
+		expect(root).toContain("https://raw.githubusercontent.com/Keonho-Chu/Vibrato/main/scripts/install.sh");
 		expect(root).not.toContain("exec sh \"$TMP\"");
 		const binaryName = hostBinaryName();
-		const payload = fakeGjcScript({ version: VERSION });
+		const payload = fakeVibScript({ version: VERSION });
 		writeCurlShim(sandbox.shimDir, {
 			assets: {
 				[binaryName]: payload,
-				"gajae-release-binaries.sha256": `${sha256(payload)}  ${binaryName}\n`,
+				"vibrato-release-binaries.sha256": `${sha256(payload)}  ${binaryName}\n`,
 			},
 		});
 		const proc = Bun.spawn(["sh", rootInstallScript], {
 			env: {
 				...process.env,
 				PATH: `${sandbox.shimDir}:/usr/bin:/bin`,
-				GJC_INSTALL_DIR: sandbox.installDir,
+				VIB_INSTALL_DIR: sandbox.installDir,
 				HOME: sandbox.root,
 			},
 			stdout: "pipe",
@@ -225,11 +225,11 @@ describe("install.sh binary-first contract", () => {
 		});
 		const exitCode = await proc.exited;
 		expect(exitCode).toBe(0);
-		expect(fs.readFileSync(path.join(sandbox.installDir, "gjc"), "utf8")).toBe(payload);
+		expect(fs.readFileSync(path.join(sandbox.installDir, "vib"), "utf8")).toBe(payload);
 	});
 
-	test("a failed download leaves the existing gjc binary untouched", async () => {
-		const existingPath = path.join(sandbox.installDir, "gjc");
+	test("a failed download leaves the existing vib binary untouched", async () => {
+		const existingPath = path.join(sandbox.installDir, "vib");
 		fs.writeFileSync(existingPath, EXISTING_BINARY);
 		fs.chmodSync(existingPath, 0o755);
 		writeCurlShim(sandbox.shimDir, { assets: {}, failDownload: true });
@@ -240,8 +240,8 @@ describe("install.sh binary-first contract", () => {
 		expect(fs.readFileSync(existingPath, "utf8")).toBe(EXISTING_BINARY);
 	});
 
-	test("an empty download leaves the existing gjc binary untouched", async () => {
-		const existingPath = path.join(sandbox.installDir, "gjc");
+	test("an empty download leaves the existing vib binary untouched", async () => {
+		const existingPath = path.join(sandbox.installDir, "vib");
 		fs.writeFileSync(existingPath, EXISTING_BINARY);
 		fs.chmodSync(existingPath, 0o755);
 		writeCurlShim(sandbox.shimDir, { assets: { [hostBinaryName()]: "" }, emptyDownload: true });
@@ -252,14 +252,14 @@ describe("install.sh binary-first contract", () => {
 	});
 
 	test("checksum mismatch leaves the existing binary untouched", async () => {
-		const existingPath = path.join(sandbox.installDir, "gjc");
+		const existingPath = path.join(sandbox.installDir, "vib");
 		fs.writeFileSync(existingPath, EXISTING_BINARY);
 		fs.chmodSync(existingPath, 0o755);
-		const payload = fakeGjcScript({ version: VERSION });
+		const payload = fakeVibScript({ version: VERSION });
 		writeCurlShim(sandbox.shimDir, {
 			assets: {
 				[hostBinaryName()]: payload,
-				"gajae-release-binaries.sha256": `${"a".repeat(64)}  ${hostBinaryName()}\n`,
+				"vibrato-release-binaries.sha256": `${"a".repeat(64)}  ${hostBinaryName()}\n`,
 			},
 		});
 		const result = await runInstaller([]);
@@ -269,14 +269,14 @@ describe("install.sh binary-first contract", () => {
 	});
 
 	test("version/smoke failure restores the previous binary", async () => {
-		const existingPath = path.join(sandbox.installDir, "gjc");
+		const existingPath = path.join(sandbox.installDir, "vib");
 		fs.writeFileSync(existingPath, EXISTING_BINARY);
 		fs.chmodSync(existingPath, 0o755);
-		const payload = fakeGjcScript({ version: "9.9.9", smokeFails: true });
+		const payload = fakeVibScript({ version: "9.9.9", smokeFails: true });
 		writeCurlShim(sandbox.shimDir, {
 			assets: {
 				[hostBinaryName()]: payload,
-				"gajae-release-binaries.sha256": `${sha256(payload)}  ${hostBinaryName()}\n`,
+				"vibrato-release-binaries.sha256": `${sha256(payload)}  ${hostBinaryName()}\n`,
 			},
 		});
 		const result = await runInstaller([]);
@@ -285,14 +285,14 @@ describe("install.sh binary-first contract", () => {
 	});
 
 	test("a successful download replaces the binary, verifies, and leaves no temp files", async () => {
-		const existingPath = path.join(sandbox.installDir, "gjc");
+		const existingPath = path.join(sandbox.installDir, "vib");
 		fs.writeFileSync(existingPath, EXISTING_BINARY);
 		fs.chmodSync(existingPath, 0o755);
-		const payload = fakeGjcScript({ version: VERSION });
+		const payload = fakeVibScript({ version: VERSION });
 		writeCurlShim(sandbox.shimDir, {
 			assets: {
 				[hostBinaryName()]: payload,
-				"gajae-release-binaries.sha256": `${sha256(payload)}  ${hostBinaryName()}\n`,
+				"vibrato-release-binaries.sha256": `${sha256(payload)}  ${hostBinaryName()}\n`,
 			},
 		});
 
@@ -300,23 +300,23 @@ describe("install.sh binary-first contract", () => {
 		expect(result.exitCode).toBe(0);
 		expect(fs.readFileSync(existingPath, "utf8")).toBe(payload);
 		expect(fs.statSync(existingPath).mode & 0o100).toBe(0o100);
-		const leftover = fs.readdirSync(sandbox.installDir).filter(name => name !== "gjc");
+		const leftover = fs.readdirSync(sandbox.installDir).filter(name => name !== "vib");
 		expect(leftover).toEqual([]);
 	});
 
 	test("installs an explicit release tag as a binary without switching to source", async () => {
-		const payload = fakeGjcScript({ version: "0.15.0" });
+		const payload = fakeVibScript({ version: "0.15.0" });
 		writeCurlShim(sandbox.shimDir, {
 			tagJson: { "v0.15.0": JSON.stringify({ tag_name: "v0.15.0" }) },
 			assets: {
 				[hostBinaryName()]: payload,
-				"gajae-release-binaries.sha256": `${sha256(payload)}  ${hostBinaryName()}\n`,
+				"vibrato-release-binaries.sha256": `${sha256(payload)}  ${hostBinaryName()}\n`,
 			},
 		});
 		const result = await runInstaller(["--ref", "v0.15.0"]);
 		expect(result.exitCode).toBe(0);
 		expect(result.stdout).toContain("Using version: v0.15.0");
-		expect(fs.readFileSync(path.join(sandbox.installDir, "gjc"), "utf8")).toBe(payload);
+		expect(fs.readFileSync(path.join(sandbox.installDir, "vib"), "utf8")).toBe(payload);
 	});
 
 	test("rejects path-traversal tags", async () => {
@@ -328,11 +328,11 @@ describe("install.sh binary-first contract", () => {
 
 	test("selects a nightly GitHub prerelease", async () => {
 		const nightly = "0.9.1-nightly.1.1.gabc";
-		const payload = fakeGjcScript({ version: nightly });
+		const payload = fakeVibScript({ version: nightly });
 		writeCurlShim(sandbox.shimDir, {
 			assets: {
 				[hostBinaryName()]: payload,
-				"gajae-release-binaries.sha256": `${sha256(payload)}  ${hostBinaryName()}\n`,
+				"vibrato-release-binaries.sha256": `${sha256(payload)}  ${hostBinaryName()}\n`,
 			},
 		});
 		const result = await runInstaller(["--channel", "nightly"]);
@@ -352,7 +352,7 @@ describe("install.sh binary-first contract", () => {
 
 	test("supported platform names are the published release assets", async () => {
 		const installer = await Bun.file(installScript).text();
-		expect(installer).toContain("gjc-${PLATFORM}-${ARCH}");
+		expect(installer).toContain("vib-${PLATFORM}-${ARCH}");
 		expect(installer).toContain('PLATFORM="linux"');
 		expect(installer).toContain('PLATFORM="darwin"');
 		expect(installer).toContain('ARCH="x64"');
@@ -390,15 +390,15 @@ describe("install.sh binary-first contract", () => {
 	test("rejects unofficial GitHub origin overrides", async () => {
 		writeCurlShim(sandbox.shimDir, { assets: {} });
 		const result = await runInstaller([], {
-			GJC_GITHUB_API: "https://evil.example/api",
+			VIB_GITHUB_API: "https://evil.example/api",
 		});
 		expect(result.exitCode).not.toBe(0);
-		expect(result.stderr + result.stdout).toContain("GJC_GITHUB_API must be https://api.github.com");
+		expect(result.stderr + result.stdout).toContain("VIB_GITHUB_API must be https://api.github.com");
 	});
 
 	test("selects a compact JSON nightly list without a pretty-printed layout", async () => {
 		const nightly = "0.9.1-nightly.1.1.gabc";
-		const payload = fakeGjcScript({ version: nightly });
+		const payload = fakeVibScript({ version: nightly });
 		writeCurlShim(sandbox.shimDir, {
 			releasesJson: JSON.stringify([
 				{ tag_name: "v0.9.0-rc.1", draft: false, prerelease: true },
@@ -406,7 +406,7 @@ describe("install.sh binary-first contract", () => {
 			]),
 			assets: {
 				[hostBinaryName()]: payload,
-				"gajae-release-binaries.sha256": `${sha256(payload)}  ${hostBinaryName()}\n`,
+				"vibrato-release-binaries.sha256": `${sha256(payload)}  ${hostBinaryName()}\n`,
 			},
 		});
 		const result = await runInstaller(["--channel", "nightly"]);
@@ -415,12 +415,12 @@ describe("install.sh binary-first contract", () => {
 	});
 	test("selects a nightly tag when prerelease appears before tag_name", async () => {
 		const nightly = "0.9.2-nightly.1.1.gdef";
-		const payload = fakeGjcScript({ version: nightly });
+		const payload = fakeVibScript({ version: nightly });
 		writeCurlShim(sandbox.shimDir, {
 			releasesJson: `[{"prerelease":true,"draft":false,"tag_name":"v${nightly}"}]`,
 			assets: {
 				[hostBinaryName()]: payload,
-				"gajae-release-binaries.sha256": `${sha256(payload)}  ${hostBinaryName()}\n`,
+				"vibrato-release-binaries.sha256": `${sha256(payload)}  ${hostBinaryName()}\n`,
 			},
 		});
 		const result = await runInstaller(["--channel", "nightly"]);
@@ -447,14 +447,14 @@ describe("install.sh binary-first contract", () => {
 
 	test("does not delete a live foreign installer lock", async () => {
 		writeCurlShim(sandbox.shimDir, { assets: {} });
-		const lockFile = path.join(sandbox.installDir, ".gjc-install.lock");
+		const lockFile = path.join(sandbox.installDir, ".vib-install.lock");
 		const sleeper = Bun.spawn(["sleep", "30"], { stdout: "ignore", stderr: "ignore" });
 		const claim = `${sleeper.pid} foreign-nonce\n`;
 		fs.writeFileSync(lockFile, claim);
 		try {
 			const result = await runInstaller([]);
 			expect(result.exitCode).not.toBe(0);
-			expect(result.stderr + result.stdout).toContain("Another GJC installer is already running");
+			expect(result.stderr + result.stdout).toContain("Another Vibrato installer is already running");
 			expect(fs.readFileSync(lockFile, "utf8")).toBe(claim);
 		} finally {
 			sleeper.kill();
@@ -464,24 +464,24 @@ describe("install.sh binary-first contract", () => {
 
 	test("fails closed when an installer lock already exists", async () => {
 		writeCurlShim(sandbox.shimDir, { assets: {} });
-		const lockFile = path.join(sandbox.installDir, ".gjc-install.lock");
+		const lockFile = path.join(sandbox.installDir, ".vib-install.lock");
 		fs.writeFileSync(lockFile, "999999 stale-nonce\n");
 		const result = await runInstaller([]);
 		expect(result.exitCode).not.toBe(0);
-		expect(result.stderr + result.stdout).toContain("Another GJC installer is already running");
+		expect(result.stderr + result.stdout).toContain("Another Vibrato installer is already running");
 		expect(fs.readFileSync(lockFile, "utf8")).toBe("999999 stale-nonce\n");
 	});
 
 	test("refuses to replace a destination symlink", async () => {
-		const payload = fakeGjcScript({ version: VERSION });
+		const payload = fakeVibScript({ version: VERSION });
 		writeCurlShim(sandbox.shimDir, {
 			assets: {
 				[hostBinaryName()]: payload,
-				"gajae-release-binaries.sha256": `${sha256(payload)}  ${hostBinaryName()}\n`,
+				"vibrato-release-binaries.sha256": `${sha256(payload)}  ${hostBinaryName()}\n`,
 			},
 		});
-		const dest = path.join(sandbox.installDir, "gjc");
-		const real = path.join(sandbox.installDir, "real-gjc");
+		const dest = path.join(sandbox.installDir, "vib");
+		const real = path.join(sandbox.installDir, "real-vib");
 		fs.writeFileSync(real, "managed\n");
 		fs.symlinkSync(real, dest);
 		const result = await runInstaller([]);

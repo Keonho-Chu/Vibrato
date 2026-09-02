@@ -1,13 +1,13 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from "bun:test";
-import { IrcSplitViewComponent } from "@gajae-code/coding-agent/modes/components/irc-sidebar";
-import { EventController } from "@gajae-code/coding-agent/modes/controllers/event-controller";
-import { IrcObservationLedger } from "@gajae-code/coding-agent/modes/irc-observation-ledger";
-import { initTheme } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { InteractiveModeContext, IrcArrivalSnapshot } from "@gajae-code/coding-agent/modes/types";
-import { parseIrcMessage } from "@gajae-code/coding-agent/modes/utils/irc-message";
-import { UiHelpers } from "@gajae-code/coding-agent/modes/utils/ui-helpers";
-import type { CustomMessage } from "@gajae-code/coding-agent/session/messages";
-import { Container, Text, TUI } from "@gajae-code/tui";
+import { IrcSplitViewComponent } from "@vib-rato/coding-agent/modes/components/irc-sidebar";
+import { EventController } from "@vib-rato/coding-agent/modes/controllers/event-controller";
+import { IrcObservationLedger } from "@vib-rato/coding-agent/modes/irc-observation-ledger";
+import { initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { InteractiveModeContext, IrcArrivalSnapshot } from "@vib-rato/coding-agent/modes/types";
+import { parseIrcMessage } from "@vib-rato/coding-agent/modes/utils/irc-message";
+import { UiHelpers } from "@vib-rato/coding-agent/modes/utils/ui-helpers";
+import type { CustomMessage } from "@vib-rato/coding-agent/session/messages";
+import { Container, Text, TUI } from "@vib-rato/tui";
 import { VirtualTerminal } from "../../../../tui/test/virtual-terminal";
 
 beforeAll(() => initTheme());

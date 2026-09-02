@@ -1,6 +1,6 @@
 # Composer 2.5 Fast parity repro
 
-This document records the one-command repros for the Composer 2.5 Fast stability work. Scope is GJC-local only: no OpenClaw reference, no Cursor live e2e, no upstream xAI/server change, and no Codex refactor. Codex is the baseline/report model only.
+This document records the one-command repros for the Composer 2.5 Fast stability work. Scope is Vibrato-local only: no OpenClaw reference, no Cursor live e2e, no upstream xAI/server change, and no Codex refactor. Codex is the baseline/report model only.
 
 ## Focused discipline regression
 

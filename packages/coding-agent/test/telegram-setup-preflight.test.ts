@@ -10,7 +10,7 @@ const CHAT_ID = "555";
 
 function settingsWithChatId(): Settings {
 	return createLightweightDaemonSettings({
-		agentDir: "/tmp/gjc-preflight-test",
+		agentDir: "/tmp/vib-preflight-test",
 		rawConfig: { notifications: { telegram: { chatId: CHAT_ID } } },
 	}) as unknown as Settings;
 }

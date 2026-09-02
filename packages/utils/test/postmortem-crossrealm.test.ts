@@ -6,7 +6,7 @@ import * as vm from "node:vm";
 import { recordFatalCrash } from "../src/postmortem";
 
 const tempCrashLog = (): string =>
-	path.join(fs.mkdtempSync(path.join(os.tmpdir(), "gjc-crossrealm-")), "gjc-crash.log");
+	path.join(fs.mkdtempSync(path.join(os.tmpdir(), "vib-crossrealm-")), "vib-crash.log");
 
 const record = (reason: unknown): string => {
 	const target = tempCrashLog();

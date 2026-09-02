@@ -38,9 +38,9 @@ describe("install.ps1 Windows PowerShell 5.1 compatibility", () => {
 		expect(installer).not.toContain("Install-Bun");
 		expect(installer).toContain("This installer never downloads Bun");
 		expect(installer).toContain("Install-Binary");
-		expect(installer).toContain("gajae-release-binaries.sha256");
+		expect(installer).toContain("vibrato-release-binaries.sha256");
 		expect(installer).toContain("--smoke-test");
-		expect(installer).toContain("Restored previous gjc binary");
+		expect(installer).toContain("Restored previous vib binary");
 		expect(installer).toContain("nightly");
 		expect(installer).not.toContain("Default: use bun if available");
 		expect(installer).toContain("Putting $InstallDir first on PATH");

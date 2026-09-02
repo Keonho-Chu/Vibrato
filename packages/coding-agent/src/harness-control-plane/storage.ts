@@ -1,14 +1,14 @@
 /**
  * Session-scoped storage for the harness control plane.
  *
- * Layout (under the harness state root, default `<cwd>/.gjc/_session-{sessionid}/state/harness`):
+ * Layout (under the harness state root, default `<cwd>/.vib/_session-{sessionid}/state/harness`):
  *   sessions/<encoded-id>/state.json        lifecycle + handle (atomic)
  *   sessions/<encoded-id>/lease.json         owner lease (M3)
  *   sessions/<encoded-id>/events.jsonl       owner-only severity envelopes
  *   sessions/<encoded-id>/receipts.jsonl     append-only receipt index
  *   sessions/<encoded-id>/receipts/<family>/<receiptId>.json  immutable receipts
  *   sessions/<encoded-id>/artifacts/...      diff/validation artifacts
- *   sessions/<encoded-id>/gjc-session/       underlying gajae-code --session-dir
+ *   sessions/<encoded-id>/vib-session/       underlying vib-rato --session-dir
  *
  * Receipt files are immutable: re-writing an existing receipt id fails closed.
  * JSON writes are atomic (temp + rename).
@@ -18,7 +18,7 @@ import * as fsSync from "node:fs";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { harnessStateRoot } from "../gjc-runtime/session-layout";
+import { harnessStateRoot } from "../vib-runtime/session-layout";
 import { appendReceiptToConfiguredSpool } from "./receipt-spool";
 import type { ReceiptEnvelope } from "./receipts";
 import type { EventEnvelope, ReceiptFamily, SessionState } from "./types";
@@ -72,9 +72,9 @@ function sessionMatchesWorkspace(state: SessionState, expectedWorkspace: string)
 }
 
 function harnessRootRegistryDir(env: NodeJS.ProcessEnv = process.env): string {
-	const override = env.GJC_HARNESS_ROOT_REGISTRY_DIR?.trim();
+	const override = env.VIB_HARNESS_ROOT_REGISTRY_DIR?.trim();
 	if (override) return path.resolve(override);
-	return path.join(os.tmpdir(), `gjch${process.getuid?.() ?? "u"}`, "harness-roots");
+	return path.join(os.tmpdir(), `vibh${process.getuid?.() ?? "u"}`, "harness-roots");
 }
 
 function harnessRootRegistryPath(sessionId: string, env: NodeJS.ProcessEnv = process.env): string {
@@ -181,9 +181,9 @@ interface SocketPathMetadata {
 }
 
 function socketBase(env: NodeJS.ProcessEnv, allowOverride: boolean): { base: string; fromOverride: boolean } {
-	const override = env.GJC_HARNESS_SOCKET_DIR?.trim();
+	const override = env.VIB_HARNESS_SOCKET_DIR?.trim();
 	if (allowOverride && override) return { base: path.resolve(override), fromOverride: true };
-	return { base: path.join(os.tmpdir(), `gjch${process.getuid?.() ?? "u"}`), fromOverride: false };
+	return { base: path.join(os.tmpdir(), `vibh${process.getuid?.() ?? "u"}`), fromOverride: false };
 }
 
 function socketPathForBase(root: string, sessionId: string, base: string): string {
@@ -238,17 +238,17 @@ export function resolveHarnessRoot(opts?: {
 	root?: string;
 	cwd?: string;
 	env?: NodeJS.ProcessEnv;
-	gjcSessionId?: string;
+	vibSessionId?: string;
 }): string {
 	const env = opts?.env ?? process.env;
 	if (opts?.root) return path.resolve(opts.root);
-	const fromEnv = env.GJC_HARNESS_STATE_ROOT;
+	const fromEnv = env.VIB_HARNESS_STATE_ROOT;
 	if (fromEnv?.trim()) return path.resolve(fromEnv.trim());
-	const gjcSessionId = opts?.gjcSessionId ?? env.GJC_SESSION_ID?.trim();
-	if (!gjcSessionId) {
-		throw new StorageError("GJC session id is required for default harness state root", "missing_gjc_session_id");
+	const vibSessionId = opts?.vibSessionId ?? env.VIB_SESSION_ID?.trim();
+	if (!vibSessionId) {
+		throw new StorageError("Vibrato session id is required for default harness state root", "missing_vib_session_id");
 	}
-	return harnessStateRoot(opts?.cwd ?? process.cwd(), gjcSessionId);
+	return harnessStateRoot(opts?.cwd ?? process.cwd(), vibSessionId);
 }
 
 export function assertSafeSessionId(id: string): void {
@@ -273,7 +273,7 @@ export interface SessionPaths {
 	artifactsDir: string;
 	controlSock: string;
 	controlFifo: string;
-	gjcSessionDir: string;
+	vibSessionDir: string;
 }
 
 export function sessionPaths(root: string, sessionId: string): SessionPaths {
@@ -289,7 +289,7 @@ export function sessionPaths(root: string, sessionId: string): SessionPaths {
 		artifactsDir: path.join(dir, "artifacts"),
 		controlSock: path.join(dir, "control.sock"),
 		controlFifo: path.join(dir, "control.fifo"),
-		gjcSessionDir: path.join(dir, "gjc-session"),
+		vibSessionDir: path.join(dir, "vib-session"),
 	};
 }
 

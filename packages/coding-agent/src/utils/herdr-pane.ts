@@ -1,9 +1,9 @@
 /**
  * Herdr agent lifecycle reporter.
  *
- * When gjc runs inside a Herdr pane (`HERDR_ENV=1`), report semantic agent
+ * When vib runs inside a Herdr pane (`HERDR_ENV=1`), report semantic agent
  * state through Herdr's documented custom-integration API so the pane is
- * recognized as the "gjc" agent in Herdr's sidebar and workspace rollups:
+ * recognized as the "vib" agent in Herdr's sidebar and workspace rollups:
  *
  *   - `idle`    — waiting at the input prompt (also reported at startup)
  *   - `working` — agent turn in progress
@@ -24,10 +24,10 @@ import * as crypto from "node:crypto";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { logger } from "@gajae-code/utils";
-import { nativeProcessBindings } from "@gajae-code/utils/native-process";
-import { probeLinuxProcPidSync } from "../gjc-runtime/linux-proc";
+import { logger } from "@vib-rato/utils";
+import { nativeProcessBindings } from "@vib-rato/utils/native-process";
 import { processIncarnation } from "../sdk/broker/process-incarnation";
+import { probeLinuxProcPidSync } from "../vib-runtime/linux-proc";
 
 const HERDR_ENV = "HERDR_ENV";
 const HERDR_PANE_ID_ENV = "HERDR_PANE_ID";
@@ -35,11 +35,11 @@ const HERDR_BIN_PATH_ENV = "HERDR_BIN_PATH";
 /**
  * Stamped into the environment by the process that claims a pane, and therefore
  * inherited by everything it spawns. Herdr's pane variables are inherited the
- * same way, so without this marker a nested gjc — an agent shelling out to
- * `gjc doctor`, a scripted `gjc -p`, a subagent — looks exactly like the pane's
- * own session and claims the very same `custom:gjc` authority.
+ * same way, so without this marker a nested vib — an agent shelling out to
+ * `vib doctor`, a scripted `vib -p`, a subagent — looks exactly like the pane's
+ * own session and claims the very same `custom:vib` authority.
  */
-const HERDR_PANE_OWNER_ENV = "GJC_HERDR_PANE_OWNER";
+const HERDR_PANE_OWNER_ENV = "VIB_HERDR_PANE_OWNER";
 const HERDR_PANE_OWNER_VERSION = 1;
 const HERDR_SOCKET_PATH_ENV = "HERDR_SOCKET_PATH";
 /** Debounce between a socket directory event and reading the socket's identity. */
@@ -47,8 +47,8 @@ const SOCKET_SETTLE_MS = 150;
 /** ~3s of re-checks while the path is empty between unlink and bind. */
 const SOCKET_SETTLE_ATTEMPTS = 20;
 const HERDR_COMMAND = "herdr";
-const AGENT_LABEL = "gjc";
-const SOURCE = "custom:gjc";
+const AGENT_LABEL = "vib";
+const SOURCE = "custom:vib";
 /** A report is a fire-and-forget status ping; a hung herdr CLI must never accumulate. */
 const HERDR_REPORT_TIMEOUT_MS = 1500;
 /** Release runs on the shutdown path, so it is bounded even tighter. */
@@ -56,7 +56,7 @@ const HERDR_RELEASE_TIMEOUT_MS = 1000;
 const CONTROL_CHARS = /[\u0000-\u001f\u007f-\u009f]/g;
 /** Herdr truncates to the pane width anyway; this only bounds the argv. */
 const MAX_PANE_TITLE_CHARS = 120;
-const HERDR_SEQUENCE_STATE_PATH = path.join(os.tmpdir(), "gjc-herdr-sequence-v1");
+const HERDR_SEQUENCE_STATE_PATH = path.join(os.tmpdir(), "vib-herdr-sequence-v1");
 
 /**
  * The environment is inherited, not authoritative. The token prevents a
@@ -78,7 +78,7 @@ interface HerdrPaneOwnerMarker {
 /**
  * Herdr records the highest sequence it has accepted per source and drops any
  * later report that does not exceed it. That watermark belongs to the pane's
- * terminal, so it outlives the gjc process that set it: a counter restarting at
+ * terminal, so it outlives the vib process that set it: a counter restarting at
  * zero makes every report of the next session in that pane look stale, and the
  * session stays invisible in the sidebar until it happens to out-count its
  * predecessor. Seeding from wall-clock milliseconds keeps sequences rising
@@ -221,7 +221,7 @@ const standaloneTitleScope: HerdrTitleScope = new HerdrTitleScope();
 
 /**
  * Scope of the process's installed reporter, when one exists. Production has
- * at most one Herdr pane per gjc process (pane ownership is exclusive by the
+ * at most one Herdr pane per vib process (pane ownership is exclusive by the
  * claim marker), so this is the binding between the reporter and standalone
  * `syncHerdrPaneTitle` calls that have no reporter reference. Cleared on
  * release so a released pane's title can never be re-sent.
@@ -236,7 +236,7 @@ function defaultSpawn(
 }
 
 /**
- * Resolve the pane environment. Returns null unless gjc is demonstrably inside
+ * Resolve the pane environment. Returns null unless vib is demonstrably inside
  * a Herdr pane AND a herdr binary is resolvable.
  *
  * `HERDR_BIN_PATH` is honored first because Herdr sets it for its own panes;
@@ -245,7 +245,7 @@ function defaultSpawn(
  * would execute, and PATH/`HERDR_BIN_PATH` are the trust boundary Herdr itself
  * documents.
  *
- * Also returns null when an ancestor gjc already owns this pane, so a nested
+ * Also returns null when an ancestor vib already owns this pane, so a nested
  * invocation reports nothing at all.
  */
 export function resolveHerdrPaneEnvironment(options: HerdrReporterOptions = {}): HerdrPaneEnvironment | null {
@@ -791,7 +791,7 @@ function createHerdrReporterWithClaim(
 			if (claimMarker !== undefined && env[HERDR_PANE_OWNER_ENV] === claimMarker) delete env[HERDR_PANE_OWNER_ENV];
 			seq = nextSequence(seq);
 			run(buildHerdrReleaseArgs(paneEnv.paneId, seq), HERDR_RELEASE_TIMEOUT_MS);
-			// The pane outlives gjc, so a session title left behind would label a
+			// The pane outlives vib, so a session title left behind would label a
 			// plain shell with the work of a session that already ended.
 			run(buildHerdrClearTitleArgs(paneEnv.paneId, nextMetadataSeq()), HERDR_RELEASE_TIMEOUT_MS);
 		},

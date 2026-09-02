@@ -2,15 +2,15 @@ import { describe, expect, it } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { type Skill as CapabilitySkill, skillCapability } from "@gajae-code/coding-agent/capability/skill";
-import { getCapability } from "@gajae-code/coding-agent/discovery";
+import { type Skill as CapabilitySkill, skillCapability } from "@vib-rato/coding-agent/capability/skill";
+import { getCapability } from "@vib-rato/coding-agent/discovery";
 import {
 	buildSkillPromptMessage,
 	loadSkills,
 	loadSkillsFromDir,
 	parseSkillInvocations,
 	type Skill,
-} from "@gajae-code/coding-agent/extensibility/skills";
+} from "@vib-rato/coding-agent/extensibility/skills";
 import { safeRm } from "../../../scripts/safe-cleanup";
 
 const fixturesDir = path.resolve(import.meta.dirname, "fixtures/skills");
@@ -55,7 +55,7 @@ describe("parseSkillInvocations", () => {
 	it("preserves multi-line and long arguments in invocation payloads", () => {
 		const args = [
 			"to re-architect our problem banks into source-based architecture, and",
-			"make sure gaebal-gajae skill-invocation modal does not truncate skill args,",
+			"make sure gaebal-vibrato skill-invocation modal does not truncate skill args,",
 			`${"even though we need few lines to use. ".repeat(20)}END`,
 		].join("\n");
 
@@ -225,8 +225,8 @@ describe("skills", () => {
 		});
 
 		it("never loads Claude/Codex convention skills at runtime; they are import sources only", async () => {
-			const tempHomeDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-external-skills-home-"));
-			const tempProjectDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-external-skills-project-"));
+			const tempHomeDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-external-skills-home-"));
+			const tempProjectDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-external-skills-project-"));
 
 			try {
 				for (const root of [
@@ -234,7 +234,7 @@ describe("skills", () => {
 					path.join(tempProjectDir, ".claude", "skills", "claude-project-skill"),
 					path.join(tempHomeDir, ".codex", "skills", "codex-user-skill"),
 					path.join(tempHomeDir, ".claude", "skills", "claude-user-skill"),
-					path.join(tempProjectDir, ".gjc", "skills", "native-project-skill"),
+					path.join(tempProjectDir, ".vib", "skills", "native-project-skill"),
 				]) {
 					await fs.mkdir(root, { recursive: true });
 					await fs.writeFile(
@@ -246,7 +246,7 @@ describe("skills", () => {
 				}
 
 				// Even with every legacy convention toggle enabled, `.claude` and
-				// `.codex` layouts are explicit import sources into `.gjc`: they are
+				// `.codex` layouts are explicit import sources into `.vib`: they are
 				// never loaded as session skills. Only the native location loads.
 				const { skills } = await loadSkills({
 					cwd: tempProjectDir,
@@ -300,7 +300,7 @@ describe("skills", () => {
 		});
 
 		it("should skip skills disabled via frontmatter", async () => {
-			const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-disabled-skill-"));
+			const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-disabled-skill-"));
 			const skillDir = path.join(tempDir, "disabled-skill");
 			await fs.mkdir(skillDir, { recursive: true });
 			await fs.writeFile(
@@ -346,7 +346,7 @@ enabled: false
 		});
 
 		it("should expand ~ in customDirectories", async () => {
-			const tempHome = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-tilde-home-"));
+			const tempHome = await fs.mkdtemp(path.join(os.tmpdir(), "vib-tilde-home-"));
 			const tempHomeSkillsDir = await fs.mkdtemp(path.join(tempHome, ".pi-skills-test-"));
 			const relativeToHome = path.relative(tempHome, tempHomeSkillsDir);
 			const tildeDir = `~/${relativeToHome.split(path.sep).join("/")}`;
@@ -402,14 +402,14 @@ description: Skill loaded from a tilde-expanded custom directory.
 		});
 
 		it("discovers native project and user skills with zero configuration", async () => {
-			const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-zero-config-skills-"));
-			const tempHome = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-zero-config-home-"));
+			const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-zero-config-skills-"));
+			const tempHome = await fs.mkdtemp(path.join(os.tmpdir(), "vib-zero-config-home-"));
 			try {
 				for (const [root, name] of [
-					[path.join(tempDir, ".gjc", "skills", "project-skill"), "project-skill"],
+					[path.join(tempDir, ".vib", "skills", "project-skill"), "project-skill"],
 					[path.join(tempDir, ".claude", "skills", "claude-skill"), "claude-skill"],
 					[path.join(tempDir, ".codex", "skills", "codex-skill"), "codex-skill"],
-					[path.join(tempHome, ".gjc", "agent", "skills", "user-skill"), "user-skill"],
+					[path.join(tempHome, ".vib", "agent", "skills", "user-skill"), "user-skill"],
 				]) {
 					await fs.mkdir(root, { recursive: true });
 					await fs.writeFile(
@@ -430,8 +430,8 @@ description: Skill loaded from a tilde-expanded custom directory.
 		});
 
 		it("project scope shadows user scope, and the nearest project ancestor wins", async () => {
-			const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-precedence-skills-"));
-			const tempHome = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-precedence-home-"));
+			const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-precedence-skills-"));
+			const tempHome = await fs.mkdtemp(path.join(os.tmpdir(), "vib-precedence-home-"));
 			try {
 				// Mark the repo root so the ancestor walk covers the nested package.
 				await fs.mkdir(path.join(tempDir, ".git"));
@@ -443,31 +443,31 @@ description: Skill loaded from a tilde-expanded custom directory.
 						["---", `name: ${name}`, "description: shared skill", "---", "", body].join("\n"),
 					);
 				};
-				await write(path.join(tempHome, ".gjc", "agent", "skills", "shared"), "shared", "user body");
-				await write(path.join(tempDir, ".gjc", "skills", "shared"), "shared", "root body");
-				await write(path.join(nested, ".gjc", "skills", "shared"), "shared", "nested body");
+				await write(path.join(tempHome, ".vib", "agent", "skills", "shared"), "shared", "user body");
+				await write(path.join(tempDir, ".vib", "skills", "shared"), "shared", "root body");
+				await write(path.join(nested, ".vib", "skills", "shared"), "shared", "nested body");
 
 				const { skills, warnings } = await loadSkills({ cwd: nested, home: tempHome });
 				const shared = skills.find(skill => skill.name === "shared");
 				expect(shared).toBeDefined();
 				expect(shared?.source).toBe("native:project");
-				expect(shared?.filePath).toContain(path.join(nested, ".gjc", "skills", "shared"));
+				expect(shared?.filePath).toContain(path.join(nested, ".vib", "skills", "shared"));
 				// Shadowed duplicates are diagnosed, not silent: root project copy and
 				// the user copy both collide with the nearest-ancestor winner.
 				expect(warnings.filter(w => w.message.includes("name collision")).length).toBe(2);
 
 				// Drop the nested copy: the repo-root project copy still beats user.
-				await safeRm(path.join(nested, ".gjc"), { recursive: true, force: true });
+				await safeRm(path.join(nested, ".vib"), { recursive: true, force: true });
 				const { skills: next } = await loadSkills({ cwd: nested, home: tempHome });
 				expect(next.find(skill => skill.name === "shared")?.filePath).toContain(
-					path.join(tempDir, ".gjc", "skills", "shared"),
+					path.join(tempDir, ".vib", "skills", "shared"),
 				);
 
 				// Drop all project copies: the user copy finally wins.
-				await safeRm(path.join(tempDir, ".gjc"), { recursive: true, force: true });
+				await safeRm(path.join(tempDir, ".vib"), { recursive: true, force: true });
 				const { skills: userWins } = await loadSkills({ cwd: nested, home: tempHome });
 				expect(userWins.find(skill => skill.name === "shared")?.filePath).toContain(
-					path.join(tempHome, ".gjc", "agent", "skills", "shared"),
+					path.join(tempHome, ".vib", "agent", "skills", "shared"),
 				);
 			} finally {
 				await safeRm(tempDir, { recursive: true, force: true });
@@ -476,10 +476,10 @@ description: Skill loaded from a tilde-expanded custom directory.
 		});
 
 		it("keeps the legacy alias working and never lets disk skills replace bundled workflows", async () => {
-			const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-protected-skills-"));
-			const tempHome = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-protected-home-"));
+			const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-protected-skills-"));
+			const tempHome = await fs.mkdtemp(path.join(os.tmpdir(), "vib-protected-home-"));
 			try {
-				const root = path.join(tempDir, ".gjc", "skills", "ralplan");
+				const root = path.join(tempDir, ".vib", "skills", "ralplan");
 				await fs.mkdir(root, { recursive: true });
 				await fs.writeFile(
 					path.join(root, "SKILL.md"),
@@ -492,7 +492,7 @@ description: Skill loaded from a tilde-expanded custom directory.
 				// project-scope copy is diagnosed as a protected-name collision.
 				const { skills, warnings } = await loadSkills({ cwd: tempDir, home: tempHome });
 				expect(skills.some(skill => skill.name === "ralplan")).toBe(true);
-				expect(warnings.some(w => w.message.includes("bundled GJC workflow skill"))).toBe(true);
+				expect(warnings.some(w => w.message.includes("bundled Vibrato workflow skill"))).toBe(true);
 
 				// The legacy alias still disables the scope explicitly.
 				const legacyDisabled = await loadSkills({ cwd: tempDir, home: tempHome, enablePiProject: false });
@@ -504,8 +504,8 @@ description: Skill loaded from a tilde-expanded custom directory.
 		});
 
 		it("trust flags disable their scope while the master switch disables everything", async () => {
-			const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-trust-skills-"));
-			const tempHome = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-trust-home-"));
+			const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-trust-skills-"));
+			const tempHome = await fs.mkdtemp(path.join(os.tmpdir(), "vib-trust-home-"));
 			try {
 				const write = async (root: string, name: string) => {
 					await fs.mkdir(root, { recursive: true });
@@ -514,8 +514,8 @@ description: Skill loaded from a tilde-expanded custom directory.
 						["---", `name: ${name}`, `description: ${name} body`, "---", "", `# ${name}`].join("\n"),
 					);
 				};
-				await write(path.join(tempDir, ".gjc", "skills", "project-helper"), "project-helper");
-				await write(path.join(tempHome, ".gjc", "agent", "skills", "user-helper"), "user-helper");
+				await write(path.join(tempDir, ".vib", "skills", "project-helper"), "project-helper");
+				await write(path.join(tempHome, ".vib", "agent", "skills", "user-helper"), "user-helper");
 
 				const userOff = await loadSkills({ cwd: tempDir, home: tempHome, trustUserSkills: false });
 				expect(userOff.skills.map(s => s.name)).toEqual(["project-helper"]);
@@ -652,7 +652,7 @@ description: Skill loaded from a tilde-expanded custom directory.
 		it("preserves multi-line and long args in the actual prompt payload and details", async () => {
 			const args = [
 				"to re-architect our problem banks into source-based architecture, and",
-				"make sure gaebal-gajae skill-invocation modal does not truncate skill args,",
+				"make sure gaebal-vibrato skill-invocation modal does not truncate skill args,",
 				`${"even though we need few lines to use. ".repeat(20)}END`,
 			].join("\n");
 			const skill = {

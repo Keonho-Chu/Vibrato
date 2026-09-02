@@ -37,7 +37,7 @@ const directory = (convention: HookSourceConvention, phase: "pre" | "post", tool
 describe("cross-convention normalization", () => {
 	it("normalizes native, Claude, and Codex directory metadata to one tool event while retaining provenance", () => {
 		for (const convention of [
-			HookSourceConvention.NativeGjc,
+			HookSourceConvention.NativeVib,
 			HookSourceConvention.ClaudeCode,
 			HookSourceConvention.Codex,
 		] as const) {
@@ -55,7 +55,7 @@ describe("cross-convention normalization", () => {
 
 	it("does not mislabel imported directory modules as command hooks", () => {
 		for (const convention of [
-			HookSourceConvention.NativeGjc,
+			HookSourceConvention.NativeVib,
 			HookSourceConvention.ClaudeCode,
 			HookSourceConvention.Codex,
 		] as const) {
@@ -66,7 +66,7 @@ describe("cross-convention normalization", () => {
 	it("keeps Codex managed JSON command authority separate", () => {
 		const result = normalizeManagedJsonHook({
 			externalEvent: "UserPromptSubmit",
-			command: "gjc codex-native-hook",
+			command: "vib codex-native-hook",
 			source: "~/.codex/hooks.json:UserPromptSubmit",
 		});
 		expect(result.hook).toMatchObject({
@@ -89,7 +89,7 @@ describe("cross-convention normalization", () => {
 
 describe("execution contracts reflect runtime differences", () => {
 	it("records actual ExtensionRunner pre-tool fail-closed behavior", () => {
-		const contract = resolveExecutionContract(HookSourceConvention.NativeGjc, HookEventKind.PreToolUse);
+		const contract = resolveExecutionContract(HookSourceConvention.NativeVib, HookEventKind.PreToolUse);
 		expect(contract).toMatchObject({
 			runtimeEvent: "tool_call",
 			ordering: "sequential",
@@ -111,8 +111,8 @@ describe("execution contracts reflect runtime differences", () => {
 	});
 
 	it("records constrained pre/post timeout and error differences", () => {
-		const pre = resolveExecutionContract(HookSourceConvention.GjcPlugin, HookEventKind.PreToolUse);
-		const post = resolveExecutionContract(HookSourceConvention.GjcPlugin, HookEventKind.PostToolUse);
+		const pre = resolveExecutionContract(HookSourceConvention.VibPlugin, HookEventKind.PreToolUse);
+		const post = resolveExecutionContract(HookSourceConvention.VibPlugin, HookEventKind.PostToolUse);
 		expect(pre).toMatchObject({
 			authority: HookAuthority.Constrained,
 			timeoutMs: null,
@@ -126,7 +126,7 @@ describe("execution contracts reflect runtime differences", () => {
 		expect(post?.mutation).toEqual(["content", "details", "isError"]);
 	});
 
-	it("does not invent GJC scheduling semantics for Codex-owned commands", () => {
+	it("does not invent Vibrato scheduling semantics for Codex-owned commands", () => {
 		const contract = resolveExecutionContract(HookSourceConvention.CodexManagedJson, HookEventKind.UserPromptSubmit);
 		expect(contract).toMatchObject({
 			ordering: "external-runtime",
@@ -282,12 +282,12 @@ describe("constrained plugin authority cannot expand through normalization", () 
 	});
 
 	it("grants plugins only constrained authority", () => {
-		for (const contract of Object.values(CONVENTION_EVENT_CONTRACTS[HookSourceConvention.GjcPlugin])) {
+		for (const contract of Object.values(CONVENTION_EVENT_CONTRACTS[HookSourceConvention.VibPlugin])) {
 			expect(contract?.authority).toBe(HookAuthority.Constrained);
 			expect(contract?.processAuthority).toBe("ambient-host");
 		}
-		expect(resolveAuthority(HookSourceConvention.GjcPlugin, HookEventKind.UserPromptSubmit)).toBeNull();
-		expect(resolveAuthority(HookSourceConvention.GjcPlugin, HookEventKind.Stop)).toBeNull();
+		expect(resolveAuthority(HookSourceConvention.VibPlugin, HookEventKind.UserPromptSubmit)).toBeNull();
+		expect(resolveAuthority(HookSourceConvention.VibPlugin, HookEventKind.Stop)).toBeNull();
 	});
 });
 
@@ -329,13 +329,13 @@ describe("bounded diagnostics, matchers, provenance, duplicates, and ordering", 
 	});
 
 	it("batch normalization is stable first-wins and never drops rejection diagnostics", () => {
-		const first = directory(HookSourceConvention.NativeGjc, "pre", "bash");
+		const first = directory(HookSourceConvention.NativeVib, "pre", "bash");
 		const rejected = normalizeManagedJsonHook({ externalEvent: "Unknown", command: "x", source: "hooks.json" });
 		const batch = normalizeHookBatch([
 			first,
 			rejected,
 			first,
-			directory(HookSourceConvention.NativeGjc, "post", "bash"),
+			directory(HookSourceConvention.NativeVib, "post", "bash"),
 		]);
 		expect(batch.hooks.map(hook => hook.kind)).toEqual([HookEventKind.PreToolUse, HookEventKind.PostToolUse]);
 		expect(batch.diagnostics.map(diagnostic => diagnostic.code)).toEqual([
@@ -365,7 +365,7 @@ describe("production discovery integration", () => {
 		expect(getProviderInfo("claude")?.capabilities).toEqual(["hooks"]);
 		expect(getProviderInfo("codex")?.capabilities).toEqual(["hooks"]);
 
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-hook-provider-diagnostics-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-hook-provider-diagnostics-"));
 		await fs.mkdir(path.join(root, ".claude", "hooks", "pre"), { recursive: true });
 		await fs.mkdir(path.join(root, ".codex", "hooks"), { recursive: true });
 		await Bun.write(path.join(root, ".claude", "hooks", "pre", "read.ts"), "export default () => undefined;\n");
@@ -382,7 +382,7 @@ describe("production discovery integration", () => {
 	});
 
 	it("keeps foreign hook layouts import-only during runtime discovery", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-hook-normalization-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-hook-normalization-"));
 		const claudeHooksDir = path.join(root, ".claude", "hooks", "pre");
 		const codexHooksDir = path.join(root, ".codex", "hooks");
 		const claudeMarker = path.join(root, "claude-imported");
@@ -410,8 +410,8 @@ describe("production discovery integration", () => {
 	});
 
 	it("loads native directory hooks into session ExtensionRunner and ignores foreign duplicates", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-hook-session-"));
-		const hooksDir = path.join(root, ".gjc", "hooks", "pre");
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-hook-session-"));
+		const hooksDir = path.join(root, ".vib", "hooks", "pre");
 		const foreignHooksDir = path.join(root, ".codex", "hooks");
 		const executionMarker = path.join(root, "executed");
 		const foreignExecutionMarker = path.join(root, "foreign-executed");
@@ -491,7 +491,7 @@ describe("production discovery integration", () => {
 	});
 
 	it("loads explicit configured hook paths into session ExtensionRunner without foreign authority", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-hook-configured-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-hook-configured-"));
 		const configuredHook = path.join(root, "configured", "hook.ts");
 		const marker = path.join(root, "configured-executed");
 		const foreignMarker = path.join(root, "foreign-executed");

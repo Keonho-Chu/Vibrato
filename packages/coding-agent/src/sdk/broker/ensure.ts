@@ -234,7 +234,7 @@ function brokerSpawnEnvironment(command: SdkInternalSpawnCommand, override?: Nod
 	delete environment.BUN_OPTIONS;
 	if (command.kind === "bun-source") {
 		delete environment.PI_COMPILED;
-		delete environment.GJC_COMPILED;
+		delete environment.VIB_COMPILED;
 	}
 	return environment;
 }

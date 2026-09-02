@@ -31,18 +31,18 @@ const repoRoot = process.cwd();
 
 const expectedBundledWorkflowSkills = ["autoresearch", "deep-interview", "ralplan", "ultragoal"] as const;
 const expectedBundledRoleAgents = ["architect", "critic", "executor", "planner"] as const;
-const expectedPackageScope = "@gajae-code/";
-const expectedCliBins = ["gjc", "gjc-stats"] as const;
-const expectedRootPackageName = "gajae-code";
+const expectedPackageScope = "@vib-rato/";
+const expectedCliBins = ["vib", "vib-stats"] as const;
+const expectedRootPackageName = "vib-rato";
 const allowedUnscopedPackageNames = new Set([expectedRootPackageName]);
 const rootPublicMetadataFields = ["name", "description", "homepage", "repository", "bugs"] as const;
 const rootLegacyScriptKeys = new Set(["test:py"]);
 
-const ignoredDirs = new Set([".git", "node_modules", ".gjc", "dist", "build", "coverage", ".turbo"]);
+const ignoredDirs = new Set([".git", "node_modules", ".vib", "dist", "build", "coverage", ".turbo"]);
 const ignoredFiles = new Set(["bun.lock", "Cargo.lock"]);
 const ignoredExtensions = new Set([".png", ".jpg", ".jpeg", ".gif", ".webp", ".ico", ".node", ".wasm"]);
 
-const forbiddenLegacyTokens = ["@oh-my" + "-pi", "oh-my" + "-pi", "om" + "p"] as const;
+const forbiddenLegacyTokens = ["@oh-my" + "-pi", "oh-my" + "-pi", "om" + "p", "gaja" + "e", "gj" + "c"] as const;
 const legacyTokenPatterns = forbiddenLegacyTokens.map(token => ({
 	token,
 	pattern: new RegExp(token === "om" + "p" ? String.raw`\b${token}\b` : token.replaceAll("-", String.raw`\-`), "gi"),
@@ -55,8 +55,13 @@ const legacyAllowlist = [
 		rationale: "Historical attribution may mention upstream names.",
 	},
 	{
+		name: "historical-archives",
+		path: /^(issues\/|\.plans\/|docs\/prompt-architect-reports\/)/,
+		rationale: "Archived issues, plans, and recovered reports are immutable history and keep the names in use at the time.",
+	},
+	{
 		name: "compatibility-docs",
-		path: /^docs\/(environment-variables|python-repl|task-agent-discovery|REBRANDING_PLAN_260525)\.md$/,
+		path: /^docs\/(environment-variables|python-repl|task-agent-discovery|REBRANDING_PLAN_260525|REBRANDING_PLAN_260902)\.md$/,
 		rationale: "Compatibility docs and the approved rebranding plan may describe retained legacy env/protocol names and historical boundaries.",
 	},
 	{
@@ -68,7 +73,7 @@ const legacyAllowlist = [
 	{
 		name: "legacy-runtime-root-scripts",
 		path: /^package\.json$/,
-		rationale: "Specific root package scripts may reference retained legacy runtime roots while public metadata remains GJC-branded.",
+		rationale: "Specific root package scripts may reference retained legacy runtime roots while public metadata remains Vibrato-branded.",
 	},
 	{
 		name: "runtime-compatibility-internals",
@@ -151,15 +156,15 @@ function listSkillDirs(dir: string): VisibleDefinition[] {
 
 function listVisibleDefinitions(): VisibleDefinition[] {
 	return [
-		...listSkillDirs(".gjc/skills"),
-		...listDefinitionFiles(".gjc/agents", "agent", [".md", ".toml"]),
-		...listDefinitionFiles(".gjc/commands", "command", [".md"]),
-		...listDefinitionFiles(".gjc/rules", "rule", [".md"]),
+		...listSkillDirs(".vib/skills"),
+		...listDefinitionFiles(".vib/agents", "agent", [".md", ".toml"]),
+		...listDefinitionFiles(".vib/commands", "command", [".md"]),
+		...listDefinitionFiles(".vib/rules", "rule", [".md"]),
 	].sort((a, b) => a.name.localeCompare(b.name) || a.path.localeCompare(b.path));
 }
 
 function listBundledWorkflowSkills(): VisibleDefinition[] {
-	return listSkillDirs("packages/coding-agent/src/defaults/gjc/skills").sort((a, b) => a.name.localeCompare(b.name) || a.path.localeCompare(b.path));
+	return listSkillDirs("packages/coding-agent/src/defaults/vib/skills").sort((a, b) => a.name.localeCompare(b.name) || a.path.localeCompare(b.path));
 }
 
 function listBundledRoleAgents(): VisibleDefinition[] {
@@ -186,11 +191,11 @@ function scanLegacyHits(): LegacyHit[] {
 		"packages",
 		"python",
 		"scripts",
-		".gjc/skills",
-		".gjc/agents",
-		".gjc/commands",
-		".gjc/rules",
-		".gjc/settings.json",
+		".vib/skills",
+		".vib/agents",
+		".vib/commands",
+		".vib/rules",
+		".vib/settings.json",
 		"assets",
 		"package.json",
 		"Cargo.toml",
@@ -256,7 +261,7 @@ const unexpectedBundledWorkflowSkills = bundledWorkflowSkills.filter(def => !exp
 const unexpectedBundledRoleAgents = bundledRoleAgents.filter(def => !expectedBundledRoleAgents.includes(def.name as (typeof expectedBundledRoleAgents)[number]));
 const missingBundledWorkflowSkills = expectedBundledWorkflowSkills.filter(name => !bundledWorkflowSkills.some(def => def.name === name));
 const missingBundledRoleAgents = expectedBundledRoleAgents.filter(name => !bundledRoleAgents.some(def => def.name === name));
-const nonGajaePackages = packages.filter(pkg => pkg.name && !pkg.name.startsWith(expectedPackageScope) && !allowedUnscopedPackageNames.has(pkg.name));
+const nonVibratoPackages = packages.filter(pkg => pkg.name && !pkg.name.startsWith(expectedPackageScope) && !allowedUnscopedPackageNames.has(pkg.name));
 const observedBins = [...new Set(packages.flatMap(pkg => pkg.bins))].sort();
 const missingBins = expectedCliBins.filter(bin => !observedBins.includes(bin));
 const unexpectedLegacyHits = legacyHits.filter(hit => !hit.allowlist);
@@ -285,7 +290,7 @@ const report = {
 		missingBins,
 		missingBundledRoleAgents,
 		missingBundledWorkflowSkills,
-		nonGajaePackages,
+		nonVibratoPackages,
 		rootMetadataViolations,
 		unexpectedBundledRoleAgents,
 		unexpectedBundledWorkflowSkills,
@@ -321,7 +326,7 @@ if (process.argv.includes("--strict")) {
 		missingBins.length > 0 ||
 		missingBundledRoleAgents.length > 0 ||
 		missingBundledWorkflowSkills.length > 0 ||
-		nonGajaePackages.length > 0 ||
+		nonVibratoPackages.length > 0 ||
 		rootMetadataViolations.length > 0 ||
 		unexpectedBundledRoleAgents.length > 0 ||
 		unexpectedBundledWorkflowSkills.length > 0 ||

@@ -2,9 +2,9 @@ import { describe, expect, it, vi } from "bun:test";
 import * as fsSync from "node:fs";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import * as native from "@gajae-code/natives";
-import { TempDir } from "@gajae-code/utils";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import * as native from "@vib-rato/natives";
+import { TempDir } from "@vib-rato/utils";
 import {
 	injectManagedFileRename,
 	injectManagedTreeFsync,
@@ -70,7 +70,7 @@ describe("SessionManager session ids", () => {
 			expect(persisted).toContain("durable immediately");
 			const recoveryCopies = fsSync
 				.readdirSync(tempDir.path(), { recursive: true, encoding: "utf8" })
-				.filter(entry => path.basename(entry).startsWith(".gjc-managed-replace-"));
+				.filter(entry => path.basename(entry).startsWith(".vib-managed-replace-"));
 			expect(recoveryCopies).toEqual([]);
 		} finally {
 			await session.close();

@@ -8,13 +8,13 @@ import {
 	AuthStorage,
 	SqliteAuthCredentialStore,
 	startAuthBroker,
-} from "@gajae-code/ai";
-import { setAgentDir } from "@gajae-code/utils";
+} from "@vib-rato/ai";
+import { setAgentDir } from "@vib-rato/utils";
 import { runAuthBrokerCommand } from "../src/cli/auth-broker-cli";
 import { matchesProviderCredential, runAuthGatewayCommand } from "../src/cli/auth-gateway-cli";
 
 const SECRET = "auth-cli-provider-secret";
-const ENV_KEYS = ["GJC_AUTH_BROKER_URL", "GJC_AUTH_BROKER_TOKEN"] as const;
+const ENV_KEYS = ["VIB_AUTH_BROKER_URL", "VIB_AUTH_BROKER_TOKEN"] as const;
 
 describe("auth gateway credential matching", () => {
 	it("accepts the token from a structured OAuth API key", () => {
@@ -66,7 +66,7 @@ describe("auth CLI diagnostic redaction", () => {
 
 	beforeEach(async () => {
 		for (const key of ENV_KEYS) savedEnv.set(key, process.env[key]);
-		agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-auth-cli-redaction-"));
+		agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-auth-cli-redaction-"));
 		setAgentDir(agentDir);
 		process.exitCode = 0;
 	});
@@ -94,8 +94,8 @@ describe("auth CLI diagnostic redaction", () => {
 				email: "secret-free@example.com",
 			}),
 		);
-		process.env.GJC_AUTH_BROKER_URL = "https://broker.example";
-		process.env.GJC_AUTH_BROKER_TOKEN = "operator-token";
+		process.env.VIB_AUTH_BROKER_URL = "https://broker.example";
+		process.env.VIB_AUTH_BROKER_TOKEN = "operator-token";
 		vi.spyOn(AuthBrokerClient.prototype, "uploadCredential").mockRejectedValue(
 			new Error(`provider rejected request: Bearer ${SECRET}`),
 		);
@@ -119,8 +119,8 @@ describe("auth CLI diagnostic redaction", () => {
 	});
 
 	it("uses a stable broker status error in JSON while redacting text diagnostics", async () => {
-		process.env.GJC_AUTH_BROKER_URL = "https://broker.example";
-		process.env.GJC_AUTH_BROKER_TOKEN = "operator-token";
+		process.env.VIB_AUTH_BROKER_URL = "https://broker.example";
+		process.env.VIB_AUTH_BROKER_TOKEN = "operator-token";
 		vi.spyOn(AuthBrokerClient.prototype, "healthz").mockRejectedValue(
 			new Error(`provider status failed api_key=${SECRET}`),
 		);
@@ -140,7 +140,7 @@ describe("auth CLI diagnostic redaction", () => {
 	});
 
 	it("redacts provider check reasons in gateway text and JSON output", async () => {
-		const brokerDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-auth-cli-redaction-broker-"));
+		const brokerDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-auth-cli-redaction-broker-"));
 		let brokerStore: SqliteAuthCredentialStore | undefined;
 		let brokerStorage: AuthStorage | undefined;
 		let handle: AuthBrokerServerHandle | undefined;
@@ -154,8 +154,8 @@ describe("auth CLI diagnostic redaction", () => {
 				bearerTokens: ["operator-token"],
 				disableRefresher: true,
 			});
-			process.env.GJC_AUTH_BROKER_URL = handle.url;
-			process.env.GJC_AUTH_BROKER_TOKEN = "operator-token";
+			process.env.VIB_AUTH_BROKER_URL = handle.url;
+			process.env.VIB_AUTH_BROKER_TOKEN = "operator-token";
 			vi.spyOn(AuthStorage.prototype, "checkCredentials").mockResolvedValue([
 				{
 					id: 7,
@@ -187,8 +187,8 @@ describe("auth CLI diagnostic redaction", () => {
 	});
 
 	it("uses a stable generic message when credential checking fails at command level", async () => {
-		process.env.GJC_AUTH_BROKER_URL = "https://broker.example";
-		process.env.GJC_AUTH_BROKER_TOKEN = "operator-token";
+		process.env.VIB_AUTH_BROKER_URL = "https://broker.example";
+		process.env.VIB_AUTH_BROKER_TOKEN = "operator-token";
 		vi.spyOn(AuthBrokerClient.prototype, "fetchSnapshot").mockResolvedValue({
 			status: 200,
 			generation: 1,

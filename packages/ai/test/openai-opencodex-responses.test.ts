@@ -6,14 +6,14 @@ import {
 	checkOpenCodexStatus,
 	fetchOpenCodexModels,
 	resolveOpenCodexEndpoint,
-} from "@gajae-code/ai/providers/openai-opencodex-responses";
+} from "@vib-rato/ai/providers/openai-opencodex-responses";
 
 const originalFetch = globalThis.fetch;
 const originalHome = process.env.OPENCODEX_HOME;
 let tempHome: string;
 
 beforeEach(async () => {
-	tempHome = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-opencodex-"));
+	tempHome = await fs.mkdtemp(path.join(os.tmpdir(), "vib-opencodex-"));
 	process.env.OPENCODEX_HOME = tempHome;
 });
 

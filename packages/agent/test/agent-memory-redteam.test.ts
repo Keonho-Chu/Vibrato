@@ -1,9 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import {
-	emergencyCompactionReason,
-	DEFAULT_EMERGENCY_COMPACTION_LIMITS as LIM,
-} from "@gajae-code/agent-core/compaction";
-import type { Message } from "@gajae-code/ai";
+import { emergencyCompactionReason, DEFAULT_EMERGENCY_COMPACTION_LIMITS as LIM } from "@vib-rato/agent-core/compaction";
+import type { Message } from "@vib-rato/ai";
 import { AppendOnlyContextManager, type BuildOptions } from "../src/append-only-context";
 import type { AgentContext } from "../src/types";
 

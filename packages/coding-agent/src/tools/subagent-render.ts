@@ -7,8 +7,8 @@
  * exists but has not emitted yet, and to a static status line when no live
  * producer is available (resumed-from-disk or backward-compat records).
  */
-import type { Component } from "@gajae-code/tui";
-import { Text } from "@gajae-code/tui";
+import type { Component } from "@vib-rato/tui";
+import { Text } from "@vib-rato/tui";
 import type { RenderResultOptions } from "../extensibility/custom-tools/types";
 import type { Theme } from "../modes/theme/theme";
 import { providerRetryPhaseLabel } from "../task/provider-retry-status";
@@ -295,9 +295,9 @@ function renderSubagentSnapshotBody(
 		// defect. Rendering the wrong one mislabels the failure mode.
 		const guidance =
 			local.kind === "local_buffer_overflow"
-				? "Local gjc staging-buffer limit, not a provider or context-window failure; re-issuing reproduces it."
+				? "Local vib staging-buffer limit, not a provider or context-window failure; re-issuing reproduces it."
 				: local.kind === "local_snapshot_failure"
-					? "Local gjc event-serialization defect, not a provider failure; safe to retry."
+					? "Local vib event-serialization defect, not a provider failure; safe to retry."
 					: undefined;
 		if (guidance) lines.push(`  ${theme.fg("dim", guidance)}`);
 	}

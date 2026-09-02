@@ -10,7 +10,7 @@ The theme system drives:
 - markdown styling adapters (`getMarkdownTheme()`)
 - selector/editor/settings list adapters (`getSelectListTheme()`, `getEditorTheme()`, `getSettingsListTheme()`)
 - symbol preset + symbol overrides (`unicode`, `nerd`, `ascii`)
-- syntax highlighting colors used by native highlighter (`@gajae-code/natives`)
+- syntax highlighting colors used by native highlighter (`@vib-rato/natives`)
 - status line segment colors
 
 Primary implementation: `src/modes/theme/theme.ts`.
@@ -98,13 +98,13 @@ Invalid override keys are ignored and logged (`logger.debug`).
 
 Theme lookup order (`loadThemeJson`):
 
-1. built-in embedded themes (`red-claw.json`, `blue-crab.json`, `claude-code.json`, `codex.json`, and `opencode.json` compiled into `defaultThemes`)
+1. built-in embedded themes (`lig-blue.json`, `lig-white.json`, `red-claw.json`, `blue-crab.json`, `claude-code.json`, `codex.json`, `opencode.json`, `gruvbox-dark.json`, and `ouroboros.json` compiled into `defaultThemes`)
 2. custom theme file: `<customThemesDir>/<name>.json`
 
 Custom themes directory comes from `getCustomThemesDir()`:
 
-- default: `~/.gjc/agent/themes`
-- overridden by `GJC_CODING_AGENT_DIR` (`$GJC_CODING_AGENT_DIR/themes`)
+- default: `~/.vib/agent/themes`
+- overridden by `VIB_CODING_AGENT_DIR` (`$VIB_CODING_AGENT_DIR/themes`)
 
 `getAvailableThemes()` returns merged built-in + custom names, sorted, with built-ins taking precedence on name collision.
 
@@ -163,12 +163,12 @@ Auto theme slot selection uses terminal appearance in this order:
 3. macOS appearance fallback only for the known-broken macOS/Zellij OSC 11 path
 4. dark slot fallback
 
-Built-in theme note: `red-claw` is the default dark GJC theme, and `blue-crab` is the default light-slot theme. Both are crustacean brand themes with separate semantic error/warning/diff-removal tokens and crab-oriented symbol overrides. Three additional bundled migration themes — `claude-code`, `codex`, and `opencode` — mirror the look of those tools for easy eye-migration. All three are dark-classified and recommended for `theme.dark`, but are selectable in either slot; they keep GJC's default symbol identity (no crab-symbol overrides).
+Built-in theme note: `lig-blue` is the default dark theme and `lig-white` is the default light-slot theme. Both apply the LIG System corporate identity — LIG Innovative Blue `#002F6D` for status chrome and (on white) accents, LIG Futuristic Gray `#BCBEC0` for secondary type, white type on blue — with separate semantic error/warning/diff-removal tokens and a neutral `◆` mark; the token contract is documented in [design-system.md](design-system.md). The legacy `red-claw` and `blue-crab` crustacean themes stay bundled and selectable. Three additional bundled migration themes — `claude-code`, `codex`, and `opencode` — mirror the look of those tools for easy eye-migration. All three are dark-classified and recommended for `theme.dark`, but are selectable in either slot; they keep Vibrato's default symbol identity (no crab-symbol overrides).
 
 Current defaults from settings schema:
 
-- `theme.dark = "red-claw"`
-- `theme.light = "blue-crab"`
+- `theme.dark = "lig-blue"`
+- `theme.light = "lig-white"`
 - `symbolPreset = "unicode"`
 - `colorBlindMode = false`
 
@@ -222,8 +222,8 @@ Other tokens are unchanged.
 Theme-related settings are persisted by `Settings` to global config YAML:
 
 - path: `<agentDir>/config.yml`
-- default agent dir: `~/.gjc/agent`
-- effective default file: `~/.gjc/agent/config.yml`
+- default agent dir: `~/.vib/agent`
+- effective default file: `~/.vib/agent/config.yml`
 
 Persisted keys:
 
@@ -236,7 +236,7 @@ Legacy migration exists: old flat `theme: "name"` is migrated to nested `theme.d
 
 ## Creating a custom theme (practical)
 
-1. Create file in custom themes dir, e.g. `~/.gjc/agent/themes/my-theme.json`.
+1. Create file in custom themes dir, e.g. `~/.vib/agent/themes/my-theme.json`.
 2. Include `name`, optional `vars`, and **all required** `colors` tokens.
 3. Optionally include `symbols` and `export`.
 4. Select the theme in Settings (`Display -> Dark theme` or `Display -> Light theme`) depending on which auto slot you want. All bundled themes are selectable: the crustacean defaults `red-claw` and `blue-crab`, plus the migration themes `claude-code`, `codex`, and `opencode` (dark-classified, recommended for the dark slot but selectable in either).

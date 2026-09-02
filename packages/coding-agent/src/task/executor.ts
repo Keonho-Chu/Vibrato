@@ -12,9 +12,9 @@ import type {
 	AgentMessage,
 	AgentTelemetryConfig,
 	ThinkingLevel,
-} from "@gajae-code/agent-core";
-import { recordHandoff, resolveTelemetry } from "@gajae-code/agent-core";
-import { estimateMessageTokensHeuristic } from "@gajae-code/agent-core/compaction";
+} from "@vib-rato/agent-core";
+import { recordHandoff, resolveTelemetry } from "@vib-rato/agent-core";
+import { estimateMessageTokensHeuristic } from "@vib-rato/agent-core/compaction";
 import {
 	type AssistantMessage,
 	isFastModeEffectiveForProvider,
@@ -22,15 +22,15 @@ import {
 	type Model,
 	modelSupportsServiceTier,
 	type ServiceTier,
-} from "@gajae-code/ai/core";
+} from "@vib-rato/ai/core";
 import {
 	classifyFallbackTrigger,
 	type TransportFailureFacts,
 	transportFailureFacts,
-} from "@gajae-code/ai/utils/fallback-transport";
-import { type JsonSchemaValidationIssue, validateJsonSchemaValue } from "@gajae-code/ai/utils/schema";
-import * as canonicalSdk from "@gajae-code/coding-agent/sdk";
-import { logger, prompt, untilAborted } from "@gajae-code/utils";
+} from "@vib-rato/ai/utils/fallback-transport";
+import { type JsonSchemaValidationIssue, validateJsonSchemaValue } from "@vib-rato/ai/utils/schema";
+import * as canonicalSdk from "@vib-rato/coding-agent/sdk";
+import { logger, prompt, untilAborted } from "@vib-rato/utils";
 import { AsyncJobManager } from "../async";
 import { AUTOROUTING_SELECTOR_MAX_LENGTH, type AutoroutingReasonCode } from "../config/autorouting-contract";
 import { ModelRegistry } from "../config/model-registry";
@@ -40,9 +40,8 @@ import { Settings } from "../config/settings";
 import { SETTINGS_SCHEMA, type SettingPath } from "../config/settings-schema";
 import { runExtensionCompact, runExtensionSetModel } from "../extensibility/extensions/compact-handler";
 import { getSessionSlashCommands } from "../extensibility/extensions/get-commands-handler";
-import { buildAgentSubskillInjection, renderAgentPromptAdditions } from "../extensibility/gjc-plugins";
 import { buildSkillPromptMessage, type Skill } from "../extensibility/skills";
-import { sessionRoot } from "../gjc-runtime/session-layout";
+import { buildAgentSubskillInjection, renderAgentPromptAdditions } from "../extensibility/vib-plugins";
 import type { HindsightSessionState } from "../hindsight/state";
 import type { LocalProtocolOptions } from "../internal-urls";
 import subagentSystemPromptTemplate from "../prompts/system/subagent-system-prompt.md" with { type: "text" };
@@ -57,6 +56,7 @@ import { SKILL_PROMPT_MESSAGE_TYPE } from "../session/messages";
 import { SessionManager, type SessionMemoryMode } from "../session/session-manager";
 import { FileSessionStorage } from "../session/session-storage";
 import { truncateTail } from "../session/streaming-output";
+import { sessionRoot } from "../vib-runtime/session-layout";
 // Ensure mandatory subagent result extraction is available even when a session is mocked.
 import "../tools/yield";
 import type { ContextFileEntry } from "../tools";
@@ -1869,7 +1869,7 @@ export async function runSubprocessOnce(options: ExecutorOptions): Promise<Singl
 					sessionManager.adoptArtifactManager(parentArtifacts.createAttemptStaging(attemptId), parentArtifacts);
 			}
 
-			// Subagents do not inherit or discover MCP runtime tools in the GJC surface.
+			// Subagents do not inherit or discover MCP runtime tools in the Vibrato surface.
 			const enableMCP = false;
 
 			// Derive subagent-scoped telemetry from the parent's config so the
@@ -1944,7 +1944,7 @@ export async function runSubprocessOnce(options: ExecutorOptions): Promise<Singl
 			try {
 				agentPromptAdditions = await renderAgentPromptAdditions({ cwd, agentName: agent.name });
 			} catch (error) {
-				logger.warn("Failed to render GJC plugin agent prompt additions", { error });
+				logger.warn("Failed to render Vibrato plugin agent prompt additions", { error });
 			}
 
 			if (options.preflightProbe || options.preflightDurable) preflightOperation = "tool_bootstrap";
@@ -2003,7 +2003,7 @@ export async function runSubprocessOnce(options: ExecutorOptions): Promise<Singl
 					spawns: spawnsEnv,
 					taskDepth: childDepth,
 					currentAgentType: agent.name,
-					gjcSubskillToolContext: {
+					vibSubskillToolContext: {
 						cwd,
 						sessionId: options.parentSessionId,
 						parent: agent.name,

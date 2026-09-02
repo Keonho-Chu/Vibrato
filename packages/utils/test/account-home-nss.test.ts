@@ -27,7 +27,7 @@ const scratch: string[] = [];
 
 /** A temporary directory, created portably and removed after the test. */
 async function tempDir(): Promise<string> {
-	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-account-home-"));
+	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-account-home-"));
 	scratch.push(dir);
 	return dir;
 }
@@ -95,16 +95,16 @@ async function runUidCacheProbe(homeA: string, homeAAfterMappingChange: string):
 	expect(accountStart).toBeGreaterThan(nssStart);
 
 	const identityReplacement = `function accountIdentity(info: os.UserInfo): AccountIdentity {
-	const uid = Number(process.env.GJC_TEST_EFFECTIVE_UID ?? info.uid);
+	const uid = Number(process.env.VIB_TEST_EFFECTIVE_UID ?? info.uid);
 	return { key: \`${process.platform}:uid=\${uid}:user=\${info.username}\`, uid };
 	}
 
 	`;
 	const withIdentitySeam = source.slice(0, identityStart) + identityReplacement + source.slice(nssCommentStart);
 	const nssReplacement = `function nssAccountHome(uid: number): string | undefined {
-	const state = globalThis as typeof globalThis & { GJC_TEST_NSS_CALLS?: number };
-	state.GJC_TEST_NSS_CALLS = (state.GJC_TEST_NSS_CALLS ?? 0) + 1;
-	return usableHome(process.env[\`GJC_TEST_NSS_HOME_\${uid}\`]);
+	const state = globalThis as typeof globalThis & { VIB_TEST_NSS_CALLS?: number };
+	state.VIB_TEST_NSS_CALLS = (state.VIB_TEST_NSS_CALLS ?? 0) + 1;
+	return usableHome(process.env[\`VIB_TEST_NSS_HOME_\${uid}\`]);
 	}
 
 	`;
@@ -117,22 +117,22 @@ async function runUidCacheProbe(homeA: string, homeAAfterMappingChange: string):
 	await Bun.write(patchedPath, patched);
 
 	const project = await tempDir();
-	await Bun.write(path.join(project, ".env"), "HOME=$GJC_TEST_RUNTIME_HOME\n");
+	await Bun.write(path.join(project, ".env"), "HOME=$VIB_TEST_RUNTIME_HOME\n");
 	const probePath = path.join(project, "uid-cache-probe.ts");
 	await Bun.write(
 		probePath,
 		[
 			`import { getTrustedHomeDir } from ${JSON.stringify(patchedPath)};`,
-			"const state = globalThis as typeof globalThis & { GJC_TEST_NSS_CALLS?: number };",
+			"const state = globalThis as typeof globalThis & { VIB_TEST_NSS_CALLS?: number };",
 			'const read = () => { try { return getTrustedHomeDir(); } catch (error) { if (String(error).includes("no trustworthy home directory")) return "REFUSED"; throw error; } };',
 			"const first = read();",
-			'process.env.GJC_TEST_EFFECTIVE_UID = "2001";',
+			'process.env.VIB_TEST_EFFECTIVE_UID = "2001";',
 			"const uidB = await Promise.all([Promise.resolve().then(read), Promise.resolve().then(read)]);",
-			'process.env.GJC_TEST_EFFECTIVE_UID = "1000";',
+			'process.env.VIB_TEST_EFFECTIVE_UID = "1000";',
 			"const uidAAgain = read();",
-			`process.env.GJC_TEST_NSS_HOME_1000 = ${JSON.stringify(homeAAfterMappingChange)};`,
+			`process.env.VIB_TEST_NSS_HOME_1000 = ${JSON.stringify(homeAAfterMappingChange)};`,
 			"const uidAAfterMappingChange = read();",
-			"console.log(JSON.stringify({ first, uidB, uidAAgain, uidAAfterMappingChange, nssCalls: state.GJC_TEST_NSS_CALLS ?? 0 }));",
+			"console.log(JSON.stringify({ first, uidB, uidAAgain, uidAAfterMappingChange, nssCalls: state.VIB_TEST_NSS_CALLS ?? 0 }));",
 		].join("\n"),
 	);
 
@@ -141,10 +141,10 @@ async function runUidCacheProbe(homeA: string, homeAAfterMappingChange: string):
 		if (value !== undefined) env[key] = value;
 	}
 	env.HOME = await tempDir();
-	env.GJC_TEST_RUNTIME_HOME = env.HOME;
-	env.GJC_TEST_EFFECTIVE_UID = "1000";
-	env.GJC_TEST_NSS_HOME_1000 = homeA;
-	delete env.GJC_TEST_NSS_HOME_2001;
+	env.VIB_TEST_RUNTIME_HOME = env.HOME;
+	env.VIB_TEST_EFFECTIVE_UID = "1000";
+	env.VIB_TEST_NSS_HOME_1000 = homeA;
+	delete env.VIB_TEST_NSS_HOME_2001;
 	const proc = Bun.spawn([process.execPath, probePath], { cwd: project, env, stdout: "pipe", stderr: "pipe" });
 	const [stdout, stderr] = await Promise.all([new Response(proc.stdout).text(), new Response(proc.stderr).text()]);
 	const exitCode = await proc.exited;
@@ -216,11 +216,11 @@ describe("account home is resolved through the OS account database", () => {
 		const attacker = await tempDir();
 		const project = await tempDir();
 		try {
-			await Bun.write(path.join(project, ".env"), "HOME=$GJC_TEST_EVIL\n");
+			await Bun.write(path.join(project, ".env"), "HOME=$VIB_TEST_EVIL\n");
 			// Point the resolver's own NSS lookup at a command that cannot exist, so
 			// the failure is injected through the resolver rather than beside it.
 			const source = await Bun.file(DIRS).text();
-			const broken = source.replace('cmd: ["getent", "passwd", String(uid)],', 'cmd: ["gjc-no-such-nss-binary"],');
+			const broken = source.replace('cmd: ["getent", "passwd", String(uid)],', 'cmd: ["vib-no-such-nss-binary"],');
 			expect(broken).not.toBe(source);
 			const brokenPath = path.join(path.dirname(DIRS), `dirs-no-nss-${Bun.randomUUIDv7()}.ts`);
 			scratch.push(brokenPath);
@@ -243,7 +243,7 @@ describe("account home is resolved through the OS account database", () => {
 				if (value !== undefined) env[key] = value;
 			}
 			env.HOME = attacker;
-			env.GJC_TEST_EVIL = attacker;
+			env.VIB_TEST_EVIL = attacker;
 			const proc = Bun.spawn([process.execPath, probePath], {
 				cwd: project,
 				env,
@@ -275,7 +275,7 @@ describe("account home is resolved through the OS account database", () => {
 		const work = await tempDir();
 		try {
 			const source = await Bun.file(DIRS).text();
-			const broken = source.replace('cmd: ["getent", "passwd", String(uid)],', 'cmd: ["gjc-no-such-nss-binary"],');
+			const broken = source.replace('cmd: ["getent", "passwd", String(uid)],', 'cmd: ["vib-no-such-nss-binary"],');
 			expect(broken).not.toBe(source);
 			const brokenPath = path.join(path.dirname(DIRS), `dirs-no-nss-${Bun.randomUUIDv7()}.ts`);
 			scratch.push(brokenPath);
@@ -322,8 +322,8 @@ describe("account home is resolved through the OS account database", () => {
 		// user state whenever their HOME agrees with their account entry.
 		const project = await tempDir();
 		try {
-			await Bun.write(path.join(project, ".env"), "HOME=$GJC_TEST_DYNAMIC\n");
-			const resolved = await resolveWith({ HOME: account, GJC_TEST_DYNAMIC: account }, project);
+			await Bun.write(path.join(project, ".env"), "HOME=$VIB_TEST_DYNAMIC\n");
+			const resolved = await resolveWith({ HOME: account, VIB_TEST_DYNAMIC: account }, project);
 			expect(resolved).toBe(account);
 		} finally {
 			await safeRm(project, { recursive: true, force: true });

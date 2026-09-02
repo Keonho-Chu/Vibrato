@@ -1,7 +1,7 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"title": "GJC Coding Agent Theme",
-	"description": "Theme schema for the GJC coding agent",
+	"title": "Vibrato Coding Agent Theme",
+	"description": "Theme schema for the Vibrato coding agent",
 	"type": "object",
 	"required": ["name", "colors"],
 	"properties": {

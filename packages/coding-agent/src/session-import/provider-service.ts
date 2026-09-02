@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import * as nodeFs from "node:fs";
 import * as fsp from "node:fs/promises";
 import * as path from "node:path";
-import { canContinuePersistedHistory } from "@gajae-code/agent-core";
+import { canContinuePersistedHistory } from "@vib-rato/agent-core";
 import { type SessionDestinationInput, SessionManager } from "../session/session-manager";
 import { parseClaudeCodeTranscript, parseClaudeExport } from "./claude";
 import { detectSessionImportFormat } from "./detect";
@@ -362,7 +362,7 @@ export async function prepareExternalSessionImport(
 }
 
 /**
- * Phase 2: materialize a prepared import as a NEW GJC session file and verify
+ * Phase 2: materialize a prepared import as a NEW Vibrato session file and verify
  * it reopens as a resumable session. The caller's live session is untouched.
  */
 export async function materializeExternalSessionImport(
@@ -457,7 +457,7 @@ export function formatProviderSessionImportSummary(result: SessionImportComplete
 	const { prepared } = result;
 	const providerLabel = prepared.conversation.provider === "codex" ? "Codex" : "Claude";
 	const lines = [
-		`Imported ${providerLabel} session (${prepared.conversation.format}) into a new GJC session.`,
+		`Imported ${providerLabel} session (${prepared.conversation.format}) into a new Vibrato session.`,
 		`Session: ${result.targetSessionId}`,
 		`Title: ${result.title}`,
 		`Messages: ${prepared.conversation.messages.length} reconstructed (${prepared.counts.mapped} records mapped, ${prepared.counts.quarantined} quarantined)`,

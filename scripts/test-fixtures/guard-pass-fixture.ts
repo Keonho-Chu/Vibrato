@@ -4,9 +4,9 @@
 import { expect, test } from "bun:test";
 import * as fs from "node:fs";
 
-const probe = process.env.GJC_GUARD_PROBE_DIR;
+const probe = process.env.VIB_GUARD_PROBE_DIR;
 test("guard allows owned in-root recursive removal", async () => {
-	if (!probe) throw new Error("GJC_GUARD_PROBE_DIR is required");
+	if (!probe) throw new Error("VIB_GUARD_PROBE_DIR is required");
 	await fs.promises.rm(probe, { recursive: true, force: true });
 	expect(fs.existsSync(probe)).toBe(false);
 });

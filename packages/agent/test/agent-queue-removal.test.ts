@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { Agent } from "@gajae-code/agent-core";
+import { Agent } from "@vib-rato/agent-core";
 
 function custom(content: string, taskId: string) {
 	return {

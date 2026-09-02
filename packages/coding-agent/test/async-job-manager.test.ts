@@ -1,5 +1,5 @@
 import { describe, expect, spyOn, test } from "bun:test";
-import { AsyncJobManager } from "@gajae-code/coding-agent/async/job-manager";
+import { AsyncJobManager } from "@vib-rato/coding-agent/async/job-manager";
 import { lookupOwnedRegistration, registerOwnedRegistration } from "../src/session/terminal-abort";
 
 describe("AsyncJobManager", () => {

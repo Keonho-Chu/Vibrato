@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { parseKeyId } from "@gajae-code/tui";
+import { parseKeyId } from "@vib-rato/tui";
 import {
 	defaultClipboardPasteImageKeysForPlatform,
 	defaultForegroundFoldKeysForPlatform,

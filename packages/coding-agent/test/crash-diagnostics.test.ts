@@ -6,13 +6,13 @@ import {
 	classifyProcessCrash,
 	formatCrashDiagnosticNotice,
 	writeCrashReport,
-} from "@gajae-code/coding-agent/debug/crash-diagnostics";
-import { executeBash } from "@gajae-code/coding-agent/exec/bash-executor";
+} from "@vib-rato/coding-agent/debug/crash-diagnostics";
+import { executeBash } from "@vib-rato/coding-agent/exec/bash-executor";
 
 const tempDirs: string[] = [];
 
 async function makeTempDir(): Promise<string> {
-	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-crash-diagnostics-test-"));
+	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-crash-diagnostics-test-"));
 	tempDirs.push(dir);
 	return dir;
 }
@@ -25,8 +25,8 @@ afterEach(async () => {
 	for (const dir of tempDirs.splice(0)) {
 		await fs.rm(dir, { recursive: true, force: true });
 	}
-	delete process.env.GJC_CRASH_DIAGNOSTICS;
-	delete process.env.GJC_CRASH_DIAGNOSTICS_DIR;
+	delete process.env.VIB_CRASH_DIAGNOSTICS;
+	delete process.env.VIB_CRASH_DIAGNOSTICS_DIR;
 });
 
 describe("crash diagnostics", () => {
@@ -42,7 +42,7 @@ describe("crash diagnostics", () => {
 
 	it("writes opt-in structured reports only for crashed classes", async () => {
 		const dir = await makeTempDir();
-		const env = { GJC_CRASH_DIAGNOSTICS: "1", GJC_CRASH_DIAGNOSTICS_DIR: dir } as NodeJS.ProcessEnv;
+		const env = { VIB_CRASH_DIAGNOSTICS: "1", VIB_CRASH_DIAGNOSTICS_DIR: dir } as NodeJS.ProcessEnv;
 		const clean = await writeCrashReport({ kind: "bash", exitCode: 0 }, { env, cwd: dir });
 		expect(clean.path).toBeNull();
 
@@ -62,7 +62,7 @@ describe("crash diagnostics", () => {
 	it("creates private diagnostics directories and reports under umask 022", async () => {
 		const dir = await makeTempDir();
 		await fs.chmod(dir, 0o755);
-		const env = { GJC_CRASH_DIAGNOSTICS: "1", GJC_CRASH_DIAGNOSTICS_DIR: dir } as NodeJS.ProcessEnv;
+		const env = { VIB_CRASH_DIAGNOSTICS: "1", VIB_CRASH_DIAGNOSTICS_DIR: dir } as NodeJS.ProcessEnv;
 		const previousUmask = process.umask(0o022);
 		try {
 			const crashed = await writeCrashReport(
@@ -84,14 +84,14 @@ describe("crash diagnostics", () => {
 		const previousUmask = process.umask(0o022);
 		process.env.TMPDIR = tempRoot;
 		try {
-			const env = { GJC_CRASH_DIAGNOSTICS: "1" } as NodeJS.ProcessEnv;
+			const env = { VIB_CRASH_DIAGNOSTICS: "1" } as NodeJS.ProcessEnv;
 			const crashed = await writeCrashReport(
 				{ kind: "worker", exitCode: 1, stderr: "secret-token" },
 				{ env, cwd: tempRoot, now: new Date("2026-06-04T00:00:02.000Z") },
 			);
 
 			expect(crashed.path).not.toBeNull();
-			const defaultDir = path.join(tempRoot, "gjc-crash-diagnostics");
+			const defaultDir = path.join(tempRoot, "vib-crash-diagnostics");
 			expect(crashed.path?.startsWith(`${defaultDir}${path.sep}`)).toBe(true);
 			expect(await modeOf(defaultDir)).toBe(0o700);
 			expect(await modeOf(crashed.path as string)).toBe(0o600);
@@ -107,8 +107,8 @@ describe("crash diagnostics", () => {
 
 	it("appends a bash crash notice and artifact when diagnostics are enabled", async () => {
 		const dir = await makeTempDir();
-		process.env.GJC_CRASH_DIAGNOSTICS = "1";
-		process.env.GJC_CRASH_DIAGNOSTICS_DIR = dir;
+		process.env.VIB_CRASH_DIAGNOSTICS = "1";
+		process.env.VIB_CRASH_DIAGNOSTICS_DIR = dir;
 
 		const result = await executeBash("echo boom >&2; exit 7", { cwd: dir, timeout: 5000 });
 		expect(result.exitCode).toBe(7);

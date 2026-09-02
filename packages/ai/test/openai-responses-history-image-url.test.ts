@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
-import { getBundledModel } from "@gajae-code/ai/models";
-import { streamOpenAICodexResponses } from "@gajae-code/ai/providers/openai-codex-responses";
-import type { AssistantMessage, Context, Model } from "@gajae-code/ai/types";
+import { getBundledModel } from "@vib-rato/ai/models";
+import { streamOpenAICodexResponses } from "@vib-rato/ai/providers/openai-codex-responses";
+import type { AssistantMessage, Context, Model } from "@vib-rato/ai/types";
 import { createOpenAIResponsesHistoryPayload } from "../src/utils";
 
 interface CapturedCodexPayload {

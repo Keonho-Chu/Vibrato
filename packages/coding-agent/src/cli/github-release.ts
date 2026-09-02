@@ -8,11 +8,11 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import type { UpdateChannel } from "../config/update-channel";
 
-export const RELEASE_REPO = "Yeachan-Heo/gajae-code";
+export const RELEASE_REPO = "Keonho-Chu/Vibrato";
 export const GITHUB_API_ORIGIN = "https://api.github.com";
 export const GITHUB_RELEASE_DOWNLOAD_ORIGIN = `https://github.com/${RELEASE_REPO}/releases/download`;
-export const BINARY_SHA256_ASSET = "gajae-release-binaries.sha256";
-export const BINARY_MANIFEST_ASSET = "gajae-release-binaries-v1.json";
+export const BINARY_SHA256_ASSET = "vibrato-release-binaries.sha256";
+export const BINARY_MANIFEST_ASSET = "vibrato-release-binaries-v1.json";
 
 const STABLE_VERSION_RE = /^\d+\.\d+\.\d+$/;
 const NIGHTLY_VERSION_RE = /^\d+\.\d+\.\d+-nightly\.[0-9]+\.[0-9]+\.g[0-9a-f]+$/;
@@ -56,7 +56,7 @@ export function versionFromTag(tag: string): string {
 export function githubReleaseHeaders(token: string | undefined): Record<string, string> {
 	const headers: Record<string, string> = {
 		Accept: "application/vnd.github+json",
-		"User-Agent": "gjc-update",
+		"User-Agent": "vib-update",
 		"X-GitHub-Api-Version": "2022-11-28",
 	};
 	if (token) headers.Authorization = `Bearer ${token}`;

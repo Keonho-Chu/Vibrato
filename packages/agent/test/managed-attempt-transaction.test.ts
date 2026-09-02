@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
-import type { ManagedAttemptOutcome } from "@gajae-code/agent-core";
-import { Agent } from "@gajae-code/agent-core";
+import type { ManagedAttemptOutcome } from "@vib-rato/agent-core";
+import { Agent } from "@vib-rato/agent-core";
 import {
 	agentLoopContinue,
 	MANAGED_ATTEMPT_MAX_STAGED_BYTES,
@@ -9,13 +9,13 @@ import {
 	managedAttemptMaxStagedBytes,
 	managedAttemptMaxStagedEvents,
 	sanitizedDetachedClone,
-} from "@gajae-code/agent-core/agent-loop";
-import type { AgentContext, AgentEvent, AgentLoopConfig } from "@gajae-code/agent-core/types";
-import type { AssistantMessage, AssistantMessageEvent, Message } from "@gajae-code/ai";
-import { createMockModel } from "@gajae-code/ai/providers/mock";
-import { AssistantMessageEventStream } from "@gajae-code/ai/utils/event-stream";
-import { attachUnicodeEscapeEvidence, collectUnicodeEscapeEvidence } from "@gajae-code/ai/utils/json-parse";
-import { logger } from "@gajae-code/utils";
+} from "@vib-rato/agent-core/agent-loop";
+import type { AgentContext, AgentEvent, AgentLoopConfig } from "@vib-rato/agent-core/types";
+import type { AssistantMessage, AssistantMessageEvent, Message } from "@vib-rato/ai";
+import { createMockModel } from "@vib-rato/ai/providers/mock";
+import { AssistantMessageEventStream } from "@vib-rato/ai/utils/event-stream";
+import { attachUnicodeEscapeEvidence, collectUnicodeEscapeEvidence } from "@vib-rato/ai/utils/json-parse";
+import { logger } from "@vib-rato/utils";
 import {
 	mintProviderSafetyStop,
 	PROVIDER_SAFETY_STOP_ADAPTER_CAPABILITY,
@@ -46,7 +46,7 @@ function captureSnapshotDiagnostics(): Record<string, unknown>[] {
 function captureStagedCapClampWarnings(): Record<string, unknown>[] {
 	const captured: Record<string, unknown>[] = [];
 	vi.spyOn(logger, "warn").mockImplementation((message: string, payload?: unknown) => {
-		if (message.startsWith("GJC_FALLBACK_MAX_STAGED_") && message.includes("clamped to")) {
+		if (message.startsWith("VIB_FALLBACK_MAX_STAGED_") && message.includes("clamped to")) {
 			captured.push((payload ?? {}) as Record<string, unknown>);
 		}
 	});
@@ -103,15 +103,15 @@ describe("managed attempt transaction", () => {
 	// transaction's provisional limits, so a host/CI export must be restored
 	// (not merely deleted) after each test; tests that need defaults clear the
 	// variables themselves inside the test.
-	const inheritedKnobEvents = process.env.GJC_FALLBACK_MAX_STAGED_EVENTS;
-	const inheritedKnobBytes = process.env.GJC_FALLBACK_MAX_STAGED_BYTES;
+	const inheritedKnobEvents = process.env.VIB_FALLBACK_MAX_STAGED_EVENTS;
+	const inheritedKnobBytes = process.env.VIB_FALLBACK_MAX_STAGED_BYTES;
 
 	afterEach(() => {
 		vi.restoreAllMocks();
-		if (inheritedKnobEvents === undefined) delete process.env.GJC_FALLBACK_MAX_STAGED_EVENTS;
-		else process.env.GJC_FALLBACK_MAX_STAGED_EVENTS = inheritedKnobEvents;
-		if (inheritedKnobBytes === undefined) delete process.env.GJC_FALLBACK_MAX_STAGED_BYTES;
-		else process.env.GJC_FALLBACK_MAX_STAGED_BYTES = inheritedKnobBytes;
+		if (inheritedKnobEvents === undefined) delete process.env.VIB_FALLBACK_MAX_STAGED_EVENTS;
+		else process.env.VIB_FALLBACK_MAX_STAGED_EVENTS = inheritedKnobEvents;
+		if (inheritedKnobBytes === undefined) delete process.env.VIB_FALLBACK_MAX_STAGED_BYTES;
+		else process.env.VIB_FALLBACK_MAX_STAGED_BYTES = inheritedKnobBytes;
 	});
 
 	it("flushes a successful assistant lifecycle once and in provider order", async () => {
@@ -828,14 +828,14 @@ describe("managed attempt transaction", () => {
 		expect(thinking.thinking).toHaveLength(MANAGED_ATTEMPT_MAX_STAGED_BYTES + 1);
 		expect(lifecycle.slice(-5)).toEqual(["message_start", "message_update", "message_end", "turn_end", "agent_end"]);
 	});
-	it("honors a low GJC_FALLBACK_MAX_STAGED_EVENTS in ordinary lossless sessions by flushing through", async () => {
+	it("honors a low VIB_FALLBACK_MAX_STAGED_EVENTS in ordinary lossless sessions by flushing through", async () => {
 		// Ordinary (non-managed) runs stage lossless snapshots behind the same
 		// limiter. With a 2-event cap the third staged frame must degrade to
 		// pass-through publication — callbacks preserved, lifecycle intact, no
 		// typed failure — instead of either failing locally or retaining
 		// unbounded state.
-		const previous = process.env.GJC_FALLBACK_MAX_STAGED_EVENTS;
-		process.env.GJC_FALLBACK_MAX_STAGED_EVENTS = "2";
+		const previous = process.env.VIB_FALLBACK_MAX_STAGED_EVENTS;
+		process.env.VIB_FALLBACK_MAX_STAGED_EVENTS = "2";
 		try {
 			const mock = createMockModel();
 			const streamFn = () => {
@@ -880,14 +880,14 @@ describe("managed attempt transaction", () => {
 				"agent_end",
 			]);
 		} finally {
-			if (previous === undefined) delete process.env.GJC_FALLBACK_MAX_STAGED_EVENTS;
-			else process.env.GJC_FALLBACK_MAX_STAGED_EVENTS = previous;
+			if (previous === undefined) delete process.env.VIB_FALLBACK_MAX_STAGED_EVENTS;
+			else process.env.VIB_FALLBACK_MAX_STAGED_EVENTS = previous;
 		}
 	});
 
-	it("honors a low GJC_FALLBACK_MAX_STAGED_BYTES in ordinary lossless sessions by flushing through", async () => {
-		const previous = process.env.GJC_FALLBACK_MAX_STAGED_BYTES;
-		process.env.GJC_FALLBACK_MAX_STAGED_BYTES = "128";
+	it("honors a low VIB_FALLBACK_MAX_STAGED_BYTES in ordinary lossless sessions by flushing through", async () => {
+		const previous = process.env.VIB_FALLBACK_MAX_STAGED_BYTES;
+		process.env.VIB_FALLBACK_MAX_STAGED_BYTES = "128";
 		try {
 			const mock = createMockModel();
 			const streamFn = () => {
@@ -925,8 +925,8 @@ describe("managed attempt transaction", () => {
 				"agent_end",
 			]);
 		} finally {
-			if (previous === undefined) delete process.env.GJC_FALLBACK_MAX_STAGED_BYTES;
-			else process.env.GJC_FALLBACK_MAX_STAGED_BYTES = previous;
+			if (previous === undefined) delete process.env.VIB_FALLBACK_MAX_STAGED_BYTES;
+			else process.env.VIB_FALLBACK_MAX_STAGED_BYTES = previous;
 		}
 	});
 
@@ -937,17 +937,17 @@ describe("managed attempt transaction", () => {
 		// move these caps. This regression pins the trust boundary by resolving
 		// through the same trusted resolver the limiter uses.
 		// A value set in the TRUSTED process environment is honored...
-		const previous = process.env.GJC_FALLBACK_MAX_STAGED_EVENTS;
-		process.env.GJC_FALLBACK_MAX_STAGED_EVENTS = "5000";
+		const previous = process.env.VIB_FALLBACK_MAX_STAGED_EVENTS;
+		process.env.VIB_FALLBACK_MAX_STAGED_EVENTS = "5000";
 		try {
 			expect(managedAttemptMaxStagedEvents()).toBe(5000);
 		} finally {
-			if (previous === undefined) delete process.env.GJC_FALLBACK_MAX_STAGED_EVENTS;
-			else process.env.GJC_FALLBACK_MAX_STAGED_EVENTS = previous;
+			if (previous === undefined) delete process.env.VIB_FALLBACK_MAX_STAGED_EVENTS;
+			else process.env.VIB_FALLBACK_MAX_STAGED_EVENTS = previous;
 		}
 		// With no trusted source set, the documented default applies regardless
 		// of what any project .env may contain.
-		delete process.env.GJC_FALLBACK_MAX_STAGED_EVENTS;
+		delete process.env.VIB_FALLBACK_MAX_STAGED_EVENTS;
 		expect(managedAttemptMaxStagedEvents()).toBe(MANAGED_ATTEMPT_MAX_STAGED_EVENTS);
 	});
 
@@ -1734,8 +1734,8 @@ describe("managed attempt transaction", () => {
 			streamFn,
 		});
 		let outcomeCalls = 0;
-		const previous = process.env.GJC_FALLBACK_MAX_STAGED_BYTES;
-		process.env.GJC_FALLBACK_MAX_STAGED_BYTES = "2048";
+		const previous = process.env.VIB_FALLBACK_MAX_STAGED_BYTES;
+		process.env.VIB_FALLBACK_MAX_STAGED_BYTES = "2048";
 		try {
 			await agent.prompt("run", {
 				fallbackManaged: true,
@@ -1752,8 +1752,8 @@ describe("managed attempt transaction", () => {
 			const overflow = (terminal as unknown as { bufferOverflow?: { stage: string } }).bufferOverflow;
 			expect(overflow?.stage).toBe("overflow.preMeasure");
 		} finally {
-			if (previous === undefined) delete process.env.GJC_FALLBACK_MAX_STAGED_BYTES;
-			else process.env.GJC_FALLBACK_MAX_STAGED_BYTES = previous;
+			if (previous === undefined) delete process.env.VIB_FALLBACK_MAX_STAGED_BYTES;
+			else process.env.VIB_FALLBACK_MAX_STAGED_BYTES = previous;
 		}
 	});
 
@@ -1783,8 +1783,8 @@ describe("managed attempt transaction", () => {
 			streamFn,
 		});
 		let outcomeCalls = 0;
-		const previous = process.env.GJC_FALLBACK_MAX_STAGED_BYTES;
-		process.env.GJC_FALLBACK_MAX_STAGED_BYTES = String(400 * 1024);
+		const previous = process.env.VIB_FALLBACK_MAX_STAGED_BYTES;
+		process.env.VIB_FALLBACK_MAX_STAGED_BYTES = String(400 * 1024);
 		try {
 			await agent.prompt("run", {
 				fallbackManaged: true,
@@ -1803,8 +1803,8 @@ describe("managed attempt transaction", () => {
 			expect(overflow?.stage).toBe("overflow.preMeasure");
 			expect(overflow?.maxStagedBytes).toBe(400 * 1024);
 		} finally {
-			if (previous === undefined) delete process.env.GJC_FALLBACK_MAX_STAGED_BYTES;
-			else process.env.GJC_FALLBACK_MAX_STAGED_BYTES = previous;
+			if (previous === undefined) delete process.env.VIB_FALLBACK_MAX_STAGED_BYTES;
+			else process.env.VIB_FALLBACK_MAX_STAGED_BYTES = previous;
 		}
 	});
 
@@ -1945,9 +1945,9 @@ describe("managed attempt transaction", () => {
 		const textEnd = callbacks.find(event => event.type === "text_end");
 		expect(textEnd).toMatchObject({ type: "text_end", contentIndex: 0, content: fullText });
 	});
-	it("honors GJC_FALLBACK_MAX_STAGED_EVENTS from the environment", async () => {
-		const previous = process.env.GJC_FALLBACK_MAX_STAGED_EVENTS;
-		process.env.GJC_FALLBACK_MAX_STAGED_EVENTS = "2";
+	it("honors VIB_FALLBACK_MAX_STAGED_EVENTS from the environment", async () => {
+		const previous = process.env.VIB_FALLBACK_MAX_STAGED_EVENTS;
+		process.env.VIB_FALLBACK_MAX_STAGED_EVENTS = "2";
 		try {
 			const mock = createMockModel();
 			const streamFn = () => {
@@ -1986,14 +1986,14 @@ describe("managed attempt transaction", () => {
 			expect(agent.state.error).toBe("Agent run failed.");
 			expect((agent.state.messages.at(-1) as AssistantMessage).errorKind).toBe("local_buffer_overflow");
 		} finally {
-			if (previous === undefined) delete process.env.GJC_FALLBACK_MAX_STAGED_EVENTS;
-			else process.env.GJC_FALLBACK_MAX_STAGED_EVENTS = previous;
+			if (previous === undefined) delete process.env.VIB_FALLBACK_MAX_STAGED_EVENTS;
+			else process.env.VIB_FALLBACK_MAX_STAGED_EVENTS = previous;
 		}
 	});
 
-	it("honors GJC_FALLBACK_MAX_STAGED_BYTES from the environment", async () => {
-		const previous = process.env.GJC_FALLBACK_MAX_STAGED_BYTES;
-		process.env.GJC_FALLBACK_MAX_STAGED_BYTES = "128";
+	it("honors VIB_FALLBACK_MAX_STAGED_BYTES from the environment", async () => {
+		const previous = process.env.VIB_FALLBACK_MAX_STAGED_BYTES;
+		process.env.VIB_FALLBACK_MAX_STAGED_BYTES = "128";
 		try {
 			const mock = createMockModel();
 			const streamFn = () => {
@@ -2025,14 +2025,14 @@ describe("managed attempt transaction", () => {
 			expect(outcomeCalls).toBe(0);
 			expect(agent.state.error).toBe("Agent run failed.");
 		} finally {
-			if (previous === undefined) delete process.env.GJC_FALLBACK_MAX_STAGED_BYTES;
-			else process.env.GJC_FALLBACK_MAX_STAGED_BYTES = previous;
+			if (previous === undefined) delete process.env.VIB_FALLBACK_MAX_STAGED_BYTES;
+			else process.env.VIB_FALLBACK_MAX_STAGED_BYTES = previous;
 		}
 	});
 
-	it("falls back to the default cap for a non-positive GJC_FALLBACK_MAX_STAGED_EVENTS", async () => {
-		const previous = process.env.GJC_FALLBACK_MAX_STAGED_EVENTS;
-		process.env.GJC_FALLBACK_MAX_STAGED_EVENTS = "0";
+	it("falls back to the default cap for a non-positive VIB_FALLBACK_MAX_STAGED_EVENTS", async () => {
+		const previous = process.env.VIB_FALLBACK_MAX_STAGED_EVENTS;
+		process.env.VIB_FALLBACK_MAX_STAGED_EVENTS = "0";
 		try {
 			const mock = createMockModel();
 			const streamFn = () => {
@@ -2059,19 +2059,19 @@ describe("managed attempt transaction", () => {
 			// applies and the small run completes without an overflow error.
 			expect(agent.state.error).toBeUndefined();
 		} finally {
-			if (previous === undefined) delete process.env.GJC_FALLBACK_MAX_STAGED_EVENTS;
-			else process.env.GJC_FALLBACK_MAX_STAGED_EVENTS = previous;
+			if (previous === undefined) delete process.env.VIB_FALLBACK_MAX_STAGED_EVENTS;
+			else process.env.VIB_FALLBACK_MAX_STAGED_EVENTS = previous;
 		}
 	});
 
-	it("falls back to the default cap for non-digit GJC_FALLBACK_MAX_STAGED_EVENTS values", async () => {
+	it("falls back to the default cap for non-digit VIB_FALLBACK_MAX_STAGED_EVENTS values", async () => {
 		// Exponents and hex are not "positive integer (digits only)" input. A
 		// bare Number() parse would accept "3e0"/"0x3" as the cap 3, so these
 		// five staged events would overflow; digits-only parsing must reject
 		// them and keep the default 10_000-event cap instead.
 		for (const raw of ["3e0", "0x3"]) {
-			const previous = process.env.GJC_FALLBACK_MAX_STAGED_EVENTS;
-			process.env.GJC_FALLBACK_MAX_STAGED_EVENTS = raw;
+			const previous = process.env.VIB_FALLBACK_MAX_STAGED_EVENTS;
+			process.env.VIB_FALLBACK_MAX_STAGED_EVENTS = raw;
 			try {
 				const mock = createMockModel();
 				const streamFn = () => {
@@ -2098,12 +2098,12 @@ describe("managed attempt transaction", () => {
 				// completes instead of tripping a misparsed 3-event limit.
 				expect(agent.state.error).toBeUndefined();
 			} finally {
-				if (previous === undefined) delete process.env.GJC_FALLBACK_MAX_STAGED_EVENTS;
-				else process.env.GJC_FALLBACK_MAX_STAGED_EVENTS = previous;
+				if (previous === undefined) delete process.env.VIB_FALLBACK_MAX_STAGED_EVENTS;
+				else process.env.VIB_FALLBACK_MAX_STAGED_EVENTS = previous;
 			}
 		}
 	});
-	it("clamps above-ceiling GJC_FALLBACK_MAX_STAGED_* overrides and accepts exact-ceiling values", async () => {
+	it("clamps above-ceiling VIB_FALLBACK_MAX_STAGED_* overrides and accepts exact-ceiling values", async () => {
 		// The caps exist to bound memory: an override near MAX_SAFE_INTEGER
 		// would trade the typed, bounded local_buffer_overflow for a process
 		// OOM. Above-ceiling values must clamp to the ceiling (with a warning)
@@ -2112,15 +2112,15 @@ describe("managed attempt transaction", () => {
 		// honored verbatim — both sides of the boundary are pinned here.
 		const diagnostics = captureStagedCapClampWarnings();
 		for (const [name, atCeiling, aboveCeiling, ceiling] of [
-			["GJC_FALLBACK_MAX_STAGED_EVENTS", "2000000", "2000001", 2_000_000],
-			["GJC_FALLBACK_MAX_STAGED_BYTES", "1073741824", "1073741825", 1024 * 1024 * 1024],
+			["VIB_FALLBACK_MAX_STAGED_EVENTS", "2000000", "2000001", 2_000_000],
+			["VIB_FALLBACK_MAX_STAGED_BYTES", "1073741824", "1073741825", 1024 * 1024 * 1024],
 		] as const) {
 			const previous = process.env[name];
 			// Exactly at the ceiling: honored, no warning.
 			process.env[name] = atCeiling;
 			try {
 				expect(
-					name === "GJC_FALLBACK_MAX_STAGED_EVENTS"
+					name === "VIB_FALLBACK_MAX_STAGED_EVENTS"
 						? managedAttemptMaxStagedEvents()
 						: managedAttemptMaxStagedBytes(),
 				).toBe(ceiling);
@@ -2132,7 +2132,7 @@ describe("managed attempt transaction", () => {
 			process.env[name] = aboveCeiling;
 			try {
 				expect(
-					name === "GJC_FALLBACK_MAX_STAGED_EVENTS"
+					name === "VIB_FALLBACK_MAX_STAGED_EVENTS"
 						? managedAttemptMaxStagedEvents()
 						: managedAttemptMaxStagedBytes(),
 				).toBe(ceiling);
@@ -2156,9 +2156,9 @@ describe("managed attempt transaction", () => {
 		// bounded digest (never the arbitrarily long raw string embedded in a
 		// log record).
 		const warnings = captureStagedCapClampWarnings();
-		const previous = process.env.GJC_FALLBACK_MAX_STAGED_EVENTS;
+		const previous = process.env.VIB_FALLBACK_MAX_STAGED_EVENTS;
 		for (const raw of ["9007199254740992", "9007199254740993", "9".repeat(64)]) {
-			process.env.GJC_FALLBACK_MAX_STAGED_EVENTS = raw;
+			process.env.VIB_FALLBACK_MAX_STAGED_EVENTS = raw;
 			expect(managedAttemptMaxStagedEvents()).toBe(2_000_000);
 		}
 		// The once-per-digest memoization collapses the two 2^53 values (same
@@ -2171,8 +2171,8 @@ describe("managed attempt transaction", () => {
 			expect(String(entry.requested)).toContain("digits");
 		}
 		expect(digestWarnings.every(entry => entry.ceiling === 2_000_000)).toBe(true);
-		if (previous === undefined) delete process.env.GJC_FALLBACK_MAX_STAGED_EVENTS;
-		else process.env.GJC_FALLBACK_MAX_STAGED_EVENTS = previous;
+		if (previous === undefined) delete process.env.VIB_FALLBACK_MAX_STAGED_EVENTS;
+		else process.env.VIB_FALLBACK_MAX_STAGED_EVENTS = previous;
 	});
 
 	it("charges every retained batch item against the caps before retention", async () => {
@@ -2183,8 +2183,8 @@ describe("managed attempt transaction", () => {
 		// proving the assistant pair is charged against the same bound the
 		// measured events use — actual retention can no longer exceed the caps
 		// while the counters read under them.
-		const previous = process.env.GJC_FALLBACK_MAX_STAGED_BYTES;
-		process.env.GJC_FALLBACK_MAX_STAGED_BYTES = "2048";
+		const previous = process.env.VIB_FALLBACK_MAX_STAGED_BYTES;
+		process.env.VIB_FALLBACK_MAX_STAGED_BYTES = "2048";
 		try {
 			const mock = createMockModel();
 			const streamFn = () => {
@@ -2221,8 +2221,8 @@ describe("managed attempt transaction", () => {
 			expect(agent.state.error).toBe("Agent run failed.");
 			expect((agent.state.messages.at(-1) as AssistantMessage).errorKind).toBe("local_buffer_overflow");
 		} finally {
-			if (previous === undefined) delete process.env.GJC_FALLBACK_MAX_STAGED_BYTES;
-			else process.env.GJC_FALLBACK_MAX_STAGED_BYTES = previous;
+			if (previous === undefined) delete process.env.VIB_FALLBACK_MAX_STAGED_BYTES;
+			else process.env.VIB_FALLBACK_MAX_STAGED_BYTES = previous;
 		}
 	});
 	it("rejects a many-small-chunks payload without materializing the full budget", async () => {
@@ -2234,10 +2234,10 @@ describe("managed attempt transaction", () => {
 		// walk substituted "" and kept going, so the full value was built
 		// before any check ran; here the cap is crossed while the accumulated
 		// seen-count is far below the payload's total size.
-		const previous = process.env.GJC_FALLBACK_MAX_STAGED_BYTES;
+		const previous = process.env.VIB_FALLBACK_MAX_STAGED_BYTES;
 		// 256 KiB budget against a ~4 MiB payload of 4 KiB chunks: each chunk
 		// is well under the budget, only their accumulation crosses it.
-		process.env.GJC_FALLBACK_MAX_STAGED_BYTES = String(256 * 1024);
+		process.env.VIB_FALLBACK_MAX_STAGED_BYTES = String(256 * 1024);
 		try {
 			const mock = createMockModel();
 			const chunk = "x".repeat(4 * 1024);
@@ -2280,8 +2280,8 @@ describe("managed attempt transaction", () => {
 			const overflow = (terminal as unknown as { bufferOverflow?: { maxStagedBytes: number } }).bufferOverflow;
 			expect(overflow?.maxStagedBytes).toBe(256 * 1024);
 		} finally {
-			if (previous === undefined) delete process.env.GJC_FALLBACK_MAX_STAGED_BYTES;
-			else process.env.GJC_FALLBACK_MAX_STAGED_BYTES = previous;
+			if (previous === undefined) delete process.env.VIB_FALLBACK_MAX_STAGED_BYTES;
+			else process.env.VIB_FALLBACK_MAX_STAGED_BYTES = previous;
 		}
 	});
 
@@ -2290,25 +2290,25 @@ describe("managed attempt transaction", () => {
 		// keeps the documented default, so the guard can never be disabled by
 		// malformed input either.
 		for (const raw of ["0", "-5", "abc", ""]) {
-			const previous = process.env.GJC_FALLBACK_MAX_STAGED_EVENTS;
-			process.env.GJC_FALLBACK_MAX_STAGED_EVENTS = raw;
+			const previous = process.env.VIB_FALLBACK_MAX_STAGED_EVENTS;
+			process.env.VIB_FALLBACK_MAX_STAGED_EVENTS = raw;
 			try {
 				expect(managedAttemptMaxStagedEvents()).toBe(MANAGED_ATTEMPT_MAX_STAGED_EVENTS);
 			} finally {
-				if (previous === undefined) delete process.env.GJC_FALLBACK_MAX_STAGED_EVENTS;
-				else process.env.GJC_FALLBACK_MAX_STAGED_EVENTS = previous;
+				if (previous === undefined) delete process.env.VIB_FALLBACK_MAX_STAGED_EVENTS;
+				else process.env.VIB_FALLBACK_MAX_STAGED_EVENTS = previous;
 			}
 		}
 	});
 
 	it("accepts trusted staged-cap values with surrounding whitespace", () => {
-		const previous = process.env.GJC_FALLBACK_MAX_STAGED_EVENTS;
-		process.env.GJC_FALLBACK_MAX_STAGED_EVENTS = " 2 ";
+		const previous = process.env.VIB_FALLBACK_MAX_STAGED_EVENTS;
+		process.env.VIB_FALLBACK_MAX_STAGED_EVENTS = " 2 ";
 		try {
 			expect(managedAttemptMaxStagedEvents()).toBe(2);
 		} finally {
-			if (previous === undefined) delete process.env.GJC_FALLBACK_MAX_STAGED_EVENTS;
-			else process.env.GJC_FALLBACK_MAX_STAGED_EVENTS = previous;
+			if (previous === undefined) delete process.env.VIB_FALLBACK_MAX_STAGED_EVENTS;
+			else process.env.VIB_FALLBACK_MAX_STAGED_EVENTS = previous;
 		}
 	});
 

@@ -7,22 +7,22 @@ import {
 	type AgentTool,
 	type StreamFn,
 	setAgentTerminalOwnerContext,
-} from "@gajae-code/agent-core";
+} from "@vib-rato/agent-core";
 
-import type { AssistantMessage, Model, StopReason } from "@gajae-code/ai";
+import type { AssistantMessage, Model, StopReason } from "@vib-rato/ai";
 
-import { getBundledModel } from "@gajae-code/ai/models";
-import { AssistantMessageEventStream } from "@gajae-code/ai/utils/event-stream";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { loadExtensions } from "@gajae-code/coding-agent/extensibility/extensions/loader";
-import { ExtensionRunner } from "@gajae-code/coding-agent/extensibility/extensions/runner";
-import type { AgentSessionEvent } from "@gajae-code/coding-agent/session/agent-session";
-import { AgentSession } from "@gajae-code/coding-agent/session/agent-session";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { convertToLlm } from "@gajae-code/coding-agent/session/messages";
-import { getLatestCompactionEntry, SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { getProjectAgentDir, TempDir } from "@gajae-code/utils";
+import { getBundledModel } from "@vib-rato/ai/models";
+import { AssistantMessageEventStream } from "@vib-rato/ai/utils/event-stream";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { loadExtensions } from "@vib-rato/coding-agent/extensibility/extensions/loader";
+import { ExtensionRunner } from "@vib-rato/coding-agent/extensibility/extensions/runner";
+import type { AgentSessionEvent } from "@vib-rato/coding-agent/session/agent-session";
+import { AgentSession } from "@vib-rato/coding-agent/session/agent-session";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { convertToLlm } from "@vib-rato/coding-agent/session/messages";
+import { getLatestCompactionEntry, SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { getProjectAgentDir, TempDir } from "@vib-rato/utils";
 import * as z from "zod/v4";
 
 /**

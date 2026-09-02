@@ -2,9 +2,9 @@ import { afterEach, expect, spyOn, test } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { Agent, type AgentEvent } from "@gajae-code/agent-core";
-import { createMockModel } from "@gajae-code/ai/providers/mock";
-import { logger } from "@gajae-code/utils";
+import { Agent, type AgentEvent } from "@vib-rato/agent-core";
+import { createMockModel } from "@vib-rato/ai/providers/mock";
+import { logger } from "@vib-rato/utils";
 import type { ExtensionActions, ExtensionAPI } from "../src/extensibility/extensions/types";
 import { brokerOwnerForTest } from "../src/sdk/broker/ensure";
 import { createNotificationsExtension } from "../src/sdk/bus";
@@ -20,7 +20,7 @@ import { createNotificationsExtension } from "../src/sdk/bus";
 const dirs: string[] = [];
 const sockets: WebSocket[] = [];
 type AgentEndEvent = Extract<AgentEvent, { type: "agent_end" }>;
-const isolatedSdkHostTest = process.env.GJC_CI_SDK_HOST_ISOLATED === "1" ? test : test.skip;
+const isolatedSdkHostTest = process.env.VIB_CI_SDK_HOST_ISOLATED === "1" ? test : test.skip;
 
 afterEach(async () => {
 	await Promise.all(sockets.splice(0).map(closeSocket));
@@ -100,7 +100,7 @@ function start(
 isolatedSdkHostTest(
 	"SDK host logs a bounded reason from a reachable provider failure",
 	async () => {
-		const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-prompt-terminal-diagnostics-"));
+		const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-prompt-terminal-diagnostics-"));
 		dirs.push(cwd);
 		const sessionId = `sdk-prompt-terminal-diagnostics-${Date.now()}`;
 		const sessionContext = context(cwd, sessionId);
@@ -119,7 +119,7 @@ isolatedSdkHostTest(
 		const unsubscribe = agent.subscribe(event => {
 			void handlers.get(event.type)?.(event, sessionContext);
 		});
-		const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+		const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 		await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 		const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 
@@ -196,7 +196,7 @@ isolatedSdkHostTest(
 isolatedSdkHostTest(
 	"SDK host logs a bounded reason from an accepted sendUserMessage rejection",
 	async () => {
-		const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-prompt-terminal-accepted-rejection-"));
+		const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-prompt-terminal-accepted-rejection-"));
 		dirs.push(cwd);
 		const sessionId = `sdk-prompt-terminal-accepted-rejection-${Date.now()}`;
 		const sessionContext = context(cwd, sessionId);
@@ -204,7 +204,7 @@ isolatedSdkHostTest(
 		const handlers = await start(sessionContext, async () => {
 			throw new Error(reason);
 		});
-		const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+		const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 		await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 		const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 
@@ -270,12 +270,12 @@ isolatedSdkHostTest(
 isolatedSdkHostTest(
 	"SDK host does not log a client cancellation as a prompt terminal failure",
 	async () => {
-		const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-prompt-terminal-cancel-"));
+		const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-prompt-terminal-cancel-"));
 		dirs.push(cwd);
 		const sessionId = `sdk-prompt-terminal-cancel-${Date.now()}`;
 		const sessionContext = context(cwd, sessionId);
 		const handlers = await start(sessionContext);
-		const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+		const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 		await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 		const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 

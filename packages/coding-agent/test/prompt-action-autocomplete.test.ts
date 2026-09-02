@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import type { SlashCommand } from "@gajae-code/tui";
-import { Editor } from "@gajae-code/tui/components/editor";
+import type { SlashCommand } from "@vib-rato/tui";
+import { Editor } from "@vib-rato/tui/components/editor";
 import { defaultEditorTheme } from "../../tui/test/test-themes";
 import { KeybindingsManager as AppKeybindingsManager } from "../src/config/keybindings";
 import { createPromptActionAutocompleteProvider } from "../src/modes/prompt-action-autocomplete";

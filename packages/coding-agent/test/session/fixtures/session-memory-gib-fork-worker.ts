@@ -3,7 +3,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { SessionManager } from "../../../src/session/session-manager";
 
-const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-session-memory-gib-fork-"));
+const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-session-memory-gib-fork-"));
 const sourceFile = path.join(root, "source.jsonl");
 const destinationDirectory = path.join(root, "forks");
 fs.mkdirSync(destinationDirectory);
@@ -37,7 +37,7 @@ try {
 } finally {
 	fs.closeSync(fd);
 }
-const capturedMode = process.env.GJC_SESSION_MEMORY_GIB_CAPTURED === "1";
+const capturedMode = process.env.VIB_SESSION_MEMORY_GIB_CAPTURED === "1";
 const captured = capturedMode ? SessionManager.captureTranscriptStrict(sourceFile) : undefined;
 if (captured?.kind === "error") throw new Error(`capture_${captured.reason}`);
 

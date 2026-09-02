@@ -5,8 +5,8 @@
  * a summary of the branch being left so context isn't lost.
  */
 
-import type { Model, ProviderSessionState } from "@gajae-code/ai";
-import { prompt } from "@gajae-code/utils";
+import type { Model, ProviderSessionState } from "@vib-rato/ai";
+import { prompt } from "@vib-rato/utils";
 import { type AgentTelemetry, instrumentedCompleteSimple } from "../telemetry";
 import type { AgentMessage } from "../types";
 import { estimateMessageTokensHeuristic } from "./compaction";

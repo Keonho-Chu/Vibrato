@@ -249,9 +249,9 @@ describe("chat daemon worker", () => {
 	});
 
 	it("creates a real configured runtime, maps event threads, routes safe replies, handles lifecycle transitions, and cleans up", async () => {
-		root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-chat-worker-"));
+		root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-chat-worker-"));
 		const agentDir = path.join(root, "agent");
-		const stateRoot = path.join(root, ".gjc", "state");
+		const stateRoot = path.join(root, ".vib", "state");
 		const endpointPath = path.join(stateRoot, "sdk", "session.json");
 		await fs.mkdir(path.dirname(endpointPath), { recursive: true });
 		await fs.writeFile(
@@ -348,10 +348,10 @@ describe("chat daemon worker", () => {
 		);
 		expect(startupQueries).toHaveLength(1);
 		expect(startupQueries[0]).toMatchObject({ type: "query_request", query: "todo.list", input: {} });
-		const turnStreamPosted = provider.waitForMessage(message => message.content === "GJC turn stream\noutbound");
+		const turnStreamPosted = provider.waitForMessage(message => message.content === "Vibrato turn stream\noutbound");
 		expect(provider.messages).toContainEqual({
 			threadId: "thread-1",
-			content: "GJC identity header\ntitle: Replay identity\nrepo: replay-repo\nbranch: replay-branch",
+			content: "Vibrato identity header\ntitle: Replay identity\nrepo: replay-repo\nbranch: replay-branch",
 		});
 		client.handler?.({ type: "turn_stream", phase: "live", sessionId: "session", text: "direct live" });
 		client.handler?.({
@@ -363,14 +363,14 @@ describe("chat daemon worker", () => {
 		expect(provider.messages.some(message => /(?:replayed|direct|wrapped) live/.test(message.content))).toBe(false);
 		client.handler?.({ type: "turn_stream", sessionId: "session", text: "outbound" });
 		await turnStreamPosted;
-		expect(provider.messages).toContainEqual({ threadId: "thread-1", content: "GJC turn stream\noutbound" });
+		expect(provider.messages).toContainEqual({ threadId: "thread-1", content: "Vibrato turn stream\noutbound" });
 		const finalizedTurnStreamPosted = provider.waitForMessage(
-			message => message.content === "GJC turn stream\nfinalized",
+			message => message.content === "Vibrato turn stream\nfinalized",
 		);
 		client.handler?.({ type: "turn_stream", phase: "finalized", sessionId: "session", text: "finalized" });
 		await finalizedTurnStreamPosted;
 		const wrappedMissingPhasePosted = provider.waitForMessage(
-			message => message.content === "GJC turn stream\nwrapped missing phase",
+			message => message.content === "Vibrato turn stream\nwrapped missing phase",
 		);
 		client.handler?.({
 			type: "event",
@@ -495,9 +495,9 @@ describe("chat daemon worker", () => {
 	}, 20_000);
 
 	it("uses the broker-authorized isolated chat endpoint", async () => {
-		root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-chat-isolated-endpoint-"));
+		root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-chat-isolated-endpoint-"));
 		const agentDir = path.join(root, "agent");
-		const stateRoot = path.join(root, ".gjc", "state");
+		const stateRoot = path.join(root, ".vib", "state");
 		const endpointPath = path.join(stateRoot, "chat", "sdk", "session.json");
 		const defaultEndpointPath = path.join(stateRoot, "sdk", "session.json");
 		await fs.mkdir(path.dirname(endpointPath), { recursive: true });
@@ -553,9 +553,9 @@ describe("chat daemon worker", () => {
 	});
 
 	it("rejects a discovery record replaced after broker registration", async () => {
-		root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-chat-endpoint-mtime-"));
+		root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-chat-endpoint-mtime-"));
 		const agentDir = path.join(root, "agent");
-		const stateRoot = path.join(root, ".gjc", "state");
+		const stateRoot = path.join(root, ".vib", "state");
 		const endpointPath = path.join(stateRoot, "sdk", "session.json");
 		await fs.mkdir(path.dirname(endpointPath), { recursive: true });
 		await fs.writeFile(
@@ -619,9 +619,9 @@ describe("chat daemon worker", () => {
 	});
 
 	it("fails closed when a replacement client cannot connect", async () => {
-		root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-chat-replace-"));
+		root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-chat-replace-"));
 		const agentDir = path.join(root, "agent");
-		const stateRoot = path.join(root, ".gjc", "state");
+		const stateRoot = path.join(root, ".vib", "state");
 		const endpointPath = path.join(stateRoot, "sdk", "session.json");
 		await fs.mkdir(path.dirname(endpointPath), { recursive: true });
 		await fs.writeFile(
@@ -692,9 +692,9 @@ describe("chat daemon worker", () => {
 	});
 
 	it("discards queued frames emitted by a same-generation successor attachment", async () => {
-		root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-chat-frame-"));
+		root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-chat-frame-"));
 		const agentDir = path.join(root, "agent");
-		const stateRoot = path.join(root, ".gjc", "state");
+		const stateRoot = path.join(root, ".vib", "state");
 		const endpointPath = path.join(stateRoot, "sdk", "session.json");
 		await fs.mkdir(path.dirname(endpointPath), { recursive: true });
 		await fs.writeFile(
@@ -780,9 +780,9 @@ describe("chat daemon worker", () => {
 	});
 
 	it("persists Slack action authority across restart, restores it for inbound replies, and clears resolved actions", async () => {
-		root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-slack-worker-"));
+		root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-slack-worker-"));
 		const agentDir = path.join(root, "agent");
-		const stateRoot = path.join(root, ".gjc", "state");
+		const stateRoot = path.join(root, ".vib", "state");
 		const endpointPath = path.join(stateRoot, "sdk", "session.json");
 		await fs.mkdir(path.dirname(endpointPath), { recursive: true });
 		await fs.writeFile(
@@ -907,9 +907,9 @@ describe("chat daemon worker", () => {
 	// deterministically passing in 1.3-6.4s locally with no polling/race in
 	// the waiter mechanism, so this raises budget rather than masking a hang.
 	it("replays Slack control, query, and global commands with their durable receipt keys", async () => {
-		root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-slack-command-keys-"));
+		root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-slack-command-keys-"));
 		const agentDir = path.join(root, "agent");
-		const stateRoot = path.join(root, ".gjc", "state");
+		const stateRoot = path.join(root, ".vib", "state");
 		const endpointPath = path.join(stateRoot, "sdk", "session.json");
 		await fs.mkdir(path.dirname(endpointPath), { recursive: true });
 		await fs.writeFile(
@@ -976,8 +976,8 @@ describe("chat daemon worker", () => {
 			},
 		);
 		await runtime.start();
-		await provider.waitForPostCount(1, post => post.text === "GJC turn stream\nreplayed finalized");
-		await provider.waitForPostCount(1, post => post.text === "GJC turn stream\nreplayed missing phase");
+		await provider.waitForPostCount(1, post => post.text === "Vibrato turn stream\nreplayed finalized");
+		await provider.waitForPostCount(1, post => post.text === "Vibrato turn stream\nreplayed missing phase");
 		client.handler?.({ type: "turn_stream", phase: "live", sessionId: "session", text: "direct live" });
 		client.handler?.({
 			type: "event",
@@ -988,8 +988,8 @@ describe("chat daemon worker", () => {
 		expect(provider.posts.some(post => /(?:replayed|direct|wrapped) live/.test(post.text))).toBe(false);
 		client.handler?.({ type: "turn_stream", phase: "finalized", sessionId: "session", text: "direct finalized" });
 		client.handler?.({ type: "turn_stream", sessionId: "session", text: "direct missing phase" });
-		await provider.waitForPostCount(1, post => post.text === "GJC turn stream\ndirect finalized");
-		await provider.waitForPostCount(1, post => post.text === "GJC turn stream\ndirect missing phase");
+		await provider.waitForPostCount(1, post => post.text === "Vibrato turn stream\ndirect finalized");
+		await provider.waitForPostCount(1, post => post.text === "Vibrato turn stream\ndirect missing phase");
 		const rootTs = provider.posts[0]?.clientMsgId === undefined ? undefined : "1.1";
 		expect(rootTs).toBeDefined();
 		const command = (eventId: string, clientMsgId: string, text: string): SlackSocketEnvelope => ({
@@ -1058,9 +1058,9 @@ describe("chat daemon worker", () => {
 		await runtime.stop();
 	}, 20000);
 	it("retains a sent control prompt as ambiguous when its SDK response is lost", async () => {
-		root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-chat-command-response-loss-"));
+		root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-chat-command-response-loss-"));
 		const agentDir = path.join(root, "agent");
-		const stateRoot = path.join(root, ".gjc", "state");
+		const stateRoot = path.join(root, ".vib", "state");
 		const endpointPath = path.join(stateRoot, "sdk", "session.json");
 		await fs.mkdir(path.dirname(endpointPath), { recursive: true });
 		await fs.writeFile(
@@ -1159,9 +1159,9 @@ describe("chat daemon worker", () => {
 		await restartedRuntime.stop();
 	});
 	it("uses the production SdkClient loopback boundary while Discord remains fake", async () => {
-		root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-chat-worker-wire-"));
+		root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-chat-worker-wire-"));
 		const agentDir = path.join(root, "agent");
-		const stateRoot = path.join(root, ".gjc", "state");
+		const stateRoot = path.join(root, ".vib", "state");
 		const endpointPath = path.join(stateRoot, "sdk", "session.json");
 		const token = "loopback-sdk-token";
 		const frames: Record<string, unknown>[] = [];
@@ -1300,16 +1300,16 @@ describe("chat daemon worker", () => {
 	// it after hundreds of unrelated tests in one Bun process can starve its broker
 	// request boundary; the isolated task still exercises the real process topology.
 	const skipProductionSessionHost =
-		process.env.AFFECTED_TASK_KEY?.startsWith("test:@gajae-code/coding-agent:shard-") ?? false;
+		process.env.AFFECTED_TASK_KEY?.startsWith("test:@vib-rato/coding-agent:shard-") ?? false;
 	const productionSessionHostTestName =
 		"routes Slack safe queries through the production Session SDK host across worker restart";
 	it.skipIf(skipProductionSessionHost)(
 		productionSessionHostTestName,
 		async () => {
-			root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-slack-production-host-"));
-			const agentDir = path.join(root, ".gjc", "agent");
+			root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-slack-production-host-"));
+			const agentDir = path.join(root, ".vib", "agent");
 			const host = await startProductionSdkHost(root);
-			const endpointIdentity = await fs.stat(path.join(root, ".gjc", "state", "sdk", `${host.sessionId}.json`), {
+			const endpointIdentity = await fs.stat(path.join(root, ".vib", "state", "sdk", `${host.sessionId}.json`), {
 				bigint: true,
 			});
 			const index = await new SessionIndex(agentDir).open();
@@ -1359,7 +1359,7 @@ describe("chat daemon worker", () => {
 				await index.append({
 					type: "host_registered",
 					sessionId: host.sessionId,
-					locator: { repo: root, stateRoot: path.join(root, ".gjc", "state") },
+					locator: { repo: root, stateRoot: path.join(root, ".vib", "state") },
 					endpointGeneration: 1,
 					pid: host.endpoint.pid,
 					endpointMtimeMs: host.endpointMtimeMs,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import type Anthropic from "@anthropic-ai/sdk";
-import type { Context, FetchImpl, Model } from "@gajae-code/ai";
+import type { Context, FetchImpl, Model } from "@vib-rato/ai";
 import {
 	assertManagedAttempt,
 	beginAttempt,
@@ -11,7 +11,7 @@ import {
 	streamAnthropic,
 	streamOpenAICompletions,
 	transportFailureFacts,
-} from "@gajae-code/ai";
+} from "@vib-rato/ai";
 
 describe("fallback transport facts", () => {
 	it("emits transport facts for SDK provider errors", async () => {

@@ -10,13 +10,13 @@ import { vi } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { getConfigRootDir } from "@gajae-code/utils";
+import { getConfigRootDir } from "@vib-rato/utils";
 import { AuthBrokerClient } from "../../src/auth-broker/client";
 import { RemoteAuthCredentialStore } from "../../src/auth-broker/remote-store";
 import { REMOTE_REFRESH_SENTINEL } from "../../src/auth-storage";
 
-const secondHome = process.env.GJC_PROBE_SECOND_HOME;
-if (!secondHome) throw new Error("GJC_PROBE_SECOND_HOME is required");
+const secondHome = process.env.VIB_PROBE_SECOND_HOME;
+if (!secondHome) throw new Error("VIB_PROBE_SECOND_HOME is required");
 
 // The value the import-time module constant would have captured, derived here
 // before the home changes so the two roots can be told apart in the report.

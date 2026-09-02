@@ -2,8 +2,8 @@ import { afterEach, describe, expect, it } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { SessionManager, type SessionMessageEntry } from "@gajae-code/coding-agent/session/session-manager";
-import { getBlobsDir } from "@gajae-code/utils";
+import { SessionManager, type SessionMessageEntry } from "@vib-rato/coding-agent/session/session-manager";
+import { getBlobsDir } from "@vib-rato/utils";
 
 const tempDirs: string[] = [];
 
@@ -12,7 +12,7 @@ afterEach(async () => {
 });
 
 function makeTempDir(): string {
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-blob-resume-"));
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-blob-resume-"));
 	tempDirs.push(dir);
 	return dir;
 }
@@ -62,7 +62,7 @@ describe("SessionManager image blob resume", () => {
 			for (const entry of entries) {
 				const canonical = reopened.getCanonicalEntryForTests(entry.id);
 				const serializedCanonical = JSON.stringify(canonical);
-				expect(serializedCanonical).toContain("__gjcResidentBlob");
+				expect(serializedCanonical).toContain("__vibResidentBlob");
 				expect(serializedCanonical).toContain("imageData");
 				for (const data of images) expect(serializedCanonical).not.toContain(data);
 			}
@@ -79,7 +79,7 @@ describe("SessionManager image blob resume", () => {
 			const serialized = JSON.stringify(context.messages);
 			for (const data of images) expect(serialized).toContain(data);
 			expect(serialized).not.toContain("blob:sha256:");
-			expect(serialized).not.toContain("__gjcResidentBlob");
+			expect(serialized).not.toContain("__vibResidentBlob");
 		} finally {
 			await reopened.close();
 		}
@@ -95,12 +95,12 @@ describe("SessionManager image blob resume", () => {
 			expect(entriesSerialized).toContain("Session resident imageData blob missing");
 			expect(entriesSerialized).toContain("original content unavailable");
 			expect(entriesSerialized).not.toContain("blob:sha256:");
-			expect(entriesSerialized).not.toContain("__gjcResidentBlob");
+			expect(entriesSerialized).not.toContain("__vibResidentBlob");
 
 			const contextSerialized = JSON.stringify(reopened.buildSessionContext().messages);
 			expect(contextSerialized).toContain("Session resident imageData blob missing");
 			expect(contextSerialized).not.toContain("blob:sha256:");
-			expect(contextSerialized).not.toContain("__gjcResidentBlob");
+			expect(contextSerialized).not.toContain("__vibResidentBlob");
 		} finally {
 			await reopened.close();
 		}

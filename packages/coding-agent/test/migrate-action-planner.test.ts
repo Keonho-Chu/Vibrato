@@ -260,7 +260,7 @@ describe("executeActions — skill destination safety", () => {
 	test("does not follow a symlinked ancestor while creating a skill", async () => {
 		const outside = await fs.mkdtemp(path.join(os.tmpdir(), "migrate-executor-outside-"));
 		try {
-			const agentRoot = path.join(tmp, ".gjc");
+			const agentRoot = path.join(tmp, ".vib");
 			await fs.symlink(outside, agentRoot, "dir");
 			const [action] = await executeActions([
 				{

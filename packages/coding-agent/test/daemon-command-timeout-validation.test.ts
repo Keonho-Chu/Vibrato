@@ -5,7 +5,7 @@ import * as path from "node:path";
 
 const packageRoot = path.join(import.meta.dir, "..");
 const cliEntry = path.join(packageRoot, "src", "cli.ts");
-const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-daemon-timeout-validation-"));
+const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "vib-daemon-timeout-validation-"));
 
 interface CliResult {
 	exitCode: number;
@@ -16,7 +16,7 @@ interface CliResult {
 function runDaemon(args: string[], agentDir: string): CliResult {
 	const result = Bun.spawnSync([process.execPath, cliEntry, "daemon", ...args], {
 		cwd: packageRoot,
-		env: { ...process.env, GJC_CODING_AGENT_DIR: agentDir },
+		env: { ...process.env, VIB_CODING_AGENT_DIR: agentDir },
 		stdout: "pipe",
 		stderr: "pipe",
 	});

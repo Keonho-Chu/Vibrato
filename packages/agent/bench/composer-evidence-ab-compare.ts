@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * Compare two scored trace corpora (e.g. gjc v0.5.3 vs v0.6.4 live captures).
+ * Compare two scored trace corpora (e.g. vib v0.5.3 vs v0.6.4 live captures).
  * Point estimate only — not a statistical hypothesis test.
  */
 import * as fs from "node:fs/promises";
@@ -97,10 +97,10 @@ function perScenarioDelta(aReport: EvidenceReport, bReport: EvidenceReport) {
 	});
 }
 
-function armSummary(label: string, gjcVersion: string, report: EvidenceReport) {
+function armSummary(label: string, vibVersion: string, report: EvidenceReport) {
 	return {
 		label,
-		gjc_version: gjcVersion,
+		vib_version: vibVersion,
 		composer_scenarios_version: report.composer_scenarios_version,
 		trace_sha256: report.trace_sha256,
 		manifest_sha256: report.manifest_sha256,
@@ -139,7 +139,7 @@ async function main(): Promise<void> {
 		capture_mode: "trace-replay",
 		comparison_kind: "historical-frozen-trace",
 		composer_scenarios_version: aManifest?.composer_scenarios_version,
-		gjc_version: aVer,
+		vib_version: aVer,
 		trace_sha256: aManifest?.trace_sha256,
 		manifest_sha256: aManifest?.manifest_sha256,
 		captured_records: aManifest?.captured_records ?? aManifest?.record_count ?? aRecords.length,
@@ -148,7 +148,7 @@ async function main(): Promise<void> {
 		capture_mode: "trace-replay",
 		comparison_kind: "historical-frozen-trace",
 		composer_scenarios_version: bManifest?.composer_scenarios_version,
-		gjc_version: bVer,
+		vib_version: bVer,
 		trace_sha256: bManifest?.trace_sha256,
 		manifest_sha256: bManifest?.manifest_sha256,
 		captured_records: bManifest?.captured_records ?? bManifest?.record_count ?? bRecords.length,
@@ -162,7 +162,7 @@ async function main(): Promise<void> {
 		schemaVersion: 1,
 		comparison_kind: "historical-frozen-trace",
 		disclaimer:
-			"Point estimate from paired harness failure counts on frozen trace corpora. Not a statistical hypothesis test. Live A/B requires separate captures with each gjc binary on the same versioned Composer scenario prompts.",
+			"Point estimate from paired harness failure counts on frozen trace corpora. Not a statistical hypothesis test. Live A/B requires separate captures with each vib binary on the same versioned Composer scenario prompts.",
 		repo_commit: process.env.EVIDENCE_REPO_COMMIT ?? "dev-evidence",
 		arm_a: armSummary("v0.5.3-or-baseline-arm", aVer, aReport),
 		arm_b: armSummary("v0.6.4-or-candidate-arm", bVer, bReport),

@@ -10,13 +10,13 @@ import {
 	type NotificationsSaveInactiveResult,
 	NotificationsSettingsEditorComponent,
 	type PreparedNotificationProviderConfiguration,
-} from "@gajae-code/coding-agent/modes/components/notifications-settings-editor";
-import { initTheme } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { NotificationProvider } from "@gajae-code/coding-agent/sdk/bus/config";
+} from "@vib-rato/coding-agent/modes/components/notifications-settings-editor";
+import { initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { NotificationProvider } from "@vib-rato/coding-agent/sdk/bus/config";
 import type {
 	NotificationHealthReport,
 	NotificationStatusReport,
-} from "@gajae-code/coding-agent/sdk/bus/notification-service";
+} from "@vib-rato/coding-agent/sdk/bus/notification-service";
 
 beforeAll(async () => {
 	await initTheme();

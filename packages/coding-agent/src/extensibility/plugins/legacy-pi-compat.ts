@@ -5,27 +5,27 @@ import * as url from "node:url";
 
 // Canonical scope for in-process pi packages. Plugins published against any of
 // the aliased scopes below (mariozechner's original publish, earendil-works'
-// fork, or the canonical @gajae-code scope itself) are remapped to this scope and
-// resolved against the bundled copy that ships inside the gjc binary. This
+// fork, or the canonical @vib-rato scope itself) are remapped to this scope and
+// resolved against the bundled copy that ships inside the vib binary. This
 // keeps plugins running against the exact runtime state of the host (single
 // module registry, single tool registry, etc.) regardless of which historical
 // scope name they happened to declare in their peerDependencies.
-const CANONICAL_PI_SCOPE = "@gajae-code";
+const CANONICAL_PI_SCOPE = "@vib-rato";
 
 // Scopes that have historically been used to publish (or alias) the same set
-// of internal pi-* packages. `@gajae-code` is intentionally included so that
+// of internal pi-* packages. `@vib-rato` is intentionally included so that
 // direct imports of the canonical name still flow through `Bun.resolveSync`
 // against the host binary, avoiding a duplicate copy being pulled in from a
 // plugin's own node_modules tree at install time.
-const PI_SCOPE_ALIASES = ["gajae-code", "mariozechner", "earendil-works"] as const;
+const PI_SCOPE_ALIASES = ["vib-rato", "mariozechner", "earendil-works"] as const;
 
 // Internal package basenames historically used by Pi plugins plus the current
-// Gajae package basenames bundled inside the gjc binary.
+// Vibrato package basenames bundled inside the vib binary.
 const PI_PACKAGE_NAME_REMAPS: ReadonlyMap<string, string> = new Map<string, string>([
 	["agent-core", "agent-core"],
 	["ai", "ai"],
 	["coding-agent", "coding-agent"],
-	["gajae-code", "coding-agent"],
+	["vib-rato", "coding-agent"],
 	["natives", "natives"],
 	["pi-agent-core", "agent-core"],
 	["pi-ai", "ai"],
@@ -59,8 +59,8 @@ const LEGACY_PI_IMPORT_SPECIFIER_REGEX = new RegExp(
 	`((?:from\\s+|import\\s*\\(\\s*)["'])(@(?:${PI_SCOPE_ALTERNATION})/(?:${PI_PACKAGE_ALTERNATION})(?:/[^"'()\\s]+)?)(["'])`,
 	"g",
 );
-const LEGACY_PI_FILE_PREFIX = "gjc-legacy-pi-file:";
-const LEGACY_PI_FILE_NAMESPACE = "gjc-legacy-pi-file";
+const LEGACY_PI_FILE_PREFIX = "vib-legacy-pi-file:";
+const LEGACY_PI_FILE_NAMESPACE = "vib-legacy-pi-file";
 const resolvedSpecifierFallbacks = new Map<string, string>();
 
 // Extensions that imported `@sinclair/typebox` directly used to resolve against a
@@ -243,7 +243,7 @@ async function mirrorLegacyPiFile(sourcePath: string, state: LegacyPiMirrorState
 }
 
 export async function loadLegacyPiModule(resolvedPath: string): Promise<unknown> {
-	const root = path.join(os.tmpdir(), "gjc-legacy-pi-file", `entry-${Bun.hash(resolvedPath).toString(36)}`);
+	const root = path.join(os.tmpdir(), "vib-legacy-pi-file", `entry-${Bun.hash(resolvedPath).toString(36)}`);
 	await fs.rm(root, { recursive: true, force: true });
 	const state: LegacyPiMirrorState = { root, seen: new Map() };
 	const mirroredEntry = await mirrorLegacyPiFile(resolvedPath, state);
@@ -269,7 +269,7 @@ function resolveLegacyPiSpecifier(args: { path: string; importer: string }): { p
 		return undefined;
 	}
 
-	// Primary: resolve the canonical @gajae-code/* specifier from the host binary
+	// Primary: resolve the canonical @vib-rato/* specifier from the host binary
 	// location. Works in dev mode and in source-link installs.
 	try {
 		return { path: getResolvedSpecifier(remappedSpecifier) };
@@ -298,7 +298,7 @@ export function installLegacyPiSpecifierShim(): void {
 	isLegacyPiSpecifierShimInstalled = true;
 
 	Bun.plugin({
-		name: "gjc:legacy-pi-shim",
+		name: "vib:legacy-pi-shim",
 		setup(build) {
 			build.onResolve({ filter: LEGACY_PI_SPECIFIER_FILTER, namespace: "file" }, resolveLegacyPiSpecifier);
 			build.onResolve(
@@ -312,7 +312,7 @@ export function installLegacyPiSpecifierShim(): void {
 				resolveTypeBoxSpecifier,
 			);
 
-			build.onResolve({ filter: /^gjc-legacy-pi-file:/, namespace: "file" }, args => ({
+			build.onResolve({ filter: /^vib-legacy-pi-file:/, namespace: "file" }, args => ({
 				path: args.path.slice(LEGACY_PI_FILE_PREFIX.length),
 				namespace: LEGACY_PI_FILE_NAMESPACE,
 			}));

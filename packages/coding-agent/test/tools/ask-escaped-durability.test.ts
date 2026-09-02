@@ -1,15 +1,15 @@
 import { afterEach, describe, expect, it } from "bun:test";
-import { agentLoop } from "@gajae-code/agent-core/agent-loop";
-import type { AgentContext, AgentLoopConfig, AgentMessage, AgentToolContext } from "@gajae-code/agent-core/types";
-import type { Message } from "@gajae-code/ai";
-import { createMockModel } from "@gajae-code/ai/providers/mock";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { readDeepInterviewStateCompact } from "@gajae-code/coding-agent/gjc-runtime/deep-interview-recorder";
-import { deepInterviewStatePath } from "@gajae-code/coding-agent/gjc-runtime/deep-interview-runtime";
-import { readWorkflowStateJson } from "@gajae-code/coding-agent/gjc-runtime/state-runtime";
-import type { ToolSession } from "@gajae-code/coding-agent/tools";
-import { AskTool } from "@gajae-code/coding-agent/tools/ask";
-import { TempDir } from "@gajae-code/utils";
+import { agentLoop } from "@vib-rato/agent-core/agent-loop";
+import type { AgentContext, AgentLoopConfig, AgentMessage, AgentToolContext } from "@vib-rato/agent-core/types";
+import type { Message } from "@vib-rato/ai";
+import { createMockModel } from "@vib-rato/ai/providers/mock";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import type { ToolSession } from "@vib-rato/coding-agent/tools";
+import { AskTool } from "@vib-rato/coding-agent/tools/ask";
+import { readDeepInterviewStateCompact } from "@vib-rato/coding-agent/vib-runtime/deep-interview-recorder";
+import { deepInterviewStatePath } from "@vib-rato/coding-agent/vib-runtime/deep-interview-runtime";
+import { readWorkflowStateJson } from "@vib-rato/coding-agent/vib-runtime/state-runtime";
+import { TempDir } from "@vib-rato/utils";
 
 function identityConverter(messages: AgentMessage[]): Message[] {
 	return messages.filter(
@@ -97,7 +97,7 @@ describe("AskTool escaped deep-interview durability (#4926)", () => {
 	});
 
 	it("resamples terminally and leaves persistence, reload, and spec input clean", async () => {
-		tempDir = TempDir.createSync("@gjc-ask-escaped-durability-4926-");
+		tempDir = TempDir.createSync("@vib-ask-escaped-durability-4926-");
 		for (const surface of ["question", "option"] as const) {
 			const cwd = `${tempDir.path()}/${surface}`;
 			const sessionId = `ask-escaped-${surface}`;
@@ -166,7 +166,7 @@ describe("AskTool display-safe escaped argument fields (#4983)", () => {
 	});
 
 	it("declares question text and option labels as its only display-safe fields", () => {
-		tempDir = TempDir.createSync("@gjc-ask-display-safe-4983-");
+		tempDir = TempDir.createSync("@vib-ask-display-safe-4983-");
 		const tool = new AskTool(createSession(tempDir.path(), "ask-display-safe"));
 		// Only pure display text opts in: ids, workflow gates, and deep-interview
 		// metadata stay load-bearing and keep the fail-closed rejection.

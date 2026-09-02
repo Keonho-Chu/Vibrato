@@ -1,6 +1,6 @@
 /** Print-mode output, terminal-status, and stdout-ownership regressions. */
 import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
-import type { AssistantMessage, Message, ToolResultMessage } from "@gajae-code/ai";
+import type { AssistantMessage, Message, ToolResultMessage } from "@vib-rato/ai";
 import { CONTEXT_OVERFLOW_EXIT_CODE, runPrintMode } from "../src/modes/print-mode";
 import type { AgentSession } from "../src/session/agent-session";
 import { SILENT_ABORT_MARKER } from "../src/session/messages";
@@ -302,10 +302,10 @@ describe("Print mode", () => {
 		installImmediateStdoutMock(stdoutOutput);
 		process.exitCode = 0;
 
-		const assistantMsg = makeAssistantMessage({ content: [{ type: "text", text: "@gajae-code/coding-agent" }] });
+		const assistantMsg = makeAssistantMessage({ content: [{ type: "text", text: "@vib-rato/coding-agent" }] });
 		await runPrintMode(createMockSession([assistantMsg, makeToolResultMessage()]), { mode: "text" });
 
-		expect(stdoutOutput.join("")).toContain("@gajae-code/coding-agent");
+		expect(stdoutOutput.join("")).toContain("@vib-rato/coding-agent");
 		expect(process.exitCode).toBe(0);
 	});
 

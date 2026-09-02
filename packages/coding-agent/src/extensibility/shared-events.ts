@@ -12,9 +12,9 @@
  * carry subsystem-specific message types — lives in the per-subsystem
  * `types.ts` files and is documented there.
  */
-import type { AgentMessage, MidRunMaintenanceOutcome } from "@gajae-code/agent-core";
-import type { CompactionPreparation, CompactionResult } from "@gajae-code/agent-core/compaction";
-import type { ImageContent, TextContent, ToolResultMessage } from "@gajae-code/ai/core";
+import type { AgentMessage, MidRunMaintenanceOutcome } from "@vib-rato/agent-core";
+import type { CompactionPreparation, CompactionResult } from "@vib-rato/agent-core/compaction";
+import type { ImageContent, TextContent, ToolResultMessage } from "@vib-rato/ai/core";
 import type { Rule } from "../capability/rule";
 import type { Goal, GoalModeState } from "../goals/state";
 import type { BranchSummaryEntry, CompactionEntry, SessionEntry } from "../session/session-manager";

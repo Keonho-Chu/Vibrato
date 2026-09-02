@@ -1,4 +1,4 @@
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 import { captureRequestHeaders, resolvePromptCacheKey } from "../auth-gateway/http";
 import type {
 	AssistantMessage,
@@ -27,8 +27,8 @@ import {
 
 /**
  * Anthropic Messages API (https://docs.anthropic.com/en/api/messages) ↔ pi-ai
- * gateway translation. Inbound: foreign HTTP body → gjc Context. Outbound:
- * gjc AssistantMessage[Stream] → Anthropic-shaped JSON / SSE.
+ * gateway translation. Inbound: foreign HTTP body → vib Context. Outbound:
+ * vib AssistantMessage[Stream] → Anthropic-shaped JSON / SSE.
  */
 
 import type { AuthGatewayParsedRequest as ParsedRequest } from "../auth-gateway/types";

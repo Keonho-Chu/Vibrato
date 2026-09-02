@@ -1,4 +1,4 @@
-import { persistCoordinatorRuntimeStateFromEvent } from "../../src/gjc-runtime/session-state-sidecar";
+import { persistCoordinatorRuntimeStateFromEvent } from "../../src/vib-runtime/session-state-sidecar";
 
 const stateFile = process.argv[2];
 if (!stateFile) throw new Error("state file required");

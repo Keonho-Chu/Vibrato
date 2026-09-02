@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import * as native from "@gajae-code/natives";
+import * as native from "@vib-rato/natives";
 import { resolveManagedSessionScope } from "../src/sdk/session-directory";
 import {
 	ManagedSessionDescendantStore,
@@ -33,7 +33,7 @@ it("skips unsupported managed directory fsync on Windows", () => {
 });
 describe.skipIf(process.platform !== "win32")("Windows managed session directory", () => {
 	it("uses one scope for a workspace and its junction alias", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-session-directory-windows-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-session-directory-windows-"));
 		temporaryDirectories.push(root);
 		const workspace = path.join(root, "Workspace");
 		const alias = path.join(root, "workspace-alias");
@@ -61,7 +61,7 @@ describe.skipIf(process.platform !== "win32")("Windows managed session directory
 	});
 
 	it("rejects UNC workspaces as network identities without creating a managed root", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-session-directory-windows-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-session-directory-windows-"));
 		temporaryDirectories.push(root);
 		const agentDir = path.join(root, "agent");
 
@@ -75,7 +75,7 @@ describe.skipIf(process.platform !== "win32")("Windows managed session directory
 	});
 
 	it("rejects extended UNC workspaces before probing or creating the managed root", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-session-directory-windows-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-session-directory-windows-"));
 		temporaryDirectories.push(root);
 		const agentDir = path.join(root, "agent");
 
@@ -88,13 +88,13 @@ describe.skipIf(process.platform !== "win32")("Windows managed session directory
 		await expect(fs.access(agentDir)).rejects.toMatchObject({ code: "ENOENT" });
 	});
 
-	it.skipIf(!process.env.GJC_TEST_SUBST_WORKSPACE)(
+	it.skipIf(!process.env.VIB_TEST_SUBST_WORKSPACE)(
 		"binds a configured subst alias to its canonical volume identity",
 		async () => {
-			const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-session-directory-windows-"));
+			const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-session-directory-windows-"));
 			temporaryDirectories.push(root);
 			const agentDir = path.join(root, "agent");
-			const substWorkspace = process.env.GJC_TEST_SUBST_WORKSPACE;
+			const substWorkspace = process.env.VIB_TEST_SUBST_WORKSPACE;
 			if (!substWorkspace) throw new Error("Missing subst workspace");
 
 			const resolved = await resolveManagedSessionScope({ cwd: substWorkspace, agentDir });
@@ -107,7 +107,7 @@ describe.skipIf(process.platform !== "win32")("Windows managed session directory
 	);
 
 	it("fails closed on an invalid required directory and succeeds after exact restore", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-session-directory-windows-startup-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-session-directory-windows-startup-"));
 		temporaryDirectories.push(root);
 		const cwd = path.join(root, "workspace");
 		const agentDir = path.join(root, "agent");
@@ -124,7 +124,7 @@ describe.skipIf(process.platform !== "win32")("Windows managed session directory
 		if (!firstSessionFile) throw new Error("Expected persisted first-session transcript");
 		await first.close();
 
-		const internal = path.join(firstDirectory, ".gjc-managed-session-internal");
+		const internal = path.join(firstDirectory, ".vib-managed-session-internal");
 		const locks = path.join(internal, "locks");
 		const retainedLocks = path.join(internal, "locks.retained-for-test");
 		const receipts = path.join(internal, "receipts");
@@ -186,7 +186,7 @@ describe.skipIf(process.platform !== "win32")("Windows managed session directory
 	});
 
 	it("preserves verify-first policy through nested managed destinations", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-session-directory-windows-nested-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-session-directory-windows-nested-"));
 		temporaryDirectories.push(root);
 		const cwd = path.join(root, "workspace");
 		const agentDir = path.join(root, "agent");
@@ -218,14 +218,14 @@ describe.skipIf(process.platform !== "win32")("Windows managed session directory
 	});
 
 	it("surfaces a path-free native security classification for the tombstones directory", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-session-directory-windows-diagnostic-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-session-directory-windows-diagnostic-"));
 		temporaryDirectories.push(root);
 		const cwd = path.join(root, "workspace");
 		const agentDir = path.join(root, "agent");
 		await fs.mkdir(cwd);
 
 		const first = SessionManager.managedDestination(cwd, agentDir);
-		const tombstones = path.join(first.directory, ".gjc-managed-session-internal", "tombstones");
+		const tombstones = path.join(first.directory, ".vib-managed-session-internal", "tombstones");
 		const verifyExpected = native.verifyOwnerOnlyPathSecurityExpected;
 		const verify = vi
 			.spyOn(native, "verifyOwnerOnlyPathSecurityExpected")

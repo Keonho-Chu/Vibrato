@@ -2,13 +2,13 @@ import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { readImageMetadata } from "@gajae-code/utils";
+import { readImageMetadata } from "@vib-rato/utils";
 
 describe("readImageMetadata", () => {
 	let testDir: string;
 
 	beforeEach(() => {
-		testDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-image-input-"));
+		testDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-image-input-"));
 	});
 
 	afterEach(() => {

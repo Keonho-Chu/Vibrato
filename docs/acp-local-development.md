@@ -12,23 +12,23 @@ newer release.
 
 ```sh
 bun run build:native        # only when crates/ changed
-bun run install:dev:bin     # compile dist/gjc and point `gjc` on PATH at it
+bun run install:dev:bin     # compile dist/vib and point `vib` on PATH at it
 bun run restart:sdk-broker -- --close-session-hosts  # REQUIRED — see below
 ```
 
 Then drive it from a client, or from a bare stdio handshake:
 
 ```sh
-printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":1,"clientCapabilities":{"fs":{"readTextFile":true,"writeTextFile":true},"terminal":true}}}' | gjc acp
+printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":1,"clientCapabilities":{"fs":{"readTextFile":true,"writeTextFile":true},"terminal":true}}}' | vib acp
 ```
 
 ## Why the broker restart is not optional
 
-`gjc acp` is a thin stdio front end. It does not run the agent loop — it attaches
+`vib acp` is a thin stdio front end. It does not run the agent loop — it attaches
 to the SDK broker published for the agent directory, and the broker spawns a
 `sdk session-host-internal` child per session. That broker is long-lived and
 holds the entrypoint it was started from, so **rebuilding the binary changes
-nothing for ACP until the broker is replaced**: the new `gjc acp` process talks
+nothing for ACP until the broker is replaced**: the new `vib acp` process talks
 to an old broker, which spawns session hosts from the old build, and your change
 appears to have no effect.
 
@@ -43,20 +43,20 @@ A stale broker is obvious once you look — the path is a different checkout, or
 the elapsed time predates your build:
 
 ```
-19466  08:25:00  /Users/you/git/gajae-code/packages/coding-agent/dist/gjc sdk broker-internal --agent-dir /Users/you/.gjc/agent
+19466  08:25:00  /Users/you/git/vib-rato/packages/coding-agent/dist/vib sdk broker-internal --agent-dir /Users/you/.vib/agent
 ```
 
 After `bun run restart:sdk-broker -- --close-session-hosts` from your checkout,
 the broker is replaced by one running that checkout's source:
 
 ```
-79955  00:09  bun --config=.../src/sdk/broker/internal-source.bunfig.toml .../src/cli.ts sdk broker-internal --agent-dir /Users/you/.gjc/agent
+79955  00:09  bun --config=.../src/sdk/broker/internal-source.bunfig.toml .../src/cli.ts sdk broker-internal --agent-dir /Users/you/.vib/agent
 ```
 
 The restart asks the published broker to shut down over its authenticated
 loopback channel and starts a replacement. `--close-session-hosts` first closes
 every broker-spawned host in that agent directory, so it can interrupt active
-ACP work; it never closes interactive `gjc` TUI sessions. Without the flag,
+ACP work; it never closes interactive `vib` TUI sessions. Without the flag,
 live hosts keep their old entrypoint. A broker-only restart is safe only when
 you will create a fresh ACP session instead of loading or reusing an existing
 one.
@@ -64,15 +64,15 @@ one.
 Working against a scratch agent directory instead:
 
 ```sh
-bun run restart:sdk-broker -- --agent-dir /tmp/gjc-acp-agent --close-session-hosts
-GJC_CODING_AGENT_DIR=/tmp/gjc-acp-agent gjc acp
+bun run restart:sdk-broker -- --agent-dir /tmp/vib-acp-agent --close-session-hosts
+VIB_CODING_AGENT_DIR=/tmp/vib-acp-agent vib acp
 ```
 
 A fresh agent directory carries no credentials. Stored local credentials live
 in `agent.db`, not `models.db`; do not copy a live SQLite database. Authenticate
 inside the scratch agent directory, use provider environment variables or an
 auth broker, or copy `agent.db` only while no process is using either database.
-For Paseo, put `GJC_CODING_AGENT_DIR` in the provider's `env` entry and restart
+For Paseo, put `VIB_CODING_AGENT_DIR` in the provider's `env` entry and restart
 the Paseo daemon, or pass it with `paseo run --env` so the provider process
 receives the override.
 
@@ -80,8 +80,8 @@ receives the override.
 
 | Question | Command |
 |---|---|
-| Which binary is `gjc`? | `readlink $(which gjc)` |
-| When was it built? | `ls -l packages/coding-agent/dist/gjc` |
+| Which binary is `vib`? | `readlink $(which vib)` |
+| When was it built? | `ls -l packages/coding-agent/dist/vib` |
 | Which broker is serving? | `ps -eo pid,etime,command \| grep '[b]roker-internal'` |
 | Which hosts are running? | `ps -eo pid,etime,command \| grep 'session-host-internal'` |
 
@@ -90,14 +90,14 @@ its output already answers the first question.
 
 ## Driving it from Paseo
 
-Register GJC as a custom ACP provider in `~/.paseo/config.json` (full example in
+Register Vibrato as a custom ACP provider in `~/.paseo/config.json` (full example in
 [External control readiness](./external-control-readiness.md#paseo-custom-agent)),
 then:
 
 ```sh
 paseo daemon restart              # after editing config.json
-paseo provider ls                 # gjc must read `available`, not `error`
-paseo run --provider gjc --cwd /tmp/gjc-acp-test --wait-timeout 3m "your prompt"
+paseo provider ls                 # vib must read `available`, not `error`
+paseo run --provider vib --cwd /tmp/vib-acp-test --wait-timeout 3m "your prompt"
 paseo logs <agent-id>             # rendered transcript
 paseo ls                          # lifecycle: running / idle / error
 paseo stop <agent-id>             # exercises session/cancel
@@ -107,16 +107,16 @@ paseo delete <agent-id>
 `paseo stop <agent-id>` sends an ACP `session/cancel`, which by default stops only
 the current turn (matching the SDK `turn.abort` default); owned background work
 (subagents, background jobs) keeps running. To keep owned cancels that also stop
-exact owned work, set `GJC_ACP_ABORT_SCOPE=owned` in the provider's `env` entry
+exact owned work, set `VIB_ACP_ABORT_SCOPE=owned` in the provider's `env` entry
 (shown in the full example in
 [External control readiness](./external-control-readiness.md#paseo-custom-agent))
 and restart the Paseo daemon.
 
 Paseo runs its daemon as a separate long-lived process, so it needs its own
-restart after a config change — but not after a GJC rebuild, since it spawns
-`gjc` per session. `--wait-timeout 3m` stops the CLI from waiting; it does not
+restart after a config change — but not after a Vibrato rebuild, since it spawns
+`vib` per session. `--wait-timeout 3m` stops the CLI from waiting; it does not
 cancel the agent, which may remain `running`. That timeout is separate from
-GJC's `sdk.promptDeadlineMs`, which defaults to 30 minutes and settles as
+Vibrato's `sdk.promptDeadlineMs`, which defaults to 30 minutes and settles as
 `prompt_deadline_exceeded`.
 
 Errors surface in the daemon log with the JSON-RPC payload intact, which is

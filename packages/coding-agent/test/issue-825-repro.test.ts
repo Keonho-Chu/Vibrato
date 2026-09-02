@@ -19,10 +19,10 @@
  */
 
 import { beforeAll, describe, expect, mock, test } from "bun:test";
-import { AgentBusyError } from "@gajae-code/agent-core";
-import { initTheme } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { CompactionQueuedMessage, InteractiveModeContext } from "@gajae-code/coding-agent/modes/types";
-import { UiHelpers } from "@gajae-code/coding-agent/modes/utils/ui-helpers";
+import { AgentBusyError } from "@vib-rato/agent-core";
+import { initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { CompactionQueuedMessage, InteractiveModeContext } from "@vib-rato/coding-agent/modes/types";
+import { UiHelpers } from "@vib-rato/coding-agent/modes/utils/ui-helpers";
 
 beforeAll(() => {
 	initTheme();

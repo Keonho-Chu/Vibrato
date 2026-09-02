@@ -14,19 +14,19 @@ import * as path from "node:path";
 const repoRoot = path.join(import.meta.dir, "..");
 const EXPECTED_DEFINITIONS = ["autoresearch", "deep-interview", "ralplan", "ultragoal"] as const;
 const EXPECTED_ROLE_AGENTS = ["architect", "critic", "executor", "planner"] as const;
-const EXPECTED_PUBLIC_PACKAGE_VERSION_CATALOG_KEY = "@gajae-code/coding-agent";
+const EXPECTED_PUBLIC_PACKAGE_VERSION_CATALOG_KEY = "@vib-rato/coding-agent";
 const ALLOWED_PUBLIC_PACKAGE_VERSIONS = new Map<string, string>();
 const ALLOWED_PRIVATE_PACKAGE_VERSIONS = new Map<string, string>([
-	["@gajae-code/orchestration-token-benchmark", "0.0.1"],
-	["@gajae-code/typescript-edit-benchmark", "0.0.1"],
+	["@vib-rato/orchestration-token-benchmark", "0.0.1"],
+	["@vib-rato/typescript-edit-benchmark", "0.0.1"],
 ]);
-const ALLOWED_UNSCOPED_PACKAGE_NAMES = new Set<string>(["gajae-code"]);
+const ALLOWED_UNSCOPED_PACKAGE_NAMES = new Set<string>(["vib-rato"]);
 const ALLOWED_PACKAGE_BINARIES = new Map<string, readonly string[]>([
-	["@gajae-code/ai", ["pi-ai"]],
-	["@gajae-code/coding-agent", ["gjc", "가재씨"]],
-	["gajae-code", ["gjc", "가재씨"]],
-	["@gajae-code/stats", ["gjc-stats"]],
-	["@gajae-code/typescript-edit-benchmark", ["typescript-edit-benchmark"]],
+	["@vib-rato/ai", ["pi-ai"]],
+	["@vib-rato/coding-agent", ["vib"]],
+	["vib-rato", ["vib"]],
+	["@vib-rato/stats", ["vib-stats"]],
+	["@vib-rato/typescript-edit-benchmark", ["typescript-edit-benchmark"]],
 ]);
 const PUBLIC_DOC_FILES = ["README.md", "packages/coding-agent/README.md"] as const;
 const LEGACY_NAME_PATTERNS: readonly RegExp[] = [
@@ -37,7 +37,7 @@ const LEGACY_NAME_PATTERNS: readonly RegExp[] = [
 	new RegExp("qa\." + ("om" + "p") + String.raw`\.sh`, "u"),
 ];
 const FORBIDDEN_PUBLIC_DOC_PATTERNS: readonly RegExp[] = [
-	// MCP is a public product surface since #4283/#4284 (`gjc mcp`, `/extensions`,
+	// MCP is a public product surface since #4283/#4284 (`vib mcp`, `/extensions`,
 	// docs/standalone-mcp.md); only removed-doc names stay forbidden in public docs.
 	...LEGACY_NAME_PATTERNS,
 	/mcp-config/u,
@@ -85,7 +85,7 @@ const REQUIRED_PRIVATE_EXPORT_BLOCKS = [
 	"./mcp/*",
 	"./runtime-mcp",
 	"./runtime-mcp/*",
-	"./commands/gjc-runtime-bridge",
+	"./commands/vib-runtime-bridge",
 	"./capability/mcp",
 	"./config/mcp-schema",
 	"./discovery/mcp-json",
@@ -98,30 +98,30 @@ const REQUIRED_PRIVATE_EXPORT_BLOCKS = [
 	"./slash-commands/helpers/mcp",
 ] as const;
 const FORBIDDEN_PACKAGE_IMPORTS = [
-	"@gajae-code/coding-agent/mcp",
-	"@gajae-code/coding-agent/runtime-mcp/index",
-	"@gajae-code/coding-agent/runtime-mcp/manager",
-	"@gajae-code/coding-agent/commands/gjc-runtime-bridge",
-	"@gajae-code/coding-agent/capability/mcp",
-	"@gajae-code/coding-agent/config/mcp-schema",
-	"@gajae-code/coding-agent/discovery/mcp-json",
-	"@gajae-code/coding-agent/exa",
-	"@gajae-code/coding-agent/exa/factory",
-	"@gajae-code/coding-agent/exa/mcp-client",
-	"@gajae-code/coding-agent/exa/search",
-	"@gajae-code/coding-agent/exa/types",
-	"@gajae-code/coding-agent/internal-urls/mcp-protocol",
-	"@gajae-code/coding-agent/modes/components/runtime-mcp-add-wizard",
-	"@gajae-code/coding-agent/modes/controllers/runtime-mcp-command-controller",
-	"@gajae-code/coding-agent/slash-commands/helpers/mcp",
+	"@vib-rato/coding-agent/mcp",
+	"@vib-rato/coding-agent/runtime-mcp/index",
+	"@vib-rato/coding-agent/runtime-mcp/manager",
+	"@vib-rato/coding-agent/commands/vib-runtime-bridge",
+	"@vib-rato/coding-agent/capability/mcp",
+	"@vib-rato/coding-agent/config/mcp-schema",
+	"@vib-rato/coding-agent/discovery/mcp-json",
+	"@vib-rato/coding-agent/exa",
+	"@vib-rato/coding-agent/exa/factory",
+	"@vib-rato/coding-agent/exa/mcp-client",
+	"@vib-rato/coding-agent/exa/search",
+	"@vib-rato/coding-agent/exa/types",
+	"@vib-rato/coding-agent/internal-urls/mcp-protocol",
+	"@vib-rato/coding-agent/modes/components/runtime-mcp-add-wizard",
+	"@vib-rato/coding-agent/modes/controllers/runtime-mcp-command-controller",
+	"@vib-rato/coding-agent/slash-commands/helpers/mcp",
 ] as const;
 const FORBIDDEN_PACKAGE_SYMBOLS = [
 	{
-		specifier: "@gajae-code/coding-agent",
+		specifier: "@vib-rato/coding-agent",
 		symbols: ["exaTools", "callExaTool", "searchTools", "researcherTools", "websetsTools"],
 	},
 	{
-		specifier: "@gajae-code/coding-agent/tools",
+		specifier: "@vib-rato/coding-agent/tools",
 		symbols: ["exaTools", "callExaTool", "searchTools", "researcherTools", "websetsTools"],
 	},
 ] as const;
@@ -176,7 +176,7 @@ async function verifyRebrandSurface(): Promise<GateResult> {
 
 	const rootName = typeof rootPackage.name === "string" ? rootPackage.name : "<missing>";
 	const codingName = typeof codingPackage.name === "string" ? codingPackage.name : "<missing>";
-	const hasGjcBin = typeof bin.gjc === "string";
+	const hasVibBin = typeof bin.vib === "string";
 	const hasLegacyBin = ("om" + "p") in bin;
 
 	details.push(`root package name: ${rootName}`);
@@ -185,7 +185,7 @@ async function verifyRebrandSurface(): Promise<GateResult> {
 
 	return {
 		name: "rebrand CLI/package surface",
-		passed: rootName === "gajae-code" && codingName.includes("gajae") && hasGjcBin && !hasLegacyBin,
+		passed: rootName === "vib-rato" && codingName === "@vib-rato/coding-agent" && hasVibBin && !hasLegacyBin,
 		details,
 	};
 }
@@ -216,12 +216,12 @@ async function verifyPackageVersionAndBinaryAllowlist(): Promise<GateResult> {
 		const isPrivate = packageJson.private === true;
 
 		if (relativePath === "package.json") {
-			if (packageName !== "gajae-code") nameFindings.push(`${relativePath}: expected gajae-code, found ${packageName}`);
+			if (packageName !== "vib-rato") nameFindings.push(`${relativePath}: expected vib-rato, found ${packageName}`);
 			continue;
 		}
 
-		if (!packageName.startsWith("@gajae-code/") && !ALLOWED_UNSCOPED_PACKAGE_NAMES.has(packageName)) {
-			nameFindings.push(`${relativePath}: package name ${packageName} is outside @gajae-code scope`);
+		if (!packageName.startsWith("@vib-rato/") && !ALLOWED_UNSCOPED_PACKAGE_NAMES.has(packageName)) {
+			nameFindings.push(`${relativePath}: package name ${packageName} is outside @vib-rato scope`);
 		}
 
 		const allowedPrivateVersion = ALLOWED_PRIVATE_PACKAGE_VERSIONS.get(packageName);
@@ -263,11 +263,11 @@ async function verifyPackageVersionAndBinaryAllowlist(): Promise<GateResult> {
 }
 
 async function verifyVisibleDefinitions(): Promise<GateResult> {
-	const otherDefinitionRoots = [".gjc/skills", ".gjc/agents", ".gjc/commands", ".gjc/rules"];
+	const otherDefinitionRoots = [".vib/skills", ".vib/agents", ".vib/commands", ".vib/rules"];
 	const otherDefinitions: string[] = [];
 	const details: string[] = [];
-	const bundledSkills = readVisibleEntries("packages/coding-agent/src/defaults/gjc/skills").filter(entry =>
-		fs.existsSync(path.join(repoRoot, "packages/coding-agent/src/defaults/gjc/skills", entry, "SKILL.md")),
+	const bundledSkills = readVisibleEntries("packages/coding-agent/src/defaults/vib/skills").filter(entry =>
+		fs.existsSync(path.join(repoRoot, "packages/coding-agent/src/defaults/vib/skills", entry, "SKILL.md")),
 	);
 	const bundledRoleAgents = readVisibleEntries("packages/coding-agent/src/prompts/agents").filter(entry =>
 		EXPECTED_ROLE_AGENTS.includes(entry as (typeof EXPECTED_ROLE_AGENTS)[number]),
@@ -284,14 +284,14 @@ async function verifyVisibleDefinitions(): Promise<GateResult> {
 	const skills = [...bundledSkills].sort();
 	const roleAgents = [...bundledRoleAgents].sort();
 	const ignoredDefinitions = getIgnoredDefinitionPaths([
-		...expectedSkills.map(name => `packages/coding-agent/src/defaults/gjc/skills/${name}/SKILL.md`),
+		...expectedSkills.map(name => `packages/coding-agent/src/defaults/vib/skills/${name}/SKILL.md`),
 		...expectedRoleAgents.map(name => `packages/coding-agent/src/prompts/agents/${name}.md`),
 	]);
 	details.push(`expected bundled workflow skills: ${expectedSkills.join(", ")}`);
 	details.push(`actual bundled workflow skills: ${skills.join(", ") || "<none>"}`);
 	details.push(`expected bundled role agents: ${expectedRoleAgents.join(", ")}`);
 	details.push(`actual bundled role agents: ${roleAgents.join(", ") || "<none>"}`);
-	details.push(`repo-visible .gjc definitions: ${otherDefinitions.join(", ") || "<none>"}`);
+	details.push(`repo-visible .vib definitions: ${otherDefinitions.join(", ") || "<none>"}`);
 	details.push(`gitignored default definitions: ${ignoredDefinitions.join(", ") || "<none>"}`);
 
 	return {
@@ -327,7 +327,7 @@ function getIgnoredDefinitionPaths(paths: readonly string[]): string[] {
 async function verifyPublicDefinitionContent(): Promise<GateResult> {
 	const findings: string[] = [];
 	for (const definition of EXPECTED_DEFINITIONS) {
-		const relativePath = `packages/coding-agent/src/defaults/gjc/skills/${definition}/SKILL.md`;
+		const relativePath = `packages/coding-agent/src/defaults/vib/skills/${definition}/SKILL.md`;
 		const text = await readText(relativePath);
 		for (const pattern of FORBIDDEN_SKILL_PATTERNS) {
 			if (pattern.test(text)) findings.push(`${relativePath}: ${pattern.source}`);
@@ -336,7 +336,7 @@ async function verifyPublicDefinitionContent(): Promise<GateResult> {
 	for (const agent of EXPECTED_ROLE_AGENTS) {
 		const relativePath = `packages/coding-agent/src/prompts/agents/${agent}.md`;
 		const text = await readText(relativePath);
-		if (new RegExp(String.raw`\b` + "om" + "x" + String.raw`\b`, "iu").test(text)) findings.push(`${relativePath}: contains GJC team runtime naming`);
+		if (new RegExp(String.raw`\b` + "om" + "x" + String.raw`\b`, "iu").test(text)) findings.push(`${relativePath}: contains Vibrato team runtime naming`);
 		for (const pattern of FORBIDDEN_SKILL_PATTERNS) {
 			if (pattern.test(text)) findings.push(`${relativePath}: ${pattern.source}`);
 		}
@@ -358,7 +358,7 @@ async function verifyBroadWorkflowExposure(): Promise<GateResult> {
 		if (exportsRecord[exportKey] !== null) findings.push(`packages/coding-agent/package.json exports ${exportKey} is not blocked`);
 	}
 
-	const publicDefinitionRoots = [".gjc/skills", ".gjc/agents", ".gjc/commands", ".gjc/rules"];
+	const publicDefinitionRoots = [".vib/skills", ".vib/agents", ".vib/commands", ".vib/rules"];
 	for (const root of publicDefinitionRoots) {
 		const absolute = path.join(repoRoot, root);
 		if (!fs.existsSync(absolute)) continue;
@@ -368,12 +368,12 @@ async function verifyBroadWorkflowExposure(): Promise<GateResult> {
 	}
 
 	const activeSkillTexts = EXPECTED_DEFINITIONS.map(definition => {
-		const relativePath = `packages/coding-agent/src/defaults/gjc/skills/${definition}/SKILL.md`;
+		const relativePath = `packages/coding-agent/src/defaults/vib/skills/${definition}/SKILL.md`;
 		return [relativePath, fs.readFileSync(path.join(repoRoot, relativePath), "utf8")] as const;
 	});
 	for (const [relativePath, text] of activeSkillTexts) {
 		for (const token of FORBIDDEN_WORKFLOW_SURFACE_TOKENS) {
-			const pattern = new RegExp(`(?:\\$|\\bgjc\\s+|\\b${"om" + "x"}\\s+)${escapeRegExp(token)}\\b`, "u");
+			const pattern = new RegExp(`(?:\\$|\\bvib\\s+|\\b${"om" + "x"}\\s+)${escapeRegExp(token)}\\b`, "u");
 			if (pattern.test(text)) findings.push(`${relativePath}: exposes ${token}`);
 		}
 	}
@@ -388,7 +388,7 @@ async function verifyBroadWorkflowExposure(): Promise<GateResult> {
 async function verifyMcpQuarantine(): Promise<GateResult> {
 	const codingPackage = await readJson("packages/coding-agent/package.json");
 	const exportsRecord = isRecord(codingPackage.exports) ? codingPackage.exports : {};
-	const mcpExportKeys = Object.keys(exportsRecord).filter(key => key === "./mcp" || key.startsWith("./mcp/") || key === "./runtime-mcp" || key.startsWith("./runtime-mcp/") || key === "./commands/gjc-runtime-bridge");
+	const mcpExportKeys = Object.keys(exportsRecord).filter(key => key === "./mcp" || key.startsWith("./mcp/") || key === "./runtime-mcp" || key.startsWith("./runtime-mcp/") || key === "./commands/vib-runtime-bridge");
 	const exposedMcpKeys = mcpExportKeys.filter(key => exportsRecord[key] !== null);
 	const blockedMcpKeys = REQUIRED_PRIVATE_EXPORT_BLOCKS.filter(key => exportsRecord[key] === null);
 	const missingPrivateBlocks = REQUIRED_PRIVATE_EXPORT_BLOCKS.filter(key => exportsRecord[key] !== null);

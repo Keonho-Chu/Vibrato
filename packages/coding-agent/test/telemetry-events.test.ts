@@ -33,7 +33,7 @@ describe("telemetry event serializer", () => {
 
 	it.each([
 		{ prompt: "secret prompt", event: "update_check_completed" },
-		{ argv: ["gjc", "update"], event: "update_check_completed" },
+		{ argv: ["vib", "update"], event: "update_check_completed" },
 		{ path: "/home/alice/project", event: "update_check_completed" },
 		{ env: { TOKEN: "secret" }, event: "update_check_completed" },
 		{ nested: { provider: "secret-provider" }, event: "update_check_completed" },
@@ -68,7 +68,7 @@ describe("telemetry event serializer", () => {
 
 describe("telemetry install ID", () => {
 	it("creates a random UUIDv4 and reuses it without machine-derived input", async () => {
-		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-telemetry-test-"));
+		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "vib-telemetry-test-"));
 		tempDirs.push(directory);
 		const filePath = path.join(directory, "telemetry-install-id");
 
@@ -81,7 +81,7 @@ describe("telemetry install ID", () => {
 	});
 
 	it("fails closed on a malformed persisted ID", async () => {
-		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-telemetry-test-"));
+		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "vib-telemetry-test-"));
 		tempDirs.push(directory);
 		const filePath = path.join(directory, "telemetry-install-id");
 		await fs.writeFile(filePath, "derived-from-hostname\n", { mode: 0o600 });
@@ -90,7 +90,7 @@ describe("telemetry install ID", () => {
 	});
 
 	it("tightens permissions when reusing an existing valid ID", async () => {
-		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-telemetry-test-"));
+		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "vib-telemetry-test-"));
 		tempDirs.push(directory);
 		const filePath = path.join(directory, "telemetry-install-id");
 		await fs.writeFile(filePath, "123e4567-e89b-42d3-a456-426614174000\n", { mode: 0o644 });
@@ -100,7 +100,7 @@ describe("telemetry install ID", () => {
 	});
 
 	it("tightens permissions after concurrent creation races", async () => {
-		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-telemetry-test-"));
+		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "vib-telemetry-test-"));
 		tempDirs.push(directory);
 		const filePath = path.join(directory, "telemetry-install-id");
 

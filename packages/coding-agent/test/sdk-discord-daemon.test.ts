@@ -166,7 +166,7 @@ async function withDaemon(
 	run: (daemon: DiscordNotificationDaemon, provider: FakeDiscordProvider, agentDir: string) => Promise<void>,
 	overrides: Partial<Pick<DiscordNotificationDaemonOptions, "resolveAttachment" | "onCommand" | "now">> = {},
 ): Promise<void> {
-	const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-discord-daemon-"));
+	const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-discord-daemon-"));
 	let daemon: DiscordNotificationDaemon | undefined;
 	try {
 		const provider = new FakeDiscordProvider();
@@ -204,7 +204,7 @@ function inbound(threadId: string, id: string, generation = 1, customId?: string
 			id: `interaction-${id}`,
 			token: `token-${id}`,
 			customId:
-				customId ?? actionCustomIds.get(threadId) ?? `gjc:${generation}:ask:00000000-0000-0000-0000-000000000000`,
+				customId ?? actionCustomIds.get(threadId) ?? `vib:${generation}:ask:00000000-0000-0000-0000-000000000000`,
 			value: "yes",
 		},
 	};
@@ -431,7 +431,7 @@ describe("DiscordNotificationDaemon fake-provider acceptance", () => {
 						components: [
 							{
 								type: 3,
-								customId: expect.stringMatching(/^gjc:4:ask:[0-9a-f-]{36}$/),
+								customId: expect.stringMatching(/^vib:4:ask:[0-9a-f-]{36}$/),
 								placeholder: "Choose an option",
 								minValues: 1,
 								maxValues: 1,
@@ -873,11 +873,11 @@ describe("DiscordNotificationDaemon fake-provider acceptance", () => {
 		const now = 60_001;
 		await withDaemon(
 			async (_daemon, provider, agentDir) => {
-				const nonce = `gjc-${createHash("sha256").update("create:session:recovery-nonce").digest("hex").slice(0, 21)}`;
+				const nonce = `vib-${createHash("sha256").update("create:session:recovery-nonce").digest("hex").slice(0, 21)}`;
 				const thread = await provider.createThread({
 					guildId: "guild",
 					parentId: "parent",
-					name: "GJC session",
+					name: "Vibrato session",
 					nonce,
 				});
 				const journal = new ChatEffectJournal({ agentDir, transport: "discord", now: () => now });
@@ -888,7 +888,7 @@ describe("DiscordNotificationDaemon fake-provider acceptance", () => {
 					transport: "discord",
 					sessionId: "session",
 					endpointGeneration: 1,
-					payload: { guildId: "guild", parentId: "parent", name: "GJC session", nonce },
+					payload: { guildId: "guild", parentId: "parent", name: "Vibrato session", nonce },
 				});
 				const leased = await journal.claim(effectId, "crashed-owner", 1);
 				expect(leased).toBeDefined();
@@ -943,11 +943,11 @@ describe("DiscordNotificationDaemon fake-provider acceptance", () => {
 	test("consumes terminal create intents represented by closed or archived mappings and recreates with a fresh effect", async () => {
 		for (const state of ["closed", "archived"] as const) {
 			await withDaemon(async (_daemon, provider, agentDir) => {
-				const nonce = `gjc-${createHash("sha256").update("create:session:recovery").digest("hex").slice(0, 21)}`;
+				const nonce = `vib-${createHash("sha256").update("create:session:recovery").digest("hex").slice(0, 21)}`;
 				const thread = await provider.createThread({
 					guildId: "guild",
 					parentId: "parent",
-					name: "GJC session",
+					name: "Vibrato session",
 					nonce,
 				});
 				const journal = new ChatEffectJournal({ agentDir, transport: "discord" });
@@ -957,7 +957,7 @@ describe("DiscordNotificationDaemon fake-provider acceptance", () => {
 					transport: "discord",
 					sessionId: "session",
 					endpointGeneration: 1,
-					payload: { guildId: "guild", parentId: "parent", name: "GJC session", nonce },
+					payload: { guildId: "guild", parentId: "parent", name: "Vibrato session", nonce },
 				});
 				const lease = await journal.claim("create:session:recovery", "crashed-owner", 60_000);
 				await journal.record(
@@ -1027,11 +1027,11 @@ describe("DiscordNotificationDaemon fake-provider acceptance", () => {
 	});
 	test("does not activate a terminal create receipt when another mapping already owns the session", async () => {
 		await withDaemon(async (_daemon, provider, agentDir) => {
-			const nonce = `gjc-${createHash("sha256").update("create:session:stale").digest("hex").slice(0, 21)}`;
+			const nonce = `vib-${createHash("sha256").update("create:session:stale").digest("hex").slice(0, 21)}`;
 			const stale = await provider.createThread({
 				guildId: "guild",
 				parentId: "parent",
-				name: "GJC session",
+				name: "Vibrato session",
 				nonce,
 			});
 			const journal = new ChatEffectJournal({ agentDir, transport: "discord" });
@@ -1041,7 +1041,7 @@ describe("DiscordNotificationDaemon fake-provider acceptance", () => {
 				transport: "discord",
 				sessionId: "session",
 				endpointGeneration: 1,
-				payload: { guildId: "guild", parentId: "parent", name: "GJC session", nonce },
+				payload: { guildId: "guild", parentId: "parent", name: "Vibrato session", nonce },
 			});
 			const lease = await journal.claim("create:session:stale", "crashed-owner", 60_000);
 			await journal.record("create:session:stale", { owner: "crashed-owner", epoch: lease!.epoch }, "terminal", {
@@ -1487,7 +1487,7 @@ describe("DiscordNotificationDaemon fake-provider acceptance", () => {
 					actionId: "ask-retry",
 					options: ["Yes"],
 				});
-				const retryCustomId = `gjc:1:ask-retry:${retry.pendingActionNonce!}`;
+				const retryCustomId = `vib:1:ask-retry:${retry.pendingActionNonce!}`;
 				provider.deferInteraction = async () => {
 					throw new Error("Discord API request failed (400)");
 				};
@@ -1513,7 +1513,7 @@ describe("DiscordNotificationDaemon fake-provider acceptance", () => {
 					options: ["Yes"],
 				});
 				expect(uncertain.pendingActionNonce).toBeDefined();
-				const uncertainCustomId = `gjc:1:ask-uncertain:${uncertain.pendingActionNonce!}`;
+				const uncertainCustomId = `vib:1:ask-uncertain:${uncertain.pendingActionNonce!}`;
 				provider.deferInteraction = async () => {};
 				const originalSend = (await attachment("session")).send;
 				const throwingAttachment = async (sessionId: string): Promise<SessionAttachment> => ({
@@ -1792,7 +1792,7 @@ describe("DiscordNotificationDaemon fake-provider acceptance", () => {
 				"Discord disconnected after accepting post",
 			);
 			expect(provider.messages).toHaveLength(1);
-			expect([...provider.messageNonces.keys()][0]).toMatch(/^gjc-[a-f0-9]{21}$/);
+			expect([...provider.messageNonces.keys()][0]).toMatch(/^vib-[a-f0-9]{21}$/);
 			const restarted = new DiscordNotificationDaemon({
 				agentDir,
 				guildId: "guild",
@@ -2285,7 +2285,7 @@ describe("DiscordNotificationDaemon fake-provider acceptance", () => {
 		});
 	});
 	test("recovers a dead unexpired inbound lease without another gateway event and cancels it on stop", async () => {
-		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-discord-lease-recovery-"));
+		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-discord-lease-recovery-"));
 		let restarted: DiscordNotificationDaemon | undefined;
 		try {
 			let now = 0;
@@ -2559,7 +2559,7 @@ describe("DiscordNotificationDaemon fake-provider acceptance", () => {
 	});
 
 	test("does not scan conversation mappings below the terminal prune threshold", async () => {
-		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-discord-prune-bound-"));
+		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-discord-prune-bound-"));
 		try {
 			const journal = new ChatEffectJournal({ agentDir, transport: "discord" });
 			await journal.enqueue({

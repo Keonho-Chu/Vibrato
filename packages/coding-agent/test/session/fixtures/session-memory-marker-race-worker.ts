@@ -6,9 +6,9 @@ import {
 	replaceSessionCommitMarkerCheckedSync,
 } from "../../../src/session/session-storage";
 
-const root = process.env.GJC_MARKER_RACE_ROOT;
-const publisher = process.env.GJC_MARKER_RACE_PUBLISHER;
-const generation = Number(process.env.GJC_MARKER_RACE_GENERATION);
+const root = process.env.VIB_MARKER_RACE_ROOT;
+const publisher = process.env.VIB_MARKER_RACE_PUBLISHER;
+const generation = Number(process.env.VIB_MARKER_RACE_GENERATION);
 if (!root || !publisher || !Number.isSafeInteger(generation))
 	throw new Error("Missing marker race worker configuration");
 

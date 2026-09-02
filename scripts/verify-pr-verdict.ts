@@ -4,12 +4,12 @@ import * as path from "node:path";
 
 const SHA40 = /^[0-9a-f]{40}$/u;
 const SHA256 = /^[0-9a-f]{64}$/u;
-const VERDICT_PREFIX = "gajae.pr-review-verdict.v1";
-const VERDICT_PATTERN = /^gajae\.pr-review-verdict\.v1 (merge-approved|merge-self-approved|merge-blocked|needs-human) sha256:([0-9a-f]{64}) reviewer:(architect|critic|human) reviewer-id:([^\s]+) evidence:(.+)$/u;
-const SELF_REVIEW_PREFIX = "gajae.pr-self-review.v1";
-const SELF_REVIEW_PATTERN = /^gajae\.pr-self-review\.v1 verdict:(merge-approved|merge-self-approved|merge-blocked) base:([0-9a-f]{40}) head:([0-9a-f]{40}) sha256:([0-9a-f]{64}) reviewer-id:([^\s]+) risk:(low-risk|regression-risk|high-risk) extra:(none|independent:[^\s]+) evidence:(.+)$/u;
+const VERDICT_PREFIX = "vibrato.pr-review-verdict.v1";
+const VERDICT_PATTERN = /^vibrato\.pr-review-verdict\.v1 (merge-approved|merge-self-approved|merge-blocked|needs-human) sha256:([0-9a-f]{64}) reviewer:(architect|critic|human) reviewer-id:([^\s]+) evidence:(.+)$/u;
+const SELF_REVIEW_PREFIX = "vibrato.pr-self-review.v1";
+const SELF_REVIEW_PATTERN = /^vibrato\.pr-self-review\.v1 verdict:(merge-approved|merge-self-approved|merge-blocked) base:([0-9a-f]{40}) head:([0-9a-f]{40}) sha256:([0-9a-f]{64}) reviewer-id:([^\s]+) risk:(low-risk|regression-risk|high-risk) extra:(none|independent:[^\s]+) evidence:(.+)$/u;
 const SELF_REVIEW_SIGNATURE_PATTERN = /^self-review-signature: sha256:([0-9a-f]{64})$/u;
-const SELF_REVIEW_FOOTER = "Signed-off-by: gaebal-gajae (clawdbot) 🦞";
+const SELF_REVIEW_FOOTER = "Signed-off-by: gaebal-vibrato (clawdbot) 🦞";
 
 export type PrVerdict = "merge-approved" | "merge-self-approved" | "merge-blocked" | "needs-human";
 export type ReviewerRole = "architect" | "critic" | "human";
@@ -184,7 +184,7 @@ export function selfReviewSignedPayload(review: Omit<ParsedSelfReview, "signatur
 	].join("\n");
 }
 
-const SELF_REVIEW_SIGNATURE_DOMAIN = "gajae.pr-self-review.v1.signature-domain";
+const SELF_REVIEW_SIGNATURE_DOMAIN = "vibrato.pr-self-review.v1.signature-domain";
 
 export function selfReviewSignature(payload: string): string {
 	return new Bun.CryptoHasher("sha256").update(SELF_REVIEW_SIGNATURE_DOMAIN).update(payload).digest("hex");
@@ -225,7 +225,7 @@ export function validatePrContract(input: PrValidationInput): PrValidationResult
 		diagnostics.push(`Exact PR head ${input.headSha} does not contain immutable event base ${input.baseSha}. Rebase onto current dev and regenerate the verdict.`);
 	}
 	if (!input.fastGatePassed) {
-		diagnostics.push("Repository fast gate failed. Run: bun scripts/verify-gjc-state-writers.ts --fail");
+		diagnostics.push("Repository fast gate failed. Run: bun scripts/verify-vib-state-writers.ts --fail");
 	}
 	const selfReview = evaluateSelfReviewComment(input);
 	if (parsed.verdict) {
@@ -256,7 +256,7 @@ export function validatePrContract(input: PrValidationInput): PrValidationResult
 				diagnostics.push(`merge-self-approved reviewer-id ${parsed.verdict.reviewerId} must name the PR author ${input.authorLogin}; this verdict is exclusively the owner's self-authorization.`);
 			}
 			if (!selfReview.ok) {
-				diagnostics.push("merge-self-approved requires a valid gajae.pr-self-review.v1 risk record for the exact head (owner identity, low-risk classification, fresh base/head/digest).");
+				diagnostics.push("merge-self-approved requires a valid vibrato.pr-self-review.v1 risk record for the exact head (owner identity, low-risk classification, fresh base/head/digest).");
 			} else if (selfReview.risk !== "low-risk" || selfReview.verdict !== "merge-self-approved") {
 				diagnostics.push(`merge-self-approved requires the risk record to classify this change low-risk with verdict:merge-self-approved; record says risk:${selfReview.risk} verdict:${selfReview.verdict}. Higher risk classes must use independent review (merge-approved).`);
 			}
@@ -486,7 +486,7 @@ async function git(args: string[], cwd: string): Promise<{ exitCode: number; std
 }
 
 async function runFastGate(cwd: string, trustedRoot: string): Promise<boolean> {
-	const configPath = path.join(Bun.env.RUNNER_TEMP ?? Bun.env.TMPDIR ?? "/tmp", "gjc-pr-contract-empty-bunfig.toml");
+	const configPath = path.join(Bun.env.RUNNER_TEMP ?? Bun.env.TMPDIR ?? "/tmp", "vib-pr-contract-empty-bunfig.toml");
 	await Bun.write(configPath, "# trusted empty Bun configuration\n");
 	const env: Record<string, string | undefined> = { ...process.env };
 	delete env.BUN_OPTIONS;
@@ -494,7 +494,7 @@ async function runFastGate(cwd: string, trustedRoot: string): Promise<boolean> {
 		process.execPath,
 		"--no-env-file",
 		`--config=${configPath}`,
-		path.join(trustedRoot, "scripts", "verify-gjc-state-writers.ts"),
+		path.join(trustedRoot, "scripts", "verify-vib-state-writers.ts"),
 		"--fail",
 		"--root",
 		cwd,

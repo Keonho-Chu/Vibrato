@@ -1,5 +1,5 @@
 /**
- * `gjc daemon` command handler.
+ * `vib daemon` command handler.
  *
  * Generic over the static built-in daemon controller map: lists/inspects
  * daemons and drives cooperative stop/reload. Telegram is the only kind today.

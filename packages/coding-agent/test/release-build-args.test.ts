@@ -4,7 +4,7 @@ import * as path from "node:path";
 
 import { buildDevCompileArgs, buildReleaseCompileArgs, releaseEntrypoints } from "../scripts/compile-args";
 
-const releaseArgs = buildReleaseCompileArgs("bun-darwin-arm64", "packages/coding-agent/binaries/gjc-darwin-arm64");
+const releaseArgs = buildReleaseCompileArgs("bun-darwin-arm64", "packages/coding-agent/binaries/vib-darwin-arm64");
 
 function valuesAfter(args: string[], flag: string): string[] {
 	const values: string[] = [];
@@ -38,14 +38,14 @@ describe("release build compile args", () => {
 
 	it("marks release binaries with release build metadata", () => {
 		expect(valuesAfter(releaseArgs, "--define")).toContain('process.env.PI_COMPILED="true"');
-		expect(valuesAfter(releaseArgs, "--define")).toContain('process.env.GJC_BUILD_CHANNEL="release"');
-		expect(valuesAfter(releaseArgs, "--define")).not.toContain('process.env.GJC_BUILD_CHANNEL="dev"');
+		expect(valuesAfter(releaseArgs, "--define")).toContain('process.env.VIB_BUILD_CHANNEL="release"');
+		expect(valuesAfter(releaseArgs, "--define")).not.toContain('process.env.VIB_BUILD_CHANNEL="dev"');
 	});
 
 	it("marks dev-compiled binaries as dev builds explicitly", () => {
 		const devDefines = valuesAfter(buildDevCompileArgs(), "--define");
 		expect(devDefines).toContain('process.env.PI_COMPILED="true"');
-		expect(devDefines).toContain('process.env.GJC_BUILD_CHANNEL="dev"');
+		expect(devDefines).toContain('process.env.VIB_BUILD_CHANNEL="dev"');
 	});
 
 	it("includes worker entrypoints in release args", () => {
@@ -60,7 +60,7 @@ describe("release build compile args", () => {
 	it("does not list models.json as an extra compile entrypoint", () => {
 		// Bun does not emit `.json` extra entrypoints into the compiled bunfs.
 		// The bundled model catalog is embedded via the `with { type: "file" }`
-		// import in @gajae-code/ai instead, so re-adding these args would regress
+		// import in @vib-rato/ai instead, so re-adding these args would regress
 		// release binary startup.
 		expect(releaseEntrypoints).not.toContain("./packages/ai/src/models.json");
 		expect(releaseArgs).not.toContain("./packages/ai/src/models.json");
@@ -69,7 +69,7 @@ describe("release build compile args", () => {
 
 	it("has exactly one target and outfile", () => {
 		expect(valuesAfter(releaseArgs, "--target")).toEqual(["bun-darwin-arm64"]);
-		expect(valuesAfter(releaseArgs, "--outfile")).toEqual(["packages/coding-agent/binaries/gjc-darwin-arm64"]);
+		expect(valuesAfter(releaseArgs, "--outfile")).toEqual(["packages/coding-agent/binaries/vib-darwin-arm64"]);
 	});
 
 	it("release script dry-run executes the builder output unmodified", () => {

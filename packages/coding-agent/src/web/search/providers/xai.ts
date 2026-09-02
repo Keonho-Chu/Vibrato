@@ -4,8 +4,8 @@
  * Uses xAI's Responses API with the built-in web_search and x_search tools.
  * Endpoint: POST https://api.x.ai/v1/responses
  */
-import type { AuthStorage } from "@gajae-code/ai/core";
-import { $credentialEnv, $env } from "@gajae-code/utils";
+import type { AuthStorage } from "@vib-rato/ai/core";
+import { $credentialEnv, $env } from "@vib-rato/utils";
 import type {
 	ActiveSearchModelContext,
 	ActiveSearchModelCredentials,
@@ -496,7 +496,7 @@ export async function searchXai(params: XaiSearchParams): Promise<SearchResponse
 	if (!auth) {
 		throw new SearchProviderError(
 			"xai",
-			"xAI search credentials not found. Set XAI_API_KEY or login with 'gjc /login xai'.",
+			"xAI search credentials not found. Set XAI_API_KEY or login with 'vib /login xai'.",
 			401,
 		);
 	}

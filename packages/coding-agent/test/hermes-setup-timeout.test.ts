@@ -23,12 +23,12 @@ interface RenderedServer {
 function renderedServerBlock(result: Awaited<ReturnType<typeof runHermesSetup>>): RenderedServer {
 	const preview = result.previews?.find(entry => entry.path.endsWith(".yaml"));
 	const parsed = YAML.parse(preview?.content ?? "") as { mcp_servers?: Record<string, RenderedServer> };
-	return parsed.mcp_servers?.gjc_coordinator ?? {};
+	return parsed.mcp_servers?.vib_coordinator ?? {};
 }
 
 async function installedServerBlock(configPath: string): Promise<RenderedServer> {
 	const parsed = YAML.parse(await Bun.file(configPath).text()) as { mcp_servers?: Record<string, RenderedServer> };
-	return parsed.mcp_servers?.gjc_coordinator ?? {};
+	return parsed.mcp_servers?.vib_coordinator ?? {};
 }
 
 async function render(flags: Parameters<typeof runHermesSetup>[0] = {}) {
@@ -36,18 +36,18 @@ async function render(flags: Parameters<typeof runHermesSetup>[0] = {}) {
 }
 
 async function tempDir(): Promise<string> {
-	tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-hermes-timeout-"));
+	tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "vib-hermes-timeout-"));
 	return tempRoot;
 }
 
 /**
  * Digest over a managed block the way it was computed before #4878, with the
- * timeout fields included, so tests can build blocks written by older GJC
+ * timeout fields included, so tests can build blocks written by older Vibrato
  * versions.
  */
 function legacySignature(block: RenderedServer): string {
 	const env = { ...(block.env ?? {}) };
-	delete env.GJC_COORDINATOR_MCP_SETUP_SIGNATURE;
+	delete env.VIB_COORDINATOR_MCP_SETUP_SIGNATURE;
 	const value = { ...block, env };
 	return crypto
 		.createHash("sha256")
@@ -67,10 +67,10 @@ function canonicalize(value: unknown): unknown {
 }
 
 async function writeConfig(configPath: string, server: RenderedServer): Promise<void> {
-	await Bun.write(configPath, YAML.stringify({ mcp_servers: { gjc_coordinator: server } }, null, 2));
+	await Bun.write(configPath, YAML.stringify({ mcp_servers: { vib_coordinator: server } }, null, 2));
 }
 
-describe("gjc setup hermes --timeout / --connect-timeout", () => {
+describe("vib setup hermes --timeout / --connect-timeout", () => {
 	afterEach(async () => {
 		vi.restoreAllMocks();
 		if (tempRoot) {
@@ -189,7 +189,7 @@ describe("gjc setup hermes --timeout / --connect-timeout", () => {
 
 		const rendered = renderedServerBlock(await render({ root: [dir], timeout: "900", connectTimeout: "45" }));
 		const legacy = { ...rendered };
-		if (legacy.env) legacy.env.GJC_COORDINATOR_MCP_SETUP_SIGNATURE = legacySignature(legacy);
+		if (legacy.env) legacy.env.VIB_COORDINATOR_MCP_SETUP_SIGNATURE = legacySignature(legacy);
 		await writeConfig(configPath, legacy);
 
 		// Before the upgrade, --check reports the legacy signature as stale.
@@ -203,8 +203,8 @@ describe("gjc setup hermes --timeout / --connect-timeout", () => {
 
 		// ... and it is re-signed with the timeout-agnostic signature.
 		const upgraded = await installedServerBlock(configPath);
-		expect(upgraded.env?.GJC_COORDINATOR_MCP_SETUP_SIGNATURE).not.toBe(
-			legacy.env?.GJC_COORDINATOR_MCP_SETUP_SIGNATURE,
+		expect(upgraded.env?.VIB_COORDINATOR_MCP_SETUP_SIGNATURE).not.toBe(
+			legacy.env?.VIB_COORDINATOR_MCP_SETUP_SIGNATURE,
 		);
 		expect((await runHermesSetup({ check: true, root: [dir], target: configPath })).check?.ok).toBe(true);
 	});
@@ -216,11 +216,11 @@ describe("gjc setup hermes --timeout / --connect-timeout", () => {
 		// hand-set to 900 after the block was signed over 180.
 		const rendered = renderedServerBlock(await render({ root: [dir], timeout: "180" }));
 		const legacy = { ...rendered };
-		if (legacy.env) legacy.env.GJC_COORDINATOR_MCP_SETUP_SIGNATURE = legacySignature(legacy);
+		if (legacy.env) legacy.env.VIB_COORDINATOR_MCP_SETUP_SIGNATURE = legacySignature(legacy);
 		await writeConfig(configPath, { ...legacy, timeout: 900 });
 
 		await expect(runHermesSetup({ install: true, root: [dir], target: configPath })).rejects.toThrow(
-			"has GJC managed markers but its setup signature does not match",
+			"has Vibrato managed markers but its setup signature does not match",
 		);
 		const checked = await runHermesSetup({ check: true, root: [dir], target: configPath });
 		expect(checked.check?.ok).toBe(false);
@@ -235,7 +235,7 @@ describe("gjc setup hermes --timeout / --connect-timeout", () => {
 		const dir = await tempDir();
 		const profileDir = path.join(dir, "profile");
 		const configPath = path.join(profileDir, "config.yaml");
-		const operatorPath = path.join(profileDir, "skills", "autonomous-ai-agents", "gajae-code", "SKILL.md");
+		const operatorPath = path.join(profileDir, "skills", "autonomous-ai-agents", "vib-rato", "SKILL.md");
 
 		await runHermesSetup({ install: true, root: [dir], profileDir, timeout: "900" });
 
@@ -244,13 +244,13 @@ describe("gjc setup hermes --timeout / --connect-timeout", () => {
 		const staleOperator = (await Bun.file(operatorPath).text())
 			.replaceAll("## Timeouts", "## Timeouts (older render)")
 			.replace(
-				/<!-- GJC Hermes operator instructions digest v1: [a-f0-9]{64} -->/,
-				"<!-- GJC Hermes operator instructions digest v1: 0000000000000000000000000000000000000000000000000000000000000000 -->",
+				/<!-- Vibrato Hermes operator instructions digest v1: [a-f0-9]{64} -->/,
+				"<!-- Vibrato Hermes operator instructions digest v1: 0000000000000000000000000000000000000000000000000000000000000000 -->",
 			);
 		await Bun.write(operatorPath, staleOperator);
 
 		await expect(runHermesSetup({ install: true, root: [dir], profileDir })).rejects.toThrow(
-			"Operator instruction target already exists and is not managed by GJC",
+			"Operator instruction target already exists and is not managed by Vibrato",
 		);
 
 		await runHermesSetup({ install: true, force: true, root: [dir], profileDir });
@@ -265,7 +265,7 @@ describe("gjc setup hermes --timeout / --connect-timeout", () => {
 		await writeConfig(configPath, { command: "other", timeout: 900, connect_timeout: 900 });
 
 		await expect(runHermesSetup({ install: true, root: [dir], target: configPath })).rejects.toThrow(
-			"already exists and is not managed by GJC",
+			"already exists and is not managed by Vibrato",
 		);
 
 		await runHermesSetup({ install: true, force: true, root: [dir], target: configPath });

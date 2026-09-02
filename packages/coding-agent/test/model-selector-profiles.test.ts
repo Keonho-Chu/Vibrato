@@ -1,15 +1,15 @@
 import { beforeAll, describe, expect, test, vi } from "bun:test";
-import { ThinkingLevel } from "@gajae-code/agent-core";
-import type { Model } from "@gajae-code/ai";
-import type { ModelProfileDefinition } from "@gajae-code/coding-agent/config/model-profiles";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
+import { ThinkingLevel } from "@vib-rato/agent-core";
+import type { Model } from "@vib-rato/ai";
+import type { ModelProfileDefinition } from "@vib-rato/coding-agent/config/model-profiles";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
 import {
 	ModelSelectorComponent,
 	type ModelSelectorSelection,
-} from "@gajae-code/coding-agent/modes/components/model-selector";
-import { SelectorController } from "@gajae-code/coding-agent/modes/controllers/selector-controller";
-import { getThemeByName, setThemeInstance } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { TUI } from "@gajae-code/tui";
+} from "@vib-rato/coding-agent/modes/components/model-selector";
+import { SelectorController } from "@vib-rato/coding-agent/modes/controllers/selector-controller";
+import { getThemeByName, setThemeInstance } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { TUI } from "@vib-rato/tui";
 
 const model = (provider: string, id: string): Model =>
 	({ provider, id, name: id, api: "openai-responses", contextWindow: 1000, maxTokens: 1000 }) as Model;

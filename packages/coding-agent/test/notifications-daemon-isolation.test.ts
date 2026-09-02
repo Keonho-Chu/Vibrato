@@ -38,11 +38,11 @@ afterEach(async () => {
 });
 
 function enableNotificationsEnv(): void {
-	const prev = process.env.GJC_NOTIFICATIONS;
-	process.env.GJC_NOTIFICATIONS = "1";
+	const prev = process.env.VIB_NOTIFICATIONS;
+	process.env.VIB_NOTIFICATIONS = "1";
 	restoreEnv = () => {
-		if (prev === undefined) delete process.env.GJC_NOTIFICATIONS;
-		else process.env.GJC_NOTIFICATIONS = prev;
+		if (prev === undefined) delete process.env.VIB_NOTIFICATIONS;
+		else process.env.VIB_NOTIFICATIONS = prev;
 	};
 }
 
@@ -55,7 +55,7 @@ async function createIsolationHarness(input: {
 	settingsOverrides?: Record<string, unknown>;
 }) {
 	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), input.prefix));
-	const agentDir = path.join(cwd, ".gjc", "agent");
+	const agentDir = path.join(cwd, ".vib", "agent");
 	const cleanup = await createNotificationFixtureRoot(cwd, agentDir);
 	cleanups.push(cleanup);
 	const settings = isolatedNotificationSettings(
@@ -103,7 +103,7 @@ async function createIsolationHarness(input: {
 		ctx,
 		settings,
 		controller,
-		endpoint: path.join(cwd, ".gjc", "state", "sdk", `${sid}.json`),
+		endpoint: path.join(cwd, ".vib", "state", "sdk", `${sid}.json`),
 	};
 }
 
@@ -115,7 +115,7 @@ test("an awaited session_start settles while the telegram daemon ensure stays we
 	// it — not publication, not the awaited handler, not shutdown.
 	const wedge = Promise.withResolvers<"attached">();
 	const harness = await createIsolationHarness({
-		prefix: "gjc-daemon-wedge-",
+		prefix: "vib-daemon-wedge-",
 		ensureTelegramDaemon: () => {
 			ensureCalls += 1;
 			return wedge.promise;
@@ -150,7 +150,7 @@ test("an awaited session_start settles while the telegram daemon ensure stays we
 test("a blocked telegram daemon identity degrades delivery only, never session startup", async () => {
 	enableNotificationsEnv();
 	const harness = await createIsolationHarness({
-		prefix: "gjc-daemon-blocked-",
+		prefix: "vib-daemon-blocked-",
 		ensureTelegramDaemon: async () => "blocked",
 	});
 	// Previously this hard-failed lifecycle startup pre-publication with
@@ -168,7 +168,7 @@ test("a same-length credential rotation re-proves ownership instead of reusing t
 	expect(rotated).toHaveLength(TOKEN.length);
 	let ensureCalls = 0;
 	const harness = await createIsolationHarness({
-		prefix: "gjc-daemon-rotate-",
+		prefix: "vib-daemon-rotate-",
 		ensureTelegramDaemon: async () => {
 			ensureCalls += 1;
 			return "attached";
@@ -192,7 +192,7 @@ test("a delivery-only change reuses the settled ownership outcome instead of re-
 	enableNotificationsEnv();
 	let ensureCalls = 0;
 	const harness = await createIsolationHarness({
-		prefix: "gjc-daemon-delivery-only-",
+		prefix: "vib-daemon-delivery-only-",
 		ensureTelegramDaemon: async () => {
 			ensureCalls += 1;
 			return "attached";
@@ -221,7 +221,7 @@ test("an ownership-identity change withholds active adapters until the new confi
 	const entered = Promise.withResolvers<void>();
 	const release = Promise.withResolvers<void>();
 	const harness = await createIsolationHarness({
-		prefix: "gjc-daemon-reproof-",
+		prefix: "vib-daemon-reproof-",
 		ensureTelegramDaemon: async () => {
 			if (!defer) return "attached";
 			entered.resolve();
@@ -269,7 +269,7 @@ test("an ownership-identity change withholds active adapters until the new confi
 for (const scenario of [
 	{
 		name: "a Discord-only credential rotation",
-		prefix: "gjc-daemon-discord-rotate-",
+		prefix: "vib-daemon-discord-rotate-",
 		overrides: {
 			"notifications.enabled": true,
 			"notifications.discord.botToken": "discord-token",
@@ -282,7 +282,7 @@ for (const scenario of [
 	},
 	{
 		name: "a Slack-only credential rotation",
-		prefix: "gjc-daemon-slack-rotate-",
+		prefix: "vib-daemon-slack-rotate-",
 		overrides: {
 			"notifications.enabled": true,
 			"notifications.slack.botToken": "slack-bot-token",
@@ -295,7 +295,7 @@ for (const scenario of [
 	},
 	{
 		name: "a Slack authorized-actor rotation",
-		prefix: "gjc-daemon-slack-actor-",
+		prefix: "vib-daemon-slack-actor-",
 		overrides: {
 			"notifications.enabled": true,
 			"notifications.slack.botToken": "slack-bot-token",
@@ -341,7 +341,7 @@ test("a redaction transition re-proves ownership when a chat daemon is effective
 	// rendering unredacted payloads.
 	let ensureCalls = 0;
 	const harness = await createIsolationHarness({
-		prefix: "gjc-daemon-redact-chat-",
+		prefix: "vib-daemon-redact-chat-",
 		settingsOverrides: {
 			"notifications.enabled": true,
 			"notifications.redact": false,
@@ -375,7 +375,7 @@ test("a telegram-only redaction change is applied in-process without re-proving 
 	// most common configuration with nothing to re-prove.
 	let ensureCalls = 0;
 	const harness = await createIsolationHarness({
-		prefix: "gjc-daemon-redact-tg-",
+		prefix: "vib-daemon-redact-tg-",
 		ensureTelegramDaemon: async () => {
 			ensureCalls += 1;
 			return "attached";

@@ -18,7 +18,7 @@ describe("SDK session import graph", () => {
 			],
 			{
 				cwd: repositoryRoot,
-				env: { ...process.env, GJC_TRACE_OUT: tracePath },
+				env: { ...process.env, VIB_TRACE_OUT: tracePath },
 				stdout: "ignore",
 				stderr: "ignore",
 			},
@@ -53,7 +53,7 @@ describe("SDK session import graph", () => {
 		const runTrace = async (tracePath: string, entry: string[]) => {
 			const child = Bun.spawn(["bun", "--preload", path.join(repositoryRoot, "scripts/trace-loader.ts"), ...entry], {
 				cwd: repositoryRoot,
-				env: { ...process.env, GJC_TRACE_OUT: tracePath },
+				env: { ...process.env, VIB_TRACE_OUT: tracePath },
 				stdout: "ignore",
 				stderr: "ignore",
 			});
@@ -90,7 +90,7 @@ describe("SDK session import graph", () => {
 	});
 	test("trace provenance keeps both source-scan and runtime-load records for one dynamic edge", async () => {
 		const repositoryRoot = path.resolve(import.meta.dir, "../../../../..");
-		const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-trace-provenance-"));
+		const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "vib-trace-provenance-"));
 		const moduleAPath = path.join(tempRoot, "module-a.ts");
 		const moduleBPath = path.join(tempRoot, "module-b.ts");
 		const entryPath = path.join(tempRoot, "entry.ts");
@@ -107,7 +107,7 @@ describe("SDK session import graph", () => {
 				["bun", "--preload", path.join(repositoryRoot, "scripts/trace-loader.ts"), entryPath],
 				{
 					cwd: repositoryRoot,
-					env: { ...process.env, GJC_TRACE_OUT: tracePath },
+					env: { ...process.env, VIB_TRACE_OUT: tracePath },
 					stdout: "ignore",
 					stderr: "ignore",
 				},

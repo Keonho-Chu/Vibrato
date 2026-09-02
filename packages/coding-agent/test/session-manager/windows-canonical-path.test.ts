@@ -14,7 +14,7 @@ afterEach(async () => {
 
 describe.skipIf(process.platform !== "win32")("Windows trusted storage canonicalization", () => {
 	it("keeps a missing resident-cache tail writable through Bun", async () => {
-		const root = await fsp.mkdtemp(path.join(os.tmpdir(), "gjc-windows-canonical-"));
+		const root = await fsp.mkdtemp(path.join(os.tmpdir(), "vib-windows-canonical-"));
 		testRoots.push(root);
 		const missingTail = path.join(root, "sessions", "resident-cache", "instance", "blob");
 		const canonical = canonicalizeTrustedPath(missingTail);
@@ -32,7 +32,7 @@ describe.skipIf(process.platform !== "win32")("Windows trusted storage canonical
 		// `\\?\Volume{GUID}\...` identity path even though `mkdirSync` succeeds, so a resident
 		// blob write on that path drops the entry mid-turn/compaction. The canonicalized DOS
 		// path must round-trip the same synchronous write and read.
-		const root = await fsp.mkdtemp(path.join(os.tmpdir(), "gjc-windows-canonical-fs-"));
+		const root = await fsp.mkdtemp(path.join(os.tmpdir(), "vib-windows-canonical-fs-"));
 		testRoots.push(root);
 		const residentDir = path.join(root, "sessions", "sess-id", "resident-cache", "sess-id-1234-1");
 		const canonicalDir = canonicalizeTrustedPath(residentDir);

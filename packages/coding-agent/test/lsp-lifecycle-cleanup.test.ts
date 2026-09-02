@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
 import * as path from "node:path";
-import { type ptree, TempDir } from "@gajae-code/utils";
+import { type ptree, TempDir } from "@vib-rato/utils";
 import { createLspWritethrough } from "../src/lsp";
 import * as lspClient from "../src/lsp/client";
 import { getActiveClients, isIdleCheckerActiveForTests, setIdleTimeout, shutdownAll } from "../src/lsp/client";
@@ -52,7 +52,7 @@ describe("LSP lifecycle cleanup", () => {
 	});
 
 	it("starts an LSP client lazily on the first LSP-backed write", async () => {
-		const tempDir = TempDir.createSync("@gjc-lsp-lazy-write-");
+		const tempDir = TempDir.createSync("@vib-lsp-lazy-write-");
 		try {
 			const filePath = path.join(tempDir.path(), "example.ts");
 			const client = createClient(tempDir.path());

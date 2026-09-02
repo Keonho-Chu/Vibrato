@@ -1,26 +1,26 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as path from "node:path";
 import { scheduler } from "node:timers/promises";
-import { Agent, type AgentTool } from "@gajae-code/agent-core";
-import { type AssistantMessage, getBundledModel, type Model, type ToolCall } from "@gajae-code/ai";
-import { createMockModel } from "@gajae-code/ai/providers/mock";
-import { AssistantMessageEventStream } from "@gajae-code/ai/utils/event-stream";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { EditTool } from "@gajae-code/coding-agent/edit";
-import { ExtensionRunner } from "@gajae-code/coding-agent/extensibility/extensions/runner";
-import type { Extension } from "@gajae-code/coding-agent/extensibility/extensions/types";
+import { Agent, type AgentTool } from "@vib-rato/agent-core";
+import { type AssistantMessage, getBundledModel, type Model, type ToolCall } from "@vib-rato/ai";
+import { createMockModel } from "@vib-rato/ai/providers/mock";
+import { AssistantMessageEventStream } from "@vib-rato/ai/utils/event-stream";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { EditTool } from "@vib-rato/coding-agent/edit";
+import { ExtensionRunner } from "@vib-rato/coding-agent/extensibility/extensions/runner";
+import type { Extension } from "@vib-rato/coding-agent/extensibility/extensions/types";
 import {
 	AgentSession,
 	type AgentSessionEvent,
 	DefaultModelSelectionRecoveryError,
-} from "@gajae-code/coding-agent/session/agent-session";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import type { ToolSession } from "@gajae-code/coding-agent/tools";
-import { ReadTool } from "@gajae-code/coding-agent/tools/read";
-import { SearchTool } from "@gajae-code/coding-agent/tools/search";
-import { TempDir } from "@gajae-code/utils";
+} from "@vib-rato/coding-agent/session/agent-session";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import type { ToolSession } from "@vib-rato/coding-agent/tools";
+import { ReadTool } from "@vib-rato/coding-agent/tools/read";
+import { SearchTool } from "@vib-rato/coding-agent/tools/search";
+import { TempDir } from "@vib-rato/utils";
 import { z } from "zod";
 
 type AutoRetryStartEvent = Extract<AgentSessionEvent, { type: "auto_retry_start" }>;

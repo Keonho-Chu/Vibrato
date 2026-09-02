@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
-import * as ai from "@gajae-code/ai";
-import { type Api, getBundledModel, type Model } from "@gajae-code/ai";
+import * as ai from "@vib-rato/ai";
+import { type Api, getBundledModel, type Model } from "@vib-rato/ai";
 import { formatSessionTerminalTitle, generateSessionTitle } from "../src/utils/title-generator";
 
 function getModelOrThrow(id: string): Model<Api> {
@@ -105,23 +105,23 @@ describe("title generator", () => {
 });
 
 describe("formatSessionTerminalTitle", () => {
-	it("returns GJC when no session name or cwd is provided", () => {
-		expect(formatSessionTerminalTitle(undefined)).toBe("GJC");
+	it("returns Vibrato when no session name or cwd is provided", () => {
+		expect(formatSessionTerminalTitle(undefined)).toBe("Vibrato");
 	});
 
-	it("prefixes the session name with GJC", () => {
-		expect(formatSessionTerminalTitle("My Session")).toBe("GJC: My Session");
+	it("prefixes the session name with Vibrato", () => {
+		expect(formatSessionTerminalTitle("My Session")).toBe("Vibrato: My Session");
 	});
 
 	it("falls back to the cwd basename when no session name is provided", () => {
-		expect(formatSessionTerminalTitle(undefined, "/home/user/gajae")).toBe("GJC: gajae");
+		expect(formatSessionTerminalTitle(undefined, "/home/user/vibrato")).toBe("Vibrato: vibrato");
 	});
 
 	it("strips control characters from the session name", () => {
-		expect(formatSessionTerminalTitle("ab\u0001\u001bc")).toBe("GJC: abc");
+		expect(formatSessionTerminalTitle("ab\u0001\u001bc")).toBe("Vibrato: abc");
 	});
 
-	it("falls back to GJC when the sanitized session name is empty", () => {
-		expect(formatSessionTerminalTitle("\u0001\u001b")).toBe("GJC");
+	it("falls back to Vibrato when the sanitized session name is empty", () => {
+		expect(formatSessionTerminalTitle("\u0001\u001b")).toBe("Vibrato");
 	});
 });

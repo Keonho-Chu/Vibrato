@@ -1,4 +1,4 @@
-import type { ImageContent, TextContent } from "@gajae-code/ai";
+import type { ImageContent, TextContent } from "@vib-rato/ai";
 
 export const IMAGE_PLACEHOLDER_ATTACHMENT_GUIDANCE =
 	"Image placeholder text was submitted without an image payload. Paste the image with #paste-image, attach it with @path/to/image.png, or save the image and provide the saved file path.";

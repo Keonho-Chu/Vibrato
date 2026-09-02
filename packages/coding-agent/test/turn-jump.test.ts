@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "bun:test";
-import type { AgentMessage } from "@gajae-code/agent-core";
-import { Container, Text } from "@gajae-code/tui";
+import type { AgentMessage } from "@vib-rato/agent-core";
+import { Container, Text } from "@vib-rato/tui";
 import { InputController } from "../src/modes/controllers/input-controller";
 import type { InteractiveModeContext } from "../src/modes/types";
 import { associateSessionMessageViewportAnchorId } from "../src/session/session-manager";

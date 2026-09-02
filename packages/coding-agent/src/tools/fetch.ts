@@ -1,10 +1,10 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import type { AgentToolResult } from "@gajae-code/agent-core";
-import type { ImageContent, TextContent } from "@gajae-code/ai/core";
-import type { htmlToMarkdown as htmlToMarkdownFn } from "@gajae-code/natives";
-import { type Component, Text } from "@gajae-code/tui";
-import { ptree, truncate } from "@gajae-code/utils";
+import type { AgentToolResult } from "@vib-rato/agent-core";
+import type { ImageContent, TextContent } from "@vib-rato/ai/core";
+import type { htmlToMarkdown as htmlToMarkdownFn } from "@vib-rato/natives";
+import { type Component, Text } from "@vib-rato/tui";
+import { ptree, truncate } from "@vib-rato/utils";
 import type { Settings } from "../config/settings";
 import type { RenderResultOptions } from "../extensibility/custom-tools/types";
 import { type Theme, theme } from "../modes/theme/theme";
@@ -37,7 +37,7 @@ let nativeHtmlBindings: NativeHtmlBindings | undefined;
  * for the process.
  */
 function nativeHtml(): NativeHtmlBindings {
-	nativeHtmlBindings ??= require("@gajae-code/natives") as NativeHtmlBindings;
+	nativeHtmlBindings ??= require("@vib-rato/natives") as NativeHtmlBindings;
 	return nativeHtmlBindings;
 }
 

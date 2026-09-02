@@ -32,7 +32,7 @@ interface GibForkWorkerResult {
 	};
 }
 
-const enabled = process.env.GJC_SESSION_MEMORY_RSS === "1";
+const enabled = process.env.VIB_SESSION_MEMORY_RSS === "1";
 const RSS_ALLOCATOR_ENVELOPE_BYTES = 128 * 1024 * 1024;
 
 describe.skipIf(!enabled)("session memory RSS plateau", () => {
@@ -58,7 +58,7 @@ describe.skipIf(!enabled)("session memory RSS plateau", () => {
 		const worker = path.join(import.meta.dir, "fixtures", "session-memory-rss-worker.ts");
 		const result = Bun.spawnSync({
 			cmd: [process.execPath, worker],
-			env: { ...process.env, GJC_SESSION_MEMORY_RSS_CONTEXT: "1" },
+			env: { ...process.env, VIB_SESSION_MEMORY_RSS_CONTEXT: "1" },
 			stdout: "pipe",
 			stderr: "pipe",
 		});
@@ -76,9 +76,9 @@ describe.skipIf(!enabled)("session memory RSS plateau", () => {
 			cmd: [process.execPath, worker],
 			env: {
 				...process.env,
-				GJC_SESSION_MEMORY_RSS_RECORDS: "120000",
-				GJC_SESSION_MEMORY_RSS_CYCLES: "3",
-				GJC_SESSION_MEMORY_RSS_CYCLE_RECORDS: "5000",
+				VIB_SESSION_MEMORY_RSS_RECORDS: "120000",
+				VIB_SESSION_MEMORY_RSS_CYCLES: "3",
+				VIB_SESSION_MEMORY_RSS_CYCLE_RECORDS: "5000",
 			},
 			stdout: "pipe",
 			stderr: "pipe",
@@ -118,10 +118,10 @@ describe.skipIf(!enabled)("session memory RSS plateau", () => {
 			cmd: [process.execPath, worker],
 			env: {
 				...process.env,
-				GJC_SESSION_MEMORY_RSS_RECORDS: "120000",
-				GJC_SESSION_MEMORY_RSS_CYCLES: "1",
-				GJC_SESSION_MEMORY_RSS_CYCLE_RECORDS: "5000",
-				GJC_SESSION_MEMORY_RSS_BRANCH: "1",
+				VIB_SESSION_MEMORY_RSS_RECORDS: "120000",
+				VIB_SESSION_MEMORY_RSS_CYCLES: "1",
+				VIB_SESSION_MEMORY_RSS_CYCLE_RECORDS: "5000",
+				VIB_SESSION_MEMORY_RSS_BRANCH: "1",
 			},
 			stdout: "pipe",
 			stderr: "pipe",
@@ -140,9 +140,9 @@ describe.skipIf(!enabled)("session memory RSS plateau", () => {
 			cmd: [process.execPath, prepareWorker],
 			env: {
 				...process.env,
-				GJC_SESSION_MEMORY_RSS_RECORDS: "120000",
-				GJC_SESSION_MEMORY_RSS_CYCLES: "0",
-				GJC_SESSION_MEMORY_RSS_KEEP: "1",
+				VIB_SESSION_MEMORY_RSS_RECORDS: "120000",
+				VIB_SESSION_MEMORY_RSS_CYCLES: "0",
+				VIB_SESSION_MEMORY_RSS_KEEP: "1",
 			},
 			stdout: "pipe",
 			stderr: "pipe",
@@ -154,8 +154,8 @@ describe.skipIf(!enabled)("session memory RSS plateau", () => {
 			cmd: [process.execPath, lazyWorker],
 			env: {
 				...process.env,
-				GJC_SESSION_MEMORY_RSS_SESSION: fixture.sessionFile,
-				GJC_SESSION_MEMORY_RSS_REMOVE: "1",
+				VIB_SESSION_MEMORY_RSS_SESSION: fixture.sessionFile,
+				VIB_SESSION_MEMORY_RSS_REMOVE: "1",
 			},
 			stdout: "pipe",
 			stderr: "pipe",
@@ -176,9 +176,9 @@ describe.skipIf(!enabled)("session memory RSS plateau", () => {
 			cmd: [process.execPath, worker],
 			env: {
 				...process.env,
-				GJC_SESSION_MEMORY_RSS_RECORDS: "60000",
-				GJC_SESSION_MEMORY_RSS_CYCLES: "0",
-				GJC_SESSION_MEMORY_RSS_FIRST_OPEN: "1",
+				VIB_SESSION_MEMORY_RSS_RECORDS: "60000",
+				VIB_SESSION_MEMORY_RSS_CYCLES: "0",
+				VIB_SESSION_MEMORY_RSS_FIRST_OPEN: "1",
 			},
 			stdout: "pipe",
 			stderr: "pipe",
@@ -196,10 +196,10 @@ describe.skipIf(!enabled)("session memory RSS plateau", () => {
 			cmd: [process.execPath, worker],
 			env: {
 				...process.env,
-				GJC_SESSION_MEMORY_RSS_RECORDS: "120000",
-				GJC_SESSION_MEMORY_RSS_CYCLES: "0",
-				GJC_SESSION_MEMORY_RSS_FIRST_OPEN: "1",
-				GJC_SESSION_MEMORY_RSS_SELECTION: "1",
+				VIB_SESSION_MEMORY_RSS_RECORDS: "120000",
+				VIB_SESSION_MEMORY_RSS_CYCLES: "0",
+				VIB_SESSION_MEMORY_RSS_FIRST_OPEN: "1",
+				VIB_SESSION_MEMORY_RSS_SELECTION: "1",
 			},
 			stdout: "pipe",
 			stderr: "pipe",
@@ -219,10 +219,10 @@ describe.skipIf(!enabled)("session memory RSS plateau", () => {
 			cmd: [process.execPath, worker],
 			env: {
 				...process.env,
-				GJC_SESSION_MEMORY_RSS_RECORDS: "120000",
-				GJC_SESSION_MEMORY_RSS_CYCLES: "0",
-				GJC_SESSION_MEMORY_RSS_FIRST_OPEN: "1",
-				GJC_SESSION_MEMORY_RSS_FORK: "1",
+				VIB_SESSION_MEMORY_RSS_RECORDS: "120000",
+				VIB_SESSION_MEMORY_RSS_CYCLES: "0",
+				VIB_SESSION_MEMORY_RSS_FIRST_OPEN: "1",
+				VIB_SESSION_MEMORY_RSS_FORK: "1",
 			},
 			stdout: "pipe",
 			stderr: "pipe",
@@ -242,10 +242,10 @@ describe.skipIf(!enabled)("session memory RSS plateau", () => {
 			cmd: [process.execPath, worker],
 			env: {
 				...process.env,
-				GJC_SESSION_MEMORY_RSS_RECORDS: "120000",
-				GJC_SESSION_MEMORY_RSS_CYCLES: "0",
-				GJC_SESSION_MEMORY_RSS_FIRST_OPEN: "1",
-				GJC_SESSION_MEMORY_RSS_CAPTURED_FORK: "1",
+				VIB_SESSION_MEMORY_RSS_RECORDS: "120000",
+				VIB_SESSION_MEMORY_RSS_CYCLES: "0",
+				VIB_SESSION_MEMORY_RSS_FIRST_OPEN: "1",
+				VIB_SESSION_MEMORY_RSS_CAPTURED_FORK: "1",
 			},
 			stdout: "pipe",
 			stderr: "pipe",
@@ -265,9 +265,9 @@ describe.skipIf(!enabled)("session memory RSS plateau", () => {
 			cmd: [process.execPath, prepareWorker],
 			env: {
 				...process.env,
-				GJC_SESSION_MEMORY_RSS_RECORDS: "120000",
-				GJC_SESSION_MEMORY_RSS_CYCLES: "0",
-				GJC_SESSION_MEMORY_RSS_FIRST_OPEN: "1",
+				VIB_SESSION_MEMORY_RSS_RECORDS: "120000",
+				VIB_SESSION_MEMORY_RSS_CYCLES: "0",
+				VIB_SESSION_MEMORY_RSS_FIRST_OPEN: "1",
 			},
 			stdout: "pipe",
 			stderr: "pipe",
@@ -280,10 +280,10 @@ describe.skipIf(!enabled)("session memory RSS plateau", () => {
 			cmd: [process.execPath, prepareWorker],
 			env: {
 				...process.env,
-				GJC_SESSION_MEMORY_RSS_RECORDS: "1000000",
-				GJC_SESSION_MEMORY_RSS_CYCLES: "0",
-				GJC_SESSION_MEMORY_RSS_FIRST_OPEN: "1",
-				GJC_SESSION_MEMORY_RSS_KEEP: "1",
+				VIB_SESSION_MEMORY_RSS_RECORDS: "1000000",
+				VIB_SESSION_MEMORY_RSS_CYCLES: "0",
+				VIB_SESSION_MEMORY_RSS_FIRST_OPEN: "1",
+				VIB_SESSION_MEMORY_RSS_KEEP: "1",
 			},
 			stdout: "pipe",
 			stderr: "pipe",
@@ -299,8 +299,8 @@ describe.skipIf(!enabled)("session memory RSS plateau", () => {
 			cmd: [process.execPath, lazyWorker],
 			env: {
 				...process.env,
-				GJC_SESSION_MEMORY_RSS_SESSION: fixture.sessionFile,
-				GJC_SESSION_MEMORY_RSS_REMOVE: "1",
+				VIB_SESSION_MEMORY_RSS_SESSION: fixture.sessionFile,
+				VIB_SESSION_MEMORY_RSS_REMOVE: "1",
 			},
 			stdout: "pipe",
 			stderr: "pipe",
@@ -337,7 +337,7 @@ describe.skipIf(!enabled)("session memory RSS plateau", () => {
 		const worker = path.join(import.meta.dir, "fixtures", "session-memory-gib-fork-worker.ts");
 		const result = Bun.spawnSync({
 			cmd: [process.execPath, worker],
-			env: { ...process.env, GJC_SESSION_MEMORY_GIB_CAPTURED: "1" },
+			env: { ...process.env, VIB_SESSION_MEMORY_GIB_CAPTURED: "1" },
 			stdout: "pipe",
 			stderr: "pipe",
 		});

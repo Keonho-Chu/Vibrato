@@ -1,10 +1,10 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "bun:test";
-import { resetSettingsForTest, Settings, settings } from "@gajae-code/coding-agent/config/settings";
-import { ThemeSelectorComponent } from "@gajae-code/coding-agent/modes/components/theme-selector";
-import { SelectorController } from "@gajae-code/coding-agent/modes/controllers/selector-controller";
-import * as themeModule from "@gajae-code/coding-agent/modes/theme/theme";
-import { initTheme, previewTheme, restoreThemePreview, theme } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { InteractiveModeContext } from "@gajae-code/coding-agent/modes/types";
+import { resetSettingsForTest, Settings, settings } from "@vib-rato/coding-agent/config/settings";
+import { ThemeSelectorComponent } from "@vib-rato/coding-agent/modes/components/theme-selector";
+import { SelectorController } from "@vib-rato/coding-agent/modes/controllers/selector-controller";
+import * as themeModule from "@vib-rato/coding-agent/modes/theme/theme";
+import { initTheme, previewTheme, restoreThemePreview, theme } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { InteractiveModeContext } from "@vib-rato/coding-agent/modes/types";
 
 const THEMES = ["red-claw", "blue-crab"];
 const ORIGINAL_COLORTERM = Bun.env.COLORTERM;

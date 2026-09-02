@@ -1,6 +1,6 @@
 # Natives Architecture
 
-`@gajae-code/natives` is now a two-layer package around a loader:
+`@vib-rato/natives` is now a two-layer package around a loader:
 
 1. **CommonJS loader/package entrypoint** resolves and loads the correct `.node` addon and patches generated enum objects onto the export object.
 2. **Rust N-API module layer** implements the exported functions/classes and emits the generated TypeScript declarations.
@@ -28,7 +28,7 @@ This document is the foundation for deeper module-level docs. Performance-motiva
 - `exports["."].types`: `./native/index.d.ts`
 - `exports["."].import`: `./native/index.js`
 
-There is no current `packages/natives/src` TypeScript wrapper layer. Consumers import functions/classes/enums directly from `@gajae-code/natives`; the type contract is the generated `native/index.d.ts` plus enum exports appended by `scripts/gen-enums.ts`.
+There is no current `packages/natives/src` TypeScript wrapper layer. Consumers import functions/classes/enums directly from `@vib-rato/natives`; the type contract is the generated `native/index.d.ts` plus enum exports appended by `scripts/gen-enums.ts`.
 
 Current capability groups in the generated API include:
 
@@ -67,7 +67,7 @@ For x64, variant selection uses:
 - macOS: `sysctl -n machdep.cpu.leaf7_features`, then `machdep.cpu.features`
 - Windows: PowerShell check for `System.Runtime.Intrinsics.X86.Avx2`
 
-`GJC_NATIVE_VARIANT` can force `modern` or `baseline`; invalid values are ignored.
+`VIB_NATIVE_VARIANT` can force `modern` or `baseline`; invalid values are ignored.
 
 ### Binary distribution and extraction model
 
@@ -77,11 +77,11 @@ For compiled binaries, loader behavior is:
 
 1. Check versioned user cache path: `<getNativesDir()>/<packageVersion>/...`.
 2. Check legacy compiled-binary location:
-   - Windows: `%LOCALAPPDATA%/gjc` (fallback `%USERPROFILE%/AppData/Local/gjc`)
+   - Windows: `%LOCALAPPDATA%/vib` (fallback `%USERPROFILE%/AppData/Local/vib`)
    - non-Windows: `~/.local/bin`
 3. Fall back to packaged `native/` and executable directory candidates.
 
-`getNativesDir()` uses `$XDG_DATA_HOME/gjc/natives` when `$XDG_DATA_HOME/gjc` exists; otherwise it uses `~/.gjc/natives`.
+`getNativesDir()` uses `$XDG_DATA_HOME/vib/natives` when `$XDG_DATA_HOME/vib` exists; otherwise it uses `~/.vib/natives`.
 
 If a populated embedded addon manifest is present, it is also treated as a compiled-binary signal. The loader can extract the matching embedded `.node` into the versioned cache directory before candidate probing.
 
@@ -142,7 +142,7 @@ N-API exports are generated from Rust `#[napi]` functions/classes/objects/enums.
 
 ## Runtime flow (high level)
 
-1. Consumer imports from `@gajae-code/natives`.
+1. Consumer imports from `@vib-rato/natives`.
 2. `native/index.js` computes platform/arch/variant and candidate paths.
 3. Optional embedded binary extraction occurs for compiled distributions.
 4. The first `require(candidate)` that succeeds becomes the exported addon object.

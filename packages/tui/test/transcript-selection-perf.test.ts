@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
-import { type Component, renderMetrics, Text, TUI } from "@gajae-code/tui";
-import { Markdown } from "@gajae-code/tui/components/markdown";
-import { $flag } from "@gajae-code/utils";
+import { type Component, renderMetrics, Text, TUI } from "@vib-rato/tui";
+import { Markdown } from "@vib-rato/tui/components/markdown";
+import { $flag } from "@vib-rato/utils";
 import { defaultMarkdownTheme } from "./test-themes";
 import { VirtualTerminal } from "./virtual-terminal";
 

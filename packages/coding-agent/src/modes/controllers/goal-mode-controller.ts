@@ -1,4 +1,3 @@
-import { consumePendingGoalModeRequest } from "../../gjc-runtime/goal-mode-request";
 import {
 	canonicalArgsKey,
 	classifyToolOutcome,
@@ -11,6 +10,7 @@ import { type Goal, type GoalModeState, normalizeGoal } from "../../goals/state"
 import type { AgentSession, AgentSessionEvent } from "../../session/agent-session";
 import type { SessionContext, SessionManager } from "../../session/session-manager";
 import { formatDuration } from "../../slash-commands/helpers/format";
+import { consumePendingGoalModeRequest } from "../../vib-runtime/goal-mode-request";
 import type { SubmittedUserInput } from "../types";
 import type { ModeGate } from "./mode-gate";
 

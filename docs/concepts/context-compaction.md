@@ -1,13 +1,13 @@
 # Context Compaction
 
-GJC compacts conversation context when the current context token count crosses the configured compaction threshold. By default, adaptive compaction is off and the legacy threshold behavior is preserved.
+Vibrato compacts conversation context when the current context token count crosses the configured compaction threshold. By default, adaptive compaction is off and the legacy threshold behavior is preserved.
 
 ## Static Threshold Tuning
 
 Use `compaction.thresholdPercent` to compact earlier or later:
 
 ```bash
-gjc config set compaction.thresholdPercent 70
+vib config set compaction.thresholdPercent 70
 ```
 
 Or set the same value in `config.yml`:

@@ -1,14 +1,9 @@
-import type { AgentTool, AgentToolContext, AgentToolResult, AgentToolUpdateCallback } from "@gajae-code/agent-core";
-import type { Component } from "@gajae-code/tui";
-import { Text } from "@gajae-code/tui";
-import { formatNumber, prompt } from "@gajae-code/utils";
+import type { AgentTool, AgentToolContext, AgentToolResult, AgentToolUpdateCallback } from "@vib-rato/agent-core";
+import type { Component } from "@vib-rato/tui";
+import { Text } from "@vib-rato/tui";
+import { formatNumber, prompt } from "@vib-rato/utils";
 import * as z from "zod/v4";
 import type { RenderResultOptions } from "../../extensibility/custom-tools/types";
-import {
-	assertCanCompleteCurrentGoal,
-	assertUltragoalDropAllowed,
-	assertUltragoalPauseAllowed,
-} from "../../gjc-runtime/ultragoal-guard";
 import type { Theme, ThemeColor } from "../../modes/theme/theme";
 import goalDescription from "../../prompts/tools/goal.md" with { type: "text" };
 import { formatDuration } from "../../slash-commands/helpers/format";
@@ -16,6 +11,11 @@ import type { ToolSession } from "../../tools";
 import { formatErrorMessage, TRUNCATE_LENGTHS } from "../../tools/render-utils";
 import { ToolError } from "../../tools/tool-errors";
 import { renderStatusLine, truncateToWidth } from "../../tui";
+import {
+	assertCanCompleteCurrentGoal,
+	assertUltragoalDropAllowed,
+	assertUltragoalPauseAllowed,
+} from "../../vib-runtime/ultragoal-guard";
 import { validateGoalObjective } from "../runtime";
 import type { Goal, GoalStatus, GoalToolDetails } from "../state";
 

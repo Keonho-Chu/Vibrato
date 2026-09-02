@@ -3,11 +3,11 @@ import type { PathLike, StatOptions } from "node:fs";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import type { ClientBridge } from "@gajae-code/coding-agent/session/client-bridge";
-import type { ToolSession } from "@gajae-code/coding-agent/tools";
-import { ReadTool } from "@gajae-code/coding-agent/tools/read";
-import { WriteTool } from "@gajae-code/coding-agent/tools/write";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import type { ClientBridge } from "@vib-rato/coding-agent/session/client-bridge";
+import type { ToolSession } from "@vib-rato/coding-agent/tools";
+import { ReadTool } from "@vib-rato/coding-agent/tools/read";
+import { WriteTool } from "@vib-rato/coding-agent/tools/write";
 import { FileReadCache } from "../src/edit/file-read-cache";
 import { writeFileAtomically } from "../src/tools/atomic-file-write";
 
@@ -564,9 +564,9 @@ describe("file tool atomicity and read-after-write (#4734)", () => {
 		}
 	});
 
-	it("rejects a symlink escape from the session-scoped gjc-local root", async () => {
+	it("rejects a symlink escape from the session-scoped vib-local root", async () => {
 		if (process.platform === "win32") return;
-		const sessionRoot = path.join(os.tmpdir(), "gjc-local", "atomic-trust-test");
+		const sessionRoot = path.join(os.tmpdir(), "vib-local", "atomic-trust-test");
 		const outside = path.join(tmpDir, "outside-secret.ts");
 		const link = path.join(sessionRoot, "alias.ts");
 		await fs.mkdir(sessionRoot, { recursive: true });
@@ -582,7 +582,7 @@ describe("file tool atomicity and read-after-write (#4734)", () => {
 
 	it("creates no directories outside the trust boundary for a dangling symlink escape", async () => {
 		if (process.platform === "win32") return;
-		const sessionRoot = path.join(os.tmpdir(), "gjc-local", "atomic-dangling-test");
+		const sessionRoot = path.join(os.tmpdir(), "vib-local", "atomic-dangling-test");
 		const outsideRoot = path.join(tmpDir, "outside-root");
 		// The link target does not exist, and neither do its parents. Resolving it
 		// escapes the session root, so nothing under outsideRoot may be created.
@@ -603,7 +603,7 @@ describe("file tool atomicity and read-after-write (#4734)", () => {
 
 	it("does not mkdir an archive path before rejecting a boundary escape", async () => {
 		if (process.platform === "win32") return;
-		const sessionRoot = path.join(os.tmpdir(), "gjc-local", "archive-boundary-test");
+		const sessionRoot = path.join(os.tmpdir(), "vib-local", "archive-boundary-test");
 		const outsideRoot = path.join(tmpDir, "archive-outside-root");
 		const danglingArchive = path.join(outsideRoot, "attacker", "nested", "payload.zip");
 		const link = path.join(sessionRoot, "archive-link.zip");

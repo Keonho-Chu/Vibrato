@@ -20,12 +20,12 @@
  * thin sync wrapper plus user-facing notice formatting.
  */
 
-import type { applyBashFixups as applyBashFixupsFn } from "@gajae-code/natives";
+import type { applyBashFixups as applyBashFixupsFn } from "@vib-rato/natives";
 
 let nativeApplyBashFixups: typeof applyBashFixupsFn | undefined;
 
 function applyBashFixupsNative(command: string): ReturnType<typeof applyBashFixupsFn> {
-	nativeApplyBashFixups ??= (require("@gajae-code/natives") as { applyBashFixups: typeof applyBashFixupsFn })
+	nativeApplyBashFixups ??= (require("@vib-rato/natives") as { applyBashFixups: typeof applyBashFixupsFn })
 		.applyBashFixups;
 	return nativeApplyBashFixups(command);
 }

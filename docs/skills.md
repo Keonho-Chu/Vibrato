@@ -1,12 +1,12 @@
 # Skills
 
-GJC supports custom `SKILL.md` skills that live as plain files on disk, following
+Vibrato supports custom `SKILL.md` skills that live as plain files on disk, following
 the same file convention as Claude Code and OpenAI Codex. Filesystem skill
-discovery is **on by default** — a valid skill placed in a canonical `.gjc`
+discovery is **on by default** — a valid skill placed in a canonical `.vib`
 location is advertised in a normal session (listed in the session's `<skills>`
 catalog and invokable via `/skill:<name>`) with no configuration ceremony.
 
-The four bundled GJC workflow skills — `autoresearch`, `deep-interview`, `ralplan`, and
+The four bundled Vibrato workflow skills — `autoresearch`, `deep-interview`, `ralplan`, and
 `ultragoal` — are always available and can never be replaced by a filesystem
 skill with the same name.
 
@@ -16,20 +16,20 @@ Project scope (trusted from the repository you open):
 
 | Location | Scope notes |
 |---|---|
-| `<project>/.gjc/skills/<name>/SKILL.md` | Native GJC location; discovered from every ancestor of `cwd` up to the repo root (closest first) |
+| `<project>/.vib/skills/<name>/SKILL.md` | Native Vibrato location; discovered from every ancestor of `cwd` up to the repo root (closest first) |
 
 User scope (installed once, available in every project):
 
 | Location | Scope notes |
 |---|---|
-| `~/.gjc/agent/skills/<name>/SKILL.md` | Canonical GJC user location |
-| `<config>/skills/<name>/SKILL.md` | Configured legacy root (`<config>` is the home-relative directory from `GJC_CONFIG_DIR`, then `PI_CONFIG_DIR`, then `.gjc`) |
-| `~/.gjc/skills/<name>/SKILL.md` | Historical legacy user location (still honored) |
+| `~/.vib/agent/skills/<name>/SKILL.md` | Canonical Vibrato user location |
+| `<config>/skills/<name>/SKILL.md` | Configured legacy root (`<config>` is the home-relative directory from `VIB_CONFIG_DIR`, then `PI_CONFIG_DIR`, then `.vib`) |
+| `~/.vib/skills/<name>/SKILL.md` | Historical legacy user location (still honored) |
 
 ## Claude Code / Codex layouts (explicit import sources)
 
-GJC recognizes the Claude Code and Codex skill layouts but never loads them
-directly — `.gjc` is the only runtime authority, so a session never silently
+Vibrato recognizes the Claude Code and Codex skill layouts but never loads them
+directly — `.vib` is the only runtime authority, so a session never silently
 executes content owned by another host's configuration:
 
 | Location | Convention |
@@ -40,7 +40,7 @@ executes content owned by another host's configuration:
 | `~/.codex/skills/<name>/SKILL.md` | Codex user skills |
 
 These are **import sources**: the `skill_discovery` tool and
-`gjc skills discover` surface them as diagnostics naming the exact copy command
+`vib skills discover` surface them as diagnostics naming the exact copy command
 that enables each skill, so a skill placed in a documented convention location
 is discoverable in a normal session. Foreign user-home layouts are enumerated
 for import only and are never loaded into sessions.
@@ -49,12 +49,12 @@ Importing is a plain file copy into a canonical location:
 
 ```sh
 # import one Claude Code project skill into the current repository
-mkdir -p .gjc/skills/my-skill
-cp .claude/skills/my-skill/SKILL.md .gjc/skills/my-skill/SKILL.md
+mkdir -p .vib/skills/my-skill
+cp .claude/skills/my-skill/SKILL.md .vib/skills/my-skill/SKILL.md
 
-# import one Codex user skill into your user-wide GJC skills
-mkdir -p ~/.gjc/agent/skills/my-skill
-cp ~/.codex/skills/my-skill/SKILL.md ~/.gjc/agent/skills/my-skill/SKILL.md
+# import one Codex user skill into your user-wide Vibrato skills
+mkdir -p ~/.vib/agent/skills/my-skill
+cp ~/.codex/skills/my-skill/SKILL.md ~/.vib/agent/skills/my-skill/SKILL.md
 ```
 
 ## Installing a skill
@@ -64,12 +64,12 @@ includes `name` and `description`):
 
 ```sh
 # project-local, per repository
-mkdir -p .gjc/skills/my-skill
-cp my-skill/SKILL.md .gjc/skills/my-skill/SKILL.md
+mkdir -p .vib/skills/my-skill
+cp my-skill/SKILL.md .vib/skills/my-skill/SKILL.md
 
 # user-wide, available in every project
-mkdir -p ~/.gjc/agent/skills/my-skill
-cp my-skill/SKILL.md ~/.gjc/agent/skills/my-skill/SKILL.md
+mkdir -p ~/.vib/agent/skills/my-skill
+cp my-skill/SKILL.md ~/.vib/agent/skills/my-skill/SKILL.md
 ```
 
 Start a new session and invoke the skill with `/skill:my-skill`, or let the
@@ -82,18 +82,18 @@ Skill discovery is controlled by three settings, all on by default:
 | Setting | Effect |
 |---|---|
 | `skills.enabled` | Master switch for all filesystem skill discovery |
-| `skills.trustProjectSkills` | Load project-scoped `.gjc/skills` and surface project `.claude`/`.codex` import candidates |
-| `skills.trustUserSkills` | Load user-scoped skills (`~/.gjc/agent/skills` and legacy roots) and surface user-home import candidates |
+| `skills.trustProjectSkills` | Load project-scoped `.vib/skills` and surface project `.claude`/`.codex` import candidates |
+| `skills.trustUserSkills` | Load user-scoped skills (`~/.vib/agent/skills` and legacy roots) and surface user-home import candidates |
 
 ```sh
-gjc config set skills.trustProjectSkills false   # ignore repo-controlled skills only
-gjc config set skills.trustUserSkills false      # ignore personal skills only
-gjc config set skills.enabled false              # disable all filesystem skill discovery
+vib config set skills.trustProjectSkills false   # ignore repo-controlled skills only
+vib config set skills.trustUserSkills false      # ignore personal skills only
+vib config set skills.enabled false              # disable all filesystem skill discovery
 ```
 
 The deprecated `skills.enablePiProject` / `skills.enablePiUser` settings remain
 supported as aliases: an explicitly configured legacy value is honored unless
-the corresponding trust setting is also configured. `gjc config set` accepts
+the corresponding trust setting is also configured. `vib config set` accepts
 either name.
 
 Bundled workflow skills are never affected by these switches — they remain
@@ -104,10 +104,10 @@ available even with discovery fully disabled.
 Duplicate names resolve deterministically, first location wins:
 
 1. project scope beats user scope;
-2. within project scope, the `.gjc/skills` directory nearest to `cwd` wins
+2. within project scope, the `.vib/skills` directory nearest to `cwd` wins
    (ancestors are walked from `cwd` up to the repo root, closest first);
 3. within user scope: `<config>/agent/skills` > legacy `<config>/skills` >
-   legacy `~/.gjc/skills`.
+   legacy `~/.vib/skills`.
 
 Shadowed duplicates are diagnosed rather than silent. Bundled workflow skill
 names are reserved: a project skill named `autoresearch`, `deep-interview`, `ralplan`,
@@ -132,8 +132,8 @@ silent skips:
 Inspect what is discoverable and why from the CLI:
 
 ```sh
-gjc skills discover                # project + user skills with diagnostics
-gjc skills discover --source project --json
+vib skills discover                # project + user skills with diagnostics
+vib skills discover --source project --json
 ```
 
 ## Custom directories

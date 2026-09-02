@@ -2,15 +2,15 @@ import { afterEach, describe, expect, it, spyOn } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { ImageContent, Message, ProviderPayload, TextContent } from "@gajae-code/ai";
-import { MemoryBlobStore } from "@gajae-code/coding-agent/session/blob-store";
-import { type PreparedNewSession, SessionManager } from "@gajae-code/coding-agent/session/session-manager";
+import type { ImageContent, Message, ProviderPayload, TextContent } from "@vib-rato/ai";
+import { MemoryBlobStore } from "@vib-rato/coding-agent/session/blob-store";
+import { type PreparedNewSession, SessionManager } from "@vib-rato/coding-agent/session/session-manager";
 import {
 	MemorySessionStorage,
 	type SessionStorage,
 	type SessionStorageWriter,
-} from "@gajae-code/coding-agent/session/session-storage";
-import { getAgentDir, getBlobsDir, setAgentDir } from "@gajae-code/utils";
+} from "@vib-rato/coding-agent/session/session-storage";
+import { getAgentDir, getBlobsDir, setAgentDir } from "@vib-rato/utils";
 
 const LARGE_TEXT = "T".repeat(700_000);
 const LARGE_IMAGE = Buffer.alloc(180_000, 7).toString("base64");
@@ -29,7 +29,7 @@ const ORIGINAL_AGENT_DIR = getAgentDir();
 let tempAgentDir: string | undefined;
 
 function isolateBlobDir(): void {
-	if (!tempAgentDir) tempAgentDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-session-blob-regression-"));
+	if (!tempAgentDir) tempAgentDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-session-blob-regression-"));
 	setAgentDir(tempAgentDir);
 }
 

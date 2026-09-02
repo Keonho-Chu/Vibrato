@@ -1,4 +1,4 @@
-import { isEnoent, logger } from "@gajae-code/utils";
+import { isEnoent, logger } from "@vib-rato/utils";
 import CHANGELOG_TEXT from "../../CHANGELOG.md" with { type: "text" };
 
 export interface ChangelogEntry {
@@ -84,7 +84,7 @@ export async function parseChangelog(changelogPath: string): Promise<ChangelogEn
  *
  * The text is embedded at build time via `with { type: "text" }`, so the
  * displayed changelog is deterministic across compiled binaries, source-tree
- * dev runs, and `GJC_PACKAGE_DIR` / `PI_PACKAGE_DIR` overrides (which scope to
+ * dev runs, and `VIB_PACKAGE_DIR` / `PI_PACKAGE_DIR` overrides (which scope to
  * optional package assets like docs/examples and do not influence the
  * binary-identity changelog).
  */

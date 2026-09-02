@@ -22,9 +22,9 @@ import {
 	setServerDisabled,
 	writeMCPConfigFile,
 } from "../runtime-mcp/config-writer";
-import { CANONICAL_GJC_WORKFLOW_SKILLS } from "../skill-state/canonical-skills";
+import { CANONICAL_VIB_WORKFLOW_SKILLS } from "../skill-state/canonical-skills";
 
-const BUNDLED_SKILL_NAMES: ReadonlySet<string> = new Set(CANONICAL_GJC_WORKFLOW_SKILLS);
+const BUNDLED_SKILL_NAMES: ReadonlySet<string> = new Set(CANONICAL_VIB_WORKFLOW_SKILLS);
 
 export type MutationResult = { ok: true } | { ok: false; reason: string };
 

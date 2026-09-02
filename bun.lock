@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "gajae-code",
+      "name": "vib-rato",
       "devDependencies": {
         "@biomejs/biome": "catalog:",
         "@types/bun": "catalog:",
@@ -13,13 +13,13 @@
       },
     },
     "packages/agent": {
-      "name": "@gajae-code/agent-core",
+      "name": "@vib-rato/agent-core",
       "version": "0.15.6",
       "dependencies": {
-        "@gajae-code/ai": "catalog:",
-        "@gajae-code/natives": "catalog:",
-        "@gajae-code/utils": "catalog:",
         "@opentelemetry/api": "catalog:",
+        "@vib-rato/ai": "catalog:",
+        "@vib-rato/natives": "catalog:",
+        "@vib-rato/utils": "catalog:",
       },
       "devDependencies": {
         "@opentelemetry/context-async-hooks": "catalog:",
@@ -28,7 +28,7 @@
       },
     },
     "packages/ai": {
-      "name": "@gajae-code/ai",
+      "name": "@vib-rato/ai",
       "version": "0.15.6",
       "bin": {
         "pi-ai": "./src/cli.ts",
@@ -36,8 +36,8 @@
       "dependencies": {
         "@anthropic-ai/sdk": "catalog:",
         "@bufbuild/protobuf": "catalog:",
-        "@gajae-code/natives": "catalog:",
-        "@gajae-code/utils": "catalog:",
+        "@vib-rato/natives": "catalog:",
+        "@vib-rato/utils": "catalog:",
         "openai": "catalog:",
         "partial-json": "catalog:",
         "zod": "catalog:",
@@ -47,24 +47,23 @@
       },
     },
     "packages/coding-agent": {
-      "name": "@gajae-code/coding-agent",
+      "name": "@vib-rato/coding-agent",
       "version": "0.15.6",
       "bin": {
-        "gjc": "bin/gjc.js",
-        "가재씨": "bin/gajaessi.js",
+        "vib": "bin/vib.js",
       },
       "dependencies": {
         "@agentclientprotocol/sdk": "catalog:",
         "@babel/parser": "catalog:",
-        "@gajae-code/agent-core": "catalog:",
-        "@gajae-code/ai": "catalog:",
-        "@gajae-code/natives": "catalog:",
-        "@gajae-code/stats": "catalog:",
-        "@gajae-code/tui": "catalog:",
-        "@gajae-code/utils": "catalog:",
         "@mozilla/readability": "catalog:",
         "@puppeteer/browsers": "catalog:",
         "@types/turndown": "catalog:",
+        "@vib-rato/agent-core": "catalog:",
+        "@vib-rato/ai": "catalog:",
+        "@vib-rato/natives": "catalog:",
+        "@vib-rato/stats": "catalog:",
+        "@vib-rato/tui": "catalog:",
+        "@vib-rato/utils": "catalog:",
         "@xterm/headless": "catalog:",
         "chalk": "catalog:",
         "diff": "catalog:",
@@ -87,19 +86,8 @@
         "@types/ws": "catalog:",
       },
     },
-    "packages/gajae-code": {
-      "name": "gajae-code",
-      "version": "0.15.6",
-      "bin": {
-        "gjc": "bin/gjc.js",
-        "가재씨": "bin/gajaessi.js",
-      },
-      "dependencies": {
-        "@gajae-code/coding-agent": "catalog:",
-      },
-    },
     "packages/natives": {
-      "name": "@gajae-code/natives",
+      "name": "@vib-rato/natives",
       "version": "0.15.6",
       "devDependencies": {
         "@napi-rs/cli": "catalog:",
@@ -107,50 +95,50 @@
         "@types/ws": "catalog:",
       },
       "optionalDependencies": {
-        "@gajae-code/natives-darwin-arm64": "workspace:*",
-        "@gajae-code/natives-darwin-x64": "workspace:*",
-        "@gajae-code/natives-linux-arm64": "workspace:*",
-        "@gajae-code/natives-linux-x64": "workspace:*",
-        "@gajae-code/natives-win32-x64": "workspace:*",
+        "@vib-rato/natives-darwin-arm64": "workspace:*",
+        "@vib-rato/natives-darwin-x64": "workspace:*",
+        "@vib-rato/natives-linux-arm64": "workspace:*",
+        "@vib-rato/natives-linux-x64": "workspace:*",
+        "@vib-rato/natives-win32-x64": "workspace:*",
       },
     },
     "packages/natives-darwin-arm64": {
-      "name": "@gajae-code/natives-darwin-arm64",
+      "name": "@vib-rato/natives-darwin-arm64",
       "version": "0.15.6",
     },
     "packages/natives-darwin-x64": {
-      "name": "@gajae-code/natives-darwin-x64",
+      "name": "@vib-rato/natives-darwin-x64",
       "version": "0.15.6",
     },
     "packages/natives-linux-arm64": {
-      "name": "@gajae-code/natives-linux-arm64",
+      "name": "@vib-rato/natives-linux-arm64",
       "version": "0.15.6",
     },
     "packages/natives-linux-x64": {
-      "name": "@gajae-code/natives-linux-x64",
+      "name": "@vib-rato/natives-linux-x64",
       "version": "0.15.6",
     },
     "packages/natives-win32-x64": {
-      "name": "@gajae-code/natives-win32-x64",
+      "name": "@vib-rato/natives-win32-x64",
       "version": "0.15.6",
     },
     "packages/orchestration-token-benchmark": {
-      "name": "@gajae-code/orchestration-token-benchmark",
+      "name": "@vib-rato/orchestration-token-benchmark",
       "version": "0.0.1",
       "devDependencies": {
         "@types/bun": "catalog:",
       },
     },
     "packages/stats": {
-      "name": "@gajae-code/stats",
+      "name": "@vib-rato/stats",
       "version": "0.15.6",
       "bin": {
-        "gjc-stats": "./src/index.ts",
+        "vib-stats": "./src/index.ts",
       },
       "dependencies": {
-        "@gajae-code/ai": "catalog:",
-        "@gajae-code/utils": "catalog:",
         "@tailwindcss/node": "catalog:",
+        "@vib-rato/ai": "catalog:",
+        "@vib-rato/utils": "catalog:",
         "chart.js": "catalog:",
         "date-fns": "catalog:",
         "lucide-react": "catalog:",
@@ -167,11 +155,11 @@
       },
     },
     "packages/tui": {
-      "name": "@gajae-code/tui",
+      "name": "@vib-rato/tui",
       "version": "0.15.6",
       "dependencies": {
-        "@gajae-code/natives": "catalog:",
-        "@gajae-code/utils": "catalog:",
+        "@vib-rato/natives": "catalog:",
+        "@vib-rato/utils": "catalog:",
         "lru-cache": "catalog:",
         "marked": "catalog:",
       },
@@ -182,7 +170,7 @@
       },
     },
     "packages/typescript-edit-benchmark": {
-      "name": "@gajae-code/typescript-edit-benchmark",
+      "name": "@vib-rato/typescript-edit-benchmark",
       "version": "0.0.1",
       "bin": {
         "typescript-edit-benchmark": "src/index.ts",
@@ -192,11 +180,11 @@
         "@babel/parser": "catalog:",
         "@babel/traverse": "catalog:",
         "@babel/types": "catalog:",
-        "@gajae-code/agent-core": "catalog:",
-        "@gajae-code/ai": "catalog:",
-        "@gajae-code/coding-agent": "catalog:",
-        "@gajae-code/tui": "catalog:",
-        "@gajae-code/utils": "catalog:",
+        "@vib-rato/agent-core": "catalog:",
+        "@vib-rato/ai": "catalog:",
+        "@vib-rato/coding-agent": "catalog:",
+        "@vib-rato/tui": "catalog:",
+        "@vib-rato/utils": "catalog:",
         "diff": "catalog:",
         "prettier": "catalog:",
         "regexp-tree": "catalog:",
@@ -208,10 +196,10 @@
       },
     },
     "packages/utils": {
-      "name": "@gajae-code/utils",
+      "name": "@vib-rato/utils",
       "version": "0.15.6",
       "dependencies": {
-        "@gajae-code/natives": "catalog:",
+        "@vib-rato/natives": "catalog:",
         "beautiful-mermaid": "catalog:",
         "handlebars": "catalog:",
         "winston": "catalog:",
@@ -219,6 +207,16 @@
       },
       "devDependencies": {
         "@types/bun": "catalog:",
+      },
+    },
+    "packages/vib-rato": {
+      "name": "vib-rato",
+      "version": "0.15.6",
+      "bin": {
+        "vib": "bin/vib.js",
+      },
+      "dependencies": {
+        "@vib-rato/coding-agent": "catalog:",
       },
     },
   },
@@ -232,18 +230,6 @@
     "@biomejs/biome": "2.5.2",
     "@bufbuild/protobuf": "^2.12.0",
     "@bufbuild/protoc-gen-es": "^2.12.0",
-    "@gajae-code/agent-core": "0.15.6",
-    "@gajae-code/ai": "0.15.6",
-    "@gajae-code/coding-agent": "0.15.6",
-    "@gajae-code/natives": "0.15.6",
-    "@gajae-code/natives-darwin-arm64": "0.15.6",
-    "@gajae-code/natives-darwin-x64": "0.15.6",
-    "@gajae-code/natives-linux-arm64": "0.15.6",
-    "@gajae-code/natives-linux-x64": "0.15.6",
-    "@gajae-code/natives-win32-x64": "0.15.6",
-    "@gajae-code/stats": "0.15.6",
-    "@gajae-code/tui": "0.15.6",
-    "@gajae-code/utils": "0.15.6",
     "@mozilla/readability": "^0.6.0",
     "@napi-rs/cli": "3.6.2",
     "@opentelemetry/api": "^1.9.0",
@@ -259,6 +245,18 @@
     "@types/react-dom": "^19.2.3",
     "@types/turndown": "5.0.6",
     "@types/ws": "^8.5.13",
+    "@vib-rato/agent-core": "0.15.6",
+    "@vib-rato/ai": "0.15.6",
+    "@vib-rato/coding-agent": "0.15.6",
+    "@vib-rato/natives": "0.15.6",
+    "@vib-rato/natives-darwin-arm64": "0.15.6",
+    "@vib-rato/natives-darwin-x64": "0.15.6",
+    "@vib-rato/natives-linux-arm64": "0.15.6",
+    "@vib-rato/natives-linux-x64": "0.15.6",
+    "@vib-rato/natives-win32-x64": "0.15.6",
+    "@vib-rato/stats": "0.15.6",
+    "@vib-rato/tui": "0.15.6",
+    "@vib-rato/utils": "0.15.6",
     "@xterm/headless": "^6.0.0",
     "beautiful-mermaid": "^1.1.3",
     "chalk": "^5.6.2",
@@ -349,34 +347,6 @@
     "@emnapi/runtime": ["@emnapi/runtime@1.9.2", "", { "dependencies": { "tslib": "^2.4.0" } }, "sha512-3U4+MIWHImeyu1wnmVygh5WlgfYDtyf0k8AbLhMFxOipihf6nrWC4syIm/SwEeec0mNSafiiNnMJwbza/Is6Lw=="],
 
     "@emnapi/wasi-threads": ["@emnapi/wasi-threads@1.2.1", "", { "dependencies": { "tslib": "^2.4.0" } }, "sha512-uTII7OYF+/Mes/MrcIOYp5yOtSMLBWSIoLPpcgwipoiKbli6k322tcoFsxoIIxPDqW01SQGAgko4EzZi2BNv2w=="],
-
-    "@gajae-code/agent-core": ["@gajae-code/agent-core@workspace:packages/agent"],
-
-    "@gajae-code/ai": ["@gajae-code/ai@workspace:packages/ai"],
-
-    "@gajae-code/coding-agent": ["@gajae-code/coding-agent@workspace:packages/coding-agent"],
-
-    "@gajae-code/natives": ["@gajae-code/natives@workspace:packages/natives"],
-
-    "@gajae-code/natives-darwin-arm64": ["@gajae-code/natives-darwin-arm64@workspace:packages/natives-darwin-arm64"],
-
-    "@gajae-code/natives-darwin-x64": ["@gajae-code/natives-darwin-x64@workspace:packages/natives-darwin-x64"],
-
-    "@gajae-code/natives-linux-arm64": ["@gajae-code/natives-linux-arm64@workspace:packages/natives-linux-arm64"],
-
-    "@gajae-code/natives-linux-x64": ["@gajae-code/natives-linux-x64@workspace:packages/natives-linux-x64"],
-
-    "@gajae-code/natives-win32-x64": ["@gajae-code/natives-win32-x64@workspace:packages/natives-win32-x64"],
-
-    "@gajae-code/orchestration-token-benchmark": ["@gajae-code/orchestration-token-benchmark@workspace:packages/orchestration-token-benchmark"],
-
-    "@gajae-code/stats": ["@gajae-code/stats@workspace:packages/stats"],
-
-    "@gajae-code/tui": ["@gajae-code/tui@workspace:packages/tui"],
-
-    "@gajae-code/typescript-edit-benchmark": ["@gajae-code/typescript-edit-benchmark@workspace:packages/typescript-edit-benchmark"],
-
-    "@gajae-code/utils": ["@gajae-code/utils@workspace:packages/utils"],
 
     "@inquirer/ansi": ["@inquirer/ansi@2.0.7", "", {}, "sha512-3eTuUO1vH2cZm2ZKHeQxnOqlTi9EfZDGgIe3BL3I4u+rJHocr9Fz86M4fjYABPvFnQG/gGK551HqDiIcETwU6Q=="],
 
@@ -644,6 +614,34 @@
 
     "@typescript/typescript-win32-x64": ["@typescript/typescript-win32-x64@7.0.2", "", { "os": "win32", "cpu": "x64" }, "sha512-0BQ3HkAHHlKLSp1qRvf3SUhGpGsDuhB/jgFw75guyqbxJqEaS0Cw/VFO8i2nHglJUzQCRtMMR/IBAKE3ETMC4g=="],
 
+    "@vib-rato/agent-core": ["@vib-rato/agent-core@workspace:packages/agent"],
+
+    "@vib-rato/ai": ["@vib-rato/ai@workspace:packages/ai"],
+
+    "@vib-rato/coding-agent": ["@vib-rato/coding-agent@workspace:packages/coding-agent"],
+
+    "@vib-rato/natives": ["@vib-rato/natives@workspace:packages/natives"],
+
+    "@vib-rato/natives-darwin-arm64": ["@vib-rato/natives-darwin-arm64@workspace:packages/natives-darwin-arm64"],
+
+    "@vib-rato/natives-darwin-x64": ["@vib-rato/natives-darwin-x64@workspace:packages/natives-darwin-x64"],
+
+    "@vib-rato/natives-linux-arm64": ["@vib-rato/natives-linux-arm64@workspace:packages/natives-linux-arm64"],
+
+    "@vib-rato/natives-linux-x64": ["@vib-rato/natives-linux-x64@workspace:packages/natives-linux-x64"],
+
+    "@vib-rato/natives-win32-x64": ["@vib-rato/natives-win32-x64@workspace:packages/natives-win32-x64"],
+
+    "@vib-rato/orchestration-token-benchmark": ["@vib-rato/orchestration-token-benchmark@workspace:packages/orchestration-token-benchmark"],
+
+    "@vib-rato/stats": ["@vib-rato/stats@workspace:packages/stats"],
+
+    "@vib-rato/tui": ["@vib-rato/tui@workspace:packages/tui"],
+
+    "@vib-rato/typescript-edit-benchmark": ["@vib-rato/typescript-edit-benchmark@workspace:packages/typescript-edit-benchmark"],
+
+    "@vib-rato/utils": ["@vib-rato/utils@workspace:packages/utils"],
+
     "@xmldom/xmldom": ["@xmldom/xmldom@0.8.13", "", {}, "sha512-KRYzxepc14G/CEpEGc3Yn+JKaAeT63smlDr+vjB8jRfgTBBI9wRj/nkQEO+ucV8p8I9bfKLWp37uHgFrbntPvw=="],
 
     "@xterm/headless": ["@xterm/headless@6.0.0", "", {}, "sha512-5Yj1QINYCyzrZtf8OFIHi47iQtI+0qYFPHmouEfG8dHNxbZ9Tb9YGSuLcsEwj9Z+OL75GJqPyJbyoFer80a2Hw=="],
@@ -819,8 +817,6 @@
     "file-type": ["file-type@21.3.4", "", { "dependencies": { "@tokenizer/inflate": "^0.4.1", "strtok3": "^10.3.4", "token-types": "^6.1.1", "uint8array-extras": "^1.4.0" } }, "sha512-Ievi/yy8DS3ygGvT47PjSfdFoX+2isQueoYP1cntFW1JLYAuS4GD7NUPGg4zv2iZfV52uDyk5w5Z0TdpRS6Q1g=="],
 
     "fn.name": ["fn.name@1.1.0", "", {}, "sha512-GRnmB5gPyJpAhTQdSZTSp9uaPSvl09KoYcMQtsB9rQoOmzs9dH6ffeccH+Z+cv6P68Hu5bC6JjRh4Ah/mHSNRw=="],
-
-    "gajae-code": ["gajae-code@workspace:packages/gajae-code"],
 
     "get-caller-file": ["get-caller-file@2.0.5", "", {}, "sha512-DyFP3BM/3YHTQOCUL/w0OZHR0lpKeGrxotcHWcqNEdnltqFwXVfhEBQ94eIo34AfQpo0rGki4cyIiftY06h2Fg=="],
 
@@ -1115,6 +1111,8 @@
     "universal-user-agent": ["universal-user-agent@7.0.3", "", {}, "sha512-TmnEAEAsBJVZM/AADELsK76llnwcf9vMKuPz8JflO1frO8Lchitr0fNaN9d+Ap0BjKtqWqd/J17qeDnXh8CL2A=="],
 
     "util-deprecate": ["util-deprecate@1.0.2", "", {}, "sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw=="],
+
+    "vib-rato": ["vib-rato@workspace:packages/vib-rato"],
 
     "webdriver-bidi-protocol": ["webdriver-bidi-protocol@0.4.1", "", {}, "sha512-ARrjNjtWRRs2w4Tk7nqrf2gBI0QXWuOmMCx2hU+1jUt6d00MjMxURrhxhGbrsoiZKJrhTSTzbIrc554iKI10qw=="],
 

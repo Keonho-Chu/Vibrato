@@ -37,13 +37,13 @@ async function createServer(root: string, sessionCommand: string | null, require
 	const calls: BrokerCall[] = [];
 	const server = createCoordinatorMcpServer({
 		env: {
-			GJC_COORDINATOR_MCP_WORKDIR_ROOTS: root,
-			GJC_COORDINATOR_MCP_STATE_ROOT: path.join(root, ".gjc", "coordinator-state"),
-			GJC_COORDINATOR_MCP_MUTATIONS: "sessions",
-			GJC_COORDINATOR_MCP_PROFILE: "local",
-			GJC_COORDINATOR_MCP_REPO: "repo",
-			...(sessionCommand === null ? {} : { GJC_COORDINATOR_MCP_SESSION_COMMAND: sessionCommand }),
-			...(requireWorktree ? { GJC_COORDINATOR_MCP_REQUIRE_WORKTREE: "true" } : {}),
+			VIB_COORDINATOR_MCP_WORKDIR_ROOTS: root,
+			VIB_COORDINATOR_MCP_STATE_ROOT: path.join(root, ".vib", "coordinator-state"),
+			VIB_COORDINATOR_MCP_MUTATIONS: "sessions",
+			VIB_COORDINATOR_MCP_PROFILE: "local",
+			VIB_COORDINATOR_MCP_REPO: "repo",
+			...(sessionCommand === null ? {} : { VIB_COORDINATOR_MCP_SESSION_COMMAND: sessionCommand }),
+			...(requireWorktree ? { VIB_COORDINATOR_MCP_REQUIRE_WORKTREE: "true" } : {}),
 		},
 		services: {
 			getAgentDir: () => agentDir,
@@ -73,7 +73,7 @@ async function startSession(
 	extra: Record<string, unknown> = {},
 	idempotencyKey = "start-1",
 ) {
-	return await server.callTool("gjc_coordinator_start_session", {
+	return await server.callTool("vib_coordinator_start_session", {
 		cwd: root,
 		idempotency_key: idempotencyKey,
 		allow_mutation: true,
@@ -84,7 +84,7 @@ async function startSession(
 describe("per-call worktree name", () => {
 	it("names this session's worktree instead of the configured default", async () => {
 		const root = await coordinatorFixtureRoot(tempDirs);
-		const { server, calls } = await createServer(root, "gjc --worktree shared-default");
+		const { server, calls } = await createServer(root, "vib --worktree shared-default");
 
 		await startSession(server, root, { worktree: "task-a" });
 
@@ -93,7 +93,7 @@ describe("per-call worktree name", () => {
 
 	it("gives concurrent sessions in one repository distinct worktrees", async () => {
 		const root = await coordinatorFixtureRoot(tempDirs);
-		const { server, calls } = await createServer(root, "gjc --worktree");
+		const { server, calls } = await createServer(root, "vib --worktree");
 
 		await startSession(server, root, { worktree: "task-a" }, "start-a");
 		await startSession(server, root, { worktree: "task-b" }, "start-b");
@@ -106,7 +106,7 @@ describe("per-call worktree name", () => {
 
 	it("falls back to the configured name when the request omits one", async () => {
 		const root = await coordinatorFixtureRoot(tempDirs);
-		const { server, calls } = await createServer(root, "gjc --worktree shared-default");
+		const { server, calls } = await createServer(root, "vib --worktree shared-default");
 
 		await startSession(server, root);
 
@@ -115,7 +115,7 @@ describe("per-call worktree name", () => {
 
 	it("requires an explicit per-task worktree when configured", async () => {
 		const root = await coordinatorFixtureRoot(tempDirs);
-		const { server, calls } = await createServer(root, "gjc --worktree", true);
+		const { server, calls } = await createServer(root, "vib --worktree", true);
 
 		expect(await startSession(server, root)).toMatchObject({ ok: false, reason: "worktree_required" });
 		expect(lifecycleTargets(calls)).toHaveLength(0);
@@ -126,7 +126,7 @@ describe("per-call worktree name", () => {
 
 	it("refuses an unsatisfiable required-worktree configuration", async () => {
 		const root = await coordinatorFixtureRoot(tempDirs);
-		const { server, calls } = await createServer(root, "gjc", true);
+		const { server, calls } = await createServer(root, "vib", true);
 
 		expect(await startSession(server, root, { worktree: "task-a" })).toMatchObject({
 			ok: false,
@@ -137,7 +137,7 @@ describe("per-call worktree name", () => {
 
 	it("refuses to enable worktree mode for an in-place coordinator", async () => {
 		const root = await coordinatorFixtureRoot(tempDirs);
-		const { server, calls } = await createServer(root, "gjc");
+		const { server, calls } = await createServer(root, "vib");
 
 		const result = await startSession(server, root, { worktree: "task-a" });
 
@@ -149,7 +149,7 @@ describe("per-call worktree name", () => {
 
 	it("rejects names the launch selector could not carry", async () => {
 		const root = await coordinatorFixtureRoot(tempDirs);
-		const { server, calls } = await createServer(root, "gjc --worktree");
+		const { server, calls } = await createServer(root, "vib --worktree");
 
 		for (const [index, worktree] of ["--force", "two words", "bad..branch", "branch.lock", 1].entries()) {
 			expect(await startSession(server, root, { worktree }, `reject-${index}`)).toMatchObject({
@@ -162,7 +162,7 @@ describe("per-call worktree name", () => {
 
 	it("treats a blank name as absent rather than as a rejection", async () => {
 		const root = await coordinatorFixtureRoot(tempDirs);
-		const { server, calls } = await createServer(root, "gjc --worktree shared-default");
+		const { server, calls } = await createServer(root, "vib --worktree shared-default");
 
 		await startSession(server, root, { worktree: "   " });
 
@@ -171,7 +171,7 @@ describe("per-call worktree name", () => {
 
 	it("binds the worktree name to the idempotency key", async () => {
 		const root = await coordinatorFixtureRoot(tempDirs);
-		const { server } = await createServer(root, "gjc --worktree");
+		const { server } = await createServer(root, "vib --worktree");
 
 		await startSession(server, root, { worktree: "task-a" }, "same-key");
 		const replayed = await startSession(server, root, { worktree: "task-b" }, "same-key");
@@ -183,13 +183,13 @@ describe("per-call worktree name", () => {
 
 	it("advertises the argument on start_session and the delegate tools", async () => {
 		const root = await coordinatorFixtureRoot(tempDirs);
-		const { server } = await createServer(root, "gjc --worktree");
+		const { server } = await createServer(root, "vib --worktree");
 
 		const response = (await server.handleJsonRpc({ jsonrpc: "2.0", id: 1, method: "tools/list" })) as {
 			result?: { tools?: Array<{ name: string; inputSchema?: { properties?: Record<string, unknown> } }> };
 		};
 		const tools = response.result?.tools ?? [];
-		for (const name of ["gjc_coordinator_start_session", "gjc_delegate_execute", "gjc_delegate_plan"]) {
+		for (const name of ["vib_coordinator_start_session", "vib_delegate_execute", "vib_delegate_plan"]) {
 			const tool = tools.find(entry => entry.name === name);
 			expect(tool?.inputSchema?.properties?.worktree).toBeDefined();
 		}

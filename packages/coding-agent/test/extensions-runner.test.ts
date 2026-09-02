@@ -5,25 +5,25 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import type { Settings } from "@gajae-code/coding-agent/config/settings";
-import { discoverAndLoadExtensions } from "@gajae-code/coding-agent/extensibility/extensions/loader";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import type { Settings } from "@vib-rato/coding-agent/config/settings";
+import { discoverAndLoadExtensions } from "@vib-rato/coding-agent/extensibility/extensions/loader";
 import {
 	EXTENSION_HANDLER_TIMEOUT_MS,
 	ExtensionRunner,
 	SESSION_SHUTDOWN_HANDLER_TIMEOUT_MS,
 	testSetExtensionHandlerTimeoutMs,
 	testSetSessionShutdownHandlerTimeoutMs,
-} from "@gajae-code/coding-agent/extensibility/extensions/runner";
+} from "@vib-rato/coding-agent/extensibility/extensions/runner";
 import {
 	createCustomToolSettings,
 	createExtensionSettings,
 	type ExtensionContext,
-} from "@gajae-code/coding-agent/extensibility/extensions/types";
+} from "@vib-rato/coding-agent/extensibility/extensions/types";
 
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { getProjectAgentDir, logger, TempDir } from "@gajae-code/utils";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { getProjectAgentDir, logger, TempDir } from "@vib-rato/utils";
 
 describe("ExtensionRunner", () => {
 	let tempDir: TempDir;

@@ -27,13 +27,13 @@ function listDefinitionFiles(dir: string, extensions: readonly string[]): string
 		});
 }
 
-const visibleSkills = listSkillDirs(".gjc/skills").sort();
-const visibleAgents = listDefinitionFiles(".gjc/agents", [".md", ".toml"]).sort();
+const visibleSkills = listSkillDirs(".vib/skills").sort();
+const visibleAgents = listDefinitionFiles(".vib/agents", [".md", ".toml"]).sort();
 const otherVisibleDefinitions = [
-	...listDefinitionFiles(".gjc/commands", [".md"]),
-	...listDefinitionFiles(".gjc/rules", [".md"]),
+	...listDefinitionFiles(".vib/commands", [".md"]),
+	...listDefinitionFiles(".vib/rules", [".md"]),
 ].sort();
-const bundledSkills = listSkillDirs("packages/coding-agent/src/defaults/gjc/skills").sort();
+const bundledSkills = listSkillDirs("packages/coding-agent/src/defaults/vib/skills").sort();
 const bundledRoleAgents = listDefinitionFiles("packages/coding-agent/src/prompts/agents", [".md"])
 	.filter(name => expectedRoleAgents.includes(name))
 	.sort();
@@ -41,7 +41,7 @@ const unexpectedVisible = [...visibleSkills, ...visibleAgents, ...otherVisibleDe
 const missingBundledSkills = expectedWorkflowSkills.filter(name => !bundledSkills.includes(name));
 const missingRoleAgents = expectedRoleAgents.filter(name => !bundledRoleAgents.includes(name));
 const ignoredDefinitions = getIgnoredDefinitionPaths([
-	...expectedWorkflowSkills.map(name => `packages/coding-agent/src/defaults/gjc/skills/${name}/SKILL.md`),
+	...expectedWorkflowSkills.map(name => `packages/coding-agent/src/defaults/vib/skills/${name}/SKILL.md`),
 	...expectedRoleAgents.map(name => `packages/coding-agent/src/prompts/agents/${name}.md`),
 ]);
 

@@ -4,9 +4,9 @@ import * as crypto from "node:crypto";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { promisify } from "node:util";
-import { ThinkingLevel } from "@gajae-code/agent-core";
-import type { Api, ImageContent, Model } from "@gajae-code/ai/core";
-import { logger } from "@gajae-code/utils";
+import { ThinkingLevel } from "@vib-rato/agent-core";
+import type { Api, ImageContent, Model } from "@vib-rato/ai/core";
+import { logger } from "@vib-rato/utils";
 import { AsyncJobManager } from "../../async";
 import {
 	getProxyRoutableProviders,
@@ -1364,7 +1364,7 @@ function createQuerySurface(
 			const activeProfile =
 				typeof ctx.getActiveModelProfile === "function" ? ctx.getActiveModelProfile() : undefined;
 			// A user-defined provider under the reserved logical namespace makes
-			// `gajae-code/*` ids ambiguous: selection is rejected, so Q10 must
+			// `vib-rato/*` ids ambiguous: selection is rejected, so Q10 must
 			// NOT advertise any rows from that namespace (neither the colliding
 			// provider's concrete models nor synthetic profiles). The collided
 			// provider's rows are filtered out of every degraded projection too,
@@ -1372,7 +1372,7 @@ function createQuerySurface(
 			const collision = syntheticNamespaceCollision(models, ctx.modelRegistry.getConfiguredProviderIds?.() ?? []);
 			const concreteRows = collision ? models.filter(model => model.provider !== SYNTHETIC_PROVIDER_ID) : models;
 			// Degraded projection: concrete rows always (minus a collided
-			// gajae-code provider), plus a bounded synthetic current readback
+			// vib-rato provider), plus a bounded synthetic current readback
 			// when a profile marker is active — unless the namespace is collided,
 			// in which case no synthetic row (including the active fallback) may
 			// appear because selection is rejected.
@@ -1901,7 +1901,7 @@ function createControlSurface(
 		return model;
 	};
 	/**
-	 * Route a synthetic `gajae-code/<profile>` model selection into the
+	 * Route a synthetic `vib-rato/<profile>` model selection into the
 	 * session-scoped activation transaction. ACP model selection never writes a
 	 * global profile default; persistence remains an explicit TUI choice. Only
 	 * an absent or `off` thinking level is forwarded (synthetic rows advertise
@@ -3493,7 +3493,7 @@ export function createSdkSessionRuntimeExtension(api: ExtensionAPI, options: Cre
 		const sessionId = ctx.sessionManager.getSessionId();
 		const sessionFile = ctx.sessionManager.getSessionFile?.();
 		if (sessionFile) return `${sessionId}\u0000${sessionFile}`;
-		const stateRoot = path.join(ctx.cwd, ".gjc", "state");
+		const stateRoot = path.join(ctx.cwd, ".vib", "state");
 		return `${sessionId}\u0000${resolveReconciliationSessionFile(undefined, stateRoot, sessionId)}`;
 	};
 	const lifecycleStateForContext = (
@@ -4241,7 +4241,7 @@ export function createSdkSessionRuntimeExtension(api: ExtensionAPI, options: Cre
 	const startRuntime = async (ctx: ExtensionContext): Promise<void> => {
 		if (active) return;
 		const sessionId = ctx.sessionManager.getSessionId();
-		const stateRoot = path.join(ctx.cwd, ".gjc", "state");
+		const stateRoot = path.join(ctx.cwd, ".vib", "state");
 		const token = crypto.randomBytes(24).toString("base64url");
 		const transport = await options.createTransport({ sessionId, stateRoot, token });
 		const revisions = new RevisionStore(sessionId, Date.now, { storageDir: stateRoot });

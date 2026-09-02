@@ -1,4 +1,4 @@
-import { UNK_CONTEXT_WINDOW, UNK_MAX_TOKENS } from "@gajae-code/ai/core";
+import { UNK_CONTEXT_WINDOW, UNK_MAX_TOKENS } from "@vib-rato/ai/core";
 import {
 	ModelProfileRegistryError,
 	UnknownModelProfileError,
@@ -13,7 +13,7 @@ export { SYNTHETIC_PROVIDER_ID } from "./model-profile-namespace";
 /**
  * Display metadata used for synthetic rows whose profile default model cannot
  * be resolved to a registered model. Mirrors the shared unknown-model
- * constants from `@gajae-code/ai`; the real model's window is authoritative.
+ * constants from `@vib-rato/ai`; the real model's window is authoritative.
  */
 export const SYNTHETIC_UNKNOWN_CONTEXT_WINDOW = UNK_CONTEXT_WINDOW;
 export const SYNTHETIC_UNKNOWN_MAX_TOKENS = UNK_MAX_TOKENS;

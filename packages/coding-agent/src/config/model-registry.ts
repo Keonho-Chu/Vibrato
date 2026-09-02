@@ -38,8 +38,8 @@ import {
 	UNK_CONTEXT_WINDOW,
 	UNK_MAX_TOKENS,
 	unregisterCustomApis,
-} from "@gajae-code/ai/core";
-import { resolveLoopbackOpenAIBaseUrl } from "@gajae-code/ai/utils/discovery/openai-compatible";
+} from "@vib-rato/ai/core";
+import { resolveLoopbackOpenAIBaseUrl } from "@vib-rato/ai/utils/discovery/openai-compatible";
 
 // Sentinels for local-only OAuth tokens — declared inline to avoid loading provider
 // modules at startup. Must match the provider OAuth modules.
@@ -54,9 +54,9 @@ function normalizeVllmApiKey(provider: string, apiKey: string | undefined): stri
 	return isVllmNoAuthToken(provider, apiKey) ? getEnvApiKey(provider) : apiKey;
 }
 
-import { registerOAuthProvider, unregisterOAuthProviders } from "@gajae-code/ai/utils/oauth";
-import type { OAuthCredentials, OAuthLoginCallbacks } from "@gajae-code/ai/utils/oauth/types";
-import { $pickCredentialEnv, $rotatingCredentialEnv, getAgentDir, isRecord, logger } from "@gajae-code/utils";
+import { registerOAuthProvider, unregisterOAuthProviders } from "@vib-rato/ai/utils/oauth";
+import type { OAuthCredentials, OAuthLoginCallbacks } from "@vib-rato/ai/utils/oauth/types";
+import { $pickCredentialEnv, $rotatingCredentialEnv, getAgentDir, isRecord, logger } from "@vib-rato/utils";
 import { parseModelString, resolveProviderModelReference, splitSelectorThinkingSuffix } from "../config/model-resolver";
 import { isValidThemeColor, type ThemeColor } from "../modes/theme/theme";
 import {
@@ -94,7 +94,6 @@ import {
 } from "./model-profiles";
 import { normalizeModelSelectorValue } from "./model-selector-value";
 import {
-	GJC_MODEL_ASSIGNMENT_TARGET_IDS,
 	type ModelOverride,
 	type ModelProfileConfig,
 	type ModelsConfig,
@@ -102,6 +101,7 @@ import {
 	ProfileDefinitionSchema,
 	type ProviderAuthMode,
 	type ProviderDiscovery,
+	VIB_MODEL_ASSIGNMENT_TARGET_IDS,
 } from "./models-config-schema";
 import {
 	buildProviderSelectionCatalog,
@@ -172,16 +172,16 @@ export const MODEL_ROLES: Record<ModelRole, ModelRoleInfo> = {
 export const MODEL_ROLE_IDS: ModelRole[] = ["default"];
 export const MODEL_PROFILE_NAME_PATTERN = /^[a-z0-9][a-z0-9._-]*$/;
 export const MODEL_PROFILE_NAME_PATTERN_DESCRIPTION = "lowercase letters, numbers, dots, underscores, or hyphens";
-export type GjcModelAssignmentTargetId = (typeof GJC_MODEL_ASSIGNMENT_TARGET_IDS)[number];
+export type VibModelAssignmentTargetId = (typeof VIB_MODEL_ASSIGNMENT_TARGET_IDS)[number];
 
-export interface GjcModelAssignmentTargetInfo extends ModelRoleInfo {
-	id: GjcModelAssignmentTargetId;
+export interface VibModelAssignmentTargetInfo extends ModelRoleInfo {
+	id: VibModelAssignmentTargetId;
 	settingsPath: "modelRoles" | "task.agentModelOverrides";
 }
 
-export { GJC_MODEL_ASSIGNMENT_TARGET_IDS };
+export { VIB_MODEL_ASSIGNMENT_TARGET_IDS };
 
-export const GJC_MODEL_ASSIGNMENT_TARGETS: Record<GjcModelAssignmentTargetId, GjcModelAssignmentTargetInfo> = {
+export const VIB_MODEL_ASSIGNMENT_TARGETS: Record<VibModelAssignmentTargetId, VibModelAssignmentTargetInfo> = {
 	default: { id: "default", tag: "DEFAULT", name: "Default", color: "success", settingsPath: "modelRoles" },
 	executor: {
 		id: "executor",
@@ -208,7 +208,7 @@ export const GJC_MODEL_ASSIGNMENT_TARGETS: Record<GjcModelAssignmentTargetId, Gj
 	image: { id: "image", tag: "IMAGE", name: "Image", color: "accent", settingsPath: "modelRoles" },
 };
 
-export function requiresExplicitThinkingChoice(model: Model, role: GjcModelAssignmentTargetId | null): boolean {
+export function requiresExplicitThinkingChoice(model: Model, role: VibModelAssignmentTargetId | null): boolean {
 	if (!modelSupportsReasoningControl(model)) return false;
 	if (
 		model.provider === "openai" ||
@@ -218,7 +218,7 @@ export function requiresExplicitThinkingChoice(model: Model, role: GjcModelAssig
 		return true;
 	if (role === null) return false;
 	if (role === "default") return true;
-	return GJC_MODEL_ASSIGNMENT_TARGETS[role].settingsPath === "task.agentModelOverrides";
+	return VIB_MODEL_ASSIGNMENT_TARGETS[role].settingsPath === "task.agentModelOverrides";
 }
 
 /** Alias for ModelRoleInfo - used for both built-in and custom roles */
@@ -705,7 +705,7 @@ function getProviderBaseUrlEnvKeys(provider: string): string[] {
  * `cwd/.env`, so reading it there would let repository content redirect
  * authenticated traffic for any provider — including re-admitting a redirect
  * that the provider-level resolvers already reject. Resolve it the same way
- * provider credentials are: launching shell plus GJC/user-owned `.env` files,
+ * provider credentials are: launching shell plus Vibrato/user-owned `.env` files,
  * never the project `.env`.
  */
 function resolveProviderBaseUrlFromEnv(provider: string): string | undefined {
@@ -840,7 +840,7 @@ function fingerprintConfiguredDiscoveryRequestShape(
 		apiByModelPrefix: sortEntries(providerConfig.discovery.apiByModelPrefix),
 		modelsDevProvider: providerConfig.discovery.modelsDevProvider ?? "",
 	});
-	return crypto.createHash("sha256").update("gajae:model-discovery-provenance\0").update(context).digest("hex");
+	return crypto.createHash("sha256").update("vibrato:model-discovery-provenance\0").update(context).digest("hex");
 }
 
 function fingerprintDescriptorDiscoveryProvenance(authEvidence: string, endpoint: string): string | undefined {
@@ -852,7 +852,7 @@ function fingerprintDescriptorDiscoveryProvenance(authEvidence: string, endpoint
 	}
 	return crypto
 		.createHash("sha256")
-		.update("gajae:model-discovery-provenance\0")
+		.update("vibrato:model-discovery-provenance\0")
 		.update(JSON.stringify({ authEvidence, endpoint }))
 		.digest("hex");
 }
@@ -3214,7 +3214,7 @@ export class ModelRegistry {
 			};
 		}
 		const cacheLookupProvenance =
-			cacheDynamicModelProvenance ?? `gajae:non-cacheable-configured:${crypto.randomUUID()}`;
+			cacheDynamicModelProvenance ?? `vibrato:non-cacheable-configured:${crypto.randomUUID()}`;
 		const refreshStrategy =
 			strategy === "online-if-uncached" &&
 			(cacheDynamicModelProvenance === undefined ||
@@ -3498,7 +3498,7 @@ export class ModelRegistry {
 		// secret and can never match a previous invocation, so constructor loads,
 		// stale fallback, and online-if-uncached reuse all fail closed.
 		const cacheDynamicModelProvenance =
-			reusableCacheProvenance ?? `gajae:non-cacheable-endpoint:${crypto.randomUUID()}`;
+			reusableCacheProvenance ?? `vibrato:non-cacheable-endpoint:${crypto.randomUUID()}`;
 		const isCurrentDiscoveryContext = () =>
 			(this.#descriptorDiscoveryGenerations.get(options.providerId) ?? 0) === generation &&
 			this.#getProviderEvidenceGeneration(options.providerId, apiKey) === authGeneration &&
@@ -5055,7 +5055,7 @@ export class ModelRegistry {
 	/**
 	 * Check whether auth is configured for a model's provider.
 	 *
-	 * Mirrors the upstream `@mariozechner/gajae-code` API surface so that
+	 * Mirrors the upstream `@mariozechner/vib-rato` API surface so that
 	 * external plugins/extensions and downstream wrappers (e.g. subagent launch
 	 * paths that pre-flight auth before model resolution) can probe a model
 	 * without resolving an API key. Returns true for keyless providers as well

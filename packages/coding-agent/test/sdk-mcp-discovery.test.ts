@@ -2,17 +2,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { type AgentTool, ThinkingLevel } from "@gajae-code/agent-core";
-import { AuthStorage, Effort, getBundledModel, type Model } from "@gajae-code/ai";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import type { CustomTool } from "@gajae-code/coding-agent/extensibility/custom-tools/types";
-import { createAgentSession, type ExtensionFactory } from "@gajae-code/coding-agent/sdk";
-import { ArtifactManager } from "@gajae-code/coding-agent/session/artifacts";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { getAgentDir, logger, Snowflake, setAgentDir } from "@gajae-code/utils";
+import { type AgentTool, ThinkingLevel } from "@vib-rato/agent-core";
+import { AuthStorage, Effort, getBundledModel, type Model } from "@vib-rato/ai";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import type { CustomTool } from "@vib-rato/coding-agent/extensibility/custom-tools/types";
+import { createAgentSession, type ExtensionFactory } from "@vib-rato/coding-agent/sdk";
+import { ArtifactManager } from "@vib-rato/coding-agent/session/artifacts";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { getAgentDir, logger, Snowflake, setAgentDir } from "@vib-rato/utils";
 import * as z from "zod/v4";
-import { installGjcBundle } from "../src/extensibility/gjc-plugins";
+import { installVibBundle } from "../src/extensibility/vib-plugins";
 import { createMCPToolName, type MCPLoadResult, MCPManager } from "../src/runtime-mcp";
 import { BUILTIN_TOOLS } from "../src/tools";
 
@@ -72,7 +72,7 @@ function createReasoningModel(): Model<"openai-responses"> {
 
 const oldSessionMtime = new Date("2000-01-01T00:00:00.000Z");
 const SLOW_SDK_TEST_TIMEOUT_MS = 15_000;
-const validSixSurfacePluginBundle = path.join(import.meta.dir, "fixtures", "gjc-plugins", "valid-six-surface-bundle");
+const validSixSurfacePluginBundle = path.join(import.meta.dir, "fixtures", "vib-plugins", "valid-six-surface-bundle");
 const originalAgentDir = getAgentDir();
 
 describe("createAgentSession MCP discovery prompt gating", () => {
@@ -735,7 +735,7 @@ describe("createAgentSession MCP discovery prompt gating", () => {
 		const cleanupError = new Error("plugin cleanup failed");
 		const disconnectAll = vi.spyOn(MCPManager.prototype, "disconnectAll").mockRejectedValue(cleanupError);
 		vi.spyOn(MCPManager.prototype, "connectServers").mockResolvedValue(createMcpLoadResult([], new Map(), []));
-		const installed = await installGjcBundle({ cwd: tempDir }, "project", validSixSurfacePluginBundle);
+		const installed = await installVibBundle({ cwd: tempDir }, "project", validSixSurfacePluginBundle);
 		expect(installed.ok).toBe(true);
 		await expect(createAgentSession(createIsolatedSessionOptions())).rejects.toMatchObject({
 			code: "MCP_MANAGER_CLEANUP_FAILED",
@@ -749,12 +749,12 @@ describe("createAgentSession MCP discovery prompt gating", () => {
 		vi.spyOn(MCPManager.prototype, "connectServers").mockRejectedValue(startupError);
 		vi.spyOn(MCPManager.prototype, "disconnectAll").mockRejectedValue(cleanupError);
 		const warning = vi.spyOn(logger, "warn").mockImplementation(() => {});
-		const installed = await installGjcBundle({ cwd: tempDir }, "project", validSixSurfacePluginBundle);
+		const installed = await installVibBundle({ cwd: tempDir }, "project", validSixSurfacePluginBundle);
 		expect(installed.ok).toBe(true);
 		const { session } = await createAgentSession(createIsolatedSessionOptions());
 		try {
 			const cleanupWarning = warning.mock.calls.find(
-				([message]) => message === "Failed to wire GJC plugin MCP servers",
+				([message]) => message === "Failed to wire Vibrato plugin MCP servers",
 			);
 			expect(cleanupWarning?.[1]).toMatchObject({
 				error: "plugin startup failed",
@@ -846,12 +846,12 @@ describe("createAgentSession MCP discovery prompt gating", () => {
 		vi.spyOn(MCPManager.prototype, "connectServers").mockRejectedValue(startupError);
 		vi.spyOn(MCPManager.prototype, "disconnectAll").mockRejectedValue(cleanupError);
 		const warning = vi.spyOn(logger, "warn").mockImplementation(() => {});
-		const installed = await installGjcBundle({ cwd: tempDir }, "project", validSixSurfacePluginBundle);
+		const installed = await installVibBundle({ cwd: tempDir }, "project", validSixSurfacePluginBundle);
 		expect(installed.ok).toBe(true);
 		const { session } = await createAgentSession(createIsolatedSessionOptions());
 		try {
 			const cleanupWarning = warning.mock.calls.find(
-				([message]) => message === "Failed to wire GJC plugin MCP servers",
+				([message]) => message === "Failed to wire Vibrato plugin MCP servers",
 			);
 			expect(cleanupWarning).toBeDefined();
 			expect(cleanupWarning?.[1]).toMatchObject({ error: "<unprintable error>" });
@@ -991,7 +991,7 @@ describe("createAgentSession MCP discovery prompt gating", () => {
 				expectedToolName: "domain_note",
 				mcpTools: [createMcpCustomTool("domain_note", "exact", "domain_note")],
 				prepare: async () => {
-					const r = await installGjcBundle({ cwd: tempDir }, "project", validSixSurfacePluginBundle);
+					const r = await installVibBundle({ cwd: tempDir }, "project", validSixSurfacePluginBundle);
 					expect(r.ok).toBe(true);
 				},
 			},

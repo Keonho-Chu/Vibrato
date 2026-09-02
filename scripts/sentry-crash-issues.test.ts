@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { applyOwnerOnlyPathSecurity } from "@gajae-code/natives";
-import { CRASH_ISSUE_MARKER_PREFIX } from "@gajae-code/utils";
+import { applyOwnerOnlyPathSecurity } from "@vib-rato/natives";
+import { CRASH_ISSUE_MARKER_PREFIX } from "@vib-rato/utils";
 import { randomUUID } from "node:crypto";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
@@ -37,7 +37,7 @@ afterEach(() => {
 function sentryIssue(overrides: Partial<SentryIssue> = {}): SentryIssue {
 	return {
 		id: "7677884771",
-		shortId: "GAJAE-CODE-1",
+		shortId: "VIBRATO-1",
 		title: "TypeError: cannot read properties of <redacted>",
 		culprit: "readFile(packages/coding-agent/src/tools/read.ts)",
 		count: "2",
@@ -55,8 +55,8 @@ function options(overrides: Partial<Options> = {}): Options {
 		approve: undefined,
 		limit: 25,
 		org: "probe",
-		project: "gajae-code",
-		repo: "Yeachan-Heo/gajae-code",
+		project: "vib-rato",
+		repo: "Keonho-Chu/Vibrato",
 		...overrides,
 	};
 }
@@ -93,7 +93,7 @@ describe("parseArgs", () => {
 		// the shared dedup contract would silently stop holding.
 		expect(parseArgs(["--repo", "someone/else"])).toMatchObject({ error: expect.stringContaining("pinned") });
 		expect(parseArgs(["--repo", "not-a-repo"])).toMatchObject({ error: expect.stringContaining("pinned") });
-		expect(parseArgs(["--repo", "Yeachan-Heo/gajae-code"])).toMatchObject({ repo: "Yeachan-Heo/gajae-code" });
+		expect(parseArgs(["--repo", "Keonho-Chu/Vibrato"])).toMatchObject({ repo: "Keonho-Chu/Vibrato" });
 	});
 
 	test("rejects an unknown flag rather than ignoring it", () => {
@@ -111,14 +111,14 @@ describe("parseArgs", () => {
 
 	test("bounds Sentry org and project slugs before building authenticated paths", () => {
 		expect(parseArgs(["--org", "probe%2F..%2Forganizations%2Fsecret"])).toMatchObject({ error: expect.stringContaining("--org") });
-		expect(parseArgs(["--project", "gajae-code\n# forged"])).toMatchObject({ error: expect.stringContaining("--project") });
-	expect(parseArgs(["--org", "probe", "--project", "gajae-code"])).toMatchObject({ org: "probe", project: "gajae-code" });
+		expect(parseArgs(["--project", "vib-rato\n# forged"])).toMatchObject({ error: expect.stringContaining("--project") });
+	expect(parseArgs(["--org", "probe", "--project", "vib-rato"])).toMatchObject({ org: "probe", project: "vib-rato" });
 	});
 });
 
 describe("fingerprintFromTagPayload", () => {
-	test("reads the sole gjc.fingerprint tag value", () => {
-		expect(fingerprintFromTagPayload({ key: "gjc.fingerprint", topValues: [{ value: FINGERPRINT }] })).toBe(
+	test("reads the sole vib.fingerprint tag value", () => {
+		expect(fingerprintFromTagPayload({ key: "vib.fingerprint", topValues: [{ value: FINGERPRINT }] })).toBe(
 			FINGERPRINT,
 		);
 	});
@@ -129,19 +129,19 @@ describe("fingerprintFromTagPayload", () => {
 
 	test("refuses a value that is not a v1 fingerprint", () => {
 		for (const value of [FINGERPRINT.toUpperCase(), FINGERPRINT.slice(0, 31), `${FINGERPRINT}0`, "zzzz"])
-			expect(() => fingerprintFromTagPayload({ key: "gjc.fingerprint", topValues: [{ value }] })).toThrow("malformed");
+			expect(() => fingerprintFromTagPayload({ key: "vib.fingerprint", topValues: [{ value }] })).toThrow("malformed");
 	});
 
 	test("rejects malformed successful tag payloads instead of treating them as absent", () => {
-		expect(() => fingerprintFromTagPayload({ key: "gjc.fingerprint" })).toThrow("malformed");
-		expect(() => fingerprintFromTagPayload({ key: "gjc.fingerprint", topValues: [] })).toThrow("malformed");
-		expect(() => fingerprintFromTagPayload({ key: "gjc.fingerprint", topValues: [null] })).toThrow("malformed");
+		expect(() => fingerprintFromTagPayload({ key: "vib.fingerprint" })).toThrow("malformed");
+		expect(() => fingerprintFromTagPayload({ key: "vib.fingerprint", topValues: [] })).toThrow("malformed");
+		expect(() => fingerprintFromTagPayload({ key: "vib.fingerprint", topValues: [null] })).toThrow("malformed");
 		expect(() => fingerprintFromTagPayload(null)).toThrow("malformed");
 	});
 
 	test("quarantines multi-valued tags instead of selecting one", () => {
 		expect(() =>
-			fingerprintFromTagPayload({ key: "gjc.fingerprint", topValues: [{ value: FINGERPRINT }, { value: FORGED_FINGERPRINT }] }),
+			fingerprintFromTagPayload({ key: "vib.fingerprint", topValues: [{ value: FINGERPRINT }, { value: FORGED_FINGERPRINT }] }),
 		).toThrow("malformed");
 	});
 });
@@ -167,7 +167,7 @@ describe("fingerprint tag lookup", () => {
 
 describe("toSentryIssue", () => {
 	test("requires both id and shortId", () => {
-		expect(toSentryIssue({ shortId: "GAJAE-CODE-1" })).toBeUndefined();
+		expect(toSentryIssue({ shortId: "VIBRATO-1" })).toBeUndefined();
 		expect(toSentryIssue({ id: "1" })).toBeUndefined();
 	});
 
@@ -177,7 +177,7 @@ describe("toSentryIssue", () => {
 	});
 
 	test("drops rows whose metadata fails the ingestion bounds instead of repairing them", () => {
-		const valid = { id: "1", shortId: "GAJAE-CODE-1" };
+		const valid = { id: "1", shortId: "VIBRATO-1" };
 		// numeric/shortId/date/permalink bounds
 		expect(toSentryIssue({ ...valid, count: "12abc" })).toBeUndefined();
 		expect(toSentryIssue({ ...valid, count: "-1" })).toBeUndefined();
@@ -207,7 +207,7 @@ describe("toSentryIssue", () => {
 	test("accepts a canonical raw issue-list payload through the public shape", () => {
 		const issue = toSentryIssue({
 			id: "7677884771",
-			shortId: "GAJAE-CODE-1",
+			shortId: "VIBRATO-1",
 			title: "TypeError: cannot read properties of <redacted>",
 			culprit: "readFile(packages/coding-agent/src/tools/read.ts)",
 			count: "2",
@@ -258,7 +258,7 @@ describe("issue rendering", () => {
 	});
 
 	test.each(["\u200b", "\u200d", "\u202e"])("removes a marker reconstituted by normalization through %j", separator => {
-		const hostile = `gjc-crash-fp.v1:${FORGED_FINGERPRINT.slice(0, 16)}${separator}${FORGED_FINGERPRINT.slice(16)}`;
+		const hostile = `vib-crash-fp.v1:${FORGED_FINGERPRINT.slice(0, 16)}${separator}${FORGED_FINGERPRINT.slice(16)}`;
 		const body = issueBody({ fingerprint: FINGERPRINT, sentry: sentryIssue({ title: hostile }) }, options());
 		expect(body).not.toContain(`${CRASH_ISSUE_MARKER_PREFIX}${FORGED_FINGERPRINT}`);
 		expect(body.match(new RegExp(CRASH_ISSUE_MARKER_PREFIX, "g"))).toHaveLength(2);
@@ -354,10 +354,10 @@ describe("gh child environment", () => {
 
 describe("main orchestration", () => {
 	test("persists approvals atomically with private file-backed state", async () => {
-		const home = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-sentry-store-"));
-		const previousStore = process.env.GJC_SENTRY_APPROVAL_STORE;
-		const target = path.join(home, ".gjc", "sentry-triage-approvals.json");
-		process.env.GJC_SENTRY_APPROVAL_STORE = target;
+		const home = await fs.mkdtemp(path.join(os.tmpdir(), "vib-sentry-store-"));
+		const previousStore = process.env.VIB_SENTRY_APPROVAL_STORE;
+		const target = path.join(home, ".vib", "sentry-triage-approvals.json");
+		process.env.VIB_SENTRY_APPROVAL_STORE = target;
 		try {
 			const manifest = approvalManifest({ fingerprint: FINGERPRINT, sentry: sentryIssue() }, options());
 			await Promise.all([fileApprovalStore.recordApprovals([manifest]), fileApprovalStore.recordApprovals([manifest])]);
@@ -366,22 +366,22 @@ describe("main orchestration", () => {
 			// are only meaningful on POSIX.
 			if (process.platform !== "win32") expect(stat.mode & 0o077).toBe(0);
 			expect(await fileApprovalStore.loadApprovals()).toEqual([manifest]);
-			await fileApprovalStore.recordFiled(manifest, "https://github.com/Yeachan-Heo/gajae-code/issues/1");
+			await fileApprovalStore.recordFiled(manifest, "https://github.com/Keonho-Chu/Vibrato/issues/1");
 			expect(await fileApprovalStore.hasAnyFiled(manifest)).toBe(true);
 			await fileApprovalStore.consume(manifest);
 			expect(await fileApprovalStore.loadApprovals()).toEqual([]);
 		} finally {
-			if (previousStore === undefined) delete process.env.GJC_SENTRY_APPROVAL_STORE;
-			else process.env.GJC_SENTRY_APPROVAL_STORE = previousStore;
+			if (previousStore === undefined) delete process.env.VIB_SENTRY_APPROVAL_STORE;
+			else process.env.VIB_SENTRY_APPROVAL_STORE = previousStore;
 			await fs.rm(home, { recursive: true, force: true });
 		}
 	});
 
 	test("recovers a stale creation lock left behind by a dead process", async () => {
-		const home = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-sentry-lock-"));
-		const previousStore = process.env.GJC_SENTRY_APPROVAL_STORE;
-		const target = path.join(home, ".gjc", "sentry-triage-approvals.json");
-		process.env.GJC_SENTRY_APPROVAL_STORE = target;
+		const home = await fs.mkdtemp(path.join(os.tmpdir(), "vib-sentry-lock-"));
+		const previousStore = process.env.VIB_SENTRY_APPROVAL_STORE;
+		const target = path.join(home, ".vib", "sentry-triage-approvals.json");
+		process.env.VIB_SENTRY_APPROVAL_STORE = target;
 		try {
 			await fs.mkdir(path.dirname(target), { recursive: true, mode: 0o700 });
 			const lockPath = `${target}.create.lock`;
@@ -398,17 +398,17 @@ describe("main orchestration", () => {
 			expect(await withCreationLock(async () => "ran")).toBe("ran");
 			await expect(fs.lstat(lockPath)).rejects.toMatchObject({ code: "ENOENT" });
 		} finally {
-			if (previousStore === undefined) delete process.env.GJC_SENTRY_APPROVAL_STORE;
-			else process.env.GJC_SENTRY_APPROVAL_STORE = previousStore;
+			if (previousStore === undefined) delete process.env.VIB_SENTRY_APPROVAL_STORE;
+			else process.env.VIB_SENTRY_APPROVAL_STORE = previousStore;
 			await fs.rm(home, { recursive: true, force: true });
 		}
 	});
 
 	test("recovers a stale creation lock with an incomplete owner record", async () => {
-		const home = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-sentry-lock-incomplete-"));
-		const previousStore = process.env.GJC_SENTRY_APPROVAL_STORE;
-		const target = path.join(home, ".gjc", "sentry-triage-approvals.json");
-		process.env.GJC_SENTRY_APPROVAL_STORE = target;
+		const home = await fs.mkdtemp(path.join(os.tmpdir(), "vib-sentry-lock-incomplete-"));
+		const previousStore = process.env.VIB_SENTRY_APPROVAL_STORE;
+		const target = path.join(home, ".vib", "sentry-triage-approvals.json");
+		process.env.VIB_SENTRY_APPROVAL_STORE = target;
 		try {
 			await fs.mkdir(path.dirname(target), { recursive: true, mode: 0o700 });
 			const lockPath = `${target}.create.lock`;
@@ -421,17 +421,17 @@ describe("main orchestration", () => {
 			expect(await withCreationLock(async () => "ran")).toBe("ran");
 			await expect(fs.lstat(lockPath)).rejects.toMatchObject({ code: "ENOENT" });
 		} finally {
-			if (previousStore === undefined) delete process.env.GJC_SENTRY_APPROVAL_STORE;
-			else process.env.GJC_SENTRY_APPROVAL_STORE = previousStore;
+			if (previousStore === undefined) delete process.env.VIB_SENTRY_APPROVAL_STORE;
+			else process.env.VIB_SENTRY_APPROVAL_STORE = previousStore;
 			await fs.rm(home, { recursive: true, force: true });
 		}
 	});
 
 	test("rejects a wrong-kind creation lock instead of treating it as contention", async () => {
-		const home = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-sentry-lock-kind-"));
-		const previousStore = process.env.GJC_SENTRY_APPROVAL_STORE;
-		const target = path.join(home, ".gjc", "sentry-triage-approvals.json");
-		process.env.GJC_SENTRY_APPROVAL_STORE = target;
+		const home = await fs.mkdtemp(path.join(os.tmpdir(), "vib-sentry-lock-kind-"));
+		const previousStore = process.env.VIB_SENTRY_APPROVAL_STORE;
+		const target = path.join(home, ".vib", "sentry-triage-approvals.json");
+		process.env.VIB_SENTRY_APPROVAL_STORE = target;
 		try {
 			await fs.mkdir(path.dirname(target), { recursive: true, mode: 0o700 });
 			const lockPath = `${target}.create.lock`;
@@ -441,25 +441,25 @@ describe("main orchestration", () => {
 			);
 			expect(await fs.readFile(lockPath, "utf8")).toBe("not a lock directory");
 		} finally {
-			if (previousStore === undefined) delete process.env.GJC_SENTRY_APPROVAL_STORE;
-			else process.env.GJC_SENTRY_APPROVAL_STORE = previousStore;
+			if (previousStore === undefined) delete process.env.VIB_SENTRY_APPROVAL_STORE;
+			else process.env.VIB_SENTRY_APPROVAL_STORE = previousStore;
 			await fs.rm(home, { recursive: true, force: true });
 		}
 	});
 
 	test.skipIf(process.platform === "win32")("refuses a POSIX approval file that became group-readable", async () => {
-		const home = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-sentry-store-mode-"));
-		const previousStore = process.env.GJC_SENTRY_APPROVAL_STORE;
-		const target = path.join(home, ".gjc", "sentry-triage-approvals.json");
-		process.env.GJC_SENTRY_APPROVAL_STORE = target;
+		const home = await fs.mkdtemp(path.join(os.tmpdir(), "vib-sentry-store-mode-"));
+		const previousStore = process.env.VIB_SENTRY_APPROVAL_STORE;
+		const target = path.join(home, ".vib", "sentry-triage-approvals.json");
+		process.env.VIB_SENTRY_APPROVAL_STORE = target;
 		try {
 			const manifest = approvalManifest({ fingerprint: FINGERPRINT, sentry: sentryIssue() }, options());
 			await fileApprovalStore.recordApprovals([manifest]);
 			await fs.chmod(target, 0o640);
 			expect(await fileApprovalStore.loadApprovals()).toEqual([]);
 		} finally {
-			if (previousStore === undefined) delete process.env.GJC_SENTRY_APPROVAL_STORE;
-			else process.env.GJC_SENTRY_APPROVAL_STORE = previousStore;
+			if (previousStore === undefined) delete process.env.VIB_SENTRY_APPROVAL_STORE;
+			else process.env.VIB_SENTRY_APPROVAL_STORE = previousStore;
 			await fs.rm(home, { recursive: true, force: true });
 		}
 	});
@@ -486,7 +486,7 @@ describe("main orchestration", () => {
 				findExistingIssue: async () => ({ kind: "none" }),
 				gh: async args => {
 					ghCalls.push([...args]);
-					return { ok: true, stdout: "https://github.com/Yeachan-Heo/gajae-code/issues/1\n", stderr: "" };
+					return { ok: true, stdout: "https://github.com/Keonho-Chu/Vibrato/issues/1\n", stderr: "" };
 				},
 				token: () => "token",
 				approvals: {
@@ -589,7 +589,7 @@ describe("main orchestration", () => {
 	test("fails closed when a body-marker search is uncertain or a create fails", async () => {
 		// An UNAPPROVED fingerprint with a planted marker stays withheld.
 		const bodyMarker = mainDependencies(false, {
-			findExistingIssue: async () => ({ kind: "untrusted", url: "https://github.com/Yeachan-Heo/gajae-code/issues/1" }),
+			findExistingIssue: async () => ({ kind: "untrusted", url: "https://github.com/Keonho-Chu/Vibrato/issues/1" }),
 		});
 		await expect(main(["--apply"], bodyMarker.dependencies)).resolves.toBe(1);
 		expect(bodyMarker.stderr.join("")).toContain("acknowledge the exact issue URL");
@@ -597,7 +597,7 @@ describe("main orchestration", () => {
 
 		// Approval never upgrades an arbitrary body marker into provenance.
 		const approvedMarker = mainDependencies(true, {
-			findExistingIssue: async () => ({ kind: "untrusted", url: "https://github.com/Yeachan-Heo/gajae-code/issues/1" }),
+			findExistingIssue: async () => ({ kind: "untrusted", url: "https://github.com/Keonho-Chu/Vibrato/issues/1" }),
 		});
 		await expect(main(["--apply"], approvedMarker.dependencies)).resolves.toBe(1);
 		expect(approvedMarker.stderr.join("")).toContain("acknowledge the exact issue URL");
@@ -682,11 +682,11 @@ describe("main orchestration", () => {
 		expect(unchanged.ghCalls).toHaveLength(1);
 		// The repo field is pinned by parseArgs, so it can only ever equal the
 		// approved value; assert the binding carries it rather than leaving it implied.
-		expect(approved.repo).toBe("Yeachan-Heo/gajae-code");
+		expect(approved.repo).toBe("Keonho-Chu/Vibrato");
 	});
 
 	test("requires URL-bound acknowledgement before a planted marker becomes locally filed", async () => {
-		const markerUrl = "https://github.com/Yeachan-Heo/gajae-code/issues/1";
+		const markerUrl = "https://github.com/Keonho-Chu/Vibrato/issues/1";
 		const setup = mainDependencies(true, {
 			findExistingIssue: async () => ({ kind: "untrusted", url: markerUrl }),
 		});
@@ -700,9 +700,9 @@ describe("main orchestration", () => {
 		// Deliberately exercises the real on-disk lock and the real approval store
 		// rather than an injected mutex: the whole point of the critical section is
 		// that it holds across processes, which an in-test mutex cannot demonstrate.
-		const home = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-sentry-lock-"));
-		const previousStore = process.env.GJC_SENTRY_APPROVAL_STORE;
-		process.env.GJC_SENTRY_APPROVAL_STORE = path.join(home, ".gjc", "sentry-triage-approvals.json");
+		const home = await fs.mkdtemp(path.join(os.tmpdir(), "vib-sentry-lock-"));
+		const previousStore = process.env.VIB_SENTRY_APPROVAL_STORE;
+		process.env.VIB_SENTRY_APPROVAL_STORE = path.join(home, ".vib", "sentry-triage-approvals.json");
 		try {
 			const manifest = approvalManifest({ fingerprint: FINGERPRINT, sentry: sentryIssue() }, options());
 			await fileApprovalStore.recordApprovals([manifest]);
@@ -716,7 +716,7 @@ describe("main orchestration", () => {
 					approvals: fileApprovalStore,
 					withCreationLock,
 					findExistingIssue: async () =>
-						created ? { kind: "untrusted", url: "https://github.com/Yeachan-Heo/gajae-code/issues/1" } : { kind: "none" },
+						created ? { kind: "untrusted", url: "https://github.com/Keonho-Chu/Vibrato/issues/1" } : { kind: "none" },
 					gh: async args => {
 						expect(args).toContain("create");
 						concurrentCriticalSections++;
@@ -727,7 +727,7 @@ describe("main orchestration", () => {
 						creates++;
 						created = true;
 						concurrentCriticalSections--;
-						return { ok: true, stdout: "https://github.com/Yeachan-Heo/gajae-code/issues/1\n", stderr: "" };
+						return { ok: true, stdout: "https://github.com/Keonho-Chu/Vibrato/issues/1\n", stderr: "" };
 					},
 				}).dependencies;
 			const results = await Promise.all([main(["--apply"], invocation()), main(["--apply"], invocation())]);
@@ -737,8 +737,8 @@ describe("main orchestration", () => {
 			expect(await fileApprovalStore.hasAnyFiled(manifest)).toBe(true);
 			expect(await fileApprovalStore.hasPending(manifest)).toBe(false);
 		} finally {
-			if (previousStore === undefined) delete process.env.GJC_SENTRY_APPROVAL_STORE;
-			else process.env.GJC_SENTRY_APPROVAL_STORE = previousStore;
+			if (previousStore === undefined) delete process.env.VIB_SENTRY_APPROVAL_STORE;
+			else process.env.VIB_SENTRY_APPROVAL_STORE = previousStore;
 			await fs.rm(home, { recursive: true, force: true });
 		}
 	});
@@ -749,7 +749,7 @@ describe("main orchestration", () => {
 		const recovered = mainDependencies(true, {
 			findExistingIssue: async () => ({
 				kind: "untrusted",
-				url: "https://github.com/Yeachan-Heo/gajae-code/issues/1",
+				url: "https://github.com/Keonho-Chu/Vibrato/issues/1",
 				title: issueTitle({ fingerprint: FINGERPRINT, sentry: sentryIssue() }),
 				body: issueBody({ fingerprint: FINGERPRINT, sentry: sentryIssue() }, options()),
 			}),
@@ -777,9 +777,9 @@ describe("main orchestration", () => {
 		// The defect this closes: a create reaches GitHub, the client loses the
 		// response, and the eventually-consistent marker search then reports no
 		// issue. Retrying on that evidence files the same crash class twice.
-		const home = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-sentry-replay-"));
-		const previousStore = process.env.GJC_SENTRY_APPROVAL_STORE;
-		process.env.GJC_SENTRY_APPROVAL_STORE = path.join(home, ".gjc", "sentry-triage-approvals.json");
+		const home = await fs.mkdtemp(path.join(os.tmpdir(), "vib-sentry-replay-"));
+		const previousStore = process.env.VIB_SENTRY_APPROVAL_STORE;
+		process.env.VIB_SENTRY_APPROVAL_STORE = path.join(home, ".vib", "sentry-triage-approvals.json");
 		try {
 			const manifest = approvalManifest({ fingerprint: FINGERPRINT, sentry: sentryIssue() }, options());
 			let creates = 0;
@@ -820,7 +820,7 @@ describe("main orchestration", () => {
 				findExistingIssue: async () => ({ kind: "none" }),
 				gh: async () => {
 					creates++;
-					return { ok: true, stdout: "https://github.com/Yeachan-Heo/gajae-code/issues/2\n", stderr: "" };
+					return { ok: true, stdout: "https://github.com/Keonho-Chu/Vibrato/issues/2\n", stderr: "" };
 				},
 			});
 			expect(await main(["--apply"], replay.dependencies)).toBe(1);
@@ -856,23 +856,23 @@ describe("main orchestration", () => {
 				findExistingIssue: async () => ({ kind: "none" }),
 				gh: async () => {
 					creates++;
-					return { ok: true, stdout: "https://github.com/Yeachan-Heo/gajae-code/issues/3\n", stderr: "" };
+					return { ok: true, stdout: "https://github.com/Keonho-Chu/Vibrato/issues/3\n", stderr: "" };
 				},
 			});
 			expect(await main(["--apply"], retried.dependencies)).toBe(0);
 			expect(creates).toBe(2);
 			expect(await fileApprovalStore.hasAnyFiled(manifest)).toBe(true);
 		} finally {
-			if (previousStore === undefined) delete process.env.GJC_SENTRY_APPROVAL_STORE;
-			else process.env.GJC_SENTRY_APPROVAL_STORE = previousStore;
+			if (previousStore === undefined) delete process.env.VIB_SENTRY_APPROVAL_STORE;
+			else process.env.VIB_SENTRY_APPROVAL_STORE = previousStore;
 			await fs.rm(home, { recursive: true, force: true });
 		}
 	});
 
 	test("--retry-pending refuses a fingerprint with no in-flight record and refuses drifted content", async () => {
-		const home = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-sentry-retry-"));
-		const previousStore = process.env.GJC_SENTRY_APPROVAL_STORE;
-		process.env.GJC_SENTRY_APPROVAL_STORE = path.join(home, ".gjc", "sentry-triage-approvals.json");
+		const home = await fs.mkdtemp(path.join(os.tmpdir(), "vib-sentry-retry-"));
+		const previousStore = process.env.VIB_SENTRY_APPROVAL_STORE;
+		process.env.VIB_SENTRY_APPROVAL_STORE = path.join(home, ".vib", "sentry-triage-approvals.json");
 		try {
 			const manifest = approvalManifest({ fingerprint: FINGERPRINT, sentry: sentryIssue() }, options());
 			await fileApprovalStore.recordApprovals([manifest]);
@@ -897,8 +897,8 @@ describe("main orchestration", () => {
 			expect(await main(["--retry-pending", FINGERPRINT], drifted.dependencies)).toBe(2);
 			expect(await fileApprovalStore.hasPending(manifest)).toBe(true);
 		} finally {
-			if (previousStore === undefined) delete process.env.GJC_SENTRY_APPROVAL_STORE;
-			else process.env.GJC_SENTRY_APPROVAL_STORE = previousStore;
+			if (previousStore === undefined) delete process.env.VIB_SENTRY_APPROVAL_STORE;
+			else process.env.VIB_SENTRY_APPROVAL_STORE = previousStore;
 			await fs.rm(home, { recursive: true, force: true });
 		}
 	});
@@ -945,7 +945,7 @@ describe("main orchestration", () => {
 	});
 
 	test("reports malformed rows distinctly from no-fingerprint skips and fails the run", async () => {
-		const malformedRow = { id: "not-numeric", shortId: "GAJAE-CODE-2" };
+		const malformedRow = { id: "not-numeric", shortId: "VIBRATO-2" };
 		const { dependencies, stdout, stderr } = mainDependencies(false, {
 			sentryGet: async () => [sentryIssue(), malformedRow, { id: "2", shortId: "S-2" }],
 			fingerprintOf: async issueId => (issueId === "2" ? undefined : { fingerprint: FINGERPRINT }),
@@ -956,7 +956,7 @@ describe("main orchestration", () => {
 		// ingestion rejection, and the tagless group stays a no-fingerprint skip.
 		expect(out).toContain("1 pending");
 		expect(out).toContain("1 upstream row(s) rejected by ingestion bounds");
-		expect(out).toContain("1 upstream group(s) skipped (no gjc.fingerprint tag)");
+		expect(out).toContain("1 upstream group(s) skipped (no vib.fingerprint tag)");
 		expect(stderr.join("")).toContain("triage is incomplete");
 	});
 });

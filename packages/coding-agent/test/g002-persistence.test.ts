@@ -1,8 +1,8 @@
 import { describe, expect, it } from "bun:test";
-import type { Rule } from "@gajae-code/coding-agent/capability/rule";
-import { buildRuleFromMarkdown } from "@gajae-code/coding-agent/discovery/helpers";
-import { TtsrManager } from "@gajae-code/coding-agent/export/ttsr";
-import { buildSessionContext, type SessionEntry } from "@gajae-code/coding-agent/session/session-manager";
+import type { Rule } from "@vib-rato/coding-agent/capability/rule";
+import { buildRuleFromMarkdown } from "@vib-rato/coding-agent/discovery/helpers";
+import { TtsrManager } from "@vib-rato/coding-agent/export/ttsr";
+import { buildSessionContext, type SessionEntry } from "@vib-rato/coding-agent/session/session-manager";
 
 const source = { provider: "test", providerName: "test", path: "/tmp/rule.md", level: "project" as const };
 

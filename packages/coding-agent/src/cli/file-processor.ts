@@ -3,8 +3,8 @@
  */
 import * as fs from "node:fs";
 import * as path from "node:path";
-import type { ImageContent } from "@gajae-code/ai/core";
-import { getProjectDir, isEnoent, readImageMetadata } from "@gajae-code/utils";
+import type { ImageContent } from "@vib-rato/ai/core";
+import { getProjectDir, isEnoent, readImageMetadata } from "@vib-rato/utils";
 import chalk from "chalk";
 import { resolveReadPath } from "../tools/path-utils";
 import { formatBytes } from "../tools/render-utils";

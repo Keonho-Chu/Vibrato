@@ -2,11 +2,11 @@
  * Print mode (single-shot): Send prompts, output result, exit.
  *
  * Used for:
- * - `gjc -p "prompt"` - text output
- * - `gjc --mode json "prompt"` - JSON event stream
+ * - `vib -p "prompt"` - text output
+ * - `vib --mode json "prompt"` - JSON event stream
  */
-import { type AssistantMessage, type ImageContent, isContextOverflow } from "@gajae-code/ai/core";
-import { isKnownSinkPeerClosedError, logger, sanitizeText } from "@gajae-code/utils";
+import { type AssistantMessage, type ImageContent, isContextOverflow } from "@vib-rato/ai/core";
+import { isKnownSinkPeerClosedError, logger, sanitizeText } from "@vib-rato/utils";
 import { loadSlashCommands } from "../extensibility/slash-commands";
 import type { AgentSession } from "../session/agent-session";
 import { isSilentAbort } from "../session/messages";
@@ -34,7 +34,7 @@ export interface PrintModeOptions {
 }
 
 /**
- * Exit code used when a non-interactive **text-mode** run (`gjc -p`) terminates
+ * Exit code used when a non-interactive **text-mode** run (`vib -p`) terminates
  * because the model context window is exhausted and automatic compaction could
  * not bring the request under the limit. Distinct from the generic failure code
  * (1) so text-mode callers can detect context exhaustion specifically instead of
@@ -56,7 +56,7 @@ function formatContextOverflowError(message: AssistantMessage, autoCompactionEna
 	const providerDetail = message.errorMessage ? ` (provider error: ${sanitizeText(message.errorMessage)})` : "";
 	const guidance = autoCompactionEnabled
 		? "Context window exhausted: automatic compaction ran but could not reduce the request below the model's context limit. Reduce the input size (smaller file reads / tool output), raise the compaction threshold, or switch to a larger-context model."
-		: "Context window exhausted and automatic compaction is disabled. Enable it (compaction.enabled=true with a non-off compaction.strategy) so GJC can compact and continue, reduce the input size, or switch to a larger-context model.";
+		: "Context window exhausted and automatic compaction is disabled. Enable it (compaction.enabled=true with a non-off compaction.strategy) so Vibrato can compact and continue, reduce the input size, or switch to a larger-context model.";
 	return `${guidance}${providerDetail}`;
 }
 

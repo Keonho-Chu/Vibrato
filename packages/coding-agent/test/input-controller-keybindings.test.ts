@@ -3,8 +3,8 @@ import { afterEach, beforeAll, describe, expect, it, type Mock, vi } from "bun:t
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { Container } from "@gajae-code/tui";
-import { getDefaultTabWidth, setDefaultTabWidth } from "@gajae-code/utils";
+import { Container } from "@vib-rato/tui";
+import { getDefaultTabWidth, setDefaultTabWidth } from "@vib-rato/utils";
 import { defaultEditorTheme } from "../../tui/test/test-themes";
 import { formatKeyHint as formatKeyHintForPlatform } from "../src/config/keybindings";
 import { resetSettingsForTest, Settings } from "../src/config/settings";
@@ -1300,26 +1300,26 @@ describe("InputController pasted image path transactions", () => {
 		}
 	});
 
-	it("consumes iTerm's generated Gajae Pet drag path without changing the composer", async () => {
+	it("consumes iTerm's generated Vibrato Pet drag path without changing the composer", async () => {
 		const { InputController, ctx, editor, spies } = await createContext();
 		const controller = new InputController(ctx);
 		controller.setupKeyHandlers();
 
 		const handled = await editor.onPasteText?.(
-			"/var/folders/cp/9506bhz103gc1rg1k4xq3vcw0000gn/T/iTerm2.d54w3v.gajae-pet.gif\n",
+			"/var/folders/cp/9506bhz103gc1rg1k4xq3vcw0000gn/T/iTerm2.d54w3v.vibrato-pet.gif\n",
 			pasteTextContext(),
 		);
 
 		expect(handled).toBe(true);
 		expect(editor.getText()).toBe("");
 		expect(ctx.pendingImages).toEqual([]);
-		expect(spies.showStatus).toHaveBeenCalledWith("Ignored dragged Gajae Pet image.", { dim: true });
+		expect(spies.showStatus).toHaveBeenCalledWith("Ignored dragged Vibrato Pet image.", { dim: true });
 	});
 
 	it("consumes marked iTerm Pet drag paths in Bash and Python modes but leaves ordinary image paths literal", async () => {
 		const dragPaths = [
-			"/var/folders/cp/9506bhz103gc1rg1k4xq3vcw0000gn/T/iTerm2.d54w3v.gajae-pet.gif\n",
-			"/var/folders/cp/9506bhz103gc1rg1k4xq3vcw0000gn/T/iTerm2.d54w3v.gajae-pet.png\n",
+			"/var/folders/cp/9506bhz103gc1rg1k4xq3vcw0000gn/T/iTerm2.d54w3v.vibrato-pet.gif\n",
+			"/var/folders/cp/9506bhz103gc1rg1k4xq3vcw0000gn/T/iTerm2.d54w3v.vibrato-pet.png\n",
 		];
 		for (const mode of ["bash", "python"] as const) {
 			for (const dragPath of dragPaths) {
@@ -1334,7 +1334,7 @@ describe("InputController pasted image path transactions", () => {
 				expect(handled).toBe(true);
 				expect(editor.getText()).toBe("");
 				expect(ctx.pendingImages).toEqual([]);
-				expect(spies.showStatus).toHaveBeenCalledWith("Ignored dragged Gajae Pet image.", { dim: true });
+				expect(spies.showStatus).toHaveBeenCalledWith("Ignored dragged Vibrato Pet image.", { dim: true });
 			}
 
 			const { InputController, ctx, editor, spies } = await createContext();
@@ -1350,7 +1350,7 @@ describe("InputController pasted image path transactions", () => {
 	});
 
 	it("confirms and atomically attaches saved-image batches in source order", async () => {
-		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-controller-pasted-images-"));
+		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "vib-controller-pasted-images-"));
 		const first = path.join(directory, "first.png");
 		const second = path.join(directory, "second.png");
 		await Bun.write(first, Buffer.from(RED_1X1_PNG_BASE64, "base64"));
@@ -1384,7 +1384,7 @@ describe("InputController pasted image path transactions", () => {
 	});
 
 	it("rolls back composer state when the attachment commit throws", async () => {
-		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-controller-rollback-"));
+		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "vib-controller-rollback-"));
 		const first = path.join(directory, "first.png");
 		const second = path.join(directory, "second.png");
 		await Bun.write(first, Buffer.from(RED_1X1_PNG_BASE64, "base64"));
@@ -1421,7 +1421,7 @@ describe("InputController pasted image path transactions", () => {
 	});
 
 	it("keeps a successful attachment consumed when status rendering fails", async () => {
-		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-controller-status-"));
+		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "vib-controller-status-"));
 		const first = path.join(directory, "first.png");
 		const second = path.join(directory, "second.png");
 		await Bun.write(first, Buffer.from(RED_1X1_PNG_BASE64, "base64"));
@@ -1563,7 +1563,7 @@ describe("InputController pasted image path transactions", () => {
 	});
 
 	it("does not commit into a successor composer", async () => {
-		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-controller-successor-"));
+		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "vib-controller-successor-"));
 		const first = path.join(directory, "first.png");
 		const second = path.join(directory, "second.png");
 		await Bun.write(first, Buffer.from(RED_1X1_PNG_BASE64, "base64"));

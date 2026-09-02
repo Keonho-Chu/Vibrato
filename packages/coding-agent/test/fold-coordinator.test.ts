@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import type { AsyncJob } from "@gajae-code/coding-agent/async/job-manager";
+import type { AsyncJob } from "@vib-rato/coding-agent/async/job-manager";
 import {
 	describeFoldReceipt,
 	type FoldAdapter,
@@ -7,7 +7,7 @@ import {
 	type FoldReceipt,
 	type ForegroundSettleOutcome,
 	type ForegroundTerminalPayload,
-} from "@gajae-code/coding-agent/session/fold-coordinator";
+} from "@vib-rato/coding-agent/session/fold-coordinator";
 
 function job(id: string, generation: string, status: AsyncJob["status"] = "running"): AsyncJob {
 	return {

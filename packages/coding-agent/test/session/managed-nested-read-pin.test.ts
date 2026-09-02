@@ -37,7 +37,7 @@ afterEach(async () => {
  * established pattern in managed-append-darwin-ctime.test.ts.
  */
 function createStoreWithoutAuthority(): { store: ManagedSessionDescendantStore; baseDir: string } {
-	const baseDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-nested-read-pin-"));
+	const baseDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-nested-read-pin-"));
 	temporaryDirectories.push(baseDir);
 	fs.chmodSync(baseDir, 0o700);
 	const platformDescriptor = Object.getOwnPropertyDescriptor(process, "platform");

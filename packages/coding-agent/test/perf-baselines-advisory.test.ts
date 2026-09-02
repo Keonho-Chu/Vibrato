@@ -5,21 +5,21 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { installExactIdentityNatives } from "./helpers/exact-identity-natives";
 
-const originalStateFileEnv = process.env.GJC_COORDINATOR_SESSION_STATE_FILE;
-const originalSessionIdEnv = process.env.GJC_COORDINATOR_SESSION_ID;
+const originalStateFileEnv = process.env.VIB_COORDINATOR_SESSION_STATE_FILE;
+const originalSessionIdEnv = process.env.VIB_COORDINATOR_SESSION_ID;
 
-let getProjectDir: typeof import("@gajae-code/utils").getProjectDir;
-let setProjectDir: typeof import("@gajae-code/utils").setProjectDir;
+let getProjectDir: typeof import("@vib-rato/utils").getProjectDir;
+let setProjectDir: typeof import("@vib-rato/utils").setProjectDir;
 let originalProjectDir: string;
 let StatusLineComponent: typeof import("../src/modes/components/tool-status-header").StatusLineComponent;
 let gitUtils: typeof import("../src/modes/components/status-line/git-utils");
 let ToolExecutionComponent: typeof import("../src/modes/components/tool-execution").ToolExecutionComponent;
 let EventController: typeof import("../src/modes/controllers/event-controller").EventController;
 let eventControllerPerfCounters: typeof import("../src/modes/controllers/event-controller").__eventControllerPerfCounters;
-let persistCoordinatorRuntimeStateFromEvent: typeof import("../src/gjc-runtime/session-state-sidecar").persistCoordinatorRuntimeStateFromEvent;
+let persistCoordinatorRuntimeStateFromEvent: typeof import("../src/vib-runtime/session-state-sidecar").persistCoordinatorRuntimeStateFromEvent;
 
 beforeAll(async () => {
-	const utils = await import("@gajae-code/utils");
+	const utils = await import("@vib-rato/utils");
 	getProjectDir = utils.getProjectDir;
 	setProjectDir = utils.setProjectDir;
 	originalProjectDir = getProjectDir();
@@ -31,7 +31,7 @@ beforeAll(async () => {
 	({ EventController, __eventControllerPerfCounters: eventControllerPerfCounters } = await import(
 		"../src/modes/controllers/event-controller"
 	));
-	({ persistCoordinatorRuntimeStateFromEvent } = await import("../src/gjc-runtime/session-state-sidecar"));
+	({ persistCoordinatorRuntimeStateFromEvent } = await import("../src/vib-runtime/session-state-sidecar"));
 	// Coordinator state writes serialize on a lock whose removals go through identity-bound
 	// native primitives; point them at a working implementation.
 	installExactIdentityNatives();
@@ -41,10 +41,10 @@ beforeAll(async () => {
 
 afterEach(() => {
 	if (setProjectDir && originalProjectDir) setProjectDir(originalProjectDir);
-	if (originalStateFileEnv === undefined) delete process.env.GJC_COORDINATOR_SESSION_STATE_FILE;
-	else process.env.GJC_COORDINATOR_SESSION_STATE_FILE = originalStateFileEnv;
-	if (originalSessionIdEnv === undefined) delete process.env.GJC_COORDINATOR_SESSION_ID;
-	else process.env.GJC_COORDINATOR_SESSION_ID = originalSessionIdEnv;
+	if (originalStateFileEnv === undefined) delete process.env.VIB_COORDINATOR_SESSION_STATE_FILE;
+	else process.env.VIB_COORDINATOR_SESSION_STATE_FILE = originalStateFileEnv;
+	if (originalSessionIdEnv === undefined) delete process.env.VIB_COORDINATOR_SESSION_ID;
+	else process.env.VIB_COORDINATOR_SESSION_ID = originalSessionIdEnv;
 	mock.restore();
 	eventControllerPerfCounters?.reset();
 });
@@ -255,10 +255,10 @@ describe("advisory performance baselines", () => {
 	});
 
 	it("records sidecar sync readFileSync invocations per state-mapped event", async () => {
-		const tempDir = fsSync.mkdtempSync(path.join(os.tmpdir(), "gjc-perf-sidecar-"));
+		const tempDir = fsSync.mkdtempSync(path.join(os.tmpdir(), "vib-perf-sidecar-"));
 		const stateFile = path.join(tempDir, "runtime-state.json");
-		process.env.GJC_COORDINATOR_SESSION_STATE_FILE = stateFile;
-		process.env.GJC_COORDINATOR_SESSION_ID = "session-sidecar-baseline";
+		process.env.VIB_COORDINATOR_SESSION_STATE_FILE = stateFile;
+		process.env.VIB_COORDINATOR_SESSION_ID = "session-sidecar-baseline";
 		const realReadFileSync = fsSync.readFileSync;
 		let readFileSyncCalls = 0;
 		spyOn(fsSync, "readFileSync").mockImplementation(((...args: Parameters<typeof fsSync.readFileSync>) => {

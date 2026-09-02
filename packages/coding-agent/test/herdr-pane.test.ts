@@ -124,11 +124,11 @@ describe("resolveHerdrPaneEnvironment", () => {
 		).toBeNull();
 	});
 
-	it("defers to the ancestor gjc that already owns the pane", () => {
+	it("defers to the ancestor vib that already owns the pane", () => {
 		expect(
 			resolveHerdrPaneEnvironment({
 				env: paneEnv({
-					GJC_HERDR_PANE_OWNER: JSON.stringify({
+					VIB_HERDR_PANE_OWNER: JSON.stringify({
 						version: 1,
 						paneId: "pane-7",
 						pid: 100,
@@ -166,7 +166,7 @@ describe("resolveHerdrPaneEnvironment", () => {
 		expect(
 			resolveHerdrPaneEnvironment({
 				env: paneEnv({
-					GJC_HERDR_PANE_OWNER: JSON.stringify({
+					VIB_HERDR_PANE_OWNER: JSON.stringify({
 						version: 1,
 						paneId: "pane-3",
 						pid: 100,
@@ -183,7 +183,7 @@ describe("resolveHerdrPaneEnvironment", () => {
 	it("handles a Herdr pane id that contains a colon", () => {
 		const env = paneEnv({
 			HERDR_PANE_ID: "wT:p1",
-			GJC_HERDR_PANE_OWNER: JSON.stringify({
+			VIB_HERDR_PANE_OWNER: JSON.stringify({
 				version: 1,
 				paneId: "wT:p1",
 				pid: 100,
@@ -203,7 +203,7 @@ describe("resolveHerdrPaneEnvironment", () => {
 
 	it("reclaims a marker after PID reuse", () => {
 		const env = paneEnv({
-			GJC_HERDR_PANE_OWNER: JSON.stringify({
+			VIB_HERDR_PANE_OWNER: JSON.stringify({
 				version: 1,
 				paneId: "pane-7",
 				pid: 100,
@@ -219,12 +219,12 @@ describe("resolveHerdrPaneEnvironment", () => {
 				processIncarnation: () => "linux:new",
 			}),
 		).toEqual({ paneId: "pane-7", binPath: "/usr/bin/herdr" });
-		expect(env.GJC_HERDR_PANE_OWNER).toBeUndefined();
+		expect(env.VIB_HERDR_PANE_OWNER).toBeUndefined();
 	});
 
 	it("reclaims a marker after the parent exits", () => {
 		const env = paneEnv({
-			GJC_HERDR_PANE_OWNER: JSON.stringify({
+			VIB_HERDR_PANE_OWNER: JSON.stringify({
 				version: 1,
 				paneId: "pane-7",
 				pid: 100,
@@ -240,12 +240,12 @@ describe("resolveHerdrPaneEnvironment", () => {
 				processIncarnation: () => undefined,
 			}),
 		).toEqual({ paneId: "pane-7", binPath: "/usr/bin/herdr" });
-		expect(env.GJC_HERDR_PANE_OWNER).toBeUndefined();
+		expect(env.VIB_HERDR_PANE_OWNER).toBeUndefined();
 	});
 
 	it("fails closed when a non-Linux owner probe is unverifiable", () => {
 		const env = paneEnv({
-			GJC_HERDR_PANE_OWNER: JSON.stringify({
+			VIB_HERDR_PANE_OWNER: JSON.stringify({
 				version: 1,
 				paneId: "pane-7",
 				pid: 100,
@@ -261,12 +261,12 @@ describe("resolveHerdrPaneEnvironment", () => {
 				processProbe: () => ({ state: "unverifiable" }),
 			}),
 		).toBeNull();
-		expect(env.GJC_HERDR_PANE_OWNER).toBeDefined();
+		expect(env.VIB_HERDR_PANE_OWNER).toBeDefined();
 	});
 
 	it("does not trust a same-process marker supplied through the environment", () => {
 		const env = paneEnv({
-			GJC_HERDR_PANE_OWNER: JSON.stringify({
+			VIB_HERDR_PANE_OWNER: JSON.stringify({
 				version: 1,
 				paneId: "pane-7",
 				pid: process.pid,
@@ -278,7 +278,7 @@ describe("resolveHerdrPaneEnvironment", () => {
 			paneId: "pane-7",
 			binPath: "/usr/bin/herdr",
 		});
-		expect(env.GJC_HERDR_PANE_OWNER).toBeUndefined();
+		expect(env.VIB_HERDR_PANE_OWNER).toBeUndefined();
 	});
 });
 
@@ -292,7 +292,7 @@ describe("herdr pane ownership", () => {
 			pid: 4242,
 		});
 
-		const marker = JSON.parse(env.GJC_HERDR_PANE_OWNER ?? "null") as {
+		const marker = JSON.parse(env.VIB_HERDR_PANE_OWNER ?? "null") as {
 			paneId?: string;
 			pid?: number;
 			version?: number;
@@ -310,7 +310,7 @@ describe("herdr pane ownership", () => {
 		});
 
 		reporter?.release();
-		expect(env.GJC_HERDR_PANE_OWNER).toBeUndefined();
+		expect(env.VIB_HERDR_PANE_OWNER).toBeUndefined();
 	});
 
 	it("clears the exact claim even when identity probing is transient", () => {
@@ -324,11 +324,11 @@ describe("herdr pane ownership", () => {
 		});
 
 		reporter?.release();
-		expect(env.GJC_HERDR_PANE_OWNER).toBeUndefined();
+		expect(env.VIB_HERDR_PANE_OWNER).toBeUndefined();
 	});
 
-	it("keeps a nested gjc from claiming or releasing its parent's pane", () => {
-		// A session shelling out to `gjc doctor` hands the child the same
+	it("keeps a nested vib from claiming or releasing its parent's pane", () => {
+		// A session shelling out to `vib doctor` hands the child the same
 		// HERDR_PANE_ID. Before the claim marker the child registered as the pane's
 		// agent and, on exit, released that authority and cleared the title; because
 		// Herdr's per-source sequence is a monotonic watermark seeded from the wall
@@ -365,7 +365,7 @@ describe("herdr pane ownership", () => {
 		// The parent keeps reporting for the pane it owns.
 		parentSource.emit({ type: "agent_start" });
 		expect(parent.calls.map(call => call.command.at(-3))).toEqual(["idle", "working"]);
-		const marker = JSON.parse(env.GJC_HERDR_PANE_OWNER ?? "null") as { paneId?: string; pid?: number };
+		const marker = JSON.parse(env.VIB_HERDR_PANE_OWNER ?? "null") as { paneId?: string; pid?: number };
 		expect(marker).toMatchObject({ paneId: "pane-7", pid: 100 });
 	});
 });
@@ -377,9 +377,9 @@ describe("herdr reporter argv", () => {
 			"report-agent",
 			"pane-7",
 			"--source",
-			"custom:gjc",
+			"custom:vib",
 			"--agent",
-			"gjc",
+			"vib",
 			"--state",
 			"working",
 			"--seq",
@@ -390,9 +390,9 @@ describe("herdr reporter argv", () => {
 			"release-agent",
 			"pane-7",
 			"--source",
-			"custom:gjc",
+			"custom:vib",
 			"--agent",
-			"gjc",
+			"vib",
 			"--seq",
 			"4",
 		]);
@@ -512,7 +512,7 @@ describe("herdr reporter state machine", () => {
 
 	it("starts sequences above the ones a previous session in the pane used", async () => {
 		// Herdr keeps the accepted sequence watermark on the terminal, so a second
-		// gjc process in the same pane must not restart the count: its reports
+		// vib process in the same pane must not restart the count: its reports
 		// would be dropped and the session would be missing from the sidebar.
 		const first = recordingSpawn();
 		const firstSource = eventSource();
@@ -662,9 +662,9 @@ describe("herdr pane title", () => {
 			"report-metadata",
 			"pane-7",
 			"--source",
-			"custom:gjc",
+			"custom:vib",
 			"--agent",
-			"gjc",
+			"vib",
 			"--title",
 			"Refactor auth middleware",
 			"--seq",
@@ -675,7 +675,7 @@ describe("herdr pane title", () => {
 			"report-metadata",
 			"pane-7",
 			"--source",
-			"custom:gjc",
+			"custom:vib",
 			"--clear-title",
 			"--seq",
 			"3",
@@ -712,9 +712,9 @@ describe("herdr pane title", () => {
 			"report-metadata",
 			"pane-7",
 			"--source",
-			"custom:gjc",
+			"custom:vib",
 			"--agent",
-			"gjc",
+			"vib",
 			"--title",
 			"Ship the release",
 			"--seq",

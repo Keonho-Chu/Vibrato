@@ -20,17 +20,17 @@ const REGISTERED_ID = "11111111-1111-4111-8111-111111111111";
 const BROKER_ONLY_ID = "22222222-2222-4222-8222-222222222222";
 
 /**
- * The `GJC_COORDINATOR_MCP_*` env every server in this file is built with. The
+ * The `VIB_COORDINATOR_MCP_*` env every server in this file is built with. The
  * state root lives under the fixture root, separate from the workdir root, so
  * tests can also assert that listing never derives paths from broker ids.
  */
 function serverEnv(root: string): NodeJS.ProcessEnv {
 	return {
-		GJC_COORDINATOR_MCP_WORKDIR_ROOTS: root,
-		GJC_COORDINATOR_MCP_STATE_ROOT: path.join(root, ".gjc", "coordinator-state"),
-		GJC_COORDINATOR_MCP_MUTATIONS: "sessions",
-		GJC_COORDINATOR_MCP_PROFILE: "local",
-		GJC_COORDINATOR_MCP_REPO: "repo",
+		VIB_COORDINATOR_MCP_WORKDIR_ROOTS: root,
+		VIB_COORDINATOR_MCP_STATE_ROOT: path.join(root, ".vib", "coordinator-state"),
+		VIB_COORDINATOR_MCP_MUTATIONS: "sessions",
+		VIB_COORDINATOR_MCP_PROFILE: "local",
+		VIB_COORDINATOR_MCP_REPO: "repo",
 	};
 }
 
@@ -92,12 +92,12 @@ async function createServer(root: string, options: { registerFirst?: boolean } =
 	);
 }
 
-describe("gjc_coordinator_list_sessions registration marker", () => {
+describe("vib_coordinator_list_sessions registration marker", () => {
 	it("reports registered for projected sessions and unregistered for broker-only ones", async () => {
 		const root = await coordinatorFixtureRoot(tempDirs);
 		const server = await createServer(root);
 
-		const listed = (await server.callTool("gjc_coordinator_list_sessions", {})) as {
+		const listed = (await server.callTool("vib_coordinator_list_sessions", {})) as {
 			ok: boolean;
 			sessions: Array<{ session_id?: string; registered?: boolean }>;
 		};
@@ -115,7 +115,7 @@ describe("gjc_coordinator_list_sessions registration marker", () => {
 		// The marker is only useful if it is the same condition other tools
 		// enforce, so assert it against real tool behavior rather than against
 		// the projection file it is derived from.
-		for (const tool of ["gjc_coordinator_read_status", "gjc_coordinator_read_tail"]) {
+		for (const tool of ["vib_coordinator_read_status", "vib_coordinator_read_tail"]) {
 			expect(await server.callTool(tool, { session_id: BROKER_ONLY_ID })).toMatchObject({
 				ok: false,
 				error: { code: "not_found" },
@@ -124,7 +124,7 @@ describe("gjc_coordinator_list_sessions registration marker", () => {
 		// stop_session does not answer `not_found`; its unregistered outcome is the
 		// `unknown_session` reason. The description must not overpromise the shape.
 		expect(
-			await server.callTool("gjc_coordinator_stop_session", {
+			await server.callTool("vib_coordinator_stop_session", {
 				session_id: BROKER_ONLY_ID,
 				allow_mutation: true,
 			}),
@@ -139,7 +139,7 @@ describe("gjc_coordinator_list_sessions registration marker", () => {
 		const root = await coordinatorFixtureRoot(tempDirs);
 		const server = await createServer(root, { registerFirst: false });
 
-		const listed = (await server.callTool("gjc_coordinator_list_sessions", {})) as {
+		const listed = (await server.callTool("vib_coordinator_list_sessions", {})) as {
 			sessions: Array<{ registered?: boolean }>;
 		};
 
@@ -174,7 +174,7 @@ describe("gjc_coordinator_list_sessions registration marker", () => {
 			{ registerFirst: false },
 		);
 
-		const listed = (await hostile.callTool("gjc_coordinator_list_sessions", {})) as {
+		const listed = (await hostile.callTool("vib_coordinator_list_sessions", {})) as {
 			ok: boolean;
 			sessions: Array<{ session_id?: string; registered?: boolean }>;
 		};
@@ -192,7 +192,7 @@ describe("gjc_coordinator_list_sessions registration marker", () => {
 		expect(config.namespace.identity.length).toBeGreaterThan(0);
 		const projections = path.join(
 			root,
-			".gjc",
+			".vib",
 			"coordinator-state",
 			"v1",
 			config.namespace.identity,
@@ -216,12 +216,12 @@ describe("gjc_coordinator_list_sessions registration marker", () => {
 		expect(config.namespace.identity.length).toBeGreaterThan(0);
 		const server = await createServer(root, { registerFirst: false });
 
-		const listed = (await server.callTool("gjc_coordinator_list_sessions", {})) as {
+		const listed = (await server.callTool("vib_coordinator_list_sessions", {})) as {
 			sessions: Array<{ session_id?: string; registered?: boolean }>;
 		};
 
 		expect(listed.sessions.find(session => session.session_id === REGISTERED_ID)?.registered).toBe(false);
-		expect(await server.callTool("gjc_coordinator_read_status", { session_id: REGISTERED_ID })).toMatchObject({
+		expect(await server.callTool("vib_coordinator_read_status", { session_id: REGISTERED_ID })).toMatchObject({
 			ok: false,
 			error: { code: "not_found" },
 		});
@@ -233,7 +233,7 @@ describe("gjc_coordinator_list_sessions registration marker", () => {
 		const fixture = await writeDurableCoordinatorSession({ sessionId: REGISTERED_ID, cwd: root, env });
 		const server = await createServer(root, { registerFirst: false });
 
-		const before = (await server.callTool("gjc_coordinator_list_sessions", {})) as {
+		const before = (await server.callTool("vib_coordinator_list_sessions", {})) as {
 			sessions: Array<{ session_id?: string; registered?: boolean }>;
 		};
 		expect(before.sessions.find(session => session.session_id === REGISTERED_ID)?.registered).toBe(true);
@@ -244,11 +244,11 @@ describe("gjc_coordinator_list_sessions registration marker", () => {
 		// resurrects a reaped projection.
 		await fs.rm(fixture.sessionFile, { force: true });
 
-		const after = (await server.callTool("gjc_coordinator_list_sessions", {})) as {
+		const after = (await server.callTool("vib_coordinator_list_sessions", {})) as {
 			sessions: Array<{ session_id?: string; registered?: boolean }>;
 		};
 		expect(after.sessions.find(session => session.session_id === REGISTERED_ID)?.registered).toBe(false);
-		expect(await server.callTool("gjc_coordinator_read_tail", { session_id: REGISTERED_ID })).toMatchObject({
+		expect(await server.callTool("vib_coordinator_read_tail", { session_id: REGISTERED_ID })).toMatchObject({
 			ok: false,
 			error: { code: "not_found" },
 		});
@@ -266,7 +266,7 @@ describe("gjc_coordinator_list_sessions registration marker", () => {
 		await writeDurableCoordinatorSession({ sessionId: REGISTERED_ID, cwd: root, env: serverEnv(root) });
 
 		const startedAt = performance.now();
-		const listed = (await server.callTool("gjc_coordinator_list_sessions", {})) as {
+		const listed = (await server.callTool("vib_coordinator_list_sessions", {})) as {
 			ok: boolean;
 			sessions: Array<{ session_id?: string; registered?: boolean }>;
 		};
@@ -288,7 +288,7 @@ describe("gjc_coordinator_list_sessions registration marker", () => {
 		const response = (await server.handleJsonRpc({ jsonrpc: "2.0", id: 1, method: "tools/list" })) as {
 			result?: { tools?: Array<{ name: string; description: string }> };
 		};
-		const listSessions = response.result?.tools?.find(tool => tool.name === "gjc_coordinator_list_sessions");
+		const listSessions = response.result?.tools?.find(tool => tool.name === "vib_coordinator_list_sessions");
 
 		expect(listSessions?.description).toContain("registered");
 		expect(listSessions?.description).toContain("not_found");

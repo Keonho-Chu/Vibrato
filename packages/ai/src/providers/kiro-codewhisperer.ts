@@ -10,7 +10,7 @@
  * (aws-toolkit-vscode CodeWhisperer streaming + codewhispererruntime-2022-11-11),
  * not from any AGPL reference implementation.
  */
-import { $credentialEnv, $env, extractHttpStatusFromError } from "@gajae-code/utils";
+import { $credentialEnv, $env, extractHttpStatusFromError } from "@vib-rato/utils";
 import type { Effort } from "../model-thinking";
 import type {
 	Api,
@@ -185,7 +185,7 @@ export const streamKiroCodeWhisperer: StreamFunction<"kiro-codewhisperer-stream"
 			const bearerToken = resolveBearerToken(options.apiKey);
 			if (!bearerToken) {
 				throw new Error(
-					"No Kiro credentials found. Set KIRO_API_KEY (ksk_ from https://app.kiro.dev/settings/api-keys) or run 'gjc auth-broker login kiro'.",
+					"No Kiro credentials found. Set KIRO_API_KEY (ksk_ from https://app.kiro.dev/settings/api-keys) or run 'vib auth-broker login kiro'.",
 				);
 			}
 

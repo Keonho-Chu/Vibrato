@@ -9,9 +9,9 @@
  */
 
 import { describe, expect, test } from "bun:test";
-import { expandPromptTemplate, type PromptTemplate } from "@gajae-code/coding-agent/config/prompt-templates";
-import { expandSlashCommand, type FileSlashCommand } from "@gajae-code/coding-agent/extensibility/slash-commands";
-import { parseCommandArgs, substituteArgs } from "@gajae-code/coding-agent/utils/command-args";
+import { expandPromptTemplate, type PromptTemplate } from "@vib-rato/coding-agent/config/prompt-templates";
+import { expandSlashCommand, type FileSlashCommand } from "@vib-rato/coding-agent/extensibility/slash-commands";
+import { parseCommandArgs, substituteArgs } from "@vib-rato/coding-agent/utils/command-args";
 import browserDescription from "../src/prompts/tools/browser.md" with { type: "text" };
 import hashlineDescription from "../src/prompts/tools/hashline.md" with { type: "text" };
 
@@ -290,10 +290,10 @@ describe("tool prompt descriptions", () => {
 		expect(browserDescription).toContain("`act` — run a list of structured `actions`");
 		expect(browserDescription).toContain("Use `run` only when an `act` verb does not cover what you need");
 		expect(browserDescription).toContain("full browser-account access");
-		expect(browserDescription).toContain("only a Chrome process GJC launched");
+		expect(browserDescription).toContain("only a Chrome process Vibrato launched");
 		expect(browserDescription).toContain("NEVER use it for a daily Chrome profile");
 		expect(browserDescription).toContain("cookies and authenticated accounts");
-		expect(browserDescription).toContain("gjc://tools/browser.md");
+		expect(browserDescription).toContain("vib://tools/browser.md");
 		expect(browserDescription).toContain('"action":"run"');
 	});
 

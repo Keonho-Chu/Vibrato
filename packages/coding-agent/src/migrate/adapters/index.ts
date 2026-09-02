@@ -1,12 +1,12 @@
 /**
- * Source adapters for `gjc migrate`.
+ * Source adapters for `vib migrate`.
  *
  * Each adapter reads GLOBAL/home config for one source agent and returns
  * normalized MCP + skill candidates plus source-level diagnostics. Adapters never
  * read project-level config and never connect to anything.
  */
 import * as fs from "node:fs/promises";
-import { isEnoent } from "@gajae-code/utils";
+import { isEnoent } from "@vib-rato/utils";
 import { normalizeSkill } from "../skill-normalizer";
 import type { AdapterResult, MigrateSource, SkillCandidate, SourceDiagnostic } from "../types";
 import { claudeCodeAdapter } from "./claude-code";

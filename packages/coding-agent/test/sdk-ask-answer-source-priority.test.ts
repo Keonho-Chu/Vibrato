@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { getAskAnswerSource, registerAskAnswerSource } from "@gajae-code/coding-agent/tools/ask-answer-registry";
+import { getAskAnswerSource, registerAskAnswerSource } from "@vib-rato/coding-agent/tools/ask-answer-registry";
 
 describe("ask answer source priority", () => {
 	it("selects the protocol source when it registers after an interactive source", () => {

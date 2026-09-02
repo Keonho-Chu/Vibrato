@@ -1,10 +1,10 @@
 /**
- * `gjc crash` — inspect local crash signatures and file an assisted, fully
- * consented bug report. `gjc crash report` requires an explicit,
- * digest-confirmed confirmation for that exact invocation; `gjc crash relay`
+ * `vib crash` — inspect local crash signatures and file an assisted, fully
+ * consented bug report. `vib crash report` requires an explicit,
+ * digest-confirmed confirmation for that exact invocation; `vib crash relay`
  * uses separately configured standing consent.
  */
-import { Args, Command, Flags } from "@gajae-code/utils/cli";
+import { Args, Command, Flags } from "@vib-rato/utils/cli";
 import { runCrashListCommand, runCrashRelayCommand, runCrashReportCommand } from "../cli/crash-cli";
 import { Settings } from "../config/settings";
 
@@ -17,7 +17,7 @@ export default class Crash extends Command {
 		json: Flags.boolean({ char: "j", description: "Emit machine-readable JSON (list only)", default: false }),
 	};
 
-	static examples = ["gjc crash list", "gjc crash list --json", "gjc crash report", "gjc crash relay"];
+	static examples = ["vib crash list", "vib crash list --json", "vib crash report", "vib crash relay"];
 
 	async run(): Promise<void> {
 		const { args, flags } = await this.parse(Crash);

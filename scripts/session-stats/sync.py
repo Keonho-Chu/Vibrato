@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Sync ~/.gjc/agent/sessions/**/*.jsonl into ~/.gjc/stats.db (ss_* tables).
+Sync ~/.vib/agent/sessions/**/*.jsonl into ~/.vib/stats.db (ss_* tables).
 
 Incremental: per-file byte offset + mtime is tracked in ss_sessions. Only new
 bytes are parsed on re-runs. Tokenization (o200k_base) and the hashline edit
@@ -49,8 +49,8 @@ except ImportError:
 # --------------------------------------------------------------------------- #
 # Config
 
-SESSIONS_ROOT = Path.home() / ".gjc" / "agent" / "sessions"
-DB_PATH = Path.home() / ".gjc" / "stats.db"
+SESSIONS_ROOT = Path.home() / ".vib" / "agent" / "sessions"
+DB_PATH = Path.home() / ".vib" / "stats.db"
 TOKENIZER_NAME = "o200k_base"
 SCHEMA_VERSION = 3
 # Bump whenever parse_hashline_input / find_longest_repeat / duplicated_anchors

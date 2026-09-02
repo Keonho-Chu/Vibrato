@@ -12,18 +12,18 @@ It documents only active behavior.
 
 | Variable | Used for | Trusted-source behavior |
 | --- | --- | --- |
-| `GJC_CRASH_SENTRY_DSN` | Sentry destination for the opt-in crash relay when `crashReport.upstreamDsn` is empty and global `crashReport.upstream` is `sentry` | Resolved through `$credentialEnv`; a project `.env` cannot provide it. A configured global DSN takes precedence. |
+| `VIB_CRASH_SENTRY_DSN` | Sentry destination for the opt-in crash relay when `crashReport.upstreamDsn` is empty and global `crashReport.upstream` is `sentry` | Resolved through `$credentialEnv`; a project `.env` cannot provide it. A configured global DSN takes precedence. |
 
 ## Resolution model and precedence
 
-Most runtime lookups use `$env` from `@gajae-code/utils` (`packages/utils/src/env.ts`).
+Most runtime lookups use `$env` from `@vib-rato/utils` (`packages/utils/src/env.ts`).
 
 `$env` loading order:
 
 1. Existing process environment (`Bun.env`)
 2. Project `.env` (`$PWD/.env`) for keys not already set
-3. Agent `.env` (`~/.gjc/agent/.env`, respecting `GJC_CONFIG_DIR` / `GJC_CODING_AGENT_DIR`) for keys not already set
-4. Config-root `.env` (`~/.gjc/.env`, respecting `GJC_CONFIG_DIR`) for keys not already set
+3. Agent `.env` (`~/.vib/agent/.env`, respecting `VIB_CONFIG_DIR` / `VIB_CODING_AGENT_DIR`) for keys not already set
+4. Config-root `.env` (`~/.vib/.env`, respecting `VIB_CONFIG_DIR`) for keys not already set
 5. Home `.env` (`~/.env`) for keys not already set
 6. Login shell rc files (`~/.zshenv`, `~/.zprofile`, `~/.zshrc`, `~/.bash_profile`, `~/.bashrc`) for keys not already set
 
@@ -31,13 +31,15 @@ Step 6 does not execute those files. Each is scanned line by line for literal `e
 
 Because the scan is per line and has no notion of shell block structure, it does not reflect whether an assignment would actually run. An assignment nested in an `if` or a function body is read exactly like a top-level one, so a value you guarded behind something like `if [ -n "$CI" ]` in `~/.zshrc` still reaches `$env` unconditionally. Only assignments that do not start their own line — for example one packed after `case ... in` on the same line — are missed.
 
-Keys are used exactly as written. A `PI_`-prefixed key in a `.env` file is not mirrored to its `GJC_` counterpart, or the reverse — where both spellings are accepted it is because the reading code asks for both names.
+Keys are used exactly as written. A `PI_`-prefixed key in a `.env` file is not mirrored to its `VIB_` counterpart, or the reverse — where both spellings are accepted it is because the reading code asks for both names.
 
 ---
 
 ## 1) Model/provider authentication
 
 These are consumed via `getEnvApiKey()` (`packages/ai/src/stream.ts`) unless noted otherwise.
+
+> **Selection note:** Vibrato's built-in provider picker (`/login`, `/model`, provider ordering, presets) is limited to four providers — see [Supported providers](./models.md#supported-providers). `ANTHROPIC_*`, `OPENAI_API_KEY`/Codex auth, `VLLM_API_KEY`, `VLLM_BASE_URL`, `SGLANG_API_KEY`, and `SGLANG_BASE_URL` back those. Every other row in the table below still works exactly as documented, but only for a provider reachable through a custom `models.yml` entry — hidden from selection (advanced / `models.yml`-only) rather than removed.
 
 ### Core provider credentials
 
@@ -113,10 +115,10 @@ When the broker is enabled, the local SQLite credential store is bypassed and al
 
 | Variable                | Used for                                                                                          | Required when                                                                                                          | Notes / precedence                                                                                                                                                                                  |
 | ----------------------- | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GJC_AUTH_BROKER_URL`   | Base URL of the remote auth-broker (e.g. `https://broker.tailnet:8765`); selects broker mode      | Resolving credentials through a broker; also required by `gjc auth-gateway serve --provider=<provider>` (the gateway is itself a broker client) | Wins over nested `auth.broker.url` in the global `config.yml`. A resolved URL without a token is a hard startup error; GJC does not fall back to local SQLite.                                    |
-| `GJC_AUTH_BROKER_TOKEN` | Bearer token sent on every broker endpoint except `/v1/healthz`                                   | A broker URL is set and no token is available from nested `auth.broker.token` or `<config-dir>/auth-broker.token`     | Resolution: this env → nested `auth.broker.token` → `<config-dir>/auth-broker.token` (mode `0600`). Nested URL/token values may be exact `$ENV_NAME` references resolved from the trusted process environment. `<config-dir>` is `~/.gjc/` (respecting `GJC_CONFIG_DIR`).         |
+| `VIB_AUTH_BROKER_URL`   | Base URL of the remote auth-broker (e.g. `https://broker.tailnet:8765`); selects broker mode      | Resolving credentials through a broker; also required by `vib auth-gateway serve --provider=<provider>` (the gateway is itself a broker client) | Wins over nested `auth.broker.url` in the global `config.yml`. A resolved URL without a token is a hard startup error; Vibrato does not fall back to local SQLite.                                    |
+| `VIB_AUTH_BROKER_TOKEN` | Bearer token sent on every broker endpoint except `/v1/healthz`                                   | A broker URL is set and no token is available from nested `auth.broker.token` or `<config-dir>/auth-broker.token`     | Resolution: this env → nested `auth.broker.token` → `<config-dir>/auth-broker.token` (mode `0600`). Nested URL/token values may be exact `$ENV_NAME` references resolved from the trusted process environment. `<config-dir>` is `~/.vib/` (respecting `VIB_CONFIG_DIR`).         |
 
-The gateway has no dedicated env vars — it inherits `GJC_AUTH_BROKER_*`. Its own inbound bearer token lives at `<config-dir>/auth-gateway.token` and is managed via `gjc auth-gateway token`.
+The gateway has no dedicated env vars — it inherits `VIB_AUTH_BROKER_*`. Its own inbound bearer token lives at `<config-dir>/auth-gateway.token` and is managed via `vib auth-gateway token`.
 
 ### Multi-account credential ranking
 
@@ -124,11 +126,11 @@ When more than one OAuth credential is stored for the same provider (e.g. severa
 
 | Variable                      | Used for                                          | Required when  | Notes / precedence                                                                                                                                                                                                                                                                                            |
 | ----------------------------- | ------------------------------------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GJC_CREDENTIAL_RANKING_MODE` | Multi-account OAuth credential selection strategy | Never (opt-in) | `balanced` (default) prefers the least-drained account (spreads load, keeps burst headroom). `earliest-reset` prefers the soonest-to-reset non-blocked account (earliest-expiry-first) so perishable tumbling-window quota (e.g. Claude 5h/7d) is drained before reset. Unset/unknown → `balanced`. Only affects session-start ranking; blocked/exhausted accounts still sort last. |
+| `VIB_CREDENTIAL_RANKING_MODE` | Multi-account OAuth credential selection strategy | Never (opt-in) | `balanced` (default) prefers the least-drained account (spreads load, keeps burst headroom). `earliest-reset` prefers the soonest-to-reset non-blocked account (earliest-expiry-first) so perishable tumbling-window quota (e.g. Claude 5h/7d) is drained before reset. Unset/unknown → `balanced`. Only affects session-start ranking; blocked/exhausted accounts still sort last. |
 
 ### External CLI credential import roots
 
-`gjc setup credentials`, the TUI "import existing credentials" action, and the startup auto-import discover Claude Code and Codex CLI credentials on disk. Both CLIs relocate their own config root through the environment, so gjc follows the same variables instead of assuming the home-directory default. This is what makes an account selected by an external account switcher (which launches the shell with these variables set) the account gjc imports.
+`vib setup credentials`, the TUI "import existing credentials" action, and the startup auto-import discover Claude Code and Codex CLI credentials on disk. Both CLIs relocate their own config root through the environment, so vib follows the same variables instead of assuming the home-directory default. This is what makes an account selected by an external account switcher (which launches the shell with these variables set) the account vib imports.
 
 | Variable             | Used for                                                              | Required when                                        | Notes / precedence                                                                                                                                     |
 | -------------------- | --------------------------------------------------------------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -229,7 +231,7 @@ providers:
         api: openai-completions
 ```
 
-For OpenRouter traffic, GJC explicitly sends `User-Agent: Gajae-Code/<package version>` plus OpenRouter attribution headers. For the built-in OpenAI Responses transport and generic OpenAI-compatible Chat Completions transport, GJC passes model/provider headers through the OpenAI JavaScript SDK and does not set a GJC user-agent unless the provider-specific code adds one.
+For OpenRouter traffic, Vibrato explicitly sends `User-Agent: Vibrato/<package version>` plus OpenRouter attribution headers. For the built-in OpenAI Responses transport and generic OpenAI-compatible Chat Completions transport, Vibrato passes model/provider headers through the OpenAI JavaScript SDK and does not set a Vibrato user-agent unless the provider-specific code adds one.
 
 ### OpenAI-compatible proxy provider config
 
@@ -254,84 +256,84 @@ providers:
 
 `models.yml` is strict: unsupported provider/model keys fail validation before the provider request is dispatched.
 
-### GJC workflow bridge commands
+### Vibrato workflow bridge commands
 
-`gjc ralplan`, `gjc deep-interview`, and `gjc state` are private runtime bridge commands. They require `GJC_RUNTIME_BINARY` (or legacy `GJC_LEGACY_RUNTIME_BINARY`) to point at the private runtime executable; public bundled workflow use remains through `/skill:ralplan` and `/skill:deep-interview` inside a GJC session.
+`vib ralplan`, `vib deep-interview`, and `vib state` are private runtime bridge commands. They require `VIB_RUNTIME_BINARY` (or legacy `VIB_LEGACY_RUNTIME_BINARY`) to point at the private runtime executable; public bundled workflow use remains through `/skill:ralplan` and `/skill:deep-interview` inside a Vibrato session.
 
 | Variable | Behavior |
 | --- | --- |
-| `GJC_RUNTIME_BINARY` | Private runtime bridge binary for `gjc ralplan`, `gjc deep-interview`, and `gjc state` |
-| `GJC_LEGACY_RUNTIME_BINARY` | Legacy fallback bridge binary name |
+| `VIB_RUNTIME_BINARY` | Private runtime bridge binary for `vib ralplan`, `vib deep-interview`, and `vib state` |
+| `VIB_LEGACY_RUNTIME_BINARY` | Legacy fallback bridge binary name |
 
 ### Interactive `--tmux` startup and scroll/mouse profile
 
-`gjc --tmux` launches the interactive TUI inside a fresh GJC-managed tmux session. Plain `gjc --tmux` does not auto-attach a scoped managed session from the same project/branch; use `gjc --tmux --continue` or `gjc session attach <session>` when you intend to continue existing tmux context. `gjc --tmux --resume` still reaches the inner GJC session resolver, so value-less resume shows the session picker and `--resume <id>` honors that target instead of reusing a branch tmux session. Older-version sessions are not auto-attached after upgrades. When GJC creates a session it applies a profile that is **scoped to the GJC session only** (it never runs `set -g` / global tmux options), including:
+`vib --tmux` launches the interactive TUI inside a fresh Vibrato-managed tmux session. Plain `vib --tmux` does not auto-attach a scoped managed session from the same project/branch; use `vib --tmux --continue` or `vib session attach <session>` when you intend to continue existing tmux context. `vib --tmux --resume` still reaches the inner Vibrato session resolver, so value-less resume shows the session picker and `--resume <id>` honors that target instead of reusing a branch tmux session. Older-version sessions are not auto-attached after upgrades. When Vibrato creates a session it applies a profile that is **scoped to the Vibrato session only** (it never runs `set -g` / global tmux options), including:
 
-- `mouse on` — enables tmux copy-mode scrolling when GJC mouse support is disabled.
+- `mouse on` — enables tmux copy-mode scrolling when Vibrato mouse support is disabled.
 - `set-clipboard on` and a readable copy-mode `mode-style`.
-- GJC ownership/identity tags (`@gjc-profile`, version, branch/project markers).
+- Vibrato ownership/identity tags (`@vib-profile`, version, branch/project markers).
 
-This profile is applied on macOS, Linux, WSL (Linux), and native Windows when a compatible tmux provider is available. It is applied **only to sessions GJC itself creates**. If you start tmux yourself and then run `gjc` inside it, GJC leaves your tmux configuration untouched. GJC's own mouse support is disabled by default, so the host terminal or tmux retains wheel and selection behavior. Add `set -g mouse on` to your own `~/.tmux.conf` when you want tmux copy-mode scrolling.
+This profile is applied on macOS, Linux, WSL (Linux), and native Windows when a compatible tmux provider is available. It is applied **only to sessions Vibrato itself creates**. If you start tmux yourself and then run `vib` inside it, Vibrato leaves your tmux configuration untouched. Vibrato's own mouse support is disabled by default, so the host terminal or tmux retains wheel and selection behavior. Add `set -g mouse on` to your own `~/.tmux.conf` when you want tmux copy-mode scrolling.
 
-Set `mouse.enabled: true` to let GJC capture the wheel for virtual session scrolling (three rows per notch, not a full page). When GJC owns mouse input, dragging across rendered text highlights the selection and copies it to the system clipboard on release. Double-click selects the word under the cursor and triple-click selects the row; both copy on release, and dragging afterwards extends by whole words or rows. Because GJC owns the mouse while this is on, the terminal's own selection is reached with a modifier held — Option on macOS, Shift on most other terminals. That modifier makes the host terminal keep the click instead of forwarding it, so GJC never sees it and does not copy: whether the resulting selection reaches the clipboard is entirely the host terminal's own copy-on-select behavior, which is off by default in most terminals. GJC's own selection is the one that copies automatically.
+Set `mouse.enabled: true` to let Vibrato capture the wheel for virtual session scrolling (three rows per notch, not a full page). When Vibrato owns mouse input, dragging across rendered text highlights the selection and copies it to the system clipboard on release. Double-click selects the word under the cursor and triple-click selects the row; both copy on release, and dragging afterwards extends by whole words or rows. Because Vibrato owns the mouse while this is on, the terminal's own selection is reached with a modifier held — Option on macOS, Shift on most other terminals. That modifier makes the host terminal keep the click instead of forwarding it, so Vibrato never sees it and does not copy: whether the resulting selection reaches the clipboard is entirely the host terminal's own copy-on-select behavior, which is off by default in most terminals. Vibrato's own selection is the one that copies automatically.
 
 | Variable | Behavior |
 | --- | --- |
-| `GJC_LAUNCH_POLICY` | Launch policy for `--tmux` startup: `tmux` (default) or `direct` (skip the tmux session) |
-| `GJC_TMUX_SESSION` | Explicit tmux session name override for `--tmux` startup. Use a unique value (for example `GJC_TMUX_SESSION=gjc-fresh-$(date +%s) gjc --tmux`) to force a fresh named session. |
-| `GJC_TMUX_COMMAND` | tmux binary/name override for every GJC tmux flow. This is not a shell command line; include only the executable path/name, not flags. |
-| `GJC_TMUX_PROFILE` | Set `0`/`false`/`off` to apply only the required ownership tags and skip the scroll/mouse/clipboard profile |
-| `GJC_MOUSE` | Set `0`/`false`/`off` to skip the managed profile's tmux `mouse on`; this does not disable GJC's own mouse support |
-| `GJC_PSMUX_COMMAND` | Identifies a psmux wrapper for Windows alias resolution. The value must resolve to the same executable identity as the selected `tmux` command; unresolved or conflicting evidence fails closed. |
-| `GJC_PSMUX_DETECTION` | Set `0`/`false`/`off` to skip banner-based psmux detection. Executable-name and alias-identity safety checks still apply. |
-| `GJC_PSMUX_FORCE_DETECT` | Set `1`/`true`/`on` to re-probe the multiplexer on every call instead of caching the per-process verdict. |
+| `VIB_LAUNCH_POLICY` | Launch policy for `--tmux` startup: `tmux` (default) or `direct` (skip the tmux session) |
+| `VIB_TMUX_SESSION` | Explicit tmux session name override for `--tmux` startup. Use a unique value (for example `VIB_TMUX_SESSION=vib-fresh-$(date +%s) vib --tmux`) to force a fresh named session. |
+| `VIB_TMUX_COMMAND` | tmux binary/name override for every Vibrato tmux flow. This is not a shell command line; include only the executable path/name, not flags. |
+| `VIB_TMUX_PROFILE` | Set `0`/`false`/`off` to apply only the required ownership tags and skip the scroll/mouse/clipboard profile |
+| `VIB_MOUSE` | Set `0`/`false`/`off` to skip the managed profile's tmux `mouse on`; this does not disable Vibrato's own mouse support |
+| `VIB_PSMUX_COMMAND` | Identifies a psmux wrapper for Windows alias resolution. The value must resolve to the same executable identity as the selected `tmux` command; unresolved or conflicting evidence fails closed. |
+| `VIB_PSMUX_DETECTION` | Set `0`/`false`/`off` to skip banner-based psmux detection. Executable-name and alias-identity safety checks still apply. |
+| `VIB_PSMUX_FORCE_DETECT` | Set `1`/`true`/`on` to re-probe the multiplexer on every call instead of caching the per-process verdict. |
 
 #### Windows psmux detection boundary
 
-On native Windows, [psmux](https://github.com/psmux/psmux) may be installed as `psmux.exe`, `pmux.exe`, or a `tmux.exe` alias. The alias can report only a generic `tmux 3.3.6` banner, so GJC compares the selected `tmux.exe` executable identity with resolved `psmux.exe` / `pmux.exe` companions. A matching identity is classified as psmux; distinct identities preserve native-tmux semantics.
+On native Windows, [psmux](https://github.com/psmux/psmux) may be installed as `psmux.exe`, `pmux.exe`, or a `tmux.exe` alias. The alias can report only a generic `tmux 3.3.6` banner, so Vibrato compares the selected `tmux.exe` executable identity with resolved `psmux.exe` / `pmux.exe` companions. A matching identity is classified as psmux; distinct identities preserve native-tmux semantics.
 
-If the selected command, an explicit `GJC_PSMUX_COMMAND`, or a resolved companion cannot be identified consistently, GJC reports `gjc_tmux_provider_ambiguous` and refuses before applying native-tmux target or mutation semantics. Correct `PATH`, set `GJC_TMUX_COMMAND` to a verified executable, or make `GJC_PSMUX_COMMAND` resolve to the same wrapper identity.
+If the selected command, an explicit `VIB_PSMUX_COMMAND`, or a resolved companion cannot be identified consistently, Vibrato reports `vib_tmux_provider_ambiguous` and refuses before applying native-tmux target or mutation semantics. Correct `PATH`, set `VIB_TMUX_COMMAND` to a verified executable, or make `VIB_PSMUX_COMMAND` resolve to the same wrapper identity.
 
-GJC-managed Windows psmux flows persist a `ProviderAuthority` for each owner generation. It binds the resolved absolute executable's identity and GJC's isolated server namespace; a missing, changed, or ambiguous identity fails closed. GJC recovery reads and re-proves that persisted authority rather than using an ambient multiplexer.
+Vibrato-managed Windows psmux flows persist a `ProviderAuthority` for each owner generation. It binds the resolved absolute executable's identity and Vibrato's isolated server namespace; a missing, changed, or ambiguous identity fails closed. Vibrato recovery reads and re-proves that persisted authority rather than using an ambient multiplexer.
 
 #### Windows psmux namespace boundary
 
-psmux follows tmux-style server semantics: `new-session -c <path>`, `new-window -c <path>`, and GJC's `gjc --tmux` cwd only choose the start directory for the session/window/pane. They do **not** create a per-project server namespace. For a managed Windows psmux owner, GJC creates and persists an isolated namespace and invokes the bound executable with `-L <namespace>` on every operation.
+psmux follows tmux-style server semantics: `new-session -c <path>`, `new-window -c <path>`, and Vibrato's `vib --tmux` cwd only choose the start directory for the session/window/pane. They do **not** create a per-project server namespace. For a managed Windows psmux owner, Vibrato creates and persists an isolated namespace and invokes the bound executable with `-L <namespace>` on every operation.
 
-GJC does not expose a `GJC_TMUX_NAMESPACE` runtime knob or parse flags from `GJC_TMUX_COMMAND`. Do not set `GJC_TMUX_COMMAND="psmux -L my-project"` and do not recover with ambient `tmux`/`psmux` or a manually supplied `-L` value; `GJC_TMUX_COMMAND` is one executable path/name. Use the GJC session or lifecycle operation so it reuses the persisted ProviderAuthority. If that authority cannot be read and re-proved, GJC refuses the operation.
+Vibrato does not expose a `VIB_TMUX_NAMESPACE` runtime knob or parse flags from `VIB_TMUX_COMMAND`. Do not set `VIB_TMUX_COMMAND="psmux -L my-project"` and do not recover with ambient `tmux`/`psmux` or a manually supplied `-L` value; `VIB_TMUX_COMMAND` is one executable path/name. Use the Vibrato session or lifecycle operation so it reuses the persisted ProviderAuthority. If that authority cannot be read and re-proved, Vibrato refuses the operation.
 
 #### WSL / Windows Terminal scrolling
 
-GJC's SGR mouse support is disabled by default, so tmux or Windows Terminal retains wheel ownership. In a GJC-managed tmux session, the default profile's `mouse on` enters tmux copy-mode and scrolls pane history.
+Vibrato's SGR mouse support is disabled by default, so tmux or Windows Terminal retains wheel ownership. In a Vibrato-managed tmux session, the default profile's `mouse on` enters tmux copy-mode and scrolls pane history.
 
-Set `mouse.enabled: true` to make the wheel scroll GJC's virtual session viewport three rows at a time, including inside `gjc --tmux`. PageUp/PageDown page the visible transcript lane, moving by its height minus one row. Set `GJC_MOUSE=off` as well as leaving GJC mouse support disabled to skip tmux mouse capture and let Windows Terminal handle its native scrollback. Keyboard fallback for tmux copy-mode remains `Ctrl-b [`, followed by `PgUp`/arrows; press `q` to exit.
+Set `mouse.enabled: true` to make the wheel scroll Vibrato's virtual session viewport three rows at a time, including inside `vib --tmux`. PageUp/PageDown page the visible transcript lane, moving by its height minus one row. Set `VIB_MOUSE=off` as well as leaving Vibrato mouse support disabled to skip tmux mouse capture and let Windows Terminal handle its native scrollback. Keyboard fallback for tmux copy-mode remains `Ctrl-b [`, followed by `PgUp`/arrows; press `q` to exit.
 
 ### Hermes MCP bridge
 
-`gjc mcp-serve coordinator` exposes a GJC-native outward MCP bridge for Hermes-style coordinators. `gjc mcp-serve hermes` is a compatibility alias for the same bridge. The bridge is read-only by default and fails closed until roots and mutation classes are explicitly configured.
+`vib mcp-serve coordinator` exposes a Vibrato-native outward MCP bridge for Hermes-style coordinators. `vib mcp-serve hermes` is a compatibility alias for the same bridge. The bridge is read-only by default and fails closed until roots and mutation classes are explicitly configured.
 
 Coordinator MCP currently exposes durable polling/await tools, not push subscriptions. Existing legacy handoffs that contain a token path but no authorization identity must be explicitly re-registered; reads report `codex_token_file_reregistration_required` rather than treating the state as corrupt or silently binding it. Re-registration re-proves the managed token file under the configured root.
 
- Consume `gjc_coordinator_read_coordination_status`, `gjc_coordinator_read_turn`, or bounded `gjc_coordinator_await_turn` for state changes.
+ Consume `vib_coordinator_read_coordination_status`, `vib_coordinator_read_turn`, or bounded `vib_coordinator_await_turn` for state changes.
 
 | Variable | Behavior |
 | --- | --- |
-| `GJC_COORDINATOR_MCP_WORKDIR_ROOTS` | Required allowlist for workdir and artifact paths. `gjc setup hermes` renders absolute normalized paths joined with the platform path delimiter (`:` on POSIX, `;` on Windows). The bridge parser also accepts commas, semicolons, and newlines for legacy manual configs. |
-| `GJC_COORDINATOR_MCP_MUTATIONS` | Enables mutating tool classes as a comma-separated list (`sessions`, `questions`, `reports`) or `all`. `sessions` covers session startup, prompt delivery, durable turn journal updates, queue, and force operations. Per-call `allow_mutation: true` is still required. |
-| `GJC_COORDINATOR_MCP_ARTIFACT_BYTE_CAP` | Max bytes returned by Linux-only artifact reads (default `65536`, capped at `1048576`). On macOS and Windows, artifact reads fail closed with generic `artifact_unavailable`; detect support through MCP `tools/list`; use the controller's approved repository/worktree reader and report bounded results instead. |
-| `GJC_COORDINATOR_MCP_STATE_ROOT` | Bridge coordination state root (default `<cwd>/.gjc/state/coordinator-mcp`). Coordinator durable state only — it does **not** select the broker agent directory; that is `GJC_CODING_AGENT_DIR`, rendered by `gjc setup hermes --coding-agent-dir <abs-path>` (absolute path required; home/filesystem-root refused; preserved across managed re-installs unless the flag overrides it). |
-| `GJC_COORDINATOR_MCP_CODEX_TOKEN_ROOT` | Root for managed Codex handoff token files (default `<state-root>/codex-tokens`). Registered files must be owner-only regular non-symlink files beneath this root. Authenticated token-file handoff is unavailable on native Windows unless an equivalent secure ACL proof is provided; registration fails closed with `codex_authenticated_handoff_unavailable_windows`. |
-| `GJC_COORDINATOR_MCP_PROFILE` | Optional profile namespace for session/question/report state. Missing scope never widens to global session enumeration. |
-| `GJC_COORDINATOR_MCP_REPO` | Optional repo namespace for session/question/report state. Missing scope never widens to global session enumeration. |
-| `GJC_COORDINATOR_MCP_SESSION_COMMAND` | Optional **typed SDK lifecycle selector**, never a shell command that the coordinator executes. The only supported values are exactly `gjc` and `gjc --worktree [name]`; the latter optionally selects the GJC-managed worktree name. Wrapper binaries, shell syntax, model/provider flags, tmux flags, and other legacy command shapes fail closed before session creation. `gjc setup hermes` renders `gjc --worktree` by default. When omitted, SDK lifecycle creation still uses the requested coordinator workdir; no coordinator-owned tmux startup or prompt injection is performed. |
-| `GJC_COORDINATOR_MCP_SETUP_MANAGED_BY` | Marker written by `gjc setup hermes` for safe managed config updates. |
-| `GJC_COORDINATOR_MCP_SETUP_SCHEMA_VERSION` | Managed setup schema version written by `gjc setup hermes`. |
-| `GJC_COORDINATOR_MCP_SETUP_SIGNATURE` | Deterministic managed setup signature used to detect safe updates versus unmanaged conflicts. |
-| `GJC_COORDINATOR_MCP_EVENT_WEBHOOK_URL` | Opt-in webhook destination for existing `watch_events` journal rows (`https:` anywhere, or `http:` loopback only). Unset or empty = the feature is fully off. Resolved through the trusted credential environment, never the checkout's `.env`; a project `.env` cannot select where coordinator rows are POSTed. No redirect following. |
-| `GJC_COORDINATOR_MCP_EVENT_WEBHOOK_TOKEN_FILE` | Absolute path to a file whose trimmed content is sent as `Authorization: Bearer …`; raw tokens are never accepted inline in env. Resolved through the trusted credential environment. |
-| `GJC_COORDINATOR_MCP_EVENT_WEBHOOK_SESSION_IDS` | Optional comma-separated session-id allowlist; only journal rows carrying one of these `session_id` values are delivered. |
-| `GJC_COORDINATOR_MCP_EVENT_WEBHOOK_TIMEOUT_MS` | Per-attempt webhook POST timeout (default `5000`, capped at `30000`). |
-| `GJC_COORDINATOR_MCP_EVENT_WEBHOOK_MAX_ATTEMPTS` | Delivery attempts per journal row (default `5`, capped at `10`) with exponential backoff (`500ms` base, `15s` cap) through a durable per-row outbox. |
+| `VIB_COORDINATOR_MCP_WORKDIR_ROOTS` | Required allowlist for workdir and artifact paths. `vib setup hermes` renders absolute normalized paths joined with the platform path delimiter (`:` on POSIX, `;` on Windows). The bridge parser also accepts commas, semicolons, and newlines for legacy manual configs. |
+| `VIB_COORDINATOR_MCP_MUTATIONS` | Enables mutating tool classes as a comma-separated list (`sessions`, `questions`, `reports`) or `all`. `sessions` covers session startup, prompt delivery, durable turn journal updates, queue, and force operations. Per-call `allow_mutation: true` is still required. |
+| `VIB_COORDINATOR_MCP_ARTIFACT_BYTE_CAP` | Max bytes returned by Linux-only artifact reads (default `65536`, capped at `1048576`). On macOS and Windows, artifact reads fail closed with generic `artifact_unavailable`; detect support through MCP `tools/list`; use the controller's approved repository/worktree reader and report bounded results instead. |
+| `VIB_COORDINATOR_MCP_STATE_ROOT` | Bridge coordination state root (default `<cwd>/.vib/state/coordinator-mcp`). Coordinator durable state only — it does **not** select the broker agent directory; that is `VIB_CODING_AGENT_DIR`, rendered by `vib setup hermes --coding-agent-dir <abs-path>` (absolute path required; home/filesystem-root refused; preserved across managed re-installs unless the flag overrides it). |
+| `VIB_COORDINATOR_MCP_CODEX_TOKEN_ROOT` | Root for managed Codex handoff token files (default `<state-root>/codex-tokens`). Registered files must be owner-only regular non-symlink files beneath this root. Authenticated token-file handoff is unavailable on native Windows unless an equivalent secure ACL proof is provided; registration fails closed with `codex_authenticated_handoff_unavailable_windows`. |
+| `VIB_COORDINATOR_MCP_PROFILE` | Optional profile namespace for session/question/report state. Missing scope never widens to global session enumeration. |
+| `VIB_COORDINATOR_MCP_REPO` | Optional repo namespace for session/question/report state. Missing scope never widens to global session enumeration. |
+| `VIB_COORDINATOR_MCP_SESSION_COMMAND` | Optional **typed SDK lifecycle selector**, never a shell command that the coordinator executes. The only supported values are exactly `vib` and `vib --worktree [name]`; the latter optionally selects the Vibrato-managed worktree name. Wrapper binaries, shell syntax, model/provider flags, tmux flags, and other legacy command shapes fail closed before session creation. `vib setup hermes` renders `vib --worktree` by default. When omitted, SDK lifecycle creation still uses the requested coordinator workdir; no coordinator-owned tmux startup or prompt injection is performed. |
+| `VIB_COORDINATOR_MCP_SETUP_MANAGED_BY` | Marker written by `vib setup hermes` for safe managed config updates. |
+| `VIB_COORDINATOR_MCP_SETUP_SCHEMA_VERSION` | Managed setup schema version written by `vib setup hermes`. |
+| `VIB_COORDINATOR_MCP_SETUP_SIGNATURE` | Deterministic managed setup signature used to detect safe updates versus unmanaged conflicts. |
+| `VIB_COORDINATOR_MCP_EVENT_WEBHOOK_URL` | Opt-in webhook destination for existing `watch_events` journal rows (`https:` anywhere, or `http:` loopback only). Unset or empty = the feature is fully off. Resolved through the trusted credential environment, never the checkout's `.env`; a project `.env` cannot select where coordinator rows are POSTed. No redirect following. |
+| `VIB_COORDINATOR_MCP_EVENT_WEBHOOK_TOKEN_FILE` | Absolute path to a file whose trimmed content is sent as `Authorization: Bearer …`; raw tokens are never accepted inline in env. Resolved through the trusted credential environment. |
+| `VIB_COORDINATOR_MCP_EVENT_WEBHOOK_SESSION_IDS` | Optional comma-separated session-id allowlist; only journal rows carrying one of these `session_id` values are delivered. |
+| `VIB_COORDINATOR_MCP_EVENT_WEBHOOK_TIMEOUT_MS` | Per-attempt webhook POST timeout (default `5000`, capped at `30000`). |
+| `VIB_COORDINATOR_MCP_EVENT_WEBHOOK_MAX_ATTEMPTS` | Delivery attempts per journal row (default `5`, capped at `10`) with exponential backoff (`500ms` base, `15s` cap) through a durable per-row outbox. |
 
 ### Google Vertex AI
 
@@ -358,20 +360,20 @@ OAuth host chain: `KIMI_CODE_OAUTH_HOST` → `KIMI_OAUTH_HOST` → `https://auth
 
 | Variable                   | Default / behavior                                              |
 | -------------------------- | --------------------------------------------------------------- |
-| `GJC_AI_GEMINI_CLI_VERSION` | Overrides Gemini CLI user-agent version tag (`0.49.0` if unset). `PI_AI_GEMINI_CLI_VERSION` remains supported as a legacy fallback. |
+| `VIB_AI_GEMINI_CLI_VERSION` | Overrides Gemini CLI user-agent version tag (`0.49.0` if unset). `PI_AI_GEMINI_CLI_VERSION` remains supported as a legacy fallback. |
 
 ### OpenAI code provider responses (feature/debug controls)
 
 | Variable                             | Behavior                                             |
 | ------------------------------------ | ---------------------------------------------------- |
-| `GJC_OPENAI_CODE_DEBUG`                     | `1`/`true` enables OpenAI code provider debug logging      |
-| `GJC_NO_STRICT`                       | Global bypass for OpenAI-style strict schema enforcement (`adaptSchemaForStrict`); legacy alias `PI_NO_STRICT` |
-| `GJC_OPENAI_CODE_WEBSOCKET`                 | `1`/`true` enables websocket transport preference    |
-| `GJC_OPENAI_CODE_WEBSOCKET_V2`              | `1`/`true` enables websocket v2 path                 |
-| `GJC_OPENAI_CODE_WEBSOCKET_IDLE_TIMEOUT_MS` | Positive integer override (default 300000)           |
-| `GJC_OPENAI_CODE_WEBSOCKET_RETRY_BUDGET`    | Non-negative integer override (default 5)            |
-| `GJC_OPENAI_CODE_WEBSOCKET_RETRY_DELAY_MS`  | Positive integer base backoff override (default 500) |
-| `GJC_OPENAI_STREAM_IDLE_TIMEOUT_MS`   | Positive integer OpenAI stream idle timeout override. Unset: 120s, except xAI Grok / Grok Build providers and Grok model ids on any OpenAI-compatible host use 300s (same floor as Anthropic long-reasoning). `0` disables. LM Studio keeps the shared idle timeout, but its first-event window is 300s by default to allow local model loading/prefill; `PI_STREAM_FIRST_EVENT_TIMEOUT_MS` overrides that window. |
+| `VIB_OPENAI_CODE_DEBUG`                     | `1`/`true` enables OpenAI code provider debug logging      |
+| `VIB_NO_STRICT`                       | Global bypass for OpenAI-style strict schema enforcement (`adaptSchemaForStrict`); legacy alias `PI_NO_STRICT` |
+| `VIB_OPENAI_CODE_WEBSOCKET`                 | `1`/`true` enables websocket transport preference    |
+| `VIB_OPENAI_CODE_WEBSOCKET_V2`              | `1`/`true` enables websocket v2 path                 |
+| `VIB_OPENAI_CODE_WEBSOCKET_IDLE_TIMEOUT_MS` | Positive integer override (default 300000)           |
+| `VIB_OPENAI_CODE_WEBSOCKET_RETRY_BUDGET`    | Non-negative integer override (default 5)            |
+| `VIB_OPENAI_CODE_WEBSOCKET_RETRY_DELAY_MS`  | Positive integer base backoff override (default 500) |
+| `VIB_OPENAI_STREAM_IDLE_TIMEOUT_MS`   | Positive integer OpenAI stream idle timeout override. Unset: 120s, except xAI Grok / Grok Build providers and Grok model ids on any OpenAI-compatible host use 300s (same floor as Anthropic long-reasoning). `0` disables. LM Studio keeps the shared idle timeout, but its first-event window is 300s by default to allow local model loading/prefill; `PI_STREAM_FIRST_EVENT_TIMEOUT_MS` overrides that window. |
 
 ### Cursor provider debug
 
@@ -384,7 +386,7 @@ OAuth host chain: `KIMI_CODE_OAUTH_HOST` → `KIMI_OAUTH_HOST` → `https://auth
 
 | Variable             | Behavior                                                                                                          |
 | -------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `GJC_CACHE_RETENTION` | If `long`, enables long retention where supported (`anthropic`, `openai-responses`, Bedrock retention resolution); any other value forces `short`. The Anthropic provider already defaults to `long` (1h) when unset, so this is mainly an opt-out (`short`) or a way to extend long retention to other providers. |
+| `VIB_CACHE_RETENTION` | If `long`, enables long retention where supported (`anthropic`, `openai-responses`, Bedrock retention resolution); any other value forces `short`. The Anthropic provider already defaults to `long` (1h) when unset, so this is mainly an opt-out (`short`) or a way to extend long retention to other providers. |
 
 ---
 
@@ -401,7 +403,7 @@ OAuth host chain: `KIMI_CODE_OAUTH_HOST` → `KIMI_OAUTH_HOST` → `https://auth
 | `TAVILY_API_KEY`                                    | Tavily search provider                                        |
 | `ZAI_API_KEY`                                       | z.ai search provider (also checks stored OAuth in `agent.db`) |
 | `OPENAI_API_KEY` / OpenAI code OAuth in DB                | OpenAI code search provider availability/auth                       |
-| `GJC_OPENAI_CODE_WEB_SEARCH_MODEL`                         | OpenAI code search provider model override                          |
+| `VIB_OPENAI_CODE_WEB_SEARCH_MODEL`                         | OpenAI code search provider model override                          |
 | `MOONSHOT_SEARCH_API_KEY` / `KIMI_SEARCH_API_KEY`   | Kimi/Moonshot search provider env auth                        |
 | `MOONSHOT_SEARCH_BASE_URL` / `KIMI_SEARCH_BASE_URL` | Kimi/Moonshot search endpoint override                        |
 | `KAGI_API_KEY`                                      | Kagi search provider                                          |
@@ -410,7 +412,7 @@ OAuth host chain: `KIMI_CODE_OAUTH_HOST` → `KIMI_OAUTH_HOST` → `https://auth
 | `SEARXNG_ENDPOINT`, `SEARXNG_TOKEN`                 | SearXNG endpoint and optional bearer token                    |
 | `SEARXNG_BASIC_USERNAME`, `SEARXNG_BASIC_PASSWORD`  | SearXNG HTTP Basic Auth credentials                           |
 
-SearXNG also reads the equivalent `searxng.endpoint`, `searxng.token`, `searxng.basicUsername`, and `searxng.basicPassword` settings from `~/.gjc/agent/config.yml`; environment variables are fallbacks.
+SearXNG also reads the equivalent `searxng.endpoint`, `searxng.token`, `searxng.basicUsername`, and `searxng.basicPassword` settings from `~/.vib/agent/config.yml`; environment variables are fallbacks.
 
 ### Anthropic web search auth chain
 
@@ -435,7 +437,7 @@ Related vars:
 
 | Variable            | Behavior                                                                        |
 | ------------------- | ------------------------------------------------------------------------------- |
-| `GJC_AUTH_NO_BORROW` | If set, disables macOS native-app token borrowing path in Perplexity login flow |
+| `VIB_AUTH_NO_BORROW` | If set, disables macOS native-app token borrowing path in Perplexity login flow |
 
 ---
 
@@ -443,16 +445,16 @@ Related vars:
 
 | Variable                  | Default / behavior                                                                                                  |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `GJC_PY`                   | Eval backend override: `0`/`bash`=JavaScript only, `1`/`py`=Python only, `mix`/`both`=both; invalid values ignored |
-| `GJC_PYTHON_SKIP_CHECK`    | If `1`, skips Python interpreter availability checks (subprocess runner still starts on demand)                     |
-| `GJC_PYTHON_INTEGRATION`   | If `1`, opts gated integration tests in (e.g. `python-runner.integration.test.ts`) into running against real Python |
-| `GJC_PYTHON_IPC_TRACE`     | If `1`, logs NDJSON frames exchanged with the Python runner subprocess                                              |
+| `VIB_PY`                   | Eval backend override: `0`/`bash`=JavaScript only, `1`/`py`=Python only, `mix`/`both`=both; invalid values ignored |
+| `VIB_PYTHON_SKIP_CHECK`    | If `1`, skips Python interpreter availability checks (subprocess runner still starts on demand)                     |
+| `VIB_PYTHON_INTEGRATION`   | If `1`, opts gated integration tests in (e.g. `python-runner.integration.test.ts`) into running against real Python |
+| `VIB_PYTHON_IPC_TRACE`     | If `1`, logs NDJSON frames exchanged with the Python runner subprocess                                              |
 | `VIRTUAL_ENV`             | Highest-priority venv path for Python runtime resolution                                                            |
 
 Extra conditional behavior:
 
 - If `BUN_ENV=test` or `NODE_ENV=test`, Python availability checks are treated as OK and warming is skipped.
-- Python env filtering denies common API keys and allows safe base vars + `LC_`, `XDG_`, `GJC_` prefixes.
+- Python env filtering denies common API keys and allows safe base vars + `LC_`, `XDG_`, `VIB_` prefixes.
 
 ---
 
@@ -460,25 +462,25 @@ Extra conditional behavior:
 
 | Variable                     | Default / behavior                                                                                 |
 | ---------------------------- | -------------------------------------------------------------------------------------------------- |
-| `GJC_SMOL_MODEL`              | Ephemeral model-role override for `smol` (CLI `--smol` takes precedence)                           |
-| `GJC_SLOW_MODEL`              | Ephemeral model-role override for `slow` (CLI `--slow` takes precedence)                           |
-| `GJC_PLAN_MODEL`              | Ephemeral model-role override for `plan` (CLI `--plan` takes precedence)                           |
-| `GJC_MODEL_PRESET_REGISTRY_URL` | HTTPS URL for the signed preset registry `latest.json`. Defaults to the public `Yeachan-Heo/gajae-code-presets` `dev` pointer. Redirects, credentials, non-HTTPS URLs, untrusted keys, and off-namespace content are rejected. |
-| `GJC_MODEL_PRESET_REGISTRY_DISABLED` | `1`, `true`, `yes`, or `on` disables registry network refresh and excludes cached registry data without deleting accepted history. Embedded presets and user `models.yml` remain available. |
-| `GJC_NO_TITLE`                | If set (any non-empty value), disables auto session title generation on first user message         |
-| `GJC_NO_CMUX_RENAME`         | If set (any non-empty value), disables renaming the containing cmux workspace to the current session name |
+| `VIB_SMOL_MODEL`              | Ephemeral model-role override for `smol` (CLI `--smol` takes precedence)                           |
+| `VIB_SLOW_MODEL`              | Ephemeral model-role override for `slow` (CLI `--slow` takes precedence)                           |
+| `VIB_PLAN_MODEL`              | Ephemeral model-role override for `plan` (CLI `--plan` takes precedence)                           |
+| `VIB_MODEL_PRESET_REGISTRY_URL` | HTTPS URL for the signed preset registry `latest.json`. Defaults to the public `Keonho-Chu/Vibrato-presets` `dev` pointer. Redirects, credentials, non-HTTPS URLs, untrusted keys, and off-namespace content are rejected. |
+| `VIB_MODEL_PRESET_REGISTRY_DISABLED` | `1`, `true`, `yes`, or `on` disables registry network refresh and excludes cached registry data without deleting accepted history. Embedded presets and user `models.yml` remain available. |
+| `VIB_NO_TITLE`                | If set (any non-empty value), disables auto session title generation on first user message         |
+| `VIB_NO_CMUX_RENAME`         | If set (any non-empty value), disables renaming the containing cmux workspace to the current session name |
 | `NULL_PROMPT`                | If `true`, system prompt builder returns empty string                                              |
-| `GJC_BLOCKED_AGENT`           | Blocks a specific subagent type in task tool                                                       |
-| `GJC_SUBPROCESS_CMD`          | Overrides subagent spawn command (`gjc` / `gjc.cmd` resolution bypass)                             |
-| `GJC_TASK_MAX_OUTPUT_BYTES`   | Max captured output bytes per subagent (default `500000`)                                          |
-| `GJC_TASK_MAX_OUTPUT_LINES`   | Max captured output lines per subagent (default `5000`)                                            |
-| `GJC_FALLBACK_MAX_STAGED_EVENTS` | Positive-integer cap on events staged by the provisional staging transaction before it is rejected as a local overflow (default `10000`, hard ceiling `2000000`). Surrounding whitespace is ignored by the trusted environment resolver. Applies to both managed fallback and ordinary (non-managed lossless) sessions; in non-managed sessions the cap only decides how much reasoning buffers before the batch flushes and streams through. Invalid or non-positive values fall back to the default; values above the ceiling clamp to it with a warning — the staging guard stays bounded. Resolved from trusted environment sources only (process/agent/user config); a project `.env` cannot change these guardrails. |
-| `GJC_FALLBACK_MAX_STAGED_BYTES` | Positive-integer byte cap on the provisional staging transaction (default `16777216` = 16 MiB, hard ceiling `1073741824` = 1 GiB). Surrounding whitespace is ignored by the trusted environment resolver. Applies to both managed fallback and ordinary (non-managed lossless) sessions; in non-managed sessions the cap only decides how much reasoning buffers before the batch flushes and streams through; raising it raises peak memory of ordinary runs by delaying that flush. A staged streaming frame is counted once as the message and once as the event's partial snapshot of that message, so a reasoning-heavy turn is charged roughly twice its retained volume — size the cap accordingly. Invalid or non-positive values fall back to the default; values above the ceiling clamp to it with a warning — the staging guard stays bounded. Resolved from trusted environment sources only (process/agent/user config); a project `.env` cannot change these guardrails. |
-| `GJC_TIMING`                  | If set (any non-empty value), prints a hierarchical timing-span tree to **stderr** via `logger.printTimings()`. In interactive mode the tree prints once the agent is ready (before the TUI starts); in print mode it prints after the whole prompt batch completes. Print-mode prompts are wrapped in `print:prompt:initial` / `print:prompt:next` spans so each user message shows up as its own row. `GJC_TIMING=x` exits the process with code 0 right after printing in interactive mode (use to measure cold startup only). `GJC_TIMING=full` lists every module-load entry instead of just the top N. |
-| `GJC_PACKAGE_DIR`             | Overrides package asset base dir resolution (docs/examples/changelog path lookup)                  |
-| `GJC_DISABLE_LSPMUX`             | Canonical lspmux opt-out. A truthy value disables lspmux probing and wrapping; `PI_DISABLE_LSPMUX` is a supported compatibility alias with the same effect. |
-| `PI_DISABLE_LSPMUX`              | Supported compatibility alias for `GJC_DISABLE_LSPMUX`; a truthy value also disables lspmux probing and wrapping. |
-| `GJC_DISABLE_TELEMETRY`          | Emergency telemetry kill switch. `1`, `true`, `yes`, or `on` disables all telemetry for this process, regardless of `telemetry.enabled`. |
+| `VIB_BLOCKED_AGENT`           | Blocks a specific subagent type in task tool                                                       |
+| `VIB_SUBPROCESS_CMD`          | Overrides subagent spawn command (`vib` / `vib.cmd` resolution bypass)                             |
+| `VIB_TASK_MAX_OUTPUT_BYTES`   | Max captured output bytes per subagent (default `500000`)                                          |
+| `VIB_TASK_MAX_OUTPUT_LINES`   | Max captured output lines per subagent (default `5000`)                                            |
+| `VIB_FALLBACK_MAX_STAGED_EVENTS` | Positive-integer cap on events staged by the provisional staging transaction before it is rejected as a local overflow (default `10000`, hard ceiling `2000000`). Surrounding whitespace is ignored by the trusted environment resolver. Applies to both managed fallback and ordinary (non-managed lossless) sessions; in non-managed sessions the cap only decides how much reasoning buffers before the batch flushes and streams through. Invalid or non-positive values fall back to the default; values above the ceiling clamp to it with a warning — the staging guard stays bounded. Resolved from trusted environment sources only (process/agent/user config); a project `.env` cannot change these guardrails. |
+| `VIB_FALLBACK_MAX_STAGED_BYTES` | Positive-integer byte cap on the provisional staging transaction (default `16777216` = 16 MiB, hard ceiling `1073741824` = 1 GiB). Surrounding whitespace is ignored by the trusted environment resolver. Applies to both managed fallback and ordinary (non-managed lossless) sessions; in non-managed sessions the cap only decides how much reasoning buffers before the batch flushes and streams through; raising it raises peak memory of ordinary runs by delaying that flush. A staged streaming frame is counted once as the message and once as the event's partial snapshot of that message, so a reasoning-heavy turn is charged roughly twice its retained volume — size the cap accordingly. Invalid or non-positive values fall back to the default; values above the ceiling clamp to it with a warning — the staging guard stays bounded. Resolved from trusted environment sources only (process/agent/user config); a project `.env` cannot change these guardrails. |
+| `VIB_TIMING`                  | If set (any non-empty value), prints a hierarchical timing-span tree to **stderr** via `logger.printTimings()`. In interactive mode the tree prints once the agent is ready (before the TUI starts); in print mode it prints after the whole prompt batch completes. Print-mode prompts are wrapped in `print:prompt:initial` / `print:prompt:next` spans so each user message shows up as its own row. `VIB_TIMING=x` exits the process with code 0 right after printing in interactive mode (use to measure cold startup only). `VIB_TIMING=full` lists every module-load entry instead of just the top N. |
+| `VIB_PACKAGE_DIR`             | Overrides package asset base dir resolution (docs/examples/changelog path lookup)                  |
+| `VIB_DISABLE_LSPMUX`             | Canonical lspmux opt-out. A truthy value disables lspmux probing and wrapping; `PI_DISABLE_LSPMUX` is a supported compatibility alias with the same effect. |
+| `PI_DISABLE_LSPMUX`              | Supported compatibility alias for `VIB_DISABLE_LSPMUX`; a truthy value also disables lspmux probing and wrapping. |
+| `VIB_DISABLE_TELEMETRY`          | Emergency telemetry kill switch. `1`, `true`, `yes`, or `on` disables all telemetry for this process, regardless of `telemetry.enabled`. |
 | `SMITHERY_URL`                   | Smithery web URL override (default `https://smithery.ai`)                                          |
 | `SMITHERY_API_URL`           | Smithery API base URL override (default `https://api.smithery.ai`)                                 |
 | `PUPPETEER_EXECUTABLE_PATH`  | Browser tool Chromium executable override                                                          |
@@ -488,36 +490,36 @@ Extra conditional behavior:
 | `SGLANG_BASE_URL`            | Trusted SGLang discovery base URL override (`http://127.0.0.1:30000/v1` if unset); project `.env` values are ignored, and credentialless remote discovery is rejected |
 | `OLLAMA_BASE_URL`            | Default implicit Ollama discovery base URL override (`http://127.0.0.1:11434` if unset)            |
 | `LLAMA_CPP_BASE_URL`         | Default implicit Llama.cpp discovery base URL override (`http://127.0.0.1:8080` if unset)          |
-| `GJC_EDIT_VARIANT`            | Forces edit tool variant (`patch`, `replace`, `hashline`, `vim`, `apply_patch`). The force beats `edit.modelVariants`, `edit.mode`, and automatic model-family routing; invalid values fail fast at startup. `PI_EDIT_VARIANT` is the legacy alias. |
-| `GJC_FORCE_IMAGE_PROTOCOL`    | Forces supported image protocol (`kitty`, `iterm2`/`iterm`, `sixel`, `none`) where used            |
-| `GJC_ALLOW_SIXEL_PASSTHROUGH` | Allows SIXEL passthrough when `GJC_FORCE_IMAGE_PROTOCOL=sixel`                                      |
-| `GJC_NO_PTY`                  | If `1`, disables interactive PTY path for bash tool                                                |
-| `GJC_SESSION_CONTEXT_BUDGET_BYTES` | Overrides the synchronous session-context materialization budget in bytes (default `536870912` = 512 MiB, ceiling `8589934592` = 8 GiB). Only a canonical positive-integer value is honored; anything invalid (empty, non-numeric, negative, zero, overflowing a safe integer, or above the ceiling) fail-closes to the 512 MiB default with a warning. Raise it above your measured session size to suppress the `SessionContextTooLargeError` preflight, or lower it to restore the old tight bound. |
+| `VIB_EDIT_VARIANT`            | Forces edit tool variant (`patch`, `replace`, `hashline`, `vim`, `apply_patch`). The force beats `edit.modelVariants`, `edit.mode`, and automatic model-family routing; invalid values fail fast at startup. `PI_EDIT_VARIANT` is the legacy alias. |
+| `VIB_FORCE_IMAGE_PROTOCOL`    | Forces supported image protocol (`kitty`, `iterm2`/`iterm`, `sixel`, `none`) where used            |
+| `VIB_ALLOW_SIXEL_PASSTHROUGH` | Allows SIXEL passthrough when `VIB_FORCE_IMAGE_PROTOCOL=sixel`                                      |
+| `VIB_NO_PTY`                  | If `1`, disables interactive PTY path for bash tool                                                |
+| `VIB_SESSION_CONTEXT_BUDGET_BYTES` | Overrides the synchronous session-context materialization budget in bytes (default `536870912` = 512 MiB, ceiling `8589934592` = 8 GiB). Only a canonical positive-integer value is honored; anything invalid (empty, non-numeric, negative, zero, overflowing a safe integer, or above the ceiling) fail-closes to the 512 MiB default with a warning. Raise it above your measured session size to suppress the `SessionContextTooLargeError` preflight, or lower it to restore the old tight bound. |
 
-LSP project configuration may control declarative matching, activation, and capabilities, but it cannot define a command, arguments, executable, client factory, initialization options, or opaque server settings. Trusted user-wide configuration outside the project—including the recommended `~/.gjc/agent/lsp.*` files and supported legacy user locations—can override LSP launches and server options; automatic discovery uses trusted external executables and rejects project-owned lexical paths as well as symlink-resolved project binaries.
+LSP project configuration may control declarative matching, activation, and capabilities, but it cannot define a command, arguments, executable, client factory, initialization options, or opaque server settings. Trusted user-wide configuration outside the project—including the recommended `~/.vib/agent/lsp.*` files and supported legacy user locations—can override LSP launches and server options; automatic discovery uses trusted external executables and rejects project-owned lexical paths as well as symlink-resolved project binaries.
 
-`GJC_NO_PTY` is also set internally when CLI `--no-pty` is used.
+`VIB_NO_PTY` is also set internally when CLI `--no-pty` is used.
 
 ---
 
 ## 6) Storage and config root paths
 
-`GJC_CONFIG_DIR`, `GJC_CODING_AGENT_DIR`, and `PWD` are consumed via `@gajae-code/utils/dirs` and affect where coding-agent stores data. `GJC_WORKTREE_DIR` is read at launch, before settings load, by `gjc-runtime/launch-worktree.ts`.
+`VIB_CONFIG_DIR`, `VIB_CODING_AGENT_DIR`, and `PWD` are consumed via `@vib-rato/utils/dirs` and affect where coding-agent stores data. `VIB_WORKTREE_DIR` is read at launch, before settings load, by `vib-runtime/launch-worktree.ts`.
 
 | Variable              | Default / behavior                                                            |
 | --------------------- | ----------------------------------------------------------------------------- |
-| `GJC_CONFIG_DIR`       | Config root dirname under home (default `.gjc`)                               |
-| `GJC_CODING_AGENT_DIR` | Full override for agent directory (default `~/<GJC_CONFIG_DIR or .gjc>/agent`). `gjc setup hermes --coding-agent-dir <abs-path>` renders it into the coordinator server env so bridge-spawned sessions share that broker; it is distinct from `GJC_COORDINATOR_MCP_STATE_ROOT`, which never selects the agent directory. |
+| `VIB_CONFIG_DIR`       | Config root dirname under home (default `.vib`)                               |
+| `VIB_CODING_AGENT_DIR` | Full override for agent directory (default `~/<VIB_CONFIG_DIR or .vib>/agent`). `vib setup hermes --coding-agent-dir <abs-path>` renders it into the coordinator server env so bridge-spawned sessions share that broker; it is distinct from `VIB_COORDINATOR_MCP_STATE_ROOT`, which never selects the agent directory. |
 | `PWD`                 | Used when matching canonical current working directory in path helpers        |
-| `GJC_WORKTREE_DIR`     | Directory holding `--worktree` launch worktrees (default `{repo}/.worktrees`) |
+| `VIB_WORKTREE_DIR`     | Directory holding `--worktree` launch worktrees (default `{repo}/.worktrees`) |
 
-`GJC_WORKTREE_DIR` is a path template. `{repo}` expands to the repository directory name, which keeps one exported value repo-scoped so two repositories that share a branch name never resolve to the same worktree. The default `{repo}/.worktrees` places managed worktrees inside the repository; the bucket must already be ignored by Git. A relative override resolves against the repository's parent directory, so `{repo}.worktrees` adopts an existing sibling bucket and `.worktrees` parks a hidden bucket beside the repository; an absolute value (or a leading `~/`) is used as given. An unset or blank value keeps the default bucket.
+`VIB_WORKTREE_DIR` is a path template. `{repo}` expands to the repository directory name, which keeps one exported value repo-scoped so two repositories that share a branch name never resolve to the same worktree. The default `{repo}/.worktrees` places managed worktrees inside the repository; the bucket must already be ignored by Git. A relative override resolves against the repository's parent directory, so `{repo}.worktrees` adopts an existing sibling bucket and `.worktrees` parks a hidden bucket beside the repository; an absolute value (or a leading `~/`) is used as given. An unset or blank value keeps the default bucket.
 
 ```sh
 # Reuse an existing <repo>.worktrees convention instead of a second bucket
-export GJC_WORKTREE_DIR='{repo}.worktrees'
+export VIB_WORKTREE_DIR='{repo}.worktrees'
 # Or park every repo's worktrees on one volume, still repo-scoped
-export GJC_WORKTREE_DIR='/Volumes/dev/worktrees/{repo}'
+export VIB_WORKTREE_DIR='/Volumes/dev/worktrees/{repo}'
 ```
 
 ---
@@ -528,18 +530,18 @@ export GJC_WORKTREE_DIR='/Volumes/dev/worktrees/{repo}'
 
 | Variable                   | Behavior                                                                       |
 | -------------------------- | ------------------------------------------------------------------------------ |
-| `GJC_BASH_NO_CI`            | Suppresses automatic `CI=true` injection into spawned shell env                |
-| `PI_BASH_NO_CI`             | Legacy alias fallback for `GJC_BASH_NO_CI`                                     |
-| `CLAUDE_BASH_NO_CI`         | Legacy alias fallback for `GJC_BASH_NO_CI`                                     |
-| `GJC_BASH_NO_LOGIN`         | Disables login-shell mode; shell args become `['-c']` instead of `['-l','-c']` |
-| `PI_BASH_NO_LOGIN`          | Legacy alias fallback for `GJC_BASH_NO_LOGIN`                                  |
-| `CLAUDE_BASH_NO_LOGIN`      | Legacy alias fallback for `GJC_BASH_NO_LOGIN`                                  |
+| `VIB_BASH_NO_CI`            | Suppresses automatic `CI=true` injection into spawned shell env                |
+| `PI_BASH_NO_CI`             | Legacy alias fallback for `VIB_BASH_NO_CI`                                     |
+| `CLAUDE_BASH_NO_CI`         | Legacy alias fallback for `VIB_BASH_NO_CI`                                     |
+| `VIB_BASH_NO_LOGIN`         | Disables login-shell mode; shell args become `['-c']` instead of `['-l','-c']` |
+| `PI_BASH_NO_LOGIN`          | Legacy alias fallback for `VIB_BASH_NO_LOGIN`                                  |
+| `CLAUDE_BASH_NO_LOGIN`      | Legacy alias fallback for `VIB_BASH_NO_LOGIN`                                  |
 | `PI_SHELL_PREFIX`           | Optional command prefix wrapper                                                |
 | `CLAUDE_CODE_SHELL_PREFIX`  | Legacy alias fallback for `PI_SHELL_PREFIX`                                    |
 | `VISUAL`                   | Preferred external editor command                                              |
 | `EDITOR`                   | Fallback external editor command                                               |
 
-Current implementation: `GJC_BASH_NO_CI` and `GJC_BASH_NO_LOGIN` are resolved first, then the `PI_*` and `CLAUDE_*` aliases above. Both are boolean-like: only `1`/`Y`/`TRUE`/`YES`/`ON` (case-insensitive) enable them, so an explicit `GJC_BASH_NO_LOGIN=0` keeps the login shell even when a legacy alias is truthy. The shell prefix is read from `PI_SHELL_PREFIX`/`CLAUDE_CODE_SHELL_PREFIX` only; `GJC_SHELL_PREFIX` is not currently honored.
+Current implementation: `VIB_BASH_NO_CI` and `VIB_BASH_NO_LOGIN` are resolved first, then the `PI_*` and `CLAUDE_*` aliases above. Both are boolean-like: only `1`/`Y`/`TRUE`/`YES`/`ON` (case-insensitive) enable them, so an explicit `VIB_BASH_NO_LOGIN=0` keeps the login shell even when a legacy alias is truthy. The shell prefix is read from `PI_SHELL_PREFIX`/`CLAUDE_CODE_SHELL_PREFIX` only; `VIB_SHELL_PREFIX` is not currently honored.
 
 ---
 
@@ -564,20 +566,20 @@ These are read as runtime signals; they are usually set by the terminal/OS rathe
 
 | Variable                  | Behavior                                                                              |
 | ------------------------- | ------------------------------------------------------------------------------------- |
-| `GJC_NOTIFICATIONS`       | `0` is a hard notification runtime opt-out; `1` explicitly enables the generic current-session path even without a globally configured adapter. |
-| `GJC_NOTIFICATIONS_TOKEN` | An explicit generic current-session opt-in token. It has the same runtime precedence as `GJC_NOTIFICATIONS=1`; it does not supply or override global Telegram credentials. |
-| `GJC_NOTIFICATIONS_STREAM` | `1` forces live assistant-output streaming for this process; `0` / `off` / `false` disables it. Unset or unknown values defer to the global `notifications.telegram.streaming.enabled` preference, which defaults to `true` and activates durable streaming only for a configured Telegram adapter. |
-| `GJC_NOTIFICATIONS_STREAM_INTERVAL_MS` | Minimum interval between live Telegram stream edits; defaults to `500` and clamps to at least `200`. |
-| `GJC_NOTIFICATIONS_TURN_MAX` | Optional finalized turn-text cap for notification streaming; defaults to the bounded full-turn ceiling for split-capable clients. |
-| `GJC_NOTIFY`              | `off` / `0` / `false` suppresses the notification control surface for this process, including completion notifications; global config is untouched and child processes inherit it. It wins over explicit notification opt-in. Use it for non-interactive runs (`gjc -p --no-session`) that must remain silent. |
-| `GJC_TUI_WRITE_LOG`        | If set, logs TUI writes to file                                                       |
-| `GJC_HARDWARE_CURSOR`      | If `1`, enables hardware cursor mode                                                  |
-| `GJC_CLEAR_ON_SHRINK`      | If `1`, clears empty rows when content shrinks                                        |
-| `GJC_DEBUG_REDRAW`         | If `1`, enables redraw debug logging                                                  |
-| `GJC_TUI_DEBUG`            | If `1`, enables deep TUI debug dump path                                              |
-| `GJC_FORCE_IMAGE_PROTOCOL` | Forces terminal image protocol detection (`kitty`, `iterm2`/`iterm`, `sixel`, `none`) |
-| `GJC_TUI_KEYBOARD_PROTOCOL` | Enhanced keyboard input (Kitty keyboard protocol + xterm modifyOtherKeys). Enabled by default; set `0` / `false` to leave the keyboard in its default mode. GJC automatically skips the modifyOtherKeys fallback on Windows and Apple Terminal because it breaks CJK/Hangul IME composition there; use the full opt-out for other affected terminals such as Android Termius. |
-| `GJC_TUI_SYNCHRONIZED_OUTPUT` | Synchronized-output framing (`CSI ?2026h/l`) is enabled by default. Set `0` / `false` / `off` / `no` before starting or restarting GJC to remove that framing for terminal parsers that render it incorrectly. This is a process-wide compatibility and diagnostic switch, not tmux/Byobu client detection or per-client negotiation. Disabling it may expose visible tearing; return to the default after diagnosis unless the client requires the workaround. |
+| `VIB_NOTIFICATIONS`       | `0` is a hard notification runtime opt-out; `1` explicitly enables the generic current-session path even without a globally configured adapter. |
+| `VIB_NOTIFICATIONS_TOKEN` | An explicit generic current-session opt-in token. It has the same runtime precedence as `VIB_NOTIFICATIONS=1`; it does not supply or override global Telegram credentials. |
+| `VIB_NOTIFICATIONS_STREAM` | `1` forces live assistant-output streaming for this process; `0` / `off` / `false` disables it. Unset or unknown values defer to the global `notifications.telegram.streaming.enabled` preference, which defaults to `true` and activates durable streaming only for a configured Telegram adapter. |
+| `VIB_NOTIFICATIONS_STREAM_INTERVAL_MS` | Minimum interval between live Telegram stream edits; defaults to `500` and clamps to at least `200`. |
+| `VIB_NOTIFICATIONS_TURN_MAX` | Optional finalized turn-text cap for notification streaming; defaults to the bounded full-turn ceiling for split-capable clients. |
+| `VIB_NOTIFY`              | `off` / `0` / `false` suppresses the notification control surface for this process, including completion notifications; global config is untouched and child processes inherit it. It wins over explicit notification opt-in. Use it for non-interactive runs (`vib -p --no-session`) that must remain silent. |
+| `VIB_TUI_WRITE_LOG`        | If set, logs TUI writes to file                                                       |
+| `VIB_HARDWARE_CURSOR`      | If `1`, enables hardware cursor mode                                                  |
+| `VIB_CLEAR_ON_SHRINK`      | If `1`, clears empty rows when content shrinks                                        |
+| `VIB_DEBUG_REDRAW`         | If `1`, enables redraw debug logging                                                  |
+| `VIB_TUI_DEBUG`            | If `1`, enables deep TUI debug dump path                                              |
+| `VIB_FORCE_IMAGE_PROTOCOL` | Forces terminal image protocol detection (`kitty`, `iterm2`/`iterm`, `sixel`, `none`) |
+| `VIB_TUI_KEYBOARD_PROTOCOL` | Enhanced keyboard input (Kitty keyboard protocol + xterm modifyOtherKeys). Enabled by default; set `0` / `false` to leave the keyboard in its default mode. Vibrato automatically skips the modifyOtherKeys fallback on Windows and Apple Terminal because it breaks CJK/Hangul IME composition there; use the full opt-out for other affected terminals such as Android Termius. |
+| `VIB_TUI_SYNCHRONIZED_OUTPUT` | Synchronized-output framing (`CSI ?2026h/l`) is enabled by default. Set `0` / `false` / `off` / `no` before starting or restarting Vibrato to remove that framing for terminal parsers that render it incorrectly. This is a process-wide compatibility and diagnostic switch, not tmux/Byobu client detection or per-client negotiation. Disabling it may expose visible tearing; return to the default after diagnosis unless the client requires the workaround. |
 
 ---
 
@@ -585,9 +587,9 @@ These are read as runtime signals; they are usually set by the terminal/OS rathe
 
 | Variable                  | Behavior                                                            |
 | ------------------------- | ------------------------------------------------------------------- |
-| `GJC_COMMIT_TEST_FALLBACK` | If `true` (case-insensitive), force commit fallback generation path |
-| `GJC_COMMIT_NO_FALLBACK`   | If `true`, disables fallback when agent returns no proposal         |
-| `GJC_COMMIT_MAP_REDUCE`    | If `false`, disables map-reduce commit analysis path                |
+| `VIB_COMMIT_TEST_FALLBACK` | If `true` (case-insensitive), force commit fallback generation path |
+| `VIB_COMMIT_NO_FALLBACK`   | If `true`, disables fallback when agent returns no proposal         |
+| `VIB_COMMIT_MAP_REDUCE`    | If `false`, disables map-reduce commit analysis path                |
 | `DEBUG`                   | If set, commit agent error stack traces are printed                 |
 
 ---
@@ -596,19 +598,19 @@ These are read as runtime signals; they are usually set by the terminal/OS rathe
 
 | Variable | Values | Default | Behavior |
 | --- | --- | --- | --- |
-| `GJC_ACP_PERMISSION_MODE` | `prompt`, `auto`, `always-allow` | `prompt` | Controls whether ACP tool calls use the client's permission prompt or the SDK allow policy. `auto` and `always-allow` both allow gated tool calls without prompting. Invalid values fail safely to `prompt`. |
-| `GJC_ACP_ABORT_SCOPE` | `turn`, `owned` | `turn` | Selects the C04 terminal-abort scope for ACP `session/cancel`. `turn` (the default) aborts only the active turn and leaves owned work running so its completion can resume the root worker; `owned` also stops exact owned subagents and background tasks. Invalid values fail safely to `turn`. |
+| `VIB_ACP_PERMISSION_MODE` | `prompt`, `auto`, `always-allow` | `prompt` | Controls whether ACP tool calls use the client's permission prompt or the SDK allow policy. `auto` and `always-allow` both allow gated tool calls without prompting. Invalid values fail safely to `prompt`. |
+| `VIB_ACP_ABORT_SCOPE` | `turn`, `owned` | `turn` | Selects the C04 terminal-abort scope for ACP `session/cancel`. `turn` (the default) aborts only the active turn and leaves owned work running so its completion can resume the root worker; `owned` also stops exact owned subagents and background tasks. Invalid values fail safely to `turn`. |
 
-ACP client metadata at `_meta.gjc.permissionHandling` takes precedence when the client supplies that field; the process environment is the fallback. The same precedence applies to the cancel scope: `_meta.gjc.abortScope` on the `session/cancel` notification wins over `GJC_ACP_ABORT_SCOPE` (when `_meta.gjc.abortScope` is present but invalid, the value fails safe to `turn` and the environment fallback is not consulted). JetBrains Air custom agents can set the fallback per agent in `acp.json`:
+ACP client metadata at `_meta.vib.permissionHandling` takes precedence when the client supplies that field; the process environment is the fallback. The same precedence applies to the cancel scope: `_meta.vib.abortScope` on the `session/cancel` notification wins over `VIB_ACP_ABORT_SCOPE` (when `_meta.vib.abortScope` is present but invalid, the value fails safe to `turn` and the environment fallback is not consulted). JetBrains Air custom agents can set the fallback per agent in `acp.json`:
 
 ```json
 {
   "agent_servers": {
-    "Gajae-Local-Opus": {
-      "command": "/absolute/path/to/gjc",
+    "Vibrato-Local-Opus": {
+      "command": "/absolute/path/to/vib",
       "args": ["acp", "--mpreset", "opus-codex"],
       "env": {
-        "GJC_ACP_PERMISSION_MODE": "always-allow"
+        "VIB_ACP_PERMISSION_MODE": "always-allow"
       }
     }
   }
@@ -616,7 +618,7 @@ ACP client metadata at `_meta.gjc.permissionHandling` takes precedence when the 
 ```
 
 Use `always-allow` only for workspaces and tool configurations you trust. It removes the approval boundary for gated shell, monitor, eval, delete, and move operations. Changes apply to newly launched ACP agent processes.
-GJC does not expose a separate ACP `--yolo` flag.
+Vibrato does not expose a separate ACP `--yolo` flag.
 
 See [External control readiness](./external-control-readiness.md#jetbrains-air-custom-agent) for the Air setup flow.
 
@@ -624,7 +626,7 @@ See [External control readiness](./external-control-readiness.md#jetbrains-air-c
 
 ## 12) Removed ingress modes
 
-`--mode rpc`, `--mode rpc-ui`, and `--mode bridge` have been removed. The retired bridge-prefixed variables and `GJC_RPC_EMIT_TITLE` are not runtime configuration variables. Use the [SDK machine interface](./sdk.md) for external machine control.
+`--mode rpc`, `--mode rpc-ui`, and `--mode bridge` have been removed. The retired bridge-prefixed variables and `VIB_RPC_EMIT_TITLE` are not runtime configuration variables. Use the [SDK machine interface](./sdk.md) for external machine control.
 
 ---
 

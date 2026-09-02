@@ -9,10 +9,10 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { clearCache } from "@gajae-code/coding-agent/capability/fs";
-import type { Skill } from "@gajae-code/coding-agent/capability/skill";
-import type { LoadContext, LoadResult } from "@gajae-code/coding-agent/capability/types";
-import { scanSkillsFromDir } from "@gajae-code/coding-agent/discovery/helpers";
+import { clearCache } from "@vib-rato/coding-agent/capability/fs";
+import type { Skill } from "@vib-rato/coding-agent/capability/skill";
+import type { LoadContext, LoadResult } from "@vib-rato/coding-agent/capability/types";
+import { scanSkillsFromDir } from "@vib-rato/coding-agent/discovery/helpers";
 
 function writeSkill(dir: string, name: string, description: string): void {
 	const skillDir = path.join(dir, name);
@@ -31,7 +31,7 @@ describe("monorepo skill discovery", () => {
 
 	beforeEach(() => {
 		clearCache();
-		tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-monorepo-skills-"));
+		tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-monorepo-skills-"));
 		repoRoot = path.join(tempDir, "repo");
 		subProject = path.join(repoRoot, "packages", "my-app");
 		fs.mkdirSync(subProject, { recursive: true });
@@ -45,18 +45,18 @@ describe("monorepo skill discovery", () => {
 		fs.rmSync(tempDir, { recursive: true, force: true });
 	});
 
-	test("finds skills in ancestor .gjc/skills/ directories", async () => {
+	test("finds skills in ancestor .vib/skills/ directories", async () => {
 		// Root has a skill
-		writeSkill(path.join(repoRoot, ".gjc", "skills"), "root-skill", "From repo root");
+		writeSkill(path.join(repoRoot, ".vib", "skills"), "root-skill", "From repo root");
 		// Sub-project has a skill
-		writeSkill(path.join(subProject, ".gjc", "skills"), "local-skill", "From sub-project");
+		writeSkill(path.join(subProject, ".vib", "skills"), "local-skill", "From sub-project");
 
 		// Simulate the walk-up pattern used by the builtin provider
 		const results: LoadResult<Skill>[] = [];
 		let current = subProject;
 		while (true) {
 			const result = await scanSkillsFromDir(ctx, {
-				dir: path.join(current, ".gjc", "skills"),
+				dir: path.join(current, ".vib", "skills"),
 				providerId: "native",
 				level: "project",
 			});
@@ -78,14 +78,14 @@ describe("monorepo skill discovery", () => {
 
 	test("closest skill wins when same name exists at multiple levels", async () => {
 		// Same skill name at root and sub-project
-		writeSkill(path.join(repoRoot, ".gjc", "skills"), "shared-skill", "Root version");
-		writeSkill(path.join(subProject, ".gjc", "skills"), "shared-skill", "Local version");
+		writeSkill(path.join(repoRoot, ".vib", "skills"), "shared-skill", "Root version");
+		writeSkill(path.join(subProject, ".vib", "skills"), "shared-skill", "Local version");
 
 		const results: LoadResult<Skill>[] = [];
 		let current = subProject;
 		while (true) {
 			const result = await scanSkillsFromDir(ctx, {
-				dir: path.join(current, ".gjc", "skills"),
+				dir: path.join(current, ".vib", "skills"),
 				providerId: "native",
 				level: "project",
 			});
@@ -110,7 +110,7 @@ describe("monorepo skill discovery", () => {
 		let current = subProject;
 		while (true) {
 			const result = await scanSkillsFromDir(ctx, {
-				dir: path.join(current, ".gjc", "skills"),
+				dir: path.join(current, ".vib", "skills"),
 				providerId: "native",
 				level: "project",
 			});
@@ -127,15 +127,15 @@ describe("monorepo skill discovery", () => {
 	test("finds skills across multiple ancestor levels", async () => {
 		// Three levels: repo root, packages/, and sub-project
 		const packagesDir = path.join(repoRoot, "packages");
-		writeSkill(path.join(repoRoot, ".gjc", "skills"), "root-skill", "Root");
-		writeSkill(path.join(packagesDir, ".gjc", "skills"), "packages-skill", "Packages");
-		writeSkill(path.join(subProject, ".gjc", "skills"), "app-skill", "App");
+		writeSkill(path.join(repoRoot, ".vib", "skills"), "root-skill", "Root");
+		writeSkill(path.join(packagesDir, ".vib", "skills"), "packages-skill", "Packages");
+		writeSkill(path.join(subProject, ".vib", "skills"), "app-skill", "App");
 
 		const results: LoadResult<Skill>[] = [];
 		let current = subProject;
 		while (true) {
 			const result = await scanSkillsFromDir(ctx, {
-				dir: path.join(current, ".gjc", "skills"),
+				dir: path.join(current, ".vib", "skills"),
 				providerId: "native",
 				level: "project",
 			});
@@ -157,16 +157,16 @@ describe("monorepo skill discovery", () => {
 
 	test("walk-up stops at repo root and does not find skills above it", async () => {
 		// Skill ABOVE the repo root (should NOT be found)
-		writeSkill(path.join(tempDir, ".gjc", "skills"), "above-repo-skill", "Above repo");
+		writeSkill(path.join(tempDir, ".vib", "skills"), "above-repo-skill", "Above repo");
 		// Skill AT the repo root (should be found)
-		writeSkill(path.join(repoRoot, ".gjc", "skills"), "root-skill", "At repo root");
+		writeSkill(path.join(repoRoot, ".vib", "skills"), "root-skill", "At repo root");
 
 		// Simulate the walk-up with repo root boundary (matching builtin provider pattern)
 		const results: LoadResult<Skill>[] = [];
 		let current = subProject;
 		while (true) {
 			const result = await scanSkillsFromDir(ctx, {
-				dir: path.join(current, ".gjc", "skills"),
+				dir: path.join(current, ".vib", "skills"),
 				providerId: "native",
 				level: "project",
 			});

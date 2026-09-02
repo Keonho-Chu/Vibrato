@@ -3,7 +3,7 @@ import * as nodeFs from "node:fs";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { coordinatorMcpStateRoot, gjcRoot } from "../gjc-runtime/session-layout";
+import { coordinatorMcpStateRoot, vibRoot } from "../vib-runtime/session-layout";
 import {
 	DEFAULT_SESSION_IDLE_TTL_MS,
 	DEFAULT_SESSION_SWEEP_INTERVAL_MS,
@@ -47,10 +47,10 @@ export function coordinatorNamespaceIdentity(env: NodeJS.ProcessEnv = process.en
 	return `ns1_${createHash("sha256")
 		.update(
 			canonicalJson({
-				profile_exact: env.GJC_COORDINATOR_MCP_PROFILE ?? null,
-				profile_present: env.GJC_COORDINATOR_MCP_PROFILE !== undefined,
-				repo_exact: env.GJC_COORDINATOR_MCP_REPO ?? null,
-				repo_present: env.GJC_COORDINATOR_MCP_REPO !== undefined,
+				profile_exact: env.VIB_COORDINATOR_MCP_PROFILE ?? null,
+				profile_present: env.VIB_COORDINATOR_MCP_PROFILE !== undefined,
+				repo_exact: env.VIB_COORDINATOR_MCP_REPO ?? null,
+				repo_present: env.VIB_COORDINATOR_MCP_REPO !== undefined,
 			}),
 		)
 		.digest("hex")
@@ -144,49 +144,49 @@ function cleanScope(value: string | undefined): string | null {
 	return trimmed.replace(/[^a-zA-Z0-9_.-]+/g, "-").slice(0, 100) || null;
 }
 
-function defaultCoordinatorMcpStateRoot(cwd: string, gjcSessionId?: string): string {
-	return gjcSessionId
-		? coordinatorMcpStateRoot(cwd, gjcSessionId)
-		: path.join(gjcRoot(cwd), "state", "coordinator-mcp");
+function defaultCoordinatorMcpStateRoot(cwd: string, vibSessionId?: string): string {
+	return vibSessionId
+		? coordinatorMcpStateRoot(cwd, vibSessionId)
+		: path.join(vibRoot(cwd), "state", "coordinator-mcp");
 }
 
 export function buildCoordinatorMcpConfig(env: NodeJS.ProcessEnv = process.env): CoordinatorMcpConfig {
-	const stateRootOverride = env.GJC_COORDINATOR_MCP_STATE_ROOT?.trim();
-	const gjcSessionId = env.GJC_SESSION_ID?.trim();
-	const stateRoot = stateRootOverride || defaultCoordinatorMcpStateRoot(process.cwd(), gjcSessionId);
+	const stateRootOverride = env.VIB_COORDINATOR_MCP_STATE_ROOT?.trim();
+	const vibSessionId = env.VIB_SESSION_ID?.trim();
+	const stateRoot = stateRootOverride || defaultCoordinatorMcpStateRoot(process.cwd(), vibSessionId);
 	return {
-		allowedRoots: parseRootList(env.GJC_COORDINATOR_MCP_WORKDIR_ROOTS).map(root => path.resolve(root)),
-		managedWorktreeRoots: parseRootList(env.GJC_COORDINATOR_MCP_WORKDIR_ROOTS).map(root =>
-			resolveManagedWorktreeRoot(path.resolve(root), env.GJC_WORKTREE_DIR),
+		allowedRoots: parseRootList(env.VIB_COORDINATOR_MCP_WORKDIR_ROOTS).map(root => path.resolve(root)),
+		managedWorktreeRoots: parseRootList(env.VIB_COORDINATOR_MCP_WORKDIR_ROOTS).map(root =>
+			resolveManagedWorktreeRoot(path.resolve(root), env.VIB_WORKTREE_DIR),
 		),
 		mutationClasses: parseMutationClasses(
-			env.GJC_COORDINATOR_MCP_MUTATIONS ?? env.GJC_COORDINATOR_MCP_ENABLE_MUTATION_CLASSES,
+			env.VIB_COORDINATOR_MCP_MUTATIONS ?? env.VIB_COORDINATOR_MCP_ENABLE_MUTATION_CLASSES,
 		),
 		artifactByteCap: parseByteCap(
-			env.GJC_COORDINATOR_MCP_ARTIFACT_BYTE_CAP ?? env.GJC_COORDINATOR_MCP_ARTIFACT_MAX_BYTES,
+			env.VIB_COORDINATOR_MCP_ARTIFACT_BYTE_CAP ?? env.VIB_COORDINATOR_MCP_ARTIFACT_MAX_BYTES,
 		),
 		namespace: {
-			profile: cleanScope(env.GJC_COORDINATOR_MCP_PROFILE),
-			repo: cleanScope(env.GJC_COORDINATOR_MCP_REPO),
+			profile: cleanScope(env.VIB_COORDINATOR_MCP_PROFILE),
+			repo: cleanScope(env.VIB_COORDINATOR_MCP_REPO),
 			identity: coordinatorNamespaceIdentity(env),
 		},
 		stateRoot: path.resolve(stateRoot),
 		codexTokenRoot: path.resolve(
-			env.GJC_COORDINATOR_MCP_CODEX_TOKEN_ROOT?.trim() || path.join(stateRoot, "codex-tokens"),
+			env.VIB_COORDINATOR_MCP_CODEX_TOKEN_ROOT?.trim() || path.join(stateRoot, "codex-tokens"),
 		),
-		sessionCommand: env.GJC_COORDINATOR_MCP_SESSION_COMMAND?.trim() || null,
-		requireWorktree: parseBool(env.GJC_COORDINATOR_MCP_REQUIRE_WORKTREE),
+		sessionCommand: env.VIB_COORDINATOR_MCP_SESSION_COMMAND?.trim() || null,
+		requireWorktree: parseBool(env.VIB_COORDINATOR_MCP_REQUIRE_WORKTREE),
 		sessionIdleTtlMs: parsePositiveIntMs(
-			env.GJC_COORDINATOR_MCP_SESSION_IDLE_TTL_MS,
+			env.VIB_COORDINATOR_MCP_SESSION_IDLE_TTL_MS,
 			DEFAULT_SESSION_IDLE_TTL_MS,
 			MIN_SESSION_IDLE_TTL_MS,
 		),
 		sessionSweepIntervalMs: parsePositiveIntMs(
-			env.GJC_COORDINATOR_MCP_SESSION_SWEEP_INTERVAL_MS,
+			env.VIB_COORDINATOR_MCP_SESSION_SWEEP_INTERVAL_MS,
 			DEFAULT_SESSION_SWEEP_INTERVAL_MS,
 			MIN_SESSION_SWEEP_INTERVAL_MS,
 		),
-		forceStopEnabled: parseBool(env.GJC_COORDINATOR_MCP_FORCE_STOP),
+		forceStopEnabled: parseBool(env.VIB_COORDINATOR_MCP_FORCE_STOP),
 	};
 }
 

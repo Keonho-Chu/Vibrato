@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { getEmbeddedDefaultGjcSkills } from "../defaults/gjc-defaults";
+import { getEmbeddedDefaultVibSkills } from "../defaults/vib-defaults";
 import { buildSkillPromptMessage } from "../extensibility/skills";
 import { SKILL_FRONTMATTER_SCAN_BYTES, SKILL_FRONTMATTER_SCAN_TOTAL_BYTES, scanSkillDescriptorsFromDir } from "./index";
 
@@ -11,7 +11,7 @@ function makeContext(): any {
 
 describe("skill descriptors", () => {
 	test("frontmatter scanning is bounded and does not read the body", async () => {
-		const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-skill-descriptor-"));
+		const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-skill-descriptor-"));
 		try {
 			const skillDir = path.join(root, "bounded");
 			await fs.mkdir(skillDir, { recursive: true });
@@ -55,7 +55,7 @@ describe("skill descriptors", () => {
 	});
 
 	test("unterminated frontmatter stops at the total scan cap", async () => {
-		const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-skill-unterminated-"));
+		const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-skill-unterminated-"));
 		try {
 			const skillDir = path.join(root, "unterminated");
 			await fs.mkdir(skillDir, { recursive: true });
@@ -75,7 +75,7 @@ describe("skill descriptors", () => {
 		}
 	});
 	test("bundled skill prompt injection is byte-identical through the lazy catalog", async () => {
-		const embedded = getEmbeddedDefaultGjcSkills().find(skill => skill.name === "ralplan");
+		const embedded = getEmbeddedDefaultVibSkills().find(skill => skill.name === "ralplan");
 		if (!embedded) throw new Error("ralplan bundled skill missing");
 		const legacyContent = embedded.content;
 		const legacy = await buildSkillPromptMessage(

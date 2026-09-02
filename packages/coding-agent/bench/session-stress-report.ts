@@ -439,7 +439,7 @@ async function main(): Promise<void> {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Gajae Code — Synthetic Session Stress Report</title>
+<title>Vibrato — Synthetic Session Stress Report</title>
 <style>
 :root{--ink:#0f172a;--muted:#475569;--line:#dbe3ee;--panel:#f8fafc;--blue:#2563eb;--green:#15803d;--orange:#c2410c;--red:#b91c1c;--purple:#7e22ce}
 *{box-sizing:border-box} body{margin:0;background:#eef2f7;color:var(--ink);font:14px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -458,7 +458,7 @@ table{width:100%;border-collapse:collapse;font-size:12px;margin:12px 0 22px}th{b
 <body>
 <main class="report">
 <header class="cover">
-<div class="eyebrow">Gajae Code Performance Engineering</div>
+<div class="eyebrow">Vibrato Performance Engineering</div>
 <h1>Synthetic Long-Running Session Stress Report</h1>
 		<div class="subtitle">${escapeHtml(representedOperations.map(operationLabel).join(", ") || "N/A")} evidence across ${escapeHtml(representedScenarios.map(scenarioName).join(", ") || "N/A")}.</div>
 

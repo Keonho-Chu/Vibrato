@@ -44,7 +44,7 @@ describe("AgentStorage SQLite compatibility", () => {
 	});
 
 	it("creates fresh storage without unixepoch defaults", async () => {
-		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-agent-storage-fresh-"));
+		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-agent-storage-fresh-"));
 		const dbPath = path.join(tempDir, "agent.db");
 
 		const storage = await AgentStorage.open(dbPath);
@@ -59,7 +59,7 @@ describe("AgentStorage SQLite compatibility", () => {
 	});
 
 	it("migrates legacy settings and model usage schemas away from unixepoch defaults", async () => {
-		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-agent-storage-legacy-"));
+		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-agent-storage-legacy-"));
 		const dbPath = path.join(tempDir, "agent.db");
 		const legacyDb = new Database(dbPath);
 		legacyDb.exec(`
@@ -96,13 +96,13 @@ describe("AgentStorage SQLite compatibility", () => {
 	});
 
 	it("clearSettings drains the legacy rows so a later load cannot re-import them", async () => {
-		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-agent-storage-drain-"));
+		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-agent-storage-drain-"));
 		const dbPath = path.join(tempDir, "agent.db");
 
 		const storage = await AgentStorage.open(dbPath);
 		const raw = new Database(dbPath);
 		raw.prepare("INSERT INTO settings (key, value) VALUES (?, ?)").run("theme.dark", '"red-claw"');
-		raw.prepare("INSERT INTO settings (key, value) VALUES (?, ?)").run("gjc.ralplan.maxIterations", "7");
+		raw.prepare("INSERT INTO settings (key, value) VALUES (?, ?)").run("vib.ralplan.maxIterations", "7");
 		raw.close();
 
 		await storage.clearSettings();
@@ -111,7 +111,7 @@ describe("AgentStorage SQLite compatibility", () => {
 	});
 
 	it("clearSettings does not swallow a persistent drain failure", async () => {
-		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-agent-storage-drain-fail-"));
+		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-agent-storage-drain-fail-"));
 		const dbPath = path.join(tempDir, "agent.db");
 
 		const storage = await AgentStorage.open(dbPath);
@@ -127,13 +127,13 @@ describe("AgentStorage SQLite compatibility", () => {
 	});
 
 	it("getSettings fails the read when a row cannot be decoded", async () => {
-		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-agent-storage-bad-row-"));
+		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-agent-storage-bad-row-"));
 		const dbPath = path.join(tempDir, "agent.db");
 
 		const storage = await AgentStorage.open(dbPath);
 		const raw = new Database(dbPath);
 		raw.prepare("INSERT INTO settings (key, value) VALUES (?, ?)").run("theme.dark", '"red-claw"');
-		raw.prepare("INSERT INTO settings (key, value) VALUES (?, ?)").run("gjc.ralplan.maxIterations", "{ not json");
+		raw.prepare("INSERT INTO settings (key, value) VALUES (?, ?)").run("vib.ralplan.maxIterations", "{ not json");
 		raw.close();
 
 		// A malformed row must fail the whole read (the migration drains rows

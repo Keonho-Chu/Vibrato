@@ -11,18 +11,18 @@
  * transaction succeeded. All dynamic text is sanitized before rendering.
  */
 import * as os from "node:os";
-import { Container, matchesKey, type SelectItem, SelectList, Text } from "@gajae-code/tui";
-import { sanitizeText } from "@gajae-code/utils";
+import { Container, matchesKey, type SelectItem, SelectList, Text } from "@vib-rato/tui";
+import { sanitizeText } from "@vib-rato/utils";
 import { applyImport, type BuildImportPreviewOptions, buildImportPreview } from "../../../customization/import";
 import type {
 	CustomizationSurface,
-	GjcScope,
 	ImportCollisionPolicy,
 	ImportPlan,
 	ImportPreview,
 	ImportProduct,
 	ImportResult,
 	ImportSourceScope,
+	VibScope,
 } from "../../../customization/types";
 import {
 	IMPORT_PRODUCTS,
@@ -47,9 +47,9 @@ const SURFACE_CHOICES: Array<{ value: string; label: string; surfaces: Customiza
 ];
 
 const COLLISION_CHOICES: Array<{ value: ImportCollisionPolicy; hint: string }> = [
-	{ value: "skip", hint: "keep existing .gjc entries; conflicting sources are skipped" },
+	{ value: "skip", hint: "keep existing .vib entries; conflicting sources are skipped" },
 	{ value: "rename", hint: "conflicting sources import under an -imported suffix" },
-	{ value: "overwrite", hint: "replace existing .gjc entries (explicit, never silent)" },
+	{ value: "overwrite", hint: "replace existing .vib entries (explicit, never silent)" },
 ];
 
 const PREVIEW_PAGE_SIZE = 8;
@@ -66,7 +66,7 @@ export class ImportWizard extends Container {
 
 	#cwd: string;
 	#homeDir: string;
-	#destinationScope: GjcScope;
+	#destinationScope: VibScope;
 	#step: WizardStep = "product";
 	#product: ImportProduct = "claude-code";
 	#sourceScope: ImportSourceScope = "project";
@@ -84,7 +84,7 @@ export class ImportWizard extends Container {
 	#bodyText: Text;
 	#footerText: Text;
 
-	constructor(cwd: string, destinationScope: GjcScope, homeDir?: string) {
+	constructor(cwd: string, destinationScope: VibScope, homeDir?: string) {
 		super();
 		this.#cwd = cwd;
 		this.#destinationScope = destinationScope;
@@ -194,7 +194,7 @@ export class ImportWizard extends Container {
 				break;
 			case "collision":
 				this.#setSelectStep(
-					"Collision policy for existing .gjc entries",
+					"Collision policy for existing .vib entries",
 					COLLISION_CHOICES.map(choice => ({
 						value: choice.value,
 						label: choice.value,

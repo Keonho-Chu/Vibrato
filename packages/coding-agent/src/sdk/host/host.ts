@@ -1,4 +1,4 @@
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 import { AUTOROUTING_INACTIVE_WARNING } from "../../config/autorouting-contract";
 import { redactBrokerRuntimeCloseCapability } from "./control/runtime-gate";
 import { type EventFrame, SessionEventStream } from "./events";
@@ -111,7 +111,7 @@ const ACTIVATION_MESSAGES: Record<
 
 /** SDK hosting is independent of notification configuration. Only root sessions host an endpoint. */
 export function shouldHostSdk(_settings: unknown, isTopLevel: boolean, env: NodeJS.ProcessEnv = process.env): boolean {
-	return isTopLevel && env.GJC_SDK_DISABLE !== "1";
+	return isTopLevel && env.VIB_SDK_DISABLE !== "1";
 }
 
 function errorFrame(connectionId: string, frame: SdkFrame, error: unknown): SdkFrame {

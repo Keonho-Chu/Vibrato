@@ -1,12 +1,12 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { type AgentMessage, ThinkingLevel } from "@gajae-code/agent-core";
-import { type AutocompleteProvider, getKeybindings, matchesKey, type SlashCommand } from "@gajae-code/tui";
-import { $pickenv, logger, sanitizeText } from "@gajae-code/utils";
+import { type AgentMessage, ThinkingLevel } from "@vib-rato/agent-core";
+import { type AutocompleteProvider, getKeybindings, matchesKey, type SlashCommand } from "@vib-rato/tui";
+import { $pickenv, logger, sanitizeText } from "@vib-rato/utils";
 import { type AppKeybinding, KEYBINDINGS } from "../../config/keybindings";
 import { isSettingsInitialized, settings } from "../../config/settings";
-import { resolveSubskillActivationForSkillInvocation } from "../../extensibility/gjc-plugins";
 import { buildSkillPromptMessage, parseSkillInvocations } from "../../extensibility/skills";
+import { resolveSubskillActivationForSkillInvocation } from "../../extensibility/vib-plugins";
 import { expandEmoticons } from "../../modes/emoji-autocomplete";
 import { createPromptActionAutocompleteProvider } from "../../modes/prompt-action-autocomplete";
 import { theme } from "../../modes/theme/theme";
@@ -76,7 +76,7 @@ export const BACKGROUND_FOLD_DOUBLE_PRESS_MS = 750;
 const DRAFT_CLEAR_DOUBLE_ESCAPE_WINDOW_MS = 800;
 const EMPTY_EDITOR_DOUBLE_ESCAPE_WINDOW_MS = 500;
 const IMAGE_PLACEHOLDER_PATTERN = /\[image ([1-9]\d*)\]/g;
-const ITERM_PET_DRAG_PATH_PATTERN = /^\/var\/folders\/[^/]+\/[^/]+\/T\/iTerm2\.[A-Za-z0-9]+\.gajae-pet\.(?:png|gif)$/;
+const ITERM_PET_DRAG_PATH_PATTERN = /^\/var\/folders\/[^/]+\/[^/]+\/T\/iTerm2\.[A-Za-z0-9]+\.vibrato-pet\.(?:png|gif)$/;
 const IMAGE_PLACEHOLDER_PRESENT_PATTERN = /\[image [1-9]\d*\]/;
 
 function isItermPetDragPaste(text: string): boolean {
@@ -1157,7 +1157,7 @@ export class InputController {
 
 		// Generate session title on first message
 		const hasUserMessages = this.ctx.session.messages.some((m: AgentMessage) => m.role === "user");
-		if (!hasUserMessages && !this.ctx.sessionManager.getSessionName() && !$pickenv("GJC_NO_TITLE", "PI_NO_TITLE")) {
+		if (!hasUserMessages && !this.ctx.sessionManager.getSessionName() && !$pickenv("VIB_NO_TITLE", "PI_NO_TITLE")) {
 			const registry = this.ctx.session.modelRegistry;
 			generateSessionTitle(
 				text,
@@ -1890,7 +1890,7 @@ export class InputController {
 
 	handleTextPaste(text: string, context: PasteTextContext): boolean | Promise<boolean> {
 		if (isItermPetDragPaste(text)) {
-			this.ctx.showStatus("Ignored dragged Gajae Pet image.", { dim: true });
+			this.ctx.showStatus("Ignored dragged Vibrato Pet image.", { dim: true });
 			return true;
 		}
 		if (this.ctx.isBashMode || this.ctx.isPythonMode) return false;
@@ -2478,7 +2478,7 @@ export class InputController {
 				? [ttyHandle.fd, ttyHandle.fd, ttyHandle.fd]
 				: ["inherit", "inherit", "inherit"];
 
-			const result = await openInEditor(editorCmd, currentText, { extension: ".gjc.md", stdio });
+			const result = await openInEditor(editorCmd, currentText, { extension: ".vib.md", stdio });
 			if (result !== null) {
 				this.ctx.editor.setText(result);
 			}

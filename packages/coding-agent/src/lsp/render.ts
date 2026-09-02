@@ -8,18 +8,18 @@
  * - Collapsible/expandable views
  */
 
-import type { RenderResultOptions } from "@gajae-code/agent-core";
-import type { HighlightColors } from "@gajae-code/natives";
+import type { RenderResultOptions } from "@vib-rato/agent-core";
+import type { HighlightColors } from "@vib-rato/natives";
 
-type NativeLspRenderBindings = Pick<typeof import("@gajae-code/natives"), "highlightCode" | "supportsLanguage">;
+type NativeLspRenderBindings = Pick<typeof import("@vib-rato/natives"), "highlightCode" | "supportsLanguage">;
 let nativeLspRenderBindings: NativeLspRenderBindings | undefined;
 
 function nativeLspRender(): NativeLspRenderBindings {
-	if (!nativeLspRenderBindings) nativeLspRenderBindings = require("@gajae-code/natives") as NativeLspRenderBindings;
+	if (!nativeLspRenderBindings) nativeLspRenderBindings = require("@vib-rato/natives") as NativeLspRenderBindings;
 	return nativeLspRenderBindings;
 }
 
-import { type Component, Text } from "@gajae-code/tui";
+import { type Component, Text } from "@vib-rato/tui";
 import { getLanguageFromPath, type Theme } from "../modes/theme/theme";
 import {
 	formatExpandHint,

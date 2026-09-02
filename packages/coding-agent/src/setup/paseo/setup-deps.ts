@@ -1,5 +1,5 @@
 /**
- * Injectable dependency surface for `gjc setup paseo`.
+ * Injectable dependency surface for `vib setup paseo`.
  *
  * Every module in this directory takes `PaseoSetupDependencies` explicitly so
  * tests can substitute paths, the Paseo CLI probe, and the clock without
@@ -7,7 +7,7 @@
  */
 import * as os from "node:os";
 import * as path from "node:path";
-import { getAgentDir } from "@gajae-code/utils";
+import { getAgentDir } from "@vib-rato/utils";
 
 /** The five Paseo skills this setup links. `context-search` is deliberately excluded. */
 export const INSTALL_SKILL_NAMES = [
@@ -24,7 +24,7 @@ export type InstallSkillName = (typeof INSTALL_SKILL_NAMES)[number];
 export const PASEO_SKILL_PREFIX = "paseo";
 
 /** Base provider key written into `agents.providers`. */
-export const PROVIDER_KEY = "gjc";
+export const PROVIDER_KEY = "vib";
 
 /** Paseo's undocumented provider inheritance contract, reverse-engineered from a hand-written config. */
 export const PROVIDER_EXTENDS = "acp";
@@ -46,12 +46,12 @@ export interface PaseoPaths {
 	readonly agentsSkillsDir: string;
 	/** `<agentDir>/paseo-skills` -- the bridge directory this setup owns. */
 	readonly bridgeDir: string;
-	/** `<agentDir>/paseo/provenance.json` -- GJC-side ownership ledger. */
+	/** `<agentDir>/paseo/provenance.json` -- Vibrato-side ownership ledger. */
 	readonly provenanceLedger: string;
 	/** `<agentDir>/paseo/intent.json` -- durable crash-recovery intent record. */
 	readonly intentRecord: string;
 	/** `<agentDir>/skills` -- second protected tree, never written by this setup. */
-	readonly gjcSkillsDir: string;
+	readonly vibSkillsDir: string;
 }
 
 /** A provider row as `paseo provider ls --json` reports it. */
@@ -85,7 +85,7 @@ export function createDefaultPaseoPaths(agentDir: string = getAgentDir(), home: 
 		bridgeDir: path.join(agentDir, "paseo-skills"),
 		provenanceLedger: path.join(agentDir, "paseo", "provenance.json"),
 		intentRecord: path.join(agentDir, "paseo", "intent.json"),
-		gjcSkillsDir: path.join(agentDir, "skills"),
+		vibSkillsDir: path.join(agentDir, "skills"),
 	};
 }
 

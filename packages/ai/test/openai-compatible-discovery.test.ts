@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "bun:test";
-import { UNK_CONTEXT_WINDOW, UNK_MAX_TOKENS } from "@gajae-code/ai";
+import { UNK_CONTEXT_WINDOW, UNK_MAX_TOKENS } from "@vib-rato/ai";
 import {
 	fetchOpenAICompatibleModels,
 	isSafeCatalogModelId,

@@ -41,7 +41,7 @@ function memoryTransport(): SessionSdkTransport & {
 	let started = false;
 	return {
 		sessionId: "session-runtime-test",
-		stateRoot: "/tmp/gjc-session-runtime-test",
+		stateRoot: "/tmp/vib-session-runtime-test",
 		token: "test-token",
 		sent,
 		broadcasts,
@@ -220,7 +220,7 @@ test("session-host prompt reconciliation fails closed when the accepted result i
 
 describe("SDK goal snapshot lifecycle", () => {
 	test("recovers an active nonzero-activity goal from the durable session projection", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-sdk-goal-recovery-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-sdk-goal-recovery-"));
 		try {
 			const sessionId = "runtime-recreated";
 			const branch = [goalModeEntry(sessionId, 17)];
@@ -244,7 +244,7 @@ describe("SDK goal snapshot lifecycle", () => {
 	});
 
 	test("keeps fresh session/worktree projections isolated while an active turn has activity", async () => {
-		const root = await mkdtemp(path.join(os.tmpdir(), "gjc-sdk-goal-isolation-"));
+		const root = await mkdtemp(path.join(os.tmpdir(), "vib-sdk-goal-isolation-"));
 		try {
 			const first = await queryGoalState(
 				extensionContext("fresh-session-a", path.join(root, "a"), {
@@ -268,7 +268,7 @@ describe("SDK goal snapshot lifecycle", () => {
 	});
 
 	test("returns an explicit no-active-goal diagnostic for the zero-activity control", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-sdk-goal-empty-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-sdk-goal-empty-"));
 		try {
 			const result = await queryGoalState(extensionContext("zero-activity", cwd), "zero-activity");
 			expect(result).toMatchObject({ enabled: false, goal: null, reason: "no_active_goal" });
@@ -278,7 +278,7 @@ describe("SDK goal snapshot lifecycle", () => {
 	});
 
 	test("returns a recoverable diagnostic when durable active-goal state is malformed", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-sdk-goal-corrupt-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-sdk-goal-corrupt-"));
 		try {
 			const result = await queryGoalState(
 				extensionContext("corrupt-goal", cwd, {
@@ -871,7 +871,7 @@ test("a reason attached after a prompt settled is never replaced by a later fail
 });
 
 test("redacts a persisted host failure during hydration", async () => {
-	const stateRoot = await mkdtemp(path.join(os.tmpdir(), "gjc-sdk-reconciliation-"));
+	const stateRoot = await mkdtemp(path.join(os.tmpdir(), "vib-sdk-reconciliation-"));
 	const sessionId = "hydrated-failure";
 	try {
 		await Bun.write(
@@ -971,7 +971,7 @@ describe("SessionSdkSessionRuntime", () => {
 	test("has no notification adapter or native notification import edge", async () => {
 		const source = await readFile(new URL("./session-runtime.ts", import.meta.url), "utf8");
 		expect(source).not.toContain("../bus");
-		expect(source).not.toContain("@gajae-code/natives");
+		expect(source).not.toContain("@vib-rato/natives");
 		expect(source).not.toContain("NotificationServer");
 	});
 
@@ -1009,7 +1009,7 @@ describe("SessionSdkSessionRuntime", () => {
 		await runtime.stop();
 	});
 	test("SDK-only host admits, replays, and conflicts terminal abort requests durably", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-sdk-terminal-abort-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-sdk-terminal-abort-"));
 		const handlers = new Map<string, (event: unknown, ctx: ExtensionContext) => Promise<void> | void>();
 		const api = {
 			on(event: string, handler: (event: unknown, ctx: ExtensionContext) => Promise<void> | void) {
@@ -1152,7 +1152,7 @@ describe("SessionSdkSessionRuntime", () => {
 		// at accept; when the unwind continuation actually promotes it to its own
 		// run, the promotion hook must create the ownership correlation so the
 		// submitting connection can terminal-abort that turn.
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-sdk-unwind-promoted-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-sdk-unwind-promoted-"));
 		let idle = true;
 		let promoted: ((promotion: { startsOwnRun: boolean }) => void) | undefined;
 		const queuedDispositions: boolean[] = [];
@@ -1261,7 +1261,7 @@ describe("SessionSdkSessionRuntime", () => {
 	});
 
 	test("SDK-only host re-reads the active prompt after an idle reservation wins the race", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-sdk-terminal-race-active-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-sdk-terminal-race-active-"));
 		const handlers = new Map<string, (event: unknown, ctx: ExtensionContext) => Promise<void> | void>();
 		const api = {
 			on(event: string, handler: (event: unknown, ctx: ExtensionContext) => Promise<void> | void) {
@@ -1352,7 +1352,7 @@ describe("SessionSdkSessionRuntime", () => {
 	});
 
 	test("SDK-only host re-reads the active prompt AND its owner after an owner-mismatch reservation wins the race", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-sdk-terminal-owner-race-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-sdk-terminal-owner-race-"));
 		const handlers = new Map<string, (event: unknown, ctx: ExtensionContext) => Promise<void> | void>();
 		const api = {
 			on(event: string, handler: (event: unknown, ctx: ExtensionContext) => Promise<void> | void) {
@@ -1454,7 +1454,7 @@ describe("SessionSdkSessionRuntime", () => {
 	});
 
 	test("SDK-only host records the OBSERVED agent_end publication on the terminal stopped row", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-sdk-terminal-published-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-sdk-terminal-published-"));
 		const handlers = new Map<string, (event: unknown, ctx: ExtensionContext) => Promise<void> | void>();
 		const api = {
 			on(event: string, handler: (event: unknown, ctx: ExtensionContext) => Promise<void> | void) {
@@ -1519,7 +1519,7 @@ describe("SessionSdkSessionRuntime", () => {
 	});
 
 	test("SDK-only host resolves EVERY concurrent terminal-publication waiter for one aborted turn", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-sdk-terminal-concurrent-publish-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-sdk-terminal-concurrent-publish-"));
 		const handlers = new Map<string, (event: unknown, ctx: ExtensionContext) => Promise<void> | void>();
 		const api = {
 			on(event: string, handler: (event: unknown, ctx: ExtensionContext) => Promise<void> | void) {
@@ -1623,7 +1623,7 @@ describe("SessionSdkSessionRuntime", () => {
 	});
 
 	test("delayed predecessor and maintenance ends cannot resolve a successor publication waiter", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-sdk-terminal-epoch-isolation-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-sdk-terminal-epoch-isolation-"));
 		const handlers = new Map<string, (event: unknown, ctx: ExtensionContext) => Promise<void> | void>();
 		const api = {
 			on(event: string, handler: (event: unknown, ctx: ExtensionContext) => Promise<void> | void) {
@@ -1719,7 +1719,7 @@ describe("SessionSdkSessionRuntime", () => {
 	});
 
 	test("SDK-only host never claims terminalPublished without observing the agent_end publication", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-sdk-terminal-unpublished-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-sdk-terminal-unpublished-"));
 		const handlers = new Map<string, (event: unknown, ctx: ExtensionContext) => Promise<void> | void>();
 		const api = {
 			on(event: string, handler: (event: unknown, ctx: ExtensionContext) => Promise<void> | void) {
@@ -1779,7 +1779,7 @@ describe("SessionSdkSessionRuntime", () => {
 	});
 
 	test("SDK-only host cancels only the preflights admitted at abort time, never a pipelined successor", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-sdk-preflight-snapshot-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-sdk-preflight-snapshot-"));
 		const handlers = new Map<string, (event: unknown, ctx: ExtensionContext) => Promise<void> | void>();
 		const api = {
 			on(event: string, handler: (event: unknown, ctx: ExtensionContext) => Promise<void> | void) {
@@ -1863,7 +1863,7 @@ describe("SessionSdkSessionRuntime", () => {
 	});
 
 	test("SDK-only host tracks ownership for skill-invoked turns so a foreign abort cannot stop them", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-sdk-skill-owner-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-sdk-skill-owner-"));
 		const handlers = new Map<string, (event: unknown, ctx: ExtensionContext) => Promise<void> | void>();
 		const api = {
 			on(event: string, handler: (event: unknown, ctx: ExtensionContext) => Promise<void> | void) {
@@ -1970,7 +1970,7 @@ describe("SessionSdkSessionRuntime", () => {
 		// queued steering/follow-up: the owner must STAY with A until B's run
 		// actually starts (agent_start), or B could terminal-abort A's running
 		// turn while A is refused (review thread P1).
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-sdk-queued-owner-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-sdk-queued-owner-"));
 		const handlers = new Map<string, (event: unknown, ctx: ExtensionContext) => Promise<void> | void>();
 		const api = {
 			on(event: string, handler: (event: unknown, ctx: ExtensionContext) => Promise<void> | void) {
@@ -2079,7 +2079,7 @@ describe("SessionSdkSessionRuntime", () => {
 		// agent-initiated monitor/cron turn's agent_start would shift the stale
 		// entry and let B terminal-abort a turn it did not submit (review thread
 		// P1).
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-sdk-stale-owner-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-sdk-stale-owner-"));
 		const handlers = new Map<string, (event: unknown, ctx: ExtensionContext) => Promise<void> | void>();
 		const api = {
 			on(event: string, handler: (event: unknown, ctx: ExtensionContext) => Promise<void> | void) {
@@ -2173,7 +2173,7 @@ describe("SessionSdkSessionRuntime", () => {
 		// Its pending entry must not survive to a later agent-initiated turn, or
 		// B could terminal-abort an unrelated monitor/cron turn (review thread
 		// P1).
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-sdk-stale-followup-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-sdk-stale-followup-"));
 		const handlers = new Map<string, (event: unknown, ctx: ExtensionContext) => Promise<void> | void>();
 		const api = {
 			on(event: string, handler: (event: unknown, ctx: ExtensionContext) => Promise<void> | void) {
@@ -2263,7 +2263,7 @@ describe("SessionSdkSessionRuntime", () => {
 	});
 
 	test("agent-initiated successor activity cannot renew a stale predecessor deadline", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-sdk-stale-deadline-owner-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-sdk-stale-deadline-owner-"));
 		try {
 			const harness = await invocationHarness("stale-deadline-owner", cwd, {
 				settings: {
@@ -2301,7 +2301,7 @@ describe("SessionSdkSessionRuntime", () => {
 		// before agent_start (e.g. the busy retry expires). The failed entry must
 		// be retired — a later agent-initiated monitor/cron turn must not inherit
 		// the failed submission's connection as owner (review thread P1).
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-sdk-failed-owner-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-sdk-failed-owner-"));
 		const handlers = new Map<string, (event: unknown, ctx: ExtensionContext) => Promise<void> | void>();
 		const api = {
 			on(event: string, handler: (event: unknown, ctx: ExtensionContext) => Promise<void> | void) {
@@ -2431,7 +2431,7 @@ describe("SessionSdkSessionRuntime", () => {
 		// connection: the active handle exists but the owner is undefined, so
 		// every client must be refused — never authorized by an absent or stale
 		// owner (review thread P1).
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-sdk-unowned-turn-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-sdk-unowned-turn-"));
 		const handlers = new Map<string, (event: unknown, ctx: ExtensionContext) => Promise<void> | void>();
 		const api = {
 			on(event: string, handler: (event: unknown, ctx: ExtensionContext) => Promise<void> | void) {
@@ -2494,7 +2494,7 @@ describe("SessionSdkSessionRuntime", () => {
 		// definitive no_active_turn: a duplicate in that window would otherwise
 		// get no_active_turn while the original stops the prompt (review thread
 		// P2).
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-sdk-terminal-reserved-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-sdk-terminal-reserved-"));
 		const handlers = new Map<string, (event: unknown, ctx: ExtensionContext) => Promise<void> | void>();
 		const api = {
 			on(event: string, handler: (event: unknown, ctx: ExtensionContext) => Promise<void> | void) {
@@ -2585,7 +2585,7 @@ describe("SessionSdkSessionRuntime", () => {
 		// delivery observer must NOT mark the original marker sent for the
 		// retry's uncertainty response: it only advances when the written
 		// response's payload matches the row's stored hash (review thread P2).
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-sdk-pending-state-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-sdk-pending-state-"));
 		const handlers = new Map<string, (event: unknown, ctx: ExtensionContext) => Promise<void> | void>();
 		const api = {
 			on(event: string, handler: (event: unknown, ctx: ExtensionContext) => Promise<void> | void) {
@@ -2675,7 +2675,7 @@ describe("SessionSdkSessionRuntime", () => {
 	});
 
 	test("SDK-only host replays an EVICTED no-effect reservation as no_active_turn, not uncertain", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-sdk-terminal-evicted-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-sdk-terminal-evicted-"));
 		const handlers = new Map<string, (event: unknown, ctx: ExtensionContext) => Promise<void> | void>();
 		const api = {
 			on(event: string, handler: (event: unknown, ctx: ExtensionContext) => Promise<void> | void) {
@@ -2767,7 +2767,7 @@ describe("SessionSdkSessionRuntime", () => {
 	});
 
 	test("SDK-only host rejects a same-key different-scope race atomically inside the durable transaction", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-sdk-terminal-race-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-sdk-terminal-race-"));
 		const handlers = new Map<string, (event: unknown, ctx: ExtensionContext) => Promise<void> | void>();
 		const api = {
 			on(event: string, handler: (event: unknown, ctx: ExtensionContext) => Promise<void> | void) {
@@ -2843,7 +2843,7 @@ describe("SessionSdkSessionRuntime", () => {
 	});
 
 	test("SDK-only host cancels exact owned jobs before reporting stopped_owned", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-sdk-terminal-owned-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-sdk-terminal-owned-"));
 		const handlers = new Map<string, (event: unknown, ctx: ExtensionContext) => Promise<void> | void>();
 		const api = {
 			on(event: string, handler: (event: unknown, ctx: ExtensionContext) => Promise<void> | void) {
@@ -2938,7 +2938,7 @@ describe("SessionSdkSessionRuntime", () => {
 	});
 
 	test("SDK-only host bounds completed terminal rows and retains key tombstones", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-sdk-terminal-bound-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-sdk-terminal-bound-"));
 		const handlers = new Map<string, (event: unknown, ctx: ExtensionContext) => Promise<void> | void>();
 		const api = {
 			on(event: string, handler: (event: unknown, ctx: ExtensionContext) => Promise<void> | void) {
@@ -2999,7 +2999,7 @@ describe("SessionSdkSessionRuntime", () => {
 		// to settle must not leave an arbitrarily large reconciliation document:
 		// the pending->uncertain finalize applies the same 256-row bound and
 		// retains key tombstones (review thread P2).
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-sdk-terminal-uncertain-bound-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-sdk-terminal-uncertain-bound-"));
 		const handlers = new Map<string, (event: unknown, ctx: ExtensionContext) => Promise<void> | void>();
 		const api = {
 			on(event: string, handler: (event: unknown, ctx: ExtensionContext) => Promise<void> | void) {
@@ -3094,7 +3094,7 @@ describe("SessionSdkSessionRuntime", () => {
 		await Promise.all([nativeRuntime.stop(), loopbackRuntime.stop()]);
 	});
 	test("failed extension stop retains retry state before replacement start", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-sdk-extension-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-sdk-extension-"));
 		const handlers = new Map<string, (event: unknown, ctx: ExtensionContext) => Promise<void> | void>();
 		const api = {
 			on(event: string, handler: (event: unknown, ctx: ExtensionContext) => Promise<void> | void) {
@@ -3103,7 +3103,7 @@ describe("SessionSdkSessionRuntime", () => {
 		} as unknown as ExtensionAPI;
 		const transports: Array<{ starts: number; stops: number }> = [];
 		createSdkSessionRuntimeExtension(api, {
-			agentDir: path.join(cwd, ".gjc", "agent"),
+			agentDir: path.join(cwd, ".vib", "agent"),
 			createTransport: async ({ sessionId, stateRoot, token }) => {
 				const stats = { starts: 0, stops: 0 };
 				const failFirstStop = transports.length === 0;
@@ -3161,8 +3161,8 @@ describe("SessionSdkSessionRuntime", () => {
 		}
 	});
 	test("keeps a local SDK-only host alive through broker failure and registers after recovery", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-sdk-broker-recovery-"));
-		const agentDir = path.join(cwd, ".gjc", "agent");
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-sdk-broker-recovery-"));
+		const agentDir = path.join(cwd, ".vib", "agent");
 		await mkdir(path.dirname(agentDir), { recursive: true });
 		await writeFile(agentDir, "blocked");
 		const handlers = new Map<string, (event: unknown, ctx: any) => Promise<void> | void>();
@@ -3228,8 +3228,8 @@ describe("SessionSdkSessionRuntime", () => {
 	});
 
 	test("rejects lifecycle-required SDK-only startup when broker registration fails", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-sdk-broker-required-"));
-		const agentDir = path.join(cwd, ".gjc", "agent");
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-sdk-broker-required-"));
+		const agentDir = path.join(cwd, ".vib", "agent");
 		await mkdir(path.dirname(agentDir), { recursive: true });
 		await writeFile(agentDir, "blocked");
 		const handlers = new Map<string, (event: unknown, ctx: any) => Promise<void> | void>();
@@ -3384,7 +3384,7 @@ async function invocationHarness(
 		...(hooks.invokeSkill ? { invokeSkill: hooks.invokeSkill } : {}),
 		sessionManager: {
 			getSessionId: () => sessionId,
-			getSessionFile: () => path.join(cwd, ".gjc", "state", `${sessionId}.jsonl`),
+			getSessionFile: () => path.join(cwd, ".vib", "state", `${sessionId}.jsonl`),
 			getSessionName: () => undefined,
 			getBranch: () => [],
 		},
@@ -3416,7 +3416,7 @@ async function invocationHarness(
 					sessionManager: {
 						...ctx.sessionManager,
 						getSessionId: () => sessionId,
-						getSessionFile: () => path.join(cwd, ".gjc", "state", `${sessionId}.jsonl`),
+						getSessionFile: () => path.join(cwd, ".vib", "state", `${sessionId}.jsonl`),
 					},
 				},
 			);
@@ -3429,7 +3429,7 @@ async function invocationHarness(
 					sessionManager: {
 						...ctx.sessionManager,
 						getSessionId: () => sessionId,
-						getSessionFile: () => path.join(cwd, ".gjc", "state", `${sessionId}.jsonl`),
+						getSessionFile: () => path.join(cwd, ".vib", "state", `${sessionId}.jsonl`),
 					},
 				},
 			);
@@ -3542,7 +3542,7 @@ describe("post-acceptance invocation terminalization", () => {
 		status,
 		code,
 	}) => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), `gjc-provider-http-${status}-`));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), `vib-provider-http-${status}-`));
 		try {
 			let prompts = 0;
 			const harness = await invocationHarness(`provider-http-${status}`, cwd, {
@@ -3601,7 +3601,7 @@ describe("post-acceptance invocation terminalization", () => {
 	});
 
 	test("classifies a statusless provider error completion as rejected", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-provider-statusless-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-provider-statusless-"));
 		try {
 			const harness = await invocationHarness("provider-statusless", cwd, {
 				sendUserMessage: async (_content, options) => {
@@ -3626,7 +3626,7 @@ describe("post-acceptance invocation terminalization", () => {
 	});
 
 	test("upgrades a generic agent_failed diagnostic when agent_end proves provider rejection", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-provider-statusless-upgrade-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-provider-statusless-upgrade-"));
 		try {
 			const harness = await invocationHarness("provider-statusless-upgrade", cwd, {
 				sendUserMessage: async (_content, options) => {
@@ -3656,7 +3656,7 @@ describe("post-acceptance invocation terminalization", () => {
 	});
 
 	test("preserves a specific agent_failed diagnostic when agent_end is statusless", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-provider-statusless-specific-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-provider-statusless-specific-"));
 		try {
 			const harness = await invocationHarness("provider-statusless-specific", cwd, {
 				sendUserMessage: async (_content, options) => {
@@ -3685,7 +3685,7 @@ describe("post-acceptance invocation terminalization", () => {
 	});
 
 	test("upgrades every shared generic diagnostic on a statusless provider end", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-provider-statusless-shared-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-provider-statusless-shared-"));
 		try {
 			let promoted: ((promotion: { startsOwnRun?: boolean }) => void) | undefined;
 			const harness = await invocationHarness("provider-statusless-shared", cwd, {
@@ -3725,7 +3725,7 @@ describe("post-acceptance invocation terminalization", () => {
 	});
 
 	test("does not misclassify a local malformed-tool circuit breaker as provider rejection", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-local-malformed-tool-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-local-malformed-tool-"));
 		try {
 			const harness = await invocationHarness("local-malformed-tool", cwd, {
 				sendUserMessage: async (_content, options) => {
@@ -3759,7 +3759,7 @@ describe("post-acceptance invocation terminalization", () => {
 	});
 
 	test("does not misclassify a local composer policy breaker as provider rejection", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-local-composer-policy-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-local-composer-policy-"));
 		try {
 			const harness = await invocationHarness("local-composer-policy", cwd, {
 				sendUserMessage: async (_content, options) => {
@@ -3793,7 +3793,7 @@ describe("post-acceptance invocation terminalization", () => {
 	});
 
 	test("terminalizes when provider end metadata exposes a throwing accessor", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-provider-throwing-metadata-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-provider-throwing-metadata-"));
 		try {
 			const harness = await invocationHarness("provider-throwing-metadata", cwd, {
 				sendUserMessage: async (_content, options) => {
@@ -3824,7 +3824,7 @@ describe("post-acceptance invocation terminalization", () => {
 	});
 
 	test("binds a delayed predecessor provider failure to its own batch after a replacement starts", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-delayed-provider-batch-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-delayed-provider-batch-"));
 		try {
 			const firstInflight = Promise.withResolvers<void>();
 			const secondInflight = Promise.withResolvers<void>();
@@ -3879,7 +3879,7 @@ describe("post-acceptance invocation terminalization", () => {
 			{ status: 402, code: "provider_http_402" },
 			{ status: 429, code: "provider_http_429" },
 		]) {
-			const cwd = await mkdtemp(path.join(os.tmpdir(), `gjc-${operation}-provider-race-`));
+			const cwd = await mkdtemp(path.join(os.tmpdir(), `vib-${operation}-provider-race-`));
 			try {
 				const entered = Promise.withResolvers<void>();
 				const release = Promise.withResolvers<void>();
@@ -4005,7 +4005,7 @@ describe("post-acceptance invocation terminalization", () => {
 		{ operation: "branch" as const, label: "session branch" },
 	])("bounds a stalled 402/429 lifecycle drain during $label", async ({ operation }) => {
 		for (const status of [402, 429]) {
-			const cwd = await mkdtemp(path.join(os.tmpdir(), `gjc-${operation}-provider-stall-`));
+			const cwd = await mkdtemp(path.join(os.tmpdir(), `vib-${operation}-provider-stall-`));
 			try {
 				const entered = Promise.withResolvers<void>();
 				const release = Promise.withResolvers<void>();
@@ -4047,7 +4047,7 @@ describe("post-acceptance invocation terminalization", () => {
 	});
 
 	test("deduplicates repeated agent_failed diagnostics for one invocation", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-agent-failed-dedupe-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-agent-failed-dedupe-"));
 		try {
 			const inflight = Promise.withResolvers<void>();
 			const harness = await invocationHarness("agent-failed-dedupe", cwd, {
@@ -4081,7 +4081,7 @@ describe("post-acceptance invocation terminalization", () => {
 	});
 
 	test("routes a delayed predecessor agent_end after replacement completion to the retired owner", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-delayed-retired-owner-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-delayed-retired-owner-"));
 		try {
 			const firstInflight = Promise.withResolvers<void>();
 			const secondInflight = Promise.withResolvers<void>();
@@ -4135,7 +4135,7 @@ describe("post-acceptance invocation terminalization", () => {
 	});
 
 	test("fails closed for tokenless delayed events when a session id is reused", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-reused-session-retired-owner-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-reused-session-retired-owner-"));
 		try {
 			const firstInflight = Promise.withResolvers<void>();
 			const harness = await invocationHarness("reused-session", cwd, {
@@ -4175,7 +4175,7 @@ describe("post-acceptance invocation terminalization", () => {
 	});
 
 	test("a prompt killed by a provider stream interrupt reports a terminal failed status", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-terminalize-prompt-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-terminalize-prompt-"));
 		try {
 			const harness = await invocationHarness("terminalize-prompt", cwd, {
 				sendUserMessage: async (_content, options) => {
@@ -4206,7 +4206,7 @@ describe("post-acceptance invocation terminalization", () => {
 	});
 
 	test("a canceled prompt reports a terminal failed status instead of hanging", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-terminalize-abort-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-terminalize-abort-"));
 		try {
 			const harness = await invocationHarness("terminalize-abort", cwd, {
 				sendUserMessage: async (_content, options) => {
@@ -4231,7 +4231,7 @@ describe("post-acceptance invocation terminalization", () => {
 		}
 	});
 	test("immediate prompt after abort ack is not terminalized by the aborted turn's delayed agent_end", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-abort-immediate-prompt-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-abort-immediate-prompt-"));
 		try {
 			const firstInflight = Promise.withResolvers<void>();
 			const successorStarted = Promise.withResolvers<void>();
@@ -4282,7 +4282,7 @@ describe("post-acceptance invocation terminalization", () => {
 	});
 
 	test("successor tool progress renews its deadline while a predecessor batch awaits agent_end", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-successor-progress-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-successor-progress-"));
 		try {
 			const firstInflight = Promise.withResolvers<void>();
 			const successorStarted = Promise.withResolvers<void>();
@@ -4333,7 +4333,7 @@ describe("post-acceptance invocation terminalization", () => {
 	});
 
 	test("reused-session successor tool progress renews its active deadline", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-reused-successor-progress-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-reused-successor-progress-"));
 		try {
 			const firstInflight = Promise.withResolvers<void>();
 			const successorStarted = Promise.withResolvers<void>();
@@ -4382,7 +4382,7 @@ describe("post-acceptance invocation terminalization", () => {
 	});
 
 	test("abort_and_prompt starts exactly one successor and is not duplicated by delayed abort teardown", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-abort-and-prompt-once-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-abort-and-prompt-once-"));
 		try {
 			const firstInflight = Promise.withResolvers<void>();
 			const abortReleased = Promise.withResolvers<void>();
@@ -4422,7 +4422,7 @@ describe("post-acceptance invocation terminalization", () => {
 	});
 
 	test("a failed skill invocation still reports a terminal failed status", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-terminalize-skill-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-terminalize-skill-"));
 		try {
 			const harness = await invocationHarness("terminalize-skill", cwd, {
 				invokeSkill: async (_name, _args, options) => {
@@ -4449,7 +4449,7 @@ describe("post-acceptance invocation terminalization", () => {
 		}
 	});
 	test("a completed prompt reports a terminal successful status", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-terminalize-completed-prompt-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-terminalize-completed-prompt-"));
 		try {
 			const harness = await invocationHarness("terminalize-completed-prompt", cwd, {
 				sendUserMessage: async (_content, options) => {
@@ -4470,7 +4470,7 @@ describe("post-acceptance invocation terminalization", () => {
 		}
 	});
 	test("a queued follow-up prompt is not terminalized before the turn runs", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-terminalize-followup-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-terminalize-followup-"));
 		try {
 			const turnRunning = Promise.withResolvers<void>();
 			const harness = await invocationHarness("terminalize-followup", cwd, {
@@ -4497,7 +4497,7 @@ describe("post-acceptance invocation terminalization", () => {
 		}
 	});
 	test("an unpromoted follow-up does not acquire a deadline lease", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-unpromoted-followup-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-unpromoted-followup-"));
 		try {
 			let promoted: ((promotion: { startsOwnRun: boolean }) => void) | undefined;
 			const harness = await invocationHarness("unpromoted-followup", cwd, {
@@ -4528,7 +4528,7 @@ describe("post-acceptance invocation terminalization", () => {
 		}
 	});
 	test("a prompt queued as steer while streaming is not terminalized before the turn runs", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-terminalize-prompt-while-busy-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-terminalize-prompt-while-busy-"));
 		try {
 			const harness = await invocationHarness("terminalize-prompt-while-busy", cwd, {
 				sendUserMessage: async (_content, options) => {
@@ -4550,7 +4550,7 @@ describe("post-acceptance invocation terminalization", () => {
 		}
 	});
 	test("a queued prompt stays non-terminal even if isIdle flips during the accept window", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-terminalize-race-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-terminalize-race-"));
 		let idle = false;
 		try {
 			const harness = await invocationHarness("terminalize-race", cwd, {
@@ -4577,7 +4577,7 @@ describe("post-acceptance invocation terminalization", () => {
 	});
 
 	test("a pre-acceptance failure rejects the submission without creating a record", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-terminalize-preflight-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-terminalize-preflight-"));
 		try {
 			const harness = await invocationHarness("terminalize-preflight", cwd, {
 				sendUserMessage: async () => {
@@ -4596,7 +4596,7 @@ describe("post-acceptance invocation terminalization", () => {
 	});
 
 	test("a later provider error enriches but never re-opens an already terminal prompt", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-terminalize-once-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-terminalize-once-"));
 		try {
 			const inflight = Promise.withResolvers<void>();
 			const harness = await invocationHarness("terminalize-once", cwd, {
@@ -4644,7 +4644,7 @@ describe("accepted-control zero-execution bound (#4668)", () => {
 		// session stats stay at zero with no failure surface. Before the fix the
 		// deadline lease was only created at agent_start, leaving the record
 		// accepted forever; the lease is now anchored at durable acceptance.
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-zero-progress-prompt-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-zero-progress-prompt-"));
 		try {
 			const harness = await invocationHarness("zero-progress-prompt", cwd, {
 				settings: zeroProgressSettings,
@@ -4679,7 +4679,7 @@ describe("accepted-control zero-execution bound (#4668)", () => {
 		// turn.abort_and_prompt accepted with permanently zero activity. Both the
 		// superseded original and the replacement must terminalize with an
 		// actionable error instead of remaining accepted forever.
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-zero-progress-replacement-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-zero-progress-replacement-"));
 		try {
 			const harness = await invocationHarness("zero-progress-replacement", cwd, {
 				settings: zeroProgressSettings,
@@ -4714,7 +4714,7 @@ describe("accepted-control zero-execution bound (#4668)", () => {
 		// Red-team finding (#4668): agent_start leased only the head of the
 		// drained batch, so follow-ups promoted together beyond the head had no
 		// deadline and could remain accepted with zero execution forever.
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-lease-batch-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-lease-batch-"));
 		try {
 			const promoted: Array<((promotion: { startsOwnRun: boolean }) => void) | undefined> = [];
 			const harness = await invocationHarness("lease-batch", cwd, {
@@ -4759,7 +4759,7 @@ describe("accepted-control zero-execution bound (#4668)", () => {
 	});
 
 	test("agent_failed reaches every prompt in the active drained batch", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-failed-batch-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-failed-batch-"));
 		try {
 			const promoted: Array<((promotion: { startsOwnRun: boolean }) => void) | undefined> = [];
 			const harness = await invocationHarness("failed-batch", cwd, {
@@ -4805,7 +4805,7 @@ describe("accepted-control zero-execution bound (#4668)", () => {
 		// replaces the tracked invocation. The replaced turn's acceptance lease
 		// must be retained (clearing it would leave its record accepted with no
 		// zero-progress bound) and the replacement must be leased too.
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-lease-reentry-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-lease-reentry-"));
 		try {
 			let promoted: ((promotion: { startsOwnRun: boolean }) => void) | undefined;
 			const harness = await invocationHarness("lease-reentry", cwd, {
@@ -4851,7 +4851,7 @@ describe("accepted-control zero-execution bound (#4668)", () => {
 		// Review finding (#4668 P1): before the promotion-boundary lease, a queued
 		// follow-up that was durably accepted and promoted but whose agent_start
 		// never arrived had no lease and stayed accepted indefinitely.
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-promote-no-start-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-promote-no-start-"));
 		try {
 			let promoted: ((promotion: { startsOwnRun: boolean }) => void) | undefined;
 			const harness = await invocationHarness("promote-no-start", cwd, {
@@ -4892,7 +4892,7 @@ describe("accepted-control zero-execution bound (#4668)", () => {
 		// Production dispatch of the in-run consumption itself is covered by
 		// agent-session-promotion-identity.test.ts; this exercises the runtime
 		// renewal wiring at the SDK boundary.
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-renew-attached-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-renew-attached-"));
 		try {
 			let promoted: ((promotion: { startsOwnRun: boolean }) => void) | undefined;
 			const harness = await invocationHarness("renew-attached", cwd, {
@@ -4939,7 +4939,7 @@ describe("accepted-control zero-execution bound (#4668)", () => {
 		// drain the stale correlation, mis-assign abort ownership, and could
 		// fabricate a prompt_deadline_exceeded. The consumed submission must
 		// attach to the in-flight run and terminalize with it instead.
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-inrun-consume-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-inrun-consume-"));
 		let idle = true;
 		const handlers = new Map<string, (event: unknown, ctx: ExtensionContext) => Promise<void> | void>();
 		let promoted: ((promotion: { startsOwnRun: boolean }) => void) | undefined;
@@ -5067,7 +5067,7 @@ describe("accepted-control zero-execution bound (#4668)", () => {
 		// in-run disposition (startsOwnRun:false, reported by agent-session at
 		// the divert) attaches the correlation to the in-flight run instead, and
 		// it terminalizes with that run's agent_end.
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-dispatch-race-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-dispatch-race-"));
 		try {
 			const harness = await invocationHarness("dispatch-race", cwd, {
 				sendUserMessage: async (content, options) => {
@@ -5118,7 +5118,7 @@ describe("accepted-control zero-execution bound (#4668)", () => {
 		// nothing renews the lease. It must NOT false-fire
 		// prompt_deadline_exceeded while legitimately queued; the lease returns
 		// at the real consumption boundary.
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-dispatch-race-lease-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-dispatch-race-lease-"));
 		try {
 			let consumed: ((promotion: { startsOwnRun?: boolean }) => void) | undefined;
 			const harness = await invocationHarness("dispatch-race-lease", cwd, {
@@ -5172,7 +5172,7 @@ describe("accepted-control zero-execution bound (#4668)", () => {
 		// clearQueue, and the abort purge drop queued messages without
 		// consumption. The accepted submission must terminalize as a bounded
 		// client-visible failure instead of staying accepted forever.
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-queue-removed-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-queue-removed-"));
 		try {
 			let promoted: ((promotion: { startsOwnRun?: boolean; removed?: boolean }) => void) | undefined;
 			const harness = await invocationHarness("queue-removed", cwd, {
@@ -5206,7 +5206,7 @@ describe("accepted-control zero-execution bound (#4668)", () => {
 		// Exact-head review P1: a failed agent_failed write followed by a
 		// successful agent_end used to classify the run terminal_ok. The
 		// boundary now replays the sanitized reason first.
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-end-reason-replay-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-end-reason-replay-"));
 		let failedWrites = 0;
 		try {
 			const harness = await invocationHarness("end-reason-replay", cwd, {
@@ -5253,7 +5253,7 @@ describe("accepted-control zero-execution bound (#4668)", () => {
 		// the recovery must be a bounded kind-aware retry that keeps the compound
 		// reason-then-boundary order — never a stranded accepted row and never
 		// terminal_ok.
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-skill-rejection-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-skill-rejection-"));
 		let failedWrites = 0;
 		try {
 			const harness = await invocationHarness("skill-rejection", cwd, {
@@ -5294,7 +5294,7 @@ describe("accepted-control zero-execution bound (#4668)", () => {
 	});
 
 	test("an active skill keeps retrying a failed terminal persistence boundary", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-skill-terminal-retry-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-skill-terminal-retry-"));
 		let failedWrites = 0;
 		try {
 			const harness = await invocationHarness("skill-terminal-retry", cwd, {
@@ -5334,7 +5334,7 @@ describe("accepted-control zero-execution bound (#4668)", () => {
 	});
 
 	test("retains skill terminal recovery across session replacement", async () => {
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-skill-terminal-replacement-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-skill-terminal-replacement-"));
 		let failFirstTerminalWrite = true;
 		try {
 			const harness = await invocationHarness("skill-terminal-replacement", cwd, {
@@ -5381,7 +5381,7 @@ describe("accepted-control zero-execution bound (#4668)", () => {
 		// terminal_ok and lost its failure reason. Inject persistence failures for
 		// EVERY agent_failed write so the outcome can only come from the compound
 		// manager replay, and a bare agent_end could never see an error.
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-rejection-replay-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-rejection-replay-"));
 		let failedWrites = 0;
 		try {
 			const harness = await invocationHarness("rejection-replay", cwd, {
@@ -5422,7 +5422,7 @@ describe("accepted-control zero-execution bound (#4668)", () => {
 		// successful agent_end used to terminalize the cancellation as
 		// terminal_ok (no error on the row). The reason must be durable first;
 		// a failed reason write must never fall through to agent_end.
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-removed-reason-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-removed-reason-"));
 		try {
 			let promoted: ((promotion: { startsOwnRun?: boolean; removed?: boolean }) => void) | undefined;
 			const harness = await invocationHarness("removed-reason", cwd, {
@@ -5453,7 +5453,7 @@ describe("accepted-control zero-execution bound (#4668)", () => {
 		// Exact-head review P1: agent_failed previously transitioned only the head
 		// invocation, so a failed shared run's ATTACHED submissions reached agent_end
 		// with no error and were marked terminal_ok.
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-attached-failed-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-attached-failed-"));
 		try {
 			let promoted: ((promotion: { startsOwnRun?: boolean }) => void) | undefined;
 			const harness = await invocationHarness("attached-failed", cwd, {
@@ -5493,7 +5493,7 @@ describe("accepted-control zero-execution bound (#4668)", () => {
 	test("agent_failed is diagnostic until agent_end terminalizes the run", async () => {
 		// Exact-head review (#4668 P1): agent_failed is an additive diagnostic;
 		// ownership, lifecycle state, and the deadline remain until agent_end.
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-agent-failed-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-agent-failed-"));
 		try {
 			const harness = await invocationHarness("agent-failed", cwd, {
 				sendUserMessage: async (_content, options) => {
@@ -5539,7 +5539,7 @@ describe("accepted-control zero-execution bound (#4668)", () => {
 		// after acceptance but before agent_start left its pending ownership
 		// entry behind, so a later agent_start drained the stale entry and made
 		// the old requester an owner of a turn it did not start.
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-settle-early-owner-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-settle-early-owner-"));
 		const handlers = new Map<string, (event: unknown, ctx: ExtensionContext) => Promise<void> | void>();
 		const api = {
 			on(event: string, handler: (event: unknown, ctx: ExtensionContext) => Promise<void> | void) {
@@ -5660,7 +5660,7 @@ describe("accepted-control zero-execution bound (#4668)", () => {
 		// resource_gone ("snapshot payload is unavailable"), which was
 		// indistinguishable from snapshot-store corruption. The query must remain
 		// available with a diagnostically useful payload.
-		const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-goal-diagnostic-"));
+		const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-goal-diagnostic-"));
 		try {
 			const harness = await invocationHarness("goal-diagnostic", cwd, {});
 			const frame = await harness.query("goal.list/get", {});
@@ -5687,7 +5687,7 @@ test("SDK-only host never advances a finalized uncertain row for a mismatched re
 	// from the original (e.g. pending_replay delivered late) could mark the
 	// durable row sent. Finalization now stores the EXACT final payload hash,
 	// so a mismatched delivery must leave the row pending.
-	const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-sdk-uncertain-payload-"));
+	const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-sdk-uncertain-payload-"));
 	const handlers = new Map<string, (event: unknown, ctx: ExtensionContext) => Promise<void> | void>();
 	const api = {
 		on(event: string, handler: (event: unknown, ctx: ExtensionContext) => Promise<void> | void) {
@@ -5781,7 +5781,7 @@ test("SDK-only host FIFO-expires tombstones instead of failing the finalization 
 	// stop may already have succeeded, and throwing would leave the client
 	// with an error and its durable row pending, with subsequent aborts
 	// repeating the failure.
-	const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-sdk-tombstone-cap-"));
+	const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-sdk-tombstone-cap-"));
 	const handlers = new Map<string, (event: unknown, ctx: ExtensionContext) => Promise<void> | void>();
 	const api = {
 		on(event: string, handler: (event: unknown, ctx: ExtensionContext) => Promise<void> | void) {
@@ -5853,7 +5853,7 @@ test("SDK-only host cancels only the aborting requester's preflight while anothe
 	// cancels the session's single controller, which would kill the other
 	// connection's preflight while the aborting requester's queued admission
 	// may still start on the newly reset controller.
-	const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-preflight-scope-"));
+	const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-preflight-scope-"));
 	let seamCancels = 0;
 	const handlers = new Map<string, (event: unknown, ctx: ExtensionContext) => Promise<void> | void>();
 	const api = {
@@ -5936,7 +5936,7 @@ test("SDK-only host keeps the idle-submitted prompt's owner when isIdle flips du
 	// terminal-abort its own prompt (the abort would report no_active_turn and
 	// ACP would treat the cancellation as unacknowledged). The startsOwnTurn
 	// decision must come from the PRE-DISPATCH idle snapshot.
-	const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-startsown-snapshot-"));
+	const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-startsown-snapshot-"));
 	let idle = true;
 	const handlers = new Map<string, (event: unknown, ctx: ExtensionContext) => Promise<void> | void>();
 	const api = {
@@ -6018,7 +6018,7 @@ test("SDK-only host advances a finalized stopped row when the retry replay match
 	// payload (replay envelope appended). The finalization now also stores the
 	// replay-shaped hash, so the written retry response advances the row from
 	// pending to sent instead of leaving it durably pending forever.
-	const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-sdk-stopped-replay-advance-"));
+	const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-sdk-stopped-replay-advance-"));
 	const handlers = new Map<string, (event: unknown, ctx: ExtensionContext) => Promise<void> | void>();
 	const api = {
 		on(event: string, handler: (event: unknown, ctx: ExtensionContext) => Promise<void> | void) {
@@ -6154,7 +6154,7 @@ test("SDK-only host does not assign a follow-up requester ownership until the fo
 	// later unrelated agent_start would shift the stale entry and let the
 	// follow-up connection terminal-abort a turn it did not submit. Ownership
 	// correlates only when the queued follow-up is actually promoted.
-	const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-sdk-followup-stale-"));
+	const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-sdk-followup-stale-"));
 	const idle = true;
 	let promoted: ((promotion: { startsOwnRun: boolean }) => void) | undefined;
 	const handlers = new Map<string, (event: unknown, ctx: ExtensionContext) => Promise<void> | void>();
@@ -6268,7 +6268,7 @@ test("SDK-only host lets every connection whose follow-up was promoted abort the
 	// The per-message promotion hooks (fired at actual dequeue) must make BOTH
 	// connections owners of that run, so each can terminal-abort work it
 	// submitted, while a foreign connection still cannot.
-	const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-sdk-multi-followup-"));
+	const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-sdk-multi-followup-"));
 	const promoted: Array<(promotion: { startsOwnRun: boolean }) => void> = [];
 	const handlers = new Map<string, (event: unknown, ctx: ExtensionContext) => Promise<void> | void>();
 	const api = {
@@ -6407,7 +6407,7 @@ test("SDK-only host rebinds the steering snapshot when the requester's turn wins
 	// became active, the fall-through terminalizes that turn and must REBIND
 	// the admission snapshot to it — otherwise the settlement rejects the
 	// still-old token and the requester's turn keeps running.
-	const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-snapshot-rebind-"));
+	const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-snapshot-rebind-"));
 	const handlers = new Map<string, (event: unknown, ctx: ExtensionContext) => Promise<void> | void>();
 	const api = {
 		on(event: string, handler: (event: unknown, ctx: ExtensionContext) => Promise<void> | void) {

@@ -5,12 +5,12 @@
  * tests can assert pairing-gate, marker, backup, and migrated-value behavior
  * without depending on host directory state.
  *
- * HOME / GJC_CONFIG_DIR / GJC_CODING_AGENT_DIR are read at module load, so this
+ * HOME / VIB_CONFIG_DIR / VIB_CODING_AGENT_DIR are read at module load, so this
  * must run as a child process with the environment set before spawn.
  */
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { getAgentDir, getConfigRootDir } from "@gajae-code/utils";
+import { getAgentDir, getConfigRootDir } from "@vib-rato/utils";
 import { YAML } from "bun";
 import { Settings, SettingsMigrationTestHooks } from "../../src/config/settings";
 
@@ -27,7 +27,7 @@ if (process.env.SETTINGS_MIGRATION_TEST_REPLACE_BACKUP === "1") {
 		const sourcePath = path.resolve(getConfigRootDir(), "settings.json");
 		await fs.rm(backupPath, { force: true });
 		await fs.writeFile(backupPath, "external-backup-content");
-		await fs.writeFile(sourcePath, '{"gjc.ralplan.maxIterations":9}');
+		await fs.writeFile(sourcePath, '{"vib.ralplan.maxIterations":9}');
 	};
 }
 // Test seam: when enabled, another process publishes a new file at the backup
@@ -38,7 +38,7 @@ if (process.env.SETTINGS_MIGRATION_TEST_REPLACE_BACKUP === "1") {
 // verification fails so the removal path is reached.
 if (process.env.SETTINGS_MIGRATION_TEST_REPLACE_BACKUP_AT_REMOVAL === "1") {
 	SettingsMigrationTestHooks.afterBackupIdentityCaptured = async () => {
-		await fs.writeFile(path.resolve(getConfigRootDir(), "settings.json"), '{"gjc.ralplan.maxIterations":9}');
+		await fs.writeFile(path.resolve(getConfigRootDir(), "settings.json"), '{"vib.ralplan.maxIterations":9}');
 	};
 	SettingsMigrationTestHooks.beforeQuarantineRemoval = async (backupPath: string) => {
 		await fs.writeFile(backupPath, "external-backup-content");
@@ -118,8 +118,8 @@ let targetValue: unknown = null;
 if (await exists(targetConfig)) {
 	try {
 		const root = YAML.parse(await fs.readFile(targetConfig, "utf8")) as Record<string, unknown> | null | undefined;
-		const gjc = root?.gjc as Record<string, unknown> | undefined;
-		const ralplan = gjc?.ralplan as Record<string, unknown> | undefined;
+		const vib = root?.vib as Record<string, unknown> | undefined;
+		const ralplan = vib?.ralplan as Record<string, unknown> | undefined;
 		if (ralplan && Object.hasOwn(ralplan, "maxIterations")) targetValue = ralplan.maxIterations;
 	} catch {
 		// Malformed target YAML: report null; the load itself must have survived.

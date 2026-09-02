@@ -1,5 +1,5 @@
-import { Container, getKeybindings, matchesKey, replaceTabs, Spacer, Text, truncateToWidth } from "@gajae-code/tui";
-import { sanitizeDisplayLine } from "@gajae-code/utils";
+import { Container, getKeybindings, matchesKey, replaceTabs, Spacer, Text, truncateToWidth } from "@vib-rato/tui";
+import { sanitizeDisplayLine } from "@vib-rato/utils";
 import type {
 	AutoroutingProvenance,
 	AutoroutingProviderOrderHint,

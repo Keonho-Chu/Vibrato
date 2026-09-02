@@ -1,8 +1,8 @@
-import type { AuthCredentialSelector, CredentialInventoryRecord, CredentialRemovalTarget } from "@gajae-code/ai/core";
-import { getEnvApiKey } from "@gajae-code/ai/core";
-import { getOAuthProviders } from "@gajae-code/ai/utils/oauth";
-import type { OAuthProviderInfo } from "@gajae-code/ai/utils/oauth/types";
-import { Container, fuzzyFilter, Input, matchesKey, Spacer, TruncatedText } from "@gajae-code/tui";
+import type { AuthCredentialSelector, CredentialInventoryRecord, CredentialRemovalTarget } from "@vib-rato/ai/core";
+import { getEnvApiKey } from "@vib-rato/ai/core";
+import type { OAuthProviderInfo } from "@vib-rato/ai/utils/oauth/types";
+import { Container, fuzzyFilter, Input, matchesKey, Spacer, TruncatedText } from "@vib-rato/tui";
+import { getSelectableOAuthProviders } from "../../config/provider-allowlist";
 import { recordProviderAuthHealth } from "../../config/provider-auth-health";
 import { compareRankedProviders, type ProviderAuthState } from "../../config/provider-ranking";
 import { theme } from "../../modes/theme/theme";
@@ -129,7 +129,7 @@ export class OAuthSelectorComponent extends Container {
 	}
 
 	#loadProviders(): void {
-		this.#allProviders = getOAuthProviders();
+		this.#allProviders = getSelectableOAuthProviders();
 	}
 
 	#loadAccountEntries(): void {

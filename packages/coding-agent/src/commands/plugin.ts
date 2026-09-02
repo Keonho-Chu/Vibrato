@@ -1,7 +1,7 @@
 /**
  * Manage plugins (install, uninstall, list, etc.).
  */
-import { Args, Command, Flags } from "@gajae-code/utils/cli";
+import { Args, Command, Flags } from "@vib-rato/utils/cli";
 import { type PluginAction, type PluginCommandArgs, runPluginCommand } from "../cli/plugin-cli";
 import { initTheme } from "../modes/theme/theme";
 
@@ -39,7 +39,7 @@ export default class Plugin extends Command {
 	static flags = {
 		json: Flags.boolean({ description: "Output JSON" }),
 		fix: Flags.boolean({ description: "Attempt to fix issues (doctor)" }),
-		"migrate-plugins": Flags.boolean({ description: "Run GJC plugin v1-to-v2 migration pre-flight" }),
+		"migrate-plugins": Flags.boolean({ description: "Run Vibrato plugin v1-to-v2 migration pre-flight" }),
 		force: Flags.boolean({ description: "Force install" }),
 		"dry-run": Flags.boolean({ description: "Show actions without applying changes" }),
 		local: Flags.boolean({ char: "l", description: "Operate on local plugin directory" }),
@@ -50,8 +50,8 @@ export default class Plugin extends Command {
 			description: 'Install scope: "user" (default) or "project"',
 			options: ["user", "project"],
 		}),
-		user: Flags.boolean({ description: "Install GJC plugin bundle into the user root" }),
-		project: Flags.boolean({ description: "Install GJC plugin bundle into the project root" }),
+		user: Flags.boolean({ description: "Install Vibrato plugin bundle into the user root" }),
+		project: Flags.boolean({ description: "Install Vibrato plugin bundle into the project root" }),
 	};
 
 	async run(): Promise<void> {

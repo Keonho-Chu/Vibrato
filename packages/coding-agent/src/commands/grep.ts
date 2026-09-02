@@ -1,8 +1,8 @@
 /**
  * Test grep tool.
  */
-import { GrepOutputMode } from "@gajae-code/natives";
-import { Args, Command, Flags } from "@gajae-code/utils/cli";
+import { GrepOutputMode } from "@vib-rato/natives";
+import { Args, Command, Flags } from "@vib-rato/utils/cli";
 import { type GrepCommandArgs, runGrepCommand } from "../cli/grep-cli";
 import { initTheme } from "../modes/theme/theme";
 

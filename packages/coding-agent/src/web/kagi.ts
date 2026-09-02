@@ -1,4 +1,4 @@
-import type { AuthStorage } from "@gajae-code/ai/core";
+import type { AuthStorage } from "@vib-rato/ai/core";
 import { withHardTimeout } from "./search/providers/utils";
 
 const KAGI_SEARCH_URL = "https://kagi.com/api/v0/search";
@@ -136,7 +136,7 @@ export async function searchWithKagi(
 ): Promise<KagiSearchResult> {
 	const apiKey = await findKagiApiKey(authStorage, options.sessionId, options.signal);
 	if (!apiKey) {
-		throw new KagiApiError("Kagi credentials not found. Set KAGI_API_KEY or login with 'gjc /login kagi'.");
+		throw new KagiApiError("Kagi credentials not found. Set KAGI_API_KEY or login with 'vib /login kagi'.");
 	}
 
 	const requestUrl = new URL(KAGI_SEARCH_URL);

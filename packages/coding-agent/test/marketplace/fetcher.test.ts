@@ -12,7 +12,7 @@ import {
 	classifySource,
 	fetchMarketplace,
 	parseMarketplaceCatalog,
-} from "@gajae-code/coding-agent/extensibility/plugins/marketplace";
+} from "@vib-rato/coding-agent/extensibility/plugins/marketplace";
 
 // Fixture lives at test/marketplace/fixtures/valid-marketplace/
 const FIXTURE_DIR = path.join(import.meta.dir, "fixtures", "valid-marketplace");
@@ -188,7 +188,7 @@ describe("fetchMarketplace", () => {
 	let tmpDir: string;
 
 	beforeEach(() => {
-		tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-fetcher-test-"));
+		tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-fetcher-test-"));
 		vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("ordinary fetch must not run"));
 	});
 

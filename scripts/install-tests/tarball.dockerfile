@@ -39,7 +39,7 @@ uplinks:
   npmjs:
     url: https://registry.npmjs.org/
 packages:
-  '@gajae-code/*':
+  '@vib-rato/*':
     access: $all
     publish: $all
     unpublish: $all
@@ -68,7 +68,7 @@ RUN cat > /repo/scripts/publish-local.sh <<'SCRIPT'
 set -e
 
 REGISTRY="http://localhost:4873"
-PACKAGES=(utils ai natives-darwin-arm64 natives-darwin-x64 natives-linux-arm64 natives-linux-x64 natives-win32-x64 natives tui stats agent coding-agent gajae-code)
+PACKAGES=(utils ai natives-darwin-arm64 natives-darwin-x64 natives-linux-arm64 natives-linux-x64 natives-win32-x64 natives tui stats agent coding-agent vib-rato)
 
 # Build version maps from local workspaces and the root catalog.
 jq '.workspaces.catalog // {}' /repo/package.json > /tmp/catalog-versions.json
@@ -140,7 +140,7 @@ for pkg in "${PACKAGES[@]}"; do
     
     # Show what we're publishing
     echo "Dependencies:"
-    jq '.dependencies | to_entries[] | select((.value | type) == "string" and (.value | test("^(@gajae-code|workspace|catalog)")))' package.json 2>/dev/null || true
+    jq '.dependencies | to_entries[] | select((.value | type) == "string" and (.value | test("^(@vib-rato|workspace|catalog)")))' package.json 2>/dev/null || true
     
     # Publish
     npm publish --registry "$REGISTRY"
@@ -166,9 +166,9 @@ RUN verdaccio --config /root/.config/verdaccio/config.yaml &>/dev/null & \
 WORKDIR /test
 RUN verdaccio --config /root/.config/verdaccio/config.yaml &>/dev/null & \
     sleep 3 && \
-    bun add gajae-code --registry http://localhost:4873 && \
+    bun add vib-rato --registry http://localhost:4873 && \
     pkill -f verdaccio
 
 # Verify the installed package works
 ENV PATH="/test/node_modules/.bin:$PATH"
-RUN gjc --version
+RUN vib --version

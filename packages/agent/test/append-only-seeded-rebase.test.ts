@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import type { Message } from "@gajae-code/ai";
+import type { Message } from "@vib-rato/ai";
 import { AppendOnlyContextManager, type BuildOptions } from "../src/append-only-context";
 import type { AgentContext } from "../src/types";
 

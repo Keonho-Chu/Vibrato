@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
-import { __animationSchedulerTestHooks } from "@gajae-code/tui";
-import { registerAnimationCallback } from "@gajae-code/tui/animation-scheduler";
-import { Loader } from "@gajae-code/tui/components/loader";
-import type { TUI } from "@gajae-code/tui/tui";
+import { __animationSchedulerTestHooks } from "@vib-rato/tui";
+import { registerAnimationCallback } from "@vib-rato/tui/animation-scheduler";
+import { Loader } from "@vib-rato/tui/components/loader";
+import type { TUI } from "@vib-rato/tui/tui";
 
 function makeUi() {
 	return { requestRender: vi.fn() } as unknown as TUI & { requestRender: ReturnType<typeof vi.fn> };
@@ -16,7 +16,7 @@ const TERMINAL_TRANSPORT_ENV_KEYS = [
 	"TMUX_PANE",
 	"STY",
 	"ZELLIJ",
-	"GJC_TMUX_LAUNCHED",
+	"VIB_TMUX_LAUNCHED",
 	// TERM feeds the multiplexer predicate: tmux-*/screen-* values count as
 	// multiplexed and would route animated loaders back to the 80ms bucket.
 	"TERM",

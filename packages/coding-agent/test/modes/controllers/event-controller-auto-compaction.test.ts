@@ -1,8 +1,8 @@
 import { beforeAll, describe, expect, it, type Mock, vi } from "bun:test";
-import { EventController } from "@gajae-code/coding-agent/modes/controllers/event-controller";
-import { initTheme } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { InteractiveModeContext } from "@gajae-code/coding-agent/modes/types";
-import type { AgentSessionEvent } from "@gajae-code/coding-agent/session/agent-session";
+import { EventController } from "@vib-rato/coding-agent/modes/controllers/event-controller";
+import { initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { InteractiveModeContext } from "@vib-rato/coding-agent/modes/types";
+import type { AgentSessionEvent } from "@vib-rato/coding-agent/session/agent-session";
 
 type AutoCompactionEndEvent = Extract<AgentSessionEvent, { type: "auto_compaction_end" }>;
 beforeAll(() => initTheme());

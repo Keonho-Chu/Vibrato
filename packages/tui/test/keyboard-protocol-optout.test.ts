@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
-import { keyboardEnhancementEnabled, ProcessTerminal } from "@gajae-code/tui/terminal";
+import { keyboardEnhancementEnabled, ProcessTerminal } from "@vib-rato/tui/terminal";
 
 const stdinIsTtyDescriptor = Object.getOwnPropertyDescriptor(process.stdin, "isTTY");
 const stdoutIsTtyDescriptor = Object.getOwnPropertyDescriptor(process.stdout, "isTTY");
 const stdinSetRawModeDescriptor = Object.getOwnPropertyDescriptor(process.stdin, "setRawMode");
-const originalKeyboardProtocolEnv = Bun.env.GJC_TUI_KEYBOARD_PROTOCOL;
+const originalKeyboardProtocolEnv = Bun.env.VIB_TUI_KEYBOARD_PROTOCOL;
 const originalTermProgram = Bun.env.TERM_PROGRAM;
 const platformDescriptor = Object.getOwnPropertyDescriptor(process, "platform");
 
@@ -32,7 +32,7 @@ function restoreEnv(key: string, original: string | undefined): void {
 	Bun.env[key] = original;
 }
 
-describe("ProcessTerminal keyboard-protocol opt-out (GJC_TUI_KEYBOARD_PROTOCOL)", () => {
+describe("ProcessTerminal keyboard-protocol opt-out (VIB_TUI_KEYBOARD_PROTOCOL)", () => {
 	beforeEach(() => {
 		Object.defineProperty(process.stdin, "isTTY", { value: true, configurable: true });
 		Object.defineProperty(process.stdout, "isTTY", { value: true, configurable: true });
@@ -46,7 +46,7 @@ describe("ProcessTerminal keyboard-protocol opt-out (GJC_TUI_KEYBOARD_PROTOCOL)"
 		restoreProperty(process.stdin, "isTTY", stdinIsTtyDescriptor);
 		restoreProperty(process.stdout, "isTTY", stdoutIsTtyDescriptor);
 		restoreProperty(process.stdin, "setRawMode", stdinSetRawModeDescriptor);
-		restoreEnv("GJC_TUI_KEYBOARD_PROTOCOL", originalKeyboardProtocolEnv);
+		restoreEnv("VIB_TUI_KEYBOARD_PROTOCOL", originalKeyboardProtocolEnv);
 		restoreEnv("TERM_PROGRAM", originalTermProgram);
 		restoreProperty(process, "platform", platformDescriptor);
 	});
@@ -75,7 +75,7 @@ describe("ProcessTerminal keyboard-protocol opt-out (GJC_TUI_KEYBOARD_PROTOCOL)"
 	it("enables the keyboard protocol by default on non-win32 (query + modifyOtherKeys fallback)", () => {
 		vi.useFakeTimers();
 		setPlatform("linux");
-		delete Bun.env.GJC_TUI_KEYBOARD_PROTOCOL;
+		delete Bun.env.VIB_TUI_KEYBOARD_PROTOCOL;
 		expect(keyboardEnhancementEnabled()).toBe(true);
 
 		const { terminal, writes } = setupTerminal();
@@ -91,7 +91,7 @@ describe("ProcessTerminal keyboard-protocol opt-out (GJC_TUI_KEYBOARD_PROTOCOL)"
 
 	it("skips the query and modifyOtherKeys fallback when disabled", () => {
 		vi.useFakeTimers();
-		Bun.env.GJC_TUI_KEYBOARD_PROTOCOL = "0";
+		Bun.env.VIB_TUI_KEYBOARD_PROTOCOL = "0";
 		expect(keyboardEnhancementEnabled()).toBe(false);
 
 		const { terminal, writes } = setupTerminal();
@@ -107,7 +107,7 @@ describe("ProcessTerminal keyboard-protocol opt-out (GJC_TUI_KEYBOARD_PROTOCOL)"
 	it("skips only the modifyOtherKeys fallback on win32 to preserve IME composition", () => {
 		vi.useFakeTimers();
 		setPlatform("win32");
-		delete Bun.env.GJC_TUI_KEYBOARD_PROTOCOL;
+		delete Bun.env.VIB_TUI_KEYBOARD_PROTOCOL;
 		expect(keyboardEnhancementEnabled()).toBe(true);
 
 		const { terminal, writes } = setupTerminal();
@@ -125,7 +125,7 @@ describe("ProcessTerminal keyboard-protocol opt-out (GJC_TUI_KEYBOARD_PROTOCOL)"
 	it("skips only the modifyOtherKeys fallback in Apple Terminal to preserve Hangul IME composition", () => {
 		vi.useFakeTimers();
 		setPlatform("darwin");
-		delete Bun.env.GJC_TUI_KEYBOARD_PROTOCOL;
+		delete Bun.env.VIB_TUI_KEYBOARD_PROTOCOL;
 		Bun.env.TERM_PROGRAM = "Apple_Terminal";
 		expect(keyboardEnhancementEnabled()).toBe(true);
 
@@ -142,7 +142,7 @@ describe("ProcessTerminal keyboard-protocol opt-out (GJC_TUI_KEYBOARD_PROTOCOL)"
 	});
 
 	it("still delivers keyboard input to the handler when disabled", () => {
-		Bun.env.GJC_TUI_KEYBOARD_PROTOCOL = "0";
+		Bun.env.VIB_TUI_KEYBOARD_PROTOCOL = "0";
 
 		const { terminal, received } = setupTerminal();
 

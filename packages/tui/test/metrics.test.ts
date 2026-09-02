@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { REPAINT_STORM_THRESHOLD, RenderMetrics } from "@gajae-code/tui/metrics";
+import { REPAINT_STORM_THRESHOLD, RenderMetrics } from "@vib-rato/tui/metrics";
 
 describe("RenderMetrics", () => {
 	it("is a no-op when disabled (negligible default overhead)", () => {

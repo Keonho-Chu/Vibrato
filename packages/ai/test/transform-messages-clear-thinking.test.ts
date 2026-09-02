@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import { transformMessages } from "@gajae-code/ai/providers/transform-messages";
-import type { AssistantMessage, Message, Model, ToolResultMessage, UserMessage } from "@gajae-code/ai/types";
+import { transformMessages } from "@vib-rato/ai/providers/transform-messages";
+import type { AssistantMessage, Message, Model, ToolResultMessage, UserMessage } from "@vib-rato/ai/types";
 
 // ---------------------------------------------------------------------------
 // Issue #4247: replayed thinking blocks emptied by clear_thinking_20251015

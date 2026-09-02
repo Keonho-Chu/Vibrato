@@ -1,6 +1,6 @@
 # Natives Binding Contract (JavaScript/TypeScript Side)
 
-This document defines the JS/TS contract between `@gajae-code/natives` callers and the loaded N-API addon.
+This document defines the JS/TS contract between `@vib-rato/natives` callers and the loaded N-API addon.
 
 > When a port is proposed to **optimize** a leftover algorithmic hot path (rather than add a new OS/process/native primitive), it must additionally clear the evidence and cost gates in [`native-ffi-optimization-policy.md`](./native-ffi-optimization-policy.md).
 
@@ -52,7 +52,7 @@ There is no current `NativeBindings` declaration-merging lifecycle and no `valid
 }
 ```
 
-Consumers in `packages/coding-agent` and `packages/tui` import directly from `@gajae-code/natives`.
+Consumers in `packages/coding-agent` and `packages/tui` import directly from `@vib-rato/natives`.
 
 ## JS API ↔ native export mapping (representative)
 

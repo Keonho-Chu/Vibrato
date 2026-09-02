@@ -3,7 +3,7 @@
  */
 
 import * as os from "node:os";
-import { APP_NAME, formatBytes, getProjectDir, VERSION } from "@gajae-code/utils";
+import { APP_NAME, formatBytes, getProjectDir, VERSION } from "@vib-rato/utils";
 
 export interface SystemInfo {
 	os: string;

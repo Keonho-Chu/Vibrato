@@ -24,7 +24,7 @@
 import type { Dirent } from "node:fs";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { parseFrontmatter, tryParseJson } from "@gajae-code/utils";
+import { parseFrontmatter, tryParseJson } from "@vib-rato/utils";
 import { YAML } from "bun";
 import type { MCPServer } from "../capability/mcp";
 import { normalizeClaudeMcpJson, normalizeCodexMcpToml, validateMCPCompatServer } from "../discovery/mcp-compat";
@@ -33,7 +33,7 @@ import { HookSourceConvention } from "../hooks/events";
 import { normalizeDirectoryHook } from "../hooks/normalize";
 import { readMCPConfigFile, writeMCPConfigFile } from "../runtime-mcp/config-writer";
 import type { MCPServerConfig } from "../runtime-mcp/types";
-import { CANONICAL_GJC_WORKFLOW_SKILLS } from "../skill-state/canonical-skills";
+import { CANONICAL_VIB_WORKFLOW_SKILLS } from "../skill-state/canonical-skills";
 import { IMPORTED_FROM_FRONTMATTER_KEY } from "./inventory";
 import type {
 	ImportCollisionPolicy,
@@ -57,7 +57,7 @@ export interface BuildImportPreviewOptions {
 	homeDir: string;
 }
 
-const PROTECTED_SKILL_NAMES = new Set<string>(CANONICAL_GJC_WORKFLOW_SKILLS);
+const PROTECTED_SKILL_NAMES = new Set<string>(CANONICAL_VIB_WORKFLOW_SKILLS);
 
 // ---------------------------------------------------------------------------
 // Structured filesystem reads — absent/value/error, never silent
@@ -127,7 +127,7 @@ function withImportProvenance(content: string, product: ImportProduct): string {
 	const { frontmatter, body } = parseFrontmatter(content, { level: "off" });
 	// parseFrontmatter camelCases keys; drop a prior camelized marker so the
 	// canonical kebab-case key is written exactly once.
-	const { xGjcImportedFrom: _priorMarker, ...rest } = frontmatter;
+	const { xVibImportedFrom: _priorMarker, ...rest } = frontmatter;
 	const fm: Record<string, unknown> = { ...rest, [IMPORTED_FROM_FRONTMATTER_KEY]: product };
 	const yaml = YAML.stringify(fm).trimEnd();
 	return `---\n${yaml}\n---\n\n${body.trim()}\n`;
@@ -377,7 +377,8 @@ export async function buildImportPreview(options: BuildImportPreviewOptions): Pr
 					status: "unsupported",
 					sourceCategory: "skill directory",
 					description: `import skill "${slug}"`,
-					reason: "protected bundled GJC workflow skill name; foreign copies cannot override bundled authority",
+					reason:
+						"protected bundled Vibrato workflow skill name; foreign copies cannot override bundled authority",
 				});
 				continue;
 			}
@@ -561,7 +562,7 @@ export async function buildImportPreview(options: BuildImportPreviewOptions): Pr
 						sourceCategory: "MCP server entry",
 						description: `MCP server "${name}" (credentials redacted)`,
 						reason:
-							"nested auth/oauth configuration is not supported by the canonical GJC MCP contract; import was skipped to avoid dropping credentials",
+							"nested auth/oauth configuration is not supported by the canonical Vibrato MCP contract; import was skipped to avoid dropping credentials",
 					});
 					continue;
 				}
@@ -680,7 +681,7 @@ async function sweepStagingTemps(dir: string): Promise<void> {
 		return;
 	}
 	for (const name of names) {
-		if (!name.includes(".gjc-import-") || !name.endsWith(".tmp")) continue;
+		if (!name.includes(".vib-import-") || !name.endsWith(".tmp")) continue;
 		await fs.rm(path.join(dir, name), { force: true }).catch(() => {});
 	}
 }
@@ -861,7 +862,7 @@ export async function applyImport(plan: ImportPlan, options: { cwd: string }): P
 			if (prior.kind === "error") throw new Error(prior.message);
 			const staged = path.join(
 				path.dirname(write.path),
-				`.gjc-import-${process.pid}-${index}-${path.basename(write.path)}.tmp`,
+				`.vib-import-${process.pid}-${index}-${path.basename(write.path)}.tmp`,
 			);
 			await fs.writeFile(staged, write.content, { encoding: "utf-8", mode: 0o600 });
 			await fs.rename(staged, write.path);
@@ -911,7 +912,7 @@ export async function applyImport(plan: ImportPlan, options: { cwd: string }): P
 				if (snapshot.previous === null) {
 					await fs.rm(snapshot.path, { force: true });
 				} else {
-					const staged = `${snapshot.path}.gjc-rollback-${process.pid}.tmp`;
+					const staged = `${snapshot.path}.vib-rollback-${process.pid}.tmp`;
 					await fs.writeFile(staged, snapshot.previous, { encoding: "utf-8", mode: 0o600 });
 					await fs.rename(staged, snapshot.path);
 				}

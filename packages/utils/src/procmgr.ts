@@ -3,7 +3,7 @@ import { nativeProcessBindings } from "./native-process";
 
 // Shell configuration lives in the natives-free ./shell-config module so
 // consumers that only need shell resolution (e.g. Settings.getShellConfig)
-// can import it without materializing @gajae-code/natives (W5b S1/idle
+// can import it without materializing @vib-rato/natives (W5b S1/idle
 // module-trace gate). Re-exported here for compatibility with existing
 // procmgr consumers, which already depend on natives for process control.
 export {

@@ -1,9 +1,9 @@
 /**
- * GJC-side ownership provenance and crash-recovery intent.
+ * Vibrato-side ownership provenance and crash-recovery intent.
  *
- * Both records live under the GJC agent directory, never inside the user's
+ * Both records live under the Vibrato agent directory, never inside the user's
  * Paseo files. Two separate concerns share this module because both answer the
- * same question -- "did GJC actually do this?" -- and both are consumed by the
+ * same question -- "did Vibrato actually do this?" -- and both are consumed by the
  * install saga and by `--remove`.
  *
  * Provenance exists because "the current value equals what we would write" is
@@ -24,15 +24,15 @@ export const INTENT_VERSION = 1;
 
 export interface ProvenanceLedger {
 	readonly version: number;
-	/** `agents.providers` keys GJC created, mapped to the value hash it wrote. */
+	/** `agents.providers` keys Vibrato created, mapped to the value hash it wrote. */
 	readonly providerKeys: Record<string, string>;
-	/** Orchestration role keys GJC actually seeded, mapped to the value it wrote. */
+	/** Orchestration role keys Vibrato actually seeded, mapped to the value it wrote. */
 	readonly seededOrchestrationKeys: Record<string, string>;
-	/** Bridge directory path GJC created, when it created it. */
+	/** Bridge directory path Vibrato created, when it created it. */
 	readonly bridgePath?: string;
-	/** Bridge entries GJC created, so the inverse removes exactly those. */
+	/** Bridge entries Vibrato created, so the inverse removes exactly those. */
 	readonly bridgeEntries?: readonly string[];
-	/** True when GJC created the bridge directory itself (as opposed to populating an existing one). */
+	/** True when Vibrato created the bridge directory itself (as opposed to populating an existing one). */
 	readonly bridgeDirCreated?: boolean;
 }
 
@@ -63,7 +63,7 @@ export async function readProvenance(provenancePath: string): Promise<Provenance
 			...(typeof parsed.bridgeDirCreated === "boolean" ? { bridgeDirCreated: parsed.bridgeDirCreated } : {}),
 		};
 	} catch {
-		// A corrupt GJC-side ledger must not brick removal: treat it as empty so
+		// A corrupt Vibrato-side ledger must not brick removal: treat it as empty so
 		// nothing is deleted on unproven ownership, which is the safe direction.
 		return EMPTY_LEDGER;
 	}
@@ -80,8 +80,8 @@ export async function writeProvenance(provenancePath: string, ledger: Provenance
 }
 
 /**
- * True only when GJC recorded this provider key AND the value still hashes to
- * what GJC wrote. A user edit after install makes this false, which is what
+ * True only when Vibrato recorded this provider key AND the value still hashes to
+ * what Vibrato wrote. A user edit after install makes this false, which is what
  * keeps `--remove` from destroying their change.
  */
 export function isProvenancedProvider(ledger: ProvenanceLedger, key: string, currentValueHash: string): boolean {
@@ -94,7 +94,7 @@ export function isProvenancedOrchestrationKey(ledger: ProvenanceLedger, key: str
 	return recorded !== undefined && recorded === currentValue;
 }
 
-/** Every `gjc`/`gjc-<preset>` key GJC recorded, so a plain `--remove` cleans up earlier `--mpreset` runs. */
+/** Every `vib`/`vib-<preset>` key Vibrato recorded, so a plain `--remove` cleans up earlier `--mpreset` runs. */
 export function provenancedProviderKeys(ledger: ProvenanceLedger): readonly string[] {
 	return Object.keys(ledger.providerKeys).sort();
 }
@@ -202,13 +202,13 @@ export async function classifyIntent(intent: IntentRecord): Promise<IntentRecove
 	if (ledger === "divergent") {
 		return {
 			action: "refuse",
-			detail: `the provenance ledger at ${intent.provenancePath} changed unexpectedly; GJC will not overwrite it`,
+			detail: `the provenance ledger at ${intent.provenancePath} changed unexpectedly; Vibrato will not overwrite it`,
 		};
 	}
 	if (target === "divergent") {
 		return {
 			action: "refuse",
-			detail: `${intent.targetPath} was changed by another writer during an interrupted GJC step; GJC will not touch it`,
+			detail: `${intent.targetPath} was changed by another writer during an interrupted Vibrato step; Vibrato will not touch it`,
 		};
 	}
 	if (target === "intended-after" && ledger === "before") {

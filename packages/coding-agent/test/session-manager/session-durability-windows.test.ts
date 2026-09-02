@@ -3,8 +3,8 @@ import * as syncFs from "node:fs";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { NativeDirectoryTreeSnapshot } from "@gajae-code/natives";
-import * as native from "@gajae-code/natives";
+import type { NativeDirectoryTreeSnapshot } from "@vib-rato/natives";
+import * as native from "@vib-rato/natives";
 import {
 	canonicalBindingOpenFlags,
 	cleanupAuthorityMatches,
@@ -45,7 +45,7 @@ function transcript(id: string, cwd: string): string {
 }
 
 async function fixture() {
-	const root = temporaryDirectory("gjc-session-durability-");
+	const root = temporaryDirectory("vib-session-durability-");
 	temporaryDirectories.push(root);
 	const cwd = path.join(root, "workspace");
 	const agentDir = path.join(root, "agent");
@@ -91,7 +91,7 @@ async function interruptedArtifactMigration(
 		kind: "error",
 		code: "durability_failed",
 	});
-	const receipts = path.join(scope.directoryPath, ".gjc-managed-session-internal", "receipts");
+	const receipts = path.join(scope.directoryPath, ".vib-managed-session-internal", "receipts");
 	const name = (await fs.readdir(receipts)).find(entry => entry.endsWith(".detached.json"));
 	if (!name) throw new Error("Missing detached receipt");
 	return {
@@ -127,7 +127,7 @@ describe("managed session Windows durability", () => {
 	});
 
 	it("fsyncs a Windows canonical binding through a writable handle without changing its bytes", async () => {
-		const root = temporaryDirectory("gjc-binding-fsync-");
+		const root = temporaryDirectory("vib-binding-fsync-");
 		temporaryDirectories.push(root);
 		const binding = path.join(root, "binding.json");
 		const expected = '{"version":2}\n';
@@ -158,7 +158,7 @@ describe("managed session Windows durability", () => {
 	});
 
 	it("uses native Windows root metadata, tolerates pi-iso directory metadata drift, and rejects same-size content drift", async () => {
-		const root = temporaryDirectory("gjc-native-root-authority-");
+		const root = temporaryDirectory("vib-native-root-authority-");
 		temporaryDirectories.push(root);
 		const artifacts = path.join(root, "artifacts");
 		const nested = path.join(artifacts, "nested");
@@ -209,7 +209,7 @@ describe("managed session Windows durability", () => {
 	});
 
 	it("uses native root metadata for cleanup authority on Windows without changing non-Windows checks", async () => {
-		const root = temporaryDirectory("gjc-cleanup-authority-root-");
+		const root = temporaryDirectory("vib-cleanup-authority-root-");
 		temporaryDirectories.push(root);
 		const retainedPath = path.join(root, "retained");
 		await fs.mkdir(retainedPath);
@@ -277,7 +277,7 @@ describe("managed session Windows durability", () => {
 	});
 
 	it("forces the win32 producer branch so cleanup identity comes from the native root", async () => {
-		const root = temporaryDirectory("gjc-cleanup-producer-");
+		const root = temporaryDirectory("vib-cleanup-producer-");
 		temporaryDirectories.push(root);
 		const originalPath = path.join(root, "artifacts");
 		await fs.mkdir(originalPath);
@@ -301,7 +301,7 @@ describe("managed session Windows durability", () => {
 		// Scope the divergence to the retained placeholder only; the detached
 		// original is validated by a separate upstream check that must see real
 		// values.
-		const placeholderPrefix = ".gjc-exact-unlink-placeholder-";
+		const placeholderPrefix = ".vib-exact-unlink-placeholder-";
 		vi.spyOn(native, "snapshotDirectoryTree").mockImplementation(pathname => {
 			const actual = originalSnapshot(pathname);
 			if (!path.basename(String(pathname)).startsWith(placeholderPrefix)) return actual;
@@ -320,7 +320,7 @@ describe("managed session Windows durability", () => {
 		const detached = detachArtifactRootForMigration(
 			{
 				originalPath,
-				detachedPath: path.join(root, ".gjc-migrate-fork-artifacts"),
+				detachedPath: path.join(root, ".vib-migrate-fork-artifacts"),
 				identity: {
 					dev: stat.dev,
 					ino: stat.ino,
@@ -345,7 +345,7 @@ describe("managed session Windows durability", () => {
 	});
 
 	it("tolerates a POSIX root ctime change caused by detaching artifacts", async () => {
-		const root = temporaryDirectory("gjc-posix-root-ctime-");
+		const root = temporaryDirectory("vib-posix-root-ctime-");
 		temporaryDirectories.push(root);
 		const artifacts = path.join(root, "artifacts");
 		await fs.mkdir(artifacts);
@@ -378,7 +378,7 @@ describe("managed session Windows durability", () => {
 		).toBe(true);
 	});
 	it("rejects POSIX nested-directory ctime drift", async () => {
-		const root = temporaryDirectory("gjc-posix-directory-ctime-");
+		const root = temporaryDirectory("vib-posix-directory-ctime-");
 		temporaryDirectories.push(root);
 		const artifacts = path.join(root, "artifacts");
 		await fs.mkdir(path.join(artifacts, "nested"), { recursive: true });

@@ -1,8 +1,9 @@
-import { sanitizeText } from "@gajae-code/utils";
+import { sanitizeText } from "@vib-rato/utils";
 import { type ModelSelectorValue, normalizeModelSelectorValue } from "./model-selector-value";
-import type { GJC_MODEL_ASSIGNMENT_TARGET_IDS, ModelsConfig } from "./models-config-schema";
+import type { ModelsConfig, VIB_MODEL_ASSIGNMENT_TARGET_IDS } from "./models-config-schema";
+import { hiddenBuiltInProviderIds } from "./provider-allowlist";
 
-export type ModelProfileRole = (typeof GJC_MODEL_ASSIGNMENT_TARGET_IDS)[number];
+export type ModelProfileRole = (typeof VIB_MODEL_ASSIGNMENT_TARGET_IDS)[number];
 
 export interface ModelProfileDefinition {
 	name: string;
@@ -693,12 +694,27 @@ export function formatModelProfileDisplayLabel(profile: Pick<ModelProfileDefinit
 	);
 }
 
+/**
+ * A profile is selectable when every provider it pins is either in the product
+ * allowlist or a user-authored custom provider. Provider-agnostic open-weights
+ * profiles pin nothing and therefore stay visible (they resolve through vLLM).
+ */
+export function isModelProfileSelectable(
+	profile: Pick<ModelProfileDefinition, "requiredProviders" | "modelMapping">,
+): boolean {
+	const hidden = hiddenBuiltInProviderIds();
+	return [...profile.requiredProviders, ...deriveModelProfileMappedProviders(profile)].every(
+		provider => !hidden.has(provider),
+	);
+}
+
 export function groupModelProfilesForPresetLanding(
 	profiles: ReadonlyMap<string, ModelProfileDefinition>,
 ): Map<string, ModelProfileDefinition[]> {
 	const groups = new Map<string, ModelProfileDefinition[]>();
 	for (const group of PROFILE_GROUP_ORDER) groups.set(group, []);
 	for (const profile of profiles.values()) {
+		if (!isModelProfileSelectable(profile)) continue;
 		const group = getModelProfilePresentation(profile).providerGroup;
 		if (!groups.has(group)) groups.set(group, []);
 		groups.get(group)?.push(profile);
@@ -732,7 +748,8 @@ export function recommendModelProfileForProvider(
 	profiles: ReadonlyMap<string, ModelProfileDefinition>,
 ): ModelProfileDefinition | undefined {
 	const recommended = PROFILE_RECOMMENDATIONS[providerId];
-	return recommended ? profiles.get(recommended) : undefined;
+	const profile = recommended ? profiles.get(recommended) : undefined;
+	return profile && isModelProfileSelectable(profile) ? profile : undefined;
 }
 
 export type RegistryModelProfilesInput =

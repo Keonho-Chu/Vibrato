@@ -1,17 +1,17 @@
 # Telegram notification onboarding
 
-This guide documents the bundled Telegram notification setup path from Gajae-Code
-source. In an interactive GJC session, use `/settings` → **Notifications** as the
-recommended path; `gjc notify` remains the authoritative headless and automation
+This guide documents the bundled Telegram notification setup path from Vibrato
+source. In an interactive Vibrato session, use `/settings` → **Notifications** as the
+recommended path; `vib notify` remains the authoritative headless and automation
 fallback. It is for the managed reference client, not a separate remote-control
 product.
 
 ## What you are setting up
 
-Gajae-Code notifications use the SDK session runtime, the global Broker index,
+Vibrato notifications use the SDK session runtime, the global Broker index,
 and a managed Telegram provider supervisor:
 
-- each eligible GJC session registers its exact endpoint generation with the
+- each eligible Vibrato session registers its exact endpoint generation with the
   Broker;
 - SDK-core `SessionRouter` resolves endpoint authority, keeps URL/token
   credentials private, and presents only opaque current-generation attachments
@@ -22,7 +22,7 @@ and a managed Telegram provider supervisor:
   exact session/action. Only coordinator/lifecycle sessions are represented by
   Telegram topics; ordinary sessions use flat delivery.
 
-The setup command stores global notification settings in your GJC agent config
+The setup command stores global notification settings in your Vibrato agent config
 and later sessions auto-connect when notifications are enabled.
 
 ## 1. Create a Telegram bot with BotFather
@@ -40,7 +40,7 @@ that other people can read.
 
 ## 2. Configure from `/settings` (recommended)
 
-In an eligible running GJC session, open `/settings` and select the
+In an eligible running Vibrato session, open `/settings` and select the
 **Notifications** tab. It provides the interactive Telegram setup/reconfigure
 flow and the operational controls in one place:
 
@@ -57,11 +57,11 @@ The tab also guides the BotFather Threaded Mode check and private-chat pairing.
 
 ### CLI setup fallback
 
-`gjc notify setup` retains the same setup workflow for terminal-driven setup and
+`vib notify setup` retains the same setup workflow for terminal-driven setup and
 automation:
 
 ```sh
-gjc notify setup
+vib notify setup
 ```
 
 Current implementation path: `packages/coding-agent/src/cli/notify-cli.ts`.
@@ -86,7 +86,7 @@ session names, action ids, or pending status by accident.
 Telegram private-chat topics: the managed daemon's coordinator/lifecycle delivery uses
 Telegram forum topics (`createForumTopic` + `message_thread_id`). Telegram now
 supports forum topics in **private chats** when the bot owner enables **Threaded
-Mode** for the bot in @BotFather. GJC cannot enable Threaded Mode through the Bot
+Mode** for the bot in @BotFather. Vibrato cannot enable Threaded Mode through the Bot
 API; setup only detects the capability (`getMe.has_topics_enabled`) and guides the
 manual BotFather toggle. A forum-enabled supergroup is no longer required.
 
@@ -95,10 +95,10 @@ purchase fee, per Telegram's Terms of Service for Bot Developers.
 
 If BotFather's **Bot Settings** menu does not show **Threads Settings** or
 **Threaded Mode**, do not treat that as a setup blocker. Telegram exposes this
-capability unevenly across clients/accounts/bot states, and GJC cannot force the
+capability unevenly across clients/accounts/bot states, and Vibrato cannot force the
 menu to appear through the Bot API. The safe fallback is to continue setup with a
 private DM pairing: choose `skip` in the interactive prompt (or use
-`--token <botToken> --chat-id <chatId>` for non-interactive setup). GJC will save
+`--token <botToken> --chat-id <chatId>` for non-interactive setup). Vibrato will save
 `threaded=unverified`/`threaded=unknown`, try topics at runtime when possible,
 and otherwise deliver flat to the paired private chat with outbound notifications
 and inline ask buttons only plus the one-time nudge shown below.
@@ -130,13 +130,13 @@ After setup succeeds, it prints a masked token and the paired chat id:
 Notifications enabled. botToken=1234…(len N) chatId=123456789 threaded=verified
 ```
 
-The raw token is never printed by GJC status/setup output after it is stored.
+The raw token is never printed by Vibrato status/setup output after it is stored.
 
 ## 3. Non-interactive setup and CLI operations
 
 For headless provisioning, scripts, and automation, the authoritative commands
-remain `gjc notify setup`, `gjc notify status`, `gjc notify health`, `gjc notify
-test`, and `gjc notify recovery`. The `/settings` tab does not replace these CLI
+remain `vib notify setup`, `vib notify status`, `vib notify health`, `vib notify
+test`, and `vib notify recovery`. The `/settings` tab does not replace these CLI
 subcommands.
 
 For scripts or CI-style local provisioning, pass the bot token and known private
@@ -145,13 +145,13 @@ so if Threaded Mode is off (or the capability is unknown) setup is still saved
 with a warning and a `threaded=unverified`/`threaded=unknown` status:
 
 ```sh
-gjc notify setup --token <botToken> --chat-id <chatId>
+vib notify setup --token <botToken> --chat-id <chatId>
 ```
 
 Optional redaction can be enabled during setup:
 
 ```sh
-gjc notify setup --token <botToken> --chat-id <chatId> --redact
+vib notify setup --token <botToken> --chat-id <chatId> --redact
 ```
 
 `--redact` sets `notifications.redact = true`. Under redaction, idle summaries
@@ -161,7 +161,7 @@ options remain readable because they must be answerable remotely.
 ## 4. Check status without leaking secrets
 
 ```sh
-gjc notify status
+vib notify status
 ```
 
 The status command reports the global master plus each provider's independent
@@ -170,18 +170,18 @@ source, and effective enablement. Stored tokens are masked with the shared
 `first 4 chars + … + length` helper. Destination identifiers such as Telegram
 chat IDs remain visible and may be sensitive, so redact them before pasting a
 status report into a public support thread. Runtime readiness and actual
-delivery outcomes remain separate; use `gjc notify health --provider telegram`
-and `gjc notify test --provider telegram` for those checks.
+delivery outcomes remain separate; use `vib notify health --provider telegram`
+and `vib notify test --provider telegram` for those checks.
 
 ## 5. Global configuration, adapters, and precedence
 
-Telegram credentials and all `notifications.*` values are **global-only**. GJC
+Telegram credentials and all `notifications.*` values are **global-only**. Vibrato
 reads them from the user/global agent config with schema defaults; notification
 keys from project config files are ignored, and runtime notification overrides
 are rejected. A project cannot supply, shadow, or disable an outbound
 notification identity.
 
-`gjc notify setup` writes these global Telegram settings through the GJC Settings
+`vib notify setup` writes these global Telegram settings through the Vibrato Settings
 layer:
 
 - `notifications.enabled = true`
@@ -189,19 +189,19 @@ layer:
 - `notifications.telegram.botToken = <token>`
 - `notifications.telegram.chatId = <paired chat id>`
 - `notifications.redact = true` only when `--redact` was passed
-- `notifications.telegram.streaming.enabled = true` by default; set it to `false` to disable durable live Telegram assistant-output updates globally. `GJC_NOTIFICATIONS_STREAM=1` forces process-local streaming, while `0`, `off`, or `false` forces it off.
+- `notifications.telegram.streaming.enabled = true` by default; set it to `false` to disable durable live Telegram assistant-output updates globally. `VIB_NOTIFICATIONS_STREAM=1` forces process-local streaming, while `0`, `off`, or `false` forces it off.
 
 Provider completeness, malformed-state quarantine, desired intent, effective enablement, runtime readiness, and delivery outcome are separate status dimensions. Telegram is complete when its bot token and private-chat id are valid; it is effective only when it is complete, not quarantined, desired on, and the global master is on. Provider-local malformed values are quarantined without erasing safe sibling values or secrets. Removing Telegram is adapter-local: it removes only Telegram credentials and sets Telegram desired intent off without changing `notifications.enabled` or any Discord/Slack state.
 
 
 Three gates keep SDK hosting, provider setup, and managed delivery separate:
 
-1. An eligible host receives the dormant notification control surface. `GJC_NOTIFY=off`,
+1. An eligible host receives the dormant notification control surface. `VIB_NOTIFY=off`,
    `0`, or `false` is a hard process opt-out; unsupported hosts and
    helper/subagent sessions are also ineligible.
 2. Every eligible top-level session hosts its local SDK endpoint and registers
    exact authority with the Broker by default, independently of notification
-   configuration. `GJC_SDK_DISABLE=1` opts out for that session. `SessionRouter`
+   configuration. `VIB_SDK_DISABLE=1` opts out for that session. `SessionRouter`
    alone reads the endpoint credential and manages replay/reconnect.
 3. A managed Telegram supervisor is ensured only for a complete global Telegram
    configuration with managed delivery enabled. It reconstructs opaque
@@ -211,47 +211,47 @@ Three gates keep SDK hosting, provider setup, and managed delivery separate:
 Environment/session precedence for managed delivery is implemented in
 `packages/coding-agent/src/sdk/bus/config.ts`:
 
-For a GJC-spawned child, `notifications.sessionScope=primary` suppresses managed
+For a Vibrato-spawned child, `notifications.sessionScope=primary` suppresses managed
 notification delivery to avoid duplicate topics; `all` permits it.
-`GJC_NOTIFICATIONS=1` or `GJC_NOTIFICATIONS_TOKEN` explicitly opts that child in,
+`VIB_NOTIFICATIONS=1` or `VIB_NOTIFICATIONS_TOKEN` explicitly opts that child in,
 but never overrides a hard opt-out or a helper/subagent exclusion.
 
 Managed-delivery precedence is highest first; it does not change independently
 hosted SDK endpoints:
 
-1. `GJC_NOTIFY=off`, `0`, or `false` prevents the notification control surface
+1. `VIB_NOTIFY=off`, `0`, or `false` prevents the notification control surface
    for that process.
-2. `GJC_NOTIFICATIONS=0` suppresses automatic generic current-session admission; explicit `/notify on` may override that suppression only for the current session.
+2. `VIB_NOTIFICATIONS=0` suppresses automatic generic current-session admission; explicit `/notify on` may override that suppression only for the current session.
 3. Local `/notify off` disables managed delivery only for the current session.
-4. `GJC_NOTIFICATIONS=1` or `GJC_NOTIFICATIONS_TOKEN` enables the legacy
+4. `VIB_NOTIFICATIONS=1` or `VIB_NOTIFICATIONS_TOKEN` enables the legacy
    explicit managed-delivery path.
 5. A complete global configuration enables managed delivery automatically.
 6. Otherwise managed delivery stays off; the SDK endpoint remains hosted unless
-   `GJC_SDK_DISABLE=1` is set.
+   `VIB_SDK_DISABLE=1` is set.
 
 ## 6. Start or reuse sessions
 
-After setup, start GJC normally:
+After setup, start Vibrato normally:
 
 ```sh
-gjc --tmux
+vib --tmux
 ```
 
-or use any other supported GJC launch mode. Every eligible top-level session
-writes its SDK endpoint unless `GJC_SDK_DISABLE=1`; when managed Telegram
+or use any other supported Vibrato launch mode. Every eligible top-level session
+writes its SDK endpoint unless `VIB_SDK_DISABLE=1`; when managed Telegram
 delivery is configured and enabled, it also ensures the Telegram daemon is running.
 
 The managed daemon is a singleton per bot token/chat pair. Telegram allows only
-one active `getUpdates` long-poll owner for a bot token, so GJC keeps a local
+one active `getUpdates` long-poll owner for a bot token, so Vibrato keeps a local
 daemon lock/state file and makes later sessions attach to the fresh owner instead
 of starting a second poller. This avoids Telegram `409 Conflict` failures.
 
 ### Same-token and foreign-owner safety
 
 Setup and reconfigure never compete with a live same-token daemon. When a live
-owner already has the stored paired chat, GJC reuses it after non-polling
+owner already has the stored paired chat, Vibrato reuses it after non-polling
 validation. If that owner has no stored chat or the chat changes, provide a
-validated private chat id; GJC performs zero `getUpdates` discovery polls. For a
+validated private chat id; Vibrato performs zero `getUpdates` discovery polls. For a
 foreign or unknown owner, setup does not poll, kill, reload, or take over the
 owner; the default is to cancel before writing configuration.
 
@@ -304,7 +304,7 @@ pair a group, supergroup, or channel as a substitute: setup intentionally accept
 only a private DM, and hand-edited non-private chat ids remain fail-closed to
 avoid leaking session data. If you specifically want group topics, create a
 forum-enabled Telegram group and use a separate/custom notification integration;
-the bundled `gjc notify setup` onboarding path is private-chat only.
+the bundled `vib notify setup` onboarding path is private-chat only.
 
 The managed daemon can render:
 
@@ -320,7 +320,7 @@ Per-tool activity is off by default so important notifications remain visible. T
 includes `bash`, `read`, `task`, and subagent start/completion bubbles, including
 both `ok` and `error` results. Send `/toolactivity on` in the paired private chat
 to opt in globally, or `/toolactivity off` to suppress these bubbles again. The
-toggle is durable, works without an active GJC session, and has an equivalent
+toggle is durable, works without an active Vibrato session, and has an equivalent
 control under `/settings` → **Notifications** → **Preferences**. Turning it off
 does not affect assistant output, ask prompts, or session notifications.
 
@@ -344,21 +344,21 @@ Reply paths:
     Each logical session permits at most two concurrent side questions. The host
     deadline is 120 seconds and cancels the actual provider work. Operational
     responses are: `Usage: /btw <question>` for an empty question; `Telegram
-    /btw is disabled in local settings.` when disabled; `Restart this GJC session
+    /btw is disabled in local settings.` when disabled; `Restart this Vibrato session
     to enable /btw.` when the connected session does not support side turns; `Two
     /btw questions are already running. Wait for one to finish.` when busy; `This
     /btw question timed out after 120 seconds. Send it again to retry.` on
-    timeout; `This /btw question stopped because the GJC session closed or
+    timeout; `This /btw question stopped because the Vibrato session closed or
     changed. Reopen it and try again.` when stopped; and `This /btw question
     failed. Send it again to retry.` on failure.
 
     A transient reconnect to the exact session may deliver a result once.
-    Graceful GJC or daemon shutdown cancels side questions. Crashes or identity
+    Graceful Vibrato or daemon shutdown cancels side questions. Crashes or identity
     changes do not promise delivery, and stale results are fenced.
     `/btw` rich replies use Telegram Bot API 10.1 Markdown only. An eligible,
     complete structured Markdown reply is sent once as
     `{rich_message:{markdown,skip_entity_detection:true}}`, correlated to the
-    source message in the same topic; GJC does not send native `blocks` or
+    source message in the same topic; Vibrato does not send native `blocks` or
     `media`. Eligibility is conservative: valid Unicode; at most 32,768 scalars,
     131,072 UTF-8 bytes, 500 blocks, 16 nesting levels, and 20 table columns.
     Tables and math use Telegram's 10.1 Markdown support. Ineligible content and
@@ -383,21 +383,21 @@ switch. Disabling it consumes `/btw` without forwarding it to the session. To
 roll back, restart the Telegram daemon, and probe health:
 
 ```sh
-gjc config set notifications.telegram.btw.enabled false
-gjc daemon restart telegram --json
-gjc notify health --probe
+vib config set notifications.telegram.btw.enabled false
+vib daemon restart telegram --json
+vib notify health --probe
 ```
 
 ## 8. Local `/notify` inside a session
 
-Inside a running GJC session, `/notify` controls the current session only; it
+Inside a running Vibrato session, `/notify` controls the current session only; it
 does not edit global config or credentials:
 
 - `/notify status` reports current session notification status without secrets;
 - `/notify off` disables the current session endpoint and removes its discovery record without changing global setup;
 - `/notify on` explicitly re-enables the current generic session when a complete effective provider or another explicit environment path is available.
 
-`GJC_NOTIFICATIONS=0` suppresses automatic generic current-session admission only. An explicit `/notify on` may override that one automatic-admission suppression for the current session; it does not alter durable provider intent or enable a direct provider API. `GJC_NOTIFY=off`, `0`, or `false` remains the hard process-level opt-out and exposes no notification control surface to override.
+`VIB_NOTIFICATIONS=0` suppresses automatic generic current-session admission only. An explicit `/notify on` may override that one automatic-admission suppression for the current session; it does not alter durable provider intent or enable a direct provider API. `VIB_NOTIFY=off`, `0`, or `false` remains the hard process-level opt-out and exposes no notification control surface to override.
 
 
 ## Troubleshooting
@@ -415,11 +415,11 @@ by the current setup flow.
 
 ### Setup succeeds but no Telegram session messages arrive
 
-Check the `threaded=` status from the last `gjc notify setup` run. If it is
+Check the `threaded=` status from the last `vib notify setup` run. If it is
 `threaded=unverified` or `threaded=unknown`, first try the current Telegram
 client's @BotFather flow for this bot. If BotFather's **Bot Settings** menu lacks
 **Threads Settings**/**Threaded Mode**, continue with the saved private-chat
-pairing; this is supported. GJC cannot enable Threaded Mode through the Bot API,
+pairing; this is supported. Vibrato cannot enable Threaded Mode through the Bot API,
 and no paid/Stars option is required just to receive flat private-chat
 notifications. When `createForumTopic` is refused for the paired chat, the daemon
 falls back to flat delivery in the paired private chat and posts a one-time nudge
@@ -429,7 +429,7 @@ session commands require Threaded Mode/topic routing.
 
 ### Managed adapter lacks ask controls
 
-A custom client must not attach to a GJC session transport. Upgrade or configure
+A custom client must not attach to a Vibrato session transport. Upgrade or configure
 the bundled managed Telegram adapter; `SessionRouter` performs its internal
 capability negotiation and rejects unsupported controlled asks without exposing
 the endpoint or credentials. Third-party controllers use Coordinator MCP or the
@@ -437,20 +437,20 @@ SDK session CLI instead.
 
 ### Telegram 409 conflict
 
-Only one `getUpdates` poller can own a bot token. GJC never takes over a fresh
+Only one `getUpdates` poller can own a bot token. Vibrato never takes over a fresh
 foreign or unknown owner. If you own the other process, stop or reconfigure it,
-then use `gjc notify health`, `gjc notify recovery`, or `gjc notify reconnect`;
+then use `vib notify health`, `vib notify recovery`, or `vib notify reconnect`;
 recovery removes only dead-owner artifacts and never touches a live owner.
 
 ### A session does not send notifications
 
 Check, in order:
 
-1. `gjc notify status` and confirm Telegram is complete, not quarantined, desired on, and effective
-2. the session has not run `/notify off`; when `GJC_NOTIFICATIONS=0` suppresses automatic admission, run `/notify on` explicitly
+1. `vib notify status` and confirm Telegram is complete, not quarantined, desired on, and effective
+2. the session has not run `/notify off`; when `VIB_NOTIFICATIONS=0` suppresses automatic admission, run `/notify on` explicitly
 3. the Broker reports the session as live with a current endpoint generation
 4. the Telegram supervisor is ready and `SessionRouter` has reconstructed the attachment
-5. the provider owner state is fresh under the GJC agent notifications directory
+5. the provider owner state is fresh under the Vibrato agent notifications directory
 
 Endpoint discovery records contain per-session credentials. They are SDK-core
 implementation details and must not be copied into provider state or public

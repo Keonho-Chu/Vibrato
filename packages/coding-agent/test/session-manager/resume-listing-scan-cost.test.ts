@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { CURRENT_SESSION_VERSION, SessionManager } from "@gajae-code/coding-agent/session/session-manager";
+import { CURRENT_SESSION_VERSION, SessionManager } from "@vib-rato/coding-agent/session/session-manager";
 
 /**
  * Resume listing reads every candidate transcript's trailing bytes to recover a
@@ -87,7 +87,7 @@ describe("resume listing trailing-patch scan cost", () => {
 	}
 
 	it("does not issue one read syscall per 4 KiB when a transcript has no header patch", async () => {
-		testDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-resume-scan-cost-"));
+		testDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-resume-scan-cost-"));
 		const cwd = path.join(testDir, "cwd");
 		const sessionDir = path.join(testDir, "sessions");
 		fs.mkdirSync(cwd, { recursive: true });
@@ -107,7 +107,7 @@ describe("resume listing trailing-patch scan cost", () => {
 	});
 
 	it("still stops early when a header patch sits near EOF", async () => {
-		testDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-resume-scan-early-"));
+		testDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-resume-scan-early-"));
 		const cwd = path.join(testDir, "cwd");
 		const sessionDir = path.join(testDir, "sessions");
 		fs.mkdirSync(cwd, { recursive: true });

@@ -4,7 +4,7 @@ import {
 	OWNER_SUBAGENT_SHUTDOWN_TIMEOUT_MS,
 	OwnerSubagentShutdownError,
 	type SubagentRunOutcome,
-} from "@gajae-code/coding-agent/async/job-manager";
+} from "@vib-rato/coding-agent/async/job-manager";
 
 function makeManager(maxRunningJobs = 4): AsyncJobManager {
 	return new AsyncJobManager({ onJobComplete: async () => {}, maxRunningJobs, retentionMs: 60_000 });

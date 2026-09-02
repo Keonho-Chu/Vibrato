@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { sanitizeHeaderComponent } from "@gajae-code/utils";
+import { sanitizeHeaderComponent } from "@vib-rato/utils";
 
 describe("sanitizeHeaderComponent", () => {
 	it("passes ordinary printable ASCII through unchanged", () => {

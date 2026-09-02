@@ -58,7 +58,7 @@ function makeManifest(overrides: Partial<GuideManifestV1> & { guides: GuideEntry
 }
 
 async function tempAgentDir(): Promise<string> {
-	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-sdk-guides-"));
+	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-sdk-guides-"));
 	return dir;
 }
 
@@ -105,14 +105,14 @@ async function runGuidesCli(
 const NOW = Date.UTC(2026, 3, 1);
 
 beforeEach(() => {
-	process.env.GJC_TEST_GUIDE_KEYS = "1";
+	process.env.VIB_TEST_GUIDE_KEYS = "1";
 	addTestGuidePinnedKey({ keyId: TEST_KEY_ID, spkiDerHex: TEST_PUBLIC_DER_HEX, source: "bundled" });
 });
 
 afterEach(() => {
 	FileLockTestHooks.afterParentMkdir = undefined;
 	removeTestGuidePinnedKey(TEST_KEY_ID);
-	delete process.env.GJC_TEST_GUIDE_KEYS;
+	delete process.env.VIB_TEST_GUIDE_KEYS;
 });
 
 describe("guide manifest verification", () => {
@@ -374,7 +374,7 @@ describe("guide catalog selection", () => {
 		const fetchImpl = fakeFetch(records, { error: new Error("network unreachable") });
 		const catalog = new GuideCatalog({
 			agentDir,
-			onlineUrl: "https://guides.gajae-code.com/manifest.json",
+			onlineUrl: "https://guides.vib-rato.com/manifest.json",
 			fetchImpl,
 			now: () => NOW,
 		});
@@ -399,13 +399,13 @@ describe("guide catalog selection", () => {
 		});
 		const manifestBody = new TextEncoder().encode(JSON.stringify(tamperedManifest));
 		const records = new Map<string, { body: Uint8Array }>([
-			["https://guides.gajae-code.com/manifest.json", { body: manifestBody }],
-			["https://guides.gajae-code.com/manifest.json.sig", { body: Buffer.alloc(64) }],
+			["https://guides.vib-rato.com/manifest.json", { body: manifestBody }],
+			["https://guides.vib-rato.com/manifest.json.sig", { body: Buffer.alloc(64) }],
 		]);
 		const fetchImpl = fakeFetch(records);
 		const catalog = new GuideCatalog({
 			agentDir,
-			onlineUrl: "https://guides.gajae-code.com/manifest.json",
+			onlineUrl: "https://guides.vib-rato.com/manifest.json",
 			fetchImpl,
 			now: () => NOW,
 		});
@@ -423,7 +423,7 @@ describe("guide catalog selection", () => {
 		const fetchImpl = fakeFetch(records, { error: new Error("tamper evident") });
 		const catalog = new GuideCatalog({
 			agentDir,
-			onlineUrl: "https://guides.gajae-code.com/manifest.json",
+			onlineUrl: "https://guides.vib-rato.com/manifest.json",
 			fetchImpl,
 			now: () => NOW,
 			disableBundled: true,
@@ -470,11 +470,11 @@ describe("guide catalog selection", () => {
 		const v2 = makeManifest({ sequence: 2, guides: [entry("concurrent/refresh", "Concurrent refresh", text)] });
 		const v3 = makeManifest({ sequence: 3, guides: [entry("concurrent/refresh", "Concurrent refresh", text)] });
 		const records = new Map<string, { body: Uint8Array }>([
-			["https://guides.gajae-code.com/manifest-v2.json", { body: new TextEncoder().encode(JSON.stringify(v2)) }],
-			["https://guides.gajae-code.com/manifest-v2.json.sig", { body: signCanonical(v2, TEST_PRIVATE_DER_HEX) }],
-			["https://guides.gajae-code.com/manifest-v3.json", { body: new TextEncoder().encode(JSON.stringify(v3)) }],
-			["https://guides.gajae-code.com/manifest-v3.json.sig", { body: signCanonical(v3, TEST_PRIVATE_DER_HEX) }],
-			["https://guides.gajae-code.com/guides/concurrent/refresh", { body: new TextEncoder().encode(text) }],
+			["https://guides.vib-rato.com/manifest-v2.json", { body: new TextEncoder().encode(JSON.stringify(v2)) }],
+			["https://guides.vib-rato.com/manifest-v2.json.sig", { body: signCanonical(v2, TEST_PRIVATE_DER_HEX) }],
+			["https://guides.vib-rato.com/manifest-v3.json", { body: new TextEncoder().encode(JSON.stringify(v3)) }],
+			["https://guides.vib-rato.com/manifest-v3.json.sig", { body: signCanonical(v3, TEST_PRIVATE_DER_HEX) }],
+			["https://guides.vib-rato.com/guides/concurrent/refresh", { body: new TextEncoder().encode(text) }],
 		]);
 		const fetchImpl = fakeFetch(records);
 
@@ -499,13 +499,13 @@ describe("guide catalog selection", () => {
 		try {
 			const olderCatalog = new GuideCatalog({
 				agentDir,
-				onlineUrl: "https://guides.gajae-code.com/manifest-v2.json",
+				onlineUrl: "https://guides.vib-rato.com/manifest-v2.json",
 				fetchImpl,
 				now: () => NOW,
 			});
 			const newerCatalog = new GuideCatalog({
 				agentDir,
-				onlineUrl: "https://guides.gajae-code.com/manifest-v3.json",
+				onlineUrl: "https://guides.vib-rato.com/manifest-v3.json",
 				fetchImpl,
 				now: () => NOW,
 			});
@@ -541,11 +541,11 @@ describe("guide catalog selection", () => {
 
 describe("guide fetch boundary and CLI-facing selection outcomes", () => {
 	it("refuses non-allowlisted URLs", () => {
-		expect(isGuideFetchUrlAllowed("https://guides.gajae-code.com/manifest.json")).toBe(true);
-		expect(isGuideFetchUrlAllowed("http://guides.gajae-code.com/manifest.json")).toBe(false);
+		expect(isGuideFetchUrlAllowed("https://guides.vib-rato.com/manifest.json")).toBe(true);
+		expect(isGuideFetchUrlAllowed("http://guides.vib-rato.com/manifest.json")).toBe(false);
 		expect(isGuideFetchUrlAllowed("https://evil.example.com/manifest.json")).toBe(false);
-		expect(isGuideFetchUrlAllowed("https://guides.gajae-code.com.evil.example/manifest.json")).toBe(false);
-		expect(isGuideFetchUrlAllowed("https://user:pass@guides.gajae-code.com/manifest.json")).toBe(false);
+		expect(isGuideFetchUrlAllowed("https://guides.vib-rato.com.evil.example/manifest.json")).toBe(false);
+		expect(isGuideFetchUrlAllowed("https://user:pass@guides.vib-rato.com/manifest.json")).toBe(false);
 		expect(isGuideFetchUrlAllowed("not a url")).toBe(false);
 	});
 
@@ -554,7 +554,7 @@ describe("guide fetch boundary and CLI-facing selection outcomes", () => {
 		expect(policy.httpsOnly).toBe(true);
 		expect(policy.credentials).toBe("omit");
 		expect(policy.redirect).toBe("error");
-		expect(policy.allowlist.some(entry => entry.host === "guides.gajae-code.com")).toBe(true);
+		expect(policy.allowlist.some(entry => entry.host === "guides.vib-rato.com")).toBe(true);
 	});
 
 	it("rejects a manifest whose canonical bytes are re-formatted by an attacker", () => {
@@ -593,18 +593,15 @@ describe("guide fetch boundary and CLI-facing selection outcomes", () => {
 		const manifestV1 = makeManifest({ sequence: 1, guides: [entry("bounded/refresh", "Bounded refresh", text)] });
 		const manifestV2 = makeManifest({ sequence: 2, guides: [entry("bounded/refresh", "Bounded refresh", text)] });
 		const records = new Map<string, { body: Uint8Array }>([
-			[
-				"https://guides.gajae-code.com/manifest.json",
-				{ body: new TextEncoder().encode(JSON.stringify(manifestV1)) },
-			],
-			["https://guides.gajae-code.com/manifest.json.sig", { body: signCanonical(manifestV1, TEST_PRIVATE_DER_HEX) }],
-			["https://guides.gajae-code.com/guides/bounded/refresh", { body: new TextEncoder().encode(text) }],
+			["https://guides.vib-rato.com/manifest.json", { body: new TextEncoder().encode(JSON.stringify(manifestV1)) }],
+			["https://guides.vib-rato.com/manifest.json.sig", { body: signCanonical(manifestV1, TEST_PRIVATE_DER_HEX) }],
+			["https://guides.vib-rato.com/guides/bounded/refresh", { body: new TextEncoder().encode(text) }],
 		]);
 		const fetchImpl = fakeFetch(records);
 
 		const catalog = new GuideCatalog({
 			agentDir,
-			onlineUrl: "https://guides.gajae-code.com/manifest.json",
+			onlineUrl: "https://guides.vib-rato.com/manifest.json",
 			fetchImpl,
 			now: () => NOW,
 		});
@@ -615,15 +612,15 @@ describe("guide fetch boundary and CLI-facing selection outcomes", () => {
 		expect(result.value.manifest.sequence).toBe(1);
 
 		// A follow-up CLI refresh that advances the floor still reports online.
-		records.set("https://guides.gajae-code.com/manifest.json", {
+		records.set("https://guides.vib-rato.com/manifest.json", {
 			body: new TextEncoder().encode(JSON.stringify(manifestV2)),
 		});
-		records.set("https://guides.gajae-code.com/manifest.json.sig", {
+		records.set("https://guides.vib-rato.com/manifest.json.sig", {
 			body: signCanonical(manifestV2, TEST_PRIVATE_DER_HEX),
 		});
 		const cli = await runGuidesCli({
 			action: "refresh",
-			url: "https://guides.gajae-code.com/manifest.json",
+			url: "https://guides.vib-rato.com/manifest.json",
 			agentDir,
 			fetchImpl,
 		});
@@ -645,7 +642,7 @@ describe("guide fetch boundary and CLI-facing selection outcomes", () => {
 		const fetchImpl = fakeFetch(new Map(), { error: new Error("network unreachable") });
 		const refresh = await runGuidesCli({
 			action: "refresh",
-			url: "https://guides.gajae-code.com/manifest.json",
+			url: "https://guides.vib-rato.com/manifest.json",
 			agentDir,
 			fetchImpl,
 		});
@@ -672,7 +669,7 @@ describe("guide fetch boundary and CLI-facing selection outcomes", () => {
 		const agentDir = await tempAgentDir();
 		const oversizedBody = new Uint8Array(GUIDE_MANIFEST_MAX_BYTES + 1);
 		const records = new Map<string, { body: Uint8Array }>([
-			["https://guides.gajae-code.com/manifest.json", { body: oversizedBody }],
+			["https://guides.vib-rato.com/manifest.json", { body: oversizedBody }],
 		]);
 		const fetchImpl = fakeFetch(records);
 
@@ -680,7 +677,7 @@ describe("guide fetch boundary and CLI-facing selection outcomes", () => {
 		// installs the oversized content.
 		const catalog = new GuideCatalog({
 			agentDir,
-			onlineUrl: "https://guides.gajae-code.com/manifest.json",
+			onlineUrl: "https://guides.vib-rato.com/manifest.json",
 			fetchImpl,
 			now: () => NOW,
 		});
@@ -697,7 +694,7 @@ describe("guide fetch boundary and CLI-facing selection outcomes", () => {
 		// successful refresh.
 		const cli = await runGuidesCli({
 			action: "refresh",
-			url: "https://guides.gajae-code.com/manifest.json",
+			url: "https://guides.vib-rato.com/manifest.json",
 			agentDir,
 			fetchImpl,
 		});
@@ -712,7 +709,7 @@ describe("guide fetch boundary and CLI-facing selection outcomes", () => {
 		const agentDir = await tempAgentDir();
 		const cli = await runGuidesCli({
 			action: "refresh",
-			url: "http://guides.gajae-code.com/manifest.json",
+			url: "http://guides.vib-rato.com/manifest.json",
 			agentDir,
 			fetchImpl: fakeFetch(new Map()),
 		});

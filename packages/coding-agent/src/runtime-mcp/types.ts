@@ -66,7 +66,7 @@ export interface MCPServerConfigBase {
 	/**
 	 * Whether an explicit runtime MCP consumer should connect this server
 	 * automatically when that consumer starts (default: true). Ordinary
-	 * standalone `gjc`, `gjc --tmux`, and print-mode sessions honor autoload for
+	 * standalone `vib`, `vib --tmux`, and print-mode sessions honor autoload for
 	 * conventional registrations; `autoload: false` keeps a server configured
 	 * for on-demand `/mcp` connection. `--no-mcp` opts a session out entirely.
 	 */
@@ -127,7 +127,7 @@ export interface MCPSseServerConfig extends MCPServerConfigBase {
 export type MCPServerConfig = MCPStdioServerConfig | MCPHttpServerConfig | MCPSseServerConfig;
 
 export const MCP_CONFIG_SCHEMA_URL =
-	"https://raw.githubusercontent.com/Yeachan-Heo/gajae-code/main/packages/coding-agent/src/config/mcp-schema.json";
+	"https://raw.githubusercontent.com/Keonho-Chu/Vibrato/main/packages/coding-agent/src/config/mcp-schema.json";
 
 /** Root mcp.json/.mcp.json file structure */
 export interface MCPConfigFile {

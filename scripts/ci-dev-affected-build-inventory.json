@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
   "typescript": [
-    { "id": "coding-agent", "name": "@gajae-code/coding-agent", "dir": "packages/coding-agent", "nativeConsumer": true, "nativeProducer": false },
-    { "id": "stats", "name": "@gajae-code/stats", "dir": "packages/stats", "nativeConsumer": false, "nativeProducer": false }
+    { "id": "coding-agent", "name": "@vib-rato/coding-agent", "dir": "packages/coding-agent", "nativeConsumer": true, "nativeProducer": false },
+    { "id": "stats", "name": "@vib-rato/stats", "dir": "packages/stats", "nativeConsumer": false, "nativeProducer": false }
   ],
   "cargo": [
-    { "id": "gjc-sdk", "name": "gjc-sdk", "manifestPath": "crates/gjc-sdk/Cargo.toml", "supported": true, "nativeAddonSource": false },
+    { "id": "vib-sdk", "name": "vib-sdk", "manifestPath": "crates/vib-sdk/Cargo.toml", "supported": true, "nativeAddonSource": false },
     { "id": "pi-ast", "name": "pi-ast", "manifestPath": "crates/pi-ast/Cargo.toml", "supported": true, "nativeAddonSource": false },
     { "id": "pi-iso", "name": "pi-iso", "manifestPath": "crates/pi-iso/Cargo.toml", "supported": true, "nativeAddonSource": false },
     { "id": "pi-natives", "name": "pi-natives", "manifestPath": "crates/pi-natives/Cargo.toml", "supported": true, "nativeAddonSource": true },

@@ -82,7 +82,7 @@ describe("public memory tool surface", () => {
 		for (const relativePath of legacyMemoryPromptFiles) {
 			const content = await fs.readFile(path.join(repoRoot, relativePath), "utf8");
 			expect(content).toContain("Compatibility-only legacy Hindsight helper");
-			expect(content).toContain("not part of the public gajae-code coding harness tool surface");
+			expect(content).toContain("not part of the public vib-rato coding harness tool surface");
 		}
 	});
 });

@@ -1,6 +1,6 @@
 import { dlopen, FFIType, ptr } from "bun:ffi";
 import * as fs from "node:fs";
-import { $env, $flag, $pickenv } from "@gajae-code/utils";
+import { $env, $flag, $pickenv } from "@vib-rato/utils";
 import { setKittyProtocolActive } from "./keys";
 import { StdinBuffer } from "./stdin-buffer";
 
@@ -36,10 +36,10 @@ export function isUnsolicitedProbeReply(sequence: string): boolean {
 }
 
 /**
- * Whether GJC may reprogram the keyboard with enhanced input protocols
+ * Whether Vibrato may reprogram the keyboard with enhanced input protocols
  * (the Kitty keyboard protocol and the xterm modifyOtherKeys fallback).
  *
- * Enabled by default. Set `GJC_TUI_KEYBOARD_PROTOCOL=0` to leave the keyboard in
+ * Enabled by default. Set `VIB_TUI_KEYBOARD_PROTOCOL=0` to leave the keyboard in
  * its default mode. Some terminals — notably Android Termius — break IME
  * composition (e.g. Korean/Hangul syllable composition) while these enhanced
  * modes are active, committing every intermediate composing jamo/syllable
@@ -48,7 +48,7 @@ export function isUnsolicitedProbeReply(sequence: string): boolean {
  * Korean correctly.
  */
 export function keyboardEnhancementEnabled(): boolean {
-	return $flag("GJC_TUI_KEYBOARD_PROTOCOL", true);
+	return $flag("VIB_TUI_KEYBOARD_PROTOCOL", true);
 }
 
 function isAppleTerminal(): boolean {
@@ -292,7 +292,7 @@ export class ProcessTerminal implements Terminal {
 	#stdinBuffer?: StdinBuffer;
 	#stdinDataHandler?: (data: string | Buffer) => void;
 	#dead = false;
-	#writeLogPath = $pickenv("GJC_TUI_WRITE_LOG", "PI_TUI_WRITE_LOG") || "";
+	#writeLogPath = $pickenv("VIB_TUI_WRITE_LOG", "PI_TUI_WRITE_LOG") || "";
 	#detachLogPath = $env.PI_TUI_TERMINAL_DETACH_LOG || "";
 	#windowsVTInputRestore?: () => void;
 	#stdoutErrorHandler?: (err: Error) => void;
@@ -852,7 +852,7 @@ export class ProcessTerminal implements Terminal {
 		// types a trailing space to force a commit first). Skip the fallback on
 		// these terminals; legacy encodings still deliver Alt+Enter (ESC CR) and
 		// the newline chords, and IME composition works again. Opt back in with
-		// GJC_TUI_KEYBOARD_PROTOCOL=0 disabling all enhancement, or force-enable
+		// VIB_TUI_KEYBOARD_PROTOCOL=0 disabling all enhancement, or force-enable
 		// elsewhere if a Kitty-capable terminal appears.
 		if (process.platform === "win32" || isAppleTerminal()) {
 			return;

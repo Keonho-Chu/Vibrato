@@ -2,13 +2,13 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { CommandController } from "@gajae-code/coding-agent/modes/controllers/command-controller";
-import { getThemeByName, setThemeInstance } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { InteractiveModeContext } from "@gajae-code/coding-agent/modes/types";
-import { getAgentDir, setAgentDir } from "@gajae-code/utils";
+import { CommandController } from "@vib-rato/coding-agent/modes/controllers/command-controller";
+import { getThemeByName, setThemeInstance } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { InteractiveModeContext } from "@vib-rato/coding-agent/modes/types";
+import { getAgentDir, setAgentDir } from "@vib-rato/utils";
 
 const originalAgentDir = getAgentDir();
-const originalAgentDirOverride = process.env.GJC_CODING_AGENT_DIR;
+const originalAgentDirOverride = process.env.VIB_CODING_AGENT_DIR;
 const originalPath = process.env.PATH;
 
 function createContainer() {
@@ -62,13 +62,13 @@ describe("/share temporary export security", () => {
 	afterEach(() => {
 		vi.restoreAllMocks();
 		setAgentDir(originalAgentDir);
-		if (originalAgentDirOverride === undefined) delete process.env.GJC_CODING_AGENT_DIR;
-		else process.env.GJC_CODING_AGENT_DIR = originalAgentDirOverride;
+		if (originalAgentDirOverride === undefined) delete process.env.VIB_CODING_AGENT_DIR;
+		else process.env.VIB_CODING_AGENT_DIR = originalAgentDirOverride;
 		process.env.PATH = originalPath;
 	});
 
 	it("uses exclusive owner-private staging and removes it after export failure", async () => {
-		const tempDir = path.join(os.tmpdir(), "gjc-share-random");
+		const tempDir = path.join(os.tmpdir(), "vib-share-random");
 		const tempFile = path.join(tempDir, "session.html");
 		const close = vi.fn(async () => undefined);
 		const mkdtemp = vi.spyOn(fs, "mkdtemp").mockResolvedValue(tempDir);
@@ -81,7 +81,7 @@ describe("/share temporary export security", () => {
 
 		await new CommandController(ctx).handleShareCommand();
 
-		expect(mkdtemp).toHaveBeenCalledWith(path.join(os.tmpdir(), "gjc-share-"));
+		expect(mkdtemp).toHaveBeenCalledWith(path.join(os.tmpdir(), "vib-share-"));
 		if (process.platform !== "win32") expect(chmod).toHaveBeenCalledWith(tempDir, 0o700);
 		expect(open).toHaveBeenCalledWith(tempFile, "wx", 0o600);
 		expect(close).toHaveBeenCalledTimes(1);
@@ -91,7 +91,7 @@ describe("/share temporary export security", () => {
 	});
 
 	it("does not replace the export error when cleanup fails", async () => {
-		const tempDir = path.join(os.tmpdir(), "gjc-share-cleanup-failure");
+		const tempDir = path.join(os.tmpdir(), "vib-share-cleanup-failure");
 		vi.spyOn(fs, "mkdtemp").mockResolvedValue(tempDir);
 		vi.spyOn(fs, "chmod").mockResolvedValue(undefined);
 		vi.spyOn(fs, "open").mockResolvedValue({ close: vi.fn() } as unknown as fs.FileHandle);
@@ -107,7 +107,7 @@ describe("/share temporary export security", () => {
 	});
 
 	it("keeps a private custom-share export until the handler settles, then removes the directory", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-share-test-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-share-test-"));
 		const agentDir = path.join(root, "agent");
 		const observed = path.join(root, "observed.json");
 		const release = path.join(root, "release");
@@ -152,7 +152,7 @@ export default async (htmlPath: string) => {
 	it.skipIf(process.platform === "win32")(
 		"terminates and awaits a blocked gist upload before reporting cancellation or removing staging",
 		async () => {
-			const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-share-cancel-test-"));
+			const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-share-cancel-test-"));
 			const binDir = path.join(root, "bin");
 			const fakeGh = path.join(binDir, "gh");
 			const started = path.join(root, "started");

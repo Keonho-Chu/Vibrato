@@ -7,7 +7,7 @@
 - Model-facing prompt: `packages/coding-agent/src/prompts/tools/task.md`
 - Key collaborators:
   - `packages/coding-agent/src/task/types.ts` — dynamic schema, progress/result types, output caps.
-  - `packages/coding-agent/src/task/discovery.ts` — resolve bundled GJC agents.
+  - `packages/coding-agent/src/task/discovery.ts` — resolve bundled Vibrato agents.
   - `packages/coding-agent/src/task/agents.ts` — bundled agent definitions and frontmatter parsing.
   - `packages/coding-agent/src/task/executor.ts` — create child sessions, run subagents, collect output.
   - `packages/coding-agent/src/task/parallel.ts` — concurrency-limited scheduling and async semaphore.
@@ -92,7 +92,7 @@ Artifacts and side channels:
    - each job body calls `#executeSync(...)` with a one-task batch and the preallocated id
    - `onUpdate(...)` emits aggregate `progress` snapshots and `details.async`
 5. Sync path (`#executeSync(...)`) rediscovers agents from disk via `discoverAgents(...)`, so runtime resolution can differ from the earlier prompt description.
-6. It resolves the requested agent with `getAgent(...)`, rejects unknown or disabled agents, and enforces parent spawn policy plus `GJC_BLOCKED_AGENT` self-recursion prevention.
+6. It resolves the requested agent with `getAgent(...)`, rejects unknown or disabled agents, and enforces parent spawn policy plus `VIB_BLOCKED_AGENT` self-recursion prevention.
 7. It derives the effective output schema in priority order: task call `schema` (if allowed) → agent frontmatter `output` → inherited parent session schema.
 8. It validates task ids: missing ids and case-insensitive duplicates are immediate errors.
 9. If `isolated` was requested, it requires a git repo (`getRepoRoot(...)` / `captureBaseline(...)`) and resolves the actual backend through `resolveIsolationBackendForTaskExecution(...)`.
@@ -143,10 +143,10 @@ Artifacts and side channels:
   - `fuse-projfs` — Windows ProjFS overlay.
 - Isolation merge strategy
   - Patch mode — capture/apply root patches, keep patch artifacts when application fails.
-  - Branch mode — commit each task onto `gjc/task/<id>` branch, cherry-pick into parent, preserve failed branches for manual resolution.
+  - Branch mode — commit each task onto `vib/task/<id>` branch, cherry-pick into parent, preserve failed branches for manual resolution.
 - Agent source
   - Project/user agents discovered from configured agent directories.
-  - Bundled GJC role agents — the retained canonical four-agent surface from `packages/coding-agent/src/task/agents.ts`.
+  - Bundled Vibrato role agents — the retained canonical four-agent surface from `packages/coding-agent/src/task/agents.ts`.
 - Bundled agent types
   - `executor` — bounded implementation, fixes, and refactors.
   - `architect` — read-only architecture and code-review assessment.
@@ -176,7 +176,7 @@ With autorouting disabled, model resolution is byte-for-byte unchanged.
   - Child sessions may use whichever networked tools/models their active tool set permits.
 - Subprocesses / native bindings
   - `fuse-overlayfs` and `fusermount`/`fusermount3` for FUSE isolation.
-  - ProjFS native bindings via `@gajae-code/natives` on Windows.
+  - ProjFS native bindings via `@vib-rato/natives` on Windows.
   - Git operations for baseline capture, patch apply/proof, worktrees, branches, stash, and cherry-pick; nested patches are left as working-tree changes rather than committing owner state.
 - Session state (transcript, memory, jobs, checkpoints, registries)
   - Creates child `AgentSession` instances with isolated settings snapshots.

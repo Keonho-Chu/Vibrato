@@ -6,8 +6,8 @@ import {
 	type AuthCredentialStore,
 	SqliteAuthCredentialStore,
 	type StoredAuthCredential,
-} from "@gajae-code/ai/core";
-import { getAgentDbPath, isRecord, logger } from "@gajae-code/utils";
+} from "@vib-rato/ai/core";
+import { getAgentDbPath, isRecord, logger } from "@vib-rato/utils";
 import type { RawSettings as Settings } from "../config/settings";
 
 /** Row shape for settings table queries */
@@ -31,7 +31,7 @@ const instances = new Map<string, AgentStorage>();
 
 /**
  * Unified SQLite storage for agent settings, model usage, and auth credentials.
- * Delegates auth credential operations to AuthCredentialStore from @gajae-code/ai.
+ * Delegates auth credential operations to AuthCredentialStore from @vib-rato/ai.
  * Uses singleton pattern per database path; access via AgentStorage.open().
  */
 export class AgentStorage {

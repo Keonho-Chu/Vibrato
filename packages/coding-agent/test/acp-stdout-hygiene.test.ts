@@ -1,5 +1,5 @@
 /**
- * ACP stdout-hygiene smoke: launching `gjc acp` must not leak any banner,
+ * ACP stdout-hygiene smoke: launching `vib acp` must not leak any banner,
  * progress text, or stray non-JSON bytes onto stdout — that channel is owned
  * by the JSON-RPC protocol. We spawn the CLI as a subprocess, send a single
  * `initialize` frame, and assert the first stdout line parses cleanly as a
@@ -93,7 +93,7 @@ async function readFirstFrame(stream: ReadableStream<Uint8Array>): Promise<strin
 
 describe("ACP stdout hygiene", () => {
 	it("emits a JSON-RPC initialize response as the first bytes on stdout", async () => {
-		const root = await fs.promises.mkdtemp(path.join(os.tmpdir(), "gjc-acp-stdout-"));
+		const root = await fs.promises.mkdtemp(path.join(os.tmpdir(), "vib-acp-stdout-"));
 		cleanupRoots.push(root);
 		const xdg = path.join(root, "xdg");
 		const agentDir = path.join(root, "agent");

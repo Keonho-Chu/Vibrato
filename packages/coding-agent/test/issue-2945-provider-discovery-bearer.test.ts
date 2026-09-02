@@ -3,10 +3,10 @@ import * as fs from "node:fs";
 import * as http from "node:http";
 import * as os from "node:os";
 import * as path from "node:path";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { resetSettingsForTest } from "@gajae-code/coding-agent/config/settings";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { Snowflake } from "@gajae-code/utils";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { resetSettingsForTest } from "@vib-rato/coding-agent/config/settings";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { Snowflake } from "@vib-rato/utils";
 
 const EXPECTED_KEY = "issue-2945-local-key";
 const KEY_ENV = "ISSUE_2945_LLM_API_KEY";
@@ -42,7 +42,7 @@ describe("issue #2945 provider discovery Bearer auth", () => {
 
 	beforeEach(async () => {
 		resetSettingsForTest();
-		tempDir = path.join(os.tmpdir(), `gjc-test-issue-2945-${Snowflake.next()}`);
+		tempDir = path.join(os.tmpdir(), `vib-test-issue-2945-${Snowflake.next()}`);
 		fs.mkdirSync(tempDir, { recursive: true });
 		modelsJsonPath = path.join(tempDir, "models.yml");
 		authStorage = await AuthStorage.create(path.join(tempDir, "testauth.db"));

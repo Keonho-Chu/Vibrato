@@ -2,7 +2,6 @@ import { afterEach, describe, expect, it } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { activeSnapshotPath } from "../src/gjc-runtime/session-layout";
 import {
 	detectMcpDelegateFlowActivation,
 	listMcpDelegateHostContexts,
@@ -10,8 +9,9 @@ import {
 	persistMcpDelegateHostContext,
 	readMcpDelegateHostContext,
 } from "../src/hooks/mcp-delegate-host-context";
-import { dispatchGjcNativeSkillHook } from "../src/hooks/native-skill-hook";
+import { dispatchVibNativeSkillHook } from "../src/hooks/native-skill-hook";
 import { readVisibleSkillActiveState } from "../src/hooks/skill-state";
+import { activeSnapshotPath } from "../src/vib-runtime/session-layout";
 
 const testEffectiveSkillConfig = {
 	skillsSettings: {
@@ -34,28 +34,28 @@ describe("MCP delegate-flow host context", () => {
 	});
 
 	async function tempRoot(): Promise<string> {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-mcp-delegate-host-context-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-mcp-delegate-host-context-"));
 		roots.push(root);
 		return root;
 	}
 
 	it("detects only exact delegate-flow activation tokens", () => {
 		for (const prompt of [
-			"$gjc-mcp-delegate-flow",
-			"run $gjc-mcp-delegate-flow now",
-			"($gjc-mcp-delegate-flow)",
-			"$gjc-mcp-delegate-flow\ncontinue",
-			"continue\n$gjc-mcp-delegate-flow",
+			"$vib-mcp-delegate-flow",
+			"run $vib-mcp-delegate-flow now",
+			"($vib-mcp-delegate-flow)",
+			"$vib-mcp-delegate-flow\ncontinue",
+			"continue\n$vib-mcp-delegate-flow",
 		]) {
 			expect(detectMcpDelegateFlowActivation(prompt)).toBe(true);
 		}
 		for (const prompt of [
-			"gjc-mcp-delegate-flow",
-			"$gjc-mcp-delegate-flows",
-			"$gjc-mcp-delegate-flow-extra",
-			"$GJC-MCP-DELEGATE-FLOW",
-			"X$gjc-mcp-delegate-flow",
-			"9$gjc-mcp-delegate-flow",
+			"vib-mcp-delegate-flow",
+			"$vib-mcp-delegate-flows",
+			"$vib-mcp-delegate-flow-extra",
+			"$Vibrato-MCP-DELEGATE-FLOW",
+			"X$vib-mcp-delegate-flow",
+			"9$vib-mcp-delegate-flow",
 		]) {
 			expect(detectMcpDelegateFlowActivation(prompt)).toBe(false);
 		}
@@ -68,27 +68,27 @@ describe("MCP delegate-flow host context", () => {
 			sessionId: "session.context-1",
 			threadId: "thread-1",
 			turnId: "turn-1",
-			prompt: "run\n  $gjc-mcp-delegate-flow\t now",
+			prompt: "run\n  $vib-mcp-delegate-flow\t now",
 		});
 
 		expect(persisted).not.toBeNull();
 		expect(persisted?.path).toBe(mcpDelegateHostContextPath(root, "session.context-1"));
 		expect(persisted?.context).toMatchObject({
 			schema_version: 1,
-			activation: "$gjc-mcp-delegate-flow",
+			activation: "$vib-mcp-delegate-flow",
 			session_id: "session.context-1",
 			thread_id: "thread-1",
 			turn_id: "turn-1",
 			cwd: root,
 			source: "user_prompt_submit",
-			prompt_excerpt: "run $gjc-mcp-delegate-flow now",
+			prompt_excerpt: "run $vib-mcp-delegate-flow now",
 		});
 		expect(persisted?.context.recorded_at).toEqual(expect.any(String));
 		expect(await readMcpDelegateHostContext(root, "session.context-1")).toEqual(persisted?.context ?? null);
 		expect(
 			await persistMcpDelegateHostContext({ cwd: root, sessionId: "session-no-match", prompt: "continue normally" }),
 		).toBeNull();
-		expect(await persistMcpDelegateHostContext({ cwd: root, prompt: "$gjc-mcp-delegate-flow" })).toBeNull();
+		expect(await persistMcpDelegateHostContext({ cwd: root, prompt: "$vib-mcp-delegate-flow" })).toBeNull();
 	});
 	it("returns null when host context is missing", async () => {
 		const root = await tempRoot();
@@ -113,7 +113,7 @@ describe("MCP delegate-flow host context", () => {
 			contextPath,
 			JSON.stringify({
 				schema_version: 2,
-				activation: "$gjc-mcp-delegate-flow",
+				activation: "$vib-mcp-delegate-flow",
 				session_id: "session-wrong-schema",
 				thread_id: null,
 				turn_id: null,
@@ -137,9 +137,9 @@ describe("MCP delegate-flow host context", () => {
 	it("persists host context without activating a workflow skill", async () => {
 		const root = await tempRoot();
 		const sessionId = "session-host-context";
-		const result = await dispatchGjcNativeSkillHook({
+		const result = await dispatchVibNativeSkillHook({
 			hookEventName: "UserPromptSubmit",
-			userPrompt: "resume $gjc-mcp-delegate-flow now",
+			userPrompt: "resume $vib-mcp-delegate-flow now",
 			cwd: root,
 			sessionId,
 			threadId: "thread-host-context",
@@ -154,7 +154,7 @@ describe("MCP delegate-flow host context", () => {
 		expect(await Bun.file(contextPath).exists()).toBe(true);
 		expect(await Bun.file(activeSnapshotPath(root, sessionId)).exists()).toBe(false);
 		expect(await readVisibleSkillActiveState(root, sessionId)).toBeNull();
-		expect(additionalContext).toContain(`GJC MCP delegate-flow host context persisted at ${contextPath}.`);
+		expect(additionalContext).toContain(`Vibrato MCP delegate-flow host context persisted at ${contextPath}.`);
 	});
 
 	it("maps non-ENOENT read failures to state_unreadable", async () => {
@@ -176,7 +176,7 @@ describe("MCP delegate-flow host context", () => {
 				contextPath,
 				JSON.stringify({
 					schema_version: 1,
-					activation: "$gjc-mcp-delegate-flow",
+					activation: "$vib-mcp-delegate-flow",
 					session_id: sessionId,
 					thread_id: null,
 					turn_id: null,
@@ -190,14 +190,14 @@ describe("MCP delegate-flow host context", () => {
 			await fs.utimes(contextPath, new Date(oldRecordedAt), new Date(oldRecordedAt));
 		}
 		for (let index = 65; index < 69; index++) {
-			await fs.mkdir(path.join(root, ".gjc", `_session-session-${String(index).padStart(3, "0")}`), {
+			await fs.mkdir(path.join(root, ".vib", `_session-session-${String(index).padStart(3, "0")}`), {
 				recursive: true,
 			});
 		}
 		const newest = await persistMcpDelegateHostContext({
 			cwd: root,
 			sessionId: "session-069",
-			prompt: "$gjc-mcp-delegate-flow",
+			prompt: "$vib-mcp-delegate-flow",
 		});
 		if (!newest) throw new Error("newest context was not persisted");
 
@@ -213,7 +213,7 @@ describe("MCP delegate-flow host context", () => {
 				"_session-traversal",
 				{
 					schema_version: 1,
-					activation: "$gjc-mcp-delegate-flow",
+					activation: "$vib-mcp-delegate-flow",
 					session_id: "../evil",
 					thread_id: null,
 					turn_id: null,
@@ -227,7 +227,7 @@ describe("MCP delegate-flow host context", () => {
 				"_session-oversized",
 				{
 					schema_version: 1,
-					activation: "$gjc-mcp-delegate-flow",
+					activation: "$vib-mcp-delegate-flow",
 					session_id: "oversized",
 					thread_id: null,
 					turn_id: null,
@@ -238,14 +238,14 @@ describe("MCP delegate-flow host context", () => {
 				},
 			],
 		] as const) {
-			const contextPath = path.join(root, ".gjc", directory, "state", "mcp-delegate-host-context.json");
+			const contextPath = path.join(root, ".vib", directory, "state", "mcp-delegate-host-context.json");
 			await fs.mkdir(path.dirname(contextPath), { recursive: true });
 			await fs.writeFile(contextPath, JSON.stringify(context), "utf8");
 		}
 		const valid = await persistMcpDelegateHostContext({
 			cwd: root,
 			sessionId: "valid",
-			prompt: "$gjc-mcp-delegate-flow",
+			prompt: "$vib-mcp-delegate-flow",
 		});
 		expect(valid).not.toBeNull();
 
@@ -259,9 +259,9 @@ describe("MCP delegate-flow host context", () => {
 		const sessionId = "persist-failure";
 		await fs.mkdir(mcpDelegateHostContextPath(root, sessionId), { recursive: true });
 
-		const failedPersistResult = await dispatchGjcNativeSkillHook({
+		const failedPersistResult = await dispatchVibNativeSkillHook({
 			hookEventName: "UserPromptSubmit",
-			userPrompt: "$gjc-mcp-delegate-flow",
+			userPrompt: "$vib-mcp-delegate-flow",
 			cwd: root,
 			sessionId,
 		});
@@ -271,9 +271,9 @@ describe("MCP delegate-flow host context", () => {
 				(failedPersistResult.outputJson?.hookSpecificOutput as { additionalContext?: unknown } | undefined)
 					?.additionalContext ?? "",
 			),
-		).not.toContain("GJC MCP delegate-flow host context persisted at");
+		).not.toContain("Vibrato MCP delegate-flow host context persisted at");
 		await expect(
-			dispatchGjcNativeSkillHook(
+			dispatchVibNativeSkillHook(
 				{
 					hookEventName: "UserPromptSubmit",
 					userPrompt: "$ultragoal continue objective",
@@ -291,7 +291,7 @@ describe("MCP delegate-flow host context", () => {
 	it("leaves ultragoal workflow activation unchanged", async () => {
 		const root = await tempRoot();
 		const sessionId = "session-ultragoal";
-		await dispatchGjcNativeSkillHook(
+		await dispatchVibNativeSkillHook(
 			{
 				hookEventName: "UserPromptSubmit",
 				userPrompt: "$ultragoal continue this objective",

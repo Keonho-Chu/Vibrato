@@ -1,16 +1,16 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
-import { Agent, type AgentMessage } from "@gajae-code/agent-core";
-import type { Message, Model, SimpleStreamOptions } from "@gajae-code/ai";
-import { AssistantMessageEventStream } from "@gajae-code/ai/utils/event-stream";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { __sessionStateSidecarPerfCounters } from "@gajae-code/coding-agent/gjc-runtime/session-state-sidecar";
+import { Agent, type AgentMessage } from "@vib-rato/agent-core";
+import type { Message, Model, SimpleStreamOptions } from "@vib-rato/ai";
+import { AssistantMessageEventStream } from "@vib-rato/ai/utils/event-stream";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
 import {
 	__agentSessionPerfCounters,
 	AgentSession,
 	type AgentSessionEvent,
 	WorkerIntegrationRequestScheduler,
-} from "@gajae-code/coding-agent/session/agent-session";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
+} from "@vib-rato/coding-agent/session/agent-session";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { __sessionStateSidecarPerfCounters } from "@vib-rato/coding-agent/vib-runtime/session-state-sidecar";
 import { createSdkRunCapability } from "../src/sdk/host/sdk-run-capability";
 import { createAssistantMessage } from "./helpers/agent-session-setup";
 

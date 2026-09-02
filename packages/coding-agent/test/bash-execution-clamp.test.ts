@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from "bun:test";
-import { BashExecutionComponent } from "@gajae-code/coding-agent/modes/components/bash-execution";
-import { getThemeByName, setThemeInstance } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { TUI } from "@gajae-code/tui";
-import { visibleWidth } from "@gajae-code/tui";
+import { BashExecutionComponent } from "@vib-rato/coding-agent/modes/components/bash-execution";
+import { getThemeByName, setThemeInstance } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { TUI } from "@vib-rato/tui";
+import { visibleWidth } from "@vib-rato/tui";
 
 const MAX_DISPLAY_LINE_CHARS = 4000;
 

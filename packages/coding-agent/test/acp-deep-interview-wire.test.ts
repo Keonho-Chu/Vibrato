@@ -53,9 +53,9 @@ function childEnv(root: string): Record<string, string> {
 		XDG_STATE_HOME: path.join(root, ".local", "state"),
 		XDG_CACHE_HOME: path.join(root, ".cache"),
 		XDG_RUNTIME_DIR: path.join(root, ".run"),
-		GJC_CODING_AGENT_DIR: agentDir,
+		VIB_CODING_AGENT_DIR: agentDir,
 		PI_CODING_AGENT_DIR: agentDir,
-		GJC_NOTIFICATIONS: "1",
+		VIB_NOTIFICATIONS: "1",
 		PI_NO_TITLE: "1",
 		NO_COLOR: "1",
 	};
@@ -188,7 +188,7 @@ describe("ACP deep-interview wire path", () => {
 		});
 		servers.push(modelServer);
 
-		const root = await fs.promises.mkdtemp(path.join(os.tmpdir(), "gjc-acp-deep-interview-wire-"));
+		const root = await fs.promises.mkdtemp(path.join(os.tmpdir(), "vib-acp-deep-interview-wire-"));
 		const env = childEnv(root);
 		for (const dir of [
 			env.HOME,
@@ -198,20 +198,20 @@ describe("ACP deep-interview wire path", () => {
 			env.XDG_STATE_HOME,
 			env.XDG_CACHE_HOME,
 			env.XDG_RUNTIME_DIR,
-			env.GJC_CODING_AGENT_DIR,
+			env.VIB_CODING_AGENT_DIR,
 		])
 			await fs.promises.mkdir(dir, { recursive: true });
 		const workspace = path.join(root, "workspace");
-		await fs.promises.mkdir(path.join(workspace, ".gjc", "skills", "wire-skill"), { recursive: true });
+		await fs.promises.mkdir(path.join(workspace, ".vib", "skills", "wire-skill"), { recursive: true });
 		await fs.promises.writeFile(
-			path.join(workspace, ".gjc", "skills", "wire-skill", "SKILL.md"),
+			path.join(workspace, ".vib", "skills", "wire-skill", "SKILL.md"),
 			"---\nname: wire-skill\ndescription: Complete one deterministic ACP turn.\n---\n\nReturn one short completion message.\n",
 		);
 		await fs.promises.writeFile(
-			path.join(workspace, ".gjc", "settings.json"),
+			path.join(workspace, ".vib", "settings.json"),
 			JSON.stringify({ skills: { enabled: true, enablePiProject: true } }),
 		);
-		const agentDir = env.GJC_CODING_AGENT_DIR;
+		const agentDir = env.VIB_CODING_AGENT_DIR;
 		await fs.promises.writeFile(
 			path.join(agentDir, "models.yml"),
 			`providers:\n  fixture:\n    baseUrl: http://127.0.0.1:${modelServer.port}/v1\n    apiKey: fixture-key\n    api: openai-completions\n    models:\n      - id: fixture-model\n        name: Fixture Model\n        contextWindow: 32768\n        maxTokens: 4096\nprofiles:\n  acp-fixture:\n    display_name: ACP Fixture\n    required_providers: [fixture]\n    model_mapping:\n      default: fixture/fixture-model\n`,

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import * as path from "node:path";
-import { streamAnthropic } from "@gajae-code/ai/providers/anthropic";
-import type { Context, Model, TJsonSchema } from "@gajae-code/ai/types";
+import { streamAnthropic } from "@vib-rato/ai/providers/anthropic";
+import type { Context, Model, TJsonSchema } from "@vib-rato/ai/types";
 
 type CacheControl = { type: string; ttl?: string };
 type ContentBlock = { type: string; text?: string; cache_control?: CacheControl };

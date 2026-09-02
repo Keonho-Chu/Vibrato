@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { appendCrashEvent, computeCrashFingerprint, formatCrashRecordMarker } from "@gajae-code/utils";
+import { appendCrashEvent, computeCrashFingerprint, formatCrashRecordMarker } from "@vib-rato/utils";
 import { crashRelayExitCode } from "../src/cli/crash-cli";
 import type { CrashSignatureView, CrashStatePaths } from "../src/crash/index-store";
 import { compactCrashIndex, listCrashSignatures, readCrashIndex } from "../src/crash/index-store";
@@ -163,7 +163,7 @@ describe("isRelayDue", () => {
 
 describe("readTrustedRelayConfig", () => {
 	/**
-	 * The whole opt-in claim rests on this: `Settings.get` merges project `.gjc`
+	 * The whole opt-in claim rests on this: `Settings.get` merges project `.vib`
 	 * configuration, so reading through it would let opening a repository enable
 	 * the relay and choose its destination.
 	 */
@@ -260,11 +260,11 @@ describe("relayCrashSignatures", () => {
 	}
 
 	beforeEach(async () => {
-		dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-relay-"));
+		dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-relay-"));
 		paths = {
-			index: path.join(dir, "gjc-crash-index.json"),
-			events: path.join(dir, "gjc-crash-events.jsonl"),
-			crashLog: path.join(dir, "gjc-crash.log"),
+			index: path.join(dir, "vib-crash-index.json"),
+			events: path.join(dir, "vib-crash-events.jsonl"),
+			crashLog: path.join(dir, "vib-crash.log"),
 		};
 	});
 
@@ -884,11 +884,11 @@ describe("relayCrashSignatures", () => {
 	});
 
 	test("relayAllSignatures covers both stores and keeps their levels distinct", async () => {
-		const handledDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-relay-handled-"));
+		const handledDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-relay-handled-"));
 		const handledPaths: CrashStatePaths = {
-			index: path.join(handledDir, "gjc-error-index.json"),
-			events: path.join(handledDir, "gjc-error-events.jsonl"),
-			crashLog: path.join(handledDir, "gjc-error.log"),
+			index: path.join(handledDir, "vib-error-index.json"),
+			events: path.join(handledDir, "vib-error-events.jsonl"),
+			crashLog: path.join(handledDir, "vib-error.log"),
 		};
 		try {
 			await seed();
@@ -934,11 +934,11 @@ describe("relayCrashSignatures", () => {
 	});
 
 	test("relayAllSignatures shares the per-run cap across fatal and handled stores", async () => {
-		const handledDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-relay-cap-"));
+		const handledDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-relay-cap-"));
 		const handledPaths: CrashStatePaths = {
-			index: path.join(handledDir, "gjc-error-index.json"),
-			events: path.join(handledDir, "gjc-error-events.jsonl"),
-			crashLog: path.join(handledDir, "gjc-error.log"),
+			index: path.join(handledDir, "vib-error-index.json"),
+			events: path.join(handledDir, "vib-error-events.jsonl"),
+			crashLog: path.join(handledDir, "vib-error.log"),
 		};
 		try {
 			for (let i = 0; i < 3; i++) {
@@ -1008,7 +1008,7 @@ describe("relay trust boundary against a hostile checkout", () => {
 	let dir = "";
 
 	beforeEach(async () => {
-		dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-relay-trust-"));
+		dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-relay-trust-"));
 	});
 
 	afterEach(async () => {
@@ -1025,9 +1025,9 @@ describe("relay trust boundary against a hostile checkout", () => {
 			NODE_ENV: env.NODE_ENV,
 			...env,
 		};
-		delete childEnv.GJC_CODING_AGENT_DIR;
+		delete childEnv.VIB_CODING_AGENT_DIR;
 		delete childEnv.PI_CODING_AGENT_DIR;
-		delete childEnv.GJC_CONFIG_DIR;
+		delete childEnv.VIB_CONFIG_DIR;
 		delete childEnv.PI_CONFIG_DIR;
 		for (const [key, value] of Object.entries(env)) {
 			if (value === undefined) delete childEnv[key];
@@ -1053,8 +1053,8 @@ describe("relay trust boundary against a hostile checkout", () => {
 		configYaml?: string,
 	): Promise<{ stdout: string; stderr: string; exitCode: number }> {
 		if (configYaml !== undefined) {
-			await fs.mkdir(path.join(dir, ".gjc", "agent"), { recursive: true });
-			await fs.writeFile(path.join(dir, ".gjc", "agent", "config.yml"), configYaml);
+			await fs.mkdir(path.join(dir, ".vib", "agent"), { recursive: true });
+			await fs.writeFile(path.join(dir, ".vib", "agent", "config.yml"), configYaml);
 		}
 		const child = Bun.spawn(["bun", path.resolve(import.meta.dir, "../src/cli.ts"), ...argv], {
 			cwd: dir,
@@ -1062,8 +1062,8 @@ describe("relay trust boundary against a hostile checkout", () => {
 				PATH: Bun.env.PATH ?? "/usr/bin:/bin",
 				HOME: dir,
 				TMPDIR: path.join(dir, "tmp"),
-				GJC_CONFIG_DIR: ".gjc",
-				GJC_CODING_AGENT_DIR: path.join(dir, ".gjc", "agent"),
+				VIB_CONFIG_DIR: ".vib",
+				VIB_CODING_AGENT_DIR: path.join(dir, ".vib", "agent"),
 			},
 			stdout: "pipe",
 			stderr: "pipe",
@@ -1076,7 +1076,7 @@ describe("relay trust boundary against a hostile checkout", () => {
 		return { stdout, stderr, exitCode };
 	}
 
-	test("dispatches gjc crash relay through the trusted global settings flow", async () => {
+	test("dispatches vib crash relay through the trusted global settings flow", async () => {
 		const result = await runCrashRelay(
 			["crash", "relay"],
 			"crashReport:\n  upstream: sentry\n  upstreamDsn: ftp://invalid.example/1\n",
@@ -1128,7 +1128,7 @@ describe("relay trust boundary against a hostile checkout", () => {
 
 	test("a dotenv-expanded agent directory cannot redirect trusted relay state", async () => {
 		const hostileAgent = path.join(dir, "checkout-agent");
-		await Bun.write(path.join(dir, ".env"), "GJC_CODING_AGENT_DIR=$HOSTILE_AGENT\n");
+		await Bun.write(path.join(dir, ".env"), "VIB_CODING_AGENT_DIR=$HOSTILE_AGENT\n");
 		const relayPath = path.resolve(import.meta.dir, "../src/crash/upstream/relay.ts");
 		const dirsPath = path.resolve(import.meta.dir, "../../utils/src/dirs.ts");
 		const out = await runInCheckout(
@@ -1138,7 +1138,7 @@ describe("relay trust boundary against a hostile checkout", () => {
 			{ HOSTILE_AGENT: hostileAgent, HOME: dir },
 		);
 		const result = JSON.parse(out) as { agent: string; paths: CrashStatePaths };
-		expect(result.agent).toBe(path.join(dir, ".gjc", "agent"));
+		expect(result.agent).toBe(path.join(dir, ".vib", "agent"));
 		for (const filePath of Object.values(result.paths)) {
 			expect(filePath.startsWith(hostileAgent)).toBe(false);
 			expect(filePath.startsWith(result.agent)).toBe(true);
@@ -1169,7 +1169,7 @@ describe("relay trust boundary against a hostile checkout", () => {
 
 	test("automatic relay remains on the trusted agent store despite XDG state", async () => {
 		const xdgState = path.join(dir, "trusted-state");
-		await fs.mkdir(path.join(xdgState, "gjc"), { recursive: true });
+		await fs.mkdir(path.join(xdgState, "vib"), { recursive: true });
 		const relayPath = path.resolve(import.meta.dir, "../src/crash/upstream/relay.ts");
 		const out = await runInCheckout(
 			`import { resolveTrustedHandledRelayStatePaths, resolveTrustedRelayStatePaths } from ${JSON.stringify(relayPath)};\n` +
@@ -1179,14 +1179,14 @@ describe("relay trust boundary against a hostile checkout", () => {
 		const result = JSON.parse(out) as { fatal: CrashStatePaths; handled: CrashStatePaths };
 		for (const store of [result.fatal, result.handled]) {
 			for (const filePath of Object.values(store))
-				expect(filePath.startsWith(path.join(dir, ".gjc", "agent"))).toBe(true);
+				expect(filePath.startsWith(path.join(dir, ".vib", "agent"))).toBe(true);
 		}
 	});
 
-	test("hostile repo XDG_STATE_HOME with a gjc child cannot feed fatal or handled stores", async () => {
+	test("hostile repo XDG_STATE_HOME with a vib child cannot feed fatal or handled stores", async () => {
 		const hostileState = path.join(dir, "hostile-state");
-		const xdgRoot = path.join(hostileState, "gjc");
-		const trustedAgent = path.join(dir, ".gjc", "agent");
+		const xdgRoot = path.join(hostileState, "vib");
+		const trustedAgent = path.join(dir, ".vib", "agent");
 		await fs.mkdir(xdgRoot, { recursive: true });
 		await fs.mkdir(trustedAgent, { recursive: true });
 
@@ -1203,10 +1203,10 @@ describe("relay trust boundary against a hostile checkout", () => {
 				errorName: "TypeError",
 				messageClass: "forged fatal",
 			},
-			path.join(xdgRoot, "gjc-crash-events.jsonl"),
+			path.join(xdgRoot, "vib-crash-events.jsonl"),
 		);
 		await Bun.write(
-			path.join(xdgRoot, "gjc-crash.log"),
+			path.join(xdgRoot, "vib-crash.log"),
 			`2026-08-11T11:59:59.000Z pid=1 [Uncaught Exception] TypeError: forged fatal\n` +
 				`${stack}\n${formatCrashRecordMarker(forgedFatal, 1, "1111222233334444")}\n\n`,
 		);
@@ -1220,10 +1220,10 @@ describe("relay trust boundary against a hostile checkout", () => {
 				errorName: "ToolError",
 				messageClass: "forged handled",
 			},
-			path.join(xdgRoot, "gjc-error-events.jsonl"),
+			path.join(xdgRoot, "vib-error-events.jsonl"),
 		);
 		await Bun.write(
-			path.join(xdgRoot, "gjc-error.log"),
+			path.join(xdgRoot, "vib-error.log"),
 			`2026-08-11T11:59:59.000Z pid=1 [Tool functions.read] ToolError: forged handled\n` +
 				`${stack}\n${formatCrashRecordMarker(forgedHandled, 1, "5555666677778888")}\n\n`,
 		);

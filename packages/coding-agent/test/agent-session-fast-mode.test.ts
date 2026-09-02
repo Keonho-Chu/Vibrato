@@ -1,17 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import * as path from "node:path";
-import { Agent } from "@gajae-code/agent-core";
-import type { AssistantMessage } from "@gajae-code/ai";
-import { getBundledModel } from "@gajae-code/ai/models";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { createAgentSession } from "@gajae-code/coding-agent/sdk";
-import type { AgentSessionEvent } from "@gajae-code/coding-agent/session/agent-session";
-import { AgentSession } from "@gajae-code/coding-agent/session/agent-session";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import type { ToolSession } from "@gajae-code/coding-agent/tools";
-import { TempDir } from "@gajae-code/utils";
+import { Agent } from "@vib-rato/agent-core";
+import type { AssistantMessage } from "@vib-rato/ai";
+import { getBundledModel } from "@vib-rato/ai/models";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { createAgentSession } from "@vib-rato/coding-agent/sdk";
+import type { AgentSessionEvent } from "@vib-rato/coding-agent/session/agent-session";
+import { AgentSession } from "@vib-rato/coding-agent/session/agent-session";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import type { ToolSession } from "@vib-rato/coding-agent/tools";
+import { TempDir } from "@vib-rato/utils";
 import { createAssistantMessage } from "./helpers/agent-session-setup";
 
 /** Build an assistant `message_end` payload signalling the provider auto-dropped fast mode. */

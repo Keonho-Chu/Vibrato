@@ -1,5 +1,5 @@
-const heartbeatPath = process.env.GJC_ISSUE4481_HEARTBEAT_PATH;
-const intervalMs = Number(process.env.GJC_ISSUE4481_HEARTBEAT_INTERVAL_MS ?? "250");
+const heartbeatPath = process.env.VIB_ISSUE4481_HEARTBEAT_PATH;
+const intervalMs = Number(process.env.VIB_ISSUE4481_HEARTBEAT_INTERVAL_MS ?? "250");
 
 if (heartbeatPath && Number.isFinite(intervalMs) && intervalMs > 0) {
 	let sequence = 0;

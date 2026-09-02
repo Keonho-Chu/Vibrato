@@ -1,20 +1,20 @@
 /**
  * Setup CLI command handler.
  *
- * Handles `gjc setup [component]` to install the normal defaults or optional feature dependencies.
+ * Handles `vib setup [component]` to install the normal defaults or optional feature dependencies.
  */
 
 import * as path from "node:path";
 import { createInterface } from "node:readline/promises";
-import { AuthStorage, SqliteAuthCredentialStore } from "@gajae-code/ai/core";
-import { $which, APP_NAME, getAgentDbPath, getPythonEnvDir } from "@gajae-code/utils";
+import { AuthStorage, SqliteAuthCredentialStore } from "@vib-rato/ai/core";
+import { $which, APP_NAME, getAgentDbPath, getPythonEnvDir } from "@vib-rato/utils";
 import { $ } from "bun";
 import chalk from "chalk";
-import { installDefaultGjcDefinitions } from "../defaults/gjc-defaults";
+import { installDefaultVibDefinitions } from "../defaults/vib-defaults";
 import {
 	getDefaultCodexHooksPath,
-	mergeGjcManagedCodexHooksConfig,
-	readGjcManagedCodexHooksStatus,
+	mergeVibManagedCodexHooksConfig,
+	readVibManagedCodexHooksStatus,
 } from "../hooks/codex-native-hooks-config";
 import { theme } from "../modes/theme/theme";
 import { formatCredentialAutoImportResult, runExternalCredentialAutoImport } from "../setup/credential-auto-import";
@@ -86,7 +86,7 @@ export interface SetupCommandArgs {
 		mutation?: string[];
 		artifactByteCap?: string;
 		serverKey?: string;
-		gjcCommand?: string;
+		vibCommand?: string;
 		target?: string;
 		profileDir?: string;
 		timeout?: string;
@@ -130,7 +130,7 @@ const HERMES_ONLY_FLAGS: readonly (keyof SetupCommandArgs["flags"])[] = [
 	"mutation",
 	"artifactByteCap",
 	"serverKey",
-	"gjcCommand",
+	"vibCommand",
 	"target",
 	"profile",
 	"profileDir",
@@ -239,8 +239,8 @@ export function parseSetupArgs(args: string[]): SetupCommandArgs | undefined {
 			flags.artifactByteCap = args[++i];
 		} else if (arg === "--server-key") {
 			flags.serverKey = args[++i];
-		} else if (arg === "--gjc-command") {
-			flags.gjcCommand = args[++i];
+		} else if (arg === "--vib-command") {
+			flags.vibCommand = args[++i];
 		} else if (arg === "--timeout") {
 			flags.timeout = args[++i] ?? "";
 		} else if (arg === "--connect-timeout") {
@@ -331,7 +331,7 @@ async function checkPythonSetup(): Promise<PythonCheckResult> {
  * Install Python packages using uv (preferred) or pip.
  */
 // Python installation helper removed: the subprocess runner has no Python
-// package dependencies beyond a working interpreter. `gjc setup python --check`
+// package dependencies beyond a working interpreter. `vib setup python --check`
 // remains as a probe; users install optional libs (pandas, matplotlib, ...)
 // directly via pip or the in-process `%pip` magic.
 
@@ -469,7 +469,7 @@ async function handleProviderSetup(flags: {
 }
 
 /**
- * Register GJC with Paseo, diagnose that registration, or roll it back.
+ * Register Vibrato with Paseo, diagnose that registration, or roll it back.
  *
  * Every write target belongs to another application, so failures are reported
  * rather than worked around: a refusal here means the user's files were left
@@ -531,14 +531,14 @@ function writePaseoHumanOutput(outcome: PaseoSetupOutcome): void {
 				);
 				return;
 			case "pass":
-				process.stdout.write(`${chalk.green(`${theme.status.success} GJC is registered with Paseo`)}\n`);
+				process.stdout.write(`${chalk.green(`${theme.status.success} Vibrato is registered with Paseo`)}\n`);
 				return;
 		}
 	}
 
 	if (outcome.kind === "install") {
 		if (outcome.result.outcome === "installed") {
-			process.stdout.write(`${chalk.green(`${theme.status.success} GJC registered with Paseo`)}\n`);
+			process.stdout.write(`${chalk.green(`${theme.status.success} Vibrato registered with Paseo`)}\n`);
 			for (const entry of outcome.result.changed) process.stdout.write(`${chalk.dim(`  updated ${entry}`)}\n`);
 			process.stdout.write(
 				`${chalk.dim("Restart the Paseo daemon when convenient so it picks up the new provider.")}\n`,
@@ -553,11 +553,11 @@ function writePaseoHumanOutput(outcome: PaseoSetupOutcome): void {
 
 	switch (outcome.result.outcome) {
 		case "removed":
-			process.stdout.write(`${chalk.green(`${theme.status.success} GJC unregistered from Paseo`)}\n`);
+			process.stdout.write(`${chalk.green(`${theme.status.success} Vibrato unregistered from Paseo`)}\n`);
 			for (const entry of outcome.result.removed) process.stdout.write(`${chalk.dim(`  reverted ${entry}`)}\n`);
 			return;
 		case "nothing-to-remove":
-			process.stdout.write(`${chalk.dim("GJC has nothing recorded to remove from Paseo.")}\n`);
+			process.stdout.write(`${chalk.dim("Vibrato has nothing recorded to remove from Paseo.")}\n`);
 			return;
 		case "partial-removal":
 			process.stderr.write(`${chalk.red(`${theme.status.error} Paseo removal did not complete`)}\n`);
@@ -572,7 +572,7 @@ async function handleHooksSetup(flags: { json?: boolean; check?: boolean }): Pro
 	const existingContent = await Bun.file(hooksPath)
 		.text()
 		.catch(() => null);
-	const status = readGjcManagedCodexHooksStatus(existingContent, hooksPath);
+	const status = readVibManagedCodexHooksStatus(existingContent, hooksPath);
 
 	if (flags.check) {
 		if (flags.json) {
@@ -581,33 +581,35 @@ async function handleHooksSetup(flags: { json?: boolean; check?: boolean }): Pro
 			return;
 		}
 		if (!status.installed) {
-			process.stderr.write(`${chalk.red(`${theme.status.error} GJC native Codex hooks are not fully installed`)}\n`);
+			process.stderr.write(
+				`${chalk.red(`${theme.status.error} Vibrato native Codex hooks are not fully installed`)}\n`,
+			);
 			process.stderr.write(`${chalk.dim(`Target: ${hooksPath}`)}\n`);
 			process.stderr.write(`${chalk.dim(`Missing events: ${status.missingEvents.join(", ")}`)}\n`);
 			process.exit(1);
 		}
-		process.stdout.write(`${chalk.green(`${theme.status.success} GJC native Codex hooks are installed`)}\n`);
+		process.stdout.write(`${chalk.green(`${theme.status.success} Vibrato native Codex hooks are installed`)}\n`);
 		process.stdout.write(`${chalk.dim(`Target: ${hooksPath}`)}\n`);
 		return;
 	}
 
-	const merged = mergeGjcManagedCodexHooksConfig(existingContent);
+	const merged = mergeVibManagedCodexHooksConfig(existingContent);
 	await Bun.write(hooksPath, merged.content);
-	const installed = readGjcManagedCodexHooksStatus(merged.content, hooksPath);
+	const installed = readVibManagedCodexHooksStatus(merged.content, hooksPath);
 
 	if (flags.json) {
 		process.stdout.write(`${JSON.stringify({ ...installed, changed: merged.changed }, null, 2)}\n`);
 		return;
 	}
 
-	process.stdout.write(`${chalk.green(`${theme.status.success} GJC native Codex hooks installed`)}\n`);
+	process.stdout.write(`${chalk.green(`${theme.status.success} Vibrato native Codex hooks installed`)}\n`);
 	process.stdout.write(`${chalk.dim(`Target: ${hooksPath}`)}\n`);
 	process.stdout.write(
 		`${chalk.dim(`Managed events: UserPromptSubmit, Stop; changed: ${merged.changed ? "yes" : "no"}`)}\n`,
 	);
 }
 async function handleDefaultsSetup(flags: { json?: boolean; check?: boolean; force?: boolean }): Promise<void> {
-	const result = await installDefaultGjcDefinitions({ check: flags.check, force: flags.force });
+	const result = await installDefaultVibDefinitions({ check: flags.check, force: flags.force });
 	const hasCheckFailure = result.missing > 0 || result.different > 0;
 	const inspectGuidance = `Inspect bundled skills with: ${APP_NAME} skills list; read one with: ${APP_NAME} skills read ralplan`;
 
@@ -619,7 +621,7 @@ async function handleDefaultsSetup(flags: { json?: boolean; check?: boolean; for
 
 	if (flags.check) {
 		if (hasCheckFailure) {
-			console.error(chalk.red(`${theme.status.error} Default GJC workflow skills are not fully installed`));
+			console.error(chalk.red(`${theme.status.error} Default Vibrato workflow skills are not fully installed`));
 			console.error(chalk.dim(`Target: ${result.targetRoot}`));
 			console.error(
 				chalk.dim(`Missing: ${result.missing}; different: ${result.different}; matching: ${result.matching}`),
@@ -632,13 +634,13 @@ async function handleDefaultsSetup(flags: { json?: boolean; check?: boolean; for
 			);
 			process.exit(1);
 		}
-		console.log(chalk.green(`${theme.status.success} Default GJC workflow skills are installed`));
+		console.log(chalk.green(`${theme.status.success} Default Vibrato workflow skills are installed`));
 		console.log(chalk.dim(`Target: ${result.targetRoot}`));
 		console.log(chalk.dim(inspectGuidance));
 		return;
 	}
 
-	console.log(chalk.green(`${theme.status.success} Default GJC workflow skills installed`));
+	console.log(chalk.green(`${theme.status.success} Default Vibrato workflow skills installed`));
 	console.log(chalk.dim(`Target: ${result.targetRoot}`));
 	console.log(chalk.dim(`Written: ${result.written}; skipped: ${result.skipped}`));
 	console.log(chalk.dim(inspectGuidance));
@@ -758,7 +760,7 @@ async function confirmImport(count: number): Promise<boolean> {
 
 /**
  * Discover existing Claude Code / Codex CLI credentials and import them into the
- * gjc credential store after a redacted preview + confirmation. Falls back to
+ * vib credential store after a redacted preview + confirmation. Falls back to
  * manual-setup guidance when nothing importable is found.
  */
 export interface CredentialsSetupDependencies {
@@ -908,16 +910,16 @@ function formatCredentialSummaryLine(credential: { provider: string; kind: strin
  * Print setup command help.
  */
 export function printSetupHelp(): void {
-	console.log(`${chalk.bold(`${APP_NAME} setup`)} - Install GJC defaults or optional feature dependencies
+	console.log(`${chalk.bold(`${APP_NAME} setup`)} - Install Vibrato defaults or optional feature dependencies
 
 ${chalk.bold("Usage:")}
   ${APP_NAME} setup [component] [options]
 
 ${chalk.bold("Components:")}
-  defaults  Install bundled GJC default workflow skills (default)
+  defaults  Install bundled Vibrato default workflow skills (default)
   hermes   Optional: render/install a Hermes MCP bridge setup package
-  hooks     Optional: install GJC native Codex UserPromptSubmit/Stop skill-state hooks
-  paseo     Optional: register GJC as a Paseo ACP provider and bridge Paseo's skills
+  hooks     Optional: install Vibrato native Codex UserPromptSubmit/Stop skill-state hooks
+  paseo     Optional: register Vibrato as a Paseo ACP provider and bridge Paseo's skills
   provider  Optional: add a preset, OpenAI-compatible, or Anthropic-compatible API provider
   python    Optional: verify a Python 3 interpreter is reachable for code execution
   stt       Optional: install speech-to-text dependencies (openai-whisper, recording tools)
@@ -925,23 +927,20 @@ ${chalk.bold("Components:")}
 
 
 ${chalk.bold("Provider example:")}
-  ${APP_NAME} setup provider --preset minimax
-  ${APP_NAME} setup provider --preset glm
-  ${APP_NAME} setup provider --preset cline-pass
-  ${APP_NAME} setup provider --preset commandcode-goat
-  ${APP_NAME} setup provider --preset litellm --base-url https://litellm.example.com/v1
-  ${APP_NAME} setup provider --preset openai-compatible-proxy --base-url https://gateway.example.com/v1
-  MY_PROVIDER_KEY=sk-... ${APP_NAME} setup provider --compat openai --provider my-oai --base-url https://api.example.com/v1 --api-key-env MY_PROVIDER_KEY --model gpt-example
+  ${APP_NAME} setup provider --preset vllm --base-url http://10.0.0.5:8000/v1        # key from VLLM_API_KEY
+  VLLM_API_KEY=sk-... ${APP_NAME} setup provider --preset vllm --base-url http://127.0.0.1:8000/v1
+  ${APP_NAME} setup provider --preset sglang --base-url http://127.0.0.1:30000/v1     # key from SGLANG_API_KEY
+  MY_PROVIDER_KEY=sk-... ${APP_NAME} setup provider --compat openai --provider my-vllm --base-url https://llm.example.com/v1 --api-key-env MY_PROVIDER_KEY
 
 ${chalk.bold("Hermes example:")}
   ${APP_NAME} setup hermes --root /path/to/repo
-  ${APP_NAME} setup hermes --root /path/to/repo --profile my-bot --repo gajae-code --profile-dir /path/to/hermes/profile --install
-  ${APP_NAME} setup hermes --root /path/to/repo --worktree-name hermes-gajae-code
-  ${APP_NAME} setup hermes --root /path/to/repo --session-command "gjc --worktree hermes-custom"
-  ${APP_NAME} setup hermes --root /path/to/repo --session-command gjc
-  ${APP_NAME} setup hermes --root /path/to/repo --coding-agent-dir /var/lib/gjc/hermes-agent
-  ${APP_NAME} setup hermes --root /path/to/repo --gjc-command "python3 /tmp/gjc-wrapper.py"
-  ${APP_NAME} setup hermes --root /path/to/repo --gjc-command /opt/gjc
+  ${APP_NAME} setup hermes --root /path/to/repo --profile my-bot --repo vib-rato --profile-dir /path/to/hermes/profile --install
+  ${APP_NAME} setup hermes --root /path/to/repo --worktree-name hermes-vib-rato
+  ${APP_NAME} setup hermes --root /path/to/repo --session-command "vib --worktree hermes-custom"
+  ${APP_NAME} setup hermes --root /path/to/repo --session-command vib
+  ${APP_NAME} setup hermes --root /path/to/repo --coding-agent-dir /var/lib/vib/hermes-agent
+  ${APP_NAME} setup hermes --root /path/to/repo --vib-command "python3 /tmp/vib-wrapper.py"
+  ${APP_NAME} setup hermes --root /path/to/repo --vib-command /opt/vib
 
 ${chalk.bold("Options:")}
   -c, --check       Check if dependencies are installed without installing
@@ -950,7 +949,7 @@ ${chalk.bold("Options:")}
   --preset          Provider preset id (run setup provider --help to list available presets)
   --compat          Provider compatibility: openai or anthropic
   --provider        Provider id to add to models.yml
-  --base-url        Provider API base URL (required for proxy presets: litellm, openai-compatible-proxy)
+  --base-url        Provider API base URL (required for the vllm and sglang presets)
   --api-key-env     Read provider API key from this environment variable
   --model, --models Model id to add (repeat or comma-separate)
   --models-path     Override models config path
@@ -959,26 +958,26 @@ ${chalk.bold("Options:")}
   --root            Allowed Hermes MCP workdir/artifact root (repeatable)
   --profile         Hermes MCP profile namespace
   --repo            Hermes MCP repo namespace
-  --gjc-command     Full command the controller execs: one token = executable (mcp-serve coordinator still appended); multiple tokens = complete server command verbatim, nothing appended; quote-aware, never shell-evaluated
-  --session-command Typed GJC lifecycle selector: gjc | gjc --worktree [name]; disables generated worktree flags
-  --no-worktree     Disable default GJC --worktree isolation for Hermes sessions
-  --worktree-name   Named GJC --worktree branch for Hermes sessions
-  --timeout         Hermes MCP client call timeout in whole seconds 1-3600 (default 180); host client budget, not a GJC turn deadline
-  --connect-timeout Hermes MCP connect timeout in whole seconds 1-3600 (default 60); host client budget, not a GJC turn deadline
+  --vib-command     Full command the controller execs: one token = executable (mcp-serve coordinator still appended); multiple tokens = complete server command verbatim, nothing appended; quote-aware, never shell-evaluated
+  --session-command Typed Vibrato lifecycle selector: vib | vib --worktree [name]; disables generated worktree flags
+  --no-worktree     Disable default Vibrato --worktree isolation for Hermes sessions
+  --worktree-name   Named Vibrato --worktree branch for Hermes sessions
+  --timeout         Hermes MCP client call timeout in whole seconds 1-3600 (default 180); host client budget, not a Vibrato turn deadline
+  --connect-timeout Hermes MCP connect timeout in whole seconds 1-3600 (default 60); host client budget, not a Vibrato turn deadline
   --mutation        Hermes MCP mutation classes: sessions,questions,reports,all
-  --coding-agent-dir GJC agent-directory override (GJC_CODING_AGENT_DIR, absolute path); distinct from --state-root
+  --coding-agent-dir Vibrato agent-directory override (VIB_CODING_AGENT_DIR, absolute path); distinct from --state-root
   --target          Hermes config file target for config-only install
   --profile-dir     Hermes profile directory for full setup install
   --dry-run         Preview discovered credentials without importing (credentials)
   -y, --yes         Import discovered credentials without an interactive prompt (credentials)
   --keychain        Include Claude macOS Keychain when discovering credentials
-  --remove          Roll back the Paseo registration GJC created (paseo)
-  --mpreset         Register an additional gjc-<preset> Paseo provider (paseo)
+  --remove          Roll back the Paseo registration Vibrato created (paseo)
+  --mpreset         Register an additional vib-<preset> Paseo provider (paseo)
 
 ${chalk.bold("Examples:")}
-  ${APP_NAME} setup                  Install bundled GJC default workflow skills
-  ${APP_NAME} setup defaults         Install bundled GJC default workflow skills explicitly
-  ${APP_NAME} setup defaults --check Check bundled GJC default workflow skills are installed
+  ${APP_NAME} setup                  Install bundled Vibrato default workflow skills
+  ${APP_NAME} setup defaults         Install bundled Vibrato default workflow skills explicitly
+  ${APP_NAME} setup defaults --check Check bundled Vibrato default workflow skills are installed
   ${APP_NAME} setup hooks            Install native Codex skill-state hooks
   ${APP_NAME} setup hooks --check    Check native Codex skill-state hooks
   ${APP_NAME} setup hermes --root /path/to/repo Render a model-agnostic Hermes MCP setup preview
@@ -989,7 +988,7 @@ ${chalk.bold("Examples:")}
   ${APP_NAME} setup credentials      Discover & import existing Claude/Codex credentials
   ${APP_NAME} setup credentials --dry-run  Preview importable credentials (redacted)
   ${APP_NAME} setup credentials --yes      Import without an interactive prompt
-  ${APP_NAME} setup paseo            Register GJC as a Paseo ACP provider
+  ${APP_NAME} setup paseo            Register Vibrato as a Paseo ACP provider
   ${APP_NAME} setup paseo --check    Diagnose the Paseo registration
   ${APP_NAME} setup paseo --remove   Roll back the Paseo registration
 `);

@@ -17,7 +17,7 @@ const collect = (): { rss: number; heapUsed: number; external: number } => {
 
 const parentCount = 200;
 const childrenPerParent = 12;
-const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-session-memory-parent-rss-"));
+const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-session-memory-parent-rss-"));
 const sessionFile = path.join(root, "parent-rss.jsonl");
 const fd = fs.openSync(sessionFile, "w", 0o600);
 const write = (value: unknown): void => {

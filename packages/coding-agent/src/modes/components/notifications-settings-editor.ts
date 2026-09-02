@@ -7,7 +7,7 @@ import {
 	type SecretValue,
 	truncateToWidth,
 	wrapTextWithAnsi,
-} from "@gajae-code/tui";
+} from "@vib-rato/tui";
 import type { CasReceipt } from "../../config/atomic-yaml-patch";
 import type { NotificationProvider, ProviderSecretDisposition } from "../../sdk/bus/config";
 import type {

@@ -11,7 +11,7 @@ import {
 	isCached,
 	isValidVersionForCache,
 	removeCachedPlugin,
-} from "@gajae-code/coding-agent/extensibility/plugins/marketplace";
+} from "@vib-rato/coding-agent/extensibility/plugins/marketplace";
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -100,7 +100,7 @@ describe("cachePlugin, isCached, removeCachedPlugin", () => {
 	let sourceDir: string;
 
 	beforeEach(async () => {
-		tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-cache-test-"));
+		tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-cache-test-"));
 		cacheDir = path.join(tmpDir, "cache");
 		sourceDir = path.join(tmpDir, "sources");
 		await fsp.mkdir(sourceDir, { recursive: true });
@@ -167,7 +167,7 @@ describe("cleanOrphanedCache", () => {
 	let sourceDir: string;
 
 	beforeEach(async () => {
-		tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-orphan-test-"));
+		tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-orphan-test-"));
 		cacheDir = path.join(tmpDir, "cache");
 		sourceDir = path.join(tmpDir, "sources");
 		await fsp.mkdir(sourceDir, { recursive: true });

@@ -1,10 +1,16 @@
-import { Container, matchesKey, Spacer, TruncatedText } from "@gajae-code/tui";
+import { Container, matchesKey, Spacer, TruncatedText } from "@vib-rato/tui";
 import { theme } from "../../modes/theme/theme";
 import { matchesSelectCancel } from "../../modes/utils/keybinding-matchers";
 import { formatModelOnboardingGuidance } from "../../setup/model-onboarding-guidance";
 import { DynamicBorder } from "./dynamic-border";
 
-export type ProviderOnboardingAction = "custom-provider-wizard" | "oauth-login" | "import-credentials" | "api-guide";
+export type ProviderOnboardingAction =
+	| "vllm-endpoint"
+	| "sglang-endpoint"
+	| "custom-provider-wizard"
+	| "oauth-login"
+	| "import-credentials"
+	| "api-guide";
 
 interface ProviderOnboardingOption {
 	label: string;
@@ -13,6 +19,16 @@ interface ProviderOnboardingOption {
 }
 
 const PROVIDER_ONBOARDING_OPTIONS: ProviderOnboardingOption[] = [
+	{
+		label: "Connect a vLLM endpoint",
+		description: "Enter the vLLM server URL and API key and start right away; models are discovered.",
+		action: "vllm-endpoint",
+	},
+	{
+		label: "Connect an SGLang endpoint",
+		description: "Enter the SGLang server URL and API key; models are discovered.",
+		action: "sglang-endpoint",
+	},
 	{
 		label: "Add custom provider",
 		description: "Configure an OpenAI- or Anthropic-compatible API provider interactively.",
@@ -25,7 +41,7 @@ const PROVIDER_ONBOARDING_OPTIONS: ProviderOnboardingOption[] = [
 	},
 	{
 		label: "Add API-compatible provider",
-		description: "Show the /provider add and gjc setup provider commands.",
+		description: "Show the /provider add and vib setup provider commands.",
 		action: "api-guide",
 	},
 	{

@@ -2,15 +2,15 @@ import { afterEach, expect, test, vi } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { Agent, type AgentMessage } from "@gajae-code/agent-core";
-import { getBundledModel } from "@gajae-code/ai";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { modeStatePath } from "@gajae-code/coding-agent/gjc-runtime/session-layout";
-import { readVisibleSkillActiveState } from "@gajae-code/coding-agent/hooks/skill-state";
-import { AgentSession } from "@gajae-code/coding-agent/session/agent-session";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
+import { Agent, type AgentMessage } from "@vib-rato/agent-core";
+import { getBundledModel } from "@vib-rato/ai";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { readVisibleSkillActiveState } from "@vib-rato/coding-agent/hooks/skill-state";
+import { AgentSession } from "@vib-rato/coding-agent/session/agent-session";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { modeStatePath } from "@vib-rato/coding-agent/vib-runtime/session-layout";
 import { createSdkRunCapability } from "../src/sdk/host/sdk-run-capability";
 
 let session: AgentSession | undefined;
@@ -18,17 +18,17 @@ let authStorage: AuthStorage | undefined;
 let tempDir: string | undefined;
 
 function createLifecycleIndependentSessionManager(): SessionManager {
-	const lifecycleRequestId = process.env.GJC_LIFECYCLE_REQUEST_ID;
-	const lifecycleSessionId = process.env.GJC_SESSION_ID;
+	const lifecycleRequestId = process.env.VIB_LIFECYCLE_REQUEST_ID;
+	const lifecycleSessionId = process.env.VIB_SESSION_ID;
 	try {
-		delete process.env.GJC_LIFECYCLE_REQUEST_ID;
-		delete process.env.GJC_SESSION_ID;
+		delete process.env.VIB_LIFECYCLE_REQUEST_ID;
+		delete process.env.VIB_SESSION_ID;
 		return SessionManager.inMemory();
 	} finally {
-		if (lifecycleRequestId === undefined) delete process.env.GJC_LIFECYCLE_REQUEST_ID;
-		else process.env.GJC_LIFECYCLE_REQUEST_ID = lifecycleRequestId;
-		if (lifecycleSessionId === undefined) delete process.env.GJC_SESSION_ID;
-		else process.env.GJC_SESSION_ID = lifecycleSessionId;
+		if (lifecycleRequestId === undefined) delete process.env.VIB_LIFECYCLE_REQUEST_ID;
+		else process.env.VIB_LIFECYCLE_REQUEST_ID = lifecycleRequestId;
+		if (lifecycleSessionId === undefined) delete process.env.VIB_SESSION_ID;
+		else process.env.VIB_SESSION_ID = lifecycleSessionId;
 	}
 }
 
@@ -43,7 +43,7 @@ afterEach(async () => {
 });
 
 test.serial("forwards preflight cancellation when a prompt reroutes to a skill", async () => {
-	tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-skill-reroute-cancel-"));
+	tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-skill-reroute-cancel-"));
 	const model = getBundledModel("anthropic", "claude-sonnet-4-5")!;
 	authStorage = await AuthStorage.create(path.join(tempDir, "auth.db"));
 	authStorage.setRuntimeApiKey("anthropic", "test-key");
@@ -101,7 +101,7 @@ test.serial("forwards preflight cancellation when a prompt reroutes to a skill",
 });
 
 test.serial("keeps SDK ownership when an internal skill invocation becomes a custom prompt", async () => {
-	tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-skill-sdk-owner-"));
+	tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-skill-sdk-owner-"));
 	const skillPath = path.join(tempDir, "SKILL.md");
 	fs.writeFileSync(skillPath, "# Fixture skill\n\n{{args}}\n");
 	const model = getBundledModel("anthropic", "claude-sonnet-4-5")!;
@@ -138,7 +138,7 @@ test.serial("keeps SDK ownership when an internal skill invocation becomes a cus
 });
 
 test.serial("cancels an ordinary prompt while it waits on the startup barrier", async () => {
-	tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-prompt-admission-cancel-"));
+	tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-prompt-admission-cancel-"));
 	const model = getBundledModel("anthropic", "claude-sonnet-4-5")!;
 	authStorage = await AuthStorage.create(path.join(tempDir, "auth.db"));
 	authStorage.setRuntimeApiKey("anthropic", "test-key");
@@ -168,7 +168,7 @@ test.serial("cancels an ordinary prompt while it waits on the startup barrier", 
 });
 
 test.serial("rolls back workflow state seeded after durable acceptance when preflight is cancelled", async () => {
-	tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-skill-state-cancel-"));
+	tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-skill-state-cancel-"));
 	const skillDir = path.join(tempDir, "deep-interview");
 	const skillPath = path.join(skillDir, "SKILL.md");
 	fs.mkdirSync(skillDir, { recursive: true });
@@ -214,17 +214,17 @@ test.serial("rolls back workflow state seeded after durable acceptance when pref
 	expect(agent.state.messages).toHaveLength(0);
 });
 test.serial("rolls back a real subskill activation after durable acceptance is cancelled", async () => {
-	tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-subskill-state-cancel-"));
+	tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-subskill-state-cancel-"));
 	const skillDir = path.join(tempDir, "deep-interview");
 	const skillPath = path.join(skillDir, "SKILL.md");
-	const pluginRoot = path.join(tempDir, ".gjc", "gjc-plugins", "cancellation-plugin");
+	const pluginRoot = path.join(tempDir, ".vib", "vib-plugins", "cancellation-plugin");
 	fs.mkdirSync(path.join(pluginRoot, "subskills", "design"), { recursive: true });
 	fs.mkdirSync(skillDir, { recursive: true });
 	fs.writeFileSync(skillPath, "# Deep interview fixture\n");
 	fs.writeFileSync(
-		path.join(pluginRoot, "gajae-plugin.json"),
+		path.join(pluginRoot, "vibrato-plugin.json"),
 		JSON.stringify({
-			kind: "gajae-code-plugin",
+			kind: "vib-rato-plugin",
 			name: "cancellation-plugin",
 			version: "1.0.0",
 			subskills: ["subskills/design/SKILL.md"],
@@ -292,7 +292,7 @@ test.serial("rolls back a real subskill activation after durable acceptance is c
 });
 
 test.serial("cancels only its accepted idle follow-up before it can execute", async () => {
-	tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-idle-follow-up-cancel-"));
+	tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-idle-follow-up-cancel-"));
 	const model = getBundledModel("anthropic", "claude-sonnet-4-5")!;
 	authStorage = await AuthStorage.create(path.join(tempDir, "auth.db"));
 	authStorage.setRuntimeApiKey("anthropic", "test-key");
@@ -329,7 +329,7 @@ test.serial("cancels only its accepted idle follow-up before it can execute", as
 	expect(agent.state.messages).toHaveLength(0);
 });
 test.serial("defers an SDK follow-up behind pre-existing queued work so its run token binds", async () => {
-	tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-follow-up-defer-"));
+	tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-follow-up-defer-"));
 	const model = getBundledModel("anthropic", "claude-sonnet-4-5")!;
 	authStorage = await AuthStorage.create(path.join(tempDir, "auth.db"));
 	authStorage.setRuntimeApiKey("anthropic", "test-key");
@@ -368,7 +368,7 @@ test.serial("defers an SDK follow-up behind pre-existing queued work so its run 
 });
 
 test.serial("releases a deferred SDK follow-up only after queued work drains", async () => {
-	tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-follow-up-release-"));
+	tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-follow-up-release-"));
 	const model = getBundledModel("anthropic", "claude-sonnet-4-5")!;
 	authStorage = await AuthStorage.create(path.join(tempDir, "auth.db"));
 	authStorage.setRuntimeApiKey("anthropic", "test-key");
@@ -413,7 +413,7 @@ test.serial("releases a deferred SDK follow-up only after queued work drains", a
 	expect(agent.snapshotFollowUp()[0]).toMatchObject({ content: [{ type: "text", text: "owned follow-up" }] });
 });
 test.serial("releases the next deferred SDK follow-up when a released one is cancelled", async () => {
-	tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-follow-up-advance-"));
+	tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-follow-up-advance-"));
 	const model = getBundledModel("anthropic", "claude-sonnet-4-5")!;
 	authStorage = await AuthStorage.create(path.join(tempDir, "auth.db"));
 	authStorage.setRuntimeApiKey("anthropic", "test-key");

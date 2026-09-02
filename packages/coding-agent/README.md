@@ -1,10 +1,10 @@
-# @gajae-code/coding-agent
+# @vib-rato/coding-agent
 
-Core implementation package for the `gjc` coding agent in the `gajae-code` monorepo.
+Core implementation package for the `vib` coding agent in the `vib-rato` monorepo.
 
 For installation, setup, provider configuration, model roles, slash commands, and full CLI reference, see:
 - [Monorepo README (local)](../../README.md)
-- [Monorepo README (GitHub)](https://github.com/Yeachan-Heo/gajae-code#readme)
+- [Monorepo README (GitHub)](https://github.com/Keonho-Chu/Vibrato#readme)
 
 Package-specific references:
 - [CHANGELOG](./CHANGELOG.md)
@@ -13,28 +13,28 @@ Package-specific references:
 
 ## External lifecycle notifications
 
-GJC already exposes public lifecycle events through the extension/hook event contract. External notification integrations for Discord, Hermes, clawhip, or similar channels should be opt-in and subscribe to these events instead of scraping transcripts or logs:
+Vibrato already exposes public lifecycle events through the extension/hook event contract. External notification integrations for Discord, Hermes, clawhip, or similar channels should be opt-in and subscribe to these events instead of scraping transcripts or logs:
 
 - `turn_end` — a model/tool turn finished. The public payload is `{ type: "turn_end", turnIndex, message, toolResults }`.
 - `agent_end` — the agent loop for a submitted prompt reached a terminal boundary. The public payload is `{ type: "agent_end", messages }`.
 
-For simple local side effects that do not need a full extension, set the user-level `completion.notifyCommand`. GJC runs it on completed agent turns with `GJC_NOTIFICATION_*` environment variables (`GJC_NOTIFICATION_TITLE`, `GJC_NOTIFICATION_BODY`, `GJC_NOTIFICATION_JSON`, etc.); project settings cannot activate this command hook.
+For simple local side effects that do not need a full extension, set the user-level `completion.notifyCommand`. Vibrato runs it on completed agent turns with `VIB_NOTIFICATION_*` environment variables (`VIB_NOTIFICATION_TITLE`, `VIB_NOTIFICATION_BODY`, `VIB_NOTIFICATION_JSON`, etc.); project settings cannot activate this command hook.
 
 ```sh
-gjc config set completion.notifyCommand 'cmux notify --title "$GJC_NOTIFICATION_TITLE" --body "$GJC_NOTIFICATION_BODY"'
+vib config set completion.notifyCommand 'cmux notify --title "$VIB_NOTIFICATION_TITLE" --body "$VIB_NOTIFICATION_BODY"'
 ```
 
-On macOS, GJC emits the terminal BEL for completion, approval, and ask notifications by default when `notifications.terminalBell` has not been configured. Set it to `false` to keep macOS terminals silent.
+On macOS, Vibrato emits the terminal BEL for completion, approval, and ask notifications by default when `notifications.terminalBell` has not been configured. Set it to `false` to keep macOS terminals silent.
 
-When GJC runs inside a cmux terminal (`CMUX_WORKSPACE_ID` is set), GJC best-effort renames that cmux workspace to the current GJC session name (with a `GJC: ` prefix) — but only when the workspace still has its default title, so a name you pinned (or one set by a peer session sharing the workspace) is never overwritten. Opt out with `GJC_NO_CMUX_RENAME=1`.
+When Vibrato runs inside a cmux terminal (`CMUX_WORKSPACE_ID` is set), Vibrato best-effort renames that cmux workspace to the current Vibrato session name (with a `Vibrato: ` prefix) — but only when the workspace still has its default title, so a name you pinned (or one set by a peer session sharing the workspace) is never overwritten. Opt out with `VIB_NO_CMUX_RENAME=1`.
 
 Windows Terminal may keep BEL (`[Console]::Write([char]7)`) silent depending on profile and system sound settings even when `notifications.terminalBell` is enabled. For an audible Windows completion beep, configure a user-level PowerShell command hook instead:
 
 ```powershell
-gjc config set completion.notifyCommand 'powershell.exe -NoProfile -Command "[Console]::Beep(880, 300)"'
+vib config set completion.notifyCommand 'powershell.exe -NoProfile -Command "[Console]::Beep(880, 300)"'
 ```
 
-`cmux notify` returning successfully means GJC handed the completion event to cmux. cmux may still suppress the native desktop banner when the app/window is focused, the emitting workspace is active, or the notification panel is open. In those cases, check cmux's notification panel or unread workspace state instead of treating the missing banner as a GJC delivery failure.
+`cmux notify` returning successfully means Vibrato handed the completion event to cmux. cmux may still suppress the native desktop banner when the app/window is focused, the emitting workspace is active, or the notification panel is open. In those cases, check cmux's notification panel or unread workspace state instead of treating the missing banner as a Vibrato delivery failure.
 Recommended external mapping:
 
 | Notification | Public event | Status guidance |
@@ -46,7 +46,7 @@ Recommended external mapping:
 Forward only a minimal, caller-sanitized payload. Do not include raw prompts, assistant transcripts, hidden prompts, tool outputs, raw logs, host paths, private config, webhook URLs, channel IDs, tokens, or secrets. A safe notification payload should be built by the extension/hook itself, for example:
 
 ```ts
-import type { ExtensionAPI } from "@gajae-code/coding-agent";
+import type { ExtensionAPI } from "@vib-rato/coding-agent";
 
 type PublicLifecycleNotification = {
 	type: "turn_end" | "agent_end";
@@ -57,7 +57,7 @@ type PublicLifecycleNotification = {
 };
 
 export default function lifecycleNotifier(pi: ExtensionAPI) {
-	const enabled = process.env.GJC_LIFECYCLE_NOTIFY === "1";
+	const enabled = process.env.VIB_LIFECYCLE_NOTIFY === "1";
 	if (!enabled) return;
 
 	const send = async (payload: PublicLifecycleNotification) => {
@@ -71,7 +71,7 @@ export default function lifecycleNotifier(pi: ExtensionAPI) {
 			status: "finished",
 			turnIndex: event.turnIndex,
 			timestamp: new Date().toISOString(),
-			summary: "GJC turn finished",
+			summary: "Vibrato turn finished",
 		}),
 	);
 
@@ -80,7 +80,7 @@ export default function lifecycleNotifier(pi: ExtensionAPI) {
 			type: "agent_end",
 			status: "stopped",
 			timestamp: new Date().toISOString(),
-			summary: "GJC prompt reached a terminal lifecycle boundary",
+			summary: "Vibrato prompt reached a terminal lifecycle boundary",
 		}),
 	);
 }
@@ -90,15 +90,15 @@ This is the supported repo-native lifecycle notification path. It is not Claude 
 
 ## Windows psmux authority boundary
 
-On native Windows, GJC-managed psmux sessions persist a per-owner `ProviderAuthority`: the exact resolved executable identity and an isolated tmux-compatible `-L` namespace. `GJC_TMUX_COMMAND` is an executable path/name only, never `psmux -L …`. Recover managed sessions through GJC so it reuses and re-proves that authority; do not fall back to ambient `tmux`/`psmux` or manually recreate a namespace. An unavailable, changed, or ambiguous authority fails closed.
+On native Windows, Vibrato-managed psmux sessions persist a per-owner `ProviderAuthority`: the exact resolved executable identity and an isolated tmux-compatible `-L` namespace. `VIB_TMUX_COMMAND` is an executable path/name only, never `psmux -L …`. Recover managed sessions through Vibrato so it reuses and re-proves that authority; do not fall back to ambient `tmux`/`psmux` or manually recreate a namespace. An unavailable, changed, or ambiguous authority fails closed.
 
 ## Memory backends
 
-The agent supports three mutually-exclusive memory backends, selected via the `memory.backend` setting (Settings → Memory tab, or `~/.gjc/agent/config.yml`):
+The agent supports three mutually-exclusive memory backends, selected via the `memory.backend` setting (Settings → Memory tab, or `~/.vib/agent/config.yml`):
 
 - `off` (default) — no memory subsystem runs.
 - `local` — existing rollout-summarisation pipeline; writes `memory_summary.md` and consolidated artifacts under the agent dir.
-- `hindsight` — talks to a [Hindsight](https://hindsight.vectorize.io) server (Cloud or self-hosted Docker). Hindsight uses private backend lifecycle hooks to retain transcripts and recall context; compatibility-only internals remain for legacy backend calls, but GJC does not expose public coding-harness memory tools such as `retain`, `recall`, or `reflect`.
+- `hindsight` — talks to a [Hindsight](https://hindsight.vectorize.io) server (Cloud or self-hosted Docker). Hindsight uses private backend lifecycle hooks to retain transcripts and recall context; compatibility-only internals remain for legacy backend calls, but Vibrato does not expose public coding-harness memory tools such as `retain`, `recall`, or `reflect`.
 
 ### Hindsight quickstart
 
@@ -115,7 +115,7 @@ Switching backends mid-session is honoured on the next system-prompt rebuild and
 
 ## Red-claw TUI theme
 
-The interactive TUI defaults to the bundled `red-claw` crustacean theme for dark terminals and the bundled `blue-crab` theme for light-appearance terminals, with matching welcome/icon assets. Three additional bundled migration themes — `claude-code`, `codex`, and `opencode` — mirror the look of those tools for easy eye-migration and are selectable from Settings or `/theme`. Explicit user theme settings still win; set `theme.dark: red-claw` and `theme.light: blue-crab` in `~/.gjc/agent/config.yml` to pin them.
+The interactive TUI defaults to the bundled `lig-blue` theme for dark terminals and the bundled `lig-white` theme for light-appearance terminals; both apply the LIG System corporate identity (see `docs/design-system.md`). The legacy `red-claw` and `blue-crab` palettes remain selectable. Three additional bundled migration themes — `claude-code`, `codex`, and `opencode` — mirror the look of those tools for easy eye-migration and are selectable from Settings or `/theme`. Explicit user theme settings still win; set `theme.dark: red-claw` and `theme.light: blue-crab` in `~/.vib/agent/config.yml` to pin them.
 
 ### Welcome banner fonts on Windows Terminal
 
@@ -127,4 +127,4 @@ The startup logo defaults to rounded Unicode box drawing. Windows Terminal can r
 }
 ```
 
-For terminals or fonts with broken rounded corners, set `startup.welcomeBannerMode` in `~/.gjc/agent/config.yml` to one of `unicode`, `square`, or `ascii`. `square` keeps a Unicode-looking logo using square corners (`┌ ┐ └ ┘`) while `ascii` uses only `+`, `-`, and `|`.
+For terminals or fonts with broken rounded corners, set `startup.welcomeBannerMode` in `~/.vib/agent/config.yml` to one of `unicode`, `square`, or `ascii`. `square` keeps a Unicode-looking logo using square corners (`┌ ┐ └ ┘`) while `ascii` uses only `+`, `-`, and `|`.

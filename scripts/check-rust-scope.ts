@@ -44,9 +44,9 @@ const RUST_SCOPE_ALLOWLIST: readonly RustScopeEntry[] = [
 		rationale: "Native filesystem isolation backends such as clone, reflink, overlay, and ProjFS.",
 	},
 	{
-		dir: "crates/gjc-sdk",
-		packageName: "gjc-sdk",
-		rationale: "Gajae-Code SDK Rust core for loopback WebSocket transport, endpoint discovery, and planned N-API integration.",
+		dir: "crates/vib-sdk",
+		packageName: "vib-sdk",
+		rationale: "Vibrato SDK Rust core for loopback WebSocket transport, endpoint discovery, and planned N-API integration.",
 	},
 	{
 		dir: "crates/brush-core-vendored",
@@ -153,7 +153,7 @@ async function readPackageName(cargoTomlPath: string): Promise<string | undefine
 function isIgnoredPath(relativePath: string): boolean {
 	return (
 		relativePath.startsWith(".git/") ||
-		relativePath.startsWith(".gjc/") ||
+		relativePath.startsWith(".vib/") ||
 		relativePath.startsWith(".worktrees/") ||
 		relativePath.startsWith(".wt/") ||
 		relativePath.startsWith("node_modules/") ||

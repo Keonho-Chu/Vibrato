@@ -1,18 +1,18 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "bun:test";
-import type { AssistantMessage } from "@gajae-code/ai";
-import { resetSettingsForTest, Settings } from "@gajae-code/coding-agent/config/settings";
-import { AssistantMessageComponent } from "@gajae-code/coding-agent/modes/components/assistant-message";
-import { IrcSplitViewComponent } from "@gajae-code/coding-agent/modes/components/irc-sidebar";
-import { EventController } from "@gajae-code/coding-agent/modes/controllers/event-controller";
-import { IrcObservationLedger } from "@gajae-code/coding-agent/modes/irc-observation-ledger";
-import { initTheme } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { InteractiveModeContext } from "@gajae-code/coding-agent/modes/types";
-import { UiHelpers } from "@gajae-code/coding-agent/modes/utils/ui-helpers";
+import type { AssistantMessage } from "@vib-rato/ai";
+import { resetSettingsForTest, Settings } from "@vib-rato/coding-agent/config/settings";
+import { AssistantMessageComponent } from "@vib-rato/coding-agent/modes/components/assistant-message";
+import { IrcSplitViewComponent } from "@vib-rato/coding-agent/modes/components/irc-sidebar";
+import { EventController } from "@vib-rato/coding-agent/modes/controllers/event-controller";
+import { IrcObservationLedger } from "@vib-rato/coding-agent/modes/irc-observation-ledger";
+import { initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { InteractiveModeContext } from "@vib-rato/coding-agent/modes/types";
+import { UiHelpers } from "@vib-rato/coding-agent/modes/utils/ui-helpers";
 import {
 	associateSessionMessageViewportAnchorId,
 	getSessionMessageViewportAnchorId,
-} from "@gajae-code/coding-agent/session/session-manager";
-import { Container, shouldUseViewportRepaintForHost, Text, TUI } from "@gajae-code/tui";
+} from "@vib-rato/coding-agent/session/session-manager";
+import { Container, shouldUseViewportRepaintForHost, Text, TUI } from "@vib-rato/tui";
 import { VirtualTerminal } from "../../../../tui/test/virtual-terminal";
 
 function assistantMessage(text: string): AssistantMessage {
@@ -44,7 +44,7 @@ afterAll(() => resetSettingsForTest());
 
 describe("EventController completion viewport", () => {
 	const envKeys = [
-		"GJC_NOTIFY",
+		"VIB_NOTIFY",
 		"SSH_CONNECTION",
 		"TERM",
 		"COLORTERM",
@@ -54,7 +54,7 @@ describe("EventController completion viewport", () => {
 		"TMUX_PANE",
 		"STY",
 		"ZELLIJ",
-		"GJC_TMUX_LAUNCHED",
+		"VIB_TMUX_LAUNCHED",
 		"TERMUX_VERSION",
 		"PI_TUI_LEGACY_MULTIPLEXER_FULL_RENDER",
 		"PI_CLEAR_ON_SHRINK",
@@ -99,7 +99,7 @@ describe("EventController completion viewport", () => {
 				const scenarioEnv = new Map(envKeys.map(key => [key, Bun.env[key]]));
 				for (const key of envKeys) delete Bun.env[key];
 				Object.assign(Bun.env, testCase.env);
-				Bun.env.GJC_NOTIFY = "off";
+				Bun.env.VIB_NOTIFY = "off";
 				try {
 					if (testCase.nativeWindows) {
 						expect(shouldUseViewportRepaintForHost({}, "win32", { includeNativeWindows: true })).toBe(true);

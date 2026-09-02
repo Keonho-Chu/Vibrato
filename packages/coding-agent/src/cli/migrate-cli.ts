@@ -1,9 +1,9 @@
 /**
- * `gjc migrate` — import MCP servers and skills from other coding agents.
+ * `vib migrate` — import MCP servers and skills from other coding agents.
  */
 import * as os from "node:os";
 import * as path from "node:path";
-import { getAgentDir, getMCPConfigPath, getProjectAgentDir, getProjectDir } from "@gajae-code/utils";
+import { getAgentDir, getMCPConfigPath, getProjectAgentDir, getProjectDir } from "@vib-rato/utils";
 import { planMigration } from "../migrate/action-planner";
 import { getAdapter } from "../migrate/adapters/index";
 import { executeActions } from "../migrate/executor";

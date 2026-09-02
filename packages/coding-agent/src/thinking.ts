@@ -1,6 +1,6 @@
-import { type ResolvedThinkingLevel, ThinkingLevel } from "@gajae-code/agent-core/thinking";
-import { clampThinkingLevelForModel, type Effort, THINKING_EFFORTS } from "@gajae-code/ai/model-thinking";
-import type { Model } from "@gajae-code/ai/types";
+import { type ResolvedThinkingLevel, ThinkingLevel } from "@vib-rato/agent-core/thinking";
+import { clampThinkingLevelForModel, type Effort, THINKING_EFFORTS } from "@vib-rato/ai/model-thinking";
+import type { Model } from "@vib-rato/ai/types";
 
 export { getThinkingLevelMetadata, type ThinkingLevelMetadata } from "./thinking-metadata";
 

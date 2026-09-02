@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
-import { AsyncJobManager } from "@gajae-code/coding-agent/async/job-manager";
+import { AsyncJobManager } from "@vib-rato/coding-agent/async/job-manager";
 import { Settings } from "../src/config/settings";
 import type { CustomMessage } from "../src/session/messages";
 import { bindToolLineage, resetTerminalAbortRegistriesForTests } from "../src/session/terminal-abort";

@@ -416,13 +416,13 @@ export function releasedBunLockContent(content: string, previousVersion: string,
 	let catalogVersionCount = 0;
 	const updatedPrefix = prefix
 		.replaceAll(previousWorkspaceVersion, `"version": "${version}"`)
-		.replace(/("@gajae-code\/[^"]+":\s*)"([^"]+)"/g, (match, key: string, currentVersion: string) => {
+		.replace(/("@vib-rato\/[^"]+":\s*)"([^"]+)"/g, (match, key: string, currentVersion: string) => {
 			if (currentVersion !== previousVersion) return match;
 			catalogVersionCount++;
 			return `${key}"${version}"`;
 		});
 	if (catalogVersionCount === 0) {
-		throw new Error(`bun.lock has no @gajae-code catalog versions matching ${previousVersion}`);
+		throw new Error(`bun.lock has no @vib-rato catalog versions matching ${previousVersion}`);
 	}
 	return `${updatedPrefix}${suffix}`;
 }
@@ -693,10 +693,10 @@ async function assertReleaseVersionConsistency(version: string, publicPkgPaths: 
 	}
 	const catalog = rootPackage.workspaces.catalog;
 	for (const [name, catalogVersion] of Object.entries(catalog)) {
-		if (!name.startsWith("@gajae-code/")) continue;
+		if (!name.startsWith("@vib-rato/")) continue;
 		if (catalogVersion !== version) throw new Error(`Root catalog ${name} has version ${String(catalogVersion)}, expected ${version}`);
 	}
-	for (const name of publicPackageNames.filter(name => name.startsWith("@gajae-code/"))) {
+	for (const name of publicPackageNames.filter(name => name.startsWith("@vib-rato/"))) {
 		if (catalog[name] !== version) throw new Error(`Root catalog does not match public package ${name} at ${version}`);
 	}
 
@@ -771,15 +771,15 @@ async function cmdRelease(version: string): Promise<void> {
 	}
 	console.log();
 
-	// Update @gajae-code/* catalog entries in root package.json
+	// Update @vib-rato/* catalog entries in root package.json
 	console.log("Updating root catalog versions...");
 	let rootPkgRaw = await Bun.file("package.json").text();
 	rootPkgRaw = rootPkgRaw.replace(
-		/("@gajae-code\/[^"]+":\s*)"[^"]+"/g,
+		/("@vib-rato\/[^"]+":\s*)"[^"]+"/g,
 		`$1"${version}"`,
 	);
 	await Bun.write("package.json", rootPkgRaw);
-	console.log("  Updated root catalog @gajae-code/* entries");
+	console.log("  Updated root catalog @vib-rato/* entries");
 
 	// 3. Update Rust workspace version
 	console.log(`Updating Rust workspace version to ${version}…`);
@@ -803,7 +803,7 @@ async function cmdRelease(version: string): Promise<void> {
 		}
 	}
 	await assertReleaseVersionConsistency(version, publicPkgPaths);
-	console.log("  All public package, Cargo workspace, and @gajae-code catalog versions match");
+	console.log("  All public package, Cargo workspace, and @vib-rato catalog versions match");
 	console.log();
 
 	// 3b. Rename the pi-natives version sentinel so any `.node` left on disk from
@@ -850,7 +850,7 @@ async function cmdRelease(version: string): Promise<void> {
 	await $`cargo update --workspace`;
 	console.log();
 
-	// 4b. Regenerate the GJC plugin bundle so its embedded version tracks the
+	// 4b. Regenerate the Vibrato plugin bundle so its embedded version tracks the
 	// freshly bumped package version (otherwise `check:plugins` reports drift).
 	console.log("Regenerating plugin bundle...");
 	await $`bun run generate-plugins`;

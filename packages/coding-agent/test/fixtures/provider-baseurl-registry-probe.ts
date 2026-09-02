@@ -5,8 +5,8 @@
 //
 // argv[2] is a scratch directory for the throwaway auth db / models.json.
 import * as path from "node:path";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
 
 const scratch = process.argv[2];
 if (!scratch) throw new Error("probe requires a scratch directory argument");

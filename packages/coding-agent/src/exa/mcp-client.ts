@@ -1,5 +1,5 @@
-import type { TSchema } from "@gajae-code/ai/core";
-import { $credentialEnv, logger } from "@gajae-code/utils";
+import type { TSchema } from "@vib-rato/ai/core";
+import { $credentialEnv, logger } from "@vib-rato/utils";
 import type { CustomTool, CustomToolResult } from "../extensibility/custom-tools/types";
 import { callMCP } from "../runtime-mcp/json-rpc";
 import type {
@@ -19,7 +19,7 @@ import type {
  * and therefore who can see those queries. `$env` merges the caller's `cwd/.env`
  * into `process.env`, so reading it there would let repository content supply
  * that account. Resolve it the same way provider credentials are: launching
- * shell plus GJC/user-owned `.env` files, never the project `.env`.
+ * shell plus Vibrato/user-owned `.env` files, never the project `.env`.
  */
 export function findApiKey(): string | null {
 	return $credentialEnv("EXA_API_KEY") ?? null;

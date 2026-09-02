@@ -1,13 +1,13 @@
 /**
  * Generate shell completion specs for external completion engines.
  */
-import { Args, Command, Flags } from "@gajae-code/utils/cli";
+import { Args, Command, Flags } from "@vib-rato/utils/cli";
 import { commands, RootHelpCommand } from "../cli";
 import {
-	buildGjcFigSpec,
+	buildVibFigSpec,
 	defaultInshellisenseSpecDir,
-	type InstallGjcInshellisenseSpecResult,
-	installGjcInshellisenseSpec,
+	type InstallVibInshellisenseSpecResult,
+	installVibInshellisenseSpec,
 	renderFigSpecModule,
 } from "../cli/completion-cli";
 
@@ -19,9 +19,9 @@ function normalizeTarget(target: CompletionTarget): "inshellisense" {
 	return target === "fig" ? "inshellisense" : target;
 }
 
-function formatInstallResult(result: InstallGjcInshellisenseSpecResult, customDir: boolean): string {
+function formatInstallResult(result: InstallVibInshellisenseSpecResult, customDir: boolean): string {
 	const lines = [
-		"Installed GJC inshellisense completion spec:",
+		"Installed Vibrato inshellisense completion spec:",
 		`  spec:  ${result.specPath}`,
 		`  index: ${result.indexPath} (${result.indexStatus})`,
 	];
@@ -49,7 +49,7 @@ export default class Completion extends Command {
 	static flags = {
 		install: Flags.boolean({ description: "Install the generated spec for inshellisense" }),
 		dir: Flags.string({ description: "Install directory (defaults to ~/.fig/autocomplete/build)" }),
-		force: Flags.boolean({ description: "Overwrite an existing non-GJC inshellisense index.js" }),
+		force: Flags.boolean({ description: "Overwrite an existing non-Vibrato inshellisense index.js" }),
 		json: Flags.boolean({ description: "Output JSON instead of JavaScript or status text" }),
 	};
 
@@ -67,14 +67,14 @@ export default class Completion extends Command {
 			return;
 		}
 
-		const spec = await buildGjcFigSpec(commands, RootHelpCommand);
+		const spec = await buildVibFigSpec(commands, RootHelpCommand);
 		if (!flags.install) {
 			process.stdout.write(flags.json ? `${JSON.stringify(spec, null, 2)}\n` : renderFigSpecModule(spec));
 			return;
 		}
 
 		const directory = flags.dir ?? defaultInshellisenseSpecDir();
-		const result = await installGjcInshellisenseSpec(spec, { dir: directory, force: flags.force });
+		const result = await installVibInshellisenseSpec(spec, { dir: directory, force: flags.force });
 		if (flags.json) {
 			process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
 			return;

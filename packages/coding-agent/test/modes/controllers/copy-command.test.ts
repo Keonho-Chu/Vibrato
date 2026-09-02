@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
-import { CommandController } from "@gajae-code/coding-agent/modes/controllers/command-controller";
-import type { InteractiveModeContext } from "@gajae-code/coding-agent/modes/types";
-import * as native from "@gajae-code/natives";
+import { CommandController } from "@vib-rato/coding-agent/modes/controllers/command-controller";
+import type { InteractiveModeContext } from "@vib-rato/coding-agent/modes/types";
+import * as native from "@vib-rato/natives";
 
 function createController(options: { assistantText?: string; hasAssistantMessage?: boolean; handoffText?: string }) {
 	const showStatus = vi.fn();

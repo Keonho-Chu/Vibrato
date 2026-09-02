@@ -4,7 +4,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 
 const repoRoot = path.resolve(import.meta.dir, "..", "..", "..");
-const binWrapper = path.join(repoRoot, "packages", "gajae-code", "bin", "gjc.js");
+const binWrapper = path.join(repoRoot, "packages", "vib-rato", "bin", "vib.js");
 
 let cleanupRoot: string | undefined;
 
@@ -25,15 +25,15 @@ async function readStream(stream: ReadableStream<Uint8Array>): Promise<string> {
 }
 
 async function copyWrapperIntoInstallRoot(root: string): Promise<string> {
-	const installedBinDir = path.join(root, "node_modules", "gajae-code", "bin");
+	const installedBinDir = path.join(root, "node_modules", "vib-rato", "bin");
 	await fs.mkdir(installedBinDir, { recursive: true });
-	const installedWrapper = path.join(installedBinDir, "gjc.js");
+	const installedWrapper = path.join(installedBinDir, "vib.js");
 	await fs.copyFile(binWrapper, installedWrapper);
 	return installedWrapper;
 }
 
 async function writeMockCodingAgentPackage(root: string): Promise<string> {
-	const packageDir = path.join(root, "node_modules", "@gajae-code", "coding-agent");
+	const packageDir = path.join(root, "node_modules", "@vib-rato", "coding-agent");
 	await fs.mkdir(packageDir, { recursive: true });
 	const marker = path.join(root, "run-cli-argv.json");
 	await fs.writeFile(
@@ -41,7 +41,7 @@ async function writeMockCodingAgentPackage(root: string): Promise<string> {
 		JSON.stringify(
 			{
 				type: "module",
-				name: "@gajae-code/coding-agent",
+				name: "@vib-rato/coding-agent",
 				exports: { "./cli": "./cli.js" },
 			},
 			null,
@@ -62,9 +62,9 @@ afterEach(async () => {
 	}
 });
 
-describe("gajae-code global bin wrapper", () => {
+describe("vib-rato global bin wrapper", () => {
 	it("invokes runCli from the installed coding-agent dependency instead of only side-effect importing it", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-global-bin-wrapper-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-global-bin-wrapper-"));
 		cleanupRoot = root;
 		const installedWrapper = await copyWrapperIntoInstallRoot(root);
 		const marker = await writeMockCodingAgentPackage(root);

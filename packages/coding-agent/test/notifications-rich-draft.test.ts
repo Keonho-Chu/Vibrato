@@ -308,7 +308,7 @@ describe("renderThreadedFrame draft marker (finalAnswer contract unchanged)", ()
 // ===========================================================================
 
 function tempAgentDir(): string {
-	return fs.mkdtempSync(path.join(os.tmpdir(), "gjc-rich-draft-test-"));
+	return fs.mkdtempSync(path.join(os.tmpdir(), "vib-rich-draft-test-"));
 }
 
 function draftSettings(agentDir: string): Settings {
@@ -579,7 +579,7 @@ describe("Telegram topic admission", () => {
 		}
 	});
 
-	test("uses the GJC session title instead of repository and branch", async () => {
+	test("uses the Vibrato session title instead of repository and branch", async () => {
 		const agentDir = tempAgentDir();
 		try {
 			const bot = new DraftFakeBotApi();
@@ -596,10 +596,10 @@ describe("Telegram topic admission", () => {
 				sessionId: "session-name",
 				repo: "project",
 				branch: "feature/topic",
-				title: "GJC session title",
+				title: "Vibrato session title",
 			});
 			expect(bot.calls.find(call => call.method === "createForumTopic")?.body).toMatchObject({
-				name: "GJC session title",
+				name: "Vibrato session title",
 			});
 		} finally {
 			fs.rmSync(agentDir, { recursive: true, force: true });

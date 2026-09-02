@@ -1,8 +1,8 @@
 /**
- * Acceptance tests for `gjc customize doctor` (#4288).
+ * Acceptance tests for `vib customize doctor` (#4288).
  *
  * Covers the issue's acceptance criteria:
- *  1. deterministic fixture provenance/precedence across native `.gjc`,
+ *  1. deterministic fixture provenance/precedence across native `.vib`,
  *     Claude, and Codex customizations;
  *  2. secret redaction in both text and JSON output;
  *  3. distinct reason codes for malformed/disabled/shadowed/quarantined/
@@ -37,7 +37,7 @@ afterEach(async () => {
 });
 
 async function makeTempProject(): Promise<string> {
-	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-customize-doctor-"));
+	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-customize-doctor-"));
 	tempDirs.push(dir);
 	return dir;
 }
@@ -75,10 +75,10 @@ function withoutTimestamp(report: CustomizeDoctorReport): Omit<CustomizeDoctorRe
 describe("customize doctor (#4288)", () => {
 	it("reports deterministic provenance and precedence across native, Claude, and Codex fixtures", async () => {
 		const cwd = await makeTempProject();
-		await makeSkill(path.join(cwd, ".gjc", "skills"), "fixture-native", "Native project skill");
+		await makeSkill(path.join(cwd, ".vib", "skills"), "fixture-native", "Native project skill");
 		await makeSkill(path.join(cwd, ".claude", "skills"), "fixture-claude", "Claude convention skill");
 		await makeSkill(path.join(cwd, ".codex", "skills"), "fixture-codex", "Codex convention skill");
-		await writeJson(path.join(cwd, ".gjc", "mcp.json"), {
+		await writeJson(path.join(cwd, ".vib", "mcp.json"), {
 			mcpServers: { "fixture-native-mcp": { command: "true" } },
 		});
 		await writeJson(path.join(cwd, ".claude", "mcp.json"), {
@@ -92,7 +92,7 @@ describe("customize doctor (#4288)", () => {
 		const skills = itemsByName(first, "skill");
 		expect(skills.get("fixture-native")).toMatchObject({
 			sourceClass: "canonical",
-			convention: "gjc",
+			convention: "vib",
 			scope: "project",
 			status: "loaded",
 			reason: "loaded",
@@ -113,7 +113,7 @@ describe("customize doctor (#4288)", () => {
 		const mcps = itemsByName(first, "mcp");
 		expect(mcps.get("fixture-native-mcp")).toMatchObject({
 			sourceClass: "canonical",
-			convention: "gjc",
+			convention: "vib",
 			scope: "project",
 		});
 		expect(mcps.get("fixture-claude-mcp")).toMatchObject({
@@ -132,7 +132,7 @@ describe("customize doctor (#4288)", () => {
 
 	it("redacts secret-bearing MCP fields in both JSON and text output", async () => {
 		const cwd = await makeTempProject();
-		await writeJson(path.join(cwd, ".gjc", "mcp.json"), {
+		await writeJson(path.join(cwd, ".vib", "mcp.json"), {
 			mcpServers: {
 				"fixture-secret-stdio": {
 					command: "run-server",
@@ -164,7 +164,7 @@ describe("customize doctor (#4288)", () => {
 
 	it("emits distinct reason codes for malformed, disabled, shadowed, quarantined, and policy-blocked items", async () => {
 		const cwd = await makeTempProject();
-		await writeJson(path.join(cwd, ".gjc", "mcp.json"), {
+		await writeJson(path.join(cwd, ".vib", "mcp.json"), {
 			mcpServers: {
 				"fixture-broken": {},
 				"fixture-off": { command: "true", enabled: false },
@@ -173,11 +173,11 @@ describe("customize doctor (#4288)", () => {
 		});
 		// A project copy of a bundled workflow skill name loses to the bundled
 		// definition (#4349 invariant) — a deterministic shadowed fixture.
-		await makeSkill(path.join(cwd, ".gjc", "skills"), "ralplan", "Project copy of a bundled skill");
+		await makeSkill(path.join(cwd, ".vib", "skills"), "ralplan", "Project copy of a bundled skill");
 		// A quarantined plugin bundle: an enabled entry whose installed file is
 		// missing on disk deterministically quarantines every declared surface.
-		const pluginRoot = path.join(cwd, ".gjc", "gjc-plugins", "fixture-bundle");
-		await writeJson(path.join(cwd, ".gjc", "gjc-plugins", "registry.json"), {
+		const pluginRoot = path.join(cwd, ".vib", "vib-plugins", "fixture-bundle");
+		await writeJson(path.join(cwd, ".vib", "vib-plugins", "registry.json"), {
 			version: 1,
 			scope: "project",
 			plugins: [
@@ -187,7 +187,7 @@ describe("customize doctor (#4288)", () => {
 					scope: "project",
 					enabled: true,
 					pluginRoot,
-					manifestPath: path.join(pluginRoot, "gajae-plugin.json"),
+					manifestPath: path.join(pluginRoot, "vibrato-plugin.json"),
 					manifestHash: "",
 					source: { kind: "path", uri: pluginRoot, resolvedAt: "2026-01-01T00:00:00.000Z" },
 					installedAt: "2026-01-01T00:00:00.000Z",
@@ -254,10 +254,10 @@ describe("customize doctor (#4288)", () => {
 
 	it("agrees with session-startup consumers (loadSkills, loadAllMCPConfigs)", async () => {
 		const cwd = await makeTempProject();
-		await makeSkill(path.join(cwd, ".gjc", "skills"), "fixture-loaded", "Loaded by startup");
-		await makeSkill(path.join(cwd, ".gjc", "skills"), "ultragoal", "Project copy of a bundled skill");
+		await makeSkill(path.join(cwd, ".vib", "skills"), "fixture-loaded", "Loaded by startup");
+		await makeSkill(path.join(cwd, ".vib", "skills"), "ultragoal", "Project copy of a bundled skill");
 		await makeSkill(path.join(cwd, ".claude", "skills"), "fixture-foreign", "Never loaded by startup");
-		await writeJson(path.join(cwd, ".gjc", "mcp.json"), {
+		await writeJson(path.join(cwd, ".vib", "mcp.json"), {
 			mcpServers: { "fixture-connectable": { command: "true" } },
 		});
 
@@ -303,11 +303,11 @@ describe("customize doctor (#4288)", () => {
 	});
 	it("disabled native provider does not shadow an enabled lower-priority source (bug A)", async () => {
 		const cwd = await makeTempProject();
-		// Same skill name from two providers: native (.gjc, priority 100) and
+		// Same skill name from two providers: native (.vib, priority 100) and
 		// agents (.agent, priority 70). When the native provider is disabled,
 		// the disabled native must never own the dedup key in the winner map,
 		// so the agents item is NOT incorrectly marked shadowed-by-precedence.
-		await makeSkill(path.join(cwd, ".gjc", "skills"), "fixture-collision", "Native project skill");
+		await makeSkill(path.join(cwd, ".vib", "skills"), "fixture-collision", "Native project skill");
 		await makeSkill(path.join(cwd, ".agent", "skills"), "fixture-collision", "Agent project skill");
 
 		const settings = Settings.isolated({
@@ -339,9 +339,9 @@ describe("customize doctor (#4288)", () => {
 	it("custom-directory skill collision reports shadowed-by-precedence, not double-loaded (bug B)", async () => {
 		const cwd = await makeTempProject();
 		// A native skill owns the name first.
-		await makeSkill(path.join(cwd, ".gjc", "skills"), "fixture-custom-collision", "Native project skill");
+		await makeSkill(path.join(cwd, ".vib", "skills"), "fixture-custom-collision", "Native project skill");
 		// A custom directory has a skill of the same name.
-		const customDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-custom-skills-"));
+		const customDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-custom-skills-"));
 		tempDirs.push(customDir);
 		await makeSkill(customDir, "fixture-custom-collision", "Custom directory skill");
 
@@ -358,7 +358,7 @@ describe("customize doctor (#4288)", () => {
 		// "loaded" item.
 		const loadedItems = items.filter(i => i.status === "loaded");
 		expect(loadedItems).toHaveLength(1);
-		expect(loadedItems[0]).toMatchObject({ provider: "native", convention: "gjc" });
+		expect(loadedItems[0]).toMatchObject({ provider: "native", convention: "vib" });
 
 		const customItem = items.find(i => i.provider === "custom");
 		expect(customItem).toMatchObject({

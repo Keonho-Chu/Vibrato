@@ -82,7 +82,7 @@ let isDryRun = false;
 export const NPM_REGISTRY_URL = "https://registry.npmjs.org/";
 export const NPM_RELEASE_TAG = "latest";
 export const NPM_NIGHTLY_TAG = "nightly";
-export const RELEASE_CHANNEL_EVIDENCE_FILE = "gajae-release-channel-v1.json";
+export const RELEASE_CHANNEL_EVIDENCE_FILE = "vibrato-release-channel-v1.json";
 export type ReleaseChannel = "stable" | "nightly";
 
 interface ReleasePolicy {
@@ -212,7 +212,7 @@ export const packages: PublishPackage[] = [
 	},
 	{ dir: "packages/agent", kind: "typescript" },
 	{ dir: "packages/coding-agent", kind: "typescript" },
-	{ dir: "packages/gajae-code", kind: "manifest" },
+	{ dir: "packages/vib-rato", kind: "manifest" },
 ];
 const dependencyFieldNames = [
 	"dependencies",
@@ -455,7 +455,7 @@ async function emitTypeDeclarations(pkg: PublishPackage, temporaryRoot?: string)
 }
 
 async function checkTypeDeclarations(): Promise<void> {
-	const temporaryRoot = await fs.mkdtemp(path.join(os.tmpdir(), "gajae-code-types-"));
+	const temporaryRoot = await fs.mkdtemp(path.join(os.tmpdir(), "vib-rato-types-"));
 	try {
 		for (const pkg of packages) {
 			if (pkg.kind !== "typescript") continue;
@@ -513,8 +513,8 @@ async function readNpmConfig(key: string): Promise<string | undefined> {
 async function assertPinnedNpmConfiguration(): Promise<void> {
 	const registry = await readNpmConfig("registry");
 	if (registry !== undefined) validateNpmRegistryUrl(registry, "ambient npm registry");
-	const scopedRegistry = await readNpmConfig("@gajae-code:registry");
-	if (scopedRegistry !== undefined) validateNpmRegistryUrl(scopedRegistry, "@gajae-code npm registry");
+	const scopedRegistry = await readNpmConfig("@vib-rato:registry");
+	if (scopedRegistry !== undefined) validateNpmRegistryUrl(scopedRegistry, "@vib-rato npm registry");
 	const tag = await readNpmConfig("tag");
 	if (tag !== undefined && tag !== NPM_RELEASE_TAG) {
 		throw new Error(`ambient npm tag must be ${NPM_RELEASE_TAG}`);
@@ -542,7 +542,7 @@ async function packPackageTwice(pkg: PublishPackage): Promise<Buffer> {
 	const pkgDir = path.join(repoRoot, pkg.dir);
 	const canonicalTarballs: Buffer[] = [];
 	for (let attempt = 0; attempt < 2; attempt += 1) {
-		const temporaryRoot = await fs.mkdtemp(path.join(os.tmpdir(), "gajae-code-release-pack-"));
+		const temporaryRoot = await fs.mkdtemp(path.join(os.tmpdir(), "vib-rato-release-pack-"));
 		try {
 			const copiedPackageDir = path.join(temporaryRoot, "package");
 			const packOutputDir = path.join(temporaryRoot, "tarballs");
@@ -620,7 +620,7 @@ async function prepareExpectedEvidence(evidenceDirectory: string, releaseChannel
 		canonicalJsonBytes({ schema_version: 1, snapshot: protectedBefore }),
 	);
 	// The fixed publish boundary iterates the sealed plan, so dependency order
-	// (e.g. @gajae-code/ai before @gajae-code/agent-core) must be computed here.
+	// (e.g. @vib-rato/ai before @vib-rato/agent-core) must be computed here.
 	const publicationOrder = planExpectedEvidencePublication(expected.packages).map(record => record.name);
 	await writeImmutableBytes(
 		path.join(evidenceDirectory, PUBLISH_ORDER_FILE),
@@ -639,11 +639,11 @@ async function prepareExpectedEvidence(evidenceDirectory: string, releaseChannel
 function isMissingRegistryPackage(output: string): boolean {
 	return /\bE404\b|404 Not Found|is not in this registry/iu.test(output);
 }
-export const CHANNEL_BEFORE_EVIDENCE_FILE = "gajae-release-channel-before-v1.json";
+export const CHANNEL_BEFORE_EVIDENCE_FILE = "vibrato-release-channel-before-v1.json";
 /** Dependency-ordered publication plan sealed by release_prepare; the fixed boundary publishes in exactly this order. */
-export const PUBLISH_ORDER_FILE = "gajae-release-publish-order-v1.json";
+export const PUBLISH_ORDER_FILE = "vibrato-release-publish-order-v1.json";
 /** Written by the fixed (no-repo-code) OIDC publish boundary; finalize requires it. */
-export const PUBLISH_RECEIPT_FILE = "gajae-release-oidc-publish-receipt-v1.json";
+export const PUBLISH_RECEIPT_FILE = "vibrato-release-oidc-publish-receipt-v1.json";
 
 export interface RegistryTagSnapshotRecord {
 	name: string;

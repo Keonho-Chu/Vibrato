@@ -17,7 +17,7 @@ import { SessionLifecycleService } from "../src/sdk/lifecycle/service";
 async function tempRoot(label: string): Promise<{ root: string; cwd: string; agentDir: string }> {
 	// `os.tmpdir()` is the platform-native root: a POSIX-only `/tmp` fallback
 	// ENOENTs on Windows runners before any lifecycle behavior runs (#4712 review).
-	const root = await fs.mkdtemp(path.join(os.tmpdir(), `gjc-sdk-${label}-`));
+	const root = await fs.mkdtemp(path.join(os.tmpdir(), `vib-sdk-${label}-`));
 	const cwd = path.join(root, "workspace");
 	const agentDir = path.join(root, "agent");
 	await fs.mkdir(cwd, { recursive: true });
@@ -30,7 +30,7 @@ function bunEval(source: string): { file: string; args: string[] } {
 const readyThenExitChild = `
 const fs = require("node:fs");
 const path = require("node:path");
-const request = JSON.parse(process.env.GJC_SDK_LIFECYCLE_REQUEST);
+const request = JSON.parse(process.env.VIB_SDK_LIFECYCLE_REQUEST);
 const markerPath = path.join(request.stateRoot, "sdk", request.sessionId + ".lifecycle.json");
 const readyPath = path.join(request.stateRoot, "sdk", request.sessionId + ".lifecycle.ready.json");
 const endpointPath = path.join(request.stateRoot, "sdk", request.sessionId + ".json");
@@ -66,7 +66,7 @@ process.exit(9);
 const corruptEndpointChild = `
 const fs = require("node:fs");
 const path = require("node:path");
-const request = JSON.parse(process.env.GJC_SDK_LIFECYCLE_REQUEST);
+const request = JSON.parse(process.env.VIB_SDK_LIFECYCLE_REQUEST);
 const markerPath = path.join(request.stateRoot, "sdk", request.sessionId + ".lifecycle.json");
 const readyPath = path.join(request.stateRoot, "sdk", request.sessionId + ".lifecycle.ready.json");
 const endpointPath = path.join(request.stateRoot, "sdk", request.sessionId + ".json");
@@ -251,9 +251,9 @@ test("win32 ready-then-exit is typed ready_then_exited with exit evidence and sa
 		expect(response.error.message).toMatch(/exit=9/);
 		expect(response.error.message).not.toContain("ready-then-exit-secret");
 		expect(await broker.handleRequest("session.create", input, "win32-rte")).toEqual(response);
-		const sdkDir = path.join(cwd, ".gjc", "state", "sdk");
+		const sdkDir = path.join(cwd, ".vib", "state", "sdk");
 		const entries = await fs.readdir(sdkDir).catch(() => [] as string[]);
-		const canonical = entries.filter(entry => !entry.startsWith(".gjc-delete-"));
+		const canonical = entries.filter(entry => !entry.startsWith(".vib-delete-"));
 		expect(canonical.some(entry => entry.endsWith(".lifecycle.json"))).toBe(false);
 		expect(canonical.some(entry => entry.endsWith(".lifecycle.ready.json"))).toBe(false);
 	} finally {
@@ -267,10 +267,10 @@ test("win32 ready-then-exit is typed ready_then_exited with exit evidence and sa
 test("win32 production host exit after ready is ready_then_exited, not spawn_failed", async () => {
 	const { root, cwd, agentDir } = await tempRoot("host-exit-after-ready");
 	const broker = new Broker({ agentDir });
-	const previous = process.env.GJC_SDK_TEST_EXIT_AFTER_READY;
-	const previousInMemory = process.env.GJC_SDK_TEST_IN_MEMORY_SESSION;
-	process.env.GJC_SDK_TEST_EXIT_AFTER_READY = cwd;
-	process.env.GJC_SDK_TEST_IN_MEMORY_SESSION = "1";
+	const previous = process.env.VIB_SDK_TEST_EXIT_AFTER_READY;
+	const previousInMemory = process.env.VIB_SDK_TEST_IN_MEMORY_SESSION;
+	process.env.VIB_SDK_TEST_EXIT_AFTER_READY = cwd;
+	process.env.VIB_SDK_TEST_IN_MEMORY_SESSION = "1";
 	setLifecycleHostPlatformForTest("win32");
 	try {
 		await broker.start();
@@ -284,10 +284,10 @@ test("win32 production host exit after ready is ready_then_exited, not spawn_fai
 		expect(response.error.message).toMatch(/became ready then exited before live admission/i);
 		expect(await broker.handleRequest("session.create", input, "host-exit-after-ready")).toEqual(response);
 	} finally {
-		if (previous === undefined) delete process.env.GJC_SDK_TEST_EXIT_AFTER_READY;
-		else process.env.GJC_SDK_TEST_EXIT_AFTER_READY = previous;
-		if (previousInMemory === undefined) delete process.env.GJC_SDK_TEST_IN_MEMORY_SESSION;
-		else process.env.GJC_SDK_TEST_IN_MEMORY_SESSION = previousInMemory;
+		if (previous === undefined) delete process.env.VIB_SDK_TEST_EXIT_AFTER_READY;
+		else process.env.VIB_SDK_TEST_EXIT_AFTER_READY = previous;
+		if (previousInMemory === undefined) delete process.env.VIB_SDK_TEST_IN_MEMORY_SESSION;
+		else process.env.VIB_SDK_TEST_IN_MEMORY_SESSION = previousInMemory;
 		setLifecycleHostPlatformForTest(undefined);
 		await broker.stop();
 		await fs.rm(root, { recursive: true, force: true });
@@ -296,10 +296,10 @@ test("win32 production host exit after ready is ready_then_exited, not spawn_fai
 test("win32 host that rejects after ready is ready_then_exited, never spawn_failed via a post-ready receipt", async () => {
 	const { root, cwd, agentDir } = await tempRoot("host-reject-after-ready");
 	const broker = new Broker({ agentDir });
-	const previous = process.env.GJC_SDK_TEST_REJECT_AFTER_READY;
-	const previousInMemory = process.env.GJC_SDK_TEST_IN_MEMORY_SESSION;
-	process.env.GJC_SDK_TEST_REJECT_AFTER_READY = cwd;
-	process.env.GJC_SDK_TEST_IN_MEMORY_SESSION = "1";
+	const previous = process.env.VIB_SDK_TEST_REJECT_AFTER_READY;
+	const previousInMemory = process.env.VIB_SDK_TEST_IN_MEMORY_SESSION;
+	process.env.VIB_SDK_TEST_REJECT_AFTER_READY = cwd;
+	process.env.VIB_SDK_TEST_IN_MEMORY_SESSION = "1";
 	setLifecycleHostPlatformForTest("win32");
 	try {
 		await broker.start();
@@ -316,10 +316,10 @@ test("win32 host that rejects after ready is ready_then_exited, never spawn_fail
 		expect(response.error.message).not.toContain("Host stderr");
 		expect(await broker.handleRequest("session.create", input, "host-reject-after-ready")).toEqual(response);
 	} finally {
-		if (previous === undefined) delete process.env.GJC_SDK_TEST_REJECT_AFTER_READY;
-		else process.env.GJC_SDK_TEST_REJECT_AFTER_READY = previous;
-		if (previousInMemory === undefined) delete process.env.GJC_SDK_TEST_IN_MEMORY_SESSION;
-		else process.env.GJC_SDK_TEST_IN_MEMORY_SESSION = previousInMemory;
+		if (previous === undefined) delete process.env.VIB_SDK_TEST_REJECT_AFTER_READY;
+		else process.env.VIB_SDK_TEST_REJECT_AFTER_READY = previous;
+		if (previousInMemory === undefined) delete process.env.VIB_SDK_TEST_IN_MEMORY_SESSION;
+		else process.env.VIB_SDK_TEST_IN_MEMORY_SESSION = previousInMemory;
 		setLifecycleHostPlatformForTest(undefined);
 		await broker.stop();
 		await fs.rm(root, { recursive: true, force: true });

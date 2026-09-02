@@ -14,11 +14,11 @@ import {
 	isComposerBashPolicyBlockedError,
 	isComposerHarnessModel,
 	isCurrentComposerBashPolicyBlockedError,
-} from "@gajae-code/ai/providers/composer-discipline";
-import { buildCursorSystemPromptJsons } from "@gajae-code/ai/providers/cursor";
-import { convertMessages } from "@gajae-code/ai/providers/openai-completions";
-import { streamOpenAIResponses } from "@gajae-code/ai/providers/openai-responses";
-import type { Context, Model, OpenAICompat } from "@gajae-code/ai/types";
+} from "@vib-rato/ai/providers/composer-discipline";
+import { buildCursorSystemPromptJsons } from "@vib-rato/ai/providers/cursor";
+import { convertMessages } from "@vib-rato/ai/providers/openai-completions";
+import { streamOpenAIResponses } from "@vib-rato/ai/providers/openai-responses";
+import type { Context, Model, OpenAICompat } from "@vib-rato/ai/types";
 
 const compat: Required<OpenAICompat> = {
 	supportsStore: true,

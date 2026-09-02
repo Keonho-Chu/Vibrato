@@ -2,8 +2,8 @@ import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
-import { type PlanRequest, planTmuxOwnerIsolationSync } from "../../src/gjc-runtime/tmux-owner-isolation";
 import { resolveOwner } from "../../src/harness-control-plane/owner";
+import { type PlanRequest, planTmuxOwnerIsolationSync } from "../../src/vib-runtime/tmux-owner-isolation";
 import { createHarnessCliEnvWithFixtureBroker, type HarnessCliBrokerFixture } from "./cli-workspace-env";
 
 const repoRoot = path.resolve(import.meta.dir, "..", "..", "..", "..");
@@ -82,9 +82,9 @@ async function startSdkFixture(): Promise<void> {
 			},
 		},
 	});
-	await mkdir(path.join(workspace, ".gjc", "state", "sdk"), { recursive: true });
+	await mkdir(path.join(workspace, ".vib", "state", "sdk"), { recursive: true });
 	await writeFile(
-		path.join(workspace, ".gjc", "state", "sdk", `${SID}.json`),
+		path.join(workspace, ".vib", "state", "sdk", `${SID}.json`),
 		JSON.stringify({ url: `ws://127.0.0.1:${sdkServer.port}`, token: "test-token" }),
 	);
 }
@@ -113,7 +113,7 @@ async function createFakeTmuxBin(rootDir: string, options: { skipOwnerLaunch?: b
 	      server_pid="$(cat "$state")"
       if kill -0 "$server_pid" 2>/dev/null; then
         if [[ "${"$"}{!#}" == *'#{session_id}'*'#{session_name}'* ]]; then
-          printf '%s\\t%s\n' '${"$"}1' 'gajae_code_harness_d'
+          printf '%s\\t%s\n' '${"$"}1' 'vib_rato_harness_d'
         else
           printf '%s\n' "$server_pid"
         fi
@@ -136,12 +136,12 @@ async function createFakeTmuxBin(rootDir: string, options: { skipOwnerLaunch?: b
 
     printf '%s\n' "${"$"}!" > "$state"
     printf '%s\n' "${"$"}!" > ${JSON.stringify(lastServerStatePath)}
-	    native_receipt='$1'; printf '%s\n' "\${GJC_HARNESS_TEST_NATIVE_RECEIPT-$native_receipt}"
+	    native_receipt='$1'; printf '%s\n' "\${VIB_HARNESS_TEST_NATIVE_RECEIPT-$native_receipt}"
 	    exit 0
 	    ;;
 	  if-shell)
 	    [ -f "$state" ] && kill "$(cat "$state")" 2>/dev/null || true
-	    printf '%s\n' '__gjc_harness_cleanup_ok__'
+	    printf '%s\n' '__vib_harness_cleanup_ok__'
 	    exit 0
 	    ;;
 	  kill-session)
@@ -166,15 +166,15 @@ async function runHarness(
 		cwd: workspace,
 		env: {
 			...cliEnv.env,
-			GJC_HARNESS_STATE_ROOT: root,
+			VIB_HARNESS_STATE_ROOT: root,
 			// The fake tmux server is a child of this test process, not a real systemd scope.
 			// Keep normal lifecycle cases independent of the runner's caller cgroup; the scoped
 			// bootstrap failure case below explicitly overrides this fixture value.
-			GJC_HARNESS_TEST_CALLER_CGROUP: "/\n",
-			GJC_HARNESS_TEST_SERVER_CGROUP: "/\n",
+			VIB_HARNESS_TEST_CALLER_CGROUP: "/\n",
+			VIB_HARNESS_TEST_SERVER_CGROUP: "/\n",
 
-			GJC_TMUX_COMMAND: tmuxCommand,
-			...(disableSdkHost ? { GJC_SDK_DISABLE: "1" } : {}),
+			VIB_TMUX_COMMAND: tmuxCommand,
+			...(disableSdkHost ? { VIB_SDK_DISABLE: "1" } : {}),
 			...env,
 		},
 		stdout: "pipe",
@@ -229,24 +229,24 @@ afterEach(async () => {
 	}
 });
 
-describe.skipIf(process.platform !== "linux")("gjc harness start --detach (detached owner lifecycle, B1)", () => {
+describe.skipIf(process.platform !== "linux")("vib harness start --detach (detached owner lifecycle, B1)", () => {
 	it("spawns a tmux-resident owner; submit + finalize route to it cross-process; retire stops it", async () => {
 		const started = await runHarness([
 			"start",
 			"--input",
-			JSON.stringify({ harness: "gajae-code", workspace, sessionId: SID, detach: true }),
+			JSON.stringify({ harness: "vib-rato", workspace, sessionId: SID, detach: true }),
 		]);
 		expect(started.code).toBe(0);
 		const evidence = started.json?.evidence as Record<string, unknown>;
 		expect(evidence.ownerRuntime).toBe("tmux");
 		expect((started.json?.state as Record<string, unknown>).ownerLive).toBe(true);
 		const handle = evidence.handle as { viewportHandle?: { tmuxSessionName?: string | null } };
-		expect(handle.viewportHandle?.tmuxSessionName).toBe(`gajae_code_harness_${SID}`);
+		expect(handle.viewportHandle?.tmuxSessionName).toBe(`vib_rato_harness_${SID}`);
 		expect(evidence.tmuxOwnerSocketKey).toBeUndefined();
 		const firstCalls = (await readFile(path.join(root, "tmux.log"), "utf8")).trim().split("\n").filter(Boolean);
 		const firstRoutedCalls = firstCalls.filter(call => call !== "-V" && call !== "--version");
 		const socket = firstRoutedCalls.map(call => call.match(/(?:^|\s)-L\s+(\S+)/)?.[1]).find(Boolean);
-		expect(socket).toMatch(/^gjc-owner-[0-9a-f]{48}$/);
+		expect(socket).toMatch(/^vib-owner-[0-9a-f]{48}$/);
 		const assertOnlyOwnerSocket = async (): Promise<void> => {
 			const calls = (await readFile(path.join(root, "tmux.log"), "utf8"))
 				.trim()
@@ -304,7 +304,7 @@ describe.skipIf(process.platform !== "linux")("gjc harness start --detach (detac
 		const started = await runHarness([
 			"start",
 			"--input",
-			JSON.stringify({ harness: "gajae-code", workspace, sessionId: SID, detach: true }),
+			JSON.stringify({ harness: "vib-rato", workspace, sessionId: SID, detach: true }),
 		]);
 		expect(started.code).toBe(1);
 		const evidence = started.json?.evidence as Record<string, unknown>;
@@ -325,11 +325,11 @@ describe.skipIf(process.platform !== "linux")("gjc harness start --detach (detac
 	it("reports blocked only after detached owner endpoint remains unavailable", async () => {
 		tmuxCommand = path.join(root, "missing-tmux");
 		disableSdkHost = true;
-		await rm(path.join(workspace, ".gjc", "state", "sdk", `${SID}.json`), { force: true });
+		await rm(path.join(workspace, ".vib", "state", "sdk", `${SID}.json`), { force: true });
 		const started = await runHarness([
 			"start",
 			"--input",
-			JSON.stringify({ harness: "gajae-code", workspace, sessionId: SID, detach: true }),
+			JSON.stringify({ harness: "vib-rato", workspace, sessionId: SID, detach: true }),
 		]);
 		expect(started.code).toBe(1);
 		expect(started.json?.ok).toBe(false);
@@ -358,9 +358,9 @@ describe.skipIf(process.platform !== "linux")("gjc harness start --detach (detac
 		await writeFile(systemdRun, "#!/usr/bin/env bash\nexit 9\n", "utf8");
 		await chmod(systemdRun, 0o755);
 		const started = await runHarness(
-			["start", "--input", JSON.stringify({ harness: "gajae-code", workspace, sessionId: SID, detach: true })],
+			["start", "--input", JSON.stringify({ harness: "vib-rato", workspace, sessionId: SID, detach: true })],
 			{
-				GJC_HARNESS_TEST_CALLER_CGROUP: "/system.slice/caller.service\n",
+				VIB_HARNESS_TEST_CALLER_CGROUP: "/system.slice/caller.service\n",
 				PATH: `${path.dirname(systemdRun)}:${process.env.PATH ?? ""}`,
 			},
 		);
@@ -377,7 +377,7 @@ describe.skipIf(process.platform !== "linux")("gjc harness start --detach (detac
 		const started = await runHarness([
 			"start",
 			"--input",
-			JSON.stringify({ harness: "gajae-code", workspace, sessionId: SID }),
+			JSON.stringify({ harness: "vib-rato", workspace, sessionId: SID }),
 		]);
 		expect(started.code).toBe(0);
 		expect((started.json?.state as Record<string, unknown>).lifecycle).toBe("started");
@@ -403,7 +403,7 @@ describe.skipIf(process.platform !== "linux")("gjc harness start --detach (detac
 		const started = await runHarness([
 			"start",
 			"--input",
-			JSON.stringify({ harness: "gajae-code", workspace, sessionId: SID }),
+			JSON.stringify({ harness: "vib-rato", workspace, sessionId: SID }),
 		]);
 		expect(started.code).toBe(0);
 		expect((started.json?.state as Record<string, unknown>).lifecycle).toBe("started");
@@ -431,7 +431,7 @@ describe.skipIf(process.platform !== "linux")("gjc harness start --detach (detac
 		const started = await runHarness([
 			"start",
 			"--input",
-			JSON.stringify({ harness: "gajae-code", workspace, sessionId: SID }),
+			JSON.stringify({ harness: "vib-rato", workspace, sessionId: SID }),
 		]);
 		expect(started.code).toBe(0);
 		expect((started.json?.state as Record<string, unknown>).lifecycle).toBe("started");
@@ -470,7 +470,7 @@ describe("portable detached-owner isolation seams", () => {
 		cwd: "/portable",
 		state_dir: "/portable/state",
 		socket_key: "private-socket",
-		tmux_argv: ["tmux", "new-session", "-d", "-s", "gajae_code_session"],
+		tmux_argv: ["tmux", "new-session", "-d", "-s", "vib_rato_session"],
 	};
 
 	it("accepts explicit non-Linux not_applicable proof without cgroup or systemd access", () => {

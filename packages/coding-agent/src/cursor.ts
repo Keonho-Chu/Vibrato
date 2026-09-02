@@ -7,13 +7,13 @@ import {
 	type AgentToolResult,
 	type AgentToolUpdateCallback,
 	bindDispatchedToolIdentity,
-} from "@gajae-code/agent-core";
+} from "@vib-rato/agent-core";
 import type {
 	CursorMcpCall,
 	CursorShellStreamCallbacks,
 	CursorExecHandlers as ICursorExecHandlers,
 	ToolResultMessage,
-} from "@gajae-code/ai/core";
+} from "@vib-rato/ai/core";
 import {
 	piEscapeRegexLiteral,
 	piJoinPath,
@@ -21,8 +21,8 @@ import {
 	piLsPath,
 	piReadPath,
 	piTimeout,
-} from "@gajae-code/ai/providers/cursor/exec-modern";
-import { sanitizeText } from "@gajae-code/utils";
+} from "@vib-rato/ai/providers/cursor/exec-modern";
+import { sanitizeText } from "@vib-rato/utils";
 import { resolveToCwd } from "./tools/path-utils";
 
 /**

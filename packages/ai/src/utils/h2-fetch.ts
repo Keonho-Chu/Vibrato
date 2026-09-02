@@ -20,7 +20,7 @@
  * Idempotent.
  */
 
-const installed: unique symbol = Symbol.for("gajae-code.h2fetch.installed");
+const installed: unique symbol = Symbol.for("vib-rato.h2fetch.installed");
 
 interface PatchedFetch {
 	[installed]?: true;

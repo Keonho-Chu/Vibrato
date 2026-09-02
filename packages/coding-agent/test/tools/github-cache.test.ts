@@ -2,15 +2,15 @@
  * Cache-layer tests for `github-cache` (storage + TTL semantics) and for the
  * `getOrFetchIssue` / `getOrFetchPr` wrappers wired into `gh.ts`.
  *
- * Each test isolates `GJC_GITHUB_CACHE_DB` to a temp file and clears
+ * Each test isolates `VIB_GITHUB_CACHE_DB` to a temp file and clears
  * `git.github.json` / `git.github.text` mocks between cases.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { getOrFetchIssue, getOrFetchPr } from "@gajae-code/coding-agent/tools/gh";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { getOrFetchIssue, getOrFetchPr } from "@vib-rato/coding-agent/tools/gh";
 import {
 	clearAll,
 	getCached,
@@ -18,8 +18,8 @@ import {
 	openDb,
 	putCached,
 	resetForTests as resetCacheForTests,
-} from "@gajae-code/coding-agent/tools/github-cache";
-import * as git from "@gajae-code/coding-agent/utils/git";
+} from "@vib-rato/coding-agent/tools/github-cache";
+import * as git from "@vib-rato/coding-agent/utils/git";
 
 const TEST_REPO = "owner/example";
 const TEST_AUTH_KEY = "test-auth";
@@ -29,17 +29,17 @@ let originalEnv: string | undefined;
 
 beforeEach(async () => {
 	tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gh-cache-"));
-	originalEnv = process.env.GJC_GITHUB_CACHE_DB;
-	process.env.GJC_GITHUB_CACHE_DB = path.join(tempDir, "github-cache.db");
+	originalEnv = process.env.VIB_GITHUB_CACHE_DB;
+	process.env.VIB_GITHUB_CACHE_DB = path.join(tempDir, "github-cache.db");
 	resetCacheForTests();
 });
 
 afterEach(async () => {
 	resetCacheForTests();
 	if (originalEnv === undefined) {
-		delete process.env.GJC_GITHUB_CACHE_DB;
+		delete process.env.VIB_GITHUB_CACHE_DB;
 	} else {
-		process.env.GJC_GITHUB_CACHE_DB = originalEnv;
+		process.env.VIB_GITHUB_CACHE_DB = originalEnv;
 	}
 	vi.restoreAllMocks();
 	await fs.rm(tempDir, { recursive: true, force: true });
@@ -184,7 +184,7 @@ describe("github-cache db layer", () => {
 		const parent = path.join(tempDir, "caller-owned-parent");
 		await fs.mkdir(parent, { recursive: true, mode: 0o755 });
 		await fs.chmod(parent, 0o755);
-		process.env.GJC_GITHUB_CACHE_DB = path.join(parent, "github-cache.db");
+		process.env.VIB_GITHUB_CACHE_DB = path.join(parent, "github-cache.db");
 		resetCacheForTests();
 
 		const db = openDb();

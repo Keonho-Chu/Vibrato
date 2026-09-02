@@ -4,13 +4,13 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 
-import { nativeProcessBindings } from "@gajae-code/utils/native-process";
+import { nativeProcessBindings } from "@vib-rato/utils/native-process";
 
-type NativeChatDaemonBindings = Pick<typeof import("@gajae-code/natives"), "exactUnlink">;
+type NativeChatDaemonBindings = Pick<typeof import("@vib-rato/natives"), "exactUnlink">;
 let nativeChatDaemonBindings: NativeChatDaemonBindings | undefined;
 
 function nativeChatDaemon(): NativeChatDaemonBindings {
-	if (!nativeChatDaemonBindings) nativeChatDaemonBindings = require("@gajae-code/natives") as NativeChatDaemonBindings;
+	if (!nativeChatDaemonBindings) nativeChatDaemonBindings = require("@vib-rato/natives") as NativeChatDaemonBindings;
 	return nativeChatDaemonBindings;
 }
 
@@ -23,7 +23,7 @@ import type {
 	DaemonRuntimeInfo,
 	DaemonStatus,
 } from "../../daemon/control-types";
-import { resolveGjcRuntimeSpawnInfo } from "../../daemon/runtime";
+import { resolveVibRuntimeSpawnInfo } from "../../daemon/runtime";
 import { isProcessIncarnation, processIncarnation } from "../broker/process-incarnation";
 import { getNotificationConfig, isDiscordComplete, isProviderEffectivelyEnabled, isSlackComplete } from "./config";
 
@@ -410,7 +410,7 @@ function defaultPidIncarnation(pid: number): string | undefined {
 	return processIncarnation(pid);
 }
 function runtimeInfo(execPath?: string): DaemonRuntimeInfo {
-	const rt = resolveGjcRuntimeSpawnInfo(execPath ?? process.execPath);
+	const rt = resolveVibRuntimeSpawnInfo(execPath ?? process.execPath);
 	return {
 		mode: rt.mode,
 		execPath: rt.execPath,
@@ -489,7 +489,7 @@ export function buildChatDaemonSpawnArgs(input: {
 	agentDir: string;
 	execPath?: string;
 }): { command: string; args: string[]; runtime: DaemonRuntimeInfo } {
-	const rt = resolveGjcRuntimeSpawnInfo(input.execPath ?? process.execPath);
+	const rt = resolveVibRuntimeSpawnInfo(input.execPath ?? process.execPath);
 	return {
 		command: rt.execPath,
 		args: [
@@ -1106,7 +1106,7 @@ function unlinkExactChatDaemonOwnerLock(lock: string, lease: ChatDaemonOwnerLock
 			parentDev: lease.parentDev,
 			parentIno: lease.parentIno,
 			sha256: lease.sha256,
-			quarantineName: `.gjc-delete-chat-daemon-lock-${crypto.randomUUID()}`,
+			quarantineName: `.vib-delete-chat-daemon-lock-${crypto.randomUUID()}`,
 		});
 		if (removed.ok) return true;
 		// Accept only typed retained authority: a concrete detached quarantine plus

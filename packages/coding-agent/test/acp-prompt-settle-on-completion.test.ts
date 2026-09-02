@@ -7,7 +7,7 @@ import type {
 	PromptRequest,
 	SessionNotification,
 } from "@agentclientprotocol/sdk";
-import { TempDir } from "@gajae-code/utils";
+import { TempDir } from "@vib-rato/utils";
 import { AcpAgent } from "../src/modes/acp/acp-agent";
 import { writeBrokerDiscovery } from "../src/sdk/broker/discovery";
 import { SessionIndex } from "../src/sdk/broker/session-index";
@@ -95,7 +95,7 @@ function phaseUpdates(updates: SessionNotification[], phase: string): number {
 	return updates.filter(
 		update =>
 			update.update.sessionUpdate === "session_info_update" &&
-			(update.update as { _meta?: { gjcPhase?: string } })._meta?.gjcPhase === phase,
+			(update.update as { _meta?: { vibPhase?: string } })._meta?.vibPhase === phase,
 	).length;
 }
 
@@ -178,7 +178,7 @@ async function createFixture(
 				if (frame.type === "broker_request") {
 					const endpointMtimeMs = 1;
 					if (frame.operation === "session.create") {
-						const endpointPath = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+						const endpointPath = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 						await fs.mkdir(path.dirname(endpointPath), { recursive: true });
 						await Bun.write(
 							endpointPath,
@@ -190,7 +190,7 @@ async function createFixture(
 						await index.append({
 							type: "host_registered",
 							sessionId,
-							locator: { repo: cwd, stateRoot: path.join(cwd, ".gjc", "state") },
+							locator: { repo: cwd, stateRoot: path.join(cwd, ".vib", "state") },
 							endpointGeneration: 1,
 							pid: process.pid,
 							endpointMtimeMs,

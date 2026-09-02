@@ -13,7 +13,7 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { scheduler } from "node:timers/promises";
 
-import { getConfigRootDir, isEnoent, logger } from "@gajae-code/utils";
+import { getConfigRootDir, isEnoent, logger } from "@vib-rato/utils";
 import {
 	type AuthCredential,
 	type AuthCredentialIfAbsentResult,
@@ -936,13 +936,13 @@ export class RemoteAuthCredentialStore implements AuthCredentialStore {
 
 	replaceAuthCredentialsForProvider(_provider: string, _credentials: AuthCredential[]): StoredAuthCredential[] {
 		throw new Error(
-			"RemoteAuthCredentialStore is read-only on the client. Use `gjc auth-broker login <provider>` to mutate credentials.",
+			"RemoteAuthCredentialStore is read-only on the client. Use `vib auth-broker login <provider>` to mutate credentials.",
 		);
 	}
 
 	upsertAuthCredentialForProvider(_provider: string, _credential: AuthCredential): StoredAuthCredential[] {
 		throw new Error(
-			"RemoteAuthCredentialStore is read-only on the client. Use `gjc auth-broker login <provider>` to mutate credentials.",
+			"RemoteAuthCredentialStore is read-only on the client. Use `vib auth-broker login <provider>` to mutate credentials.",
 		);
 	}
 
@@ -951,13 +951,13 @@ export class RemoteAuthCredentialStore implements AuthCredentialStore {
 		_credential: AuthCredential,
 	): AuthCredentialIfAbsentResult {
 		throw new Error(
-			"RemoteAuthCredentialStore is read-only on the client. Use `gjc auth-broker login <provider>` to mutate credentials.",
+			"RemoteAuthCredentialStore is read-only on the client. Use `vib auth-broker login <provider>` to mutate credentials.",
 		);
 	}
 
 	deleteAuthCredentialsForProvider(_provider: string, _disabledCause: string): void {
 		throw new Error(
-			"RemoteAuthCredentialStore is read-only on the client. Use `gjc auth-broker logout <provider>` to mutate credentials.",
+			"RemoteAuthCredentialStore is read-only on the client. Use `vib auth-broker logout <provider>` to mutate credentials.",
 		);
 	}
 

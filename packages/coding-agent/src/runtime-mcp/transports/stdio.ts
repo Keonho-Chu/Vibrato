@@ -5,7 +5,7 @@
  * Messages are newline-delimited JSON.
  */
 
-import { readJsonl, Snowflake } from "@gajae-code/utils";
+import { readJsonl, Snowflake } from "@vib-rato/utils";
 import { type OwnedProcess, spawnOwnedProcess } from "../../runtime/process-lifecycle";
 import type {
 	JsonRpcError,

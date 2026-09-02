@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "bun:test";
 import type Anthropic from "@anthropic-ai/sdk";
-import { streamAnthropic } from "@gajae-code/ai/providers/anthropic";
+import { streamAnthropic } from "@vib-rato/ai/providers/anthropic";
 import type {
 	AssistantMessage,
 	AssistantMessageEvent,
@@ -8,7 +8,7 @@ import type {
 	Model,
 	ProviderSessionState,
 	UserMessage,
-} from "@gajae-code/ai/types";
+} from "@vib-rato/ai/types";
 
 /**
  * Issue #4011: a single ACP session burned 121 rejected Anthropic requests over

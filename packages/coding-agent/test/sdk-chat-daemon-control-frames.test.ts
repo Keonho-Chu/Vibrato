@@ -83,10 +83,10 @@ async function withRuntime(
 	replayEvents: Array<Record<string, unknown>>,
 	run: (input: RuntimeHarness) => Promise<void>,
 ): Promise<void> {
-	const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-chat-control-frames-"));
+	const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-chat-control-frames-"));
 	let runtime: ChatDaemonRuntime | undefined;
 	try {
-		const stateRoot = path.join(agentDir, ".gjc", "state");
+		const stateRoot = path.join(agentDir, ".vib", "state");
 		const endpointFile = path.join(stateRoot, "sdk", `${SESSION_ID}.json`);
 		await fs.mkdir(path.dirname(endpointFile), { recursive: true });
 		await fs.writeFile(

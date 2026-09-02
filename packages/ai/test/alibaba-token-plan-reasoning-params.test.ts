@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it } from "bun:test";
-import { getBundledModel } from "@gajae-code/ai/models";
-import { streamOpenAICompletions } from "@gajae-code/ai/providers/openai-completions";
-import { streamOpenAIResponses } from "@gajae-code/ai/providers/openai-responses";
-import { getEnvApiKey } from "@gajae-code/ai/stream";
-import type { Context, Model } from "@gajae-code/ai/types";
+import { getBundledModel } from "@vib-rato/ai/models";
+import { streamOpenAICompletions } from "@vib-rato/ai/providers/openai-completions";
+import { streamOpenAIResponses } from "@vib-rato/ai/providers/openai-responses";
+import { getEnvApiKey } from "@vib-rato/ai/stream";
+import type { Context, Model } from "@vib-rato/ai/types";
 
 const originalAlibabaTokenPlanApiKey = Bun.env.ALIBABA_TOKEN_PLAN_API_KEY;
 

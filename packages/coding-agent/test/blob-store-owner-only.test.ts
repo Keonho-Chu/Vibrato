@@ -21,7 +21,7 @@ describe.skipIf(process.platform === "win32")("blob store owner-only permissions
 	it("creates the resident-cache directory tree and blobs owner-only under a permissive umask", () => {
 		const previousUmask = process.umask(0o002);
 		try {
-			const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-blob-mode-resident-"));
+			const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-blob-mode-resident-"));
 			temporaryDirectories.push(root);
 			const cacheDir = path.join(root, "stem", "resident-cache", "inst-1");
 			const store = new EphemeralBlobStore(cacheDir);
@@ -38,7 +38,7 @@ describe.skipIf(process.platform === "win32")("blob store owner-only permissions
 	it("creates base BlobStore putSync blobs owner-only under a permissive umask", () => {
 		const previousUmask = process.umask(0o002);
 		try {
-			const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-blob-mode-base-"));
+			const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-blob-mode-base-"));
 			temporaryDirectories.push(root);
 			const store = new BlobStore(path.join(root, "blobs"));
 			const { path: blobPath } = store.putSync(Buffer.from("base blob"));
@@ -53,7 +53,7 @@ describe.skipIf(process.platform === "win32")("blob store owner-only permissions
 	it("creates base BlobStore async put() blobs owner-only under a permissive umask", async () => {
 		const previousUmask = process.umask(0o002);
 		try {
-			const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-blob-mode-async-"));
+			const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-blob-mode-async-"));
 			temporaryDirectories.push(root);
 			const store = new BlobStore(path.join(root, "blobs"));
 			const { path: blobPath } = await store.put(Buffer.from("async blob"));
@@ -68,7 +68,7 @@ describe.skipIf(process.platform === "win32")("blob store owner-only permissions
 	it("installs immutable blobs owner-only under a permissive umask", () => {
 		const previousUmask = process.umask(0o002);
 		try {
-			const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-blob-mode-immutable-"));
+			const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-blob-mode-immutable-"));
 			temporaryDirectories.push(root);
 			const store = new BlobStore(path.join(root, "blobs"));
 			const { path: blobPath } = store.putImmutableSync(Buffer.from("immutable blob"));

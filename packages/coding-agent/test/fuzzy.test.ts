@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { fuzzyFilter, fuzzyMatch } from "@gajae-code/tui";
+import { fuzzyFilter, fuzzyMatch } from "@vib-rato/tui";
 
 describe("fuzzyMatch", () => {
 	test("empty query matches everything with score 0", () => {

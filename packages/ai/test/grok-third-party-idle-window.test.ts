@@ -17,7 +17,7 @@ import { withEnv } from "./helpers";
 describe("Grok idle window on third-party OpenAI-compatible hosts", () => {
 	describe("getOpenAIStreamIdleTimeoutMs(provider, modelId)", () => {
 		afterEach(() => {
-			delete Bun.env.GJC_OPENAI_STREAM_IDLE_TIMEOUT_MS;
+			delete Bun.env.VIB_OPENAI_STREAM_IDLE_TIMEOUT_MS;
 			delete Bun.env.PI_OPENAI_STREAM_IDLE_TIMEOUT_MS;
 			delete Bun.env.PI_STREAM_IDLE_TIMEOUT_MS;
 		});
@@ -42,12 +42,12 @@ describe("Grok idle window on third-party OpenAI-compatible hosts", () => {
 			expect(getOpenAIStreamIdleTimeoutMs("xai", "grok-4.6")).toBe(300_000);
 			expect(getOpenAIStreamIdleTimeoutMs("grok-build", "grok-build")).toBe(300_000);
 			// Env overrides still win over the model-keyed floor (the first
-			// withEnv block leaves GJC_OPENAI_STREAM_IDLE_TIMEOUT_MS set only
+			// withEnv block leaves VIB_OPENAI_STREAM_IDLE_TIMEOUT_MS set only
 			// inside its own scope; the disable check re-runs cleanly).
-			withEnv({ GJC_OPENAI_STREAM_IDLE_TIMEOUT_MS: "77" }, () => {
+			withEnv({ VIB_OPENAI_STREAM_IDLE_TIMEOUT_MS: "77" }, () => {
 				expect(getOpenAIStreamIdleTimeoutMs("openrouter", "x-ai/grok-4.6")).toBe(77);
 			});
-			withEnv({ GJC_OPENAI_STREAM_IDLE_TIMEOUT_MS: "0" }, () => {
+			withEnv({ VIB_OPENAI_STREAM_IDLE_TIMEOUT_MS: "0" }, () => {
 				expect(getOpenAIStreamIdleTimeoutMs("openrouter", "x-ai/grok-4.6")).toBeUndefined();
 			});
 		});

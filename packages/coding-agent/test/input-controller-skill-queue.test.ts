@@ -19,23 +19,23 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { Agent } from "@gajae-code/agent-core";
-import { getBundledModel } from "@gajae-code/ai/models";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { getEmbeddedDefaultGjcSkills } from "@gajae-code/coding-agent/defaults/gjc-defaults";
-import { resolveSkillSlashCommands, type Skill } from "@gajae-code/coding-agent/extensibility/skills";
-import { EventController } from "@gajae-code/coding-agent/modes/controllers/event-controller";
-import { InputController } from "@gajae-code/coding-agent/modes/controllers/input-controller";
-import { getThemeByName, setThemeInstance } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { InteractiveModeContext } from "@gajae-code/coding-agent/modes/types";
-import { UiHelpers } from "@gajae-code/coding-agent/modes/utils/ui-helpers";
-import { AgentSession, type AgentSessionEvent } from "@gajae-code/coding-agent/session/agent-session";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { SKILL_PROMPT_MESSAGE_TYPE, type SkillPromptDetails } from "@gajae-code/coding-agent/session/messages";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { Container } from "@gajae-code/tui";
-import { TempDir } from "@gajae-code/utils";
+import { Agent } from "@vib-rato/agent-core";
+import { getBundledModel } from "@vib-rato/ai/models";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { getEmbeddedDefaultVibSkills } from "@vib-rato/coding-agent/defaults/vib-defaults";
+import { resolveSkillSlashCommands, type Skill } from "@vib-rato/coding-agent/extensibility/skills";
+import { EventController } from "@vib-rato/coding-agent/modes/controllers/event-controller";
+import { InputController } from "@vib-rato/coding-agent/modes/controllers/input-controller";
+import { getThemeByName, setThemeInstance } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { InteractiveModeContext } from "@vib-rato/coding-agent/modes/types";
+import { UiHelpers } from "@vib-rato/coding-agent/modes/utils/ui-helpers";
+import { AgentSession, type AgentSessionEvent } from "@vib-rato/coding-agent/session/agent-session";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { SKILL_PROMPT_MESSAGE_TYPE, type SkillPromptDetails } from "@vib-rato/coding-agent/session/messages";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { Container } from "@vib-rato/tui";
+import { TempDir } from "@vib-rato/utils";
 
 // ============================================================================
 // Shared helpers
@@ -225,8 +225,8 @@ describe("InputController #invokeSkillCommand (E1-E3)", () => {
 		expect(messageArg.details.__pendingDisplayTag).toBe("sk-test-0");
 	});
 
-	it("E3b: embedded default skill command does not require .gjc on disk", async () => {
-		const embedded = getEmbeddedDefaultGjcSkills().find(skill => skill.name === "deep-interview");
+	it("E3b: embedded default skill command does not require .vib on disk", async () => {
+		const embedded = getEmbeddedDefaultVibSkills().find(skill => skill.name === "deep-interview");
 		if (!embedded) throw new Error("expected embedded deep-interview skill");
 		const { ctx, editor, promptCustomMessage } = createStubInputControllerContext({
 			skillCommands: new Map<string, Skill>([["skill:deep-interview", embedded]]),
@@ -244,7 +244,7 @@ describe("InputController #invokeSkillCommand (E1-E3)", () => {
 		if (!firstCall) throw new Error("expected promptCustomMessage to be called");
 		const messageArg = firstCall[0];
 		expect(messageArg.content).toContain("Deep Interview");
-		expect(messageArg.details.path).toBe("embedded:gjc/skills/deep-interview/SKILL.md");
+		expect(messageArg.details.path).toBe("embedded:vib/skills/deep-interview/SKILL.md");
 		expect(ctx.showError).not.toHaveBeenCalled();
 	});
 
@@ -386,7 +386,7 @@ describe("skill slash command resolution", () => {
 	});
 
 	it("exposes only namespaced skill commands", () => {
-		const deepInterview = getEmbeddedDefaultGjcSkills().find(skill => skill.name === "deep-interview");
+		const deepInterview = getEmbeddedDefaultVibSkills().find(skill => skill.name === "deep-interview");
 		if (!deepInterview) throw new Error("expected embedded deep-interview skill");
 
 		const withFileCollision = resolveSkillSlashCommands([deepInterview], new Set(["deep-interview"]));

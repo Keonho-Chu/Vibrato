@@ -1,10 +1,10 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
-import { resetSettingsForTest, Settings, settings } from "@gajae-code/coding-agent/config/settings";
-import { SelectorController } from "@gajae-code/coding-agent/modes/controllers/selector-controller";
-import { buildOAuthLoginAnchor, createOAuthUrlCopyLease } from "@gajae-code/coding-agent/modes/shared/oauth-url-copy";
-import { getThemeByName, setThemeInstance } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { InteractiveModeContext } from "@gajae-code/coding-agent/modes/types";
-import { type Component, Text } from "@gajae-code/tui";
+import { resetSettingsForTest, Settings, settings } from "@vib-rato/coding-agent/config/settings";
+import { SelectorController } from "@vib-rato/coding-agent/modes/controllers/selector-controller";
+import { buildOAuthLoginAnchor, createOAuthUrlCopyLease } from "@vib-rato/coding-agent/modes/shared/oauth-url-copy";
+import { getThemeByName, setThemeInstance } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { InteractiveModeContext } from "@vib-rato/coding-agent/modes/types";
+import { type Component, Text } from "@vib-rato/tui";
 import { MCPAddWizard } from "../src/modes/components/runtime-mcp-add-wizard";
 import { MCPCommandController } from "../src/modes/controllers/runtime-mcp-command-controller";
 

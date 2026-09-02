@@ -1,28 +1,28 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import type { AgentTool, AgentToolContext } from "@gajae-code/agent-core";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
+import type { AgentTool, AgentToolContext } from "@vib-rato/agent-core";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { ToolSession } from "@vib-rato/coding-agent/tools";
+import { AskTool } from "@vib-rato/coding-agent/tools/ask";
+import { ToolError } from "@vib-rato/coding-agent/tools/tool-errors";
+import { guardToolForUltragoalAsk } from "@vib-rato/coding-agent/tools/ultragoal-ask-guard";
 import {
 	activeSnapshotPath,
 	modeStatePath,
 	sessionActivityPath,
-} from "@gajae-code/coding-agent/gjc-runtime/session-layout";
-import { isUltragoalAskBlocked } from "@gajae-code/coding-agent/gjc-runtime/ultragoal-guard";
+} from "@vib-rato/coding-agent/vib-runtime/session-layout";
+import { isUltragoalAskBlocked } from "@vib-rato/coding-agent/vib-runtime/ultragoal-guard";
 import {
 	computeUltragoalPlanGeneration,
 	createUltragoalPlan,
 	getUltragoalPaths,
 	hashStructuredValue,
-} from "@gajae-code/coding-agent/gjc-runtime/ultragoal-runtime";
-import { initTheme } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { ToolSession } from "@gajae-code/coding-agent/tools";
-import { AskTool } from "@gajae-code/coding-agent/tools/ask";
-import { ToolError } from "@gajae-code/coding-agent/tools/tool-errors";
-import { guardToolForUltragoalAsk } from "@gajae-code/coding-agent/tools/ultragoal-ask-guard";
+} from "@vib-rato/coding-agent/vib-runtime/ultragoal-runtime";
 
 const TEST_SESSION_ID = "ultragoal-ask-guard-test-session";
-const ORIGINAL_GJC_SESSION_ID = process.env.GJC_SESSION_ID;
+const ORIGINAL_VIB_SESSION_ID = process.env.VIB_SESSION_ID;
 const tempRoots: string[] = [];
 
 async function tempDir(): Promise<string> {
@@ -36,8 +36,8 @@ beforeAll(async () => {
 });
 
 afterEach(async () => {
-	if (ORIGINAL_GJC_SESSION_ID === undefined) delete process.env.GJC_SESSION_ID;
-	else process.env.GJC_SESSION_ID = ORIGINAL_GJC_SESSION_ID;
+	if (ORIGINAL_VIB_SESSION_ID === undefined) delete process.env.VIB_SESSION_ID;
+	else process.env.VIB_SESSION_ID = ORIGINAL_VIB_SESSION_ID;
 	await Promise.all(tempRoots.splice(0).map(dir => fs.rm(dir, { recursive: true, force: true })));
 });
 
@@ -131,26 +131,26 @@ class StubExtensionWrappedAskTool {
 }
 
 describe("ultragoal ask guard", () => {
-	it("allows ask when durable ultragoal state is absent without requiring ambient GJC_SESSION_ID", async () => {
+	it("allows ask when durable ultragoal state is absent without requiring ambient VIB_SESSION_ID", async () => {
 		const cwd = await tempDir();
-		const previousSessionId = process.env.GJC_SESSION_ID;
-		delete process.env.GJC_SESSION_ID;
+		const previousSessionId = process.env.VIB_SESSION_ID;
+		delete process.env.VIB_SESSION_ID;
 		try {
 			const diagnostic = await isUltragoalAskBlocked(cwd);
 			expect(diagnostic.active).toBe(false);
 			expect(diagnostic.source).toBe("absent");
-			expect(diagnostic.goalsPath).toBe(path.join(cwd, ".gjc", "ultragoal", "goals.json"));
+			expect(diagnostic.goalsPath).toBe(path.join(cwd, ".vib", "ultragoal", "goals.json"));
 		} finally {
-			if (previousSessionId === undefined) delete process.env.GJC_SESSION_ID;
-			else process.env.GJC_SESSION_ID = previousSessionId;
+			if (previousSessionId === undefined) delete process.env.VIB_SESSION_ID;
+			else process.env.VIB_SESSION_ID = previousSessionId;
 		}
 	});
 
-	it("blocks latest session-scoped ultragoal ask when GJC_SESSION_ID is absent", async () => {
+	it("blocks latest session-scoped ultragoal ask when VIB_SESSION_ID is absent", async () => {
 		const cwd = await tempDir();
-		process.env.GJC_SESSION_ID = TEST_SESSION_ID;
+		process.env.VIB_SESSION_ID = TEST_SESSION_ID;
 		await createUltragoalPlan({ cwd, brief: "Implement the story" });
-		delete process.env.GJC_SESSION_ID;
+		delete process.env.VIB_SESSION_ID;
 
 		const diagnostic = await isUltragoalAskBlocked(cwd);
 
@@ -162,7 +162,7 @@ describe("ultragoal ask guard", () => {
 
 	it("blocks SDK-initial-path style wrapped ask while ultragoal is active", async () => {
 		const cwd = await tempDir();
-		process.env.GJC_SESSION_ID = TEST_SESSION_ID;
+		process.env.VIB_SESSION_ID = TEST_SESSION_ID;
 		await createUltragoalPlan({ cwd, brief: "Implement the story" });
 		const execute = vi.fn(async () => {});
 		const guarded = guardToolForUltragoalAsk(stubAskTool(execute), () => cwd);
@@ -188,7 +188,7 @@ describe("ultragoal ask guard", () => {
 
 	it("blocks an unwrapped AskTool before prompting while ultragoal is active", async () => {
 		const cwd = await tempDir();
-		process.env.GJC_SESSION_ID = TEST_SESSION_ID;
+		process.env.VIB_SESSION_ID = TEST_SESSION_ID;
 		await createUltragoalPlan({ cwd, brief: "Implement the story" });
 		const select = vi.fn(async () => "Yes");
 		const tool = new AskTool(createSession(cwd));
@@ -211,11 +211,11 @@ describe("ultragoal ask guard", () => {
 		const ultragoalSessionB = "ultragoal-ambiguous-b";
 		const tiedActivity = "2026-06-29T00:00:00.000Z";
 
-		process.env.GJC_SESSION_ID = ultragoalSessionA;
+		process.env.VIB_SESSION_ID = ultragoalSessionA;
 		await createUltragoalPlan({ cwd, brief: "Implement the first stale story" });
-		process.env.GJC_SESSION_ID = ultragoalSessionB;
+		process.env.VIB_SESSION_ID = ultragoalSessionB;
 		await createUltragoalPlan({ cwd, brief: "Implement the second stale story" });
-		delete process.env.GJC_SESSION_ID;
+		delete process.env.VIB_SESSION_ID;
 
 		await writeActivityMarker(cwd, ultragoalSessionA, tiedActivity);
 		await writeActivityMarker(cwd, ultragoalSessionB, tiedActivity);
@@ -245,9 +245,9 @@ describe("ultragoal ask guard", () => {
 		const cwd = await tempDir();
 		const sessionId = "deep-interview-with-ultragoal-state";
 
-		process.env.GJC_SESSION_ID = sessionId;
+		process.env.VIB_SESSION_ID = sessionId;
 		await createUltragoalPlan({ cwd, brief: "Implement the same-session story" });
-		delete process.env.GJC_SESSION_ID;
+		delete process.env.VIB_SESSION_ID;
 		await writeActiveDeepInterviewState(cwd, sessionId);
 
 		const select = vi.fn(async () => "Continue");
@@ -272,7 +272,7 @@ describe("ultragoal ask guard", () => {
 
 	it("allows ask when the ultragoal run is verified complete", async () => {
 		const cwd = await tempDir();
-		process.env.GJC_SESSION_ID = TEST_SESSION_ID;
+		process.env.VIB_SESSION_ID = TEST_SESSION_ID;
 		await createUltragoalPlan({ cwd, brief: "Implement the story" });
 		const paths = getUltragoalPaths(cwd);
 		const now = new Date().toISOString();
@@ -303,8 +303,8 @@ describe("ultragoal ask guard", () => {
 			goalId: plan.goals[0].id,
 			receiptKind: "final-aggregate",
 			goalStatusBeforeCheckpoint: "active",
-			gjcGoalMode: plan.gjcGoalMode,
-			gjcObjective: plan.gjcObjective,
+			vibGoalMode: plan.vibGoalMode,
+			vibObjective: plan.vibObjective,
 			qualityGateHash: hashStructuredValue(qualityGateJson),
 			planGeneration: generation.planGeneration,
 			basis: generation.basis,
@@ -320,21 +320,21 @@ describe("ultragoal ask guard", () => {
 		expect(diagnostic.source).toBe("durable_state");
 	});
 
-	it("allows ask when no GJC session resolves even if a stale global ultragoal plan exists", async () => {
+	it("allows ask when no Vibrato session resolves even if a stale global ultragoal plan exists", async () => {
 		const cwd = await tempDir();
-		const previousSessionId = process.env.GJC_SESSION_ID;
-		delete process.env.GJC_SESSION_ID;
+		const previousSessionId = process.env.VIB_SESSION_ID;
+		delete process.env.VIB_SESSION_ID;
 		try {
-			// Legacy/global .gjc/ultragoal with an incomplete plan, but no resolvable
+			// Legacy/global .vib/ultragoal with an incomplete plan, but no resolvable
 			// session (no env, no _session-* activity marker). Must not block ask.
-			const globalDir = path.join(cwd, ".gjc", "ultragoal");
+			const globalDir = path.join(cwd, ".vib", "ultragoal");
 			await fs.mkdir(globalDir, { recursive: true });
 			await fs.writeFile(
 				path.join(globalDir, "goals.json"),
 				JSON.stringify({
 					version: 1,
 					brief: "Stale run",
-					gjcGoalMode: "aggregate",
+					vibGoalMode: "aggregate",
 					goals: [{ id: "G001", title: "Leftover", objective: "Leftover", status: "pending" }],
 				}),
 			);
@@ -344,8 +344,8 @@ describe("ultragoal ask guard", () => {
 			expect(diagnostic.active).toBe(false);
 			expect(diagnostic.source).toBe("absent");
 		} finally {
-			if (previousSessionId === undefined) delete process.env.GJC_SESSION_ID;
-			else process.env.GJC_SESSION_ID = previousSessionId;
+			if (previousSessionId === undefined) delete process.env.VIB_SESSION_ID;
+			else process.env.VIB_SESSION_ID = previousSessionId;
 		}
 	});
 });

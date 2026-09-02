@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { getConfigRootDir, getMCPConfigPath, setAgentDir } from "@gajae-code/utils";
+import { getConfigRootDir, getMCPConfigPath, setAgentDir } from "@vib-rato/utils";
 import { runMCPCommand } from "../src/cli/mcp-cli";
 import { readMCPConfigFile } from "../src/runtime-mcp/config-writer";
 
@@ -10,16 +10,16 @@ let tmpDir = "";
 let agentDir = "";
 let projectDir = "";
 
-const originalAgentDir = process.env.GJC_CODING_AGENT_DIR;
+const originalAgentDir = process.env.VIB_CODING_AGENT_DIR;
 const fallbackAgentDir = path.join(getConfigRootDir(), "agent");
 
 function stdoutText(spy: { mock: { calls: Array<[unknown, ...unknown[]]> } }): string {
 	return spy.mock.calls.map((call: [unknown, ...unknown[]]) => String(call[0] ?? "")).join("");
 }
 
-describe("gjc mcp CLI helpers", () => {
+describe("vib mcp CLI helpers", () => {
 	beforeEach(async () => {
-		tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-mcp-cli-"));
+		tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-mcp-cli-"));
 		agentDir = path.join(tmpDir, "agent");
 		projectDir = path.join(tmpDir, "project");
 		await fs.mkdir(projectDir, { recursive: true });
@@ -33,7 +33,7 @@ describe("gjc mcp CLI helpers", () => {
 			setAgentDir(originalAgentDir);
 		} else {
 			setAgentDir(fallbackAgentDir);
-			delete process.env.GJC_CODING_AGENT_DIR;
+			delete process.env.VIB_CODING_AGENT_DIR;
 		}
 		process.exitCode = 0;
 		await fs.rm(tmpDir, { recursive: true, force: true });
@@ -62,7 +62,7 @@ describe("gjc mcp CLI helpers", () => {
 		expect(stdoutText(stdout)).toContain('"API_TOKEN": "<redacted>"');
 		expect(stdoutText(stdout)).not.toContain("super-secret");
 		expect(stdoutText(stdout)).toContain('"runtimeStatus": "autoload"');
-		expect(stdoutText(stdout)).toContain('"runtimeNote": "Loaded by ordinary standalone gjc sessions at startup."');
+		expect(stdoutText(stdout)).toContain('"runtimeNote": "Loaded by ordinary standalone vib sessions at startup."');
 
 		stdout.mockClear();
 		await runMCPCommand({ action: "list", flags: { json: true }, cwd: projectDir });
@@ -70,7 +70,7 @@ describe("gjc mcp CLI helpers", () => {
 		expect(stdoutText(stdout)).toContain('"API_TOKEN": "<redacted>"');
 		expect(stdoutText(stdout)).not.toContain("super-secret");
 		expect(stdoutText(stdout)).toContain('"runtimeStatus": "autoload"');
-		expect(stdoutText(stdout)).toContain('"runtimeNote": "Loaded by ordinary standalone gjc sessions at startup."');
+		expect(stdoutText(stdout)).toContain('"runtimeNote": "Loaded by ordinary standalone vib sessions at startup."');
 		expect(stdoutText(stdout)).toContain('"scope": "user"');
 
 		stdout.mockClear();
@@ -109,7 +109,7 @@ describe("gjc mcp CLI helpers", () => {
 		});
 		const output = stdoutText(stdout);
 		expect(output).toContain("docs\thttp\thttps://example.test/%3Credacted%3E");
-		expect(output).toContain("Runtime: Loaded by ordinary standalone gjc sessions at startup.");
+		expect(output).toContain("Runtime: Loaded by ordinary standalone vib sessions at startup.");
 		expect(output).toContain('"Authorization": "<redacted>"');
 		expect(output).toContain('"X-Public": "<redacted>"');
 		expect(output).not.toContain("Bearer real-token");
@@ -263,7 +263,7 @@ describe("gjc mcp CLI helpers", () => {
 		const parsed = JSON.parse(output);
 		const byName = Object.fromEntries(parsed.servers.map((entry: { name: string }) => [entry.name, entry]));
 		expect(byName.alpha.runtimeStatus).toBe("autoload");
-		expect(byName.alpha.runtimeNote).toBe("Loaded by ordinary standalone gjc sessions at startup.");
+		expect(byName.alpha.runtimeNote).toBe("Loaded by ordinary standalone vib sessions at startup.");
 		expect(byName.disabled.runtimeStatus).toBe("disabled");
 		expect(byName.disabled.runtimeNote).toBe("Disabled; not loaded by sessions. Re-enable to autoload.");
 		expect(byName.denied.runtimeStatus).toBe("disabled");
@@ -288,7 +288,7 @@ describe("gjc mcp CLI helpers", () => {
 
 		const output = stdoutText(stdout);
 		expect(output).toContain('MCP server "demo" added in project config');
-		expect(output).toContain("Runtime: Loaded by ordinary standalone gjc sessions at startup.");
+		expect(output).toContain("Runtime: Loaded by ordinary standalone vib sessions at startup.");
 		expect(output).not.toContain("storage-only");
 		expect(output).not.toContain("do not load stored MCP registrations today");
 	});

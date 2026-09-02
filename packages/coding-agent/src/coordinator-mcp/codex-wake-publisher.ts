@@ -152,7 +152,7 @@ export async function publishCodexWake(input: {
 	const transport = await input.transportFactory(endpoint, token);
 	try {
 		await transport.request("initialize", {
-			clientInfo: { name: "gjc-coordinator", title: null, version: packageJson.version || "0" },
+			clientInfo: { name: "vib-coordinator", title: null, version: packageJson.version || "0" },
 			capabilities: null,
 		});
 		await transport.notify?.("initialized");

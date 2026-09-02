@@ -8,6 +8,7 @@
  */
 
 import type { ModelRegistry } from "../../config/model-registry";
+import { isProviderSelectable } from "../../config/provider-allowlist";
 import { getProviderAuthHealth } from "../../config/provider-auth-health";
 import type { Settings } from "../../config/settings";
 import type { AuthStorage } from "../../session/auth-storage";
@@ -171,7 +172,7 @@ export class ProviderOrderContext {
 		const providers = new Map<string, string>();
 		for (const model of this.#registry.getAll()) {
 			const id = normalizeProviderId(model.provider);
-			if (id && !providers.has(id)) providers.set(id, model.provider);
+			if (id && !providers.has(id) && isProviderSelectable(id)) providers.set(id, model.provider);
 		}
 		return providers;
 	}

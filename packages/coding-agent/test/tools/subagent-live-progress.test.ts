@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
-import { GenAIAttr, resolveTelemetry, startChatSpan } from "@gajae-code/agent-core/telemetry";
-import { createMockModel } from "@gajae-code/ai/providers/mock";
 import { BasicTracerProvider, InMemorySpanExporter, SimpleSpanProcessor } from "@opentelemetry/sdk-trace-base";
+import { GenAIAttr, resolveTelemetry, startChatSpan } from "@vib-rato/agent-core/telemetry";
+import { createMockModel } from "@vib-rato/ai/providers/mock";
 import { AsyncJobManager, type SubagentRecord } from "../../src/async";
 import { Settings } from "../../src/config/settings";
 import { mapAgentSessionEventToAcpSessionUpdates } from "../../src/modes/acp/acp-event-mapper";

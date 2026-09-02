@@ -987,13 +987,13 @@ describe("Cursor system prompt encoding", () => {
 			})),
 		).toEqual([
 			{
-				fullPath: "/gjc/system-prompt/0.mdc",
+				fullPath: "/vib/system-prompt/0.mdc",
 				content: "Primary instructions.",
 				source: 2,
 				type: "global",
 			},
 			{
-				fullPath: "/gjc/system-prompt/1.mdc",
+				fullPath: "/vib/system-prompt/1.mdc",
 				content: "Developer constraints.",
 				source: 2,
 				type: "global",

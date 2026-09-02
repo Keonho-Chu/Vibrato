@@ -78,7 +78,7 @@ async function login(provider: OAuthProvider): Promise<void> {
 				return promptFn(`${p.message}${p.placeholder ? ` (${p.placeholder})` : ""}:`);
 			},
 		});
-		console.log(`\nCredentials saved to ~/.gjc/agent/agent.db`);
+		console.log(`\nCredentials saved to ~/.vib/agent/agent.db`);
 	} finally {
 		store.close();
 		rl.close();
@@ -90,7 +90,7 @@ async function main(): Promise<void> {
 	const command = args[0];
 
 	if (!command || command === "help" || command === "--help" || command === "-h") {
-		console.log(`Usage: bunx @gajae-code/ai <command> [provider]
+		console.log(`Usage: bunx @vib-rato/ai <command> [provider]
 
 Commands:
   login [provider]  Login to a provider
@@ -125,11 +125,11 @@ Providers:
   ollama-cloud      Ollama Cloud
 
 Examples:
-  bunx @gajae-code/ai login              # interactive provider selection
-  bunx @gajae-code/ai login anthropic    # login to specific provider
-  bunx @gajae-code/ai logout anthropic   # logout from specific provider
-  bunx @gajae-code/ai status             # show logged-in providers
-  bunx @gajae-code/ai list               # list providers
+  bunx @vib-rato/ai login              # interactive provider selection
+  bunx @vib-rato/ai login anthropic    # login to specific provider
+  bunx @vib-rato/ai logout anthropic   # logout from specific provider
+  bunx @vib-rato/ai status             # show logged-in providers
+  bunx @vib-rato/ai list               # list providers
 `);
 		return;
 	}
@@ -140,7 +140,7 @@ Examples:
 			const providers = storage.listProviders();
 			if (providers.length === 0) {
 				console.log("No credentials stored.");
-				console.log(`Use 'bunx @gajae-code/ai login' to authenticate.`);
+				console.log(`Use 'bunx @vib-rato/ai login' to authenticate.`);
 			} else {
 				console.log("Logged-in providers:\n");
 				for (const provider of providers) {
@@ -249,7 +249,7 @@ Examples:
 
 		if (!PROVIDERS.some(p => p.id === provider)) {
 			console.error(`Unknown provider: ${provider}`);
-			console.error(`Use 'bunx @gajae-code/ai list' to see available providers`);
+			console.error(`Use 'bunx @vib-rato/ai list' to see available providers`);
 			process.exit(1);
 		}
 
@@ -259,7 +259,7 @@ Examples:
 	}
 
 	console.error(`Unknown command: ${command}`);
-	console.error(`Use 'bunx @gajae-code/ai --help' for usage`);
+	console.error(`Use 'bunx @vib-rato/ai --help' for usage`);
 	process.exit(1);
 }
 

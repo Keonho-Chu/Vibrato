@@ -14,7 +14,7 @@ import { isDeepInterviewAskQuestion } from "../../../deep-interview/render-middl
 import {
 	assertDeepInterviewInputWithinLimit,
 	MAX_USER_RESPONSE_LENGTH,
-} from "../../../gjc-runtime/deep-interview-state";
+} from "../../../vib-runtime/deep-interview-state";
 import type { OpenGateInput } from "./workflow-gate-broker";
 import {
 	type AskGateDeepInterviewState,

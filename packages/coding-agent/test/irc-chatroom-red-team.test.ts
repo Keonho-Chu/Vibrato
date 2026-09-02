@@ -6,20 +6,20 @@ import {
 	computeIrcSplitWidths,
 	type IrcSidebarTheme,
 	IrcSplitViewComponent,
-} from "@gajae-code/coding-agent/modes/components/irc-sidebar";
-import { IrcObservationLedger } from "@gajae-code/coding-agent/modes/irc-observation-ledger";
-import { initTheme } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { InteractiveModeContext, IrcArrivalSnapshot } from "@gajae-code/coding-agent/modes/types";
+} from "@vib-rato/coding-agent/modes/components/irc-sidebar";
+import { IrcObservationLedger } from "@vib-rato/coding-agent/modes/irc-observation-ledger";
+import { initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { InteractiveModeContext, IrcArrivalSnapshot } from "@vib-rato/coding-agent/modes/types";
 import {
 	formatIrcMessageBlock,
 	type ParsedIrcMessage,
 	parseIrcMessage,
-} from "@gajae-code/coding-agent/modes/utils/irc-message";
-import { UiHelpers } from "@gajae-code/coding-agent/modes/utils/ui-helpers";
-import { type Component, Container, TUI, visibleWidth } from "@gajae-code/tui";
+} from "@vib-rato/coding-agent/modes/utils/irc-message";
+import { UiHelpers } from "@vib-rato/coding-agent/modes/utils/ui-helpers";
+import { type Component, Container, TUI, visibleWidth } from "@vib-rato/tui";
 import { VirtualTerminal } from "../../tui/test/virtual-terminal";
 
-const artifactDirectory = path.join(os.tmpdir(), `gjc-irc-chatroom-red-team-${process.pid}`);
+const artifactDirectory = path.join(os.tmpdir(), `vib-irc-chatroom-red-team-${process.pid}`);
 const widths = Array.from({ length: 500 }, (_, index) => index + 1);
 const candidateRef = Bun.env.GITHUB_HEAD_SHA ?? Bun.env.GITHUB_SHA ?? "local-worktree";
 const expectedCaseInventory = [

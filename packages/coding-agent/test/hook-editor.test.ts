@@ -1,10 +1,10 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from "bun:test";
-import { KeybindingsManager } from "@gajae-code/coding-agent/config/keybindings";
-import { HookEditorComponent } from "@gajae-code/coding-agent/modes/components/hook-editor";
-import { ExtensionUiController } from "@gajae-code/coding-agent/modes/controllers/extension-ui-controller";
-import { getThemeByName, setThemeInstance } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { InteractiveModeContext } from "@gajae-code/coding-agent/modes/types";
-import { setKeybindings, type TUI } from "@gajae-code/tui";
+import { KeybindingsManager } from "@vib-rato/coding-agent/config/keybindings";
+import { HookEditorComponent } from "@vib-rato/coding-agent/modes/components/hook-editor";
+import { ExtensionUiController } from "@vib-rato/coding-agent/modes/controllers/extension-ui-controller";
+import { getThemeByName, setThemeInstance } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { InteractiveModeContext } from "@vib-rato/coding-agent/modes/types";
+import { setKeybindings, type TUI } from "@vib-rato/tui";
 
 beforeAll(async () => {
 	const theme = await getThemeByName("red-claw");

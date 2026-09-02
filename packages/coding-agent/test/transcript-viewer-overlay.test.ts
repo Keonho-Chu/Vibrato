@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "bun:test";
 import * as path from "node:path";
-import { Agent } from "@gajae-code/agent-core";
-import type { AssistantMessage } from "@gajae-code/ai";
-import { resetSettingsForTest, Settings } from "@gajae-code/coding-agent/config/settings";
-import { TempDir } from "@gajae-code/utils";
+import { Agent } from "@vib-rato/agent-core";
+import type { AssistantMessage } from "@vib-rato/ai";
+import { resetSettingsForTest, Settings } from "@vib-rato/coding-agent/config/settings";
+import { TempDir } from "@vib-rato/utils";
 import { ModelRegistry } from "../src/config/model-registry";
 import { createToolTranscriptRenderDescriptor } from "../src/modes/components/tool-transcript-format";
 import {

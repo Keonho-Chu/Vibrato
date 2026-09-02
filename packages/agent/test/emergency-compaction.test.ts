@@ -3,7 +3,7 @@ import {
 	emergencyCompactionReason,
 	DEFAULT_EMERGENCY_COMPACTION_LIMITS as LIM,
 	resolveEmergencyCompactionLimits,
-} from "@gajae-code/agent-core/compaction";
+} from "@vib-rato/agent-core/compaction";
 
 const under = { heapUsedBytes: 1, providerBytes: 1, messageCount: 1, imageBytes: 1 };
 

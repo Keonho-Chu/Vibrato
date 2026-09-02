@@ -1,4 +1,4 @@
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 import { generatePromptSuggestion } from "../utils/prompt-suggestion";
 import type { InteractiveModeContext } from "./types";
 

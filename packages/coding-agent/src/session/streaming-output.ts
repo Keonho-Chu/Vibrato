@@ -1,6 +1,6 @@
-import type { AgentToolUpdateCallback } from "@gajae-code/agent-core";
+import type { AgentToolUpdateCallback } from "@vib-rato/agent-core";
 
-import { sanitizeText } from "@gajae-code/utils";
+import { sanitizeText } from "@vib-rato/utils";
 import { formatBytes } from "../tools/render-utils";
 import { sanitizeWithOptionalSixelPassthrough } from "../utils/sixel";
 

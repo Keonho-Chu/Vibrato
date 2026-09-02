@@ -1,6 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import type { AgentTool, AgentToolContext, AgentToolResult, AgentToolUpdateCallback } from "@gajae-code/agent-core";
+import type { AgentTool, AgentToolContext, AgentToolResult, AgentToolUpdateCallback } from "@vib-rato/agent-core";
 import { z } from "zod/v4";
 import { getTelegramFileSink } from "../sdk/bus/attachment-registry";
 import { getNotificationConfig, isProviderEffectivelyEnabled } from "../sdk/bus/config";

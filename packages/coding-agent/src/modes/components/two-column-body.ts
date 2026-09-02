@@ -1,4 +1,4 @@
-import { type Component, padding, truncateToWidth, visibleWidth } from "@gajae-code/tui";
+import { type Component, padding, truncateToWidth, visibleWidth } from "@vib-rato/tui";
 import { theme } from "../theme/theme";
 
 export class TwoColumnBody implements Component {

@@ -3,18 +3,18 @@ import { createHash, randomUUID } from "node:crypto";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
-import type * as native from "@gajae-code/natives";
+import type * as native from "@vib-rato/natives";
 
-let nativeSessionStorageBindings: typeof import("@gajae-code/natives") | undefined;
+let nativeSessionStorageBindings: typeof import("@vib-rato/natives") | undefined;
 
-function nativeSessionStorage(): typeof import("@gajae-code/natives") {
+function nativeSessionStorage(): typeof import("@vib-rato/natives") {
 	if (!nativeSessionStorageBindings) {
-		nativeSessionStorageBindings = require("@gajae-code/natives") as typeof import("@gajae-code/natives");
+		nativeSessionStorageBindings = require("@vib-rato/natives") as typeof import("@vib-rato/natives");
 	}
 	return nativeSessionStorageBindings;
 }
 
-import { isEnoent, pathIsWithin, peekFile, toError } from "@gajae-code/utils";
+import { isEnoent, pathIsWithin, peekFile, toError } from "@vib-rato/utils";
 import {
 	assertManagedDirectoryRoot,
 	type ManagedDirectoryRoot,
@@ -2306,8 +2306,8 @@ export class FileSessionStorage implements SessionStorage {
 			!plannedTranscriptPath ||
 			path.dirname(plannedArtifactsPath) !== path.dirname(transcriptPath) ||
 			path.dirname(plannedTranscriptPath) !== path.dirname(transcriptPath) ||
-			!path.basename(plannedArtifactsPath).startsWith(".gjc-delete-") ||
-			!path.basename(plannedTranscriptPath).startsWith(".gjc-delete-") ||
+			!path.basename(plannedArtifactsPath).startsWith(".vib-delete-") ||
+			!path.basename(plannedTranscriptPath).startsWith(".vib-delete-") ||
 			plannedArtifactsPath === plannedTranscriptPath
 		) {
 			throw new SessionDeleteVerificationError(
@@ -2320,7 +2320,7 @@ export class FileSessionStorage implements SessionStorage {
 		if (
 			detachedTranscriptPath &&
 			(path.dirname(detachedTranscriptPath) !== path.dirname(transcriptPath) ||
-				!path.basename(detachedTranscriptPath).startsWith(".gjc-delete-") ||
+				!path.basename(detachedTranscriptPath).startsWith(".vib-delete-") ||
 				detachedTranscriptPath === plannedTranscriptPath)
 		) {
 			throw new SessionDeleteVerificationError(
@@ -2358,7 +2358,7 @@ export class FileSessionStorage implements SessionStorage {
 			if (
 				!expectedArtifactsIdentity ||
 				path.dirname(detachedArtifactsPath) !== path.dirname(transcriptPath) ||
-				(!path.basename(detachedArtifactsPath).startsWith(".gjc-delete-") &&
+				(!path.basename(detachedArtifactsPath).startsWith(".vib-delete-") &&
 					!detachedArtifactsPath.endsWith(".removing"))
 			) {
 				throw new SessionDeleteVerificationError("artifacts", "Detached artifact cleanup evidence is invalid");
@@ -3536,7 +3536,7 @@ export class MemorySessionStorage implements SessionStorage {
  * Outcome of a disk-retention retirement attempt.
  *
  * `kept` means the transcript survived and nothing of the session was
- * destroyed, with the exact reason so `gjc gc --disk` can report it.
+ * destroyed, with the exact reason so `vib gc --disk` can report it.
  * `cleanup_pending` means the delete authority already detached or removed the
  * session's artifact tree (or quarantined the transcript) before it stopped:
  * the record survives, the session does not, and a caller must NOT report that
@@ -3600,8 +3600,8 @@ function planSessionRetirement(
 				mtimeNs: snapshot.stat.mtimeNs,
 				sha256: createHash("sha256").update(snapshot.bytes).digest("hex"),
 			},
-			plannedArtifactsPath: path.join(directory, `.gjc-delete-gc-${randomUUID()}-artifacts`),
-			plannedTranscriptPath: path.join(directory, `.gjc-delete-gc-${randomUUID()}-transcript`),
+			plannedArtifactsPath: path.join(directory, `.vib-delete-gc-${randomUUID()}-artifacts`),
+			plannedTranscriptPath: path.join(directory, `.vib-delete-gc-${randomUUID()}-transcript`),
 		},
 	};
 }
@@ -3610,7 +3610,7 @@ function planSessionRetirement(
  * Non-mutating projection of {@link retireSessionTranscript}: would the
  * retention pass's own preconditions let this transcript be retired at all?
  *
- * `gjc gc --disk` runs it so a dry run reports the verdict a prune would reach
+ * `vib gc --disk` runs it so a dry run reports the verdict a prune would reach
  * instead of promising bytes the delete authority will refuse to release. The
  * authority's verdict (containment, identity, artifact tree) is deliberately
  * not predicted here — it is re-derived against live state at delete time.

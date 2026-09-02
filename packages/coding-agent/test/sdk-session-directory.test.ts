@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { getAgentDir, getSessionsDir, setAgentDir } from "@gajae-code/utils";
+import { getAgentDir, getSessionsDir, setAgentDir } from "@vib-rato/utils";
 import {
 	listManagedSessionCandidates,
 	resolveManagedSessionScope,
@@ -23,8 +23,8 @@ afterEach(async () => {
 
 describe("managed session directory SDK", () => {
 	it("uses the configured agent layout for the default sessions root", async () => {
-		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-sdk-layout-"));
-		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-sdk-layout-cwd-"));
+		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-sdk-layout-"));
+		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "vib-sdk-layout-cwd-"));
 		temporaryDirectories.push(agentDir, cwd);
 
 		const resolved = await resolveManagedSessionScope({ cwd, agentDir });
@@ -35,12 +35,12 @@ describe("managed session directory SDK", () => {
 	it.skipIf(process.platform !== "linux")(
 		"honors XDG data layout for the configured default agent directory",
 		async () => {
-			const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-sdk-xdg-"));
+			const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-sdk-xdg-"));
 			const xdgData = path.join(root, "data");
-			const agentDir = path.join(os.homedir(), ".gjc", "agent");
+			const agentDir = path.join(os.homedir(), ".vib", "agent");
 			const cwd = path.join(root, "workspace");
 			temporaryDirectories.push(root);
-			await fs.mkdir(path.join(xdgData, "gjc"), { recursive: true });
+			await fs.mkdir(path.join(xdgData, "vib"), { recursive: true });
 			await fs.mkdir(cwd, { recursive: true });
 			const previousAgentDir = getAgentDir();
 			const previousXdgData = process.env.XDG_DATA_HOME;
@@ -50,7 +50,7 @@ describe("managed session directory SDK", () => {
 				const resolved = await resolveManagedSessionScope({ cwd, agentDir });
 				expect(resolved).toMatchObject({
 					kind: "resolved",
-					scope: { sessionsRoot: path.join(xdgData, "gjc", "sessions") },
+					scope: { sessionsRoot: path.join(xdgData, "vib", "sessions") },
 				});
 			} finally {
 				if (previousXdgData === undefined) delete process.env.XDG_DATA_HOME;
@@ -61,7 +61,7 @@ describe("managed session directory SDK", () => {
 	);
 
 	it("creates managed scope components beneath the configured agent root", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-sdk-components-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-sdk-components-"));
 		temporaryDirectories.push(root);
 		const agentDir = path.join(root, "agent", "nested");
 		const cwd = path.join(root, "workspace");
@@ -80,7 +80,7 @@ describe("managed session directory SDK", () => {
 	});
 
 	it("fails closed for a symlinked managed component", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-sdk-components-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-sdk-components-"));
 		temporaryDirectories.push(root);
 		const agentDir = path.join(root, "agent");
 		const outside = path.join(root, "outside");
@@ -92,11 +92,11 @@ describe("managed session directory SDK", () => {
 	});
 	it("pins the v2 digest wire format", () => {
 		expect(computeManagedScopeDigest("posix", "/workspace/a-b/c")).toBe(
-			"ckdstvtkkadas65jsj3gvlcstjat5o5yuwifaq2p3qrc5lmran5q",
+			"mjtbrafiacpucygwhepnvxzk56mhlpaxzzkgmyy7j3ijzaoqusfa",
 		);
 	});
 	it("uses distinct fixed-width v2 components for legacy collision vectors", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-session-directory-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-session-directory-"));
 		temporaryDirectories.push(root);
 		const agentDir = path.join(root, "agent");
 		const first = path.join(root, "a-b", "c");
@@ -136,7 +136,7 @@ describe("managed session directory SDK", () => {
 	});
 
 	it("fails closed when an existing v2 binding identifies another workspace", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-session-directory-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-session-directory-"));
 		temporaryDirectories.push(root);
 		const agentDir = path.join(root, "agent");
 		const cwd = path.join(root, "workspace");
@@ -148,7 +148,7 @@ describe("managed session directory SDK", () => {
 		if (resolved.kind !== "resolved") return;
 		await fs.mkdir(resolved.scope.directoryPath, { mode: 0o700 });
 		await fs.writeFile(
-			path.join(resolved.scope.directoryPath, ".gjc-managed-session-scope.v2.json"),
+			path.join(resolved.scope.directoryPath, ".vib-managed-session-scope.v2.json"),
 			`${JSON.stringify({
 				schemaVersion: 1,
 				layoutVersion: 2,
@@ -165,7 +165,7 @@ describe("managed session directory SDK", () => {
 	});
 
 	it("lists readonly candidates without creating the absent managed root", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-session-directory-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-session-directory-"));
 		temporaryDirectories.push(root);
 		const agentDir = path.join(root, "agent");
 		const sessionsRoot = path.join(agentDir, "sessions");
@@ -181,7 +181,7 @@ describe("managed session directory SDK", () => {
 	});
 
 	it("maps an alias to the same v2 component while preserving its legacy lexical encoding", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-session-directory-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-session-directory-"));
 		temporaryDirectories.push(root);
 		const workspace = path.join(root, "workspace", "nested");
 		const alias = path.join(root, "workspace-alias");
@@ -223,7 +223,7 @@ describe("managed session directory SDK", () => {
 	});
 
 	it("returns validated legacy candidates without exposing mutable internal identities", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-session-directory-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-session-directory-"));
 		temporaryDirectories.push(root);
 		const agentDir = path.join(root, "agent");
 		const sessionsRoot = path.join(agentDir, "sessions");

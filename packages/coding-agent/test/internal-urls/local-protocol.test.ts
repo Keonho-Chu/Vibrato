@@ -9,9 +9,9 @@ import {
 	LocalProtocolHandler,
 	resolveLocalRoot,
 	resolveLocalUrlToPath,
-} from "@gajae-code/coding-agent/internal-urls";
-import { AgentRegistry } from "@gajae-code/coding-agent/registry/agent-registry";
-import type { AgentSession } from "@gajae-code/coding-agent/session/agent-session";
+} from "@vib-rato/coding-agent/internal-urls";
+import { AgentRegistry } from "@vib-rato/coding-agent/registry/agent-registry";
+import type { AgentSession } from "@vib-rato/coding-agent/session/agent-session";
 
 async function withTempDir<T>(fn: (dir: string) => Promise<T>): Promise<T> {
 	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "local-protocol-"));
@@ -50,7 +50,7 @@ it("keeps explicit local roots under artifacts while managed roots stay external
 				isManagedDestination: () => true,
 				getSessionId: () => sessionId,
 			}),
-		).toBe(path.join(os.tmpdir(), "gjc-local", sessionId));
+		).toBe(path.join(os.tmpdir(), "vib-local", sessionId));
 	});
 });
 it("migrates opaque managed legacy topology, retires exactly once, and verifies the marker", async () => {
@@ -88,7 +88,7 @@ it("migrates opaque managed legacy topology, retires exactly once, and verifies 
 		await initializeLocalRoot(LocalProtocolHandler.resolveOptions()!);
 		expect(await fs.readFile(path.join(localRoot, "nested", "legacy.json"), "utf8")).toBe('{"legacy":true}');
 		expect((await fs.lstat(path.join(localRoot, "empty"))).isDirectory()).toBe(true);
-		expect(await fs.readFile(path.join(localRoot, ".gjc-local-legacy-migrated-v1"), "utf8")).toBe("verified\n");
+		expect(await fs.readFile(path.join(localRoot, ".vib-local-legacy-migrated-v1"), "utf8")).toBe("verified\n");
 		await initializeLocalRoot(LocalProtocolHandler.resolveOptions()!);
 		expect({ captures, retired }).toEqual({ captures: 1, retired: 1 });
 	});
@@ -119,7 +119,7 @@ it("coalesces concurrent managed migration for the same local root", async () =>
 		expect(captures).toBe(1);
 		releaseCapture.resolve();
 		await expect(Promise.all([first, second])).resolves.toEqual([localRoot, localRoot]);
-		expect(await fs.readFile(path.join(localRoot, ".gjc-local-legacy-migrated-v1"), "utf8")).toBe("absent\n");
+		expect(await fs.readFile(path.join(localRoot, ".vib-local-legacy-migrated-v1"), "utf8")).toBe("absent\n");
 		expect({ captures, retired }).toEqual({ captures: 1, retired: 0 });
 	});
 });
@@ -158,7 +158,7 @@ it("rolls back a sorted managed partial install and retries the same identity", 
 		await expect(fs.lstat(path.join(localRoot, "01-first"))).rejects.toMatchObject({ code: "ENOENT" });
 		expect(await fs.readFile(path.join(localRoot, "02-second"), "utf8")).toBe("existing");
 		expect(retired).toBe(0);
-		await expect(fs.lstat(path.join(localRoot, ".gjc-local-legacy-migrated-v1"))).rejects.toMatchObject({
+		await expect(fs.lstat(path.join(localRoot, ".vib-local-legacy-migrated-v1"))).rejects.toMatchObject({
 			code: "ENOENT",
 		});
 
@@ -166,7 +166,7 @@ it("rolls back a sorted managed partial install and retries the same identity", 
 		await initializeLocalRoot(options);
 		expect(await fs.readFile(path.join(localRoot, "01-first"), "utf8")).toBe("first");
 		expect(await fs.readFile(path.join(localRoot, "02-second"), "utf8")).toBe("second");
-		expect(await fs.readFile(path.join(localRoot, ".gjc-local-legacy-migrated-v1"), "utf8")).toBe("verified\n");
+		expect(await fs.readFile(path.join(localRoot, ".vib-local-legacy-migrated-v1"), "utf8")).toBe("verified\n");
 		expect(retired).toBe(1);
 	});
 });
@@ -199,7 +199,7 @@ it("fails closed for real managed payloads above the 64 MiB safe size without wr
 		};
 		await expect(initializeLocalRoot(options)).rejects.toThrow("exceeds the safe size limit");
 		await expect(fs.lstat(path.join(localRoot, "huge.bin"))).rejects.toMatchObject({ code: "ENOENT" });
-		await expect(fs.lstat(path.join(localRoot, ".gjc-local-legacy-migrated-v1"))).rejects.toMatchObject({
+		await expect(fs.lstat(path.join(localRoot, ".vib-local-legacy-migrated-v1"))).rejects.toMatchObject({
 			code: "ENOENT",
 		});
 		expect(retired).toBe(0);
@@ -312,14 +312,14 @@ describe("LocalProtocolHandler", () => {
 				LocalProtocolHandler.setOverride(localOptions(sessionId, artifactsDir));
 				const resource = await InternalUrlRouter.instance().resolve("local://");
 
-				expect(localRoot).toBe(path.join(os.tmpdir(), "gjc-local", sessionId));
+				expect(localRoot).toBe(path.join(os.tmpdir(), "vib-local", sessionId));
 				expect(resource.sourcePath).toBe(await fs.realpath(localRoot));
 				expect(resource.content).toContain("handoff.json");
 				expect(resource.content).toContain("legacy.json");
 				expect(resource.sourcePath?.startsWith(`${path.resolve(artifactsDir)}${path.sep}`)).toBe(false);
 				await expect(fs.lstat(path.join(artifactsDir, "local"))).rejects.toMatchObject({ code: "ENOENT" });
 				expect((await InternalUrlRouter.instance().resolve("local://legacy.json")).content).toBe('{"legacy":true}');
-				expect(await fs.readFile(path.join(localRoot, ".gjc-local-legacy-migrated-v1"), "utf8")).toBe(
+				expect(await fs.readFile(path.join(localRoot, ".vib-local-legacy-migrated-v1"), "utf8")).toBe(
 					"cleanup_pending\n",
 				);
 			});
@@ -341,7 +341,7 @@ describe("LocalProtocolHandler", () => {
 				await initializeLocalRoot(LocalProtocolHandler.resolveOptions()!);
 				expect(await fs.readFile(path.join(localRoot, "legacy.json"), "utf8")).toBe('{"legacy":true}');
 				await expect(fs.lstat(path.join(artifactsDir, "local"))).rejects.toMatchObject({ code: "ENOENT" });
-				expect(await fs.readFile(path.join(localRoot, ".gjc-local-legacy-migrated-v1"), "utf8")).toBe(
+				expect(await fs.readFile(path.join(localRoot, ".vib-local-legacy-migrated-v1"), "utf8")).toBe(
 					"cleanup_pending\n",
 				);
 			});
@@ -387,7 +387,7 @@ describe("LocalProtocolHandler", () => {
 
 				expect(await fs.readFile(path.join(legacy, "replacement.json"), "utf8")).toBe('{"replacement":true}');
 				expect(await fs.readFile(path.join(displacedLegacy, "legacy.json"), "utf8")).toBe('{"legacy":true}');
-				await expect(fs.lstat(path.join(localRoot, ".gjc-local-legacy-migrated-v1"))).rejects.toMatchObject({
+				await expect(fs.lstat(path.join(localRoot, ".vib-local-legacy-migrated-v1"))).rejects.toMatchObject({
 					code: "ENOENT",
 				});
 				await expect(fs.lstat(path.join(localRoot, "legacy.json"))).rejects.toMatchObject({ code: "ENOENT" });
@@ -410,7 +410,7 @@ describe("LocalProtocolHandler", () => {
 					"Unsafe legacy local:// migration source",
 				);
 				expect((await fs.lstat(legacy)).isSymbolicLink()).toBe(true);
-				await expect(fs.lstat(path.join(localRoot, ".gjc-local-legacy-migrated-v1"))).rejects.toMatchObject({
+				await expect(fs.lstat(path.join(localRoot, ".vib-local-legacy-migrated-v1"))).rejects.toMatchObject({
 					code: "ENOENT",
 				});
 			});
@@ -563,7 +563,7 @@ describe("LocalProtocolHandler", () => {
 			getArtifactsDir: () => null,
 		};
 		const root = resolveLocalRoot(options);
-		expect(root).toBe(path.join(os.tmpdir(), "gjc-local", "session_fallback"));
+		expect(root).toBe(path.join(os.tmpdir(), "vib-local", "session_fallback"));
 		expect(resolveLocalUrlToPath("local://memo.txt", options)).toBe(path.join(root, "memo.txt"));
 		await initializeLocalRoot(options);
 		expect(resolveLocalUrlToPath("local://memo.txt", options)).toBe(path.join(root, "memo.txt"));
@@ -578,7 +578,7 @@ describe("LocalProtocolHandler", () => {
 			const sessionId = `cleanup-pending-sync-${path.basename(artifactsDir)}`;
 			await withLocalRoot(sessionId, async localRoot => {
 				await Bun.write(path.join(localRoot, "carried.json"), '{"carried":true}');
-				await fs.writeFile(path.join(localRoot, ".gjc-local-legacy-migrated-v1"), "cleanup_pending\n", {
+				await fs.writeFile(path.join(localRoot, ".vib-local-legacy-migrated-v1"), "cleanup_pending\n", {
 					mode: 0o600,
 				});
 
@@ -586,7 +586,7 @@ describe("LocalProtocolHandler", () => {
 				expect(resolveLocalUrlToPath("local://carried.json", options)).toBe(path.join(localRoot, "carried.json"));
 				// Idempotent: a second resolution must not rewrite or reject the marker.
 				expect(resolveLocalUrlToPath("local://", options)).toBe(localRoot);
-				expect(await fs.readFile(path.join(localRoot, ".gjc-local-legacy-migrated-v1"), "utf8")).toBe(
+				expect(await fs.readFile(path.join(localRoot, ".vib-local-legacy-migrated-v1"), "utf8")).toBe(
 					"cleanup_pending\n",
 				);
 			});
@@ -597,7 +597,7 @@ describe("LocalProtocolHandler", () => {
 		await withTempDir(async artifactsDir => {
 			const sessionId = `unsafe-marker-sync-${path.basename(artifactsDir)}`;
 			await withLocalRoot(sessionId, async localRoot => {
-				await fs.writeFile(path.join(localRoot, ".gjc-local-legacy-migrated-v1"), "definitely-not-a-state\n", {
+				await fs.writeFile(path.join(localRoot, ".vib-local-legacy-migrated-v1"), "definitely-not-a-state\n", {
 					mode: 0o600,
 				});
 				expect(() => resolveLocalUrlToPath("local://memo.txt", localOptions(sessionId, artifactsDir))).toThrow(

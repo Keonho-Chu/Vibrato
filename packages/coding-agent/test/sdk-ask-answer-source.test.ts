@@ -2,12 +2,12 @@ import { afterEach, beforeAll, describe, expect, it } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { AgentToolContext } from "@gajae-code/agent-core";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { initTheme } from "@gajae-code/coding-agent/modes/theme/theme";
-import { createAgentSession } from "@gajae-code/coding-agent/sdk";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { registerAskAnswerSource } from "@gajae-code/coding-agent/tools/ask-answer-registry";
+import type { AgentToolContext } from "@vib-rato/agent-core";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
+import { createAgentSession } from "@vib-rato/coding-agent/sdk";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { registerAskAnswerSource } from "@vib-rato/coding-agent/tools/ask-answer-registry";
 
 /**
  * Regression for the "ask buttons only appear after finalize" report: the
@@ -30,7 +30,7 @@ describe("createAgentSession wires getAskAnswerSource into built-in AskTool", ()
 	});
 
 	it("invokes the registered ask answer source before opening the local selector", async () => {
-		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-ask-source-"));
+		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-ask-source-"));
 		tempDirs.push(tempDir);
 
 		const { session } = await createAgentSession({
@@ -93,7 +93,7 @@ describe("createAgentSession wires getAskAnswerSource into built-in AskTool", ()
 	}, 20_000);
 
 	it("answers a headless SDK ask through the registered remote source", async () => {
-		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-headless-ask-source-"));
+		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-headless-ask-source-"));
 		tempDirs.push(tempDir);
 
 		const { session } = await createAgentSession({

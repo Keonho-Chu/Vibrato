@@ -80,7 +80,7 @@ pub struct ComputerScreenshot {
 /// Requires the Screen & System Audio Recording permission. This is the
 /// read-only `screenshot` primitive of the computer-use tool; input primitives
 /// land behind the same surface once the Accessibility gate is satisfied in a
-/// granted `gjc` process.
+/// granted `vib` process.
 ///
 /// # Errors
 /// Returns an error when capture fails (e.g. Screen Recording not granted).

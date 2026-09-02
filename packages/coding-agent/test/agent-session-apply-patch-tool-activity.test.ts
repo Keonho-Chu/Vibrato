@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { Agent, type AgentTool } from "@gajae-code/agent-core";
-import type { Model } from "@gajae-code/ai";
+import { Agent, type AgentTool } from "@vib-rato/agent-core";
+import type { Model } from "@vib-rato/ai";
 import { Settings } from "../src/config/settings";
 import { EditTool } from "../src/edit";
 import { projectToolSummary } from "../src/sdk/bus/index";

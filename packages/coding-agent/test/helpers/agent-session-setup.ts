@@ -1,4 +1,4 @@
-import type { AssistantMessage } from "@gajae-code/ai";
+import type { AssistantMessage } from "@vib-rato/ai";
 
 /**
  * Shared factory for building a minimal mock `AssistantMessage`

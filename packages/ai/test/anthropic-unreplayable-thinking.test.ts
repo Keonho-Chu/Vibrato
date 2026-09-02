@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import { streamAnthropic } from "@gajae-code/ai/providers/anthropic";
-import type { AssistantMessage, Context, Message, Model, ToolResultMessage, UserMessage } from "@gajae-code/ai/types";
+import { streamAnthropic } from "@vib-rato/ai/providers/anthropic";
+import type { AssistantMessage, Context, Message, Model, ToolResultMessage, UserMessage } from "@vib-rato/ai/types";
 
 const model: Model<"anthropic-messages"> = {
 	api: "anthropic-messages",

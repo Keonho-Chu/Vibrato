@@ -20,9 +20,9 @@ describe("generated tool catalog", () => {
 	});
 
 	test("ambient agent fixtures cannot contaminate generated task metadata", async () => {
-		const project = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-tool-catalog-project-"));
+		const project = await fs.mkdtemp(path.join(os.tmpdir(), "vib-tool-catalog-project-"));
 		const pluginRoot = path.join(project, "review-plugin");
-		const registryPath = path.join(project, ".gjc", "plugins", "installed_plugins.json");
+		const registryPath = path.join(project, ".vib", "plugins", "installed_plugins.json");
 		try {
 			const agentsDir = path.join(pluginRoot, "agents");
 			await fs.mkdir(agentsDir, { recursive: true });

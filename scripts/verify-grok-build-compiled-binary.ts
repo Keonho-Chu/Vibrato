@@ -4,17 +4,17 @@ import * as os from "node:os";
 import * as path from "node:path";
 
 const repoRoot = path.resolve(import.meta.dir, "..");
-const binaryPath = path.resolve(repoRoot, process.argv[2] ?? "packages/coding-agent/dist/gjc");
-const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-grok-compiled-agent-"));
+const binaryPath = path.resolve(repoRoot, process.argv[2] ?? "packages/coding-agent/dist/vib");
+const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-grok-compiled-agent-"));
 
 try {
 	const proc = Bun.spawn([binaryPath, "--list-models", "grok-build"], {
 		cwd: repoRoot,
 		env: {
 			...Bun.env,
-			GJC_CODING_AGENT_DIR: agentDir,
-			GJC_DISABLE_AUTO_UPDATE: "1",
-			GJC_GROK_CLI_MODELS: "grok-composer-2.5-fast,grok-build",
+			VIB_CODING_AGENT_DIR: agentDir,
+			VIB_DISABLE_AUTO_UPDATE: "1",
+			VIB_GROK_CLI_MODELS: "grok-composer-2.5-fast,grok-build",
 			GROK_CLI_OAUTH_TOKEN: "compiled-smoke-token",
 		},
 		stdout: "pipe",
@@ -27,13 +27,13 @@ try {
 	]);
 	const combined = `${stdout}\n${stderr}`;
 	if (exitCode !== 0) {
-		throw new Error(`compiled gjc --list-models failed with ${exitCode}:\n${combined}`);
+		throw new Error(`compiled vib --list-models failed with ${exitCode}:\n${combined}`);
 	}
 	if (combined.includes("Bundled Grok Build default is missing")) {
-		throw new Error(`compiled gjc used missing filesystem defaults:\n${combined}`);
+		throw new Error(`compiled vib used missing filesystem defaults:\n${combined}`);
 	}
 	if (!combined.includes("grok-build") || !combined.includes("grok-composer-2.5-fast")) {
-		throw new Error(`compiled gjc did not list bundled Grok Build models:\n${combined}`);
+		throw new Error(`compiled vib did not list bundled Grok Build models:\n${combined}`);
 	}
 	console.log("PASS compiled Grok Build list-models smoke");
 } finally {

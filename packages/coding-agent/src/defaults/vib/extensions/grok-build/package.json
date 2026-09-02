@@ -1,0 +1,7 @@
+{
+  "name": "vib-grok-build",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Vibrato extension: Grok Build OAuth and grok-cli models"
+}

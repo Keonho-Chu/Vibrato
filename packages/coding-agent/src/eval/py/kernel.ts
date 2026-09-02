@@ -8,7 +8,7 @@
  * Shutdown writes `{"type":"exit"}` and escalates to SIGTERM/SIGKILL on
  * timeout.
  */
-import { $env, isBunTestRuntime, logger, Snowflake } from "@gajae-code/utils";
+import { $env, isBunTestRuntime, logger, Snowflake } from "@vib-rato/utils";
 import type { Subprocess } from "bun";
 import { Settings } from "../../config/settings";
 import { type KernelDisplayOutput, renderKernelDisplay } from "./display";
@@ -25,7 +25,7 @@ import {
 export type { KernelDisplayOutput, PythonStatusEvent } from "./display";
 export { renderKernelDisplay } from "./display";
 
-// Dual-read: `GJC_PYTHON_IPC_TRACE` is preferred, then legacy `PI_PYTHON_IPC_TRACE`.
+// Dual-read: `VIB_PYTHON_IPC_TRACE` is preferred, then legacy `PI_PYTHON_IPC_TRACE`.
 const TRACE_IPC = resolvePythonIpcTrace($env);
 
 const SHUTDOWN_GRACE_MS = 1_000;
@@ -764,10 +764,10 @@ function buildInitScript(cwd: string, env?: Record<string, string | undefined>):
 	const envPayload = Object.fromEntries(envEntries);
 	return [
 		"import os, sys",
-		`__gjc_cwd = ${JSON.stringify(cwd)}`,
-		"os.chdir(__gjc_cwd)",
-		`__gjc_env = ${JSON.stringify(envPayload)}`,
-		"for __gjc_key, __gjc_val in __gjc_env.items():\n    os.environ[__gjc_key] = __gjc_val",
-		"if __gjc_cwd not in sys.path:\n    sys.path.insert(0, __gjc_cwd)",
+		`__vib_cwd = ${JSON.stringify(cwd)}`,
+		"os.chdir(__vib_cwd)",
+		`__vib_env = ${JSON.stringify(envPayload)}`,
+		"for __vib_key, __vib_val in __vib_env.items():\n    os.environ[__vib_key] = __vib_val",
+		"if __vib_cwd not in sys.path:\n    sys.path.insert(0, __vib_cwd)",
 	].join("\n");
 }

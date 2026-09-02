@@ -1,13 +1,13 @@
 import { describe, expect, it } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import type { AssistantMessage } from "@gajae-code/ai";
+import type { AssistantMessage } from "@vib-rato/ai";
 import {
 	CURRENT_SESSION_VERSION,
 	SessionManager,
 	type SessionMessageEntry,
-} from "@gajae-code/coding-agent/session/session-manager";
-import { getBlobsDir, TempDir } from "@gajae-code/utils";
+} from "@vib-rato/coding-agent/session/session-manager";
+import { getBlobsDir, TempDir } from "@vib-rato/utils";
 
 function isAssistantSessionEntry(entry: unknown): entry is SessionMessageEntry & { message: AssistantMessage } {
 	return (

@@ -2,7 +2,7 @@ import * as crypto from "node:crypto";
 import * as fsSync from "node:fs";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { getConfigRootDir } from "@gajae-code/utils";
+import { getConfigRootDir } from "@vib-rato/utils";
 
 export interface MachineIdentityDeps {
 	platform?: NodeJS.Platform;
@@ -116,7 +116,7 @@ async function loadInstallationSecret(deps: MachineIdentityDeps): Promise<string
 function hashMachineIdentity(rawId: string, installationSecret: string): string {
 	return crypto
 		.createHmac("sha256", Buffer.from(installationSecret, "hex"))
-		.update("gajae-code:machine-identity:v2\0")
+		.update("vib-rato:machine-identity:v2\0")
 		.update(rawId)
 		.digest("hex");
 }
@@ -124,7 +124,7 @@ function hashMachineIdentity(rawId: string, installationSecret: string): string 
 function legacyMachineIdentity(rawId: string): string {
 	return crypto
 		.createHash("sha256")
-		.update("gajae-code:telegram-daemon:machine-identity:v1\0")
+		.update("vib-rato:telegram-daemon:machine-identity:v1\0")
 		.update(rawId)
 		.digest("hex");
 }

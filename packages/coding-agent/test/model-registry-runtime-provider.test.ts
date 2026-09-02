@@ -2,12 +2,12 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { type AssistantMessageEventStream, clearCustomApis, Effort, getCustomApi } from "@gajae-code/ai";
-import { getOAuthProviders, unregisterOAuthProviders } from "@gajae-code/ai/utils/oauth";
-import type { OAuthCredentials } from "@gajae-code/ai/utils/oauth/types";
-import { ModelRegistry, type ProviderConfigInput } from "@gajae-code/coding-agent/config/model-registry";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { Snowflake } from "@gajae-code/utils";
+import { type AssistantMessageEventStream, clearCustomApis, Effort, getCustomApi } from "@vib-rato/ai";
+import { getOAuthProviders, unregisterOAuthProviders } from "@vib-rato/ai/utils/oauth";
+import type { OAuthCredentials } from "@vib-rato/ai/utils/oauth/types";
+import { ModelRegistry, type ProviderConfigInput } from "@vib-rato/coding-agent/config/model-registry";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { Snowflake } from "@vib-rato/utils";
 
 describe("ModelRegistry runtime provider registration", () => {
 	let tempDir: string;
@@ -96,7 +96,7 @@ describe("ModelRegistry runtime provider registration", () => {
 	}
 
 	test("loads custom provider API keys from typed apiKeyEnv without falling back to the env var name", async () => {
-		const keyEnv = `GJC_TEST_PROVIDER_KEY_${Snowflake.next()}`;
+		const keyEnv = `VIB_TEST_PROVIDER_KEY_${Snowflake.next()}`;
 		process.env[keyEnv] = "resolved-env-secret";
 		await Bun.write(
 			modelsJsonPath,
@@ -410,7 +410,7 @@ describe("ModelRegistry runtime provider registration", () => {
 	});
 
 	test("runtime literal credentials take precedence over colliding static apiKeyEnv credentials", async () => {
-		const staticKeyEnv = `GJC_TEST_STATIC_COLLISION_KEY_${Snowflake.next()}`;
+		const staticKeyEnv = `VIB_TEST_STATIC_COLLISION_KEY_${Snowflake.next()}`;
 		process.env[staticKeyEnv] = "static-collision-key";
 		await Bun.write(
 			modelsJsonPath,
@@ -452,8 +452,8 @@ describe("ModelRegistry runtime provider registration", () => {
 	});
 
 	test("runtime apiKeyEnv removal restores static credentials and generated headers", async () => {
-		const staticKeyEnv = `GJC_TEST_STATIC_RESTORE_KEY_${Snowflake.next()}`;
-		const runtimeKeyEnv = `GJC_TEST_RUNTIME_RESTORE_KEY_${Snowflake.next()}`;
+		const staticKeyEnv = `VIB_TEST_STATIC_RESTORE_KEY_${Snowflake.next()}`;
+		const runtimeKeyEnv = `VIB_TEST_RUNTIME_RESTORE_KEY_${Snowflake.next()}`;
 		process.env[staticKeyEnv] = "static-restore-key";
 		process.env[runtimeKeyEnv] = "runtime-restore-key";
 		await Bun.write(

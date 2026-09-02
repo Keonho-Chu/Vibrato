@@ -26,7 +26,7 @@ export interface SpawnedHarnessSession {
 export interface CreateSdkSessionTransportOptions {
 	repo: string;
 	sessionId: string;
-	/** Starts the normal GJC session before discovery. Test callers may provide a deterministic SDK host. */
+	/** Starts the normal Vibrato session before discovery. Test callers may provide a deterministic SDK host. */
 	spawn?: () => SpawnedHarnessSession | Promise<SpawnedHarnessSession>;
 	discoveryTimeoutMs?: number;
 	/** Test seam: inject SDK client/endpoint resolution to avoid a process-global module mock. */
@@ -362,7 +362,7 @@ export function spawnNormalHarnessSession(
 	options: { termGraceMs?: number; killVerifyMs?: number } = {},
 ): SpawnedHarnessSession {
 	const entry = process.argv[1];
-	if (process.env.GJC_SDK_DISABLE === "1") {
+	if (process.env.VIB_SDK_DISABLE === "1") {
 		throw new HarnessSdkTransportError(
 			"endpoint_unavailable",
 			"SDK hosting is disabled for the harness child session.",
@@ -371,11 +371,11 @@ export function spawnNormalHarnessSession(
 	if (!entry)
 		throw new HarnessSdkTransportError(
 			"endpoint_unavailable",
-			"Cannot determine the GJC CLI entrypoint for harness session startup.",
+			"Cannot determine the Vibrato CLI entrypoint for harness session startup.",
 		);
 	const child = Bun.spawn([process.execPath, path.resolve(entry)], {
 		cwd: repo,
-		env: { ...process.env, GJC_LIFECYCLE_REQUEST_ID: `harness-${sessionId}`, GJC_SESSION_ID: sessionId },
+		env: { ...process.env, VIB_LIFECYCLE_REQUEST_ID: `harness-${sessionId}`, VIB_SESSION_ID: sessionId },
 		terminal: { cols: 80, rows: 24 },
 		stdout: "ignore",
 		stderr: "ignore",

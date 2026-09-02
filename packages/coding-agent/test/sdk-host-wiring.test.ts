@@ -4,11 +4,11 @@ import * as fsPromises from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 import type { AgentSideConnection } from "@agentclientprotocol/sdk";
-import { Agent, type AgentTool, type RunSettlementProof } from "@gajae-code/agent-core";
-import { closeModelCache, getBundledModel } from "@gajae-code/ai";
-import { createMockModel } from "@gajae-code/ai/providers/mock";
-import { NotificationServer } from "@gajae-code/natives";
-import { logger } from "@gajae-code/utils";
+import { Agent, type AgentTool, type RunSettlementProof } from "@vib-rato/agent-core";
+import { closeModelCache, getBundledModel } from "@vib-rato/ai";
+import { createMockModel } from "@vib-rato/ai/providers/mock";
+import { NotificationServer } from "@vib-rato/natives";
+import { logger } from "@vib-rato/utils";
 import * as z from "zod/v4";
 import { ModelRegistry } from "../src/config/model-registry";
 import { Settings } from "../src/config/settings";
@@ -138,11 +138,11 @@ afterEach(async () => {
 		await Bun.sleep(50);
 	}
 	for (const dir of dirs.splice(0)) await removeTempDir(dir);
-	delete process.env.GJC_SDK_DISABLE;
-	delete process.env.GJC_NOTIFICATIONS;
-	delete process.env.GJC_LIFECYCLE_TEST_TOKEN;
-	delete process.env.GJC_LIFECYCLE_TEST_SECRET;
-	delete process.env.GJC_LIFECYCLE_TEST_API_KEY;
+	delete process.env.VIB_SDK_DISABLE;
+	delete process.env.VIB_NOTIFICATIONS;
+	delete process.env.VIB_LIFECYCLE_TEST_TOKEN;
+	delete process.env.VIB_LIFECYCLE_TEST_SECRET;
+	delete process.env.VIB_LIFECYCLE_TEST_API_KEY;
 });
 
 async function waitFor(predicate: () => boolean, label: string): Promise<void> {
@@ -485,12 +485,12 @@ test("lifecycle startup production secret collection redacts before normalizatio
 	const bare = "bare-secret-value";
 	const overlap = "bare-secret-value-plus";
 	const nfkc = "secret０";
-	const names = ["GJC_LIFECYCLE_TEST_TOKEN", "GJC_LIFECYCLE_TEST_SECRET", "GJC_LIFECYCLE_TEST_API_KEY"] as const;
+	const names = ["VIB_LIFECYCLE_TEST_TOKEN", "VIB_LIFECYCLE_TEST_SECRET", "VIB_LIFECYCLE_TEST_API_KEY"] as const;
 	const previous = names.map(name => process.env[name]);
 	try {
-		process.env.GJC_LIFECYCLE_TEST_TOKEN = bare;
-		process.env.GJC_LIFECYCLE_TEST_SECRET = overlap;
-		process.env.GJC_LIFECYCLE_TEST_API_KEY = nfkc;
+		process.env.VIB_LIFECYCLE_TEST_TOKEN = bare;
+		process.env.VIB_LIFECYCLE_TEST_SECRET = overlap;
+		process.env.VIB_LIFECYCLE_TEST_API_KEY = nfkc;
 		const failure = new SdkStartupCapability().normalizeFailure(
 			"startup",
 			"failed",
@@ -535,7 +535,7 @@ test("lifecycle SDK startup capability settles once and sanitizes public failure
 });
 
 test("lifecycle teardown swallows dual owner failures without surfacing an extension error and retains exact retry authority", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-lifecycle-cleanup-proof-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-lifecycle-cleanup-proof-"));
 	dirs.push(cwd);
 	const sessionId = `cleanup-proof-${Date.now()}`;
 	const tracker = new SdkStartupRollbackTracker();
@@ -618,7 +618,7 @@ test("lifecycle teardown swallows dual owner failures without surfacing an exten
 	}
 }, 60_000);
 test("lifecycle cleanup fences same-id startup and preserves proven owner release across retry", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-lifecycle-cleanup-retry-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-lifecycle-cleanup-retry-"));
 	dirs.push(cwd);
 	const sessionId = `cleanup-retry-${Date.now()}`;
 	const tracker = new SdkStartupRollbackTracker();
@@ -674,7 +674,7 @@ test("lifecycle cleanup fences same-id startup and preserves proven owner releas
 }, 60_000);
 
 test("a blocked Telegram ownership race preserves the canonical endpoint and withholds adapters", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-telegram-sibling-isolation-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-telegram-sibling-isolation-"));
 	dirs.push(cwd);
 	const agentDir = path.join(cwd, "agent");
 	const sessionId = `telegram-sibling-isolation-${Date.now()}`;
@@ -711,8 +711,8 @@ test("a blocked Telegram ownership race preserves the canonical endpoint and wit
 	);
 	await handlers.get("session_start")!({ type: "session_start" }, sessionContext);
 	await expect(capability.promise).resolves.toEqual({ status: "started" });
-	const defaultEndpoint = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
-	const chatStateRoot = path.join(cwd, ".gjc", "state", "chat");
+	const defaultEndpoint = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
+	const chatStateRoot = path.join(cwd, ".vib", "state", "chat");
 	const chatEndpoint = path.join(chatStateRoot, "sdk", `${sessionId}.json`);
 	// No durable foreign-owner state exists up front, so the session publishes
 	// its canonical endpoint immediately; the ownership race discovered by the
@@ -720,7 +720,7 @@ test("a blocked Telegram ownership race preserves the canonical endpoint and wit
 	// republishes or blocks the session (fail-closed daemon isolation).
 	expect(fs.existsSync(defaultEndpoint)).toBe(true);
 	expect(fs.existsSync(chatEndpoint)).toBe(false);
-	const stateRoot = path.join(cwd, ".gjc", "state");
+	const stateRoot = path.join(cwd, ".vib", "state");
 	const sessions = (await new SessionIndex(agentDir).open()).listSessions().sessions;
 	expect(sessions).toContainEqual(
 		expect.objectContaining({
@@ -733,7 +733,7 @@ test("a blocked Telegram ownership race preserves the canonical endpoint and wit
 }, 60_000);
 
 test("production SDK host starts exactly one instrumented server (no duplicate auto-host)", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-single-host-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-single-host-"));
 	dirs.push(cwd);
 	const serverStart = spyOn(NotificationServer.prototype, "start");
 	let host: Awaited<ReturnType<typeof startProductionSdkHost>> | undefined;
@@ -744,7 +744,7 @@ test("production SDK host starts exactly one instrumented server (no duplicate a
 		// could race and overwrite the endpoint (dropping onSdkRequest).
 		expect(serverStart).toHaveBeenCalledTimes(1);
 		// And exactly one endpoint file exists for the session.
-		const sdkDir = path.join(cwd, ".gjc", "state", "sdk");
+		const sdkDir = path.join(cwd, ".vib", "state", "sdk");
 		const endpointFiles = fs.readdirSync(sdkDir).filter(name => name.endsWith(".json"));
 		expect(endpointFiles).toEqual([`${host.sessionId}.json`]);
 	} finally {
@@ -754,7 +754,7 @@ test("production SDK host starts exactly one instrumented server (no duplicate a
 }, 60_000);
 
 test("lifecycle session shutdown disposes the exact endpoint once", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-lifecycle-once-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-lifecycle-once-"));
 	dirs.push(cwd);
 	const sessionId = `cleanup-once-${Date.now()}`;
 	const tracker = new SdkStartupRollbackTracker();
@@ -798,7 +798,7 @@ test("lifecycle rollback proof only fences the exact started endpoint generation
 });
 
 test("lifecycle startup settles failure when native callback registration throws before host start", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-prestart-failure-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-prestart-failure-"));
 	dirs.push(cwd);
 	const sessionId = "prestart-failure";
 	const capability = new SdkStartupCapability();
@@ -814,14 +814,14 @@ test("lifecycle startup settles failure when native callback registration throws
 		expect(result.status).toBe("failed");
 		if (result.status !== "failed") throw new Error("Expected lifecycle startup failure.");
 		expect(result.failure.message).toContain("[redacted-secret]");
-		expect(fs.existsSync(path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`))).toBe(false);
+		expect(fs.existsSync(path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`))).toBe(false);
 	} finally {
 		hook.mockRestore();
 	}
 });
 
 test("session_start swallows startup plus owner-release failure without surfacing an extension error", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-startup-cleanup-double-failure-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-startup-cleanup-double-failure-"));
 	dirs.push(cwd);
 	const sessionId = `startup-cleanup-double-failure-${Date.now()}`;
 	// `mockRejectedValueOnce` on a shared prototype is a one-shot global: a peer
@@ -906,7 +906,7 @@ test("session_start swallows startup plus owner-release failure without surfacin
 }, 60_000);
 
 test("lifecycle startup reports an actionable error when native capability registration is missing", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-missing-capability-callback-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-missing-capability-callback-"));
 	dirs.push(cwd);
 	const capability = new SdkStartupCapability();
 	const prototype = NotificationServer.prototype as unknown as { onNegotiatedCapabilities?: unknown };
@@ -926,14 +926,14 @@ test("lifecycle startup reports an actionable error when native capability regis
 			expect(result.failure.message).toContain("onNegotiatedCapabilities");
 			expect(result.failure.message).toContain("out of date");
 		}
-		expect(fs.existsSync(path.join(cwd, ".gjc", "state", "sdk", "missing-capability-callback.json"))).toBe(false);
+		expect(fs.existsSync(path.join(cwd, ".vib", "state", "sdk", "missing-capability-callback.json"))).toBe(false);
 	} finally {
 		prototype.onNegotiatedCapabilities = original;
 	}
 });
 
 test("lifecycle startup settles native capability incompatibility before constructing the host", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-native-incompatible-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-native-incompatible-"));
 	dirs.push(cwd);
 	const capability = new SdkStartupCapability();
 	const original = (NotificationServer.prototype as unknown as { retireIfUnclaimed?: unknown }).retireIfUnclaimed;
@@ -950,19 +950,19 @@ test("lifecycle startup settles native capability incompatibility before constru
 		});
 		if (result.status === "failed")
 			expect(result.failure.message).toContain("required workflow arbitration methods are missing");
-		expect(fs.existsSync(path.join(cwd, ".gjc", "state", "sdk", "native-incompatible.json"))).toBe(false);
+		expect(fs.existsSync(path.join(cwd, ".vib", "state", "sdk", "native-incompatible.json"))).toBe(false);
 	} finally {
 		(NotificationServer.prototype as unknown as { retireIfUnclaimed?: unknown }).retireIfUnclaimed = original;
 	}
 });
 
 test("SDK broker registration records an absolute lifecycle scope", async () => {
-	const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-host-locator-"));
+	const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-host-locator-"));
 	const cwd = path.relative(process.cwd(), root);
 	const agentDir = path.join(root, "agent");
 	const sessionId = `locator-${Date.now()}`;
 	dirs.push(root);
-	process.env.GJC_NOTIFICATIONS = "1";
+	process.env.VIB_NOTIFICATIONS = "1";
 	start(context(cwd, sessionId), {
 		get: () => undefined,
 		getAgentDir: () => agentDir,
@@ -1060,7 +1060,7 @@ test("interactive extension context advertises typed SDK controls and forwards p
 	).rejects.toMatchObject({ code: "invalid_input" });
 });
 
-test("interactive SDK control routes synthetic gajae-code selections to session-scoped activation", async () => {
+test("interactive SDK control routes synthetic vib-rato selections to session-scoped activation", async () => {
 	let contextActions: ExtensionContextActions | undefined;
 	let activated: { name: string; options: unknown } | undefined;
 	let thinkingLevel: string | undefined;
@@ -1098,17 +1098,17 @@ test("interactive SDK control routes synthetic gajae-code selections to session-
 
 	expect(
 		await contextActions?.sdkControl?.("model.set", {
-			id: "gajae-code/codex-eco",
+			id: "vib-rato/codex-eco",
 			thinkingLevel: "off",
 		}),
-	).toEqual({ provider: "gajae-code", modelId: "codex-eco", thinkingLevel: "off" });
+	).toEqual({ provider: "vib-rato", modelId: "codex-eco", thinkingLevel: "off" });
 	expect(activated).toEqual({
 		name: "codex-eco",
 		options: { persistDefault: false, thinkingLevelOverride: "off" },
 	});
 
 	await expect(
-		contextActions?.sdkControl?.("model.set", { id: "gajae-code/codex-eco", thinkingLevel: "high" }),
+		contextActions?.sdkControl?.("model.set", { id: "vib-rato/codex-eco", thinkingLevel: "high" }),
 	).rejects.toMatchObject({ code: "invalid_input" });
 });
 test("interactive SDK controls reject Broker-owned session handoff", async () => {
@@ -1133,7 +1133,7 @@ test("interactive SDK controls reject Broker-owned session handoff", async () =>
 });
 
 test("startup records identity before an early lifecycle event and publishes it only after NotificationServer starts", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-host-identity-startup-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-host-identity-startup-"));
 	dirs.push(cwd);
 	const sessionId = `identity-startup-${Date.now()}`;
 	const prototype = NotificationServer.prototype as unknown as {
@@ -1158,7 +1158,7 @@ test("startup records identity before an early lifecycle event and publishes it 
 		}
 		pushFrame.call(this, frame);
 	};
-	process.env.GJC_NOTIFICATIONS = "1";
+	process.env.VIB_NOTIFICATIONS = "1";
 	const sessionContext = context(cwd, sessionId);
 	const handlers = start(sessionContext);
 	emitEarlyLifecycle = () => {
@@ -1166,7 +1166,7 @@ test("startup records identity before an early lifecycle event and publishes it 
 	};
 	try {
 		await waitFor(() => identityDelivered, "startup identity delivery");
-		const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+		const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 		const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 		const frames: Record<string, unknown>[] = [];
 		const socket = new WebSocket(`${endpoint.url}/?token=${encodeURIComponent(endpoint.token)}`);
@@ -1201,7 +1201,7 @@ test("startup records identity before an early lifecycle event and publishes it 
 });
 
 test("serializes concurrent /notify on across overlapping replacement startups", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-host-notify-startup-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-host-notify-startup-"));
 	dirs.push(cwd);
 	const sessionId = `notify-startup-${Date.now()}`;
 	const commands = new Map<string, { handler: (args: string, ctx: unknown) => Promise<void> }>();
@@ -1221,7 +1221,7 @@ test("serializes concurrent /notify on across overlapping replacement startups",
 		return await startServer.call(this);
 	};
 	const handlers = start(sessionContext, undefined, () => {}, false, commands);
-	process.env.GJC_NOTIFICATIONS = "1";
+	process.env.VIB_NOTIFICATIONS = "1";
 	try {
 		const notify = commands.get("notify");
 		expect(notify).toBeDefined();
@@ -1249,7 +1249,7 @@ test("serializes concurrent /notify on across overlapping replacement startups",
 });
 
 test("/notify on refuses a startup result for a rotated runtime identity", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-host-notify-rotation-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-host-notify-rotation-"));
 	dirs.push(cwd);
 	const initialSessionId = `notify-rotation-a-${Date.now()}`;
 	let currentSessionId = initialSessionId;
@@ -1272,7 +1272,7 @@ test("/notify on refuses a startup result for a rotated runtime identity", async
 		return await startServer.call(this);
 	};
 	const handlers = start(sessionContext, undefined, () => {}, false, commands);
-	process.env.GJC_NOTIFICATIONS = "1";
+	process.env.VIB_NOTIFICATIONS = "1";
 	try {
 		const enabling = commands.get("notify")!.handler("on", sessionContext);
 		await startReached.promise;
@@ -1295,7 +1295,7 @@ test("/notify on refuses a startup result for a rotated runtime identity", async
 });
 
 test("/notify on fences teardown and permits a later same-ID replacement runtime", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-host-notify-teardown-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-host-notify-teardown-"));
 	dirs.push(cwd);
 	const sessionId = `notify-teardown-${Date.now()}`;
 	const commands = new Map<string, { handler: (args: string, ctx: unknown) => Promise<void> }>();
@@ -1314,7 +1314,7 @@ test("/notify on fences teardown and permits a later same-ID replacement runtime
 		return await startServer.call(this);
 	};
 	const handlers = start(sessionContext, undefined, () => {}, false, commands);
-	process.env.GJC_NOTIFICATIONS = "1";
+	process.env.VIB_NOTIFICATIONS = "1";
 	try {
 		const enabling = commands.get("notify")!.handler("on", sessionContext);
 		await startReached.promise;
@@ -1346,13 +1346,13 @@ test("/notify on fences teardown and permits a later same-ID replacement runtime
 });
 
 test("SDK host replays file attachment data as base64 while passing raw bytes to N-API", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-host-file-replay-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-host-file-replay-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-file-replay-${Date.now()}`;
 	const bytes = Buffer.from([0, 1, 2, 253, 254, 255]);
 	const attachmentPath = path.join(cwd, "replay.bin");
 	fs.writeFileSync(attachmentPath, bytes);
-	process.env.GJC_NOTIFICATIONS = "1";
+	process.env.VIB_NOTIFICATIONS = "1";
 	const handlers = start(context(cwd, sessionId));
 	const nativePrototype = NotificationServer.prototype as unknown as {
 		pushFileAttachmentUnchecked?: (
@@ -1369,7 +1369,7 @@ test("SDK host replays file attachment data as base64 while passing raw bytes to
 		nativeData = data;
 	};
 	try {
-		const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+		const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 		await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 		await waitFor(() => getTelegramFileSink(sessionId) !== undefined, "file attachment sink");
 		const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
@@ -1453,12 +1453,12 @@ test("SDK host replays file attachment data as base64 while passing raw bytes to
 });
 
 test("SDK host replays event frames over direct v3 ingress and routes queries through the v2 control-command seam", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-host-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-host-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-${Date.now()}`;
-	process.env.GJC_NOTIFICATIONS = "1";
+	process.env.VIB_NOTIFICATIONS = "1";
 	const handlers = start(context(cwd, sessionId));
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const frames: Record<string, unknown>[] = [];
@@ -1610,12 +1610,12 @@ test("SDK host replays event frames over direct v3 ingress and routes queries th
 });
 
 test("SDK host preserves positioned live order and replay parity for every attached direct subscriber", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-live-events-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-live-events-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-${Date.now()}`;
-	process.env.GJC_NOTIFICATIONS = "1";
+	process.env.VIB_NOTIFICATIONS = "1";
 	const handlers = start(context(cwd, sessionId));
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const clients = await Promise.all([
@@ -1708,7 +1708,7 @@ test("SDK host preserves positioned live order and replay parity for every attac
 });
 
 test("SDK host preserves ordered prompt image blocks in the host payload", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-prompt-images-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-prompt-images-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-prompt-images-${Date.now()}`;
 	const sent: CapturedSendCall[] = [];
@@ -1716,7 +1716,7 @@ test("SDK host preserves ordered prompt image blocks in the host payload", async
 	const handlers = start(sessionContext, undefined, (...args) => {
 		captureInternalSend(sent, args[0], args[1]);
 	});
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const frames: Record<string, unknown>[] = [];
@@ -1772,7 +1772,7 @@ test("SDK host preserves ordered prompt image blocks in the host payload", async
 });
 
 test("SDK host correlates follow-up acknowledgements with the later agent start", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-follow-up-correlation-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-follow-up-correlation-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-follow-up-correlation-${Date.now()}`;
 	const sent: CapturedSendCall[] = [];
@@ -1780,7 +1780,7 @@ test("SDK host correlates follow-up acknowledgements with the later agent start"
 	const handlers = start(sessionContext, undefined, (...args) => {
 		captureInternalSend(sent, args[0], args[1]);
 	});
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const frames: Record<string, unknown>[] = [];
@@ -1845,12 +1845,12 @@ test("SDK host correlates follow-up acknowledgements with the later agent start"
 });
 
 test("SDK host directly delivers correlated lifecycle frames for an accepted prompt", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-prompt-success-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-prompt-success-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-prompt-success-${Date.now()}`;
 	const sessionContext = context(cwd, sessionId);
 	const handlers = start(sessionContext);
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const frames: Record<string, unknown>[] = [];
@@ -1921,7 +1921,7 @@ test("SDK host directly delivers correlated lifecycle frames for an accepted pro
 			type: "tool_execution_end",
 			toolCallId: "tool-read-1",
 			toolName: "read",
-			result: { content: [{ type: "text", text: "# Gajae-Code" }] },
+			result: { content: [{ type: "text", text: "# Vibrato" }] },
 			isError: false,
 		},
 		sessionContext,
@@ -2012,7 +2012,7 @@ test("SDK host directly delivers correlated lifecycle frames for an accepted pro
 });
 
 test("SDK host buffers synchronous pre-ack start and end until after acknowledgement", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-prompt-pre-ack-end-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-prompt-pre-ack-end-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-prompt-pre-ack-end-${Date.now()}`;
 	const sessionContext = context(cwd, sessionId);
@@ -2027,7 +2027,7 @@ test("SDK host buffers synchronous pre-ack start and end until after acknowledge
 		},
 		true,
 	);
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const frames: Record<string, unknown>[] = [];
@@ -2070,7 +2070,7 @@ test("SDK host buffers synchronous pre-ack start and end until after acknowledge
 });
 
 test("SDK host buffers synchronous pre-ack accepted failure until after acknowledgement", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-prompt-pre-ack-failed-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-prompt-pre-ack-failed-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-prompt-pre-ack-failed-${Date.now()}`;
 	const sessionContext = context(cwd, sessionId);
@@ -2085,7 +2085,7 @@ test("SDK host buffers synchronous pre-ack accepted failure until after acknowle
 		},
 		true,
 	);
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const frames: Record<string, unknown>[] = [];
@@ -2135,12 +2135,12 @@ test("SDK host buffers synchronous pre-ack accepted failure until after acknowle
 });
 
 test("SDK host replays an accepted prompt terminal after its requester disconnects", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-prompt-disconnect-replay-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-prompt-disconnect-replay-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-prompt-disconnect-replay-${Date.now()}`;
 	const sessionContext = context(cwd, sessionId);
 	const handlers = start(sessionContext);
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const frames: Record<string, unknown>[] = [];
@@ -2232,7 +2232,7 @@ test("SDK host replays an accepted prompt terminal after its requester disconnec
 });
 
 test("SDK host serializes concurrent prompt admission and replays correlated lifecycle", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-prompt-concurrent-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-prompt-concurrent-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-prompt-concurrent-${Date.now()}`;
 	const submissions: string[] = [];
@@ -2251,7 +2251,7 @@ test("SDK host serializes concurrent prompt admission and replays correlated lif
 		true,
 	);
 
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const firstFrames: Record<string, unknown>[] = [];
@@ -2362,13 +2362,13 @@ test("SDK host serializes concurrent prompt admission and replays correlated lif
 });
 
 test("SDK host delivers accepted prompt failures after their acknowledgement", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-prompt-terminal-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-prompt-terminal-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-prompt-terminal-${Date.now()}`;
 	const handlers = start(context(cwd, sessionId), undefined, () =>
 		Promise.reject(Object.assign(new Error("prompt failed after preflight"), { code: "unavailable" })),
 	);
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const frames: Record<string, unknown>[] = [];
@@ -2410,7 +2410,7 @@ test("SDK host delivers accepted prompt failures after their acknowledgement", a
 });
 
 test("SDK host terminalizes a cancelled preflight and releases prompt authority", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-prompt-preflight-cancelled-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-prompt-preflight-cancelled-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-prompt-preflight-cancelled-${Date.now()}`;
 	const preflightStarted = Promise.withResolvers<void>();
@@ -2434,7 +2434,7 @@ test("SDK host terminalizes a cancelled preflight and releases prompt authority"
 		},
 		true,
 	);
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const frames: Record<string, unknown>[] = [];
@@ -2486,7 +2486,7 @@ test("SDK host terminalizes a cancelled preflight and releases prompt authority"
 });
 
 test("SDK host cancels canonical skill invocation before agent start and fences late acceptance", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-skill-preflight-cancelled-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-skill-preflight-cancelled-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-skill-preflight-cancelled-${Date.now()}`;
 	const preflightStarted = Promise.withResolvers<void>();
@@ -2526,7 +2526,7 @@ test("SDK host cancels canonical skill invocation before agent start and fences 
 		return { name, path: "/fixture/SKILL.md", args };
 	};
 	const handlers = start(sessionContext);
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const frames: Record<string, unknown>[] = [];
@@ -2579,7 +2579,7 @@ test("SDK host cancels canonical skill invocation before agent start and fences 
 });
 
 test("SDK host waits for accepted handleless skill settlement before publishing cancellation", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-skill-accepted-handleless-cancel-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-skill-accepted-handleless-cancel-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-skill-accepted-handleless-cancel-${Date.now()}`;
 	const acceptedWithoutHandle = Promise.withResolvers<void>();
@@ -2609,7 +2609,7 @@ test("SDK host waits for accepted handleless skill settlement before publishing 
 		return { name, path: "/fixture/SKILL.md", args };
 	};
 	const handlers = start(sessionContext);
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const frames: Record<string, unknown>[] = [];
@@ -2696,7 +2696,7 @@ test("SDK host waits for accepted handleless skill settlement before publishing 
 	await handlers.get("session_shutdown")?.({ type: "session_shutdown" }, sessionContext);
 });
 test("SDK host waits for durable prompt acceptance before completing concurrent cancellation", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-prompt-durable-accept-cancel-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-prompt-durable-accept-cancel-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-prompt-durable-accept-cancel-${Date.now()}`;
 	const sessionFile = path.join(cwd, "session.jsonl");
@@ -2733,7 +2733,7 @@ test("SDK host waits for durable prompt acceptance before completing concurrent 
 	await handlers.get("session_start")?.({ type: "session_start" }, sessionContext);
 	const pausedCommit = pauseNextReconciliationCommit(sessionFile, sessionId);
 	try {
-		const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+		const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 		await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 		const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 		const frames: Record<string, unknown>[] = [];
@@ -2816,7 +2816,7 @@ test("SDK host waits for durable prompt acceptance before completing concurrent 
 }, 30_000);
 
 test("SDK host waits for durable skill acceptance before completing concurrent cancellation", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-skill-durable-accept-cancel-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-skill-durable-accept-cancel-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-skill-durable-accept-cancel-${Date.now()}`;
 	const sessionFile = path.join(cwd, "session.jsonl");
@@ -2858,7 +2858,7 @@ test("SDK host waits for durable skill acceptance before completing concurrent c
 	await handlers.get("session_start")?.({ type: "session_start" }, sessionContext);
 	const pausedCommit = pauseNextReconciliationCommit(sessionFile, sessionId);
 	try {
-		const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+		const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 		await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 		const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 		const frames: Record<string, unknown>[] = [];
@@ -2940,7 +2940,7 @@ test("SDK host waits for durable skill acceptance before completing concurrent c
 }, 60_000);
 
 test("SDK host rolls back canonical skill ownership when durable acceptance fails", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-skill-acceptance-failed-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-skill-acceptance-failed-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-skill-acceptance-failed-${Date.now()}`;
 	const sessionFile = path.join(cwd, "session.jsonl");
@@ -2971,7 +2971,7 @@ test("SDK host rolls back canonical skill ownership when durable acceptance fail
 	fs.writeFileSync(storeDirectory, "block reconciliation persistence");
 	const handlers = start(sessionContext, undefined, () => {}, false, new Map(), undefined, false);
 	await handlers.get("session_start")?.({ type: "session_start" }, sessionContext);
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
@@ -3037,7 +3037,7 @@ test("SDK host rolls back canonical skill ownership when durable acceptance fail
 	await handlers.get("session_shutdown")?.({ type: "session_shutdown" }, sessionContext);
 });
 test("session_shutdown awaits a late reconciliation publication before teardown can remove it", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-skill-late-publication-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-skill-late-publication-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-skill-late-publication-${Date.now()}`;
 	const sessionFile = path.join(cwd, "session.jsonl");
@@ -3072,7 +3072,7 @@ test("session_shutdown awaits a late reconciliation publication before teardown 
 	const pausedCommit = pauseNextReconciliationCommit(sessionFile, sessionId);
 	const handlers = start(sessionContext, undefined, () => {}, false, new Map(), undefined, false);
 	await handlers.get("session_start")?.({ type: "session_start" }, sessionContext);
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const frames: Record<string, unknown>[] = [];
@@ -3132,7 +3132,7 @@ test("session_shutdown awaits a late reconciliation publication before teardown 
 	pausedCommit.restore();
 }, 60_000);
 test("session_shutdown joins a still-executing skill before teardown can race its publication (#4743)", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-skill-teardown-join-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-skill-teardown-join-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-skill-teardown-join-${Date.now()}`;
 	const sessionFile = path.join(cwd, "session.jsonl");
@@ -3164,7 +3164,7 @@ test("session_shutdown joins a still-executing skill before teardown can race it
 	const storePath = reconciliationStorePath(sessionFile, sessionId);
 	const handlers = start(sessionContext, undefined, () => {}, false, new Map(), undefined, false);
 	await handlers.get("session_start")?.({ type: "session_start" }, sessionContext);
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const frames: Record<string, unknown>[] = [];
@@ -3212,8 +3212,8 @@ test("session_shutdown joins a still-executing skill before teardown can race it
 	expect(persisted.records.some(record => record.kind === "skill")).toBe(true);
 }, 60_000);
 test("session_shutdown bounds a hung reconciliation publication and reports the drain timeout (#4743)", async () => {
-	process.env.GJC_SDK_RECONCILIATION_DRAIN_TIMEOUT_MS = "250";
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-drain-deadline-"));
+	process.env.VIB_SDK_RECONCILIATION_DRAIN_TIMEOUT_MS = "250";
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-drain-deadline-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-drain-deadline-${Date.now()}`;
 	const sessionFile = path.join(cwd, "session.jsonl");
@@ -3246,7 +3246,7 @@ test("session_shutdown bounds a hung reconciliation publication and reports the 
 	try {
 		const handlers = start(sessionContext, undefined, () => {}, false, new Map(), undefined, false);
 		await handlers.get("session_start")?.({ type: "session_start" }, sessionContext);
-		const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+		const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 		await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 		const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 		const frames: Record<string, unknown>[] = [];
@@ -3300,12 +3300,12 @@ test("session_shutdown bounds a hung reconciliation publication and reports the 
 		warnSpy.mockRestore();
 		pausedCommit.release();
 		pausedCommit.restore();
-		delete process.env.GJC_SDK_RECONCILIATION_DRAIN_TIMEOUT_MS;
+		delete process.env.VIB_SDK_RECONCILIATION_DRAIN_TIMEOUT_MS;
 	}
 }, 60_000);
 
 test("session_shutdown propagates a rejected reconciliation publication without an unhandled rejection (#4743)", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-drain-publish-failure-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-drain-publish-failure-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-drain-publish-failure-${Date.now()}`;
 	const sessionFile = path.join(cwd, "session.jsonl");
@@ -3335,7 +3335,7 @@ test("session_shutdown propagates a rejected reconciliation publication without 
 	try {
 		const handlers = start(sessionContext, undefined, () => {}, false, new Map(), undefined, false);
 		await handlers.get("session_start")?.({ type: "session_start" }, sessionContext);
-		const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+		const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 		await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 		const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 		const frames: Record<string, unknown>[] = [];
@@ -3396,7 +3396,7 @@ test("session_shutdown propagates a rejected reconciliation publication without 
 	}
 }, 60_000);
 test("a recovered reconciliation publication lets a later teardown drain report success (#4743)", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-drain-recovery-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-drain-recovery-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-drain-recovery-${Date.now()}`;
 	const sessionFile = path.join(cwd, "session.jsonl");
@@ -3428,7 +3428,7 @@ test("a recovered reconciliation publication lets a later teardown drain report 
 	try {
 		const handlers = start(sessionContext, undefined, () => {}, false, new Map(), undefined, false);
 		await handlers.get("session_start")?.({ type: "session_start" }, sessionContext);
-		const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+		const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 		await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 		const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 		const frames: Record<string, unknown>[] = [];
@@ -3504,7 +3504,7 @@ test("a recovered reconciliation publication lets a later teardown drain report 
 	}
 }, 60_000);
 test("SDK host terminalizes a never-resolving preflight on abort and fences late acceptance", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-prompt-preflight-never-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-prompt-preflight-never-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-prompt-preflight-never-${Date.now()}`;
 	const preflightStarted = Promise.withResolvers<void>();
@@ -3533,7 +3533,7 @@ test("SDK host terminalizes a never-resolving preflight on abort and fences late
 		},
 		true,
 	);
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const frames: Record<string, unknown>[] = [];
@@ -3582,7 +3582,7 @@ test("SDK host terminalizes a never-resolving preflight on abort and fences late
 });
 
 test("terminal abort cancels a pending prompt preflight (never accepts)", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-terminal-preflight-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-terminal-preflight-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-terminal-preflight-${Date.now()}`;
 	const live = { idle: true };
@@ -3592,7 +3592,7 @@ test("terminal abort cancels a pending prompt preflight (never accepts)", async 
 		...context(cwd, sessionId, "main", live),
 		sessionManager: {
 			...(context(cwd, sessionId, "main", live).sessionManager as Record<string, unknown>),
-			getSessionFile: () => path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.jsonl`),
+			getSessionFile: () => path.join(cwd, ".vib", "state", "sdk", `${sessionId}.jsonl`),
 		},
 		getTerminalTurnEpoch: () => 1,
 	};
@@ -3608,7 +3608,7 @@ test("terminal abort cancels a pending prompt preflight (never accepts)", async 
 		},
 		true,
 	);
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const frames: Record<string, unknown>[] = [];
@@ -3651,7 +3651,7 @@ test("terminal abort cancels a pending prompt preflight (never accepts)", async 
 });
 
 test("SDK host abort-and-prompt cancels a never-resolving preflight before replacement submission", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-abort-prompt-never-preflight-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-abort-prompt-never-preflight-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-abort-prompt-never-preflight-${Date.now()}`;
 	const live = { idle: true };
@@ -3680,7 +3680,7 @@ test("SDK host abort-and-prompt cancels a never-resolving preflight before repla
 		},
 		true,
 	);
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const frames: Record<string, unknown>[] = [];
@@ -3738,7 +3738,7 @@ test("SDK host abort-and-prompt cancels a never-resolving preflight before repla
 });
 
 test("SDK host waits for asynchronous abort unwind before delivering an abort-and-prompt replacement", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-abort-prompt-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-abort-prompt-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-abort-prompt-${Date.now()}`;
 	const live = { idle: false };
@@ -3761,7 +3761,7 @@ test("SDK host waits for asynchronous abort unwind before delivering an abort-an
 		},
 		true,
 	);
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const frames: Record<string, unknown>[] = [];
@@ -3802,7 +3802,7 @@ test("SDK host waits for asynchronous abort unwind before delivering an abort-an
 	await handlers.get("session_shutdown")?.({ type: "session_shutdown" }, sessionContext);
 });
 test("SDK host turn.abort terminal mode returns no-effect with no active turn", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-terminal-noop-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-terminal-noop-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-terminal-noop-${Date.now()}`;
 	const sessionContext = {
@@ -3811,11 +3811,11 @@ test("SDK host turn.abort terminal mode returns no-effect with no active turn", 
 		// owner (the no-store gate only fires for genuinely store-less sessions).
 		sessionManager: {
 			...(context(cwd, sessionId).sessionManager as Record<string, unknown>),
-			getSessionFile: () => path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.jsonl`),
+			getSessionFile: () => path.join(cwd, ".vib", "state", "sdk", `${sessionId}.jsonl`),
 		},
 	};
 	const handlers = start(sessionContext, undefined, () => {}, true);
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = (await Bun.file(endpointFile).json()) as { url: string; token: string };
 	const frames: Record<string, unknown>[] = [];
@@ -3857,7 +3857,7 @@ test("terminal abort from a queued requester never cancels another connection's 
 	// wrapper preflight but must NOT invoke the session-wide preflight seam —
 	// it cancels the session's single controller captured by the OTHER
 	// connection's active preflight, failing an unrelated prompt.
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-preflight-scope-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-preflight-scope-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-preflight-scope-${Date.now()}`;
 	let sessionPreflightCancelled = 0;
@@ -3880,7 +3880,7 @@ test("terminal abort from a queued requester never cancels another connection's 
 		},
 		true,
 	);
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const connect = async () => {
@@ -3943,10 +3943,10 @@ test("full-bus terminal replay advances a finalized row through the stored repla
 	// only advances a pending row when the written response matches either
 	// stored hash. Without replayPayloadHash the written replay stays durably
 	// pending forever.
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-fullbus-replay-hash-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-fullbus-replay-hash-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-fullbus-replay-hash-${Date.now()}`;
-	const sessionFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.jsonl`);
+	const sessionFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.jsonl`);
 	const handlers = start(
 		{
 			...context(cwd, sessionId),
@@ -3960,7 +3960,7 @@ test("full-bus terminal replay advances a finalized row through the stored repla
 		() => {},
 		true,
 	);
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const frames: Record<string, unknown>[] = [];
@@ -4036,10 +4036,10 @@ test("terminal abort durable replay after restart never cancels a NEW unrelated 
 	// admission predicate must treat EVERY stored-carrying replay as a
 	// non-admission — cancelling the requester's unrelated in-preflight prompt
 	// there would give an idempotency replay real effects (review thread P1).
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-terminal-replay-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-terminal-replay-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-terminal-replay-${Date.now()}`;
-	const sessionFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.jsonl`);
+	const sessionFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.jsonl`);
 	const makeContext = () => ({
 		...context(cwd, sessionId),
 		sessionManager: {
@@ -4051,7 +4051,7 @@ test("terminal abort durable replay after restart never cancels a NEW unrelated 
 	// Host #1: file-backed store. The first abort (no active turn) durably
 	// reserves a no-effect row for the key.
 	const handlersA = start(makeContext(), undefined, () => {}, true);
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint (host A)");
 	const endpointA = (await Bun.file(endpointFile).json()) as { url: string; token: string };
 	const framesA: Record<string, unknown>[] = [];
@@ -4171,7 +4171,7 @@ test("terminal abort durable replay after restart never cancels a NEW unrelated 
 }, 20_000);
 
 test("SDK host turn.abort terminal mode finalizes an accepted-but-not-started prompt as cancelled", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-terminal-fence-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-terminal-fence-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-terminal-fence-${Date.now()}`;
 	const live = { idle: true };
@@ -4182,7 +4182,7 @@ test("SDK host turn.abort terminal mode finalizes an accepted-but-not-started pr
 		// fence path (and fails closed there) instead of the no-store gate.
 		sessionManager: {
 			...(context(cwd, sessionId, "main", live).sessionManager as Record<string, unknown>),
-			getSessionFile: () => path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.jsonl`),
+			getSessionFile: () => path.join(cwd, ".vib", "state", "sdk", `${sessionId}.jsonl`),
 		},
 		// The initial-marker seam: a stable epoch so the marker is written
 		// before the fence attempts (and fails closed) on the missing seam.
@@ -4197,7 +4197,7 @@ test("SDK host turn.abort terminal mode finalizes an accepted-but-not-started pr
 		},
 		true,
 	);
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = (await Bun.file(endpointFile).json()) as { url: string; token: string };
 	const frames: Record<string, unknown>[] = [];
@@ -4248,7 +4248,7 @@ test("SDK host turn.abort terminal mode finalizes an accepted-but-not-started pr
 });
 
 test("SDK session switches rotate endpoint authority before publishing the replacement host", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-host-switch-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-host-switch-"));
 	dirs.push(cwd);
 	const sessionA = `sdk-switch-a-${Date.now()}`;
 	const sessionB = `sdk-switch-b-${Date.now()}`;
@@ -4262,7 +4262,7 @@ test("SDK session switches rotate endpoint authority before publishing the repla
 		},
 	};
 	const handlers = start(ctx);
-	const endpointAPath = path.join(cwd, ".gjc", "state", "sdk", `${sessionA}.json`);
+	const endpointAPath = path.join(cwd, ".vib", "state", "sdk", `${sessionA}.json`);
 	await waitFor(() => fs.existsSync(endpointAPath), "session A endpoint");
 	const endpointA = JSON.parse(fs.readFileSync(endpointAPath, "utf8")) as { url: string; token: string };
 	const clientA = new WebSocket(`${endpointA.url}/?token=${encodeURIComponent(endpointA.token)}`);
@@ -4281,7 +4281,7 @@ test("SDK session switches rotate endpoint authority before publishing the repla
 		},
 		ctx,
 	);
-	const endpointBPath = path.join(cwd, ".gjc", "state", "sdk", `${sessionB}.json`);
+	const endpointBPath = path.join(cwd, ".vib", "state", "sdk", `${sessionB}.json`);
 	await waitFor(() => !fs.existsSync(endpointAPath) && fs.existsSync(endpointBPath), "rotated session endpoint");
 	const endpointB = JSON.parse(fs.readFileSync(endpointBPath, "utf8")) as { url: string; token: string };
 	expect(endpointB.token).not.toBe(endpointA.token);
@@ -4303,7 +4303,7 @@ test("SDK session switches rotate endpoint authority before publishing the repla
 
 for (const eventType of ["session_switch", "session_branch"] as const) {
 	test(`SDK ${eventType} rotation fails closed when predecessor release is uncertain`, async () => {
-		const cwd = fs.mkdtempSync(path.join(os.tmpdir(), `gjc-sdk-rotate-fail-${eventType}-`));
+		const cwd = fs.mkdtempSync(path.join(os.tmpdir(), `vib-sdk-rotate-fail-${eventType}-`));
 		dirs.push(cwd);
 		const sessionA = `rotate-fail-a-${Date.now()}`;
 		const sessionB = `rotate-fail-b-${Date.now()}`;
@@ -4333,7 +4333,7 @@ for (const eventType of ["session_switch", "session_branch"] as const) {
 				lifecycleRequired: true,
 			});
 			await expect(startupCapability.promise).resolves.toEqual({ status: "started" });
-			const endpointAPath = path.join(cwd, ".gjc", "state", "sdk", `${sessionA}.json`);
+			const endpointAPath = path.join(cwd, ".vib", "state", "sdk", `${sessionA}.json`);
 			await waitFor(() => fs.existsSync(endpointAPath), "session A endpoint");
 
 			activeSessionId = sessionB;
@@ -4349,7 +4349,7 @@ for (const eventType of ["session_switch", "session_branch"] as const) {
 			);
 
 			// The failed predecessor release quarantines B: no successor endpoint is published.
-			const endpointBPath = path.join(cwd, ".gjc", "state", "sdk", `${sessionB}.json`);
+			const endpointBPath = path.join(cwd, ".vib", "state", "sdk", `${sessionB}.json`);
 			expect(fs.existsSync(endpointBPath)).toBe(false);
 
 			// With the mock restored, A's retained cleanup can still complete.
@@ -4369,11 +4369,11 @@ for (const eventType of ["session_switch", "session_branch"] as const) {
 }
 
 test("SDK host binds session query and control seams and excludes uninstalled resources", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-host-bindings-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-host-bindings-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-bindings-${Date.now()}`;
 	start(context(cwd, sessionId));
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const frames: Record<string, unknown>[] = [];
@@ -4499,7 +4499,7 @@ test("SDK host binds session query and control seams and excludes uninstalled re
 });
 
 test("SDK host routes pure ACP permission prompts through a live reverse provider", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-permission-provider-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-permission-provider-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-permission-provider-${Date.now()}`;
 	let permissionProvider:
@@ -4515,9 +4515,9 @@ test("SDK host routes pure ACP permission prompts through a live reverse provide
 			permissionProvider = provider;
 		},
 	};
-	process.env.GJC_NOTIFICATIONS = "1";
+	process.env.VIB_NOTIFICATIONS = "1";
 	start(ctx);
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const socket = new WebSocket(`${endpoint.url}/?token=${encodeURIComponent(endpoint.token)}`);
@@ -4601,7 +4601,7 @@ test("SDK host routes pure ACP permission prompts through a live reverse provide
 });
 
 test("ACP permission attachment normalizes decisions through the registered provider path", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-acp-permission-path-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-acp-permission-path-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-acp-permission-path-${Date.now()}`;
 	const acpSessionId = "acp-session-authority";
@@ -4639,9 +4639,9 @@ test("ACP permission attachment normalizes decisions through the registered prov
 			agentSession.setSdkPermissionProvider(provider);
 		},
 	};
-	process.env.GJC_NOTIFICATIONS = "1";
+	process.env.VIB_NOTIFICATIONS = "1";
 	start(ctx);
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as {
 		sessionId: string;
@@ -4766,12 +4766,12 @@ test("ACP permission attachment normalizes decisions through the registered prov
 });
 
 test("SDK host routes AskUserQuestion through a live ACP form elicitation provider", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-ui-provider-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-ui-provider-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-ui-provider-${Date.now()}`;
-	process.env.GJC_NOTIFICATIONS = "1";
+	process.env.VIB_NOTIFICATIONS = "1";
 	start(context(cwd, sessionId));
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const socket = new WebSocket(`${endpoint.url}/?token=${encodeURIComponent(endpoint.token)}`);
@@ -4947,7 +4947,7 @@ test("SDK host routes AskUserQuestion through a live ACP form elicitation provid
 });
 
 test("SDK ACP form elicitation remains preferred after /notify on and falls back on provider disconnect", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-ui-provider-notify-priority-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-ui-provider-notify-priority-"));
 	dirs.push(cwd);
 	const host = await startProductionSdkHost(cwd, { notificationsInitiallyEnabled: false });
 	const { sessionId, endpoint } = host;
@@ -4976,13 +4976,13 @@ test("SDK ACP form elicitation remains preferred after /notify on and falls back
 			() => frames.some(frame => frame.type === "register_provider_result" && frame.id === "ui"),
 			"UI provider registration",
 		);
-		const priorNotifications = process.env.GJC_NOTIFICATIONS;
-		process.env.GJC_NOTIFICATIONS = "1";
+		const priorNotifications = process.env.VIB_NOTIFICATIONS;
+		process.env.VIB_NOTIFICATIONS = "1";
 		try {
 			await host.runCommand("/notify on");
 		} finally {
-			if (priorNotifications === undefined) delete process.env.GJC_NOTIFICATIONS;
-			else process.env.GJC_NOTIFICATIONS = priorNotifications;
+			if (priorNotifications === undefined) delete process.env.VIB_NOTIFICATIONS;
+			else process.env.VIB_NOTIFICATIONS = priorNotifications;
 		}
 
 		const protocolAnswerSource = getAskAnswerSource(sessionId);
@@ -5071,12 +5071,12 @@ test("SDK ACP form elicitation remains preferred after /notify on and falls back
 	}
 });
 test("rejects malformed provider definitions without replacing a valid tools registry", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-provider-validation-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-provider-validation-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-provider-validation-${Date.now()}`;
-	process.env.GJC_NOTIFICATIONS = "1";
+	process.env.VIB_NOTIFICATIONS = "1";
 	start(context(cwd, sessionId));
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const frames: Record<string, unknown>[] = [];
@@ -5199,7 +5199,7 @@ test("SDK host replay gaps are generation-scoped and sequence gaps remain cohere
 });
 
 test("Q17 returns resource_gone without an assistant and reads a completed persisted turn after reopen", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-last-assistant-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-last-assistant-"));
 	dirs.push(cwd);
 	const original = SessionManager.create(cwd, cwd);
 	await original.flush();
@@ -5230,7 +5230,7 @@ test("Q17 returns resource_gone without an assistant and reads a completed persi
 		(content, options) => agentSession.prompt(String(content), options),
 		true,
 	);
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const frames: Record<string, unknown>[] = [];
@@ -5360,11 +5360,11 @@ test("Q17 returns resource_gone without an assistant and reads a completed persi
 });
 
 test("terminal shutdown removes session snapshot spills", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-host-snapshots-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-host-snapshots-"));
 	dirs.push(cwd);
 	const sessionId = `snapshots-${Date.now()}`;
 	const handlers = start(context(cwd, sessionId));
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const socket = new WebSocket(`${endpoint.url}/?token=${encodeURIComponent(endpoint.token)}`);
@@ -5388,18 +5388,18 @@ test("terminal shutdown removes session snapshot spills", async () => {
 		() => frames.some(frame => frame.type === "control_command_result" && frame.requestId === "snapshot-query"),
 		"snapshot query response",
 	);
-	const snapshotDirectory = path.join(cwd, ".gjc", "state", "sdk", "snapshots", sessionId);
+	const snapshotDirectory = path.join(cwd, ".vib", "state", "sdk", "snapshots", sessionId);
 	await waitFor(() => fs.existsSync(snapshotDirectory), "snapshot spill");
 	await handlers.get("session_shutdown")!({ type: "session_shutdown" }, context(cwd, sessionId));
 	await waitFor(() => !fs.existsSync(snapshotDirectory), "snapshot spill removal");
 });
 
 test("diff queries return typed errors outside a Git working tree", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-host-no-git-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-host-no-git-"));
 	dirs.push(cwd);
 	const sessionId = `no-git-${Date.now()}`;
 	const handlers = start(context(cwd, sessionId));
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const socket = new WebSocket(`${endpoint.url}/?token=${encodeURIComponent(endpoint.token)}`);
@@ -5438,7 +5438,7 @@ test("diff queries return typed errors outside a Git working tree", async () => 
 });
 
 test("diff queries return a bounded error for oversized diffs", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-host-large-diff-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-host-large-diff-"));
 	dirs.push(cwd);
 	for (const args of [
 		["init", "-q"],
@@ -5453,7 +5453,7 @@ test("diff queries return a bounded error for oversized diffs", async () => {
 	fs.writeFileSync(path.join(cwd, "large.txt"), "x".repeat(1024 * 1024 + 1));
 	const sessionId = `large-diff-${Date.now()}`;
 	const handlers = start(context(cwd, sessionId));
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const socket = new WebSocket(`${endpoint.url}/?token=${encodeURIComponent(endpoint.token)}`);
@@ -5485,26 +5485,26 @@ test("diff queries return a bounded error for oversized diffs", async () => {
 });
 
 test("SDK host honors disable opt-out and excludes subagent sessions", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-host-gate-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-host-gate-"));
 	dirs.push(cwd);
-	process.env.GJC_SDK_DISABLE = "1";
+	process.env.VIB_SDK_DISABLE = "1";
 	start(context(cwd, "disabled"));
 	await Bun.sleep(100);
-	expect(fs.existsSync(path.join(cwd, ".gjc", "state", "sdk", "disabled.json"))).toBe(false);
-	delete process.env.GJC_SDK_DISABLE;
+	expect(fs.existsSync(path.join(cwd, ".vib", "state", "sdk", "disabled.json"))).toBe(false);
+	delete process.env.VIB_SDK_DISABLE;
 	start(context(cwd, "subagent", "sub"));
 	await Bun.sleep(100);
-	expect(fs.existsSync(path.join(cwd, ".gjc", "state", "sdk", "subagent.json"))).toBe(false);
+	expect(fs.existsSync(path.join(cwd, ".vib", "state", "sdk", "subagent.json"))).toBe(false);
 });
 
 test("context.get reports live streaming state and typed queue depths without notifications", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-host-live-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-host-live-"));
 	dirs.push(cwd);
 	const sessionId = `live-${Date.now()}`;
 	// Notifications intentionally NOT configured: SDK-only hosting.
 	const live: { idle?: boolean; counts?: { steering: number; followUp: number; nextTurn: number } } = {};
 	const handlers = start(context(cwd, sessionId, "main", live));
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const frames: Record<string, unknown>[] = [];
@@ -5560,7 +5560,7 @@ test("context.get reports live streaming state and typed queue depths without no
 });
 
 test("SDK endpoint applies typed skill, plan, goal, and config controls with observable readback", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-host-typed-controls-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-host-typed-controls-"));
 	dirs.push(cwd);
 	const sessionId = `typed-controls-${Date.now()}`;
 	let plan: { enabled: boolean; planFilePath: string } | undefined;
@@ -5607,10 +5607,10 @@ test("SDK endpoint applies typed skill, plan, goal, and config controls with obs
 		set: (key: string, value: unknown) => configWrites.push([key, value]),
 	} as unknown as Settings;
 
-	process.env.GJC_NOTIFICATIONS = "1";
+	process.env.VIB_NOTIFICATIONS = "1";
 	start(ctx, settings);
 
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const socket = new WebSocket(`${endpoint.url}/?token=${encodeURIComponent(endpoint.token)}`);
@@ -5739,7 +5739,7 @@ test("SDK endpoint applies typed skill, plan, goal, and config controls with obs
 });
 
 test("Q12 records the runtime-turn correlation before a workflow gate is exposed", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-q12-runtime-turn-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-q12-runtime-turn-"));
 	dirs.push(cwd);
 	const emitter = new BrokerWorkflowGateEmitter("q12-runtime-turn", new FileGateStore(path.join(cwd, "gates.json")));
 	const detachTerminalController = emitter.registerGateTerminalController!({
@@ -5771,7 +5771,7 @@ test("Q12 records the runtime-turn correlation before a workflow gate is exposed
 	}
 });
 test("workflow gate recommendation projection marks only one exact hint without changing raw options", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-workflow-gate-recommendation-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-workflow-gate-recommendation-"));
 	dirs.push(cwd);
 	const sessionId = `workflow-gate-recommendation-${Date.now()}`;
 	let emitGate:
@@ -5799,9 +5799,9 @@ test("workflow gate recommendation projection marks only one exact hint without 
 			return { status: "accepted" };
 		},
 	} as unknown as WorkflowGateEmitter;
-	process.env.GJC_NOTIFICATIONS = "1";
+	process.env.VIB_NOTIFICATIONS = "1";
 	const handlers = start(context(cwd, sessionId, "main", {}, workflowGate));
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const socket = new WebSocket(`${endpoint.url}/?token=${encodeURIComponent(endpoint.token)}`);
@@ -5860,14 +5860,14 @@ test("workflow gate recommendation projection marks only one exact hint without 
 }, 60_000);
 
 test("SDK host discovers, answers, and advances a durable workflow gate", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-host-workflow-gate-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-host-workflow-gate-"));
 	dirs.push(cwd);
 	const sessionId = `workflow-gate-${Date.now()}`;
-	const gateStore = new FileGateStore(path.join(cwd, ".gjc", "state", "workflow-gates.json"));
+	const gateStore = new FileGateStore(path.join(cwd, ".vib", "state", "workflow-gates.json"));
 	const emitter = new BrokerWorkflowGateEmitter(sessionId, gateStore);
-	process.env.GJC_NOTIFICATIONS = "1";
+	process.env.VIB_NOTIFICATIONS = "1";
 	start(context(cwd, sessionId, "main", {}, emitter));
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const socket = new WebSocket(`${endpoint.url}/?token=${encodeURIComponent(endpoint.token)}`);
@@ -6068,7 +6068,7 @@ test("SDK host discovers, answers, and advances a durable workflow gate", async 
 });
 
 test("session teardown drains admitted direct gate resolution before detaching its controller", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-direct-resolution-drain-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-direct-resolution-drain-"));
 	dirs.push(cwd);
 	const sessionId = `direct-resolution-drain-${Date.now()}`;
 	const emitter = new BrokerWorkflowGateEmitter(sessionId, new FileGateStore(path.join(cwd, "gates.json")));
@@ -6111,10 +6111,10 @@ test("session teardown drains admitted direct gate resolution before detaching i
 		}
 		return delivered;
 	});
-	process.env.GJC_NOTIFICATIONS = "1";
+	process.env.VIB_NOTIFICATIONS = "1";
 	const sessionContext = context(cwd, sessionId, "main", {}, emitter);
 	const handlers = start(sessionContext);
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	let shutdown: Promise<unknown> | undefined;
 	try {
 		await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
@@ -6250,7 +6250,7 @@ test("PresentationArbiter drops a retired presentation before terminal persisten
 });
 
 test("SDK host omits direct workflow controls for a legacy workflow-gate emitter", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-legacy-workflow-gate-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-legacy-workflow-gate-"));
 	dirs.push(cwd);
 	const sessionId = `legacy-workflow-gate-${Date.now()}`;
 	const legacyEmitter = {
@@ -6263,9 +6263,9 @@ test("SDK host omits direct workflow controls for a legacy workflow-gate emitter
 			resolved_at: new Date().toISOString(),
 		}),
 	} as WorkflowGateEmitter;
-	process.env.GJC_NOTIFICATIONS = "1";
+	process.env.VIB_NOTIFICATIONS = "1";
 	start(context(cwd, sessionId, "main", {}, legacyEmitter));
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const socket = new WebSocket(`${endpoint.url}/?token=${encodeURIComponent(endpoint.token)}`);
@@ -7317,12 +7317,12 @@ test("PresentationArbiter fences already-terminal direct controls and resets exh
 });
 
 test("AC2/AC8: SDK host completes successful session mutations over its live WebSocket", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-host-successful-verbs-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-host-successful-verbs-"));
 	dirs.push(cwd);
 	const sessionId = `successful-verbs-${Date.now()}`;
 	const emitter = new BrokerWorkflowGateEmitter(
 		sessionId,
-		new FileGateStore(path.join(cwd, ".gjc", "state", "workflow-gates.json")),
+		new FileGateStore(path.join(cwd, ".vib", "state", "workflow-gates.json")),
 	);
 	const emittedGates: Array<{ gate_id: string; kind: string }> = [];
 	emitter.onGateEmitted!(gate => emittedGates.push(gate));
@@ -7339,9 +7339,9 @@ test("AC2/AC8: SDK host completes successful session mutations over its live Web
 		},
 		getConfigItems: () => ({ "theme.dark": "light" }),
 	};
-	process.env.GJC_NOTIFICATIONS = "1";
+	process.env.VIB_NOTIFICATIONS = "1";
 	start(ctx, settings);
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const frames: Record<string, unknown>[] = [];
@@ -7489,7 +7489,7 @@ test("AC2/AC8: SDK host completes successful session mutations over its live Web
 });
 
 test("turn.prompt_status settles durable acceptance after disconnect before agent_start", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-prompt-reconcile-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-prompt-reconcile-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-prompt-reconcile-${Date.now()}`;
 	const sessionFile = path.join(cwd, "session.jsonl");
@@ -7521,7 +7521,7 @@ test("turn.prompt_status settles durable acceptance after disconnect before agen
 		},
 		true,
 	);
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const connect = async () => {
@@ -7631,7 +7631,7 @@ test("turn.prompt_status settles durable acceptance after disconnect before agen
 });
 
 test("ordered turn.prompt ignores envelope idempotencyKey: no replay and no idempotency_conflict", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-prompt-ordered-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-prompt-ordered-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-prompt-ordered-${Date.now()}`;
 	const sessionContext = context(cwd, sessionId);
@@ -7639,7 +7639,7 @@ test("ordered turn.prompt ignores envelope idempotencyKey: no replay and no idem
 	const handlers = start(sessionContext, undefined, (content: unknown) => {
 		deliveries.push(content);
 	});
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const frames: Record<string, unknown>[] = [];
@@ -7692,12 +7692,12 @@ test("ordered turn.prompt ignores envelope idempotencyKey: no replay and no idem
 });
 
 test("turn.result validates selectors and its prompt alias rejects invalid clientRef input", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-prompt-validation-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-prompt-validation-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-prompt-validation-${Date.now()}`;
 	const sessionContext = context(cwd, sessionId);
 	const handlers = start(sessionContext);
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const frames: Record<string, unknown>[] = [];
@@ -7777,7 +7777,7 @@ test("turn.result validates selectors and its prompt alias rejects invalid clien
 });
 
 test("clientRef admission reservation is released when a submission is rejected before acceptance", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-prompt-release-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-prompt-release-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-prompt-release-${Date.now()}`;
 	const sessionContext = context(cwd, sessionId);
@@ -7800,7 +7800,7 @@ test("clientRef admission reservation is released when a submission is rejected 
 		},
 		true,
 	);
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const frames: Record<string, unknown>[] = [];
@@ -7844,12 +7844,12 @@ test("clientRef admission reservation is released when a submission is rejected 
 });
 
 test("busy rejection releases the clientRef admission so a same-ref retry succeeds after the turn", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-prompt-busy-release-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-prompt-busy-release-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-prompt-busy-release-${Date.now()}`;
 	const sessionContext = context(cwd, sessionId);
 	const handlers = start(sessionContext);
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const frames: Record<string, unknown>[] = [];
@@ -7888,7 +7888,7 @@ test("busy rejection releases the clientRef admission so a same-ref retry succee
 });
 
 test("accepted-then-failed submission retains its reconciliation record and blocks ref reuse", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-prompt-accepted-failure-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-prompt-accepted-failure-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-prompt-accepted-failure-${Date.now()}`;
 	const sessionContext = context(cwd, sessionId);
@@ -7906,7 +7906,7 @@ test("accepted-then-failed submission retains its reconciliation record and bloc
 		},
 		true,
 	);
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const frames: Record<string, unknown>[] = [];
@@ -7966,12 +7966,12 @@ test("accepted-then-failed submission retains its reconciliation record and bloc
 });
 
 test("long-running prompt settles terminally after the delivery buffer expires", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-prompt-longrun-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-prompt-longrun-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-prompt-longrun-${Date.now()}`;
 	const sessionContext = context(cwd, sessionId);
 	const handlers = start(sessionContext);
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const frames: Record<string, unknown>[] = [];
@@ -8073,8 +8073,8 @@ test("long-running prompt settles terminally after the delivery buffer expires",
 });
 
 test("identical clientRefs in separate session runtimes stay isolated", async () => {
-	const cwdA = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-session-a-"));
-	const cwdB = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-session-b-"));
+	const cwdA = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-session-a-"));
+	const cwdB = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-session-b-"));
 	dirs.push(cwdA, cwdB);
 	const sessionA = `sdk-session-a-${Date.now()}`;
 	const sessionB = `sdk-session-b-${Date.now()}`;
@@ -8082,8 +8082,8 @@ test("identical clientRefs in separate session runtimes stay isolated", async ()
 	const contextB = context(cwdB, sessionB);
 	const handlersA = start(contextA);
 	const handlersB = start(contextB);
-	const endpointFileA = path.join(cwdA, ".gjc", "state", "sdk", `${sessionA}.json`);
-	const endpointFileB = path.join(cwdB, ".gjc", "state", "sdk", `${sessionB}.json`);
+	const endpointFileA = path.join(cwdA, ".vib", "state", "sdk", `${sessionA}.json`);
+	const endpointFileB = path.join(cwdB, ".vib", "state", "sdk", `${sessionB}.json`);
 	await waitFor(() => fs.existsSync(endpointFileA) && fs.existsSync(endpointFileB), "SDK endpoints");
 	const connect = async (endpointFile: string) => {
 		const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
@@ -8148,17 +8148,17 @@ test("identical clientRefs in separate session runtimes stay isolated", async ()
 	await handlersB.get("session_shutdown")?.({ type: "session_shutdown" }, contextB);
 });
 test("canonical subagent lifecycle keeps the parent workflow-gate runtime turn correlated", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-canonical-subagent-gate-correlation-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-canonical-subagent-gate-correlation-"));
 	dirs.push(cwd);
 	const subagentSessionManager = SessionManager.inMemory(cwd);
 	const sessionId = subagentSessionManager.getSessionId();
 	const emitter = new BrokerWorkflowGateEmitter(
 		sessionId,
-		new FileGateStore(path.join(cwd, ".gjc", "state", "workflow-gates.json")),
+		new FileGateStore(path.join(cwd, ".vib", "state", "workflow-gates.json")),
 	);
 	const sessionContext = context(cwd, sessionId, "main", {}, emitter);
 	const handlers = start(sessionContext);
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const frames: Record<string, unknown>[] = [];
@@ -8278,12 +8278,12 @@ test("canonical subagent lifecycle keeps the parent workflow-gate runtime turn c
  * terminalized, and every ACP client hung until the 30-minute prompt deadline.
  */
 test("SDK host keeps the prompt correlation across a mid-prompt continuation agent_start", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-continuation-correlation-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-continuation-correlation-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-continuation-correlation-${Date.now()}`;
 	const sessionContext = context(cwd, sessionId);
 	const handlers = start(sessionContext);
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const frames: Record<string, unknown>[] = [];
@@ -8351,7 +8351,7 @@ test("notification host rebinds the steering snapshot before terminalizing with 
 	// steering admission token is present — an abort admitted under another
 	// connection's turn whose requester's prompt wins the race would otherwise
 	// have the session reject the still-old token as unknown_run.
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-notif-rebind-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-notif-rebind-"));
 	dirs.push(cwd);
 	const sessionId = `sdk-notif-rebind-${Date.now()}`;
 	const rebinds: number[] = [];
@@ -8370,7 +8370,7 @@ test("notification host rebinds the steering snapshot before terminalizing with 
 		abortPromptAndWait: async () => ({ status: "settled", terminalScope: {} }),
 	};
 	const handlers = start(sessionContext, { get: () => undefined, getAgentDir: () => cwd } as unknown as Settings);
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const frames: Record<string, unknown>[] = [];

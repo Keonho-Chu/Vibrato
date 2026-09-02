@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 import type { AgentSession } from "../session/agent-session";
 import { type BankScope, ensureBankMission } from "./bank";
 import type { HindsightApi, MemoryItemInput } from "./client";

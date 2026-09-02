@@ -30,7 +30,7 @@ interface Resolved {
 const tempDirs: string[] = [];
 
 function tempDir(): string {
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-smithery-trust-"));
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-smithery-trust-"));
 	tempDirs.push(dir);
 	return dir;
 }
@@ -73,7 +73,7 @@ function buildProbeEnv(overrides: Record<string, string>): Record<string, string
 	const env: Record<string, string> = {
 		PATH: process.env.PATH ?? "/usr/bin:/bin",
 		HOME: tempDir(),
-		GJC_CODING_AGENT_DIR: tempDir(),
+		VIB_CODING_AGENT_DIR: tempDir(),
 		TMPDIR: process.env.TMPDIR ?? os.tmpdir(),
 		LANG: process.env.LANG ?? "C",
 	};

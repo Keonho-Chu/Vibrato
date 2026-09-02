@@ -1,14 +1,14 @@
 # Discord notification onboarding
 
 This is the managed Discord notification adapter. It is an SDK client: every
-local GJC session retains its own loopback SDK endpoint, while the daemon maps
+local Vibrato session retains its own loopback SDK endpoint, while the daemon maps
 that session to one Discord thread under a configured parent channel.
 
 ## Prerequisites
 
 Create a Discord application and bot through Discord's developer portal, install
 the bot in the target guild, and create or select the parent channel that will
-contain GJC session threads. Configure the bot with only the permissions it
+contain Vibrato session threads. Configure the bot with only the permissions it
 needs in that channel:
 
 - View Channel
@@ -25,7 +25,7 @@ metadata.
 
 ## Configure the adapter
 
-`gjc notify setup discord` is non-interactive. It requires these flags:
+`vib notify setup discord` is non-interactive. It requires these flags:
 
 - `--discord-bot-token`
 - `--discord-application-id`
@@ -44,7 +44,7 @@ the repository, chat transcripts, or screenshots. The setup command writes:
 - `notifications.discord.parentChannelId`
 - `notifications.redact = true` when requested
 
-`gjc notify status` reports Discord completeness, repair/quarantine state, desired intent, effective enablement, destination identifiers, and a masked token. It must not be used as a way to recover a token. A successful durable save is not rolled back when later daemon activation fails; the command reports the saved-but-runtime-degraded outcome and exits nonzero so the configuration can be repaired or reactivated explicitly. In `/settings`, secret edits are explicit `keep`, `replace`, or `remove`; removing the required bot token turns Discord desired intent off without changing Telegram, Slack, or the global master.
+`vib notify status` reports Discord completeness, repair/quarantine state, desired intent, effective enablement, destination identifiers, and a masked token. It must not be used as a way to recover a token. A successful durable save is not rolled back when later daemon activation fails; the command reports the saved-but-runtime-degraded outcome and exits nonzero so the configuration can be repaired or reactivated explicitly. In `/settings`, secret edits are explicit `keep`, `replace`, or `remove`; removing the required bot token turns Discord desired intent off without changing Telegram, Slack, or the global master.
 
 ## Threads, resume, and replies
 

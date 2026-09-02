@@ -8,7 +8,7 @@
  *  - be the SOLE writer of the severity event stream,
  *  - heartbeat the lease.
  *
- * Stateless `gjc harness` CLI calls reach the owner via {@link resolveOwner} + the endpoint.
+ * Stateless `vib harness` CLI calls reach the owner via {@link resolveOwner} + the endpoint.
  */
 
 import { execFileSync } from "node:child_process";
@@ -373,7 +373,7 @@ export class RuntimeOwner {
 			: {
 					sessionId: this.#opts.sessionId,
 					lifecycle: "started" as const,
-					harness: "gajae-code" as const,
+					harness: "vib-rato" as const,
 					ownerLive: true,
 					blockers: [],
 				};

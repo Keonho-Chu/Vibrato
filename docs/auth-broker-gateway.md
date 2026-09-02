@@ -2,8 +2,8 @@
 
 The auth broker and auth gateway are two cooperating HTTP services that move OAuth refresh tokens and provider access tokens off developer laptops and into a single broker host.
 
-- **`gjc auth-broker serve`** holds the canonical SQLite credential vault, performs OAuth refreshes, and exposes a small REST API (`/v1/snapshot`, `/v1/credential/:id/refresh`, `/v1/credential/:id/disable`, `/v1/credential`, `/v1/usage`, `/v1/usage/scoped?provider=<provider>`, `/v1/healthz`).
-- **`gjc auth-gateway serve --provider=<provider>`** is a provider-scoped forward-proxy. It accepts OpenAI Chat Completions, Anthropic Messages, and OpenAI Responses requests, injects the broker-resolved access token, and dispatches only through the selected provider catalog. Clients (containerised gjc, llm-git, the macOS usage widget, …) never see the access token.
+- **`vib auth-broker serve`** holds the canonical SQLite credential vault, performs OAuth refreshes, and exposes a small REST API (`/v1/snapshot`, `/v1/credential/:id/refresh`, `/v1/credential/:id/disable`, `/v1/credential`, `/v1/usage`, `/v1/usage/scoped?provider=<provider>`, `/v1/healthz`).
+- **`vib auth-gateway serve --provider=<provider>`** is a provider-scoped forward-proxy. It accepts OpenAI Chat Completions, Anthropic Messages, and OpenAI Responses requests, injects the broker-resolved access token, and dispatches only through the selected provider catalog. Clients (containerised vib, llm-git, the macOS usage widget, …) never see the access token.
 
 Transport security between operator, broker, and gateway is delegated to the operator (Tailscale / Wireguard / reverse proxy + TLS). Every endpoint except `/v1/healthz` (broker) and `/healthz` (gateway) requires a bearer token when bearer authentication is configured. The gateway's `--no-auth` mode disables inbound bearer checks only on a loopback bind; an unauthenticated non-loopback bind is rejected at startup.
 
@@ -16,7 +16,7 @@ Source: `packages/ai/src/auth-broker/`, `packages/ai/src/auth-gateway/`, `packag
                 │ broker host                                                │
                 │                                                            │
   developer ──▶ │  ┌──────────────────────────┐    ┌────────────────────┐    │
-  laptop /      │  │  gjc auth-broker serve   │◀──▶│  SQLite agent.db    │    │
+  laptop /      │  │  vib auth-broker serve   │◀──▶│  SQLite agent.db    │    │
   CI          │  │  - holds refresh tokens  │    │  (canonical writer)│    │
                 │  │  - background refresher  │    └────────────────────┘    │
                 │  │  /v1/{snapshot,refresh,…}│                              │
@@ -24,7 +24,7 @@ Source: `packages/ai/src/auth-broker/`, `packages/ai/src/auth-gateway/`, `packag
                 │            │  bearer ($CONFIG_DIR/auth-broker.token)       │
                 │            ▼                                               │
                 │  ┌──────────────────────────┐                              │
-                │  │  gjc auth-gateway serve  │  RemoteAuthCredentialStore   │
+                │  │  vib auth-gateway serve  │  RemoteAuthCredentialStore   │
                 │  │  /v1/{chat,messages,…}   │  pulls /v1/snapshot at boot, │
                 │  │  /v1/usage, /v1/models   │  refreshes credentials by id │
                 │  └─────────┬────────────────┘  via the broker on expiry    │
@@ -38,28 +38,28 @@ Source: `packages/ai/src/auth-broker/`, `packages/ai/src/auth-gateway/`, `packag
                   api.anthropic.com / api.openai.com / …
 ```
 
-The broker is the only writer of OAuth refresh tokens. Clients (including the gateway itself) load a redacted snapshot in which every `refresh` field has been replaced with `REMOTE_REFRESH_SENTINEL`; when an access token expires the client calls `POST /v1/credential/:id/refresh` and the broker performs the refresh server-side. `RemoteAuthCredentialStore` rejects any local code path that tries to write through it, with an error pointing at `gjc auth-broker login` / `gjc auth-broker logout`.
+The broker is the only writer of OAuth refresh tokens. Clients (including the gateway itself) load a redacted snapshot in which every `refresh` field has been replaced with `REMOTE_REFRESH_SENTINEL`; when an access token expires the client calls `POST /v1/credential/:id/refresh` and the broker performs the refresh server-side. `RemoteAuthCredentialStore` rejects any local code path that tries to write through it, with an error pointing at `vib auth-broker login` / `vib auth-broker logout`.
 
 ## auth-broker
 
 ### CLI
 
 ```
-gjc auth-broker serve     [--bind=host:port]                    # boot the broker
-gjc auth-broker token     [--regenerate] [--json]               # print or rotate the bearer token
-gjc auth-broker login     <provider> [--via=user@host] [--dry-run]
-gjc auth-broker logout    <provider>
-gjc auth-broker import    <file|dir> [--provider=<id>] [--include-disabled] [--dry-run] [--json]
-gjc auth-broker migrate   --from-local [--dry-run] [--json]
-gjc auth-broker status    [--json]
+vib auth-broker serve     [--bind=host:port]                    # boot the broker
+vib auth-broker token     [--regenerate] [--json]               # print or rotate the bearer token
+vib auth-broker login     <provider> [--via=user@host] [--dry-run]
+vib auth-broker logout    <provider>
+vib auth-broker import    <file|dir> [--provider=<id>] [--include-disabled] [--dry-run] [--json]
+vib auth-broker migrate   --from-local [--dry-run] [--json]
+vib auth-broker status    [--json]
 ```
 
 - `serve` opens the local SQLite store at `getAgentDbPath()` and binds an HTTP listener (default `127.0.0.1:8765`). On startup a token is ensured at `<config-dir>/auth-broker.token` (mode `0600`, `0700` parent dir). The background refresher refreshes any OAuth credential whose `expires - Date.now() < refreshSkewMs` (default 5 min) every `refreshIntervalMs` (default 60 s).
 - `token` prints the cached bearer or generates a new one. `--regenerate` rotates it.
-- `login <provider>` runs the per-provider OAuth flow locally, or — with `--via=user@host` — `ssh -L <callback-port>:127.0.0.1:<callback-port> user@host gjc auth-broker login <provider>` so the OAuth callback hits the local browser but the credential is written on the broker host. Built-in callback ports: `anthropic:54545`, `openai-code:1455`, `google-gemini-cli:8085`, `google-antigravity:51121`, `gitlab-duo:8080`.
-  When no port forward is possible, run the interactive TUI on that host and use `/login anthropic --manual`, which pairs by pasting the code Anthropic renders at `https://platform.claude.com/oauth/code/callback` instead of using a loopback callback at all. `gjc auth-broker login` itself has no manual mode.
+- `login <provider>` runs the per-provider OAuth flow locally, or — with `--via=user@host` — `ssh -L <callback-port>:127.0.0.1:<callback-port> user@host vib auth-broker login <provider>` so the OAuth callback hits the local browser but the credential is written on the broker host. Built-in callback ports: `anthropic:54545`, `openai-code:1455`, `google-gemini-cli:8085`, `google-antigravity:51121`, `gitlab-duo:8080`.
+  When no port forward is possible, run the interactive TUI on that host and use `/login anthropic --manual`, which pairs by pasting the code Anthropic renders at `https://platform.claude.com/oauth/code/callback` instead of using a loopback callback at all. `vib auth-broker login` itself has no manual mode.
 - `logout <provider>` deletes every credential row for `<provider>`.
-- `import <file|dir>` imports CLIProxyAPI-style JSON credentials into the local SQLite store. Maps `type` field → gjc provider (`anthropic-model → anthropic`, `openai-code → openai-code`, `gemini → google-gemini-cli`, `antigravity → google-antigravity`, `gemini-cli → google-gemini-cli`).
+- `import <file|dir>` imports CLIProxyAPI-style JSON credentials into the local SQLite store. Maps `type` field → vib provider (`anthropic-model → anthropic`, `openai-code → openai-code`, `gemini → google-gemini-cli`, `antigravity → google-antigravity`, `gemini-cli → google-gemini-cli`).
 - `migrate --from-local` walks the local SQLite store + env-derived credentials and idempotently uploads them to the configured broker (`POST /v1/credential`).
 - `status` health-pings the configured remote broker.
 
@@ -94,10 +94,10 @@ Requests use `Authorization: Bearer <token>`. The server compares against an in-
 ### CLI
 
 ```
-gjc auth-gateway serve   --provider=<provider> [--bind=host:port] [--no-auth]
-gjc auth-gateway token   [--regenerate] [--json]
-gjc auth-gateway status  [--provider=<provider>] [--json]
-gjc auth-gateway check   [--provider=<provider>] [--json]
+vib auth-gateway serve   --provider=<provider> [--bind=host:port] [--no-auth]
+vib auth-gateway token   [--regenerate] [--json]
+vib auth-gateway status  [--provider=<provider>] [--json]
+vib auth-gateway check   [--provider=<provider>] [--json]
 ```
 
 - `serve` requires an explicit `--provider`. It fetches the broker snapshot before binding and fails closed unless that snapshot contains an enabled credential for the selected provider. The gateway is itself a broker client: it calls `AuthBrokerClient.fetchSnapshot()`, wraps it in `RemoteAuthCredentialStore`, and constructs an `AuthStorage` that resolves access tokens through the broker. Default bind is `127.0.0.1:4000`. The gateway token is stored at `<config-dir>/auth-gateway.token` (`0600`); `--no-auth` disables the inbound bearer check only on a loopback bind for non-browser local clients. Browser-Origin requests and preflight are rejected in no-auth mode. A non-loopback unauthenticated bind is rejected at startup.
@@ -116,11 +116,11 @@ gjc auth-gateway check   [--provider=<provider>] [--json]
 | `POST` | `/v1/chat/completions` | bearer | OpenAI Chat Completions wire format |
 | `POST` | `/v1/messages` | bearer | Anthropic Messages wire format |
 | `POST` | `/v1/responses` | bearer | OpenAI Responses wire format |
-| `POST` | `/v1/pi/stream` | bearer | Native gjc stream format |
+| `POST` | `/v1/pi/stream` | bearer | Native vib stream format |
 
 The model id is read from the top-level `model` field and must be an exact member of the selected provider’s source-backed catalog. The gateway resolves the scoped model and obtains the credential for that model’s provider only; it never falls back to a credential from another provider. `/v1/models` emits the catalog model’s `owned_by` and `api` values. In particular, an `openai-codex` scope exposes Codex-owned rows with `owned_by: "openai-codex"` and `api: "openai-codex-responses"`; it cannot project the same id through GitHub Copilot or generic OpenAI Responses.
 
-All provider-format routes parse into gjc’s canonical `Context`, dispatch through `streamSimple()`, and encode back to the inbound wire format. This keeps provider-specific OAuth shaping, headers, and transport selection on the source-backed model.
+All provider-format routes parse into vib’s canonical `Context`, dispatch through `streamSimple()`, and encode back to the inbound wire format. This keeps provider-specific OAuth shaping, headers, and transport selection on the source-backed model.
 
 `idleTimeout` on the underlying `Bun.serve` is set to `255 s` so long thinking-budget calls do not get killed by Bun’s default idle timeout.
 
@@ -146,14 +146,14 @@ The 15 s client window deliberately sits below the broker’s 5 min server cache
 
 ## Operator opt-in
 
-The broker is **off** unless `GJC_AUTH_BROKER_URL` (or `auth.broker.url` in `config.yml`) is set. When set, `discoverAuthStorage` in `packages/coding-agent/src/sdk/session.ts` swaps the local SQLite credential store for `RemoteAuthCredentialStore` and every API call resolves credentials through the broker.
+The broker is **off** unless `VIB_AUTH_BROKER_URL` (or `auth.broker.url` in `config.yml`) is set. When set, `discoverAuthStorage` in `packages/coding-agent/src/sdk/session.ts` swaps the local SQLite credential store for `RemoteAuthCredentialStore` and every API call resolves credentials through the broker.
 
 ### Environment variables
 
 | Variable | Purpose | Required when |
 | -------- | ------- | ------------- |
-| `GJC_AUTH_BROKER_URL`   | Base URL of the remote auth-broker (e.g. `https://broker.tailnet:8765`). Selecting this puts the client in broker mode — local SQLite is bypassed. | Any time the gjc client should resolve credentials through a broker (and required by `gjc auth-gateway serve --provider=<provider>`). |
-| `GJC_AUTH_BROKER_TOKEN` | Bearer token used for every broker endpoint except `/v1/healthz`. | When a broker URL is set and no token is available from nested config or `<config-dir>/auth-broker.token`. |
+| `VIB_AUTH_BROKER_URL`   | Base URL of the remote auth-broker (e.g. `https://broker.tailnet:8765`). Selecting this puts the client in broker mode — local SQLite is bypassed. | Any time the vib client should resolve credentials through a broker (and required by `vib auth-gateway serve --provider=<provider>`). |
+| `VIB_AUTH_BROKER_TOKEN` | Bearer token used for every broker endpoint except `/v1/healthz`. | When a broker URL is set and no token is available from nested config or `<config-dir>/auth-broker.token`. |
 
 ### Startup resolver and configuration
 
@@ -168,29 +168,29 @@ auth:
 
 Resolution is explicit and ordered:
 
-1. `GJC_AUTH_BROKER_URL` takes precedence over the nested `auth.broker.url` value.
-2. If a URL is resolved, `GJC_AUTH_BROKER_TOKEN` takes precedence over nested `auth.broker.token`, which takes precedence over the trimmed contents of `<config-dir>/auth-broker.token`.
-3. A resolved URL without a token is a hard startup error; GJC does not fall back to the local SQLite store.
+1. `VIB_AUTH_BROKER_URL` takes precedence over the nested `auth.broker.url` value.
+2. If a URL is resolved, `VIB_AUTH_BROKER_TOKEN` takes precedence over nested `auth.broker.token`, which takes precedence over the trimmed contents of `<config-dir>/auth-broker.token`.
+3. A resolved URL without a token is a hard startup error; Vibrato does not fall back to the local SQLite store.
 
 The nested URL and token entries may be literal strings or exact `$ENV_NAME` references resolved from the trusted process environment. Missing config is allowed and leaves broker mode disabled. An unreadable file, invalid YAML, non-mapping root, malformed `auth`/`broker`/`gateway` section, unresolved nested URL reference, invalid ranking mode, or invalid credential-pin record fails closed with a typed `StartupAuthConfigError` rather than silently downgrading to local authority. An unresolved nested token reference may still fall through to the owner-only token file. Legacy literal dotted auth keys are rejected with manual nested-YAML rewrite guidance.
 
-The gateway has no dedicated env vars — it inherits `GJC_AUTH_BROKER_*` because it is itself a broker client.
+The gateway has no dedicated env vars — it inherits `VIB_AUTH_BROKER_*` because it is itself a broker client.
 
 ### `config.yml` keys
 
 | Key | Default | Purpose |
 | --- | ------- | ------- |
-| `auth.broker.url`   | unset | Same as `GJC_AUTH_BROKER_URL`; env wins. Hidden from the settings UI. |
-| `auth.broker.token` | unset | Same as `GJC_AUTH_BROKER_TOKEN`; env wins. Accepts a literal bearer token or exact `$ENV_NAME` reference. |
+| `auth.broker.url`   | unset | Same as `VIB_AUTH_BROKER_URL`; env wins. Hidden from the settings UI. |
+| `auth.broker.token` | unset | Same as `VIB_AUTH_BROKER_TOKEN`; env wins. Accepts a literal bearer token or exact `$ENV_NAME` reference. |
 
 ### Token files
 
 | Path | Owner | Mode |
 | ---- | ----- | ---- |
-| `<config-dir>/auth-broker.token`  | `gjc auth-broker serve` (created at first start) | `0600` in a `0700` parent dir |
-| `<config-dir>/auth-gateway.token` | `gjc auth-gateway serve` (skipped under `--no-auth`) | `0600` in a `0700` parent dir |
+| `<config-dir>/auth-broker.token`  | `vib auth-broker serve` (created at first start) | `0600` in a `0700` parent dir |
+| `<config-dir>/auth-gateway.token` | `vib auth-gateway serve` (skipped under `--no-auth`) | `0600` in a `0700` parent dir |
 
-`<config-dir>` resolves to `~/.gjc/` (respecting `GJC_CONFIG_DIR`).
+`<config-dir>` resolves to `~/.vib/` (respecting `VIB_CONFIG_DIR`).
 
 ## Interaction with the local API-key resolution order
 
@@ -200,6 +200,6 @@ The broker only owns OAuth credentials and provider-API-key credentials that wer
 
 ## See also
 
-- [`secrets.md`](./secrets.md) — secret obfuscation around tokens that *do* leak through (e.g. `GJC_AUTH_BROKER_TOKEN` in shell output).
+- [`secrets.md`](./secrets.md) — secret obfuscation around tokens that *do* leak through (e.g. `VIB_AUTH_BROKER_TOKEN` in shell output).
 - [`models.md`](./models.md) — provider auth resolution order; the broker plugs in at layers 2–3 (stored credentials).
-- [`environment-variables.md`](./environment-variables.md) — full env reference including `GJC_AUTH_BROKER_URL` / `GJC_AUTH_BROKER_TOKEN`.
+- [`environment-variables.md`](./environment-variables.md) — full env reference including `VIB_AUTH_BROKER_URL` / `VIB_AUTH_BROKER_TOKEN`.

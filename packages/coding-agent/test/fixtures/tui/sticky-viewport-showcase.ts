@@ -1,6 +1,6 @@
-import { Agent } from "@gajae-code/agent-core";
-import { Text } from "@gajae-code/tui";
-import { TempDir } from "@gajae-code/utils";
+import { Agent } from "@vib-rato/agent-core";
+import { Text } from "@vib-rato/tui";
+import { TempDir } from "@vib-rato/utils";
 import chalk from "chalk";
 import { VirtualTerminal } from "../../../../tui/test/virtual-terminal";
 import { ModelRegistry } from "../../../src/config/model-registry";
@@ -97,7 +97,7 @@ const semanticRootIds = (mode: InteractiveMode) =>
 // anchor row text, the COMPLETE geometry (grapheme and cell start AND end plus
 // frameRow), and the committed frame digest, under a versioned domain literal so
 // the digest cannot be repurposed in another context.
-export const SEMANTIC_ANCHOR_DOMAIN = "gjc.sticky-viewport.semantic-anchor.v1";
+export const SEMANTIC_ANCHOR_DOMAIN = "vib.sticky-viewport.semantic-anchor.v1";
 // Netstring framing (`<byteLength>:<value>,`). A plain `a:b:c` join is ambiguous
 // as soon as any field may itself contain `:` — which namespaces and painted row
 // text both do — so distinct field tuples could otherwise share a preimage.

@@ -1,16 +1,16 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
 import * as path from "node:path";
-import { Agent, type AgentTool, type StreamFn } from "@gajae-code/agent-core";
-import type { AssistantMessage } from "@gajae-code/ai";
-import { getBundledModel } from "@gajae-code/ai";
-import { createMockModel } from "@gajae-code/ai/providers/mock";
-import { AssistantMessageEventStream } from "@gajae-code/ai/utils/event-stream";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { AgentSession, WorkerIntegrationRequestScheduler } from "@gajae-code/coding-agent/session/agent-session";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { TempDir } from "@gajae-code/utils";
+import { Agent, type AgentTool, type StreamFn } from "@vib-rato/agent-core";
+import type { AssistantMessage } from "@vib-rato/ai";
+import { getBundledModel } from "@vib-rato/ai";
+import { createMockModel } from "@vib-rato/ai/providers/mock";
+import { AssistantMessageEventStream } from "@vib-rato/ai/utils/event-stream";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { AgentSession, WorkerIntegrationRequestScheduler } from "@vib-rato/coding-agent/session/agent-session";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { TempDir } from "@vib-rato/utils";
 import * as z from "zod/v4";
 
 describe("AgentSession abort timeout", () => {
@@ -53,7 +53,7 @@ describe("AgentSession abort timeout", () => {
 	});
 
 	it("bounds abort cleanup when the underlying agent never becomes idle", async () => {
-		tempDir = TempDir.createSync("@gjc-abort-timeout-");
+		tempDir = TempDir.createSync("@vib-abort-timeout-");
 		authStorage = await AuthStorage.create(path.join(tempDir.path(), "testauth.db"));
 		authStorage.setRuntimeApiKey("anthropic", "test-key");
 		const modelRegistry = new ModelRegistry(authStorage);
@@ -91,7 +91,7 @@ describe("AgentSession abort timeout", () => {
 	});
 
 	it("aborts and quarantines only the captured prompt domain while a successor remains live", async () => {
-		tempDir = TempDir.createSync("@gjc-exact-prompt-abort-");
+		tempDir = TempDir.createSync("@vib-exact-prompt-abort-");
 		authStorage = await AuthStorage.create(path.join(tempDir.path(), "testauth.db"));
 		authStorage.setRuntimeApiKey("anthropic", "test-key");
 		const modelRegistry = new ModelRegistry(authStorage);
@@ -251,7 +251,7 @@ describe("AgentSession abort timeout", () => {
 	}
 
 	it("returns from a timed-out abort and admits a successor when the stream ignores abort", async () => {
-		tempDir = TempDir.createSync("@gjc-abort-wedged-stream-");
+		tempDir = TempDir.createSync("@vib-abort-wedged-stream-");
 		authStorage = await AuthStorage.create(path.join(tempDir.path(), "testauth.db"));
 		const modelRegistry = new ModelRegistry(authStorage);
 		const harness = wedgedTurnHarness();
@@ -307,7 +307,7 @@ describe("AgentSession abort timeout", () => {
 	});
 
 	it("lets a bounded abort force recovery for a wedged unbounded abort sharing the unwind", async () => {
-		tempDir = TempDir.createSync("@gjc-abort-shared-unwind-");
+		tempDir = TempDir.createSync("@vib-abort-shared-unwind-");
 		authStorage = await AuthStorage.create(path.join(tempDir.path(), "testauth.db"));
 		const modelRegistry = new ModelRegistry(authStorage);
 		const harness = wedgedTurnHarness();
@@ -366,7 +366,7 @@ describe("AgentSession abort timeout", () => {
 	});
 
 	it("keeps a successor observable while an abandoned prompt settles later", async () => {
-		tempDir = TempDir.createSync("@gjc-abort-zombie-settlement-");
+		tempDir = TempDir.createSync("@vib-abort-zombie-settlement-");
 		authStorage = await AuthStorage.create(path.join(tempDir.path(), "testauth.db"));
 		const modelRegistry = new ModelRegistry(authStorage);
 		const harness = wedgedTurnHarness();
@@ -407,7 +407,7 @@ describe("AgentSession abort timeout", () => {
 	});
 
 	it("recovers when the provider event stream itself never settles after abort", async () => {
-		tempDir = TempDir.createSync("@gjc-abort-wedged-provider-stream-");
+		tempDir = TempDir.createSync("@vib-abort-wedged-provider-stream-");
 		authStorage = await AuthStorage.create(path.join(tempDir.path(), "testauth.db"));
 		const mock = createMockModel();
 		authStorage.setRuntimeApiKey(mock.model.provider, "test-key");
@@ -481,7 +481,7 @@ describe("AgentSession abort timeout", () => {
 	});
 
 	it("bounds dispose, lets an abort-ignoring run settle cooperatively, and drops its late events", async () => {
-		tempDir = TempDir.createSync("@gjc-dispose-timeout-");
+		tempDir = TempDir.createSync("@vib-dispose-timeout-");
 		authStorage = await AuthStorage.create(path.join(tempDir.path(), "testauth.db"));
 		const mock = createMockModel();
 		authStorage.setRuntimeApiKey(mock.model.provider, "test-key");

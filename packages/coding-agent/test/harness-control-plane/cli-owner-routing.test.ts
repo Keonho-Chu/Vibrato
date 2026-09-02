@@ -53,8 +53,8 @@ function seed(workspace: string): SessionState {
 		schemaVersion: SESSION_SCHEMA_VERSION,
 		sessionId: SID,
 		lifecycle: "started",
-		harness: "gajae-code",
-		handle: { sessionId: SID, harness: "gajae-code", workspace, branch: "feat/x" } as SessionHandle,
+		harness: "vib-rato",
+		handle: { sessionId: SID, harness: "vib-rato", workspace, branch: "feat/x" } as SessionHandle,
 		retries: {},
 		blockers: [],
 		createdAt: now,
@@ -67,7 +67,7 @@ function seed(workspace: string): SessionState {
 async function runHarness(args: string[]): Promise<{ code: number; json: Record<string, unknown> | null }> {
 	const proc = Bun.spawn(["bun", cliEntry, "harness", ...args], {
 		cwd: root,
-		env: { ...cliEnv.env, GJC_HARNESS_STATE_ROOT: root },
+		env: { ...cliEnv.env, VIB_HARNESS_STATE_ROOT: root },
 		stdout: "pipe",
 		stderr: "pipe",
 	});
@@ -122,7 +122,7 @@ afterEach(async () => {
 	await rm(root, { recursive: true, force: true });
 });
 
-describe("gjc harness CLI -> live owner routing", () => {
+describe("vib harness CLI -> live owner routing", () => {
 	it("submit routes to the live owner and is accepted via single-flight", async () => {
 		const res = await runHarness(["submit", "--session", SID, "--input", JSON.stringify({ prompt: "do it" })]);
 		expect(res.code).toBe(0);

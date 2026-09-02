@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { Effort, type Model } from "@gajae-code/ai";
+import { Effort, type Model } from "@vib-rato/ai";
 import {
 	resolveCliModel,
 	resolveModelFromSettings,
@@ -9,8 +9,8 @@ import {
 	resolveSelector,
 	restoreModelFromSession,
 	splitSelectorThinkingSuffix,
-} from "@gajae-code/coding-agent/config/model-resolver";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
+} from "@vib-rato/coding-agent/config/model-resolver";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
 
 const model = (provider: string, id: string): Model<"anthropic-messages"> => ({
 	id,

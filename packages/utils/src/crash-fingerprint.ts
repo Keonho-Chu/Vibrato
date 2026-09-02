@@ -21,7 +21,7 @@
  * Fields are length-prefixed UTF-8 (`<byteLength>:<bytes>`) so no delimiter
  * ambiguity exists between an empty field and a missing one:
  *
- *     "gjc-crash-fp.v1" | errorName | messageClass | frame0 | frame1 | frame2
+ *     "vib-crash-fp.v1" | errorName | messageClass | frame0 | frame1 | frame2
  *
  * Up to three normalized in-app frames participate; absent frames are omitted
  * (the length prefix of the preceding fields keeps the encoding unambiguous).
@@ -40,9 +40,9 @@ export const CRASH_FINGERPRINT_HEX_LENGTH = 32;
 /** Matches exactly a published fingerprint. */
 export const CRASH_FINGERPRINT_PATTERN = /^[0-9a-f]{32}$/;
 /** Marker used for the machine-readable identity line of each crash record. */
-export const CRASH_RECORD_MARKER = "gjc-crash-record.v1";
+export const CRASH_RECORD_MARKER = "vib-crash-record.v1";
 /** Marker embedded in an external issue body, outside crash-derived blocks. */
-export const CRASH_ISSUE_MARKER_PREFIX = "gjc-crash-fp.v1:";
+export const CRASH_ISSUE_MARKER_PREFIX = "vib-crash-fp.v1:";
 /** Literal frame used when a stack carries no in-app frame at all. */
 export const NO_APP_FRAME = "<no-app-frame>";
 
@@ -70,7 +70,7 @@ export interface CrashFingerprint {
 }
 
 export interface CrashFingerprintOptions {
-	/** Install root used to relativize in-app frames. Defaults to the GJC install root. */
+	/** Install root used to relativize in-app frames. Defaults to the Vibrato install root. */
 	readonly installRoot?: string;
 	/** Home directory used for `<home>` substitution. Defaults to `os.homedir()`. */
 	readonly homeDir?: string;
@@ -233,7 +233,7 @@ export function computeCrashFingerprint(
 	const messageClass = normalizeCrashMessage(input.message, options);
 	const frames = normalizeCrashFrames(input.stack, options);
 	const digest = createHash("sha256")
-		.update(canonicalSerialization(["gjc-crash-fp.v1", errorName, messageClass, ...frames]))
+		.update(canonicalSerialization(["vib-crash-fp.v1", errorName, messageClass, ...frames]))
 		.digest();
 	return {
 		fingerprint: digest.subarray(0, CRASH_FINGERPRINT_HEX_LENGTH / 2).toString("hex"),

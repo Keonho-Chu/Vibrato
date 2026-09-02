@@ -7,7 +7,7 @@
  * caller-supplied hooks.
  */
 import * as path from "node:path";
-import { ThinkingLevel } from "@gajae-code/agent-core";
+import { ThinkingLevel } from "@vib-rato/agent-core";
 import { runExtensionCompact, runExtensionSetModel } from "../extensibility/extensions/compact-handler";
 import { getSessionSlashCommands } from "../extensibility/extensions/get-commands-handler";
 import type { ExtensionError, ExtensionUIContext } from "../extensibility/extensions/types";

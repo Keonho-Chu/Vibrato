@@ -17,7 +17,7 @@ import {
 const tempDirs: string[] = [];
 
 async function tempRoot(): Promise<string> {
-	const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-codex-handoff-"));
+	const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-codex-handoff-"));
 	tempDirs.push(root);
 	return root;
 }
@@ -288,8 +288,8 @@ console.log(JSON.stringify(await recordCodexWakeEvent(${JSON.stringify(root)}, {
 		});
 		for (let index = 0; index < 20; index++) {
 			const origin = {
-				gjc_session_id: `concurrent-${index}`,
-				gjc_turn_id: null,
+				vib_session_id: `concurrent-${index}`,
+				vib_turn_id: null,
 				codex_thread_id: "thread-source",
 				codex_turn_id: null,
 				codex_host_session_id: "host",
@@ -320,8 +320,8 @@ console.log(JSON.stringify(await recordCodexWakeEvent(${JSON.stringify(root)}, {
 			token_root: tokenRoot,
 		});
 		const origin = {
-			gjc_session_id: "delegate-session",
-			gjc_turn_id: "delegate-turn",
+			vib_session_id: "delegate-session",
+			vib_turn_id: "delegate-turn",
 			codex_thread_id: "thread-source",
 			codex_turn_id: "codex-turn-1",
 			codex_host_session_id: "host-session",

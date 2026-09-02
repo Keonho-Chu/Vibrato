@@ -19,15 +19,15 @@
 import type { Dirent } from "node:fs";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { parseFrontmatter } from "@gajae-code/utils";
+import { parseFrontmatter } from "@vib-rato/utils";
 import { mcpCapability } from "../capability/mcp";
 import { listNativeSkillsForManagement, type SkillManagementPolicy } from "../extensibility/skill-management";
 import { readMCPConfigFile } from "../runtime-mcp/config-writer";
-import type { CustomizationSurface, GjcScope, InventoryRow, InventoryStatus } from "./types";
+import type { CustomizationSurface, InventoryRow, InventoryStatus, VibScope } from "./types";
 import { resolveScopePaths, scopeLabel } from "./types";
 
 /** Frontmatter key written by the import flow to record provenance. */
-export const IMPORTED_FROM_FRONTMATTER_KEY = "x-gjc-imported-from";
+export const IMPORTED_FROM_FRONTMATTER_KEY = "x-vib-imported-from";
 
 export interface LoadCustomizationInventoryOptions {
 	cwd: string;
@@ -45,7 +45,7 @@ export interface CustomizationInventory {
 }
 
 /** Stable row identity used for selection and mutations. */
-export function inventoryRowId(surface: CustomizationSurface, scope: GjcScope, rowPath: string): string {
+export function inventoryRowId(surface: CustomizationSurface, scope: VibScope, rowPath: string): string {
 	return `${surface}:${scope}:${rowPath}`;
 }
 
@@ -76,8 +76,8 @@ async function readImportMarker(skillPath: string): Promise<string | null> {
 	try {
 		const content = await fs.readFile(skillPath, "utf-8");
 		const { frontmatter } = parseFrontmatter(content, { level: "off" });
-		// parseFrontmatter camelCases keys: x-gjc-imported-from → xGjcImportedFrom.
-		const marker = frontmatter[IMPORTED_FROM_FRONTMATTER_KEY] ?? frontmatter.xGjcImportedFrom;
+		// parseFrontmatter camelCases keys: x-vib-imported-from → xVibImportedFrom.
+		const marker = frontmatter[IMPORTED_FROM_FRONTMATTER_KEY] ?? frontmatter.xVibImportedFrom;
 		return typeof marker === "string" ? marker : null;
 	} catch {
 		return null;
@@ -98,7 +98,7 @@ async function loadSkillRows(options: LoadCustomizationInventoryOptions, _warnin
 	const managedPaths = new Set<string>();
 	for (const record of records) {
 		managedPaths.add(path.resolve(record.path));
-		const scope: GjcScope = record.scope === "project" ? "project" : "global";
+		const scope: VibScope = record.scope === "project" ? "project" : "global";
 		const marker = await readImportMarker(record.path);
 		let status: InventoryStatus;
 		const diagnostics: string[] = [];
@@ -110,7 +110,7 @@ async function loadSkillRows(options: LoadCustomizationInventoryOptions, _warnin
 		} else if (record.disabledReason === "protected") {
 			// Bundled workflow skills are always active; the name is protected.
 			status = "enabled";
-			diagnostics.push("bundled GJC workflow skill — protected name, always available");
+			diagnostics.push("bundled Vibrato workflow skill — protected name, always available");
 		} else {
 			status = "disabled";
 			if (record.disabledReason) diagnostics.push(`disabled (${record.disabledReason})`);
@@ -319,7 +319,7 @@ async function loadMcpRows(options: LoadCustomizationInventoryOptions, warnings:
 
 /**
  * Load the full Skills/Hooks/MCPs inventory for the `/extensions` dashboard.
- * Reads only the canonical `.gjc` scopes; foreign Claude/Codex layouts are
+ * Reads only the canonical `.vib` scopes; foreign Claude/Codex layouts are
  * import sources handled by the explicit import flow, never managed entries.
  */
 export async function loadCustomizationInventory(

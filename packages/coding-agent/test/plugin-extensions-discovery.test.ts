@@ -2,11 +2,11 @@ import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { discoverAndLoadExtensions } from "@gajae-code/coding-agent/extensibility/extensions/loader";
-import { getAgentDir, getPluginsDir, setAgentDir, TempDir } from "@gajae-code/utils";
+import { discoverAndLoadExtensions } from "@vib-rato/coding-agent/extensibility/extensions/loader";
+import { getAgentDir, getPluginsDir, setAgentDir, TempDir } from "@vib-rato/utils";
 
-const currentPiCodingAgentPath = Bun.resolveSync("@gajae-code/coding-agent", import.meta.dir);
-const currentPiExtensionsPath = Bun.resolveSync("@gajae-code/coding-agent/extensibility/extensions", import.meta.dir);
+const currentPiCodingAgentPath = Bun.resolveSync("@vib-rato/coding-agent", import.meta.dir);
+const currentPiExtensionsPath = Bun.resolveSync("@vib-rato/coding-agent/extensibility/extensions", import.meta.dir);
 
 describe("plugin extension discovery", () => {
 	let projectDir: TempDir;
@@ -18,7 +18,7 @@ describe("plugin extension discovery", () => {
 		projectDir = TempDir.createSync("@pi-plugin-ext-");
 		originalXdgDataHome = process.env.XDG_DATA_HOME;
 		tempXdgDataHome = fs.mkdtempSync(path.join(os.tmpdir(), "pi-plugin-data-"));
-		fs.mkdirSync(path.join(tempXdgDataHome, "gjc"), { recursive: true });
+		fs.mkdirSync(path.join(tempXdgDataHome, "vib"), { recursive: true });
 		process.env.XDG_DATA_HOME = tempXdgDataHome;
 		// Rebuild path caches after changing XDG env so plugin discovery resolves into the temp root.
 		setAgentDir(originalAgentDir);
@@ -29,7 +29,7 @@ describe("plugin extension discovery", () => {
 		fs.writeFileSync(
 			path.join(pluginsDir, "package.json"),
 			JSON.stringify({
-				name: "gjc-plugins",
+				name: "vib-plugins",
 				private: true,
 				dependencies: {
 					"@demo/plugin": "1.0.0",
@@ -41,7 +41,7 @@ describe("plugin extension discovery", () => {
 			JSON.stringify({
 				name: "@demo/plugin",
 				version: "1.0.0",
-				gjc: {
+				vib: {
 					extensions: ["./dist/extension.ts"],
 				},
 			}),
@@ -85,7 +85,7 @@ describe("plugin extension discovery", () => {
 		fs.writeFileSync(
 			path.join(pluginsDir, "package.json"),
 			JSON.stringify({
-				name: "gjc-plugins",
+				name: "vib-plugins",
 				private: true,
 				dependencies: {
 					"legacy-pi-plugin": "1.0.0",
@@ -107,8 +107,8 @@ describe("plugin extension discovery", () => {
 			[
 				'import * as nodePath from "path";',
 				'if (false) import("./optional-missing.js");',
-				'import { isToolCallEventType as legacyRoot } from "@mariozechner/gajae-code";',
-				'import { isToolCallEventType as legacyExtensions } from "@mariozechner/gajae-code/extensibility/extensions";',
+				'import { isToolCallEventType as legacyRoot } from "@mariozechner/vib-rato";',
+				'import { isToolCallEventType as legacyExtensions } from "@mariozechner/vib-rato/extensibility/extensions";',
 				`import { isToolCallEventType as modernRoot } from ${JSON.stringify(currentPiCodingAgentPath)};`,
 				`import { isToolCallEventType as modernExtensions } from ${JSON.stringify(currentPiExtensionsPath)};`,
 				"",
@@ -149,7 +149,7 @@ describe("plugin extension discovery", () => {
 		fs.writeFileSync(
 			path.join(pluginsDir, "package.json"),
 			JSON.stringify({
-				name: "gjc-plugins",
+				name: "vib-plugins",
 				private: true,
 				dependencies: {
 					"dir-entry-plugin": "1.0.0",

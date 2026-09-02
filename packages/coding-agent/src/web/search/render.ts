@@ -4,8 +4,8 @@
  * Tree-based rendering with collapsed/expanded states for web search results.
  */
 
-import type { Component } from "@gajae-code/tui";
-import { Text, visibleWidth, wrapTextWithAnsi } from "@gajae-code/tui";
+import type { Component } from "@vib-rato/tui";
+import { Text, visibleWidth, wrapTextWithAnsi } from "@vib-rato/tui";
 import type { RenderResultOptions } from "../../extensibility/custom-tools/types";
 import type { Theme } from "../../modes/theme/theme";
 import {

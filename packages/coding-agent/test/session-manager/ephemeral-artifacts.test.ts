@@ -34,7 +34,7 @@ describe("non-persistent session artifacts", () => {
 		const artifactPath = await session.getArtifactPath(id!);
 		expect(artifactPath).toBeTruthy();
 		expect(path.dirname(path.dirname(artifactPath!))).toBe(path.resolve(os.tmpdir()));
-		expect(path.basename(path.dirname(artifactPath!))).toStartWith("gjc-session-artifacts-");
+		expect(path.basename(path.dirname(artifactPath!))).toStartWith("vib-session-artifacts-");
 		expect(await Bun.file(artifactPath!).text()).toBe(content);
 
 		// The store is exposed so artifact:// authorization can reach the same root.
@@ -67,7 +67,7 @@ describe("non-persistent session artifacts", () => {
 	});
 
 	it("claims unique numeric IDs across managers sharing one root and resolves each URI exactly", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-artifact-shared-root-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-artifact-shared-root-"));
 		try {
 			const first = new ArtifactManager(root);
 			const second = new ArtifactManager(root);
@@ -101,7 +101,7 @@ describe("non-persistent session artifacts", () => {
 	});
 
 	it("rejects unsafe scanned numeric IDs without retrying forever", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-artifact-unsafe-id-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-artifact-unsafe-id-"));
 		try {
 			await Bun.write(path.join(root, ".artifact-id-9007199254740992"), "");
 			const manager = new ArtifactManager(root);
@@ -121,7 +121,7 @@ describe("non-persistent session artifacts", () => {
 	});
 
 	it("retires predecessor artifacts only after an existing-session transition commits", async () => {
-		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-existing-session-artifacts-"));
+		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "vib-existing-session-artifacts-"));
 		const predecessor = SessionManager.inMemory(cwd, new FileSessionStorage());
 		try {
 			const targetFile = path.join(cwd, "existing-populated.jsonl");
@@ -223,7 +223,7 @@ describe("non-persistent session artifacts", () => {
 		expect(await pathExists(root)).toBe(false);
 	});
 	it("prefers the session artifact directory when the session is persisted", async () => {
-		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-ephemeral-artifacts-"));
+		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "vib-ephemeral-artifacts-"));
 		try {
 			const session = SessionManager.create(cwd, cwd);
 			const id = await session.saveArtifact("persisted", "bash");

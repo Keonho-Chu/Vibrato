@@ -3,7 +3,7 @@
  * Batch-triage aggregated crash signatures from a Sentry project into GitHub
  * issues.
  *
- * This is a maintainer tool, not part of the shipped CLI. `gjc crash report`
+ * This is a maintainer tool, not part of the shipped CLI. `vib crash report`
  * deliberately files one signature at a time behind a per-invocation,
  * digest-confirmed consent boundary, because a field host running it in a loop
  * would file hundreds of duplicates for a single bug. Once signatures are
@@ -12,7 +12,7 @@
  * digest.
  *
  * The two surfaces therefore share exactly one contract — the
- * `gjc-crash-fp.v1:<fp>` marker — and nothing else. An issue this script files
+ * `vib-crash-fp.v1:<fp>` marker — and nothing else. An issue this script files
  * is indistinguishable to `checkForDuplicateIssue` from one filed interactively,
  * so the interactive flow keeps recognizing it as a duplicate afterwards.
  *
@@ -36,7 +36,7 @@
  * after confirming none did.
  *
  * `--repo` exists only to make the target explicit; it is pinned to the same
- * repository `gjc crash report` searches, because the shared marker is the
+ * repository `vib crash report` searches, because the shared marker is the
  * dedup contract and a marker filed anywhere else is invisible to it.
  *
  * Auth:
@@ -46,7 +46,7 @@
  * Run a dry run, review its digest, run `--approve DIGEST`, then run
  * `--apply`. The repository is pinned to the interactive report repository.
  */
-import { CRASH_ISSUE_MARKER_PREFIX } from "@gajae-code/utils";
+import { CRASH_ISSUE_MARKER_PREFIX } from "@vib-rato/utils";
 import {
 	applyOwnerOnlyFdSecurity,
 	applyOwnerOnlyPathSecurity,
@@ -56,7 +56,7 @@ import {
 	snapshotDirectoryTree,
 	verifyOwnerOnlyFdSecurity,
 	verifyOwnerOnlyPathSecurityExpected,
-} from "@gajae-code/natives";
+} from "@vib-rato/natives";
 import { randomUUID } from "node:crypto";
 import { AsyncLocalStorage } from "node:async_hooks";
 import * as fs from "node:fs/promises";
@@ -65,13 +65,13 @@ import * as path from "node:path";
 
 import { fenceCrashText, sanitizeExternalCrashV1 } from "../packages/coding-agent/src/crash/sanitize";
 
-const DEFAULT_REPO = "Yeachan-Heo/gajae-code";
+const DEFAULT_REPO = "Keonho-Chu/Vibrato";
 const DEFAULT_ORG = "probe";
-const DEFAULT_PROJECT = "gajae-code";
+const DEFAULT_PROJECT = "vib-rato";
 const SENTRY_API = "https://sentry.io/api/0";
 const GH_TIMEOUT_MS = 20_000;
 const FINGERPRINT = /^[0-9a-f]{32}$/;
-const CRASH_MARKER_PATTERN = /gjc-crash-fp\.v1:(?:[0-9a-f]{32}|<hex>)(?![a-z0-9_])/gi;
+const CRASH_MARKER_PATTERN = /vib-crash-fp\.v1:(?:[0-9a-f]{32}|<hex>)(?![a-z0-9_])/gi;
 /** Sentry paginates at 100; a triage batch larger than this wants a saved search, not a bigger flag. */
 const MAX_LIMIT = 100;
 const MAX_RETRIES = 2;
@@ -266,7 +266,7 @@ function asString(value: unknown): string {
 
 /**
  * Sanitize one crash-derived field for local rendering. The upstream relay
- * sanitized these fields on egress, but the `gjc.fingerprint` tag that gates
+ * sanitized these fields on egress, but the `vib.fingerprint` tag that gates
  * provenance here is stamped client-side with the public DSN key and is
  * therefore forgeable, so the egress contract is re-applied before anything
  * reaches a GitHub issue rather than assumed. A field the scanner cannot vouch
@@ -339,17 +339,17 @@ export function toSentryIssue(raw: unknown): SentryIssue | undefined {
 }
 
 /**
- * Recover the gjc fingerprint from the `gjc.fingerprint` tag the relay stamps.
+ * Recover the vib fingerprint from the `vib.fingerprint` tag the relay stamps.
  *
  * The issue-list payload carries no tags, so this is a per-issue lookup. A
- * group without the tag did not come from the gjc relay and is skipped rather
+ * group without the tag did not come from the vib relay and is skipped rather
  * than guessed at — filing an issue against a fingerprint we inferred would
  * poison the dedup key the interactive flow depends on.
  */
 export function fingerprintFromTagPayload(raw: unknown): string | undefined {
 	if (typeof raw !== "object" || raw === null) throw new Error("Sentry fingerprint tag payload is malformed");
 	const record = raw as Record<string, unknown>;
-	if (asString(record.key) !== "gjc.fingerprint") return undefined;
+	if (asString(record.key) !== "vib.fingerprint") return undefined;
 	const top = record.topValues;
 	if (!Array.isArray(top) || top.length !== 1) throw new Error("Sentry fingerprint tag values are malformed");
 	const first = top[0];
@@ -365,10 +365,10 @@ interface FingerprintObservation {
 
 export async function fingerprintOf(issueId: string, token: string): Promise<FingerprintObservation | undefined> {
 	try {
-		const fingerprint = fingerprintFromTagPayload(await sentryGet(`/issues/${issueId}/tags/gjc.fingerprint/`, token));
+		const fingerprint = fingerprintFromTagPayload(await sentryGet(`/issues/${issueId}/tags/vib.fingerprint/`, token));
 		return fingerprint ? { fingerprint } : undefined;
 	} catch (error) {
-		// Only "the tag is absent" means "not a gjc group". Auth failures, rate
+		// Only "the tag is absent" means "not a vib group". Auth failures, rate
 		// limits, timeouts and 5xx must not be laundered into that answer: doing so
 		// silently drops triage coverage and lets the run exit successfully with
 		// "Nothing to file." while it in fact saw nothing.
@@ -455,7 +455,7 @@ function issueTitle(row: TriageRow): string {
 /**
  * Every field here survived the relay's outbound sanitizer before it reached
  * Sentry, and crash-derived fields are re-sanitized locally anyway: the
- * `gjc.fingerprint` tag that identifies the crash class is stamped client-side with the
+ * `vib.fingerprint` tag that identifies the crash class is stamped client-side with the
  * public DSN key, so trusting it blindly would let a forged group smuggle raw
  * text into an issue. The marker sits outside any fenced block, matching
  * `report.ts`, so a forged marker inside crash text cannot impersonate one.
@@ -476,7 +476,7 @@ function issueBody(row: TriageRow, options: Options): string {
 		`- Culprit: \`${culprit}\`\n` +
 		`- Upstream group: ${sentry.permalink} (${options.org}/${options.project}, ${fenceCrashText(sentry.shortId)})\n\n` +
 		`Grouped crash class: \`${title}\`\n\n` +
-		`Grouping is driven by the gjc fingerprint, not Sentry heuristics, so this group is exactly one gjc crash class.\n\n` +
+		`Grouping is driven by the vib fingerprint, not Sentry heuristics, so this group is exactly one vib crash class.\n\n` +
 		`Reproduction steps and environment are not captured upstream; see \`docs/crash-reporting.md\` for what the relay ` +
 		`does and does not transmit.\n\n` +
 		`<!-- ${CRASH_ISSUE_MARKER_PREFIX}${fingerprint} -->\n`;
@@ -523,7 +523,7 @@ export function previewCulprit(culprit: string): string {
  * recognize already-filed markers for approved fingerprints, keeping the batch
  * flow idempotent without promoting any forgeable signal to authority.
  *
- * The store is deliberately per-host (`~/.gjc/sentry-triage-approvals.json`):
+ * The store is deliberately per-host (`~/.vib/sentry-triage-approvals.json`):
  * approval is an operator act, not a repo artifact.
  */
 export interface ApprovalStore {
@@ -923,7 +923,7 @@ function usage(): string {
 }
 
 function approvalStorePath(): string {
-	return Bun.env.GJC_SENTRY_APPROVAL_STORE ?? path.join(os.homedir(), ".gjc", "sentry-triage-approvals.json");
+	return Bun.env.VIB_SENTRY_APPROVAL_STORE ?? path.join(os.homedir(), ".vib", "sentry-triage-approvals.json");
 }
 
 export const fileApprovalStore: ApprovalStore = {
@@ -1117,8 +1117,8 @@ export async function main(argv: readonly string[], dependencies: MainDependenci
 
 	const incomplete = skippedMalformed > 0 || collisions.length > 0 || unverified.length > 0 || untrustedBodyMarkers.length > 0;
 	dependencies.writeStdout(
-		`${rows.length} gjc signature(s) upstream; ${already} already filed, ${pending.length} pending` +
-			(skippedNoFingerprint > 0 ? `; ${skippedNoFingerprint} upstream group(s) skipped (no gjc.fingerprint tag)` : "") +
+		`${rows.length} vib signature(s) upstream; ${already} already filed, ${pending.length} pending` +
+			(skippedNoFingerprint > 0 ? `; ${skippedNoFingerprint} upstream group(s) skipped (no vib.fingerprint tag)` : "") +
 			(skippedMalformed > 0 ? `; ${skippedMalformed} upstream row(s) rejected by ingestion bounds (run is incomplete)` : "") +
 			(unverified.length > 0 ? `; ${unverified.length} unverified fingerprint(s) withheld` : "") +
 			(untrustedBodyMarkers.length > 0 ? `; ${untrustedBodyMarkers.length} untrusted issue marker(s) withheld` : "") +

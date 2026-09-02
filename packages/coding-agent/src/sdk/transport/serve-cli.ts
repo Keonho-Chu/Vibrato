@@ -1,5 +1,5 @@
-import { getAgentDir } from "@gajae-code/utils";
-import { CliParseError } from "@gajae-code/utils/cli";
+import { getAgentDir } from "@vib-rato/utils";
+import { CliParseError } from "@vib-rato/utils/cli";
 import { readSdkBrokerDiscovery, SdkClient, SdkClientError } from "../client";
 import { SessionListTraversalError, sessionListPageFromResponse, traverseSessionList } from "../session-list";
 import { DEFAULT_PENDING_CEILING_BYTES, MIN_PENDING_CEILING_BYTES, startSocketServe, startStdioServe } from "./index";
@@ -13,7 +13,7 @@ interface ServeArguments {
 }
 
 function usageError(message: string): never {
-	throw new CliParseError(`gjc sdk serve: ${message}`);
+	throw new CliParseError(`vib sdk serve: ${message}`);
 }
 
 function readFlagValue(argv: string[], index: number, flag: string): string {
@@ -136,7 +136,7 @@ export async function runSdkServe(argv: string[]): Promise<void> {
 		throw new Error("unsupported_platform: --socket is unavailable on Windows.");
 	const pendingCeilingBytes = resolveServePendingCeiling(
 		parsed.pendingCeiling,
-		process.env.GJC_SDK_SERVE_PENDING_CEILING_BYTES,
+		process.env.VIB_SDK_SERVE_PENDING_CEILING_BYTES,
 	);
 	const discovery = await readSdkBrokerDiscovery(getAgentDir());
 	if (!discovery) throw new Error("broker_unavailable: SDK broker is not running");

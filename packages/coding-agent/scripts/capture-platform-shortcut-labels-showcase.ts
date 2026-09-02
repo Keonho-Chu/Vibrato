@@ -8,7 +8,7 @@ import {
 } from "../test/fixtures/tui/platform-shortcut-labels-showcase";
 
 const CANONICAL_COMMAND =
-	"bun packages/coding-agent/scripts/capture-platform-shortcut-labels-showcase.ts --output .gjc/qa/platform-shortcut-labels";
+	"bun packages/coding-agent/scripts/capture-platform-shortcut-labels-showcase.ts --output .vib/qa/platform-shortcut-labels";
 const CAPTURE_TOOL_VERSION = "platform-shortcut-labels-fixture-injected-platform-v1";
 const EXPECTED_KEYS = [
 	"darwin/composer-idle/80x24/unicode-color",

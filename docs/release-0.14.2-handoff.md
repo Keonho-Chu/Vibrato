@@ -1,6 +1,6 @@
 # Release 0.14.2 — maintainer handoff
 
-Patch release assembled per the deep-interview spec (`.gjc/_session-*/specs/deep-interview-release-0-14-2-patch-scope.md`). Scope: patch-like changes only, **zero team → autoresearch cutover content** (PR #4430 and dependents stay on dev for a later minor).
+Patch release assembled per the deep-interview spec (`.vib/_session-*/specs/deep-interview-release-0-14-2-patch-scope.md`). Scope: patch-like changes only, **zero team → autoresearch cutover content** (PR #4430 and dependents stay on dev for a later minor).
 
 ## What is on this branch
 

@@ -1,19 +1,19 @@
 /**
  * Conventional MCP autoload: ordinary top-level standalone sessions consume
- * `gjc mcp add` registrations (issue #4284).
+ * `vib mcp add` registrations (issue #4284).
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { AuthStorage, getBundledModel } from "@gajae-code/ai";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { createAgentSession } from "@gajae-code/coding-agent/sdk";
-import { AgentSession } from "@gajae-code/coding-agent/session/agent-session";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { getAgentDir, setAgentDir } from "@gajae-code/utils";
+import { AuthStorage, getBundledModel } from "@vib-rato/ai";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { createAgentSession } from "@vib-rato/coding-agent/sdk";
+import { AgentSession } from "@vib-rato/coding-agent/session/agent-session";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { getAgentDir, setAgentDir } from "@vib-rato/utils";
 import { safeRm } from "../../../scripts/safe-cleanup";
 import { runMCPCommand } from "../src/cli/mcp-cli";
 import { MCPManager } from "../src/runtime-mcp";
@@ -63,11 +63,11 @@ describe("conventional MCP autoload in standalone sessions", () => {
 
 	beforeEach(async () => {
 		MCPManager.resetForTests();
-		projectDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), "gjc-mcp-autoload-project-"));
-		tempHome = await fs.promises.mkdtemp(path.join(os.tmpdir(), "gjc-mcp-autoload-home-"));
+		projectDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), "vib-mcp-autoload-project-"));
+		tempHome = await fs.promises.mkdtemp(path.join(os.tmpdir(), "vib-mcp-autoload-home-"));
 		// The MCP user scope is the agent directory, so `setAgentDir` is what keeps
-		// this test off the developer's real ~/.gjc MCP configuration.
-		agentDir = path.join(tempHome, ".gjc", "agent");
+		// this test off the developer's real ~/.vib MCP configuration.
+		agentDir = path.join(tempHome, ".vib", "agent");
 		await fs.promises.mkdir(agentDir, { recursive: true });
 		setAgentDir(agentDir);
 		// Home-relative surfaces (skills and other convention scans) resolve from
@@ -103,7 +103,7 @@ describe("conventional MCP autoload in standalone sessions", () => {
 		};
 	}
 
-	it("exposes tools from `gjc mcp add --project` registrations at ordinary session startup", async () => {
+	it("exposes tools from `vib mcp add --project` registrations at ordinary session startup", async () => {
 		const stdout = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
 		await runMCPCommand({
 			action: "add",
@@ -113,9 +113,9 @@ describe("conventional MCP autoload in standalone sessions", () => {
 			cwd: projectDir,
 		});
 		expect(stdout.mock.calls.map(call => String(call[0])).join("")).toContain(
-			"Runtime: Loaded by ordinary standalone gjc sessions at startup.",
+			"Runtime: Loaded by ordinary standalone vib sessions at startup.",
 		);
-		expect(await fs.promises.readFile(path.join(projectDir, ".gjc", "mcp.json"), "utf8")).toContain('"demo": {');
+		expect(await fs.promises.readFile(path.join(projectDir, ".vib", "mcp.json"), "utf8")).toContain('"demo": {');
 
 		const { session, mcpManager } = await createAgentSession(isolatedSessionOptions());
 		try {
@@ -219,9 +219,9 @@ describe("conventional MCP autoload in standalone sessions", () => {
 	}, 30_000);
 
 	it("does not load a disabled or autoload:false registration at startup", async () => {
-		await fs.promises.mkdir(path.join(projectDir, ".gjc"), { recursive: true });
+		await fs.promises.mkdir(path.join(projectDir, ".vib"), { recursive: true });
 		await fs.promises.writeFile(
-			path.join(projectDir, ".gjc", "mcp.json"),
+			path.join(projectDir, ".vib", "mcp.json"),
 			JSON.stringify({
 				mcpServers: {
 					disabled: {

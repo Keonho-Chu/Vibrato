@@ -307,9 +307,9 @@ export function daemonCliLifecycleInput(host: AdapterFixture, operation: string)
 }
 
 export async function fixture(): Promise<AdapterFixture> {
-	const repo = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-adapter-dispositions-"));
-	const agentDir = path.join(repo, ".gjc", "adapter-agent");
-	const stateRoot = path.join(repo, ".gjc", "state");
+	const repo = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-adapter-dispositions-"));
+	const agentDir = path.join(repo, ".vib", "adapter-agent");
+	const stateRoot = path.join(repo, ".vib", "state");
 	Bun.spawnSync(["git", "init", "-q"], { cwd: repo });
 	const productionHost = await startProductionSdkHost(repo, { acceptPromptPreflightWithoutExecution: true });
 	const sessionId = productionHost.sessionId;
@@ -421,7 +421,7 @@ export async function stopFixture(host: AdapterFixture, operation: Operation): P
 	await host.stop();
 	if (operation.sdkId !== "session.new") return;
 	await Bun.sleep(500);
-	const runtimeAgentDir = path.join(host.repo, ".gjc", "agent");
+	const runtimeAgentDir = path.join(host.repo, ".vib", "agent");
 	const restartedAfterShutdown = fs.existsSync(runtimeAgentDir);
 	await brokerOwnerForTest(runtimeAgentDir)?.stop();
 	fs.rmSync(host.repo, { recursive: true, force: true });
@@ -489,10 +489,10 @@ export async function assertMcpRow(operation: Operation, secret: boolean): Promi
 		mcp = createSdkMcpServer({ agentDir: host.agentDir });
 		const tool =
 			operation.kind === "global"
-				? "gjc_session_global"
+				? "vib_session_global"
 				: operation.kind === "query"
-					? "gjc_session_query"
-					: "gjc_session_control";
+					? "vib_session_query"
+					: "vib_session_control";
 		const args =
 			operation.kind === "global"
 				? { operation: operation.sdkId, input, idempotencyKey: `parity-${operation.id}` }

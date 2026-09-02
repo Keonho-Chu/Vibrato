@@ -1,7 +1,7 @@
 import { afterAll, beforeEach, describe, expect, it, vi } from "bun:test";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { type Component, renderMetrics, TUI } from "@gajae-code/tui";
+import { type Component, renderMetrics, TUI } from "@vib-rato/tui";
 import { VirtualTerminal } from "./virtual-terminal";
 
 const FLAG = "PI_TUI_VIRTUAL_VIEWPORT";

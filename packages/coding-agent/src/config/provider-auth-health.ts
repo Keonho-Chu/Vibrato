@@ -1,4 +1,4 @@
-import type { AuthStorage } from "@gajae-code/ai/auth-storage";
+import type { AuthStorage } from "@vib-rato/ai/auth-storage";
 
 /**
  * Most recent OAuth validation outcome per provider, used only as an ordering

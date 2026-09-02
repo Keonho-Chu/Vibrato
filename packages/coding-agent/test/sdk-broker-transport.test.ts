@@ -100,7 +100,7 @@ describe("SDK broker WebSocket transport", () => {
 		expect(brokerShutdownSendAction(1)).toBe("close");
 	});
 	it("uses Rust-compatible request and response frames", async () => {
-		const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-transport-"));
+		const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-transport-"));
 		const broker = new Broker({ agentDir, packageGeneration: "test" });
 		const discovery = await broker.start();
 		try {
@@ -151,7 +151,7 @@ describe("SDK broker WebSocket transport", () => {
 		}
 	});
 	it("dispatches durable lifecycle lookup outcomes through the broker transport", async () => {
-		const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-lookup-"));
+		const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-lookup-"));
 		const broker = new Broker({ agentDir, packageGeneration: "test" });
 		const discovery = await broker.start();
 		try {
@@ -283,7 +283,7 @@ describe("SDK broker WebSocket transport", () => {
 		}
 	});
 	it("hashes lifecycle wire fingerprints before retaining secret-bearing large inputs", async () => {
-		const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-digest-"));
+		const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-digest-"));
 		const broker = new Broker({ agentDir, packageGeneration: "test" });
 		const discovery = await broker.start();
 		const secret = "mcp-credential-not-for-ledger";
@@ -337,7 +337,7 @@ describe("SDK broker WebSocket transport", () => {
 		}
 	});
 	it("accepts authenticated shutdown and removes discovery before completion", async () => {
-		const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-shutdown-"));
+		const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-shutdown-"));
 		const broker = new Broker({ agentDir, packageGeneration: "test" });
 		const discovery = await broker.start();
 
@@ -355,7 +355,7 @@ describe("SDK broker WebSocket transport", () => {
 		expect(await Bun.file(path.join(agentDir, "sdk", "broker.json")).exists()).toBe(false);
 	});
 	it("rejects oversized frames without disrupting other authenticated clients", async () => {
-		const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-transport-"));
+		const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-transport-"));
 		const broker = new Broker({ agentDir, packageGeneration: "test" });
 		const discovery = await broker.start();
 		try {

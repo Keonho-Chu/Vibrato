@@ -10,7 +10,7 @@
   - `packages/coding-agent/src/tools/archive-reader.ts` — detect `archive.ext:inner/path`, index archives, list/read entries.
   - `packages/coding-agent/src/tools/sqlite-reader.ts` — detect SQLite targets, parse selectors, render tables.
   - `packages/coding-agent/src/tools/fetch.ts` — URL parsing, fetch/render pipeline, URL cache/artifacts.
-  - `packages/coding-agent/src/internal-urls/router.ts` — resolve public internal URLs (`agent://`, `artifact://`, `local://`, `gjc://`, and `rule://`) plus legacy non-public compatibility handlers.
+  - `packages/coding-agent/src/internal-urls/router.ts` — resolve public internal URLs (`agent://`, `artifact://`, `local://`, `vib://`, and `rule://`) plus legacy non-public compatibility handlers.
   - `packages/coding-agent/src/edit/notebook.ts` — convert `.ipynb` to editable `# %% [...] cell:N` text.
   - `packages/coding-agent/src/utils/file-display-mode.ts` — decide hashline vs line-number vs raw display.
   - `packages/coding-agent/src/workspace-tree.ts` — render directory trees.
@@ -65,7 +65,7 @@ URL selectors are parsed separately in `packages/coding-agent/src/tools/fetch.ts
 
 ## Flow
 1. `ReadTool.execute()` accepts `{ path, truncation? }`. `file://...` inputs are expanded first with `expandPath()`.
-   - `gjc read <path> --truncation head|last|both` passes the explicit direction through to the same tool payload.
+   - `vib read <path> --truncation head|last|both` passes the explicit direction through to the same tool payload.
 2. It tries URL handling first via `parseReadUrlTarget()` from `packages/coding-agent/src/tools/fetch.ts`.
    - Plain URL reads call `executeReadUrl()`.
    - URL reads with line selectors load or refresh the URL cache with `loadReadUrlCacheEntry()` and paginate the cached text locally with `#buildInMemoryTextResult()`.
@@ -200,7 +200,7 @@ URL selectors are parsed separately in `packages/coding-agent/src/tools/fetch.ts
 
 ### Internal URLs
 - `read` does not resolve these itself; it delegates to `session.internalRouter.resolve()`.
-- Registered public protocols include `agent://`, `artifact://`, `issue://`, `local://`, `gjc://`, `pr://`, and `rule://`. Non-public compatibility handlers may exist in the router for legacy persisted guidance, but they are not part of the public coding-harness URI contract and must not be documented as user/model-facing read targets.
+- Registered public protocols include `agent://`, `artifact://`, `issue://`, `local://`, `vib://`, `pr://`, and `rule://`. Non-public compatibility handlers may exist in the router for legacy persisted guidance, but they are not part of the public coding-harness URI contract and must not be documented as user/model-facing read targets.
 - `#handleInternalUrl()` behavior:
   - parses the URL with `parseInternalUrl()` so colons inside the host segment are legal
   - for `agent://`, treats non-root path extraction or `?q=` extraction as a special no-pagination mode
@@ -241,7 +241,7 @@ Notes: ...
 
 - `web.insaneFallback` is retained as a compatibility setting and defaults to **off**. The production `read` path does not invoke the guard, dependency probes, Python bridge, vendored engine, or browser phase even when the setting is enabled; it appends a disabled-security note and preserves the normal `read` result.
 - The vendored [`fivetaku/insane-search`](https://github.com/fivetaku/insane-search) engine remains packaged but is not a current `read` winning path, so `Method: insane` is not emitted.
-- The fallback was disabled because a subprocess or browser handoff cannot preserve GJC's validated per-hop network route. The vendored curl transport classifies each redirect target, but it does not bind the validated DNS address to the subsequent connection; the Playwright phase also cannot constrain redirects and subresources to that boundary.
+- The fallback was disabled because a subprocess or browser handoff cannot preserve Vibrato's validated per-hop network route. The vendored curl transport classifies each redirect target, but it does not bind the validated DNS address to the subsequent connection; the Playwright phase also cannot constrain redirects and subresources to that boundary.
 - Any future reactivation must remain public-content-only, must never auto-install Python/browser dependencies, and must continue to reject authentication, login, paywall, and CAPTCHA bypasses. Raw mode must remain ineligible for escalation.
 
 ## Side Effects

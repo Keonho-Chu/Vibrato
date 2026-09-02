@@ -24,8 +24,8 @@ async function makeSkill(root: string, name: string, description: string): Promi
 }
 
 async function withTempDirs(run: (cwd: string, home: string) => Promise<void>): Promise<void> {
-	const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-skill-mgmt-project-"));
-	const home = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-skill-mgmt-home-"));
+	const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "vib-skill-mgmt-project-"));
+	const home = await fs.mkdtemp(path.join(os.tmpdir(), "vib-skill-mgmt-home-"));
 	try {
 		await run(cwd, home);
 	} finally {
@@ -38,11 +38,11 @@ describe("skill-management", () => {
 	describe("listNativeSkillsForManagement", () => {
 		it("lists project and user native skills with provenance and enablement state", async () => {
 			await withTempDirs(async (cwd, home) => {
-				await makeSkill(path.join(cwd, ".gjc", "skills"), "project-helper", "Project helper");
-				await makeSkill(path.join(home, ".gjc", "agent", "skills"), "user-helper", "User helper");
-				await makeSkill(path.join(cwd, ".gjc", "skills"), "ralplan", "Bundled impostor");
-				await makeSkill(path.join(cwd, ".gjc", "skills"), "ignored-helper", "Ignored helper");
-				await makeSkill(path.join(cwd, ".gjc", "skills"), "disabled-helper", "Disabled helper");
+				await makeSkill(path.join(cwd, ".vib", "skills"), "project-helper", "Project helper");
+				await makeSkill(path.join(home, ".vib", "agent", "skills"), "user-helper", "User helper");
+				await makeSkill(path.join(cwd, ".vib", "skills"), "ralplan", "Bundled impostor");
+				await makeSkill(path.join(cwd, ".vib", "skills"), "ignored-helper", "Ignored helper");
+				await makeSkill(path.join(cwd, ".vib", "skills"), "disabled-helper", "Disabled helper");
 
 				const records = await listNativeSkillsForManagement({
 					cwd,
@@ -53,12 +53,12 @@ describe("skill-management", () => {
 
 				expect(byName.get("project-helper")).toMatchObject({
 					scope: "project",
-					source: "project .gjc/skills",
+					source: "project .vib/skills",
 					enabled: true,
 				});
 				const userRecord = byName.get("user-helper");
 				expect(userRecord?.scope).toBe("user");
-				expect(userRecord?.source).toContain(path.join(".gjc", "agent", "skills"));
+				expect(userRecord?.source).toContain(path.join(".vib", "agent", "skills"));
 				expect(userRecord?.enabled).toBe(true);
 				expect(byName.get("ralplan")).toMatchObject({ enabled: false, disabledReason: "protected" });
 				expect(byName.get("ignored-helper")).toMatchObject({ enabled: false, disabledReason: "ignored" });
@@ -71,8 +71,8 @@ describe("skill-management", () => {
 
 		it("resolves name collisions deterministically: the project copy wins over user", async () => {
 			await withTempDirs(async (cwd, home) => {
-				await makeSkill(path.join(home, ".gjc", "agent", "skills"), "shared", "User copy");
-				await makeSkill(path.join(cwd, ".gjc", "skills"), "shared", "Project copy");
+				await makeSkill(path.join(home, ".vib", "agent", "skills"), "shared", "User copy");
+				await makeSkill(path.join(cwd, ".vib", "skills"), "shared", "Project copy");
 
 				const records = await listNativeSkillsForManagement({ cwd, home });
 				const shared = records.filter(record => record.name === "shared");
@@ -84,8 +84,8 @@ describe("skill-management", () => {
 
 		it("does not scan an untrusted scope at all", async () => {
 			await withTempDirs(async (cwd, home) => {
-				await makeSkill(path.join(cwd, ".gjc", "skills"), "project-helper", "Project helper");
-				await makeSkill(path.join(home, ".gjc", "agent", "skills"), "user-helper", "User helper");
+				await makeSkill(path.join(cwd, ".vib", "skills"), "project-helper", "Project helper");
+				await makeSkill(path.join(home, ".vib", "agent", "skills"), "user-helper", "User helper");
 
 				const records = await listNativeSkillsForManagement({
 					cwd,
@@ -102,7 +102,7 @@ describe("skill-management", () => {
 			"\n",
 		);
 
-		it("writes project skills into the repo-root .gjc/skills directory", async () => {
+		it("writes project skills into the repo-root .vib/skills directory", async () => {
 			await withTempDirs(async (cwd, home) => {
 				await fs.mkdir(path.join(cwd, ".git"));
 				const nested = path.join(cwd, "pkg");
@@ -115,7 +115,7 @@ describe("skill-management", () => {
 					name: "my-skill",
 					content: validContent,
 				});
-				expect(receipt.path).toBe(path.join(cwd, ".gjc", "skills", "my-skill", "SKILL.md"));
+				expect(receipt.path).toBe(path.join(cwd, ".vib", "skills", "my-skill", "SKILL.md"));
 				const written = await fs.readFile(receipt.path, "utf8");
 				expect(written).toContain("description: A managed skill");
 			});
@@ -130,7 +130,7 @@ describe("skill-management", () => {
 					name: "my-skill",
 					content: validContent,
 				});
-				expect(receipt.path).toBe(path.join(home, ".gjc", "agent", "skills", "my-skill", "SKILL.md"));
+				expect(receipt.path).toBe(path.join(home, ".vib", "agent", "skills", "my-skill", "SKILL.md"));
 			});
 		});
 

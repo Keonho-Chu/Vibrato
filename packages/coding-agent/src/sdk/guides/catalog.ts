@@ -1,3 +1,4 @@
+import { BUNDLED_GUIDE_MANIFESTS, BUNDLED_GUIDE_SIGNATURE_HEX, bundledGuideAdvisoryTexts } from "./bundled-manifest";
 import { installGuideCache, readGuideCache, type VerifiedGuideCache } from "./cache";
 import {
 	GUIDE_ADVISORY_MAX_BYTES,
@@ -6,7 +7,9 @@ import {
 	type GuideManifestV1,
 	parseGuideManifest,
 } from "./manifest";
-import { GUIDE_PINNED_KEYS, guideAdvisoryDigest, verifyGuideAdvisoryText, verifyGuideManifest } from "./verify";
+import { verifyGuideAdvisoryText, verifyGuideManifest } from "./verify";
+
+export { BUNDLED_GUIDE_MANIFESTS } from "./bundled-manifest";
 
 /**
  * HTTPS-only, allowlisted, credential-free fetch boundary for advisory guides.
@@ -26,12 +29,12 @@ export interface GuideFetchAllowlistEntry {
 }
 
 export const GUIDE_FETCH_ALLOWLIST: readonly GuideFetchAllowlistEntry[] = [
-	{ host: "guides.gajae-code.com", pathPrefix: "/" },
+	{ host: "guides.vib-rato.com", pathPrefix: "/" },
 ];
 export const GUIDE_FETCH_TIMEOUT_MS = 10_000;
 export const GUIDE_FETCH_MAX_MANIFEST_BYTES = GUIDE_MANIFEST_MAX_BYTES;
 export const GUIDE_FETCH_MAX_SIGNATURE_BYTES = 1024;
-export const GUIDE_FETCH_USER_AGENT = "gajae-code-sdk-guides/1";
+export const GUIDE_FETCH_USER_AGENT = "vib-rato-sdk-guides/1";
 
 export interface GuideFetchPolicy {
 	httpsOnly: true;
@@ -231,63 +234,6 @@ export async function fetchGuideManifestOnline(params: {
 	};
 }
 
-/**
- * Trusted-by-compilation bundled manifests. The seed manifest is signed by the
- * bundled pinned key (`verify.ts`), and every bundled advisory ships its text
- * so fresh-install `list`/`show` work offline with no cache. The seed is
- * selected only when no valid online or cached manifest exists; because the
- * bundled manifest is itself signature-verified at module load, bundling the
- * signature here preserves the normal verify path for bundled content.
- */
-const BUNDLED_GUIDE_MANIFEST_ID = "gajae-code-advisory-bundled";
-const BUNDLED_GUIDE_SIGNATURE_HEX =
-	"682028a6834dfd2b39db57fb6cc185b9e2bdf21a3256d907fbbb8ddb20a0ce285f3a21b970df7d4055acfb2aede13d8f69931249c6d27fc092bfa2b60e936303";
-
-const bundledGuideAdvisoryTexts: Readonly<Record<string, string>> = {
-	"getting-started":
-		"GJC ships a small set of signed advisory guides with the client so `gjc sdk guides list` and `gjc sdk guides show <guideId>` work offline on a fresh install. Guides are advisory text only: they are rendered for reading and never executed or applied as configuration. To receive newer guides, run `gjc sdk guides refresh --url <https manifest url>`. The manifest must come from the allowlisted HTTPS host and must be signed by a pinned Ed25519 key; a rejected refresh falls back to the last verified cache, then to the bundled seed, and any rejection is reported in the warnings list.",
-	"sdk/session-cli":
-		"`gjc sdk session` is the broker-bound command family for operating live GJC SDK sessions from the terminal: `list` enumerates managed sessions, `inspect` shows session details, `send` submits a prompt turn, `status` reports session health, and `tail` follows the event stream. The explicit `raw` hatch dispatches one SDK operation as `control`, `query`, or `global`. Authority resolves through the local broker and endpoint credentials are never rendered by the CLI.",
-	"troubleshooting/sdk-connection":
-		"When an SDK connection fails, first check that the session host is alive and healthy: `gjc sdk session status` reports readiness and liveness. If the broker is gone, restart it and re-list sessions; detached hosts are reaped after a bounded absence grace. Fetch-boundary failures (offline host, allowlisted URL violations, signature rejections) are reported as typed errors with exit code 1 so scripts can fail closed instead of silently serving unverified content.",
-};
-
-function bundledGuideSeedEntry(id: string, title: string): GuideEntryV1 {
-	const text = bundledGuideAdvisoryTexts[id];
-	if (text === undefined) throw new Error(`Bundled guide ${id} has no advisory text.`);
-	return { id, title, sha256: guideAdvisoryDigest(new TextEncoder().encode(text)) };
-}
-
-/**
- * Trusted-by-compilation bundled manifests. The seed manifest is signed by the
- * bundled pinned key (`verify.ts`), and every bundled advisory ships its text
- * so fresh-install `list`/`show` work offline with no cache. The seed is
- * selected only when no valid online or cached manifest exists; because the
- * bundled manifest is itself signature-verified at module load, bundling the
- * signature here preserves the normal verify path for bundled content.
- */
-export const BUNDLED_GUIDE_MANIFESTS: readonly GuideManifestV1[] = [
-	{
-		version: 1,
-		manifestId: BUNDLED_GUIDE_MANIFEST_ID,
-		keyId: GUIDE_PINNED_KEYS[0].keyId,
-		sequence: 1,
-		issuedAt: Date.UTC(2026, 0, 1),
-		expiresAt: Date.UTC(2036, 0, 1),
-		minimumSdkVersion: 1,
-		guides: [
-			bundledGuideSeedEntry("getting-started", "Getting started with the SDK advisory catalog"),
-			bundledGuideSeedEntry("sdk/session-cli", "Using the SDK session CLI"),
-			bundledGuideSeedEntry("troubleshooting/sdk-connection", "Troubleshooting SDK connection failures"),
-		],
-	},
-];
-for (const manifest of BUNDLED_GUIDE_MANIFESTS) {
-	for (const entry of manifest.guides) Object.freeze(entry);
-	Object.freeze(manifest.guides);
-	Object.freeze(manifest);
-}
-Object.freeze(BUNDLED_GUIDE_MANIFESTS);
 {
 	const selfVerification = verifyGuideManifest({
 		manifest: BUNDLED_GUIDE_MANIFESTS[0],

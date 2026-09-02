@@ -1,1 +1,1 @@
-Autonomous per-repo git daemon for gajae-code repository operations.
+Autonomous per-repo git daemon for vib-rato repository operations.

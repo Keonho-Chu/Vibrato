@@ -125,11 +125,11 @@ const perAdapter = new Map<string, number>();
  * not free, though: receipts that each spawn a detached SDK broker and load
  * Node-API addons fail when they race, so concurrency is never assumed. It stays
  * sequential unless the caller opts a specific manifest in through
- * `GJC_MANIFEST_RECEIPT_CONCURRENCY`, and every receipt keeps its own process,
+ * `VIB_MANIFEST_RECEIPT_CONCURRENCY`, and every receipt keeps its own process,
  * its own argv, and its own receipt line either way.
  */
 const receiptConcurrency = (() => {
-	const configured = Number(process.env.GJC_MANIFEST_RECEIPT_CONCURRENCY);
+	const configured = Number(process.env.VIB_MANIFEST_RECEIPT_CONCURRENCY);
 	return Number.isSafeInteger(configured) && configured >= 1 ? configured : 1;
 })();
 

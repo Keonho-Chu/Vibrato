@@ -12,7 +12,7 @@ describe("Stream Deck focus state", () => {
     expect(nextSelectedSessionId(sessions, "ttys002", "first", key)).toBe("focused");
   });
 
-  test("retains the prior session when focus is not a mapped GJC tty", () => {
+  test("retains the prior session when focus is not a mapped Vibrato tty", () => {
     const sessions = [{ sessionId: "first", tty: "ttys001" }];
     expect(nextSelectedSessionId(sessions, "ttys999", "first", key)).toBe("first");
   });

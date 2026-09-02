@@ -1,6 +1,6 @@
 import { describe, expect, it, spyOn } from "bun:test";
-import { type AgentMessage, ThinkingLevel } from "@gajae-code/agent-core";
-import type { CachedUsageReport, CredentialInventoryRecord, Usage } from "@gajae-code/ai";
+import { type AgentMessage, ThinkingLevel } from "@vib-rato/agent-core";
+import type { CachedUsageReport, CredentialInventoryRecord, Usage } from "@vib-rato/ai";
 import { Settings } from "../src/config/settings";
 import { createMemoryBackendService } from "../src/memory-backend";
 import { getThemeByName, setThemeInstance, theme } from "../src/modes/theme/theme";
@@ -637,7 +637,7 @@ describe("ACP builtin slash commands", () => {
 		expect(output[0]).toContain("No model");
 	});
 
-	it("model: reports only default plus GJC role-agent assignment targets", async () => {
+	it("model: reports only default plus Vibrato role-agent assignment targets", async () => {
 		const { output, runtime } = createRuntime();
 		runtime.settings = Settings.isolated({
 			cycleOrder: ["smol", "task", "default"],
@@ -846,7 +846,7 @@ describe("ACP builtin slash commands", () => {
 		});
 	});
 
-	it("model: assigns a known model to a GJC role-agent target without switching active model", async () => {
+	it("model: assigns a known model to a Vibrato role-agent target without switching active model", async () => {
 		const { output, runtime, session } = createRuntime();
 		session.getAvailableModels = () => [{ provider: "anthropic", id: "claude-3-5-sonnet", contextWindow: 200_000 }];
 		const setModelSpy = spyOn(session, "setModel").mockResolvedValue(undefined);
@@ -1456,7 +1456,7 @@ describe("wave 3 commands", () => {
 });
 
 describe("wave 4 commands", () => {
-	// /mcp is intentionally not an ACP builtin in gajae-code. MCP-compatible
+	// /mcp is intentionally not an ACP builtin in vib-rato. MCP-compatible
 	// helpers may remain private, but the default user-facing ACP command surface
 	// must fall through instead of advertising or handling /mcp.
 	it("/mcp commands fall through to the model for MCP quarantine", async () => {

@@ -1,11 +1,11 @@
 /**
  * Grep CLI command handlers.
  *
- * Handles `gjc grep` subcommand for testing grep tool on Windows.
+ * Handles `vib grep` subcommand for testing grep tool on Windows.
  */
 import * as path from "node:path";
-import { GrepOutputMode, grep } from "@gajae-code/natives";
-import { APP_NAME } from "@gajae-code/utils";
+import { GrepOutputMode, grep } from "@vib-rato/natives";
+import { APP_NAME } from "@vib-rato/utils";
 import chalk from "chalk";
 
 export interface GrepCommandArgs {

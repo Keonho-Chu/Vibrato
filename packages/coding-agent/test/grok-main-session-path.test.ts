@@ -2,16 +2,16 @@ import { describe, expect, it } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { getOAuthProviders } from "@gajae-code/ai/utils/oauth";
-import { setAgentDir } from "@gajae-code/utils";
+import { getOAuthProviders } from "@vib-rato/ai/utils/oauth";
+import { setAgentDir } from "@vib-rato/utils";
 import { Settings } from "../src/config/settings";
-import { BUNDLED_GROK_BUILD_EXTENSION_ID } from "../src/defaults/gjc-grok-cli";
+import { BUNDLED_GROK_BUILD_EXTENSION_ID } from "../src/defaults/vib-grok-cli";
 import { createAgentSession } from "../src/sdk";
 import { SessionManager } from "../src/session/session-manager";
 
 describe("bundled Grok Build session path", () => {
 	it("loads Grok Build OAuth and models with extension discovery disabled", async () => {
-		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-grok-main-session-"));
+		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-grok-main-session-"));
 		setAgentDir(agentDir);
 		try {
 			const { session } = await createAgentSession({

@@ -1,12 +1,12 @@
 import { afterEach, describe, expect, it } from "bun:test";
-import { Agent } from "@gajae-code/agent-core";
-import type { Message } from "@gajae-code/ai";
-import { createMockModel, type MockModel, registerMockApi } from "@gajae-code/ai/providers/mock";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { AgentRegistry, MAIN_AGENT_ID } from "@gajae-code/coding-agent/registry/agent-registry";
-import { AgentSession, type AgentSessionConfig } from "@gajae-code/coding-agent/session/agent-session";
-import { convertToLlm } from "@gajae-code/coding-agent/session/messages";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
+import { Agent } from "@vib-rato/agent-core";
+import type { Message } from "@vib-rato/ai";
+import { createMockModel, type MockModel, registerMockApi } from "@vib-rato/ai/providers/mock";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { AgentRegistry, MAIN_AGENT_ID } from "@vib-rato/coding-agent/registry/agent-registry";
+import { AgentSession, type AgentSessionConfig } from "@vib-rato/coding-agent/session/agent-session";
+import { convertToLlm } from "@vib-rato/coding-agent/session/messages";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
 
 registerMockApi();
 

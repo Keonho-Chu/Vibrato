@@ -129,7 +129,7 @@ describe("SDK query mutation continuity", () => {
 
 	it("retains shared chunks through eviction and only publishes complete manifests", async () => {
 		let now = 0;
-		const stateRoot = await mkdtemp(join(tmpdir(), "gjc-sdk-query-test-"));
+		const stateRoot = await mkdtemp(join(tmpdir(), "vib-sdk-query-test-"));
 		const objects = join(stateRoot, "sdk", "snapshots", "s", "objects");
 		const manifests = join(stateRoot, "sdk", "snapshots", "s", "manifests");
 		const value = { body: text(17 * 1024 * 1024) };

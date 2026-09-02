@@ -99,11 +99,11 @@ describe("SecretObfuscator regex behavior", () => {
 
 describe("loadSecrets regex provenance", () => {
 	it("accepts global regexes while ignoring project regexes without dropping project plain entries", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-secrets-provenance-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-secrets-provenance-"));
 		const cwd = path.join(root, "project");
 		const agentDir = path.join(root, "agent");
 		try {
-			await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
+			await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
 			await fs.mkdir(agentDir, { recursive: true });
 			await Bun.write(
 				path.join(agentDir, "secrets.yml"),
@@ -113,7 +113,7 @@ describe("loadSecrets regex provenance", () => {
 				].join("\n"),
 			);
 			await Bun.write(
-				path.join(cwd, ".gjc", "secrets.yml"),
+				path.join(cwd, ".vib", "secrets.yml"),
 				[
 					"- type: plain\n  content: project-secret",
 					'- type: plain\n  content: "shared-[a-z]+"',
@@ -148,11 +148,11 @@ describe("loadSecrets regex provenance", () => {
 	});
 
 	it("treats an agent directory inside the project as project scope", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-secrets-contained-agent-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-secrets-contained-agent-"));
 		const cwd = path.join(root, "project");
 		const agentDir = path.join(cwd, "caller-agent");
 		try {
-			await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
+			await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
 			await fs.mkdir(agentDir, { recursive: true });
 			await Bun.write(path.join(agentDir, "secrets.yml"), '- type: regex\n  content: "contained-[a-z]+"');
 
@@ -165,11 +165,11 @@ describe("loadSecrets regex provenance", () => {
 	});
 
 	it("fails closed when agent directory canonicalization is unavailable", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-secrets-canonical-failure-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-secrets-canonical-failure-"));
 		const cwd = path.join(root, "project");
 		const agentDir = path.join(root, "agent");
 		try {
-			await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
+			await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
 			await fs.mkdir(agentDir, { recursive: true });
 			await Bun.write(path.join(agentDir, "secrets.yml"), '- type: regex\n  content: "uncertain-[a-z]+"');
 			const realpathSpy = spyOn(fs, "realpath").mockRejectedValue(new Error("canonicalization unavailable"));
@@ -186,14 +186,14 @@ describe("loadSecrets regex provenance", () => {
 	});
 
 	test.skipIf(process.platform === "win32")("classifies agent directory symlink aliases fail closed", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-secrets-agent-alias-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-secrets-agent-alias-"));
 		const cwd = path.join(root, "project");
 		const outsideAgentDir = path.join(root, "outside-agent");
 		const insideAgentDir = path.join(cwd, "inside-agent");
 		const lexicalInsideAlias = path.join(cwd, "outside-alias");
 		const canonicalInsideAlias = path.join(root, "inside-alias");
 		try {
-			await fs.mkdir(path.join(cwd, ".gjc"), { recursive: true });
+			await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
 			await fs.mkdir(outsideAgentDir, { recursive: true });
 			await fs.mkdir(insideAgentDir, { recursive: true });
 			await Bun.write(path.join(outsideAgentDir, "secrets.yml"), '- type: regex\n  content: "outside-[a-z]+"');
@@ -413,13 +413,13 @@ describe("SecretObfuscator authenticated placeholders", () => {
 	it("round-trips only known versioned authenticated tokens", () => {
 		const obfuscator = new SecretObfuscator([{ type: "plain", content: "secret-value" }], TEST_KEY);
 		const token = obfuscator.obfuscate("secret-value");
-		expect(token).toMatch(/^#GJC1_[A-Za-z0-9_-]{22}#$/);
+		expect(token).toMatch(/^#VIB1_[A-Za-z0-9_-]{22}#$/);
 		expect(obfuscator.deobfuscate(token)).toBe("secret-value");
 		for (const opaque of [
 			"#AAAA#",
-			"#GJC0_0123456789012345678901#",
-			"#GJC1_0123456789012345678901#",
-			"#GJC1_short#",
+			"#VIB0_0123456789012345678901#",
+			"#VIB1_0123456789012345678901#",
+			"#VIB1_short#",
 		]) {
 			expect(obfuscator.deobfuscate(opaque)).toBe(opaque);
 		}
@@ -427,7 +427,7 @@ describe("SecretObfuscator authenticated placeholders", () => {
 
 	it("matches the fixed authenticated-placeholder vector", () => {
 		const obfuscator = new SecretObfuscator([{ type: "plain", content: "secret-value" }], TEST_KEY);
-		expect(obfuscator.obfuscate("secret-value")).toBe("#GJC1_LEyH7CSGoVYoWfjXx6PKVQ#");
+		expect(obfuscator.obfuscate("secret-value")).toBe("#VIB1_Xhn7DIHlF_3L-ReyqE_Vmg#");
 	});
 
 	it("keeps helper-created plain tokens stable within the process", () => {

@@ -307,6 +307,6 @@ Same as `definition`, but sends `textDocument/implementation` and reports `imple
 - `request` with `file: "*"` is treated the same as omitted `file`: it does not build workspace-specific params.
 - `reload` does not recreate a client immediately after killing it; the next request triggers reinitialization.
 - `workspace/applyEdit` can apply edits initiated by the server outside the direct tool action result path.
-- `GJC_DISABLE_LSPMUX=1` is the canonical opt-out; `PI_DISABLE_LSPMUX=1` is a supported compatibility alias. A truthy value for either variable disables lspmux probing and wrapping. Only `rust-analyzer` is in `DEFAULT_SUPPORTED_SERVERS`.
+- `VIB_DISABLE_LSPMUX=1` is the canonical opt-out; `PI_DISABLE_LSPMUX=1` is a supported compatibility alias. A truthy value for either variable disables lspmux probing and wrapping. Only `rust-analyzer` is in `DEFAULT_SUPPORTED_SERVERS`.
 - Startup LSP warmup (`discoverStartupLspServers(cwd)` in `sdk.ts`) is gated on `enableLsp && options.hasUI && settings.get("lsp.diagnosticsOnWrite")` — print, ACP, and script sessions skip it and let `getOrCreateClient()` cold-start servers on demand. See `docs/sdk-embedding.md` § Startup performance.
 - `configCache` is per-process and never auto-invalidated; config changes require a fresh process to be observed by `getConfig()` callers.

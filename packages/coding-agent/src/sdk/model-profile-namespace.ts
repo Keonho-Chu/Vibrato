@@ -5,4 +5,4 @@
  * filtering projected models and must not pull the model registry/session host
  * graph into their static import closure.
  */
-export const SYNTHETIC_PROVIDER_ID = "gajae-code";
+export const SYNTHETIC_PROVIDER_ID = "vib-rato";

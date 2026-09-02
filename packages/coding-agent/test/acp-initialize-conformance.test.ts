@@ -9,7 +9,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import type { AgentSideConnection, InitializeRequest } from "@agentclientprotocol/sdk";
 import acpProtocolSchema from "@agentclientprotocol/sdk/schema/schema.json" with { type: "json" };
-import { getConfigRootDir, setAgentDir } from "@gajae-code/utils";
+import { getConfigRootDir, setAgentDir } from "@vib-rato/utils";
 import { fromJSONSchema } from "zod/v4";
 import type * as z from "zod/v4/core";
 import { AcpAgent } from "../src/modes/acp/acp-agent";
@@ -38,7 +38,7 @@ afterEach(async () => {
 });
 
 async function createAgent(): Promise<AcpAgent> {
-	const root = await fs.promises.mkdtemp(path.join(os.tmpdir(), "gjc-acp-init-"));
+	const root = await fs.promises.mkdtemp(path.join(os.tmpdir(), "vib-acp-init-"));
 	cleanupRoots.push(root);
 	const agentDir = path.join(root, "agent");
 	const cwd = path.join(root, "cwd");
@@ -130,8 +130,8 @@ describe("ACP initialize conformance", () => {
 		const pkg = (await Bun.file(pkgPath).json()) as { version: string };
 		expect(response.agentInfo).toEqual(
 			expect.objectContaining({
-				name: "gajae-code",
-				title: "Gajae Code",
+				name: "vib-rato",
+				title: "Vibrato",
 				version: pkg.version,
 			}),
 		);

@@ -19,14 +19,14 @@ import { describe, expect, it } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { SessionManager, SessionManagerTestHooks } from "@gajae-code/coding-agent/session/session-manager";
+import { SessionManager, SessionManagerTestHooks } from "@vib-rato/coding-agent/session/session-manager";
 import {
 	FileSessionStorage,
 	MemorySessionStorage,
 	type SessionStorageWriter,
 	type SessionStorageWriterCloseState,
 	SessionStorageWriterRetryableCloseError,
-} from "@gajae-code/coding-agent/session/session-storage";
+} from "@vib-rato/coding-agent/session/session-storage";
 
 type CloseMode =
 	| { kind: "clean" }
@@ -265,7 +265,7 @@ describe("rejected strict-resume open cleanup", () => {
 
 describe("managed strict-resume target races", () => {
 	it("rejects a target removed after strict revalidation without recreating it", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-strict-missing-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-strict-missing-"));
 		const cwd = path.join(root, "cwd");
 		const agentDir = path.join(root, "agent");
 		await fs.mkdir(cwd, { recursive: true });
@@ -291,7 +291,7 @@ describe("managed strict-resume target races", () => {
 	});
 
 	it("rejects a large bounded target removed before eager fallback without recreating it", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-bounded-missing-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-bounded-missing-"));
 		const cwd = path.join(root, "cwd");
 		const agentDir = path.join(root, "agent");
 		await fs.mkdir(cwd, { recursive: true });
@@ -321,7 +321,7 @@ describe("managed strict-resume target races", () => {
 	});
 
 	it("rejects a large bounded target replaced before final acceptance", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-bounded-replaced-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-bounded-replaced-"));
 		const cwd = path.join(root, "cwd");
 		const agentDir = path.join(root, "agent");
 		await fs.mkdir(cwd, { recursive: true });
@@ -349,7 +349,7 @@ describe("managed strict-resume target races", () => {
 	});
 
 	it("rejects a large bounded target replaced after acceptance without persisting", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-bounded-return-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-bounded-return-"));
 		const cwd = path.join(root, "cwd");
 		const agentDir = path.join(root, "agent");
 		await fs.mkdir(cwd, { recursive: true });
@@ -377,7 +377,7 @@ describe("managed strict-resume target races", () => {
 	});
 
 	it("initializes an initially missing managed target with bounded mode enabled", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-bounded-create-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-bounded-create-"));
 		const cwd = path.join(root, "cwd");
 		const agentDir = path.join(root, "agent");
 		await fs.mkdir(cwd, { recursive: true });
@@ -396,7 +396,7 @@ describe("managed strict-resume target races", () => {
 	});
 
 	it("propagates retained authority stat failures instead of pathname fallback", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-retained-stat-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-retained-stat-"));
 		const cwd = path.join(root, "cwd");
 		const agentDir = path.join(root, "agent");
 		await fs.mkdir(cwd, { recursive: true });
@@ -419,7 +419,7 @@ describe("managed strict-resume target races", () => {
 	});
 
 	it("propagates retained root disappearance instead of treating the target as missing", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-retained-root-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-retained-root-"));
 		const cwd = path.join(root, "cwd");
 		const agentDir = path.join(root, "agent");
 		await fs.mkdir(cwd, { recursive: true });
@@ -442,7 +442,7 @@ describe("managed strict-resume target races", () => {
 	});
 
 	it("rejects root replacement after missing-target authority acceptance", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-missing-root-race-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-missing-root-race-"));
 		const cwd = path.join(root, "cwd");
 		const agentDir = path.join(root, "agent");
 		await fs.mkdir(cwd, { recursive: true });
@@ -467,7 +467,7 @@ describe("managed strict-resume target races", () => {
 	});
 
 	it("preserves an occupant installed immediately before missing-target publication", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-missing-publish-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-missing-publish-"));
 		const cwd = path.join(root, "cwd");
 		const agentDir = path.join(root, "agent");
 		await fs.mkdir(cwd, { recursive: true });
@@ -490,7 +490,7 @@ describe("managed strict-resume target races", () => {
 	});
 
 	it("does not recreate a managed root removed immediately before missing publication", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-missing-publish-root-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-missing-publish-root-"));
 		const cwd = path.join(root, "cwd");
 		const agentDir = path.join(root, "agent");
 		await fs.mkdir(cwd, { recursive: true });
@@ -513,7 +513,7 @@ describe("managed strict-resume target races", () => {
 	});
 
 	it("rejects replacement after missing-target publication without mutating the successor", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-missing-return-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-missing-return-"));
 		const cwd = path.join(root, "cwd");
 		const agentDir = path.join(root, "agent");
 		await fs.mkdir(cwd, { recursive: true });
@@ -536,7 +536,7 @@ describe("managed strict-resume target races", () => {
 	});
 
 	it("does not recreate a managed root removed after the final publication assertion", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-missing-asserted-root-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-missing-asserted-root-"));
 		const cwd = path.join(root, "cwd");
 		const agentDir = path.join(root, "agent");
 		await fs.mkdir(cwd, { recursive: true });
@@ -559,7 +559,7 @@ describe("managed strict-resume target races", () => {
 	});
 
 	it("does not rewrite a successor installed after managed resume acceptance", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-managed-close-successor-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-managed-close-successor-"));
 		const cwd = path.join(root, "cwd");
 		const agentDir = path.join(root, "agent");
 		await fs.mkdir(cwd, { recursive: true });
@@ -580,7 +580,7 @@ describe("managed strict-resume target races", () => {
 	});
 
 	it("does not append to a successor installed after managed resume acceptance", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-managed-append-successor-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-managed-append-successor-"));
 		const cwd = path.join(root, "cwd");
 		const agentDir = path.join(root, "agent");
 		await fs.mkdir(cwd, { recursive: true });
@@ -603,7 +603,7 @@ describe("managed strict-resume target races", () => {
 	});
 
 	it("restores full resident state and identity when managed switch identity fails", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-switch-identity-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-switch-identity-"));
 		const cwd = path.join(root, "cwd");
 		const agentDir = path.join(root, "agent");
 		await fs.mkdir(cwd, { recursive: true });

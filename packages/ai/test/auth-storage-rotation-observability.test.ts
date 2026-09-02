@@ -27,7 +27,7 @@ describe("AuthStorage rotation observability", () => {
 	};
 
 	beforeEach(async () => {
-		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-ai-rotation-obs-"));
+		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-ai-rotation-obs-"));
 		store = await SqliteAuthCredentialStore.open(path.join(tempDir, "agent.db"));
 		auth = new AuthStorage(store);
 	});

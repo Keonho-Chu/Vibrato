@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it, vi } from "bun:test";
-import { Container, Text, TUI } from "@gajae-code/tui";
+import { Container, Text, TUI } from "@vib-rato/tui";
 import { VirtualTerminal } from "../../tui/test/virtual-terminal";
 import { SelectorController } from "../src/modes/controllers/selector-controller";
 import { initTheme } from "../src/modes/theme/theme";

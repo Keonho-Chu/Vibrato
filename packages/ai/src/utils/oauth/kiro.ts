@@ -20,8 +20,8 @@ const BUILDER_ID_START_URL = "https://view.awsapps.com/start";
 /** Default AWS region for SSO OIDC. */
 const DEFAULT_REGION = "us-east-1";
 
-/** Client registration metadata for the Gajae Code application. */
-const CLIENT_NAME = "gajae-code";
+/** Client registration metadata for the Vibrato application. */
+const CLIENT_NAME = "vib-rato";
 const CLIENT_TYPE = "public";
 
 /**
@@ -314,12 +314,12 @@ export async function refreshKiroToken(credentials: OAuthCredentials): Promise<O
 		const desc = data.error_description ? `: ${data.error_description}` : "";
 		if (errorCode === "invalid_grant_exception" || errorCode === "invalid_grant") {
 			throw new Error(
-				`Kiro refresh token is invalid or expired. Run 'gjc auth-broker login kiro' to re-authenticate. (${errorCode}${desc})`,
+				`Kiro refresh token is invalid or expired. Run 'vib auth-broker login kiro' to re-authenticate. (${errorCode}${desc})`,
 			);
 		}
 		if (errorCode === "expired_token_exception") {
 			throw new Error(
-				`Kiro client registration has expired. Run 'gjc auth-broker login kiro' to re-authenticate. (${errorCode}${desc})`,
+				`Kiro client registration has expired. Run 'vib auth-broker login kiro' to re-authenticate. (${errorCode}${desc})`,
 			);
 		}
 		throw new Error(`Kiro token refresh failed: ${errorCode}${desc}`);
@@ -382,7 +382,7 @@ export async function loginKiro(options: KiroLoginOptions): Promise<OAuthCredent
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { getTrustedHomeDir } from "@gajae-code/utils";
+import { getTrustedHomeDir } from "@vib-rato/utils";
 
 interface SsoCachedAccessToken {
 	accessToken: string;

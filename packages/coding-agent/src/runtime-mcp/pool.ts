@@ -4,7 +4,7 @@
  * Shared and per-session keys are both supported. Shared entries are owned by
  * multiple leases and roots/resource subscriptions are connection-global unions.
  */
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 import { connectToServer, subscribeToResources, unsubscribeFromResources } from "./client";
 import {
 	buildMCPPoolKeyIdentity,

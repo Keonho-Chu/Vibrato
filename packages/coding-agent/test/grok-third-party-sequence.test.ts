@@ -28,7 +28,7 @@ function registerTestProvider(api: ExtensionAPI, providerName: string): void {
 
 describe("Grok Build with explicit third-party extensions", () => {
 	it("loads bundled and inline extensions while keeping filesystem paths quarantined", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-grok-third-party-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-grok-third-party-"));
 		const extensionPath = path.join(root, "third-party.ts");
 		await Bun.write(
 			extensionPath,

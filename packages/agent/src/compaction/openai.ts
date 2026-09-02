@@ -17,18 +17,18 @@ import {
 	getCodexAccountId,
 	OPENAI_HEADER_VALUES,
 	OPENAI_HEADERS,
-} from "@gajae-code/ai/providers/openai-codex/constants";
-import { parseTextSignature } from "@gajae-code/ai/providers/openai-responses-shared";
-import { transformMessages } from "@gajae-code/ai/providers/transform-messages";
-import type { AssistantMessage, Message, Model } from "@gajae-code/ai/types";
+} from "@vib-rato/ai/providers/openai-codex/constants";
+import { parseTextSignature } from "@vib-rato/ai/providers/openai-responses-shared";
+import { transformMessages } from "@vib-rato/ai/providers/transform-messages";
+import type { AssistantMessage, Message, Model } from "@vib-rato/ai/types";
 import {
 	getOpenAIResponsesHistoryItems,
 	getOpenAIResponsesHistoryPayload,
 	neutralizeReservedControlTokens,
 	neutralizeResponsesInputControlTokens,
 	normalizeResponsesToolCallId,
-} from "@gajae-code/ai/utils";
-import { $credentialEnv, logger } from "@gajae-code/utils";
+} from "@vib-rato/ai/utils";
+import { $credentialEnv, logger } from "@vib-rato/utils";
 
 const OPENAI_DEFAULT_BASE_URL = "https://api.openai.com/v1";
 

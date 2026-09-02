@@ -1,12 +1,12 @@
-import type { AgentTool } from "@gajae-code/agent-core";
+import type { AgentTool } from "@vib-rato/agent-core";
 import {
 	consumeUltragoalAskNudge,
 	isUltragoalAskBlocked,
 	type UltragoalAskBlockDiagnostic,
-} from "../gjc-runtime/ultragoal-guard";
+} from "../vib-runtime/ultragoal-guard";
 import { ToolError } from "./tool-errors";
 
-const ULTRAGOAL_ASK_GUARD = Symbol.for("gajae-code.ultragoalAskGuard");
+const ULTRAGOAL_ASK_GUARD = Symbol.for("vib-rato.ultragoalAskGuard");
 
 type GuardedTool = AgentTool & { [ULTRAGOAL_ASK_GUARD]?: true };
 
@@ -37,7 +37,7 @@ export function formatUltragoalAskBlockMessage(diagnostic: UltragoalAskBlockDiag
 	return [
 		diagnostic.message,
 		`Ultragoal ask guard blocked ask (source: ${diagnostic.source}; reason: ${diagnostic.reason}).`,
-		"Use `gjc ultragoal record-review-blockers` to record the blocker instead of asking the user.",
+		"Use `vib ultragoal record-review-blockers` to record the blocker instead of asking the user.",
 	].join("\n");
 }
 

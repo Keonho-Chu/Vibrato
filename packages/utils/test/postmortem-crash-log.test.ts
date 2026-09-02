@@ -5,9 +5,9 @@ import * as path from "node:path";
 import { CRASH_LOG_MAX_BYTES, CRASH_RECORD_MAX_BYTES, recordFatalCrash } from "../src/postmortem";
 
 function tempCrashLog(): string {
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-crash-log-"));
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-crash-log-"));
 	// Nested path proves the writer creates missing parent directories.
-	return path.join(dir, "agent", "gjc-crash.log");
+	return path.join(dir, "agent", "vib-crash.log");
 }
 
 const POSTMORTEM_SOURCE = path.resolve(import.meta.dir, "../src/postmortem.ts");
@@ -267,7 +267,7 @@ describe("recordFatalCrash", () => {
 		const fileAsParent = tempCrashLog();
 		fs.mkdirSync(path.dirname(fileAsParent), { recursive: true });
 		fs.writeFileSync(fileAsParent, "i am a file");
-		const bogus = path.join(fileAsParent, "nested", "gjc-crash.log");
+		const bogus = path.join(fileAsParent, "nested", "vib-crash.log");
 		const result = recordFatalCrash("Uncaught Exception", new Error("x"), { path: bogus });
 		expect(result).toBeUndefined();
 	});
@@ -275,13 +275,13 @@ describe("recordFatalCrash", () => {
 
 describe("fatal handler process fixtures", () => {
 	function runFatalFixture(body: string): { exitCode: number; stderr: string; crashLog: string } {
-		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-fatal-fixture-"));
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-fatal-fixture-"));
 		const script = path.join(dir, "fixture.ts");
 		fs.writeFileSync(script, `import ${JSON.stringify(POSTMORTEM_SOURCE)};\n${body}\n`);
 		const result = spawnBun(script, {
-			env: { GJC_CODING_AGENT_DIR: path.join(dir, "agent") },
+			env: { VIB_CODING_AGENT_DIR: path.join(dir, "agent") },
 		});
-		return { ...result, crashLog: path.join(dir, "agent", "gjc-crash.log") };
+		return { ...result, crashLog: path.join(dir, "agent", "vib-crash.log") };
 	}
 
 	it("persists an uncaught exception to the crash log before exiting 1", () => {

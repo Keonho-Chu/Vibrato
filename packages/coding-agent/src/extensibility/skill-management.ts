@@ -1,9 +1,9 @@
 /**
- * Authoritative skill management contracts for native `.gjc` skills.
+ * Authoritative skill management contracts for native `.vib` skills.
  *
- * Canonical skill locations are project `<project>/.gjc/skills/` and global
- * `~/.gjc/agent/skills/` (plus legacy user roots). Claude Code / Codex layouts
- * are explicit import sources into `.gjc` and are enumerated separately by
+ * Canonical skill locations are project `<project>/.vib/skills/` and global
+ * `~/.vib/agent/skills/` (plus legacy user roots). Claude Code / Codex layouts
+ * are explicit import sources into `.vib` and are enumerated separately by
  * `listConventionSkillImportSources`; they are never loaded as ordinary runtime
  * skills.
  *
@@ -14,14 +14,14 @@
  */
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { getTrustedHomeDir, parseFrontmatter } from "@gajae-code/utils";
+import { getTrustedHomeDir, parseFrontmatter } from "@vib-rato/utils";
 import { findRepoRoot } from "../capability/fs";
 import type { Skill as CapabilitySkill } from "../capability/skill";
 import { resolveSkillScopeTrust } from "../config/skill-settings-defaults";
 import { scanClaudeProjectSkills, scanClaudeUserSkills } from "../discovery/claude";
 import { scanCodexProjectSkills, scanCodexUserSkills } from "../discovery/codex";
 import { compareSkillOrder, SOURCE_PATHS, scanSkillsFromDir } from "../discovery/helpers";
-import { CANONICAL_GJC_WORKFLOW_SKILLS } from "../skill-state/canonical-skills";
+import { CANONICAL_VIB_WORKFLOW_SKILLS } from "../skill-state/canonical-skills";
 export type SkillScope = "project" | "user";
 export type ConventionSkillHost = "claude" | "codex";
 
@@ -42,14 +42,14 @@ export interface ManagedSkillRecord {
 	description: string;
 	path: string;
 	scope: SkillScope;
-	/** Canonical source label, e.g. "project .gjc/skills" or "user ~/.gjc/agent/skills". */
+	/** Canonical source label, e.g. "project .vib/skills" or "user ~/.vib/agent/skills". */
 	source: string;
 	hidden: boolean;
 	enabled: boolean;
 	disabledReason?: SkillDisabledReason;
 }
 
-/** A Claude Code / Codex skill enumerated as an explicit import source into `.gjc`. */
+/** A Claude Code / Codex skill enumerated as an explicit import source into `.vib`. */
 export interface ConventionSkillImportSource {
 	host: ConventionSkillHost;
 	scope: SkillScope;
@@ -78,7 +78,7 @@ export class SkillNameProtectedError extends Error {
 	readonly code = "SKILL_NAME_PROTECTED";
 	constructor(name: string) {
 		super(
-			`skill "${name}" is a bundled GJC workflow skill (${CANONICAL_GJC_WORKFLOW_SKILLS.join(", ")}) and cannot be written as a custom skill`,
+			`skill "${name}" is a bundled Vibrato workflow skill (${CANONICAL_VIB_WORKFLOW_SKILLS.join(", ")}) and cannot be written as a custom skill`,
 		);
 		this.name = "SkillNameProtectedError";
 	}
@@ -93,7 +93,7 @@ export class SkillFrontmatterError extends Error {
 	}
 }
 
-const BUILT_IN_SKILL_NAMES = new Set<string>(CANONICAL_GJC_WORKFLOW_SKILLS);
+const BUILT_IN_SKILL_NAMES = new Set<string>(CANONICAL_VIB_WORKFLOW_SKILLS);
 
 function getRuntimeHome(): string {
 	return getTrustedHomeDir();
@@ -118,7 +118,7 @@ function ancestorDirs(cwd: string, stop: string, home: string): string[] {
 }
 
 /**
- * Canonical project skill directories in precedence order: `.gjc/skills` in
+ * Canonical project skill directories in precedence order: `.vib/skills` in
  * every ancestor from `cwd` up to the repo root (closest first).
  */
 export async function getProjectSkillDirs(
@@ -127,7 +127,7 @@ export async function getProjectSkillDirs(
 ): Promise<{ dirs: string[]; repoRoot: string | null }> {
 	const repoRoot = await findRepoRoot(cwd);
 	const walkDirs = ancestorDirs(cwd, path.resolve(repoRoot ?? cwd), home);
-	return { dirs: walkDirs.map(dir => path.join(dir, ".gjc", "skills")), repoRoot };
+	return { dirs: walkDirs.map(dir => path.join(dir, ".vib", "skills")), repoRoot };
 }
 
 /** Canonical user skill directories in precedence order (same resolution as runtime discovery). */
@@ -136,15 +136,15 @@ export function getUserSkillDirs(home: string): string[] {
 		...new Set([
 			path.join(home, SOURCE_PATHS.native.userAgent, "skills"),
 			path.join(home, SOURCE_PATHS.native.userBase, "skills"),
-			path.join(home, ".gjc", "skills"),
+			path.join(home, ".vib", "skills"),
 		]),
 	];
 }
 
 /**
  * The canonical directory a write targets for a scope: the repo root (or `cwd`)
- * `.gjc/skills` for project scope, the canonical `<config>/agent/skills` user
- * root for user scope (honoring `GJC_CONFIG_DIR` / `PI_CONFIG_DIR`).
+ * `.vib/skills` for project scope, the canonical `<config>/agent/skills` user
+ * root for user scope (honoring `VIB_CONFIG_DIR` / `PI_CONFIG_DIR`).
  */
 export async function resolveNativeSkillScopeDir(
 	cwd: string,
@@ -153,7 +153,7 @@ export async function resolveNativeSkillScopeDir(
 ): Promise<string> {
 	if (scope === "user") return path.join(home, SOURCE_PATHS.native.userAgent, "skills");
 	const repoRoot = await findRepoRoot(cwd);
-	return path.join(repoRoot ?? path.resolve(cwd), ".gjc", "skills");
+	return path.join(repoRoot ?? path.resolve(cwd), ".vib", "skills");
 }
 
 function matchesPattern(name: string, patterns: string[] | undefined): boolean {
@@ -210,7 +210,7 @@ export async function listNativeSkillsForManagement(options: {
 
 	for (const { dir, items } of await Promise.all(scanJobs)) {
 		const scope: SkillScope = path.resolve(dir).startsWith(`${path.resolve(home)}${path.sep}`) ? "user" : "project";
-		const source = scope === "project" ? "project .gjc/skills" : `user ${dir}`;
+		const source = scope === "project" ? "project .vib/skills" : `user ${dir}`;
 		for (const skill of items) {
 			const realPath = await safeRealpath(skill.path);
 			if (seenPaths.has(realPath)) continue;
@@ -256,7 +256,7 @@ export async function listNativeSkillsForManagement(options: {
 }
 
 /**
- * Write a native skill into the canonical `.gjc` scope directory. The content
+ * Write a native skill into the canonical `.vib` scope directory. The content
  * must parse as frontmatter with a non-empty `description`; the effective name
  * comes from `frontmatter.name` when present, else the requested `name`. Bundled
  * workflow skill names are rejected.
@@ -310,7 +310,7 @@ export function setNativeSkillEnabled(name: string, enabled: boolean, disabledEx
 
 /**
  * Enumerate Claude Code / Codex skills (project and user scope) as explicit
- * import sources into `.gjc`. This only reads the foreign layouts for
+ * import sources into `.vib`. This only reads the foreign layouts for
  * inspection/import; nothing is loaded into sessions and user-home content is
  * never used without an explicit import action (#4291).
  */

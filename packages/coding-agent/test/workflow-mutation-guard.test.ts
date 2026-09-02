@@ -2,14 +2,8 @@ import { afterEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { AgentTool } from "@gajae-code/agent-core";
-import * as autoresearchGit from "@gajae-code/coding-agent/autoresearch/git";
-import {
-	activeSnapshotPath,
-	modeStatePath,
-	sessionStateDir,
-} from "@gajae-code/coding-agent/gjc-runtime/session-layout";
-import { runNativeStateCommand } from "@gajae-code/coding-agent/gjc-runtime/state-runtime";
+import type { AgentTool } from "@vib-rato/agent-core";
+import * as autoresearchGit from "@vib-rato/coding-agent/autoresearch/git";
 import {
 	assertWorkflowMutationRawPathsAllowed,
 	DEEP_INTERVIEW_MUTATION_BLOCK_MESSAGE,
@@ -17,14 +11,16 @@ import {
 	RALPLAN_MUTATION_BLOCK_MESSAGE,
 	readWorkflowGuardContext,
 	ULTRAGOAL_GOAL_PLANNING_MUTATION_BLOCK_MESSAGE,
-} from "@gajae-code/coding-agent/skill-state/workflow-mutation-guard";
-import { ToolError } from "@gajae-code/coding-agent/tools/tool-errors";
-import { logger } from "@gajae-code/utils";
+} from "@vib-rato/coding-agent/skill-state/workflow-mutation-guard";
+import { ToolError } from "@vib-rato/coding-agent/tools/tool-errors";
+import { activeSnapshotPath, modeStatePath, sessionStateDir } from "@vib-rato/coding-agent/vib-runtime/session-layout";
+import { runNativeStateCommand } from "@vib-rato/coding-agent/vib-runtime/state-runtime";
+import { logger } from "@vib-rato/utils";
 
 const tempRoots: string[] = [];
 
 async function makeTempRoot(): Promise<string> {
-	const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-deep-interview-guard-"));
+	const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-deep-interview-guard-"));
 	tempRoots.push(root);
 	return root;
 }
@@ -152,7 +148,7 @@ describe("workflow mutation guard", () => {
 		const cwd = await makeTempRoot();
 		await writeActiveDeepInterview(cwd);
 
-		for (const rawPath of [".gjc/specs/deep-interview-x.md", ".gjc/plans/plan.md"]) {
+		for (const rawPath of [".vib/specs/deep-interview-x.md", ".vib/plans/plan.md"]) {
 			const decision = await getWorkflowMutationDecision({
 				cwd,
 				sessionId: "session-a",
@@ -160,28 +156,28 @@ describe("workflow mutation guard", () => {
 				args: { path: rawPath, content: "x" },
 			});
 			expect(decision.blocked).toBe(true);
-			expect(decision.reason).toBe("gjc-target");
+			expect(decision.reason).toBe("vib-target");
 			expect(decision.message).toContain("runtime-owned");
 		}
 
 		const blockedCases: Array<[string, AgentTool, unknown]> = [
-			["write active", tool("write"), { path: ".gjc/state/skill-active-state.json", content: "{}" }],
+			["write active", tool("write"), { path: ".vib/state/skill-active-state.json", content: "{}" }],
 			[
 				"write session active legacy",
 				tool("write"),
-				{ path: ".gjc/state/sessions/session-a/skill-active-state.json", content: "{}" },
+				{ path: ".vib/state/sessions/session-a/skill-active-state.json", content: "{}" },
 			],
 			[
 				"write session active generated",
 				tool("write"),
-				{ path: ".gjc/_session-session-a/state/skill-active-state.json", content: "{}" },
+				{ path: ".vib/_session-session-a/state/skill-active-state.json", content: "{}" },
 			],
 			...(["deep-interview", "ralplan", "ultragoal", "autoresearch"] as const).map(
 				skill =>
 					[
 						`write ${skill}`,
 						tool("write"),
-						{ path: `.gjc/state/sessions/session-a/${skill}-state.json`, content: "{}" },
+						{ path: `.vib/state/sessions/session-a/${skill}-state.json`, content: "{}" },
 					] as [string, AgentTool, unknown],
 			),
 			...(["deep-interview", "ralplan", "ultragoal", "autoresearch"] as const).map(
@@ -189,25 +185,25 @@ describe("workflow mutation guard", () => {
 					[
 						`write generated ${skill}`,
 						tool("write"),
-						{ path: `.gjc/_session-session-a/state/${skill}-state.json`, content: "{}" },
+						{ path: `.vib/_session-session-a/state/${skill}-state.json`, content: "{}" },
 					] as [string, AgentTool, unknown],
 			),
 			[
 				"apply_patch state",
 				tool("edit", { mode: "apply_patch", customWireName: "apply_patch" }),
 				{
-					input: "*** Begin Patch\n*** Update File: .gjc/state/autoresearch-state.json\n@@\n-a\n+b\n*** End Patch\n",
+					input: "*** Begin Patch\n*** Update File: .vib/state/autoresearch-state.json\n@@\n-a\n+b\n*** End Patch\n",
 				},
 			],
 			[
 				"vim state",
 				tool("edit", { mode: "vim" }),
-				{ file: "src/foo.ts", steps: [{ kbd: [":edit .gjc/state/sessions/session-a/ralplan-state.json<CR>"] }] },
+				{ file: "src/foo.ts", steps: [{ kbd: [":edit .vib/state/sessions/session-a/ralplan-state.json<CR>"] }] },
 			],
 			[
 				"ast_edit state",
 				tool("ast_edit"),
-				{ paths: [".gjc/state/**/autoresearch-state.json"], ops: [{ pat: "foo", out: "bar" }] },
+				{ paths: [".vib/state/**/autoresearch-state.json"], ops: [{ pat: "foo", out: "bar" }] },
 			],
 		];
 
@@ -219,7 +215,7 @@ describe("workflow mutation guard", () => {
 				args,
 			});
 			expect(decision.blocked).toBe(true);
-			if (decision.reason === "workflow-state-target" || decision.reason === "gjc-target") {
+			if (decision.reason === "workflow-state-target" || decision.reason === "vib-target") {
 				expect(decision.message).toContain("runtime-owned");
 			} else {
 				expect(decision.message).toBe(DEEP_INTERVIEW_MUTATION_BLOCK_MESSAGE);
@@ -232,7 +228,7 @@ describe("workflow mutation guard", () => {
 		await writeActiveDeepInterview(cwd);
 
 		// Neutral temp scratch outside the project tree stays writable so specs can be
-		// staged and fed to `gjc deep-interview --write --spec <path>`.
+		// staged and fed to `vib deep-interview --write --spec <path>`.
 		for (const rawPath of [path.join(os.tmpdir(), "deep-interview-scratch.md"), "/tmp/deep-interview-scratch.md"]) {
 			const decision = await getWorkflowMutationDecision({
 				cwd,
@@ -255,7 +251,7 @@ describe("workflow mutation guard", () => {
 			expect(decision.message).toBe(DEEP_INTERVIEW_MUTATION_BLOCK_MESSAGE);
 		}
 
-		for (const rawPath of [".gjc/specs-evil/plan.md", ".gjc/stateful/data.json"]) {
+		for (const rawPath of [".vib/specs-evil/plan.md", ".vib/stateful/data.json"]) {
 			const decision = await getWorkflowMutationDecision({
 				cwd,
 				sessionId: "session-a",
@@ -270,7 +266,7 @@ describe("workflow mutation guard", () => {
 			cwd,
 			sessionId: "session-a",
 			tool: tool("ast_edit"),
-			args: { paths: [".gjc/state/deep-interview-state.json", "packages/**"], ops: [{ pat: "foo", out: "bar" }] },
+			args: { paths: [".vib/state/deep-interview-state.json", "packages/**"], ops: [{ pat: "foo", out: "bar" }] },
 		});
 		expect(mixed.blocked).toBe(true);
 	});
@@ -309,7 +305,7 @@ describe("workflow mutation guard", () => {
 			"# Spec: Memory System",
 			"",
 			"- retrieval: session > project > global precedence",
-			"- don't hardcode `~/.gjc`; user's overrides matter",
+			"- don't hardcode `~/.vib`; user's overrides matter",
 			"| Round | Prior → New | 66.5% → 62.3% |",
 			"rm -rf src is what we must never do",
 			"echo x > src/product.ts (quoted example, not a command)",
@@ -438,7 +434,7 @@ describe("workflow mutation guard", () => {
 		await writeActiveDeepInterview(cwd);
 
 		for (const command of [
-			"rm .gjc/state/deep-interview-state.json",
+			"rm .vib/state/deep-interview-state.json",
 			"tee src/product.ts",
 			"cat <<EOF > src/product.ts\nx\nEOF",
 		]) {
@@ -453,9 +449,9 @@ describe("workflow mutation guard", () => {
 		}
 
 		for (const command of [
-			"mkdir -p .gjc/specs",
-			"cp source.md .gjc/specs/deep-interview-x.md",
-			"cat source.md > .gjc/specs/deep-interview-x.md",
+			"mkdir -p .vib/specs",
+			"cp source.md .vib/specs/deep-interview-x.md",
+			"cat source.md > .vib/specs/deep-interview-x.md",
 		]) {
 			const decision = await getWorkflowMutationDecision({
 				cwd,
@@ -521,13 +517,13 @@ describe("workflow mutation guard", () => {
 		// leave an empty target list that reads as "safe".
 		for (const command of [
 			"exec 1<>src/product.ts; printf x >/dev/stdout",
-			"exec 1<>.gjc/_session-session-a/state/deep-interview-state.json; printf x >/dev/stdout",
+			"exec 1<>.vib/_session-session-a/state/deep-interview-state.json; printf x >/dev/stdout",
 			"/bin/dd if=/dev/zero of=src/product.ts count=1 2>/dev/null",
 			"printf x | /usr/bin/tee src/product.ts >/dev/null",
 			"dd if=/dev/zero of=/dev/null of=src/product.ts count=1",
 			"printf x >|src/product.ts 2>/dev/null",
 			"printf x >&src/product.ts 2>/dev/null",
-			"printf x >|.gjc/_session-session-a/state/deep-interview-state.json 2>/dev/null",
+			"printf x >|.vib/_session-session-a/state/deep-interview-state.json 2>/dev/null",
 			'dd if=/dev/zero of=" /dev/null"',
 			'printf x >" src.ts"',
 		]) {
@@ -541,13 +537,13 @@ describe("workflow mutation guard", () => {
 		}
 	});
 
-	it("keeps project, .gjc, mixed, dd, and exact-match-negative targets blocked", async () => {
+	it("keeps project, .vib, mixed, dd, and exact-match-negative targets blocked", async () => {
 		const cwd = await makeTempRoot();
 		await writeActiveDeepInterview(cwd);
 
 		for (const command of [
 			"echo x > src/product.ts",
-			"echo x > .gjc/_session-test/state/deep-interview-state.json",
+			"echo x > .vib/_session-test/state/deep-interview-state.json",
 			"echo hi > /dev/null; touch src/product.ts",
 			"dd if=/dev/zero of=src/product.ts",
 			"echo x > /dev/nullx",
@@ -564,7 +560,7 @@ describe("workflow mutation guard", () => {
 		}
 	});
 
-	it("blocks vim file-switches into .gjc", async () => {
+	it("blocks vim file-switches into .vib", async () => {
 		const cwd = await makeTempRoot();
 		await writeActiveDeepInterview(cwd);
 
@@ -574,7 +570,7 @@ describe("workflow mutation guard", () => {
 			tool: tool("edit", { mode: "vim" }),
 			args: {
 				file: "packages/coding-agent/src/product.ts",
-				steps: [{ kbd: [":edit .gjc/specs/deep-interview-x.md<CR>", "iunsafe"] }],
+				steps: [{ kbd: [":edit .vib/specs/deep-interview-x.md<CR>", "iunsafe"] }],
 			},
 		});
 
@@ -646,7 +642,7 @@ describe("workflow mutation guard", () => {
 			});
 			expect(decision.blocked).toBe(false);
 			expect(warn).toHaveBeenCalledTimes(1);
-			expect(String(warn.mock.calls[0]?.[0] ?? "")).toContain("gjc skill-state: invalid mode-state at");
+			expect(String(warn.mock.calls[0]?.[0] ?? "")).toContain("vib skill-state: invalid mode-state at");
 		} finally {
 			warn.mockRestore();
 		}
@@ -676,7 +672,7 @@ describe("workflow mutation guard", () => {
 		const cwd = await makeTempRoot();
 		await writeActiveDeepInterview(cwd);
 
-		for (const rawPaths of [["src/product.ts"], [".gjc/specs/deep-interview-x.md"], []]) {
+		for (const rawPaths of [["src/product.ts"], [".vib/specs/deep-interview-x.md"], []]) {
 			await expect(
 				assertWorkflowMutationRawPathsAllowed({
 					cwd,
@@ -717,13 +713,13 @@ describe("workflow mutation guard", () => {
 		});
 		expect(temp.blocked).toBe(false);
 
-		const gjcBash = await getWorkflowMutationDecision({
+		const vibBash = await getWorkflowMutationDecision({
 			cwd,
 			sessionId: "session-a",
 			tool: tool("bash"),
-			args: { command: "gjc ralplan --write --stage planner --stage_n 1 --artifact /tmp/plan.md" },
+			args: { command: "vib ralplan --write --stage planner --stage_n 1 --artifact /tmp/plan.md" },
 		});
-		expect(gjcBash.blocked).toBe(false);
+		expect(vibBash.blocked).toBe(false);
 	});
 
 	it("blocks product mutation only during the ultragoal goal-planning phase", async () => {
@@ -937,17 +933,17 @@ describe("workflow mutation guard", () => {
 		expect(decision.blocked).toBe(false);
 	});
 
-	it("blocks product-mutating bash during a planning phase but allows sanctioned gjc and artifact writes", async () => {
+	it("blocks product-mutating bash during a planning phase but allows sanctioned vib and artifact writes", async () => {
 		const cwd = await makeTempRoot();
 		await writeActiveSkill(cwd, "ralplan", "planner");
 
 		for (const command of [
-			"gjc ralplan --write --stage planner --artifact /tmp/p.md ; tee src/product.ts",
+			"vib ralplan --write --stage planner --artifact /tmp/p.md ; tee src/product.ts",
 			"echo x > src/product.ts",
-			"gjc state read && echo x | tee src/product.ts",
-			"gjc state read && echo x > .gjc/state/foo.json",
-			"gjc ralplan --write --stage planner --artifact /tmp/p.md\ntouch src/product.ts",
-			"gjc state read\nrm .gjc/state/foo.json",
+			"vib state read && echo x | tee src/product.ts",
+			"vib state read && echo x > .vib/state/foo.json",
+			"vib ralplan --write --stage planner --artifact /tmp/p.md\ntouch src/product.ts",
+			"vib state read\nrm .vib/state/foo.json",
 			"sed -i s/a/b/ src/product.ts",
 			'python -c \'open("src/product.ts", "w").write("x")\'',
 			"dd if=/dev/null of=src/product.ts",
@@ -968,17 +964,17 @@ describe("workflow mutation guard", () => {
 		}
 
 		for (const command of [
-			"gjc ralplan --write --stage planner --artifact /tmp/p.md",
-			"cat sample.md > .gjc/specs/deep-interview-sample.md",
+			"vib ralplan --write --stage planner --artifact /tmp/p.md",
+			"cat sample.md > .vib/specs/deep-interview-sample.md",
 			// Reading and inspecting must never be blocked during a planning phase,
 			// including commands the scanner does not model and read-only wrappers.
-			"gjc deep-interview inspect --selector summary --json",
+			"vib deep-interview inspect --selector summary --json",
 			"cat package.json | jq .name",
 			"git status --short",
-			"bash -c 'gjc deep-interview inspect --json'",
-			'bun -e \'const p=Bun.spawnSync(["gjc","state","read"]); process.stdout.write(p.stdout)\'',
+			"bash -c 'vib deep-interview inspect --json'",
+			'bun -e \'const p=Bun.spawnSync(["vib","state","read"]); process.stdout.write(p.stdout)\'',
 			// Shell metacharacters inside a single-quoted argument value are inert data.
-			"gjc deep-interview draft edit --op set --path /a --value 'uses `bun run release`; a > b | c'",
+			"vib deep-interview draft edit --op set --path /a --value 'uses `bun run release`; a > b | c'",
 		]) {
 			const allowed = await getWorkflowMutationDecision({
 				cwd,
@@ -1039,7 +1035,7 @@ describe("workflow mutation guard", () => {
 		const cwd = await makeTempRoot();
 		await writeActiveDeepInterview(cwd);
 		await fs.mkdir(path.join(cwd, "src"), { recursive: true });
-		const linkDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-guard-symlink-"));
+		const linkDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-guard-symlink-"));
 		tempRoots.push(linkDir);
 		const link = path.join(linkDir, "into-repo");
 		await fs.symlink(path.join(cwd, "src"), link);
@@ -1053,15 +1049,15 @@ describe("workflow mutation guard", () => {
 		expect(decision.blocked).toBe(true);
 	});
 
-	it("blocks .gjc raw paths in deferred ast_edit apply even with no planning skill or forceOverride", async () => {
+	it("blocks .vib raw paths in deferred ast_edit apply even with no planning skill or forceOverride", async () => {
 		const cwd = await makeTempRoot();
 		await expect(
-			assertWorkflowMutationRawPathsAllowed({ cwd, rawPaths: [".gjc/specs/x.md"] }),
+			assertWorkflowMutationRawPathsAllowed({ cwd, rawPaths: [".vib/specs/x.md"] }),
 		).rejects.toBeInstanceOf(ToolError);
 		await expect(
 			assertWorkflowMutationRawPathsAllowed({
 				cwd,
-				rawPaths: [".gjc/state/ralplan-state.json"],
+				rawPaths: [".vib/state/ralplan-state.json"],
 				forceOverride: true,
 			}),
 		).rejects.toBeInstanceOf(ToolError);
@@ -1072,7 +1068,7 @@ describe("workflow mutation guard", () => {
 		// before BashTool.execute. A blocked mutation must not touch product or
 		// workflow state bytes — decision-only tests alone do not prove that.
 		const { assertWorkflowMutationAllowed } = await import(
-			"@gajae-code/coding-agent/skill-state/workflow-mutation-guard"
+			"@vib-rato/coding-agent/skill-state/workflow-mutation-guard"
 		);
 		const cwd = await makeTempRoot();
 		await writeActiveDeepInterview(cwd);

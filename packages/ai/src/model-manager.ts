@@ -1,4 +1,4 @@
-import { sanitizeText } from "@gajae-code/utils";
+import { sanitizeText } from "@vib-rato/utils";
 import { applyFinalCodexGpt56ContextCap } from "./context-cap-policy";
 import { insertModelCacheIfAbsent, readModelCache, updateModelCacheIfUnchanged, writeModelCache } from "./model-cache";
 import { isRetiredModel, isRetiredModelKey } from "./model-retirements";
@@ -202,7 +202,7 @@ async function resolveProviderModelsUncoalesced<TApi extends Api = Api, TModelsD
 	const cacheNeedsInitialDynamicRefresh =
 		hasDynamicFetcher &&
 		options.cacheDynamicModelProvenance !== undefined &&
-		!options.cacheDynamicModelProvenance.startsWith("gajae:non-cacheable-") &&
+		!options.cacheDynamicModelProvenance.startsWith("vibrato:non-cacheable-") &&
 		cache?.dynamicModelIds === undefined;
 	const hasAuthoritativeCache =
 		!hasDynamicFetcher ||
@@ -230,7 +230,7 @@ async function resolveProviderModelsUncoalesced<TApi extends Api = Api, TModelsD
 	// fetch is skipped, AND the static catalog slice is byte-identical to what
 	// was merged in last time, the cache row IS the authoritative merge result.
 	// Re-running `mergeDynamicModels(static, cache)` would just rebuild the same
-	// objects (~800ms in the steady-state cold-start profile for `gjc -p hi`).
+	// objects (~800ms in the steady-state cold-start profile for `vib -p hi`).
 	if (
 		!shouldFetchFromNetwork &&
 		cache?.fresh &&

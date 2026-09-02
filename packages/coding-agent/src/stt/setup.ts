@@ -12,7 +12,7 @@ export function formatSTTUsage(
 	terminalProgram: string | undefined = Bun.env.TERM_PROGRAM,
 ): string {
 	const lines = [
-		"Enable STT: gjc config set stt.enabled true",
+		"Enable STT: vib config set stt.enabled true",
 		"You can also enable it in /settings > Interaction > Speech-to-Text.",
 		"In the composer, press Alt+H to start recording, then press Alt+H again to stop and transcribe.",
 		"The transcription is inserted into the composer for review before you send it.",
@@ -26,7 +26,7 @@ export function formatSTTUsage(
 			);
 		}
 	}
-	lines.push("Run /hotkeys inside GJC to confirm the active shortcut.");
+	lines.push("Run /hotkeys inside Vibrato to confirm the active shortcut.");
 	return lines.join("\n");
 }
 
@@ -51,7 +51,7 @@ export async function checkDependencies(): Promise<STTDependencyStatus> {
 		});
 		whisperAvailable = check.exitCode === 0;
 	}
-	const whisperHint = "Run 'gjc setup stt' to auto-install, or: pip install openai-whisper";
+	const whisperHint = "Run 'vib setup stt' to auto-install, or: pip install openai-whisper";
 
 	return {
 		recorder: { available: recorderTools.length > 0, tool: recorderTools[0] ?? null, installHint: recorderHint },

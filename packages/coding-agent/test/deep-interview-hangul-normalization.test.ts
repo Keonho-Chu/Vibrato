@@ -1,11 +1,11 @@
 import { describe, expect, it } from "bun:test";
-import { appendOrMergeRound, buildAnswerShell } from "../src/gjc-runtime/deep-interview-recorder";
+import { appendOrMergeRound, buildAnswerShell } from "../src/vib-runtime/deep-interview-recorder";
 import {
 	answerHash,
 	assertDeepInterviewInputWithinLimit,
 	MAX_USER_RESPONSE_LENGTH,
 	questionHash,
-} from "../src/gjc-runtime/deep-interview-state";
+} from "../src/vib-runtime/deep-interview-state";
 
 const COMPOSED_QUESTION = "알림 재시도 정책을 어떻게 잡아야 합니까?";
 const COMPOSED_ANSWER = "지수 백오프로 최대 다섯 번 재시도합니다";

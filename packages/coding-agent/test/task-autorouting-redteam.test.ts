@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
-import type { Model } from "@gajae-code/ai";
-import { prompt } from "@gajae-code/utils";
+import type { Model } from "@vib-rato/ai";
+import { prompt } from "@vib-rato/utils";
 import { AsyncJobManager } from "../src/async";
 import { normalizeTierSelector, resolveTaskRouting } from "../src/config/autorouting";
 import {

@@ -3,15 +3,15 @@ import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 import {
-	clearGjcNativeSkillHookCachesForTesting,
-	dispatchGjcNativeSkillHook,
-	getGjcNativeSkillHookCacheStatsForTesting,
-	resolveGjcNativeSkillConfigForTesting,
-	runGjcNativeSkillHookInProcess,
+	clearVibNativeSkillHookCachesForTesting,
+	dispatchVibNativeSkillHook,
+	getVibNativeSkillHookCacheStatsForTesting,
+	resolveVibNativeSkillConfigForTesting,
+	runVibNativeSkillHookInProcess,
 } from "../src/hooks/native-skill-hook";
 
 async function tempRoot(): Promise<string> {
-	return await fs.mkdtemp(path.join(os.tmpdir(), "gjc-native-skill-hook-"));
+	return await fs.mkdtemp(path.join(os.tmpdir(), "vib-native-skill-hook-"));
 }
 
 async function runSubprocessHook(payload: Record<string, unknown>): Promise<string> {
@@ -22,8 +22,8 @@ async function runSubprocessHook(payload: Record<string, unknown>): Promise<stri
 		stderr: "pipe",
 		env: {
 			...process.env,
-			GJC_CONFIG_DIR: ".gjc",
-			GJC_CODING_AGENT_DIR: path.join(String(payload.cwd), ".gjc", "agent"),
+			VIB_CONFIG_DIR: ".vib",
+			VIB_CODING_AGENT_DIR: path.join(String(payload.cwd), ".vib", "agent"),
 		},
 	});
 	proc.stdin.write(`${JSON.stringify(payload)}\n`);
@@ -38,11 +38,11 @@ async function runSubprocessHook(payload: Record<string, unknown>): Promise<stri
 	return stdout;
 }
 
-describe("GJC native skill hook in-process dispatch and config cache", () => {
+describe("Vibrato native skill hook in-process dispatch and config cache", () => {
 	const roots: string[] = [];
 
 	afterEach(async () => {
-		clearGjcNativeSkillHookCachesForTesting();
+		clearVibNativeSkillHookCachesForTesting();
 		await Promise.all(roots.splice(0).map(root => fs.rm(root, { recursive: true, force: true })));
 	});
 
@@ -63,10 +63,10 @@ describe("GJC native skill hook in-process dispatch and config cache", () => {
 			threadId: "thread-parity",
 		};
 
-		await expect(runGjcNativeSkillHookInProcess(userPromptPayload)).resolves.toBe(
+		await expect(runVibNativeSkillHookInProcess(userPromptPayload)).resolves.toBe(
 			await runSubprocessHook(userPromptPayload),
 		);
-		await expect(runGjcNativeSkillHookInProcess(stopPayload)).resolves.toBe(await runSubprocessHook(stopPayload));
+		await expect(runVibNativeSkillHookInProcess(stopPayload)).resolves.toBe(await runSubprocessHook(stopPayload));
 	});
 
 	it("invalidates effective config cache when config mtime changes", async () => {
@@ -81,19 +81,19 @@ describe("GJC native skill hook in-process dispatch and config cache", () => {
 			threadId: "thread-cache",
 		};
 
-		const firstWithConfig = await resolveGjcNativeSkillConfigForTesting(resolveInput);
+		const firstWithConfig = await resolveVibNativeSkillConfigForTesting(resolveInput);
 		expect(firstWithConfig.disabledExtensions?.filter(value => value.startsWith("skill:")).length).toBe(1);
-		expect(getGjcNativeSkillHookCacheStatsForTesting().effectiveSkillConfigResolutions).toBe(1);
+		expect(getVibNativeSkillHookCacheStatsForTesting().effectiveSkillConfigResolutions).toBe(1);
 
-		const cached = await resolveGjcNativeSkillConfigForTesting(resolveInput);
+		const cached = await resolveVibNativeSkillConfigForTesting(resolveInput);
 		expect(cached.disabledExtensions?.filter(value => value.startsWith("skill:")).length).toBe(1);
-		expect(getGjcNativeSkillHookCacheStatsForTesting().effectiveSkillConfigResolutions).toBe(1);
+		expect(getVibNativeSkillHookCacheStatsForTesting().effectiveSkillConfigResolutions).toBe(1);
 
 		await new Promise(resolve => setTimeout(resolve, 5));
 		await fs.writeFile(configPath, "disabledExtensions:\n  - skill:first\n  - skill:second\n");
-		const invalidated = await resolveGjcNativeSkillConfigForTesting(resolveInput);
+		const invalidated = await resolveVibNativeSkillConfigForTesting(resolveInput);
 		expect(invalidated.disabledExtensions?.filter(value => value.startsWith("skill:")).length).toBe(2);
-		expect(getGjcNativeSkillHookCacheStatsForTesting().effectiveSkillConfigResolutions).toBe(2);
+		expect(getVibNativeSkillHookCacheStatsForTesting().effectiveSkillConfigResolutions).toBe(2);
 	});
 
 	it("does not resolve effective config when no skill activation needs it", async () => {
@@ -101,7 +101,7 @@ describe("GJC native skill hook in-process dispatch and config cache", () => {
 		roots.push(root);
 		const configPath = path.join(root, "config.yml");
 		await fs.writeFile(configPath, "::not yaml::");
-		await dispatchGjcNativeSkillHook(
+		await dispatchVibNativeSkillHook(
 			{
 				hookEventName: "UserPromptSubmit",
 				userPrompt: "ordinary non workflow prompt",
@@ -110,6 +110,6 @@ describe("GJC native skill hook in-process dispatch and config cache", () => {
 			},
 			{ configPaths: [configPath] },
 		);
-		expect(getGjcNativeSkillHookCacheStatsForTesting().effectiveSkillConfigResolutions).toBe(0);
+		expect(getVibNativeSkillHookCacheStatsForTesting().effectiveSkillConfigResolutions).toBe(0);
 	});
 });

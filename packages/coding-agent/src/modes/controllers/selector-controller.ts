@@ -1,17 +1,16 @@
 import * as path from "node:path";
-import { ThinkingLevel } from "@gajae-code/agent-core";
+import { ThinkingLevel } from "@vib-rato/agent-core";
 import {
 	type Api,
 	type AuthCredentialSelector,
 	type CredentialRemovalTarget,
 	type Model,
 	resolveOAuthStorageProvider,
-} from "@gajae-code/ai/core";
-import { getOAuthProviders } from "@gajae-code/ai/utils/oauth";
-import type { OAuthProvider } from "@gajae-code/ai/utils/oauth/types";
-import type { Component, OverlayHandle, SlashCommand } from "@gajae-code/tui";
-import { Input, Loader, resolvePetMode, Spacer, Text } from "@gajae-code/tui";
-import { getAgentDbPath, getProjectDir, logger, VERSION } from "@gajae-code/utils";
+} from "@vib-rato/ai/core";
+import type { OAuthProvider } from "@vib-rato/ai/utils/oauth/types";
+import type { Component, OverlayHandle, SlashCommand } from "@vib-rato/tui";
+import { Input, Loader, resolvePetMode, Spacer, Text } from "@vib-rato/tui";
+import { getAgentDbPath, getProjectDir, logger, VERSION } from "@vib-rato/utils";
 import {
 	type AutoroutingProvenance,
 	type AutoroutingSetup,
@@ -32,10 +31,11 @@ import {
 	restoreMaterializedModelProfileForDeletion,
 } from "../../config/model-profile-activation";
 import { formatModelProfileDisplayLabel, recommendModelProfileForProvider } from "../../config/model-profiles";
-import { GJC_MODEL_ASSIGNMENT_TARGETS, type GjcModelAssignmentTargetId } from "../../config/model-registry";
+import { VIB_MODEL_ASSIGNMENT_TARGETS, type VibModelAssignmentTargetId } from "../../config/model-registry";
 import { formatModelSelectorValue } from "../../config/model-resolver";
 import { selectorHead } from "../../config/model-selector-value";
 import type { ModelProfileConfig } from "../../config/models-config-schema";
+import { getSelectableOAuthProviders } from "../../config/provider-allowlist";
 import { type RawSettings, type Settings, type SettingsAtomicReceipt, settings } from "../../config/settings";
 import type { SettingValue } from "../../config/settings-schema";
 import { DebugSelectorComponent } from "../../debug";
@@ -165,7 +165,11 @@ import {
 	CustomModelPresetWizardComponent,
 	type CustomModelPresetWizardSubmit,
 } from "../components/custom-model-preset-wizard";
-import { CustomProviderWizardComponent, type CustomProviderWizardSubmit } from "../components/custom-provider-wizard";
+import {
+	CustomProviderWizardComponent,
+	type CustomProviderWizardOptions,
+	type CustomProviderWizardSubmit,
+} from "../components/custom-provider-wizard";
 import { CustomizationDashboard } from "../components/customization";
 import { ExtensionDashboard } from "../components/extensions";
 import {
@@ -173,7 +177,6 @@ import {
 	type FrictionlessOnboardingStage,
 	getFrictionlessOnboardingCopy,
 } from "../components/frictionless-onboarding-selector";
-import type { PetMode } from "../components/gajae-pet-widget";
 import { HistorySearchComponent } from "../components/history-search";
 import { HookSelectorComponent } from "../components/hook-selector";
 import { JobsOverlayComponent } from "../components/jobs-overlay";
@@ -211,6 +214,7 @@ import type { StatusLineSettings } from "../components/tool-status-header";
 import { TranscriptViewerOverlay, transcriptViewerEntries } from "../components/transcript-viewer-overlay";
 import { TreeSelectorComponent } from "../components/tree-selector";
 import { UserMessageSelectorComponent } from "../components/user-message-selector";
+import type { PetMode } from "../components/vibrato-pet-widget";
 import type { JobsObserver } from "../jobs-observer";
 import type { SessionObserverRegistry } from "../session-observer-registry";
 import { buildOAuthLoginAnchor, createOAuthUrlCopyLease } from "../shared/oauth-url-copy";
@@ -439,7 +443,7 @@ export function createNotificationsEditorOperations(
 			try {
 				const input: Parameters<typeof checkNotificationHealth>[0] & { signal?: AbortSignal } = {
 					settings: ctx.settings,
-					stateRoot: path.join(ctx.sessionManager.getCwd(), ".gjc", "state"),
+					stateRoot: path.join(ctx.sessionManager.getCwd(), ".vib", "state"),
 					probe,
 					provider,
 					signal,
@@ -494,7 +498,7 @@ export function createNotificationsEditorOperations(
 			try {
 				const result = await services.recoverNotifications({
 					settings: ctx.settings,
-					stateRoot: path.join(ctx.sessionManager.getCwd(), ".gjc", "state"),
+					stateRoot: path.join(ctx.sessionManager.getCwd(), ".vib", "state"),
 				});
 				return {
 					...result,
@@ -1364,7 +1368,7 @@ export class SelectorController {
 	}
 
 	async #refreshOAuthProviderAuthState(): Promise<void> {
-		const oauthProviders = getOAuthProviders();
+		const oauthProviders = getSelectableOAuthProviders();
 		await Promise.all(
 			oauthProviders.map(provider =>
 				this.ctx.session.modelRegistry
@@ -1453,7 +1457,9 @@ export class SelectorController {
 			const selector = new ProviderOnboardingSelectorComponent(
 				(action: ProviderOnboardingAction) => {
 					done();
-					if (action === "custom-provider-wizard") this.showCustomProviderWizard();
+					if (action === "vllm-endpoint") this.showCustomProviderWizard({ preset: "vllm" });
+					else if (action === "sglang-endpoint") this.showCustomProviderWizard({ preset: "sglang" });
+					else if (action === "custom-provider-wizard") this.showCustomProviderWizard();
 					else if (action === "oauth-login") void this.showOAuthSelector("login");
 					else if (action === "import-credentials") void this.#handleCredentialImport();
 					else this.ctx.showStatus(formatProviderOnboardingCommandGuide());
@@ -1752,7 +1758,7 @@ export class SelectorController {
 		}
 	}
 
-	showCustomProviderWizard(): void {
+	showCustomProviderWizard(options: CustomProviderWizardOptions = {}): void {
 		this.showSelector(done => {
 			let wizard: CustomProviderWizardComponent;
 			const submit = async (input: CustomProviderWizardSubmit): Promise<void> => {
@@ -1778,6 +1784,7 @@ export class SelectorController {
 					this.ctx.ui.requestRender();
 				},
 				() => this.ctx.ui.requestRender(),
+				options,
 			);
 			return { component: wizard, focus: wizard };
 		});
@@ -1842,8 +1849,8 @@ export class SelectorController {
 						availableThemes,
 						availableModelProfiles: [...this.ctx.session.modelRegistry.getModelProfiles().keys()],
 						cwd: getProjectDir(),
-						gjcRuntimeSnapshot: this.ctx.session.gjcRuntimeSnapshot,
-						gjcActivationGeneration: this.ctx.session.gjcActivationGeneration,
+						vibRuntimeSnapshot: this.ctx.session.vibRuntimeSnapshot,
+						vibActivationGeneration: this.ctx.session.vibActivationGeneration,
 					},
 					{
 						onChange: (id, value) => this.handleSettingChange(id, value),
@@ -1974,7 +1981,7 @@ export class SelectorController {
 
 	showThemeSelector(): void {
 		getAvailableThemes().then(availableThemes => {
-			const initialTheme = getCurrentThemeName() ?? "red-claw";
+			const initialTheme = getCurrentThemeName() ?? "lig-blue";
 			const settingsPath = getDetectedThemeSettingsPath();
 			const savedTheme = settings.get(settingsPath);
 			this.showSelector(done => {
@@ -2681,7 +2688,7 @@ export class SelectorController {
 							done();
 							this.ctx.ui.requestRender();
 						} else if (selection.roles !== undefined) {
-							const targetRoles: readonly GjcModelAssignmentTargetId[] = selection.roles;
+							const targetRoles: readonly VibModelAssignmentTargetId[] = selection.roles;
 							const includesDefault = targetRoles.includes("default");
 							const includesRoleAgent = targetRoles.some(targetRole => targetRole !== "default");
 							if (includesRoleAgent) {
@@ -2702,7 +2709,7 @@ export class SelectorController {
 							}
 							const value =
 								selectedSelector ?? formatModelSelectorValue(`${model.provider}/${model.id}`, thinkingLevel);
-							const assignments = new Map<GjcModelAssignmentTargetId, string>();
+							const assignments = new Map<VibModelAssignmentTargetId, string>();
 							for (const targetRole of targetRoles) assignments.set(targetRole, value);
 							const defaultSelector =
 								selectedSelector && thinkingLevel && selectedSelector.endsWith(`:${thinkingLevel}`)
@@ -2735,7 +2742,7 @@ export class SelectorController {
 								});
 								if (!materializedProfile) {
 									for (const targetRole of targetRoles) {
-										const target = GJC_MODEL_ASSIGNMENT_TARGETS[targetRole];
+										const target = VIB_MODEL_ASSIGNMENT_TARGETS[targetRole];
 										if (target.settingsPath === "modelRoles") {
 											this.ctx.settings.setModelRole(targetRole, value);
 										} else {
@@ -2762,7 +2769,7 @@ export class SelectorController {
 							this.ctx.updateEditorBorderColor();
 							await this.ctx.notifyConfigChanged?.();
 							const labels = targetRoles.map(
-								targetRole => GJC_MODEL_ASSIGNMENT_TARGETS[targetRole].tag ?? targetRole.toUpperCase(),
+								targetRole => VIB_MODEL_ASSIGNMENT_TARGETS[targetRole].tag ?? targetRole.toUpperCase(),
 							);
 							this.ctx.showStatus(
 								includesDefault
@@ -2830,14 +2837,14 @@ export class SelectorController {
 							}
 							const value =
 								selectedSelector ?? formatModelSelectorValue(`${model.provider}/${model.id}`, thinkingLevel);
-							const assignments = new Map<GjcModelAssignmentTargetId, string>([[role, value]]);
+							const assignments = new Map<VibModelAssignmentTargetId, string>([[role, value]]);
 							const materializedProfile = materializeActiveModelProfileAssignments({
 								session: this.ctx.session,
 								settings: this.ctx.settings,
 								assignments,
 							});
 							if (!materializedProfile) {
-								const target = GJC_MODEL_ASSIGNMENT_TARGETS[role];
+								const target = VIB_MODEL_ASSIGNMENT_TARGETS[role];
 								if (target.settingsPath === "modelRoles") {
 									this.ctx.settings.setModelRole(role, value);
 								} else {
@@ -3579,7 +3586,7 @@ export class SelectorController {
 			// Credentials stored locally but not removable locally are broker-managed.
 			if (inventory.length > 0 && removable.length === 0) {
 				this.ctx.showError(
-					`Logout is broker-managed for ${providerId}; run \`gjc auth-broker logout ${providerId}\` on the broker host.`,
+					`Logout is broker-managed for ${providerId}; run \`vib auth-broker logout ${providerId}\` on the broker host.`,
 				);
 				return;
 			}
@@ -3610,7 +3617,7 @@ export class SelectorController {
 	): Promise<void> {
 		if (providerId) {
 			const selectedProviderId = mode === "logout" ? resolveOAuthStorageProvider(providerId) : providerId;
-			const oauthProvider = getOAuthProviders().find(provider => provider.id === selectedProviderId);
+			const oauthProvider = getSelectableOAuthProviders().find(provider => provider.id === selectedProviderId);
 			if (!oauthProvider && !this.ctx.session.modelRegistry.getModelProfiles().has(selectedProviderId)) {
 				this.ctx.showError(`Unknown OAuth provider: ${selectedProviderId}`);
 				return;
@@ -3679,7 +3686,7 @@ export class SelectorController {
 
 		if (mode === "logout") {
 			await this.#refreshOAuthProviderAuthState();
-			const oauthProviders = getOAuthProviders();
+			const oauthProviders = getSelectableOAuthProviders();
 			const loggedInProviders = oauthProviders.filter(provider =>
 				this.ctx.session.modelRegistry.authStorage.hasAuth(provider.id),
 			);

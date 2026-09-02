@@ -2,8 +2,8 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { SqliteAuthCredentialStore } from "@gajae-code/ai";
-import { getAgentDbPath, setAgentDir } from "@gajae-code/utils";
+import { SqliteAuthCredentialStore } from "@vib-rato/ai";
+import { getAgentDbPath, setAgentDir } from "@vib-rato/utils";
 import {
 	buildCredentialAutoImportNotice,
 	CREDENTIAL_AUTO_IMPORT_ROTATION_WARNING,
@@ -46,7 +46,7 @@ describe("discoverExternalCredentials", () => {
 	let homeDir = "";
 
 	beforeEach(async () => {
-		homeDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-cred-discovery-"));
+		homeDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-cred-discovery-"));
 	});
 
 	afterEach(async () => {
@@ -335,14 +335,14 @@ describe("discoverExternalCredentials", () => {
 	});
 
 	// Claude Code and Codex both relocate their own credential file through the
-	// environment, and Orca-style account switchers rely on that redirect. gjc
+	// environment, and Orca-style account switchers rely on that redirect. vib
 	// used to read `~/.claude` / `~/.codex` unconditionally, so it imported the
 	// wrong account whenever the launching shell selected another one.
 	describe("relocated external CLI config roots", () => {
 		let redirectDir = "";
 
 		beforeEach(async () => {
-			redirectDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-cred-redirect-"));
+			redirectDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-cred-redirect-"));
 		});
 
 		afterEach(async () => {
@@ -433,15 +433,15 @@ describe("importCredentials", () => {
 	let originalAgentDir: string | undefined;
 
 	beforeEach(async () => {
-		originalAgentDir = process.env.GJC_AGENT_DIR;
-		homeDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-cred-import-home-"));
-		agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-cred-import-agent-"));
+		originalAgentDir = process.env.VIB_AGENT_DIR;
+		homeDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-cred-import-home-"));
+		agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-cred-import-agent-"));
 		setAgentDir(agentDir);
 	});
 
 	afterEach(async () => {
-		if (originalAgentDir === undefined) delete process.env.GJC_AGENT_DIR;
-		else process.env.GJC_AGENT_DIR = originalAgentDir;
+		if (originalAgentDir === undefined) delete process.env.VIB_AGENT_DIR;
+		else process.env.VIB_AGENT_DIR = originalAgentDir;
 		await fs.rm(homeDir, { recursive: true, force: true });
 		await fs.rm(agentDir, { recursive: true, force: true });
 	});
@@ -609,10 +609,10 @@ describe("auto-import OAuth filter and orchestrator", () => {
 	test("notice is emitted only when imported and includes exact rotation warning", () => {
 		expect(buildCredentialAutoImportNotice({ imported: [] })).toBeUndefined();
 		const notice = buildCredentialAutoImportNotice({ imported: [oauthCredential()] });
-		expect(notice).toContain("Imported 1 external OAuth credential(s) into gjc");
+		expect(notice).toContain("Imported 1 external OAuth credential(s) into vib");
 		expect(notice).toContain(CREDENTIAL_AUTO_IMPORT_ROTATION_WARNING);
 		expect(CREDENTIAL_AUTO_IMPORT_ROTATION_WARNING).toBe(
-			"Refreshing in gjc may log out the Claude/Codex CLI because OAuth refresh tokens can rotate.",
+			"Refreshing in vib may log out the Claude/Codex CLI because OAuth refresh tokens can rotate.",
 		);
 	});
 

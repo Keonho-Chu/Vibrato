@@ -1,13 +1,13 @@
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { isEnoent } from "@gajae-code/utils";
-import type { GcCollectResult, GcContext, GcError, GcRecord, GcStoreAdapter } from "../gjc-runtime/gc-runtime";
+import { isEnoent } from "@vib-rato/utils";
+import type { GcCollectResult, GcContext, GcError, GcRecord, GcStoreAdapter } from "../vib-runtime/gc-runtime";
 
 /**
  * GC for `local://` session roots.
  *
- * `resolveLocalRoot` gives every session its own `<tmp>/gjc-local/<session-id>`
+ * `resolveLocalRoot` gives every session its own `<tmp>/vib-local/<session-id>`
  * directory, and the first `local://` resolution seeds it with a migration
  * marker. Nothing ever removes those directories, so a machine accumulates one
  * per session indefinitely — and the overwhelming majority only ever hold the
@@ -19,13 +19,13 @@ import type { GcCollectResult, GcContext, GcError, GcRecord, GcStoreAdapter } fr
  * started is still inside its grace window.
  */
 
-const LOCAL_ROOT_PARENT = "gjc-local";
-const LEGACY_MIGRATION_MARKER = ".gjc-local-legacy-migrated-v1";
+const LOCAL_ROOT_PARENT = "vib-local";
+const LEGACY_MIGRATION_MARKER = ".vib-local-legacy-migrated-v1";
 
 /** Directories younger than this are left alone so a live session is never raced. */
 const GRACE_MS = 24 * 60 * 60 * 1000;
 
-/** Bound the scan so a pathological directory cannot stall `gjc gc`. */
+/** Bound the scan so a pathological directory cannot stall `vib gc`. */
 const MAX_ENTRIES = 20_000;
 
 function localRootParent(env: NodeJS.ProcessEnv): string {

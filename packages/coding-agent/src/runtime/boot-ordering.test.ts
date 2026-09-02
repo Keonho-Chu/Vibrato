@@ -51,7 +51,7 @@ describe("legacy memory startup ordering", () => {
 		const settings = Settings.isolated({ "memory.backend": "off" });
 		const injected = markerMemoryService(markers);
 		const runtimeServices = createOptionalRuntimeServices(settings, { memoryBackend: injected });
-		const agentDir = await mkdtemp(join(tmpdir(), "gjc-vb001-boot-"));
+		const agentDir = await mkdtemp(join(tmpdir(), "vib-vb001-boot-"));
 		let session: Awaited<ReturnType<typeof createAgentSession>>["session"] | undefined;
 		try {
 			const result = await createAgentSession({
@@ -93,7 +93,7 @@ describe("legacy memory startup ordering", () => {
 		const settings = Settings.isolated({ "memory.backend": "off" });
 		const injected = markerMemoryService(markers, startFailure);
 		const runtimeServices = createOptionalRuntimeServices(settings, { memoryBackend: injected });
-		const agentDir = await mkdtemp(join(tmpdir(), "gjc-vb001-start-failure-"));
+		const agentDir = await mkdtemp(join(tmpdir(), "vib-vb001-start-failure-"));
 		try {
 			await expect(
 				createAgentSession({

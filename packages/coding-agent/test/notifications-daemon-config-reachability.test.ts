@@ -17,7 +17,7 @@ import { createLightweightDaemonSettings, loadLightweightDaemonSettings } from "
 // full Settings class. These tests prove the rich setting survives that reduced
 // path end-to-end (raw YAML object -> getNotificationConfig.rich).
 function cfgFromRaw(rawConfig: unknown) {
-	const settings = createLightweightDaemonSettings({ agentDir: "/tmp/gjc-rich-config", rawConfig });
+	const settings = createLightweightDaemonSettings({ agentDir: "/tmp/vib-rich-config", rawConfig });
 	return getNotificationConfig(settings);
 }
 
@@ -124,7 +124,7 @@ describe("notifications daemon config reachability (btw)", () => {
 	});
 	test("rejects malformed global roots and quarantines malformed Telegram containers", () => {
 		for (const rawConfig of [true, { notifications: true }]) {
-			expect(() => cfgFromRaw(rawConfig)).toThrow("gjc_notify_daemon_invalid_configuration");
+			expect(() => cfgFromRaw(rawConfig)).toThrow("vib_notify_daemon_invalid_configuration");
 		}
 		for (const [rawConfig, pathName] of [
 			[{ notifications: { telegram: [] } }, "notifications.telegram"],
@@ -137,12 +137,12 @@ describe("notifications daemon config reachability (btw)", () => {
 	});
 	test("explicit malformed idle timeout throws instead of silently defaulting", () => {
 		expect(() => cfgFromRaw({ notifications: { daemon: { idleTimeoutMs: 0 } } })).toThrow(
-			"gjc_notify_daemon_invalid_configuration",
+			"vib_notify_daemon_invalid_configuration",
 		);
 	});
 
 	test("persists, reloads, and re-enables btw without exposing notification secrets", async () => {
-		const agentDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-btw-set-"));
+		const agentDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-btw-set-"));
 		const configPath = path.join(agentDir, "config.yml");
 		fs.writeFileSync(
 			configPath,
@@ -206,7 +206,7 @@ describe("notifications daemon config reachability (providers)", () => {
 
 describe("lightweight daemon settings set() persists via lock + partial merge", () => {
 	test("flips rich.enabled and preserves unrelated keys, including a concurrent write", async () => {
-		const agentDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-rich-set-"));
+		const agentDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-rich-set-"));
 		const configPath = path.join(agentDir, "config.yml");
 		fs.writeFileSync(
 			configPath,

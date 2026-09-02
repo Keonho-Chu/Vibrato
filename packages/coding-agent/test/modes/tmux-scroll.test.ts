@@ -24,7 +24,7 @@ describe("scrollTmuxToPreviousUserInput", () => {
 	it("enters copy mode and searches backward for the user-message label in the current pane", () => {
 		const calls: string[][] = [];
 		const env: NodeJS.ProcessEnv = {
-			GJC_TMUX_COMMAND: "tmux-test",
+			VIB_TMUX_COMMAND: "tmux-test",
 			TMUX: "/tmp/tmux-501/default,123,0",
 			TMUX_PANE: "%7",
 		};
@@ -44,7 +44,7 @@ describe("scrollTmuxToPreviousUserInput", () => {
 	it("falls back to tmux's current pane when TMUX_PANE is absent", () => {
 		const calls: string[][] = [];
 		const env: NodeJS.ProcessEnv = {
-			GJC_TMUX_COMMAND: "tmux-test",
+			VIB_TMUX_COMMAND: "tmux-test",
 			TMUX: "/tmp/tmux-501/default,123,0",
 		};
 		const result = scrollTmuxToPreviousUserInput(env, (command, args) => {
@@ -62,7 +62,7 @@ describe("scrollTmuxToPreviousUserInput", () => {
 
 	it("returns the tmux stderr from the failing step", () => {
 		const env: NodeJS.ProcessEnv = {
-			GJC_TMUX_COMMAND: "tmux-test",
+			VIB_TMUX_COMMAND: "tmux-test",
 			TMUX: "/tmp/tmux-501/default,123,0",
 			TMUX_PANE: "%7",
 		};

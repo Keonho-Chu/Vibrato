@@ -12,7 +12,7 @@ import {
 const tempDirs: string[] = [];
 
 async function tempRoot(): Promise<string> {
-	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-coordinator-policy-"));
+	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-coordinator-policy-"));
 	tempDirs.push(dir);
 	return dir;
 }
@@ -25,18 +25,18 @@ describe("Hermes MCP safety policy", () => {
 	it("defaults to read-only with a deterministic local state root when no session env exists", () => {
 		const config = buildCoordinatorMcpConfig({});
 
-		expect(config.stateRoot).toBe(path.join(process.cwd(), ".gjc", "state", "coordinator-mcp"));
+		expect(config.stateRoot).toBe(path.join(process.cwd(), ".vib", "state", "coordinator-mcp"));
 		expect(config.mutationClasses.size).toBe(0);
 		expect(config.namespace.profile).toBeNull();
 		expect(config.namespace.repo).toBeNull();
 		expect(config.artifactByteCap).toBe(65536);
 	});
 
-	it("scopes the default state root to GJC_SESSION_ID when present", () => {
-		const config = buildCoordinatorMcpConfig({ GJC_SESSION_ID: "coordinator-policy-test-session" });
+	it("scopes the default state root to VIB_SESSION_ID when present", () => {
+		const config = buildCoordinatorMcpConfig({ VIB_SESSION_ID: "coordinator-policy-test-session" });
 
 		expect(config.stateRoot).toContain(
-			path.join(".gjc", "_session-coordinator-policy-test-session", "state", "coordinator-mcp"),
+			path.join(".vib", "_session-coordinator-policy-test-session", "state", "coordinator-mcp"),
 		);
 		expect(config.mutationClasses.size).toBe(0);
 		expect(config.namespace.profile).toBeNull();
@@ -46,8 +46,8 @@ describe("Hermes MCP safety policy", () => {
 
 	it("requires startup mutation opt-in and per-call allow_mutation", () => {
 		const config = buildCoordinatorMcpConfig({
-			GJC_SESSION_ID: "coordinator-policy-test-session",
-			GJC_COORDINATOR_MCP_MUTATIONS: "sessions,reports",
+			VIB_SESSION_ID: "coordinator-policy-test-session",
+			VIB_COORDINATOR_MCP_MUTATIONS: "sessions,reports",
 		});
 
 		expect(() => requireCoordinatorMutation(config, "sessions", { allow_mutation: false })).toThrow(
@@ -63,8 +63,8 @@ describe("Hermes MCP safety policy", () => {
 		const root = await tempRoot();
 		const outside = await tempRoot();
 		const config = buildCoordinatorMcpConfig({
-			GJC_SESSION_ID: "coordinator-policy-test-session",
-			GJC_COORDINATOR_MCP_WORKDIR_ROOTS: root,
+			VIB_SESSION_ID: "coordinator-policy-test-session",
+			VIB_COORDINATOR_MCP_WORKDIR_ROOTS: root,
 		});
 
 		await expect(assertCoordinatorWorkdir(config, path.join(root, "child"))).resolves.toBe(path.join(root, "child"));
@@ -76,13 +76,13 @@ describe("Hermes MCP safety policy", () => {
 		);
 	});
 
-	it("authorizes GJC-managed repository-local worktrees under the repository bucket", async () => {
+	it("authorizes Vibrato-managed repository-local worktrees under the repository bucket", async () => {
 		const root = await tempRoot();
 		const bucket = path.join(root, ".worktrees");
 		const worktree = path.join(bucket, "feature-session");
 		await fs.mkdir(worktree, { recursive: true });
 		const config = buildCoordinatorMcpConfig({
-			GJC_COORDINATOR_MCP_WORKDIR_ROOTS: root,
+			VIB_COORDINATOR_MCP_WORKDIR_ROOTS: root,
 		});
 
 		await expect(assertCoordinatorWorkdir(config, worktree)).resolves.toBe(worktree);
@@ -94,8 +94,8 @@ describe("Hermes MCP safety policy", () => {
 		const worktree = path.join(bucket, "configured-session");
 		await fs.mkdir(worktree);
 		const config = buildCoordinatorMcpConfig({
-			GJC_COORDINATOR_MCP_WORKDIR_ROOTS: root,
-			GJC_WORKTREE_DIR: bucket,
+			VIB_COORDINATOR_MCP_WORKDIR_ROOTS: root,
+			VIB_WORKTREE_DIR: bucket,
 		});
 
 		await expect(assertCoordinatorWorkdir(config, worktree)).resolves.toBe(worktree);
@@ -110,9 +110,9 @@ describe("Hermes MCP safety policy", () => {
 		await Bun.write(path.join(outside, "secret.txt"), "secret");
 		await fs.symlink(path.join(outside, "secret.txt"), escapedLink);
 		const config = buildCoordinatorMcpConfig({
-			GJC_SESSION_ID: "coordinator-policy-test-session",
-			GJC_COORDINATOR_MCP_WORKDIR_ROOTS: root,
-			GJC_COORDINATOR_MCP_ARTIFACT_BYTE_CAP: "3",
+			VIB_SESSION_ID: "coordinator-policy-test-session",
+			VIB_COORDINATOR_MCP_WORKDIR_ROOTS: root,
+			VIB_COORDINATOR_MCP_ARTIFACT_BYTE_CAP: "3",
 		});
 
 		const safe = await assertCoordinatorArtifactPath(config, safeFile);
@@ -132,8 +132,8 @@ describe("Hermes MCP safety policy", () => {
 		await fs.rm(parent, { recursive: true });
 		await fs.symlink(outside, parent);
 		const config = buildCoordinatorMcpConfig({
-			GJC_SESSION_ID: "coordinator-policy-test-session",
-			GJC_COORDINATOR_MCP_WORKDIR_ROOTS: root,
+			VIB_SESSION_ID: "coordinator-policy-test-session",
+			VIB_COORDINATOR_MCP_WORKDIR_ROOTS: root,
 		});
 		await expect(assertCoordinatorArtifactPath(config, path.join(parent, "secret.txt"))).rejects.toThrow(
 			"coordinator_artifact_outside_allowed_roots",

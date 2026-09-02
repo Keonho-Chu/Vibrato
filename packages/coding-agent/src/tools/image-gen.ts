@@ -3,14 +3,14 @@ import * as https from "node:https";
 import * as net from "node:net";
 import * as os from "node:os";
 import * as path from "node:path";
-import { getEnvApiKey, type Model } from "@gajae-code/ai/core";
+import { getEnvApiKey, type Model } from "@vib-rato/ai/core";
 import {
 	CODEX_BASE_URL,
 	getCodexAccountId,
 	OPENAI_HEADER_VALUES,
 	OPENAI_HEADERS,
 	URL_PATHS,
-} from "@gajae-code/ai/providers/openai-codex/constants";
+} from "@vib-rato/ai/providers/openai-codex/constants";
 import {
 	$credentialEnv,
 	isEnoent,
@@ -21,7 +21,7 @@ import {
 	Snowflake,
 	sanitizeHeaderComponent,
 	untilAborted,
-} from "@gajae-code/utils";
+} from "@vib-rato/utils";
 import * as z from "zod/v4";
 import packageJson from "../../package.json" with { type: "json" };
 import { isAuthenticated, type ModelRegistry } from "../config/model-registry";
@@ -917,7 +917,7 @@ async function findAlibabaImageCredentials(
  *
  * `$env` merges the caller's `cwd/.env`, so reading the key there would let
  * repository content supply the credential these image requests authenticate
- * with. Provider credentials resolve from the launching shell plus GJC/user-owned
+ * with. Provider credentials resolve from the launching shell plus Vibrato/user-owned
  * `.env` files, never the project `.env`.
  */
 function googleImageApiKeyFromEnv(): string | undefined {
@@ -1053,7 +1053,7 @@ function getExtensionForMime(mimeType: string): string {
 
 async function saveImageToTemp(image: InlineImageData): Promise<string> {
 	const ext = getExtensionForMime(image.mimeType);
-	const filename = `gjc-image-${Snowflake.next()}.${ext}`;
+	const filename = `vib-image-${Snowflake.next()}.${ext}`;
 	const filepath = path.join(os.tmpdir(), filename);
 	await Bun.write(filepath, Buffer.from(image.data, "base64"));
 	return filepath;
@@ -1583,7 +1583,7 @@ export const imageGenTool: CustomTool<typeof imageGenSchema, ImageGenToolDetails
 				);
 
 				const { getAntigravityUserAgent } =
-					require("@gajae-code/ai/providers/google-gemini-headers") as typeof import("@gajae-code/ai/providers/google-gemini-headers");
+					require("@vib-rato/ai/providers/google-gemini-headers") as typeof import("@vib-rato/ai/providers/google-gemini-headers");
 				const response = await fetchImageProvider(
 					`${ANTIGRAVITY_ENDPOINT}/v1internal:streamGenerateContent?alt=sse`,
 					{
@@ -1664,8 +1664,8 @@ export const imageGenTool: CustomTool<typeof imageGenSchema, ImageGenToolDetails
 						headers: {
 							"Content-Type": "application/json",
 							Authorization: `Bearer ${apiKey.apiKey}`,
-							"HTTP-Referer": "https://gaebal-gajae.dev/",
-							"X-OpenRouter-Title": "Gajae Code",
+							"HTTP-Referer": "https://gaebal-vibrato.dev/",
+							"X-OpenRouter-Title": "Vibrato",
 							"X-OpenRouter-Categories": "cli-agent",
 						},
 						body: JSON.stringify(requestBody),

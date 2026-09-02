@@ -1,7 +1,7 @@
 /**
- * `gjc customize doctor` — provenance-aware customization inspection.
+ * `vib customize doctor` — provenance-aware customization inspection.
  *
- * Answers, for one project: what did GJC discover, which source convention won,
+ * Answers, for one project: what did Vibrato discover, which source convention won,
  * what is disabled/shadowed/rejected/quarantined, and why is a tool, skill,
  * hook, extension, command, MCP server, or plugin bundle absent.
  *
@@ -22,7 +22,7 @@ import {
 	getPluginsNodeModules,
 	getPluginsPackageJson,
 	getProjectDir,
-} from "@gajae-code/utils";
+} from "@vib-rato/utils";
 import { type ExtensionModule, extensionModuleCapability } from "../capability/extension-module";
 import { findRepoRoot } from "../capability/fs";
 import { type Hook, hookCapability } from "../capability/hook";
@@ -33,21 +33,21 @@ import { type CustomTool, toolCapability } from "../capability/tool";
 import type { Capability, LoadContext, LoadResult, SourceMeta } from "../capability/types";
 import { Settings, type Settings as SettingsInstance } from "../config/settings";
 import { resolveSkillScopeTrust } from "../config/skill-settings-defaults";
-import { getEmbeddedDefaultGjcSkills } from "../defaults/gjc-defaults";
+import { getEmbeddedDefaultVibSkills } from "../defaults/vib-defaults";
 import { initializeWithSettings, loadCapability } from "../discovery";
 import { inspectClaudeConvention } from "../discovery/claude";
 import { inspectCodexConvention } from "../discovery/codex";
 import { scanSkillsFromDir } from "../discovery/helpers";
-import { summarizeGjcPluginObservability } from "../extensibility/gjc-plugins/observability";
-import { loadEffectiveGjcPluginRegistry } from "../extensibility/gjc-plugins/registry";
 import { getEnabledPlugins } from "../extensibility/plugins/loader";
 import { loadSkills } from "../extensibility/skills";
 import { loadSlashCommands } from "../extensibility/slash-commands";
+import { summarizeVibPluginObservability } from "../extensibility/vib-plugins/observability";
+import { loadEffectiveVibPluginRegistry } from "../extensibility/vib-plugins/registry";
 import { loadAllMCPConfigs } from "../runtime-mcp/config";
 import { readDisabledServers } from "../runtime-mcp/config-writer";
 import { canonicalizeMCPEndpoint } from "../runtime-mcp/pool-key";
 import { redactMCPEndpoint } from "../runtime-mcp/redaction";
-import { CANONICAL_GJC_WORKFLOW_SKILLS } from "../skill-state/canonical-skills";
+import { CANONICAL_VIB_WORKFLOW_SKILLS } from "../skill-state/canonical-skills";
 import { expandTilde } from "../tools/path-utils";
 
 // =============================================================================
@@ -60,17 +60,17 @@ export type CustomizeSurfaceKind = "mcp" | "skill" | "hook" | "tool" | "extensio
  * Provenance class of a discovered item — the reusable read model for the
  * `/extensions` surface (#4291) and CI/setup tooling.
  *
- * - `canonical`: project/global `.gjc` entries and GJC bundled defaults — the
+ * - `canonical`: project/global `.vib` entries and Vibrato bundled defaults — the
  *   primary load path and the persisted authority for sessions.
  * - `convention`: items from registered non-native conventions that are part of
  *   the discovery load path (claude-plugins, claude/codex hooks, agents,
  *   cursor, gemini, opencode, windsurf, cline, github, mcp-json, ssh).
  * - `import-candidate`: Claude Code / Codex project (+ global) files on
- *   surfaces GJC deliberately never loads. Reported for provenance only; never
+ *   surfaces Vibrato deliberately never loads. Reported for provenance only; never
  *   active runtime authority. Candidates for a future import flow (#4291).
  * - `imported`: items carrying explicit import provenance (reserved; no import
  *   command exists yet, so nothing emits this today).
- * - `plugin`: plugin bundles (npm plugin packages + GJC plugin bundles).
+ * - `plugin`: plugin bundles (npm plugin packages + Vibrato plugin bundles).
  */
 export type CustomizeSourceClass = "canonical" | "convention" | "import-candidate" | "imported" | "plugin";
 
@@ -200,7 +200,7 @@ export interface CustomizeDoctorCommandOptions {
 
 const REDACTED = "<redacted>";
 
-const BUILT_IN_SKILL_NAMES = new Set<string>(CANONICAL_GJC_WORKFLOW_SKILLS);
+const BUILT_IN_SKILL_NAMES = new Set<string>(CANONICAL_VIB_WORKFLOW_SKILLS);
 
 const SENSITIVE_KEY_PATTERN =
 	/(?:token|secret|key|credential|password|passwd|pwd|authorization|auth|bearer|cookie|session|apikey)/i;
@@ -218,13 +218,13 @@ const SURFACE_DISPLAY: Record<CustomizeSurfaceKind, string> = {
 };
 
 const SURFACE_DESCRIPTION: Record<CustomizeSurfaceKind, string> = {
-	mcp: "Model Context Protocol server configurations discovered from GJC and other registered conventions",
-	skill: "Skill definitions discovered from GJC and other registered conventions",
-	hook: "Hook files discovered from GJC and other registered conventions",
-	tool: "Custom tool modules discovered from GJC and other registered conventions",
-	extension: "Extension modules discovered from GJC and other registered conventions",
-	command: "Slash command templates discovered from GJC and other registered conventions",
-	"plugin-bundle": "Installed GJC plugin bundles and npm plugin packages",
+	mcp: "Model Context Protocol server configurations discovered from Vibrato and other registered conventions",
+	skill: "Skill definitions discovered from Vibrato and other registered conventions",
+	hook: "Hook files discovered from Vibrato and other registered conventions",
+	tool: "Custom tool modules discovered from Vibrato and other registered conventions",
+	extension: "Extension modules discovered from Vibrato and other registered conventions",
+	command: "Slash command templates discovered from Vibrato and other registered conventions",
+	"plugin-bundle": "Installed Vibrato plugin bundles and npm plugin packages",
 };
 
 /**
@@ -236,7 +236,7 @@ const SOURCE_CLASS_DESCRIPTIONS: Array<{ sourceClass: CustomizeSourceClass; desc
 	{
 		sourceClass: "canonical",
 		description:
-			"Project/global .gjc entries and GJC bundled defaults — the primary, authoritative load path for sessions.",
+			"Project/global .vib entries and Vibrato bundled defaults — the primary, authoritative load path for sessions.",
 	},
 	{
 		sourceClass: "convention",
@@ -246,7 +246,7 @@ const SOURCE_CLASS_DESCRIPTIONS: Array<{ sourceClass: CustomizeSourceClass; desc
 	{
 		sourceClass: "import-candidate",
 		description:
-			"Claude Code / Codex project (and global) files on surfaces GJC deliberately never loads. Reported for provenance as import candidates; never active runtime authority.",
+			"Claude Code / Codex project (and global) files on surfaces Vibrato deliberately never loads. Reported for provenance as import candidates; never active runtime authority.",
 	},
 	{
 		sourceClass: "imported",
@@ -255,7 +255,7 @@ const SOURCE_CLASS_DESCRIPTIONS: Array<{ sourceClass: CustomizeSourceClass; desc
 	},
 	{
 		sourceClass: "plugin",
-		description: "Plugin bundles (npm plugin packages and GJC plugin bundles) contributed by the plugin runtime.",
+		description: "Plugin bundles (npm plugin packages and Vibrato plugin bundles) contributed by the plugin runtime.",
 	},
 ];
 
@@ -283,7 +283,7 @@ function sourceClassFor(provider: string): CustomizeSourceClass {
 		case "bundled":
 			return "canonical";
 		case "plugin":
-		case "gjc-bundle":
+		case "vib-bundle":
 			return "plugin";
 		// "claude"/"codex" items arriving through the registry (hooks) are load-path
 		// participants, so they classify as "convention"; the import-candidate class
@@ -297,7 +297,7 @@ function conventionForProvider(provider: string): string {
 	switch (provider) {
 		case "native":
 		case "bundled":
-			return "gjc";
+			return "vib";
 		case "claude":
 			return "claude-project";
 		case "claude-plugins":
@@ -562,7 +562,7 @@ async function collectMcps(cwd: string, activeSettings: SettingsInstance): Promi
 				"disabled",
 				"disabled-extension",
 				`MCP server "${entry.name}" is disabled via the disabledExtensions setting.`,
-				["gjc config set disabledExtensions '[]'", "or re-enable it in the extension dashboard"],
+				["vib config set disabledExtensions '[]'", "or re-enable it in the extension dashboard"],
 			);
 		}
 		if (disabledProviders.has(entry.provider)) {
@@ -571,7 +571,7 @@ async function collectMcps(cwd: string, activeSettings: SettingsInstance): Promi
 				"disabled",
 				"disabled-provider",
 				`Provider "${entry.providerName}" is disabled via the disabledProviders setting, so startup ignores this config source.`,
-				["gjc config set disabledProviders '[]'"],
+				["vib config set disabledProviders '[]'"],
 			);
 		}
 		if (entry.shadowed && entry.shadowedBy) {
@@ -581,7 +581,7 @@ async function collectMcps(cwd: string, activeSettings: SettingsInstance): Promi
 				"shadowed-by-precedence",
 				`"${entry.name}" from ${entry.providerName} (priority ${entry.priority}) loses to the same name from ${entry.shadowedBy.provider} (higher priority).`,
 				[
-					`Disable the winning source to let this one load: gjc config set disabledProviders '["${entry.shadowedBy.provider}"]'`,
+					`Disable the winning source to let this one load: vib config set disabledProviders '["${entry.shadowedBy.provider}"]'`,
 					`or rename "${entry.name}" in ${entry.path}`,
 				],
 			);
@@ -619,7 +619,7 @@ async function collectMcps(cwd: string, activeSettings: SettingsInstance): Promi
 			"stored-only",
 			"storage-only",
 			"Discovered but never auto-connected by standalone sessions. Connect it explicitly when you need it.",
-			["Run /mcp connect inside a session", `gjc --mcp-config ${entry.path} to load one exact config file`],
+			["Run /mcp connect inside a session", `vib --mcp-config ${entry.path} to load one exact config file`],
 			{ mcp: safeMcpSummary(server, connectable) },
 		);
 	});
@@ -647,7 +647,7 @@ async function collectSkills(cwd: string, activeSettings: SettingsInstance): Pro
 	const includePatterns = activeSettings.get("skills.includeSkills") ?? [];
 
 	// Exact session-startup consumer (sdk/session.ts): loadSkills only runs when
-	// skills.enabled is true, and only GJC (native) skills survive its filters.
+	// skills.enabled is true, and only Vibrato (native) skills survive its filters.
 	const loadedNames = new Set<string>();
 	if (skillsEnabled) {
 		const result = await loadSkills({
@@ -661,12 +661,12 @@ async function collectSkills(cwd: string, activeSettings: SettingsInstance): Pro
 	const skillScopeNotes: string[] = [];
 	if (!skillsEnabled) {
 		skillScopeNotes.push(
-			"skills.enabled is false: sessions load only the four bundled workflow skills. Enable discovery with `gjc config set skills.enabled true`.",
+			"skills.enabled is false: sessions load only the four bundled workflow skills. Enable discovery with `vib config set skills.enabled true`.",
 		);
 	}
 	if (skillsEnabled && !resolveSkillScopeTrust(activeSettings.getGroup("skills"), "project")) {
 		skillScopeNotes.push(
-			"Project skills are not trusted (skills.trustProjectSkills is false, or legacy skills.enablePiProject is false): project .gjc/skills are not loaded even with skills.enabled true.",
+			"Project skills are not trusted (skills.trustProjectSkills is false, or legacy skills.enablePiProject is false): project .vib/skills are not loaded even with skills.enabled true.",
 		);
 	}
 	if (skillsEnabled && !resolveSkillScopeTrust(activeSettings.getGroup("skills"), "user")) {
@@ -688,7 +688,7 @@ async function collectSkills(cwd: string, activeSettings: SettingsInstance): Pro
 				"disabled",
 				"policy-blocked",
 				"Skill discovery is disabled (skills.enabled is false), so this skill is not loaded by sessions.",
-				["gjc config set skills.enabled true"],
+				["vib config set skills.enabled true"],
 			);
 		}
 		if (entry.extensionId !== undefined && disabledExts.has(entry.extensionId)) {
@@ -697,7 +697,7 @@ async function collectSkills(cwd: string, activeSettings: SettingsInstance): Pro
 				"disabled",
 				"disabled-extension",
 				`Skill "${entry.name}" is disabled via the disabledExtensions setting.`,
-				["gjc config set disabledExtensions '[]'", "or re-enable it in the extension dashboard"],
+				["vib config set disabledExtensions '[]'", "or re-enable it in the extension dashboard"],
 			);
 		}
 		if (disabledProviders.has(entry.provider)) {
@@ -706,7 +706,7 @@ async function collectSkills(cwd: string, activeSettings: SettingsInstance): Pro
 				"disabled",
 				"disabled-provider",
 				`Provider "${entry.providerName}" is disabled via the disabledProviders setting, so startup ignores this config source.`,
-				["gjc config set disabledProviders '[]'"],
+				["vib config set disabledProviders '[]'"],
 			);
 		}
 		if (entry.shadowed && entry.shadowedBy) {
@@ -716,7 +716,7 @@ async function collectSkills(cwd: string, activeSettings: SettingsInstance): Pro
 				"shadowed-by-precedence",
 				`"${entry.name}" from ${entry.providerName} (priority ${entry.priority}) loses to the same name from ${entry.shadowedBy.provider} (higher priority).`,
 				[
-					`Disable the winning source to let this one load: gjc config set disabledProviders '["${entry.shadowedBy.provider}"]'`,
+					`Disable the winning source to let this one load: vib config set disabledProviders '["${entry.shadowedBy.provider}"]'`,
 					`or rename "${entry.name}" in ${entry.path}`,
 				],
 			);
@@ -726,8 +726,8 @@ async function collectSkills(cwd: string, activeSettings: SettingsInstance): Pro
 				base,
 				"ignored",
 				"source-ignored",
-				"GJC loads skills only from .gjc (native) locations. Skills discovered from other agent conventions are deliberately not loaded at session startup.",
-				[`Move the skill under .gjc/skills/<name>/SKILL.md to make it loadable`],
+				"Vibrato loads skills only from .vib (native) locations. Skills discovered from other agent conventions are deliberately not loaded at session startup.",
+				[`Move the skill under .vib/skills/<name>/SKILL.md to make it loadable`],
 			);
 		}
 		if (BUILT_IN_SKILL_NAMES.has(entry.name)) {
@@ -735,7 +735,7 @@ async function collectSkills(cwd: string, activeSettings: SettingsInstance): Pro
 				base,
 				"shadowed",
 				"shadowed-by-precedence",
-				`"${entry.name}" is a bundled GJC workflow skill; the bundled definition takes precedence in sessions and this discovered copy is never used (sdk/session.ts withEmbeddedDefaultGjcSkills).`,
+				`"${entry.name}" is a bundled Vibrato workflow skill; the bundled definition takes precedence in sessions and this discovered copy is never used (sdk/session.ts withEmbeddedDefaultVibSkills).`,
 				[`Rename ${entry.path} to make it loadable`],
 				{ precedence: { priority: entry.priority, shadowedBy: { provider: "bundled", scope: "native" } } },
 			);
@@ -749,7 +749,7 @@ async function collectSkills(cwd: string, activeSettings: SettingsInstance): Pro
 				"disabled",
 				"policy-blocked",
 				"Discovered but not present in the session skill list; check skills.ignoredSkills and skills.includeSkills patterns.",
-				["gjc config reset skills.ignoredSkills", "gjc config reset skills.includeSkills"],
+				["vib config reset skills.ignoredSkills", "vib config reset skills.includeSkills"],
 			);
 		}
 		return finalizeItem(
@@ -792,7 +792,7 @@ async function collectSkills(cwd: string, activeSettings: SettingsInstance): Pro
 						"disabled",
 						"policy-blocked",
 						"Skill discovery is disabled (skills.enabled is false), so this skill is not loaded by sessions.",
-						["gjc config set skills.enabled true"],
+						["vib config set skills.enabled true"],
 					),
 				);
 				continue;
@@ -804,7 +804,7 @@ async function collectSkills(cwd: string, activeSettings: SettingsInstance): Pro
 						"disabled",
 						"disabled-extension",
 						`Skill "${skill.name}" is disabled via the disabledExtensions setting.`,
-						["gjc config set disabledExtensions '[]'", "or re-enable it in the extension dashboard"],
+						["vib config set disabledExtensions '[]'", "or re-enable it in the extension dashboard"],
 					),
 				);
 				continue;
@@ -815,7 +815,7 @@ async function collectSkills(cwd: string, activeSettings: SettingsInstance): Pro
 						base,
 						"shadowed",
 						"shadowed-by-precedence",
-						`"${skill.name}" is a bundled GJC workflow skill; the bundled definition takes precedence in sessions and this custom-directory copy is never used (sdk/session.ts withEmbeddedDefaultGjcSkills).`,
+						`"${skill.name}" is a bundled Vibrato workflow skill; the bundled definition takes precedence in sessions and this custom-directory copy is never used (sdk/session.ts withEmbeddedDefaultVibSkills).`,
 						[`Rename ${skill.path} to make it loadable`],
 						{ precedence: { priority: 0, shadowedBy: { provider: "bundled", scope: "native" } } },
 					),
@@ -865,19 +865,19 @@ async function collectSkills(cwd: string, activeSettings: SettingsInstance): Pro
 		}
 	}
 
-	// Bundled GJC workflow skills are a product invariant: sessions always
+	// Bundled Vibrato workflow skills are a product invariant: sessions always
 	// include them, and the bundled definition always wins over any discovered
-	// same-name filesystem skill (sdk/session.ts withEmbeddedDefaultGjcSkills,
+	// same-name filesystem skill (sdk/session.ts withEmbeddedDefaultVibSkills,
 	// extensibility/skills.ts collision warning). Discovered same-name copies
 	// are marked shadowed by the bundled entry above.
-	for (const embedded of getEmbeddedDefaultGjcSkills()) {
+	for (const embedded of getEmbeddedDefaultVibSkills()) {
 		const base: Omit<CustomizeDoctorItem, "status" | "reason" | "detail" | "remediation"> = {
 			name: embedded.name,
 			kind: "skill",
 			sourceClass: "canonical",
-			convention: "gjc",
+			convention: "vib",
 			provider: "bundled",
-			providerName: "GJC Bundled",
+			providerName: "Vibrato Bundled",
 			scope: "native",
 			path: embedded.filePath,
 			trust: TRUST_BY_KIND.skill,
@@ -889,7 +889,7 @@ async function collectSkills(cwd: string, activeSettings: SettingsInstance): Pro
 				base,
 				"loaded",
 				"loaded",
-				"Bundled GJC workflow skill — always available to sessions (product invariant), even when skills.enabled is false, and always takes precedence over any discovered same-name filesystem skill.",
+				"Bundled Vibrato workflow skill — always available to sessions (product invariant), even when skills.enabled is false, and always takes precedence over any discovered same-name filesystem skill.",
 				[],
 			),
 		);
@@ -910,8 +910,8 @@ async function collectHooks(cwd: string, activeSettings: SettingsInstance): Prom
 		nameOf: hook => hook.name,
 		pathOf: hook => hook.path,
 		notExecutedDetail:
-			"Discovered and shown in the extension dashboard, but standalone sessions do not execute hook files. Runtime hooks come from validated GJC plugin bundles.",
-		notExecutedRemediation: ["See `gjc plugin list` for plugin bundles that contribute runtime hooks"],
+			"Discovered and shown in the extension dashboard, but standalone sessions do not execute hook files. Runtime hooks come from validated Vibrato plugin bundles.",
+		notExecutedRemediation: ["See `vib plugin list` for plugin bundles that contribute runtime hooks"],
 	});
 }
 
@@ -920,8 +920,8 @@ async function collectTools(cwd: string, activeSettings: SettingsInstance): Prom
 		nameOf: tool => tool.name,
 		pathOf: tool => tool.path,
 		notExecutedDetail:
-			"Discovered and shown in the extension dashboard, but standalone sessions do not execute custom tool modules. Runtime custom tools come from validated GJC plugin bundles and MCP servers.",
-		notExecutedRemediation: ["See `gjc plugin list` for plugin bundles that contribute runtime tools"],
+			"Discovered and shown in the extension dashboard, but standalone sessions do not execute custom tool modules. Runtime custom tools come from validated Vibrato plugin bundles and MCP servers.",
+		notExecutedRemediation: ["See `vib plugin list` for plugin bundles that contribute runtime tools"],
 	});
 }
 
@@ -930,8 +930,8 @@ async function collectExtensions(cwd: string, activeSettings: SettingsInstance):
 		nameOf: ext => ext.name,
 		pathOf: ext => ext.path,
 		notExecutedDetail:
-			"Discovered and shown in the extension dashboard, but session startup does not load filesystem extension modules. Runtime extensions come from validated GJC plugin bundles.",
-		notExecutedRemediation: ["See `gjc plugin list` for plugin bundles that contribute extensions"],
+			"Discovered and shown in the extension dashboard, but session startup does not load filesystem extension modules. Runtime extensions come from validated Vibrato plugin bundles.",
+		notExecutedRemediation: ["See `vib plugin list` for plugin bundles that contribute extensions"],
 	});
 }
 
@@ -974,7 +974,7 @@ async function collectNotExecutedAtStartup<T extends { _source: SourceMeta }>(
 				"disabled",
 				"disabled-extension",
 				`"${entry.name}" is disabled via the disabledExtensions setting (${entry.extensionId}).`,
-				["gjc config set disabledExtensions '[]'", "or re-enable it in the extension dashboard"],
+				["vib config set disabledExtensions '[]'", "or re-enable it in the extension dashboard"],
 			);
 		}
 		if (disabledProviders.has(entry.provider)) {
@@ -983,7 +983,7 @@ async function collectNotExecutedAtStartup<T extends { _source: SourceMeta }>(
 				"disabled",
 				"disabled-provider",
 				`Provider "${entry.providerName}" is disabled via the disabledProviders setting, so startup ignores this config source.`,
-				["gjc config set disabledProviders '[]'"],
+				["vib config set disabledProviders '[]'"],
 			);
 		}
 		if (entry.shadowed && entry.shadowedBy) {
@@ -993,7 +993,7 @@ async function collectNotExecutedAtStartup<T extends { _source: SourceMeta }>(
 				"shadowed-by-precedence",
 				`"${entry.name}" from ${entry.providerName} (priority ${entry.priority}) loses to the same name from ${entry.shadowedBy.provider} (higher priority).`,
 				[
-					`Disable the winning source to let this one load: gjc config set disabledProviders '["${entry.shadowedBy.provider}"]'`,
+					`Disable the winning source to let this one load: vib config set disabledProviders '["${entry.shadowedBy.provider}"]'`,
 					`or rename "${entry.name}" in ${entry.path}`,
 				],
 			);
@@ -1028,7 +1028,7 @@ async function collectCommands(cwd: string, activeSettings: SettingsInstance): P
 				"disabled",
 				"disabled-extension",
 				`Slash command "${entry.name}" is disabled via the disabledExtensions setting.`,
-				["gjc config set disabledExtensions '[]'", "or re-enable it in the extension dashboard"],
+				["vib config set disabledExtensions '[]'", "or re-enable it in the extension dashboard"],
 			);
 		}
 		if (disabledProviders.has(entry.provider)) {
@@ -1037,7 +1037,7 @@ async function collectCommands(cwd: string, activeSettings: SettingsInstance): P
 				"disabled",
 				"disabled-provider",
 				`Provider "${entry.providerName}" is disabled via the disabledProviders setting, so startup ignores this config source.`,
-				["gjc config set disabledProviders '[]'"],
+				["vib config set disabledProviders '[]'"],
 			);
 		}
 		if (entry.shadowed && entry.shadowedBy) {
@@ -1047,7 +1047,7 @@ async function collectCommands(cwd: string, activeSettings: SettingsInstance): P
 				"shadowed-by-precedence",
 				`"${entry.name}" from ${entry.providerName} (priority ${entry.priority}) loses to the same name from ${entry.shadowedBy.provider} (higher priority).`,
 				[
-					`Disable the winning source to let this one load: gjc config set disabledProviders '["${entry.shadowedBy.provider}"]'`,
+					`Disable the winning source to let this one load: vib config set disabledProviders '["${entry.shadowedBy.provider}"]'`,
 					`or rename "${entry.name}" in ${entry.path}`,
 				],
 			);
@@ -1127,27 +1127,27 @@ async function collectPluginBundles(cwd: string): Promise<CustomizeDoctorSurface
 					"disabled",
 					"disabled-bundle",
 					"Installed npm plugin package that is disabled in plugin runtime config or project overrides.",
-					["gjc plugin enable <name>", "or remove it from plugin-overrides.json disabled list"],
+					["vib plugin enable <name>", "or remove it from plugin-overrides.json disabled list"],
 				),
 			);
 		}
 	}
 
-	// GJC plugin bundles (convention "gjc-bundle") — canonical registry +
+	// Vibrato plugin bundles (convention "vib-bundle") — canonical registry +
 	// observability; never raw locators or config values.
 	// Read-only: migrate:false keeps the doctor from persisting registry
 	// migrations/legacy discovery (startup activation owns those writes).
-	const bundleEntries = await loadEffectiveGjcPluginRegistry(cwd, { migrate: false });
-	const observability = await summarizeGjcPluginObservability(cwd, { migrate: false });
+	const bundleEntries = await loadEffectiveVibPluginRegistry(cwd, { migrate: false });
+	const observability = await summarizeVibPluginObservability(cwd, { migrate: false });
 	const items: CustomizeDoctorItem[] = [...npmItems];
 	for (const entry of bundleEntries) {
 		const base: Omit<CustomizeDoctorItem, "status" | "reason" | "detail" | "remediation"> = {
 			name: entry.name,
 			kind: "plugin-bundle",
 			sourceClass: "plugin",
-			convention: "gjc-bundle",
-			provider: "gjc-bundle",
-			providerName: "GJC Bundle",
+			convention: "vib-bundle",
+			provider: "vib-bundle",
+			providerName: "Vibrato Bundle",
 			scope: entry.scope,
 			path: entry.pluginRoot,
 			trust: TRUST_BY_KIND["plugin-bundle"],
@@ -1160,8 +1160,8 @@ async function collectPluginBundles(cwd: string): Promise<CustomizeDoctorSurface
 					base,
 					"disabled",
 					"disabled-bundle",
-					`GJC plugin bundle "${entry.name}" is disabled in the plugin registry.`,
-					[`gjc plugin enable ${entry.name} --${entry.scope}`],
+					`Vibrato plugin bundle "${entry.name}" is disabled in the plugin registry.`,
+					[`vib plugin enable ${entry.name} --${entry.scope}`],
 				),
 			);
 			continue;
@@ -1177,7 +1177,7 @@ async function collectPluginBundles(cwd: string): Promise<CustomizeDoctorSurface
 					"quarantined",
 					`${quarantined.length} surface(s) of bundle "${entry.name}" are quarantined (${codes}); quarantined surfaces are not activated.`,
 					[
-						`Reinstall the bundle: gjc plugin uninstall ${entry.name} --${entry.scope} && gjc plugin install <source> --${entry.scope}`,
+						`Reinstall the bundle: vib plugin uninstall ${entry.name} --${entry.scope} && vib plugin install <source> --${entry.scope}`,
 						"Quarantine is triggered by file-hash drift or session collisions; verify the installed files",
 					],
 					{ quarantineCode: quarantined[0]?.quarantineCode },
@@ -1195,8 +1195,8 @@ async function collectPluginBundles(cwd: string): Promise<CustomizeDoctorSurface
 				base,
 				"loaded",
 				"loaded",
-				`Enabled GJC plugin bundle with ${surfaces.length} surface(s).${surfaceDetail}`,
-				disabledSurfaceIds.length > 0 ? ["gjc plugin enable <name> --surface <id> to re-enable a surface"] : [],
+				`Enabled Vibrato plugin bundle with ${surfaces.length} surface(s).${surfaceDetail}`,
+				disabledSurfaceIds.length > 0 ? ["vib plugin enable <name> --surface <id> to re-enable a surface"] : [],
 			),
 		);
 	}
@@ -1285,9 +1285,9 @@ function foreignMcpItem(
 		...base,
 		status: "ignored",
 		reason: "source-ignored",
-		detail: `${desc.providerName} project convention (${desc.dirName}/) is not part of the GJC load path; sessions never discover this MCP server.`,
+		detail: `${desc.providerName} project convention (${desc.dirName}/) is not part of the Vibrato load path; sessions never discover this MCP server.`,
 		remediation: [
-			`Move the server definition to .gjc/mcp.json to make it discoverable`,
+			`Move the server definition to .vib/mcp.json to make it discoverable`,
 			"or connect it explicitly via /mcp connect with an exact config file",
 		],
 		mcp: safeMcpSummary(server, false),
@@ -1312,8 +1312,8 @@ function foreignItem(
 		path: filePath,
 		status: "ignored",
 		reason: "source-ignored",
-		detail: `${desc.providerName} project convention (${desc.dirName}/) is not part of the GJC load path; sessions never discover this file.`,
-		remediation: [`Move it to the equivalent .gjc location`, "or install it via a plugin (see `gjc plugin list`)"],
+		detail: `${desc.providerName} project convention (${desc.dirName}/) is not part of the Vibrato load path; sessions never discover this file.`,
+		remediation: [`Move it to the equivalent .vib location`, "or install it via a plugin (see `vib plugin list`)"],
 		trust: TRUST_BY_KIND[kind],
 		restartRequired: restartRequiredFor(kind),
 		precedence: { priority: 0, shadowedBy },
@@ -1323,7 +1323,7 @@ function foreignItem(
 async function collectForeignConventions(cwd: string): Promise<ForeignConventionCollection> {
 	const ctx: LoadContext = { cwd, home: os.homedir(), repoRoot: await findRepoRoot(cwd) };
 	const itemsByKind: Map<CustomizeSurfaceKind, CustomizeDoctorItem[]> = new Map();
-	const policyNote = `${FOREIGN_CONVENTIONS.map(d => d.dirName).join(" and ")} project hooks are discovered by GJC (see the Hooks surface); all other ${FOREIGN_CONVENTIONS.map(d => d.providerName).join(" / ")} project config surfaces (MCP servers, skills, tools, extensions, commands, prompts, settings) are not part of the GJC load path. Those files are reported below as import candidates for provenance but are never discovered by sessions.`;
+	const policyNote = `${FOREIGN_CONVENTIONS.map(d => d.dirName).join(" and ")} project hooks are discovered by Vibrato (see the Hooks surface); all other ${FOREIGN_CONVENTIONS.map(d => d.providerName).join(" / ")} project config surfaces (MCP servers, skills, tools, extensions, commands, prompts, settings) are not part of the Vibrato load path. Those files are reported below as import candidates for provenance but are never discovered by sessions.`;
 
 	for (const desc of FOREIGN_CONVENTIONS) {
 		const inspection = await desc.inspect(ctx);
@@ -1472,7 +1472,7 @@ export async function runCustomizeDoctor(
 			skillScopeNotes,
 			disabledProviders: settings.get("disabledProviders"),
 			mcpNote:
-				"Standalone sessions never auto-connect MCP servers. Discovered servers are connectable on demand via /mcp connect, or with gjc --mcp-config <path>.",
+				"Standalone sessions never auto-connect MCP servers. Discovered servers are connectable on demand via /mcp connect, or with vib --mcp-config <path>.",
 			conventionsNotLoaded: foreignPolicyNote ? [foreignPolicyNote] : [],
 			globalImportCandidateDirs,
 			sourceClasses: SOURCE_CLASS_DESCRIPTIONS,
@@ -1485,7 +1485,7 @@ export async function runCustomizeDoctor(
 
 /**
  * User-home convention directories that exist (global import candidates).
- * GJC never loads these; they are reported so the read model can distinguish
+ * Vibrato never loads these; they are reported so the read model can distinguish
  * project and global Claude/Codex candidate locations.
  */
 async function findGlobalImportCandidateDirs(): Promise<string[]> {
@@ -1538,13 +1538,13 @@ export function renderCustomizeDoctorText(report: CustomizeDoctorReport): string
 	for (const note of report.policy.skillScopeNotes) policyHints.push(note);
 	if (report.policy.disabledProviders.length > 0) {
 		policyHints.push(
-			`Disabled providers: ${report.policy.disabledProviders.join(", ")} — their config sources are ignored at startup. Fix: gjc config set disabledProviders '[]'`,
+			`Disabled providers: ${report.policy.disabledProviders.join(", ")} — their config sources are ignored at startup. Fix: vib config set disabledProviders '[]'`,
 		);
 	}
 	for (const note of report.policy.conventionsNotLoaded) policyHints.push(note);
 	if (report.policy.globalImportCandidateDirs.length > 0) {
 		policyHints.push(
-			`Global import candidate dirs present in home: ${report.policy.globalImportCandidateDirs.join(", ")} — never loaded by GJC sessions.`,
+			`Global import candidate dirs present in home: ${report.policy.globalImportCandidateDirs.join(", ")} — never loaded by Vibrato sessions.`,
 		);
 	}
 	policyHints.push(report.policy.mcpNote);

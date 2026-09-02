@@ -2,13 +2,13 @@ import { afterEach, describe, expect, it } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { AssistantMessage, UserMessage } from "@gajae-code/ai";
-import { exportSessionToHtml } from "@gajae-code/coding-agent/export/html";
+import type { AssistantMessage, UserMessage } from "@vib-rato/ai";
+import { exportSessionToHtml } from "@vib-rato/coding-agent/export/html";
 import {
 	SessionManager,
 	SessionManagerTestHooks,
 	type SessionMessageEntry,
-} from "@gajae-code/coding-agent/session/session-manager";
+} from "@vib-rato/coding-agent/session/session-manager";
 
 const tempDirs: string[] = [];
 afterEach(async () => {
@@ -16,7 +16,7 @@ afterEach(async () => {
 });
 
 function tempRoot(): string {
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-resident-own-"));
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-resident-own-"));
 	tempDirs.push(dir);
 	return dir;
 }

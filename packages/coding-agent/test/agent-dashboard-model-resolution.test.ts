@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import type { Model } from "@gajae-code/ai";
+import type { Model } from "@vib-rato/ai";
 import {
 	resolveAgentCreationModel,
 	updateAgentModelOverride,
-} from "@gajae-code/coding-agent/modes/components/agent-dashboard";
+} from "@vib-rato/coding-agent/modes/components/agent-dashboard";
 
 const availableModel = {
 	provider: "available-provider",

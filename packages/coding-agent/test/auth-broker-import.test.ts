@@ -2,8 +2,8 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { type AuthBrokerServerHandle, AuthStorage, SqliteAuthCredentialStore, startAuthBroker } from "@gajae-code/ai";
-import { getAgentDbPath, setAgentDir } from "@gajae-code/utils";
+import { type AuthBrokerServerHandle, AuthStorage, SqliteAuthCredentialStore, startAuthBroker } from "@vib-rato/ai";
+import { getAgentDbPath, setAgentDir } from "@vib-rato/utils";
 import { runAuthBrokerCommand } from "../src/cli/auth-broker-cli";
 
 const ORIGINAL_STDOUT_WRITE = process.stdout.write.bind(process.stdout);
@@ -23,16 +23,16 @@ describe("auth-broker import (CLIProxyAPI)", () => {
 	let originalAgentDir: string | undefined;
 
 	beforeEach(async () => {
-		originalAgentDir = process.env.GJC_AGENT_DIR;
-		agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-import-agent-"));
-		cliproxyDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-import-cliproxy-"));
+		originalAgentDir = process.env.VIB_AGENT_DIR;
+		agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-import-agent-"));
+		cliproxyDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-import-cliproxy-"));
 		setAgentDir(agentDir);
 	});
 
 	afterEach(async () => {
 		process.stdout.write = ORIGINAL_STDOUT_WRITE;
-		if (originalAgentDir === undefined) delete process.env.GJC_AGENT_DIR;
-		else process.env.GJC_AGENT_DIR = originalAgentDir;
+		if (originalAgentDir === undefined) delete process.env.VIB_AGENT_DIR;
+		else process.env.VIB_AGENT_DIR = originalAgentDir;
 		await fs.rm(agentDir, { recursive: true, force: true });
 		await fs.rm(cliproxyDir, { recursive: true, force: true });
 	});
@@ -43,7 +43,7 @@ describe("auth-broker import (CLIProxyAPI)", () => {
 		return file;
 	}
 
-	test("imports a directory of CLIProxyAPI JSONs and maps types to gjc providers", async () => {
+	test("imports a directory of CLIProxyAPI JSONs and maps types to vib providers", async () => {
 		await writeCliProxyJson("claude-sample.json", {
 			type: "claude",
 			access_token: "claude-access-1",
@@ -197,11 +197,11 @@ describe("auth-broker import (broker-routed)", () => {
 	const savedEnv: Record<string, string | undefined> = {};
 
 	beforeEach(async () => {
-		savedEnv.GJC_AUTH_BROKER_URL = process.env.GJC_AUTH_BROKER_URL;
-		savedEnv.GJC_AUTH_BROKER_TOKEN = process.env.GJC_AUTH_BROKER_TOKEN;
-		agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-import-client-"));
-		brokerAgentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-import-broker-"));
-		cliproxyDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-import-cliproxy-broker-"));
+		savedEnv.VIB_AUTH_BROKER_URL = process.env.VIB_AUTH_BROKER_URL;
+		savedEnv.VIB_AUTH_BROKER_TOKEN = process.env.VIB_AUTH_BROKER_TOKEN;
+		agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-import-client-"));
+		brokerAgentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-import-broker-"));
+		cliproxyDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-import-cliproxy-broker-"));
 		setAgentDir(agentDir);
 
 		brokerStore = await SqliteAuthCredentialStore.open(path.join(brokerAgentDir, "agent.db"));
@@ -213,8 +213,8 @@ describe("auth-broker import (broker-routed)", () => {
 			bearerTokens: [token],
 			disableRefresher: true,
 		});
-		process.env.GJC_AUTH_BROKER_URL = handle.url;
-		process.env.GJC_AUTH_BROKER_TOKEN = token;
+		process.env.VIB_AUTH_BROKER_URL = handle.url;
+		process.env.VIB_AUTH_BROKER_TOKEN = token;
 	});
 
 	afterEach(async () => {
@@ -224,7 +224,7 @@ describe("auth-broker import (broker-routed)", () => {
 		await fs.rm(agentDir, { recursive: true, force: true });
 		await fs.rm(brokerAgentDir, { recursive: true, force: true });
 		await fs.rm(cliproxyDir, { recursive: true, force: true });
-		for (const key of ["GJC_AUTH_BROKER_URL", "GJC_AUTH_BROKER_TOKEN"] as const) {
+		for (const key of ["VIB_AUTH_BROKER_URL", "VIB_AUTH_BROKER_TOKEN"] as const) {
 			if (savedEnv[key] === undefined) delete process.env[key];
 			else process.env[key] = savedEnv[key];
 		}

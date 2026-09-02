@@ -1,19 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as crypto from "node:crypto";
 import * as path from "node:path";
-import { Agent } from "@gajae-code/agent-core";
-import * as compactionModule from "@gajae-code/agent-core/compaction";
-import type { AssistantMessage } from "@gajae-code/ai";
-import { getBundledModel } from "@gajae-code/ai/models";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { loadExtensions } from "@gajae-code/coding-agent/extensibility/extensions/loader";
-import { ExtensionRunner } from "@gajae-code/coding-agent/extensibility/extensions/runner";
-import { AgentSession } from "@gajae-code/coding-agent/session/agent-session";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import * as activeStateModule from "@gajae-code/coding-agent/skill-state/active-state";
-import { getProjectAgentDir, TempDir } from "@gajae-code/utils";
+import { Agent } from "@vib-rato/agent-core";
+import * as compactionModule from "@vib-rato/agent-core/compaction";
+import type { AssistantMessage } from "@vib-rato/ai";
+import { getBundledModel } from "@vib-rato/ai/models";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { loadExtensions } from "@vib-rato/coding-agent/extensibility/extensions/loader";
+import { ExtensionRunner } from "@vib-rato/coding-agent/extensibility/extensions/runner";
+import { AgentSession } from "@vib-rato/coding-agent/session/agent-session";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import * as activeStateModule from "@vib-rato/coding-agent/skill-state/active-state";
+import { getProjectAgentDir, TempDir } from "@vib-rato/utils";
 
 function assistantMessage(stopReason: "stop" | "length" = "stop"): AssistantMessage {
 	return {
@@ -118,15 +118,15 @@ describe("AgentSession workflow recovery continuation (#4560)", () => {
 	}
 
 	async function seedUltragoalPlan(): Promise<void> {
-		const dir = path.join(tempDir.path(), ".gjc", `_session-${session.sessionId}`, "ultragoal");
+		const dir = path.join(tempDir.path(), ".vib", `_session-${session.sessionId}`, "ultragoal");
 		const now = new Date().toISOString();
 		await Bun.write(
 			path.join(dir, "goals.json"),
 			JSON.stringify({
 				version: 1,
 				brief: "b",
-				gjcGoalMode: "aggregate",
-				gjcObjective: "Ship the durable recovery contract",
+				vibGoalMode: "aggregate",
+				vibObjective: "Ship the durable recovery contract",
 				goals: [
 					{
 						id: "G001",
@@ -154,7 +154,7 @@ describe("AgentSession workflow recovery continuation (#4560)", () => {
 
 	async function seedRalplanReview(): Promise<void> {
 		const runId = "review-run";
-		const runDir = path.join(tempDir.path(), ".gjc", `_session-${session.sessionId}`, "plans", "ralplan", runId);
+		const runDir = path.join(tempDir.path(), ".vib", `_session-${session.sessionId}`, "plans", "ralplan", runId);
 		const plan = `Plan the durable recovery contract.\n\n## Accepted Scope\n- recovery projection\n\n## Non-Goals\n- unrelated UI changes\n\n## Acceptance Criteria\n- forced compaction resumes plan review\n`;
 		const artifactPath = path.join(runDir, "stage-01-planner.md");
 		await Bun.write(artifactPath, plan);
@@ -168,13 +168,13 @@ describe("AgentSession workflow recovery continuation (#4560)", () => {
 			})}\n`,
 		);
 		await Bun.write(
-			path.join(tempDir.path(), ".gjc", `_session-${session.sessionId}`, "state", "ralplan-state.json"),
+			path.join(tempDir.path(), ".vib", `_session-${session.sessionId}`, "state", "ralplan-state.json"),
 			JSON.stringify({ run_id: runId, current_phase: "planner", active: true }),
 		);
 	}
 
 	async function seedJoinedCohort(sourceHash: string): Promise<void> {
-		const dir = path.join(tempDir.path(), ".gjc", `_session-${session.sessionId}`, "ultragoal");
+		const dir = path.join(tempDir.path(), ".vib", `_session-${session.sessionId}`, "ultragoal");
 		await Bun.write(
 			path.join(dir, "ledger.jsonl"),
 			`${JSON.stringify({
@@ -188,15 +188,15 @@ describe("AgentSession workflow recovery continuation (#4560)", () => {
 	}
 
 	async function seedUltragoalPlanWithBlockedGoal(): Promise<void> {
-		const dir = path.join(tempDir.path(), ".gjc", `_session-${session.sessionId}`, "ultragoal");
+		const dir = path.join(tempDir.path(), ".vib", `_session-${session.sessionId}`, "ultragoal");
 		const now = new Date().toISOString();
 		await Bun.write(
 			path.join(dir, "goals.json"),
 			JSON.stringify({
 				version: 1,
 				brief: "b",
-				gjcGoalMode: "aggregate",
-				gjcObjective: "Ship the durable recovery contract",
+				vibGoalMode: "aggregate",
+				vibObjective: "Ship the durable recovery contract",
 				goals: [
 					{
 						id: "G001",

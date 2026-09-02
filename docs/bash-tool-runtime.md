@@ -75,7 +75,7 @@ Before execution, the tool allocates an artifact path/id (best-effort) for trunc
 `BashTool` chooses PTY execution only when all are true:
 
 - tool input `pty === true`
-- `GJC_NO_PTY !== "1"`
+- `VIB_NO_PTY !== "1"`
 - tool context has UI (`ctx.hasUI === true` and `ctx.ui` set)
 
 Otherwise it uses non-interactive `executeBash()`.
@@ -183,15 +183,15 @@ When `async.enabled` is true and the call passes `async: true`, `BashTool` start
 
 ### ACP client-terminal retention
 
-When the connected client owns terminal execution, GJC requests the same bounded Bash output contract through `outputByteLimit`:
+When the connected client owns terminal execution, Vibrato requests the same bounded Bash output contract through `outputByteLimit`:
 
 - the default request retains the last 1 KiB; ACP truncates from the beginning at a UTF-8 character boundary,
 - an explicit `tools.artifactTailBytes` value sets that requested tail limit,
-- an explicit `tools.artifactHeadBytes` value omits the client-side byte limit so GJC can receive the complete returned stream, apply local head+tail middle elision, and save the full returned output when artifact storage is available,
-- if the client itself reports `truncated: true`, the returned bytes are already incomplete and GJC does not label an artifact made from that partial value as the full capture,
+- an explicit `tools.artifactHeadBytes` value omits the client-side byte limit so Vibrato can receive the complete returned stream, apply local head+tail middle elision, and save the full returned output when artifact storage is available,
+- if the client itself reports `truncated: true`, the returned bytes are already incomplete and Vibrato does not label an artifact made from that partial value as the full capture,
 - poll updates and timeout output use the same local retention policy; a complete oversized timeout capture is saved before the bounded error is surfaced when artifact storage is available.
 
-For an ACP result where the client reports `truncated: true`, a truncation notice without an `artifact://` link means GJC never received the full stream. Separately, when artifact allocation is unavailable, a complete local capture can remain without a link or diagnostic because SDK allocation wrappers may return an empty value; if an artifact writer/save operation is attempted and fails, it emits a bounded diagnostic without inventing an artifact URI.
+For an ACP result where the client reports `truncated: true`, a truncation notice without an `artifact://` link means Vibrato never received the full stream. Separately, when artifact allocation is unavailable, a complete local capture can remain without a link or diagnostic because SDK allocation wrappers may return an empty value; if an artifact writer/save operation is attempted and fails, it emits a bounded diagnostic without inventing an artifact URI.
 
 ## Result shaping, metadata, and error mapping
 
@@ -250,7 +250,7 @@ This component is wired by `CommandController.handleBashCommand()` and fed from 
 
 | Surface                        | Entry path                                            | PTY eligible                                                         | Live output UX                                                           | Error surfacing                                  |
 | ------------------------------ | ----------------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------ |
-| Interactive tool call          | `BashTool.execute`                                    | Yes, when `pty=true` and UI exists and `GJC_NO_PTY!=1`                | PTY overlay (interactive) or streamed tail updates                       | Tool errors become `toolResult.isError`          |
+| Interactive tool call          | `BashTool.execute`                                    | Yes, when `pty=true` and UI exists and `VIB_NO_PTY!=1`                | PTY overlay (interactive) or streamed tail updates                       | Tool errors become `toolResult.isError`          |
 | Print mode tool call           | `BashTool.execute`                                    | No (no UI context)                                                   | No TUI overlay; output appears in event stream/final assistant text flow | Same tool error mapping                          |
 | ACP tool call (agent tooling)  | `BashTool.execute`                                    | Usually no UI -> non-PTY                                             | Structured protocol events/results                                      | Same tool error mapping                          |
 | Interactive bang command (`!`) | `AgentSession.executeBash` + `BashExecutionComponent` | No (uses executor directly)                                          | Dedicated bash execution component                                       | Controller catches exceptions and shows UI error |

@@ -1,8 +1,8 @@
 import * as syncFs from "node:fs";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import type { AgentState } from "@gajae-code/agent-core";
-import { APP_NAME, isEnoent } from "@gajae-code/utils";
+import type { AgentState } from "@vib-rato/agent-core";
+import { APP_NAME, isEnoent } from "@vib-rato/utils";
 import { getResolvedThemeColors, getThemeExportColors } from "../../modes/theme/theme";
 import { SessionManager } from "../../session/session-manager";
 // Pre-generated template (created by scripts/generate-template.ts at publish time)

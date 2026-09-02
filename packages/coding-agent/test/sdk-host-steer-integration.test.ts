@@ -53,7 +53,7 @@ function createHarness(cwd: string, sessionId: string, sessionFile: string | und
 	};
 	const transport: SessionSdkTransport = {
 		sessionId,
-		stateRoot: path.join(cwd, ".gjc", "state"),
+		stateRoot: path.join(cwd, ".vib", "state"),
 		token: "test-token",
 		sendFrame: (_connectionId, frame) => {
 			const response = frame as Record<string, unknown>;
@@ -82,7 +82,7 @@ function createHarness(cwd: string, sessionId: string, sessionFile: string | und
 			dispatches++;
 			persistedAtDispatch = await fs.readFile(
 				path.join(
-					path.dirname(sessionFile ?? path.join(cwd, ".gjc", "state", `${sessionId}.jsonl`)),
+					path.dirname(sessionFile ?? path.join(cwd, ".vib", "state", `${sessionId}.jsonl`)),
 					".sdk-reconciliation",
 					`${sessionId}.json`,
 				),
@@ -180,7 +180,7 @@ async function query(harness: Harness, id: string, input: Record<string, unknown
 }
 
 test("harness handshake resolves after explicit host progression", async () => {
-	const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-host-steer-handshake-"));
+	const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "vib-host-steer-handshake-"));
 	try {
 		const harness = createHarness(cwd, "handshake-delay", undefined);
 		await harness.start();
@@ -198,7 +198,7 @@ test("harness handshake resolves after explicit host progression", async () => {
 });
 
 test("harness handshake times out, and a late response never satisfies a later emission", async () => {
-	const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-host-steer-timeout-"));
+	const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "vib-host-steer-timeout-"));
 	try {
 		const harness = createHarness(cwd, "handshake-timeout", undefined);
 		await harness.start();
@@ -226,7 +226,7 @@ test("harness handshake times out, and a late response never satisfies a later e
 });
 
 test("harness keeps late responses fenced across repeated bounded-load emissions", async () => {
-	const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-host-steer-stress-"));
+	const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "vib-host-steer-stress-"));
 	try {
 		const harness = createHarness(cwd, "handshake-stress", undefined);
 		await harness.start();
@@ -262,7 +262,7 @@ test("harness keeps late responses fenced across repeated bounded-load emissions
 });
 
 test("production SDK host correlates durable steer replay and restart without redispatch", async () => {
-	const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-host-steer-"));
+	const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "vib-host-steer-"));
 	try {
 		const sessionId = "host-steer-oracle";
 		const sessionFile = path.join(cwd, "sessions", "session.jsonl");
@@ -324,7 +324,7 @@ test("production SDK host correlates durable steer replay and restart without re
 });
 
 test("production SDK host persists steer reconciliation under state root when session file is undefined", async () => {
-	const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-host-steer-state-root-"));
+	const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "vib-host-steer-state-root-"));
 	try {
 		const sessionId = "in-memory-host-steer";
 		const harness = createHarness(cwd, sessionId, undefined);
@@ -332,7 +332,7 @@ test("production SDK host persists steer reconciliation under state root when se
 		const accepted = await control(harness, "accept", "private steer text", "state-root-ref");
 		expect(accepted).toMatchObject({ ok: true, result: { accepted: true, clientRef: "state-root-ref" } });
 		const persisted = await fs.readFile(
-			path.join(cwd, ".gjc", "state", ".sdk-reconciliation", `${sessionId}.json`),
+			path.join(cwd, ".vib", "state", ".sdk-reconciliation", `${sessionId}.json`),
 			"utf8",
 		);
 		expect(persisted).toContain('"status":"accepted"');

@@ -2,6 +2,19 @@
 
 This document describes how the coding-agent currently loads models, applies overrides, resolves credentials, and chooses models at runtime.
 
+## Supported providers
+
+Vibrato exposes exactly four providers on every selection surface — `/login`, `/model`, `/provider`, provider ordering, model-profile presets, and `vib setup provider --preset` — plus `vib setup provider`'s CLI help:
+
+| Provider id | What it is |
+| --- | --- |
+| `anthropic` | Claude, via Claude Pro/Max OAuth (`/login anthropic`) or `ANTHROPIC_API_KEY`. |
+| `openai-codex` / `openai-codex-device` | OpenAI Codex, via ChatGPT Plus/Pro OAuth (browser or device-code login). |
+| `vllm` | A self-hosted vLLM server, OpenAI-compatible, keyless by default. |
+| `sglang` | A self-hosted SGLang server, OpenAI-compatible, keyless by default. |
+
+The allowlist lives in `packages/coding-agent/src/config/provider-allowlist.ts` and is not user-configurable. Every other built-in provider (OpenAI API, Google, Bedrock, OpenRouter, xAI, Mistral, MiniMax, GLM, Kimi, Cursor, Copilot, OpenCode Go, GOAT, ClinePass, LM Studio, Ollama, oMLX, and the rest of the catalog below) still ships and can still be reached, but only through a user-authored custom provider entry in `~/.vib/agent/models.yml` — its transport, discovery, and auth-resolution machinery are unchanged; only the built-in id is hidden from the pickers described above. This document otherwise describes the full underlying `models.yml` mechanism, including provider ids and presets that are no longer offered as built-in selections — treat any section that names a hidden provider as "how to reproduce this yourself with a custom `models.yml` entry," not as a built-in option you can pick from a menu.
+
 ## What controls model behavior
 
 Primary implementation files:
@@ -16,7 +29,7 @@ Primary implementation files:
 
 Default config path:
 
-- `~/.gjc/agent/models.yml`
+- `~/.vib/agent/models.yml`
 
 Legacy behavior still present:
 
@@ -121,7 +134,7 @@ modelBindings:
 
 ### First-class DeepInfra, Azure OpenAI, and Amazon Bedrock examples
 
-Azure OpenAI uses canonical OpenAI model IDs in GJC and resolves those IDs to Azure deployment names at request time. Set `AZURE_OPENAI_DEPLOYMENT_NAME_MAP` to avoid assuming model id equals deployment name:
+Azure OpenAI uses canonical OpenAI model IDs in Vibrato and resolves those IDs to Azure deployment names at request time. Set `AZURE_OPENAI_DEPLOYMENT_NAME_MAP` to avoid assuming model id equals deployment name:
 
 ```yaml
 providers:
@@ -138,7 +151,7 @@ providers:
 export AZURE_OPENAI_DEPLOYMENT_NAME_MAP='gpt-4.1=gpt-41-prod,o3=o3-reasoning-prod'
 ```
 
-DeepInfra is available as the first-class `deepinfra` provider. It uses DeepInfra's OpenAI-compatible Chat Completions endpoint and reads `DEEPINFRA_API_KEY` when no explicit config key is provided. Set `serviceTier: priority` in GJC config or use the runtime service-tier controls to send DeepInfra's `service_tier: "priority"` request field for supported models:
+DeepInfra is available as the first-class `deepinfra` provider. It uses DeepInfra's OpenAI-compatible Chat Completions endpoint and reads `DEEPINFRA_API_KEY` when no explicit config key is provided. Set `serviceTier: priority` in Vibrato config or use the runtime service-tier controls to send DeepInfra's `service_tier: "priority"` request field for supported models:
 
 ```yaml
 providers:
@@ -152,7 +165,7 @@ providers:
 
 #### `/fast` provider support
 
-`/fast on` only shows `⚡` when GJC will put a fast/priority field on the selected provider's wire request:
+`/fast on` only shows `⚡` when Vibrato will put a fast/priority field on the selected provider's wire request:
 
 | Provider ID | Wire request | Notes |
 |---|---|---|
@@ -173,7 +186,7 @@ providers:
       supportsServiceTier: true
 ```
 
-Without that capability, `/fast status` shows `off` even when the session retains an unscoped `priority` intent. The `⚡` indicator means that GJC sends the provider's fast request field. API-key providers may report a downgrade in their response; ChatGPT-authenticated Codex and OpenCodex route Fast server-side and cannot be verified from the final `service_tier` value.
+Without that capability, `/fast status` shows `off` even when the session retains an unscoped `priority` intent. The `⚡` indicator means that Vibrato sends the provider's fast request field. API-key providers may report a downgrade in their response; ChatGPT-authenticated Codex and OpenCodex route Fast server-side and cannot be verified from the final `service_tier` value.
 
 Amazon Bedrock uses the native `bedrock-converse-stream` transport and AWS credential chain auth. Do not put AWS access keys in `models.yml`; configure `AWS_REGION` / `AWS_PROFILE` or standard static AWS credential environment variables instead:
 
@@ -189,61 +202,57 @@ providers:
 
 ### Coding-plan provider presets
 
-For supported coding-plan providers, prefer presets so the API type, base URL, environment variable, model catalog, discovery behavior, and compatibility flags are written together:
+`vib setup provider --preset` is reduced to the two self-hosted runtime presets, `vllm` and `sglang`. Both are parameterized: `--base-url` is required, and the credential comes from `VLLM_API_KEY` / `SGLANG_API_KEY` (or a pasted value during interactive setup) rather than from a hardcoded env-var name per plan.
 
 ```sh
-gjc setup provider --preset minimax
-gjc setup provider --preset minimax-cn
-gjc setup provider --preset glm
-gjc setup provider --preset alibaba-token-plan
-gjc setup provider --preset cline-pass
-gjc setup provider --preset commandcode-goat
+vib setup provider --preset vllm --base-url http://127.0.0.1:8000/v1
+vib setup provider --preset sglang --base-url http://127.0.0.1:30000/v1
 ```
 
-The same presets are available inside the TUI:
+The same presets are available inside the TUI, either through the automatic first-run provider onboarding menu or any time via `/provider`:
 
 ```text
-/provider add --preset minimax
-/provider add --preset glm
-/provider add zai
-/provider add --preset alibaba-token-plan
-/provider add --preset cline-pass
-/provider add --preset commandcode-goat
+/provider add --preset vllm --base-url http://127.0.0.1:8000/v1
+/provider add --preset sglang --base-url http://127.0.0.1:30000/v1
 ```
 
-Presets only write `models.yml` entries that reference documented environment variable names (`MINIMAX_CODE_API_KEY`, `MINIMAX_CODE_CN_API_KEY`, `ZAI_API_KEY`, `ALIBABA_TOKEN_PLAN_API_KEY`, `CLINE_API_KEY`, or `CMD_API_KEY`); they do not store or validate real credentials. The GLM preset aliases (`glm`, `zai`, `z-ai`) write an OpenAI-compatible custom provider named `glm-proxy` and do not replace the first-class `zai` provider. The Alibaba Token Plan preset (aliases: `alibaba`, `token-plan`) writes an OpenAI-compatible custom provider named `alibaba-token-plan` with per-model API routing. The ClinePass preset (aliases: `clinepass`, `cline`) does not hardcode models: Cline's inference API has no working `/models` route, so GJC follows Cline's own catalog-generation source and fetches the live `cline-pass` provider catalog from `https://models.dev/api.json`. The Command Code GOAT preset (aliases: `commandcode`, `command-code`, `goat`) fetches its live `/provider/v1/models` catalog, keeps every current or future model—including Claude-named IDs—on the provider's documented OpenAI-compatible `/chat/completions` transport, and requires a fixed harmless inference entitlement probe before login persistence. Create the corresponding API key in the provider dashboard before inference; plan entitlement is enforced by the provider.
+Both presets write an OpenAI-compatible provider entry with live model discovery against the server's `/v1/models`, including `max_model_len`; see [Implicit vLLM discovery](#implicit-vllm-discovery) and [Implicit SGLang discovery](#implicit-sglang-discovery) below for the equivalent zero-config behavior when the server is already running on its default loopback address.
+
+Every other coding-plan preset that used to ship here (`minimax`, `minimax-cn`, `glm`, `alibaba-token-plan`, `cline-pass`, `commandcode-goat`, and the rest) has been removed from `vib setup provider --preset` and `/provider add --preset` because its target provider is outside the current [allowlist](#supported-providers). The underlying provider transports are unaffected — hand-author the equivalent `providers:` block in `models.yml` yourself (see the [OpenAI-compatible proxy configuration](#openai-compatible-proxy-configuration) examples below) if you need one of them; it will work exactly as it did before, it will simply never appear in a picker or preset list.
 
 ## Signed remote preset registry
 
-GJC ships its embedded model metadata and profiles as an immutable bootstrap fallback, then overlays a separately published signed registry before applying local configuration:
+Vibrato ships its embedded model metadata and profiles as an immutable bootstrap fallback, then overlays a separately published signed registry before applying local configuration:
 
 1. embedded model presets and profiles
-2. the last accepted `Yeachan-Heo/gajae-code-presets` registry snapshot
-3. user `~/.gjc/agent/models.yml` entries and overrides
+2. the last accepted `Keonho-Chu/Vibrato-presets` registry snapshot
+3. user `~/.vib/agent/models.yml` entries and overrides
 
 Local user configuration always wins. Registry refresh never writes `models.yml`, and a failed, partial, oversized, incompatible, downgraded, equivocated, digest-mismatched, or untrusted update never replaces the active snapshot. Startup reads only the verified local cache and does not wait for network I/O; a delayed best-effort refresh runs at a bounded cadence. Offline cold starts use embedded data, while offline warm starts use the last-known-good accepted snapshot.
 
-The registry manifest is canonical JSON signed with a compiled Ed25519 trust root. Signatures are 64-byte Ed25519 values encoded as canonical RFC 4648 Base64; unused padding bits must be zero, so two encodings of the same signature cannot produce distinct anti-equivocation digests. The signed payload binds the monotonic revision, consumer-contract compatibility, immutable revision paths, exact byte counts, SHA-256 digests, source commit provenance, snapshot, profile data, and credential-free model metadata. GJC sends no cookies, authorization headers, API keys, or provider credentials when fetching it. Registry schemas do not permit endpoints, request headers, credentials, environment references, commands, scripts, or arbitrary executable content. Selectors, preset identifiers, display text, and context-promotion targets reject Unicode format controls. Registry provider IDs are slash-free (`[a-z0-9][a-z0-9._-]*`), matching profile `requiredProviders` and the first-slash selector boundary used at runtime.
+The registry manifest is canonical JSON signed with a compiled Ed25519 trust root. Signatures are 64-byte Ed25519 values encoded as canonical RFC 4648 Base64; unused padding bits must be zero, so two encodings of the same signature cannot produce distinct anti-equivocation digests. The signed payload binds the monotonic revision, consumer-contract compatibility, immutable revision paths, exact byte counts, SHA-256 digests, source commit provenance, snapshot, profile data, and credential-free model metadata. Vibrato sends no cookies, authorization headers, API keys, or provider credentials when fetching it. Registry schemas do not permit endpoints, request headers, credentials, environment references, commands, scripts, or arbitrary executable content. Selectors, preset identifiers, display text, and context-promotion targets reject Unicode format controls. Registry provider IDs are slash-free (`[a-z0-9][a-z0-9._-]*`), matching profile `requiredProviders` and the first-slash selector boundary used at runtime.
 
 Administrative commands:
 
 ```sh
-gjc models presets status [--json]
-gjc models presets refresh [--json]
-gjc models presets rollback <accepted-revision> [--json]
-gjc models presets pin <accepted-revision> [--json]
-gjc models presets unpin [--json]
-gjc models presets disable [--json]
-gjc models presets enable [--json]
+vib models presets status [--json]
+vib models presets refresh [--json]
+vib models presets rollback <accepted-revision> [--json]
+vib models presets pin <accepted-revision> [--json]
+vib models presets unpin [--json]
+vib models presets disable [--json]
+vib models presets enable [--json]
 ```
 
-`status` reports deterministic, credential-free provenance: active and highest-seen revisions, manifest/snapshot/profile/preset digests, signature key id, source GJC commit, accepted/published/check timestamps, retained removed entries, cache health, history, and pin/disable state. Rollback and pin can select only previously verified retained revisions; neither lowers the highest-seen anti-rollback floor, and selected generations are protected from bounded-history eviction. A rollback remains selected across background refreshes until another rollback/pin is chosen or `unpin` returns selection to the highest accepted revision. When a registry revision removes a profile, GJC retains that profile plus only the removed model metadata and dynamic-provider declarations it references so an existing default/current selection remains usable without unboundedly copying the whole prior catalog.
+`status` reports deterministic, credential-free provenance: active and highest-seen revisions, manifest/snapshot/profile/preset digests, signature key id, source Vibrato commit, accepted/published/check timestamps, retained removed entries, cache health, history, and pin/disable state. Rollback and pin can select only previously verified retained revisions; neither lowers the highest-seen anti-rollback floor, and selected generations are protected from bounded-history eviction. A rollback remains selected across background refreshes until another rollback/pin is chosen or `unpin` returns selection to the highest accepted revision. When a registry revision removes a profile, Vibrato retains that profile plus only the removed model metadata and dynamic-provider declarations it references so an existing default/current selection remains usable without unboundedly copying the whole prior catalog.
 
-The cache and control files live under `~/.gjc/agent/model-presets/` (respecting `GJC_CODING_AGENT_DIR`). Writes use an interprocess lock, file fsync, and atomic rename. POSIX filesystems also receive a parent-directory durability barrier; Windows does not expose an equivalent directory fsync through Bun/Node, so it retains the file-fsync + atomic-rename guarantee with weaker crash durability for the renamed directory entry. `GJC_MODEL_PRESET_REGISTRY_URL` may override the manifest URL only with credential-free HTTPS; the trust root cannot be replaced at runtime. `GJC_MODEL_PRESET_REGISTRY_DISABLED=1` provides a non-destructive environment disable.
+The cache and control files live under `~/.vib/agent/model-presets/` (respecting `VIB_CODING_AGENT_DIR`). Writes use an interprocess lock, file fsync, and atomic rename. POSIX filesystems also receive a parent-directory durability barrier; Windows does not expose an equivalent directory fsync through Bun/Node, so it retains the file-fsync + atomic-rename guarantee with weaker crash durability for the renamed directory entry. `VIB_MODEL_PRESET_REGISTRY_URL` may override the manifest URL only with credential-free HTTPS; the trust root cannot be replaced at runtime. `VIB_MODEL_PRESET_REGISTRY_DISABLED=1` provides a non-destructive environment disable.
 
 ## Model profiles (`--mpreset`)
 
-Model profiles are optional top-level `profiles:` entries in `~/.gjc/agent/models.yml`. A profile can require provider credentials before activation and can map one or more model roles; omitted roles inherit from the active defaults.
+> **Availability note:** the built-in profile catalog below predates the current [four-provider allowlist](#supported-providers) and still documents the full underlying mechanism, but a profile only activates when every provider in its `required_providers` (or every alias-resolved family, for bare-alias profiles) is actually reachable. Of the built-ins listed here, only the Codex-family tiers (`codex-{eco,medium,pro}`, `lunamaxxing`) and the Anthropic `claude-opus` preset use exclusively allowlisted providers and remain usable out of the box. Everything else — the GLM/Kimi/MiniMax/Grok/Cursor/Alibaba/oMLX/OpenCode Go tiers and combos — needs its provider reproduced as a custom `models.yml` entry with a matching id before `--mpreset` can activate it, since those providers no longer authenticate through `/login`.
+
+Model profiles are optional top-level `profiles:` entries in `~/.vib/agent/models.yml`. A profile can require provider credentials before activation and can map one or more model roles; omitted roles inherit from the active defaults.
 
 > See also: [Cross-vendor role-based profiles](./multi-vendor-profiles.md) — a curated multi-vendor `profiles:` recipe and verified selector notes that build on the mechanism described here.
 
@@ -303,11 +312,11 @@ Gemini 3.7 Flash is bundled wherever Gemini 3.6 Flash already was (`google/gemin
 The `eco`, `medium`, and `pro` Codex profile mappings are current product judgments: Eco assigns Terra low/Luna low/Luna high/Terra xhigh/Terra high to default/executor/planner/critic/architect; Medium assigns Sol low/Terra low/Terra high/Sol xhigh/Sol high; Pro assigns Sol medium/Terra medium/Sol high/Sol max/Sol xhigh; and LunaMaxxing assigns Luna medium/Luna xhigh/Luna max/Luna max/Luna max. `opus-codex` retains the Medium Codex executor, critic, and architect roles but uses `anthropic/claude-sonnet-5` for planner; `codex-opencodego` retains the Medium Codex default and architect roles; and `fable-opus-codex` uses the Pro Codex executor and architect roles with `anthropic/claude-opus-5:medium` for planner. The descriptive repeated local exact-edit evidence informs only selected executor-style TypeScript tasks; it does not evaluate or prove default, planner, architect, or critic performance. See [GPT-5.6 Codex preset benchmark](./gpt-5.6-codex-preset-benchmark.md). The Alibaba Pro role evidence and its limits are recorded separately in [Alibaba Token Plan Pro profile benchmark](./alibaba-token-plan-pro-profile-benchmark.md). Cursor Eco uses Composer 2.5 for every role; Medium keeps standard Composer for default/planning and spends the Fast premium on execution, criticism, and architecture; Pro uses Composer 2.5 Fast throughout. Composer does not expose a strength value through the current Cursor RPC, so these profiles use exact model IDs without inert generic effort suffixes. See [Cursor Composer profile tiers](./cursor-composer-profile-tiers.md). Effort suffixes are clamped to each model's supported thinking range at preview and activation time. Single-provider tiers pin each provider's current flagship (`zai/glm-5.2`, `kimi-code/kimi-k2.7-code`, `xiaomi/mimo-v2.5-pro`, `xai/grok-4.3`, `cursor/composer-2.5`, `minimax-code/MiniMax-M3`). User-defined profiles override built-ins by exact profile name.
 
 
-Use `gjc --mpreset <name>` to activate a profile for the current session only. Activation hard-blocks when any provider listed in `required_providers` lacks credentials. Add `--default` to persist the selected profile as `modelProfile.default` in `config.yml`, so it applies at startup:
+Use `vib --mpreset <name>` to activate a profile for the current session only. Activation hard-blocks when any provider listed in `required_providers` lacks credentials. Add `--default` to persist the selected profile as `modelProfile.default` in `config.yml`, so it applies at startup:
 
 ```sh
-gjc --mpreset codex-medium
-gjc --mpreset opencodego --default
+vib --mpreset codex-medium
+vib --mpreset opencodego --default
 ```
 
 ### Routing built-in presets through a proxy (`modelProfile.proxyProvider`)
@@ -316,11 +325,17 @@ Built-in preset selectors pin a direct provider endpoint (`xai/grok-4.3`, `xiaom
 
 ```yaml
 modelProfile:
-  proxyProvider: litellm
+  proxyProvider: my-proxy
   proxyMode: always # use fallback to keep directly authenticated providers direct
 ```
 
-The proxy provider is a normal `providers:` entry. Add it with `gjc setup provider --preset litellm --base-url <url>` or the generic `gjc setup provider --preset openai-compatible-proxy --base-url <url>` (both presets require `--base-url` and use live model discovery). The configured proxy must be authenticated and expose every routed model. Activation rewrites each selected built-in preset selector from `<direct-provider>/<model>` to `<proxy>/<direct-provider>/<model>` (for example `xai/grok-4.3` → `litellm/xai/grok-4.3`), matching the proxy's catalog entry for the model. The rules:
+The proxy provider is a normal `providers:` entry. There is no longer a dedicated `litellm`/`openai-compatible-proxy` preset — add it through the custom-provider wizard instead, either interactively (`/provider` → **Add custom provider**) or non-interactively:
+
+```sh
+vib setup provider --compat openai --provider my-proxy --base-url <url> --api-key-env MY_PROXY_API_KEY
+```
+
+Both paths configure live model discovery. The chosen `--provider` id must not reuse a built-in provider name — `litellm`, `openai`, and `openrouter` are reserved built-in ids and would be hidden by the [allowlist](#supported-providers) even with a custom entry, so pick something like `my-proxy` instead, as the examples above do. The configured proxy must be authenticated and expose every routed model. Activation rewrites each selected built-in preset selector from `<direct-provider>/<model>` to `<proxy>/<direct-provider>/<model>` (for example `xai/grok-4.3` → `my-proxy/xai/grok-4.3`), matching the proxy's catalog entry for the model. The rules:
 
 - Routing applies to **built-in presets only**. User-defined `profiles:` entries always keep their exact selectors — set them explicitly if you want them proxied.
 - `proxyMode: fallback` (the default) routes only selectors whose direct provider is unauthenticated. `proxyMode: always` routes every proxy-routable built-in selector through the configured proxy, including selectors with direct credentials.
@@ -328,9 +343,11 @@ The proxy provider is a normal `providers:` entry. Add it with `gjc setup provid
 - Only providers the bundled preset catalog treats as routable are rewritten; providers outside that set (for example a custom `acme-private`) keep the direct credential error.
 - A routed selector must have exactly one matching proxy catalog model. Exact `<direct-provider>/<model>` proxy ids win over suffix matches; missing or ambiguous matches fail activation before any role can run.
 
-The `/model` command opens to a preset landing view: presets are grouped by provider with live auth marks (✓/✗), highlighting a group expands its tiers, and selecting a tier shows the full role→model preview before applying for the session or as default. Typing jumps straight to model search, and `Browse all models` opens the classic tabbed model selector. In `/login`, `Add custom provider` is the first option for configuring credentials needed by custom or profile-required providers; after a successful provider login, the matching preset is recommended automatically. Custom providers participate in provider-agnostic alias resolution but require manual preset selection.
+The `/model` command opens to a preset landing view: presets are grouped by provider with live auth marks (✓/✗), highlighting a group expands its tiers, and selecting a tier shows the full role→model preview before applying for the session or as default. Typing jumps straight to model search, and `Browse all models` opens the classic tabbed model selector. Only allowlisted providers surface auth marks and grouped tiers by default; a hidden provider's profile shows as unauthenticated until you configure it yourself under a custom `models.yml` id.
 
-External SDK/ACP clients (e.g. the Paseo TUI) can select profiles like ordinary models: the SDK `models.list/current` (Q10) catalog exposes every usable profile as a synthetic `gajae-code/<profile>` entry (e.g. `gajae-code/codex-eco`), and selecting one through `model.set` (or the ACP Model picker) activates the profile for the live session only. Persisting a profile remains an explicit TUI choice, mirroring `gjc --mpreset <name> --default`. See [SDK model profiles](./sdk.md#model-profiles-as-synthetic-models-gajae-codeprofile).
+`/login` now opens directly on the two OAuth-based allowlisted providers (`anthropic`, `openai-codex`/`openai-codex-device`); it no longer lists every built-in OAuth provider. `Add custom provider` remains the first option for configuring credentials needed by a custom or profile-required provider — including one that reproduces a hidden built-in provider under your own id — and after a successful login, the matching preset (if any) is still recommended automatically. vLLM and SGLang are not OAuth providers, so they are configured through `/provider` (or `vib setup provider --preset vllm|sglang`) rather than `/login`. Custom providers participate in provider-agnostic alias resolution but require manual preset selection.
+
+External SDK/ACP clients (e.g. the Paseo TUI) can select profiles like ordinary models: the SDK `models.list/current` (Q10) catalog exposes every usable profile as a synthetic `vib-rato/<profile>` entry (e.g. `vib-rato/codex-eco`), and selecting one through `model.set` (or the ACP Model picker) activates the profile for the live session only. Persisting a profile remains an explicit TUI choice, mirroring `vib --mpreset <name> --default`. See [SDK model profiles](./sdk.md#model-profiles-as-synthetic-models-vib-ratoprofile).
 
 MiniMax's OpenAI-compatible endpoint rejects multiple system messages and emits thinking in `reasoning_content`, so pin the public-safe compatibility fields when hand-authoring a custom provider:
 
@@ -389,7 +406,7 @@ The gateway multiplexes transports by model family:
 | GPT (Responses-only) | `gpt-5.3-codex` | `openai-responses` | 272K |
 
 All models cap output at 128K. Junie also exposes Gemini and Grok, but those ride a proprietary Grazie
-translation protocol that GJC does not implement, so they are deliberately not bundled. The bare
+translation protocol that Vibrato does not implement, so they are deliberately not bundled. The bare
 `opus`/`sonnet`/`gpt`/`grok` aliases are Junie CLI shorthands the gateway itself rejects.
 
 ### Allowed auth/discovery values
@@ -397,12 +414,12 @@ translation protocol that GJC does not implement, so they are deliberately not b
 - `auth`: `apiKey` (default), `none`, or `oauth`; for `models.yml` custom models, `oauth` is accepted by schema but does not waive the `apiKey` requirement
 - `models.yml` is strict: unknown provider/model keys fail validation before provider dispatch, so stale keys such as `requestTransform` or `wireModelId` only work where this document lists them.
 - `discovery.type`: `ollama`, `llama.cpp`, `lm-studio`, `omlx`, `vllm`, `sglang`, `openai-models-list`, or `models-dev`; `models-dev` may select a different catalog entry with `modelsDevProvider`
-- `cacheRetention`: `none`, `short`, or `long`; request-time options win over model/modelOverride values, then provider values, then `GJC_CACHE_RETENTION`, then the runtime default. The runtime default is `short` for most providers, but the Anthropic provider defaults to `long` because the ~5m cache is fragile for long-running subagent workflows. Canonical Anthropic models use top-level automatic caching and emit `ttl: "1h"` when long retention is supported. Claude-family models on non-canonical Anthropic-compatible endpoints default to explicit block markers because compatible proxies commonly inject, rewrite, or reject top-level cache controls; they omit `ttl` unless `compat.supportsLongCacheRetention: true` opts the endpoint into 1-hour retention. For OpenAI Responses, this controls `prompt_cache_retention` only; it does not disable `prompt_cache_key` when a stable session id exists.
+- `cacheRetention`: `none`, `short`, or `long`; request-time options win over model/modelOverride values, then provider values, then `VIB_CACHE_RETENTION`, then the runtime default. The runtime default is `short` for most providers, but the Anthropic provider defaults to `long` because the ~5m cache is fragile for long-running subagent workflows. Canonical Anthropic models use top-level automatic caching and emit `ttl: "1h"` when long retention is supported. Claude-family models on non-canonical Anthropic-compatible endpoints default to explicit block markers because compatible proxies commonly inject, rewrite, or reject top-level cache controls; they omit `ttl` unless `compat.supportsLongCacheRetention: true` opts the endpoint into 1-hour retention. For OpenAI Responses, this controls `prompt_cache_retention` only; it does not disable `prompt_cache_key` when a stable session id exists.
 
 ## OpenAI-compatible proxy configuration
 
 OpenAI-compatible proxy providers should use schema-supported provider keys first:
-The first-class way to add a proxy provider is `gjc setup provider --preset litellm --base-url <url>` (LiteLLM) or `gjc setup provider --preset openai-compatible-proxy --base-url <url>` (any OpenAI-compatible gateway); both presets require `--base-url` and configure live model discovery. Proxy providers can also be used to route built-in model-preset selectors — see [Routing built-in presets through a proxy](#routing-built-in-presets-through-a-proxy-modelprofileproxyprovider). The YAML below shows the equivalent hand-written provider config:
+The first-class way to add a proxy provider (LiteLLM, or any other OpenAI-compatible gateway) is the custom-provider wizard, since there is no longer a dedicated `litellm`/`openai-compatible-proxy` preset: interactively via `/provider` → **Add custom provider**, or non-interactively with `vib setup provider --compat openai --provider <id> --base-url <url> --api-key-env <VAR>`. Both configure live model discovery. Pick an `<id>` that does not reuse a built-in provider name — for example `my-proxy`, not `litellm`, `openai`, or `openrouter`, all of which are reserved built-in ids and would be hidden by the [allowlist](#supported-providers) even as a custom entry. Proxy providers can also be used to route built-in model-preset selectors — see [Routing built-in presets through a proxy](#routing-built-in-presets-through-a-proxy-modelprofileproxyprovider). The YAML below shows the equivalent hand-written provider config:
 
 ```yaml
 providers:
@@ -431,7 +448,7 @@ providers:
 
 Use provider-level `headers` for proxy-required headers. Keep the provider `api` set to `openai-completions` when the proxy exposes Chat Completions-compatible `/v1/chat/completions` semantics. `auth: apiKey` sends the resolved token as bearer auth; use `auth: none` only for trusted local/no-auth endpoints.
 
-For an unknown custom endpoint, `reasoning: true` declares model capability but does not prove the proxy accepts a control parameter. A familiar provider id or model-family name is not transport evidence: configurable LiteLLM/vLLM/local endpoints still fail closed. Add `thinking` and `compat.supportsReasoningEffort: true` only when the endpoint documents OpenAI-style `reasoning_effort`; set `compat.thinkingFormat` as well when it uses a different documented request shape. Otherwise GJC keeps reasoning-level controls unavailable and omits the parameter.
+For an unknown custom endpoint, `reasoning: true` declares model capability but does not prove the proxy accepts a control parameter. A familiar provider id or model-family name is not transport evidence: configurable LiteLLM/vLLM/local endpoints still fail closed. Add `thinking` and `compat.supportsReasoningEffort: true` only when the endpoint documents OpenAI-style `reasoning_effort`; set `compat.thinkingFormat` as well when it uses a different documented request shape. Otherwise Vibrato keeps reasoning-level controls unavailable and omits the parameter.
 
 `auth` selects the transport scheme only; it never supplies a credential. A provider that declares `models:` must therefore also declare where its key comes from, and `models.yml` validation rejects the config before model discovery otherwise:
 
@@ -443,7 +460,7 @@ For an unknown custom endpoint, `reasoning: true` declares model capability but 
 
 Omitting both `apiKey` and `apiKeyEnv` while leaving `auth` at its `apiKey` default fails with `Provider <name>: custom models need a credential source, but none is configured.` — the fix is to add one of the rows above, not to change `api` or `baseUrl`.
 
-`input` is the model modality list GJC uses to decide whether image content is forwarded. When a custom model omits `input`, GJC defaults to `[text]` (unless a bundled model with the same id contributes a reference). Vision-capable upstream models therefore need an explicit `input: [text, image]`; otherwise `read`/tool images are stripped before the request and replaced with `[image omitted: model does not support vision]`, even if the remote model can see images.
+`input` is the model modality list Vibrato uses to decide whether image content is forwarded. When a custom model omits `input`, Vibrato defaults to `[text]` (unless a bundled model with the same id contributes a reference). Vision-capable upstream models therefore need an explicit `input: [text, image]`; otherwise `read`/tool images are stripped before the request and replaced with `[image omitted: model does not support vision]`, even if the remote model can see images.
 
 ```yaml
 providers:
@@ -466,7 +483,7 @@ providers:
 
 When request shaping is needed:
 
-- `requestTransform.profile: openai-proxy` strips OpenAI SDK/Stainless telemetry and beta headers at final fetch time and sets a generic GJC user agent.
+- `requestTransform.profile: openai-proxy` strips OpenAI SDK/Stainless telemetry and beta headers at final fetch time and sets a generic Vibrato user agent.
 - `stripHeaders` replaces the preset strip list when provided.
 - `setHeaders` is applied after stripping; use `null` to remove a header.
 - `extraBody` is shallow-merged into the JSON request body after provider compatibility fields; core transport keys such as `model`, `messages`/`input`, `stream`, `tools`, and `tool_choice` are protected and ignored.
@@ -561,7 +578,7 @@ boundary applies the same rule to provider options.
 
 ModelRegistry pipeline (on refresh):
 
-1. Load built-in providers/models from `@gajae-code/ai`.
+1. Load built-in providers/models from `@vib-rato/ai`.
 2. Load `models.yml` custom config.
 3. Apply provider overrides (`baseUrl`, `headers`, `requestTransform`, `disableStrictTools`, `cacheRetention`) to built-in models.
 4. Apply `modelOverrides` (per provider + model id).
@@ -706,6 +723,8 @@ Runtime discovery fetches models (`GET /v1/models`) and synthesizes model entrie
 
 ### Implicit vLLM discovery
 
+vLLM is one of the two self-hosted providers in the default [allowlist](#supported-providers), with a dedicated first entry ("Connect a vLLM endpoint") in the automatic first-run provider onboarding menu and in `/provider` at any time. Both surfaces, and the `vllm` preset (`vib setup provider --preset vllm --base-url <url>`), are thin UI over the same implicit discovery described here — they ask for the server URL and an optional key, then call `/v1/models`.
+
 If `vllm` is not explicitly configured, its bundled provider descriptor discovers the local server implicitly:
 
 - provider: `vllm`
@@ -713,9 +732,11 @@ If `vllm` is not explicitly configured, its bundled provider descriptor discover
 - base URL: trusted `VLLM_BASE_URL` or `http://127.0.0.1:8000/v1` (a project `.env` cannot redirect authenticated traffic)
 - auth mode: keyless (`auth: none` behavior), `VLLM_API_KEY` attaches when present
 
-Runtime discovery fetches models (`GET /v1/models`) and synthesizes model entries with local defaults and `max_model_len` support. Credentialless implicit discovery is limited to loopback. For a remote vLLM server (for example, a LAN GPU box), set `VLLM_BASE_URL` and `VLLM_API_KEY` in the launching shell or a user-owned GJC environment file, or configure it explicitly under `providers` as shown below.
+Runtime discovery fetches models (`GET /v1/models`) and synthesizes model entries with local defaults and `max_model_len` support. Credentialless implicit discovery is limited to loopback. For a remote vLLM server (for example, a LAN GPU box), set `VLLM_BASE_URL` and `VLLM_API_KEY` in the launching shell or a user-owned Vibrato environment file, or configure it explicitly under `providers` as shown below.
 
 ### Implicit SGLang discovery
+
+SGLang is the other self-hosted provider in the default [allowlist](#supported-providers), with the second entry in the automatic first-run provider onboarding menu and in `/provider` at any time. Both surfaces, and the `sglang` preset (`vib setup provider --preset sglang --base-url <url>`), are thin UI over the same implicit discovery described here — they ask for the server URL and an optional key, then call `/v1/models`.
 
 If `sglang` is not explicitly configured, its bundled provider descriptor discovers the local server implicitly:
 
@@ -724,7 +745,7 @@ If `sglang` is not explicitly configured, its bundled provider descriptor discov
 - base URL: trusted `SGLANG_BASE_URL` or `http://127.0.0.1:30000/v1` (a project `.env` cannot redirect authenticated traffic)
 - auth mode: keyless (`auth: none` behavior), `SGLANG_API_KEY` attaches when present
 
-Runtime discovery fetches models (`GET /v1/models`) and synthesizes model entries with local defaults and `max_model_len` support. Credentialless implicit discovery is limited to loopback and needs no `/login`; `/login sglang` stores only an actual API key. For a remote SGLang server (for example, a LAN GPU box), set `SGLANG_BASE_URL` and `SGLANG_API_KEY` in the launching shell or a user-owned GJC environment file, or configure it explicitly under `providers` as shown below. Standard proxy environment variables remain explicit transport configuration, so include local SGLang hosts in `NO_PROXY` when local traffic must connect directly.
+Runtime discovery fetches models (`GET /v1/models`) and synthesizes model entries with local defaults and `max_model_len` support. Credentialless implicit discovery is limited to loopback and needs no `/login`; `/login sglang` stores only an actual API key. For a remote SGLang server (for example, a LAN GPU box), set `SGLANG_BASE_URL` and `SGLANG_API_KEY` in the launching shell or a user-owned Vibrato environment file, or configure it explicitly under `providers` as shown below. Standard proxy environment variables remain explicit transport configuration, so include local SGLang hosts in `NO_PROXY` when local traffic must connect directly.
 
 ### Explicit provider discovery
 
@@ -785,9 +806,9 @@ Keyless providers:
 
 ### Broker mode
 
-When `GJC_AUTH_BROKER_URL` (or `auth.broker.url`) is set, the local SQLite credential store is replaced by `RemoteAuthCredentialStore`. Layers 2 and 3 above (stored API key / OAuth in `agent.db`) are served from a broker-supplied snapshot whose `refresh` tokens are redacted; expiry triggers `POST /v1/credential/:id/refresh` on the broker rather than a local refresh.
+When `VIB_AUTH_BROKER_URL` (or `auth.broker.url`) is set, the local SQLite credential store is replaced by `RemoteAuthCredentialStore`. Layers 2 and 3 above (stored API key / OAuth in `agent.db`) are served from a broker-supplied snapshot whose `refresh` tokens are redacted; expiry triggers `POST /v1/credential/:id/refresh` on the broker rather than a local refresh.
 
-`AuthStorage.setConfigApiKey` lets a `models.yml` `apiKey` win over a broker-resolved OAuth token without overriding a runtime `--api-key`. See [`auth-broker-gateway.md`](./auth-broker-gateway.md) for the full broker / gateway design and env surface (`GJC_AUTH_BROKER_URL`, `GJC_AUTH_BROKER_TOKEN`, `auth.broker.url`, `auth.broker.token`).
+`AuthStorage.setConfigApiKey` lets a `models.yml` `apiKey` win over a broker-resolved OAuth token without overriding a runtime `--api-key`. See [`auth-broker-gateway.md`](./auth-broker-gateway.md) for the full broker / gateway design and env surface (`VIB_AUTH_BROKER_URL`, `VIB_AUTH_BROKER_TOKEN`, `auth.broker.url`, `auth.broker.token`).
 
 ## Model availability vs all models
 
@@ -997,7 +1018,7 @@ Prompt-cache modes:
 
 Without an explicit mode, canonical Anthropic endpoints default to `automatic`, Claude-family model ids on non-canonical compatible endpoints default to `explicit`, and unknown non-Claude compatible endpoints default to `none`. Non-canonical endpoints get the default ~5m lifetime unless they opt into `supportsLongCacheRetention: true`. Set `promptCacheMode: automatic` only when a gateway is known to pass through Anthropic's top-level cache control without adding conflicting block markers.
 
-If a gateway attaches enough cache markers of its own that ours push the request past Anthropic's four-breakpoint limit, Anthropic rejects it with `A maximum of 4 blocks with cache_control may be provided.` Those extra markers are not visible in the request GJC builds, so the limit is handled at runtime rather than predicted. Because the rejection means "too many" rather than "none allowed", recovery reduces the generated breakpoints one step at a time: `explicit` mode normally emits two markers (a conversation-prefix anchor and a current-turn refresh point), so the first retry keeps only the prefix anchor, and generated caching is disabled entirely only if that is rejected too. The reduced setting persists for the rest of the provider session, so an endpoint with one free slot keeps caching its conversation prefix instead of losing caching altogether. Set `promptCacheMode: none` on a gateway that never has a free slot to skip the wasted attempts.
+If a gateway attaches enough cache markers of its own that ours push the request past Anthropic's four-breakpoint limit, Anthropic rejects it with `A maximum of 4 blocks with cache_control may be provided.` Those extra markers are not visible in the request Vibrato builds, so the limit is handled at runtime rather than predicted. Because the rejection means "too many" rather than "none allowed", recovery reduces the generated breakpoints one step at a time: `explicit` mode normally emits two markers (a conversation-prefix anchor and a current-turn refresh point), so the first retry keeps only the prefix anchor, and generated caching is disabled entirely only if that is rejected too. The reduced setting persists for the rest of the provider session, so an endpoint with one free slot keeps caching its conversation prefix instead of losing caching altogether. Set `promptCacheMode: none` on a gateway that never has a free slot to skip the wasted attempts.
 
 ```yaml
 providers:
@@ -1101,7 +1122,7 @@ providers:
 
 ## Legacy consumer caveat
 
-Most model configuration now flows through `models.yml` via `ModelRegistry`. Explicit `.json` / `.jsonc` paths remain supported only when passed programmatically to `ModelRegistry`; the default user config is `~/.gjc/agent/models.yml`.
+Most model configuration now flows through `models.yml` via `ModelRegistry`. Explicit `.json` / `.jsonc` paths remain supported only when passed programmatically to `ModelRegistry`; the default user config is `~/.vib/agent/models.yml`.
 
 ## Failure mode
 

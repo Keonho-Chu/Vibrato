@@ -16,7 +16,7 @@ import { runDaemonInternal } from "../src/sdk/bus/telegram-daemon-cli";
 const BOT_TOKEN = "1234567890:ABCDEFghijkLmnOpQrsTuvWxYz012345678";
 
 function tempAgentDir(): string {
-	return fs.mkdtempSync(path.join(os.tmpdir(), "gjc-4403-cli-"));
+	return fs.mkdtempSync(path.join(os.tmpdir(), "vib-4403-cli-"));
 }
 
 function settings(agentDir: string): Settings {

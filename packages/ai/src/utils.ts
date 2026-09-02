@@ -1,10 +1,10 @@
-import { $env } from "@gajae-code/utils";
+import { $env } from "@vib-rato/utils";
 import type { ResponseInput } from "openai/resources/responses/responses";
 import type { CacheRetention, OpenAIResponsesHistoryPayload, ProviderPayload } from "./types";
 
 type OpenAIResponsesReplayItem = ResponseInput[number];
 
-export { isRecord } from "@gajae-code/utils";
+export { isRecord } from "@vib-rato/utils";
 export function normalizeSystemPrompts(systemPrompt: readonly string[] | string | undefined | null): string[] {
 	if (systemPrompt === undefined || systemPrompt === null) return [];
 	const prompts = Array.isArray(systemPrompt) ? systemPrompt : typeof systemPrompt === "string" ? [systemPrompt] : [];
@@ -499,7 +499,7 @@ export function getOpenAIResponsesHistoryItems(
 /**
  * Resolve cache retention preference.
  *
- * Resolution order: explicit request value → `GJC_CACHE_RETENTION` →
+ * Resolution order: explicit request value → `VIB_CACHE_RETENTION` →
  * legacy `PI_CACHE_RETENTION` → `fallback`. Both env vars act as explicit
  * opt-in (`"long"`) or opt-out (any other value) so a provider-specific
  * `fallback` only applies when nothing else is configured. `fallback`
@@ -511,8 +511,8 @@ export function resolveCacheRetention(
 	fallback: CacheRetention = "short",
 ): CacheRetention {
 	if (cacheRetention) return cacheRetention;
-	if ($env.GJC_CACHE_RETENTION === "long") return "long";
-	if ($env.GJC_CACHE_RETENTION !== undefined) return "short";
+	if ($env.VIB_CACHE_RETENTION === "long") return "long";
+	if ($env.VIB_CACHE_RETENTION !== undefined) return "short";
 	if ($env.PI_CACHE_RETENTION === "long") return "long";
 	if ($env.PI_CACHE_RETENTION !== undefined) return "short";
 	return fallback;

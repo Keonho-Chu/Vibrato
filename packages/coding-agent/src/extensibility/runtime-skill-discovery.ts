@@ -1,6 +1,6 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { getTrustedHomeDir } from "@gajae-code/utils";
+import { getTrustedHomeDir } from "@vib-rato/utils";
 import { findRepoRoot } from "../capability/fs";
 import type { Skill as CapabilitySkill } from "../capability/skill";
 import type { SkillsSettings } from "../config/settings-schema";
@@ -8,7 +8,7 @@ import { resolveSkillScopeTrust } from "../config/skill-settings-defaults";
 import { scanClaudeProjectSkills, scanClaudeUserSkills } from "../discovery/claude";
 import { scanCodexProjectSkills, scanCodexUserSkills } from "../discovery/codex";
 import { compareSkillOrder, SOURCE_PATHS, scanSkillsFromDir } from "../discovery/helpers";
-import { CANONICAL_GJC_WORKFLOW_SKILLS } from "../skill-state/canonical-skills";
+import { CANONICAL_VIB_WORKFLOW_SKILLS } from "../skill-state/canonical-skills";
 import { expandTilde } from "../tools/path-utils";
 import type { Skill } from "./skills";
 
@@ -53,7 +53,7 @@ function getRuntimeHome(): string {
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
 const MAX_DIAGNOSTICS = 10;
-const BUILT_IN_SKILL_NAMES = new Set<string>(CANONICAL_GJC_WORKFLOW_SKILLS);
+const BUILT_IN_SKILL_NAMES = new Set<string>(CANONICAL_VIB_WORKFLOW_SKILLS);
 
 function normalizeLimit(limit: number | undefined): number {
 	if (limit === undefined || !Number.isFinite(limit)) return DEFAULT_LIMIT;
@@ -62,17 +62,17 @@ function normalizeLimit(limit: number | undefined): number {
 
 interface ProjectScanDir {
 	dir: string;
-	/** Precedence label used in diagnostics, e.g. "project .gjc/skills". */
+	/** Precedence label used in diagnostics, e.g. "project .vib/skills". */
 	label: string;
 }
 
 /**
- * Project skill scan directories in deterministic precedence order: `.gjc/skills`
+ * Project skill scan directories in deterministic precedence order: `.vib/skills`
  * in every ancestor from `cwd` up to the repo root (closest first). Claude/Codex
- * convention layouts are explicit import sources into `.gjc` (see
+ * convention layouts are explicit import sources into `.vib` (see
  * extensibility/skill-management.ts) and are intentionally not scanned here.
  *
- * The walk never enters the home directory, so `~/.gjc/skills` stays a
+ * The walk never enters the home directory, so `~/.vib/skills` stays a
  * user-scope path and cannot be reclassified as project content.
  */
 async function getProjectSkillDirs(
@@ -83,7 +83,7 @@ async function getProjectSkillDirs(
 	const repoRoot = await findRepoRoot(cwd);
 	const walkDirs = ancestorDirs(cwd, path.resolve(repoRoot ?? cwd), home);
 	for (const dir of walkDirs) {
-		scans.push({ dir: path.join(dir, ".gjc", "skills"), label: "project .gjc/skills" });
+		scans.push({ dir: path.join(dir, ".vib", "skills"), label: "project .vib/skills" });
 	}
 	return { scans, repoRoot };
 }
@@ -113,7 +113,7 @@ function getUserSkillDirs(home: string): string[] {
 		...new Set([
 			path.join(home, canonicalUserDir, "skills"),
 			path.join(home, configuredLegacyDir, "skills"),
-			path.join(home, ".gjc", "skills"),
+			path.join(home, ".vib", "skills"),
 		]),
 	];
 }
@@ -211,7 +211,7 @@ function isAllowedByPolicy(skill: CapabilitySkill, policy: SkillsSettings | unde
 	if (BUILT_IN_SKILL_NAMES.has(skill.name)) {
 		pushDiagnostic(
 			diagnostics,
-			`skill "${skill.name}" is a bundled GJC workflow skill and always resolves to the bundled definition; the filesystem copy at ${skill.path} is shadowed`,
+			`skill "${skill.name}" is a bundled Vibrato workflow skill and always resolves to the bundled definition; the filesystem copy at ${skill.path} is shadowed`,
 		);
 		return false;
 	}
@@ -263,7 +263,7 @@ interface ConventionImportScan {
 /**
  * Enumerate Claude Code / Codex skill layouts as explicit import candidates.
  * Convention skills are never advertised as invokable candidates (they become
- * ordinary native skills only after an explicit import into `.gjc/skills`), but
+ * ordinary native skills only after an explicit import into `.vib/skills`), but
  * they are reported as diagnostics so a skill placed in a documented convention
  * location is visibly discoverable — with the exact enablement action — instead
  * of invisible. Foreign user-home layouts are only enumerated when the user
@@ -312,7 +312,7 @@ function reportConventionImportCandidates(
 			seenNames.add(skill.name);
 			pushDiagnostic(
 				diagnostics,
-				`skill "${skill.name}" found at ${skill.path} (${scan.host} convention): import sources are not loaded directly; copy it into a trusted .gjc/skills directory to enable it, e.g. mkdir -p .gjc/skills/${skill.name} && cp ${skill.path} .gjc/skills/${skill.name}/SKILL.md`,
+				`skill "${skill.name}" found at ${skill.path} (${scan.host} convention): import sources are not loaded directly; copy it into a trusted .vib/skills directory to enable it, e.g. mkdir -p .vib/skills/${skill.name} && cp ${skill.path} .vib/skills/${skill.name}/SKILL.md`,
 			);
 		}
 	}
@@ -323,24 +323,24 @@ function reportConventionImportCandidates(
  * than by an actually empty skill catalog. Uses the user-facing trust
  * settings; the legacy `skills.enablePiUser` / `skills.enablePiProject`
  * aliases map onto the same effective values. Shared by the skill_discovery
- * tool and `gjc skills discover`.
+ * tool and `vib skills discover`.
  */
 export function describeDisabledSkillScopes(
 	source: RuntimeSkillDiscoverySource | "all",
 	policy: SkillsSettings | undefined,
 ): string | undefined {
 	if (policy?.enabled !== true) {
-		return "Runtime skill discovery is disabled: `skills.enabled` is false, so no skill directories were searched. Enable it with `gjc config set skills.enabled true`.";
+		return "Runtime skill discovery is disabled: `skills.enabled` is false, so no skill directories were searched. Enable it with `vib config set skills.enabled true`.";
 	}
 	const skipped: string[] = [];
 	const commands: string[] = [];
 	if ((source === "all" || source === "project") && !resolveSkillScopeTrust(policy, "project")) {
 		skipped.push("project (`skills.trustProjectSkills` is false)");
-		commands.push("`gjc config set skills.trustProjectSkills true`");
+		commands.push("`vib config set skills.trustProjectSkills true`");
 	}
 	if ((source === "all" || source === "user") && !resolveSkillScopeTrust(policy, "user")) {
 		skipped.push("user (`skills.trustUserSkills` is false)");
-		commands.push("`gjc config set skills.trustUserSkills true`");
+		commands.push("`vib config set skills.trustUserSkills true`");
 	}
 	if (skipped.length === 0) return undefined;
 	return `Skill discovery skipped disabled scope(s): ${skipped.join(", ")}. Enable them with ${commands.join(" and ")}.`;

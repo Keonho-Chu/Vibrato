@@ -12,7 +12,7 @@ const WIN32_AVX2_PROBE_MAX_BUFFER = 4 * 1024;
 
 function emitWin32Avx2ProbeDiagnostic(kind: Win32Avx2ProbeDiagnostic): void {
 	process.emitWarning(`Windows AVX2 host probe inconclusive (${kind}); using baseline variant.`, {
-		code: "GJC_WIN32_AVX2_PROBE",
+		code: "VIB_WIN32_AVX2_PROBE",
 	});
 }
 
@@ -81,8 +81,8 @@ export function detectWin32Avx2Support(
 		"-NoProfile",
 		"-NonInteractive",
 		"-Command",
-		"Add-Type -Namespace GjcNative -Name Cpu -MemberDefinition '[DllImport(\"kernel32.dll\")] public static extern bool IsProcessorFeaturePresent(int feature);'; " +
-			`[GjcNative.Cpu]::IsProcessorFeaturePresent(${WIN32_PF_AVX2_INSTRUCTIONS_AVAILABLE})`,
+		"Add-Type -Namespace VibNative -Name Cpu -MemberDefinition '[DllImport(\"kernel32.dll\")] public static extern bool IsProcessorFeaturePresent(int feature);'; " +
+			`[VibNative.Cpu]::IsProcessorFeaturePresent(${WIN32_PF_AVX2_INSTRUCTIONS_AVAILABLE})`,
 	], report);
 	if (output === null) return false;
 	const normalized = output.toLowerCase();

@@ -1,4 +1,4 @@
-import { Container, matchesKey, type SelectItem, SelectList, Spacer, Text } from "@gajae-code/tui";
+import { Container, matchesKey, type SelectItem, SelectList, Spacer, Text } from "@vib-rato/tui";
 import { formatKeyHint } from "../../config/keybindings";
 import type { QueuedMessageEditEntry } from "../../session/agent-session";
 import { getSelectListTheme, theme } from "../theme/theme";

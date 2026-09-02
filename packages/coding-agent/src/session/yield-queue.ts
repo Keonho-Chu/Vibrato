@@ -1,5 +1,5 @@
-import type { AgentMessage } from "@gajae-code/agent-core";
-import { logger } from "@gajae-code/utils";
+import type { AgentMessage } from "@vib-rato/agent-core";
+import { logger } from "@vib-rato/utils";
 
 export interface YieldDispatcher<P> {
 	/** Drop entries already delivered through another path. Called per-entry at flush time. */

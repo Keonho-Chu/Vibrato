@@ -10,7 +10,7 @@
  * failure mode is compacting slightly early).
  */
 import { describe, expect, it } from "bun:test";
-import type { Model } from "@gajae-code/ai";
+import type { Model } from "@vib-rato/ai";
 import {
 	boundConversationTextForSummary,
 	estimateMessageTokensHeuristic,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { type KeyId, parseKeyId } from "@gajae-code/tui";
+import { type KeyId, parseKeyId } from "@vib-rato/tui";
 import { generateHotkeysDocsTable } from "../scripts/generate-hotkeys-docs";
 import { type AppKeybinding, KEYBINDINGS } from "../src/config/keybindings";
 import { APP_ACTION_METADATA } from "../src/modes/action-registry";

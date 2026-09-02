@@ -7,25 +7,25 @@ const repoRoot = path.resolve(import.meta.dir, "..", "..", "..");
 const cliEntry = path.join(repoRoot, "packages", "coding-agent", "src", "cli.ts");
 
 /**
- * Regression for #3857: `gjc models` from a nested GJC tool environment must not
- * start an interactive agent (and therefore must not re-spawn `gjc models`).
+ * Regression for #3857: `vib models` from a nested Vibrato tool environment must not
+ * start an interactive agent (and therefore must not re-spawn `vib models`).
  */
-describe("issue #3857 nested gjc models chain", () => {
-	it("exits after listing when invoked as `models` under a simulated GJC session env", async () => {
-		const home = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-issue-3857-"));
-		const agentDir = path.join(home, ".gjc", "agent");
+describe("issue #3857 nested vib models chain", () => {
+	it("exits after listing when invoked as `models` under a simulated Vibrato session env", async () => {
+		const home = await fs.mkdtemp(path.join(os.tmpdir(), "vib-issue-3857-"));
+		const agentDir = path.join(home, ".vib", "agent");
 		try {
 			const result = Bun.spawnSync(["bun", cliEntry, "models"], {
 				cwd: repoRoot,
 				env: {
 					...process.env,
 					HOME: home,
-					GJC_CODING_AGENT_DIR: agentDir,
+					VIB_CODING_AGENT_DIR: agentDir,
 					// Simulate a bash-tool child inheriting the parent agent session id.
-					GJC_SESSION_ID: "session-issue-3857-nested-models",
+					VIB_SESSION_ID: "session-issue-3857-nested-models",
 					// Keep listing offline/local so the test does not hang on network discovery.
-					GJC_NO_PTY: "1",
-					GJC_NO_TITLE: "1",
+					VIB_NO_PTY: "1",
+					VIB_NO_TITLE: "1",
 				},
 				stdout: "pipe",
 				stderr: "pipe",
@@ -51,9 +51,9 @@ describe("issue #3857 nested gjc models chain", () => {
 		}
 	}, 90_000);
 
-	it("does not leave a grandchild gjc process after models exits", async () => {
-		const home = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-issue-3857-child-"));
-		const agentDir = path.join(home, ".gjc", "agent");
+	it("does not leave a grandchild vib process after models exits", async () => {
+		const home = await fs.mkdtemp(path.join(os.tmpdir(), "vib-issue-3857-child-"));
+		const agentDir = path.join(home, ".vib", "agent");
 		const marker = `issue-3857-models-${process.pid}-${Date.now()}`;
 		try {
 			const result = Bun.spawnSync(["bun", cliEntry, "models", marker], {
@@ -61,10 +61,10 @@ describe("issue #3857 nested gjc models chain", () => {
 				env: {
 					...process.env,
 					HOME: home,
-					GJC_CODING_AGENT_DIR: agentDir,
-					GJC_SESSION_ID: "session-issue-3857-grandchild-guard",
-					GJC_NO_PTY: "1",
-					GJC_NO_TITLE: "1",
+					VIB_CODING_AGENT_DIR: agentDir,
+					VIB_SESSION_ID: "session-issue-3857-grandchild-guard",
+					VIB_NO_PTY: "1",
+					VIB_NO_TITLE: "1",
 				},
 				stdout: "pipe",
 				stderr: "pipe",

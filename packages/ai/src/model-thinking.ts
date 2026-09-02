@@ -568,7 +568,7 @@ function applyGeneratedModelPolicy(model: ApiModel<Api>): void {
 	// Groq's agentic `compound` systems reject `reasoning_effort` outright
 	// (400 "`reasoning_effort` is not supported with this model", verified
 	// 2026-08-23), yet models.dev advertises them as reasoning models. Drop the
-	// thinking config so GJC never sends the field.
+	// thinking config so Vibrato never sends the field.
 	if (isGroqCompoundReasoningUnsupported(model)) {
 		model.reasoning = false;
 		delete model.thinking;
@@ -669,7 +669,7 @@ function applyGpt55ContextWindow(model: ApiModel<Api>, parsedModel: OpenAIModel)
 		}
 		// The first-party OpenAI GPT-5.5 model advertises a 1M total window, but
 		// the OpenAI code backend request path still enforces the smaller prompt
-		// budget. GJC's `contextWindow` is the usable prompt/input cap, not the
+		// budget. Vibrato's `contextWindow` is the usable prompt/input cap, not the
 		// marketing total window; using 1M here delays compaction and makes the UI
 		// promise space that `/responses/compact`/agent turns cannot actually use.
 		model.contextWindow =

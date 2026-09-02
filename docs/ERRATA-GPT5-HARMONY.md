@@ -45,7 +45,7 @@ non-Latin token through the next clean structural boundary is corruption.
 
 ## 2. Observed statistics & failure modes
 
-Source: `~/.gjc/stats.db` (`ss_tool_calls`, `ss_assistant_msgs`), through
+Source: `~/.vib/stats.db` (`ss_tool_calls`, `ss_assistant_msgs`), through
 2026-05-10. 1.05M tool calls scanned.
 
 ### 2.1 Rate

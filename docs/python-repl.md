@@ -32,7 +32,7 @@ The tool is `concurrency = "exclusive"` for a session, so calls do not overlap.
 
 ## Kernel lifecycle
 
-Each kernel is a single Python subprocess: `python -u <runner.py>`. The bundled runner is materialized once per GJC process in a process-private temporary directory and file, then reused only by subsequent spawns within that process.
+Each kernel is a single Python subprocess: `python -u <runner.py>`. The bundled runner is materialized once per Vibrato process in a process-private temporary directory and file, then reused only by subsequent spawns within that process.
 
 Kernel startup sequence:
 
@@ -70,7 +70,7 @@ Runner → host:
 {"type": "done",     "id": "<reqId>", "status": "ok"|"error", "executionCount": N, "cancelled": false}
 ```
 
-Status events the prelude emits (e.g. `_emit_status("find", count=…)`) ship inside display bundles under `application/x-gjc-status` so the existing TUI status renderer keeps working.
+Status events the prelude emits (e.g. `_emit_status("find", count=…)`) ship inside display bundles under `application/x-vib-status` so the existing TUI status renderer keeps working.
 
 ## Magics
 
@@ -129,7 +129,7 @@ Owner-scoped kernels are reaped on all three exits:
 - session cleanup, which also handles session identity transitions,
 - signal exit (Ctrl-C), via `disposeChildSubprocesses`, which also drains both registries inside a single bounded budget.
 
-`gjc autoresearch clear` clears autoresearch state only; it does not dispose a Python kernel.
+`vib autoresearch clear` clears autoresearch state only; it does not dispose a Python kernel.
 
 A tool registering through the SDK's `registerSessionCleanup` lands in the **transition** cleanup registry, not the session one. Draining only the session registry on signal exit left explicitly-owned kernels running after Ctrl-C while graceful dispose looked correct.
 
@@ -150,13 +150,13 @@ If an intermediate cell fails:
 Environment is filtered before launching the runner:
 
 - Allowlist includes core vars like `PATH`, `HOME`, locale vars, `VIRTUAL_ENV`, `PYTHONPATH`, etc.
-- Allow-prefixes: `LC_`, `XDG_`, `GJC_`
+- Allow-prefixes: `LC_`, `XDG_`, `VIB_`
 - Denylist strips common API keys (OpenAI/Anthropic/Gemini/etc.)
 
 Runtime selection order:
 
 1. Active/located venv (`VIRTUAL_ENV`, then `<cwd>/.venv`, `<cwd>/venv`)
-2. Managed venv at `~/.gjc/python-env`
+2. Managed venv at `~/.vib/python-env`
 3. `python` or `python3` on PATH
 
 When a venv is selected, its bin/Scripts path is prepended to `PATH`.
@@ -165,13 +165,13 @@ The runner additionally receives `PYTHONUNBUFFERED=1` and `PYTHONIOENCODING=utf-
 
 ## Tool availability and mode selection
 
-`eval.py` / `eval.js` (both default `true`) plus optional `GJC_PY` override controls eval backend exposure:
+`eval.py` / `eval.js` (both default `true`) plus optional `VIB_PY` override controls eval backend exposure:
 
 - Python backend only (`eval.py=true`, `eval.js=false`)
 - JavaScript backend only (`eval.py=false`, `eval.js=true`)
 - both backends
 
-`GJC_PY` accepted values:
+`VIB_PY` accepted values:
 
 - `0` / `bash` → JavaScript backend only
 - `1` / `py` → Python backend only
@@ -209,7 +209,7 @@ From runner frames:
 - `stdout` / `stderr` → plain text chunks
 - `display` / `result` → rich display handling (MIME bundle)
 - `error` → traceback text
-- `application/x-gjc-status` MIME inside `display` → structured status events
+- `application/x-vib-status` MIME inside `display` → structured status events
 
 Display MIME precedence:
 
@@ -221,7 +221,7 @@ Additionally captured as structured outputs:
 
 - `application/json` → JSON tree data
 - `image/png` / `image/jpeg` → image payloads
-- `application/x-gjc-status` → status events
+- `application/x-vib-status` → status events
 
 ### Matplotlib
 
@@ -245,15 +245,15 @@ Output is streamed through `OutputSink` and may be persisted to artifact storage
 
 ## Operational troubleshooting
 
-- **Python backend not available** — Check `eval.py`, `GJC_PY`, and that `python`/`python3` is on PATH. If preflight fails and `eval.js` is enabled, omit `language` or pass `language: "js"` to use JavaScript.
-- **No Python on PATH** — Install a system Python 3.8+ or place a venv at `~/.gjc/python-env`. `gjc setup python --check` reports the resolved interpreter.
+- **Python backend not available** — Check `eval.py`, `VIB_PY`, and that `python`/`python3` is on PATH. If preflight fails and `eval.js` is enabled, omit `language` or pass `language: "js"` to use JavaScript.
+- **No Python on PATH** — Install a system Python 3.8+ or place a venv at `~/.vib/python-env`. `vib setup python --check` reports the resolved interpreter.
 - **Execution hangs then times out** — Increase tool `timeout` (max 600s) if workload is legitimate. For stuck native code, cancellation triggers `SIGINT` first then escalates; the session restarts on the next request.
 - **stdin/input prompts in Python code** — `input()` is not supported; pass data programmatically.
 - **Working directory errors** — Tool validates `cwd` exists and is a directory before execution.
 
 ## Relevant environment variables
 
-- `GJC_PY` — tool exposure override
-- `GJC_PYTHON_SKIP_CHECK=1` — bypass Python preflight/warm checks
-- `GJC_PYTHON_INTEGRATION=1` — enable gated integration tests that spawn a real Python
-- `GJC_PYTHON_IPC_TRACE=1` — log NDJSON frames exchanged with the runner subprocess
+- `VIB_PY` — tool exposure override
+- `VIB_PYTHON_SKIP_CHECK=1` — bypass Python preflight/warm checks
+- `VIB_PYTHON_INTEGRATION=1` — enable gated integration tests that spawn a real Python
+- `VIB_PYTHON_IPC_TRACE=1` — log NDJSON frames exchanged with the runner subprocess

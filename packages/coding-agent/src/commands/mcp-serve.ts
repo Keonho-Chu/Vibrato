@@ -1,5 +1,5 @@
-import { getAgentDir } from "@gajae-code/utils";
-import { Args, Command, Flags } from "@gajae-code/utils/cli";
+import { getAgentDir } from "@vib-rato/utils";
+import { Args, Command, Flags } from "@vib-rato/utils/cli";
 import {
 	COORDINATOR_MCP_PROTOCOL_VERSION,
 	COORDINATOR_MCP_SERVER_NAME,
@@ -94,7 +94,7 @@ export function validateMcpServeSubcommandForTest(server: string | undefined): v
 }
 
 export default class McpServe extends Command {
-	static description = "Serve GJC MCP compatibility bridges";
+	static description = "Serve Vibrato MCP compatibility bridges";
 	static strict = false;
 
 	static args = {
@@ -124,14 +124,14 @@ export default class McpServe extends Command {
 
 		if (flags.check) {
 			if (!flags.json) {
-				const serverName = server === "sdk" ? "gjc-sdk-mcp" : COORDINATOR_MCP_SERVER_NAME;
+				const serverName = server === "sdk" ? "vib-sdk-mcp" : COORDINATOR_MCP_SERVER_NAME;
 				const toolCount = server === "sdk" ? SDK_MCP_TOOL_NAMES.length : COORDINATOR_MCP_TOOL_NAMES.length;
 				process.stdout.write(`server: ${serverName}\ntools: ${toolCount}\n`);
 				return;
 			}
 			const payload =
 				server === "sdk"
-					? { ok: true, server: { name: "gjc-sdk-mcp" }, readOnly: false, tools: [...SDK_MCP_TOOL_NAMES] }
+					? { ok: true, server: { name: "vib-sdk-mcp" }, readOnly: false, tools: [...SDK_MCP_TOOL_NAMES] }
 					: await buildCoordinatorCheckPayload();
 			writeJson(payload);
 			return;

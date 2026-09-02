@@ -2,21 +2,21 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { scheduler } from "node:timers/promises";
-import { Agent, AgentBusyError } from "@gajae-code/agent-core";
-import type { AssistantMessage } from "@gajae-code/ai";
-import { getBundledModel } from "@gajae-code/ai/models";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { loadExtensions } from "@gajae-code/coding-agent/extensibility/extensions/loader";
-import { ExtensionRunner } from "@gajae-code/coding-agent/extensibility/extensions/runner";
-import { AgentSession, type AgentSessionEvent } from "@gajae-code/coding-agent/session/agent-session";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { FallbackChainController } from "@gajae-code/coding-agent/session/fallback-chain-controller";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import * as native from "@gajae-code/natives";
-import { getProjectAgentDir, logger, TempDir, withTimeout } from "@gajae-code/utils";
+import { Agent, AgentBusyError } from "@vib-rato/agent-core";
+import type { AssistantMessage } from "@vib-rato/ai";
+import { getBundledModel } from "@vib-rato/ai/models";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { loadExtensions } from "@vib-rato/coding-agent/extensibility/extensions/loader";
+import { ExtensionRunner } from "@vib-rato/coding-agent/extensibility/extensions/runner";
+import { AgentSession, type AgentSessionEvent } from "@vib-rato/coding-agent/session/agent-session";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { FallbackChainController } from "@vib-rato/coding-agent/session/fallback-chain-controller";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import * as native from "@vib-rato/natives";
+import { getProjectAgentDir, logger, TempDir, withTimeout } from "@vib-rato/utils";
 
-const runtimeSignalStoreKey = "__gjcAutoContinueSignals";
+const runtimeSignalStoreKey = "__vibAutoContinueSignals";
 type RuntimeSignalGlobal = typeof globalThis & { [runtimeSignalStoreKey]?: string[] };
 
 function getRuntimeSignals(): string[] {

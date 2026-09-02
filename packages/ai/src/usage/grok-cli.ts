@@ -1,4 +1,4 @@
-import { $credentialEnv } from "@gajae-code/utils";
+import { $credentialEnv } from "@vib-rato/utils";
 import type {
 	CredentialRankingStrategy,
 	UsageFetchContext,

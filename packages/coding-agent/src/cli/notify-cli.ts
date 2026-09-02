@@ -1,10 +1,10 @@
 /**
  * Notify CLI command handlers.
  *
- * Handles `gjc notify` setup/status and the hidden daemon entrypoint.
+ * Handles `vib notify` setup/status and the hidden daemon entrypoint.
  */
 import { createInterface } from "node:readline/promises";
-import { APP_NAME } from "@gajae-code/utils/dirs";
+import { APP_NAME } from "@vib-rato/utils/dirs";
 import chalk from "chalk";
 import { Settings, type SettingsAtomicPatch } from "../config/settings";
 import {
@@ -587,7 +587,7 @@ async function runTelegramSetup(cmd: NotifyCommandArgs, deps: NotifyCommandDeps)
 		if (!persisted && observed === undefined && commitAttempted) {
 			throw new Error(
 				"Telegram notification settings may or may not have been saved, and the stored configuration could not be read; " +
-					`run \`gjc notify status\` before retrying: ${detail}`,
+					`run \`vib notify status\` before retrying: ${detail}`,
 			);
 		}
 		throw new Error(
@@ -944,7 +944,7 @@ export function printNotifyHelp(): void {
 	process.stdout.write(`${chalk.bold(`${APP_NAME} notify`)} - Configure Telegram, Discord, or Slack notifications
 
 ${chalk.bold("Interactive path:")}
-  In a running GJC session, use /settings → Notifications for first-class Telegram, Discord,
+  In a running Vibrato session, use /settings → Notifications for first-class Telegram, Discord,
   and Slack configure/edit/repair, desired intent, health, test, removal, global master, and session controls.
   The CLI subcommands below remain the authoritative headless and automation fallback.
 
@@ -975,16 +975,16 @@ ${chalk.bold("Examples:")}
   ${APP_NAME} notify setup slack --slack-bot-token <token> --slack-app-token <token> --slack-workspace-id <id> --slack-channel-id <id> [--slack-authorized-user-id <id>]
   ${APP_NAME} notify status
   ${APP_NAME} notify health --provider discord --probe
-  ${APP_NAME} notify test --provider slack --message "hello from gjc"
+  ${APP_NAME} notify test --provider slack --message "hello from vib"
   ${APP_NAME} notify recovery
   ${APP_NAME} notify bind-thread --session-id 01J... --thread-ts 1785573662.132329
   ${APP_NAME} notify activate-thread --session-id 01J...
 
 ${chalk.bold("Threaded Mode:")}
-  GJC uses Telegram private-chat topics for coordinator/lifecycle sessions only. Setup verifies the bot
+  Vibrato uses Telegram private-chat topics for coordinator/lifecycle sessions only. Setup verifies the bot
   capability via getMe.has_topics_enabled. Enable Threaded Mode in @BotFather > Bot Settings
   > Threads Settings; bots cannot toggle it through the Bot API. If Telegram refuses topic
-  creation at runtime, GJC delivers flat to the paired private chat with outbound notifications
+  creation at runtime, Vibrato delivers flat to the paired private chat with outbound notifications
   and inline ask buttons only, then nudges you to enable Threaded Mode for free-text replies
   and session commands.
 `);

@@ -13,7 +13,7 @@ const settingsModule = path.join(repoRoot, "packages", "coding-agent", "src", "c
 const serviceModule = path.join(repoRoot, "packages", "coding-agent", "src", "memory-backend", "service.ts");
 
 async function runOffProbe(): Promise<{ stdout: string; records: Array<Record<string, unknown>> }> {
-	const tempDir = await mkdtemp(path.join(os.tmpdir(), "gjc-w1c-memory-"));
+	const tempDir = await mkdtemp(path.join(os.tmpdir(), "vib-w1c-memory-"));
 	const probePath = path.join(tempDir, "probe.ts");
 	const tracePath = path.join(tempDir, "trace.json");
 	const settingsImport = JSON.stringify(settingsModule);
@@ -31,7 +31,7 @@ async function runOffProbe(): Promise<{ stdout: string; records: Array<Record<st
 
 	const child = Bun.spawn(["bun", "--preload", traceLoader, probePath], {
 		cwd: repoRoot,
-		env: { ...process.env, GJC_TRACE_OUT: tracePath },
+		env: { ...process.env, VIB_TRACE_OUT: tracePath },
 		stdout: "pipe",
 		stderr: "pipe",
 	});

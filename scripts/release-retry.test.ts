@@ -24,7 +24,7 @@ afterEach(async () => {
 });
 
 async function git(cwd: string, args: readonly string[]): Promise<string> {
-	const result = await $`git -c user.email=release-test@gajae.local -c user.name=release-test ${args}`.cwd(cwd).quiet().nothrow();
+	const result = await $`git -c user.email=release-test@vibrato.local -c user.name=release-test ${args}`.cwd(cwd).quiet().nothrow();
 	if (result.exitCode !== 0) throw new Error(`git ${args.join(" ")} failed: ${result.stderr.toString().trim()}`);
 	return result.stdout.toString();
 }
@@ -37,7 +37,7 @@ interface Fixture {
 }
 
 async function releaseFixture(): Promise<Fixture> {
-	const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-release-retry-"));
+	const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-release-retry-"));
 	tempRoots.push(root);
 	const origin = path.join(root, "origin.git");
 	const work = path.join(root, "work");

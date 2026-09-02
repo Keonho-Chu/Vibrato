@@ -3,7 +3,7 @@ import { renderAutoresearchIteratePrompt, renderAutoresearchSetupPrompt } from "
 import iteratePromptTemplate from "../../src/autoresearch/prompts/prompt.md" with { type: "text" };
 import setupPromptTemplate from "../../src/autoresearch/prompts/prompt-setup.md" with { type: "text" };
 
-const DEAD_TOOL_NAMES = ["init_experiment", "run_experiment", "log_experiment", "update_notes", "~/.gjc/autoresearch"];
+const DEAD_TOOL_NAMES = ["init_experiment", "run_experiment", "log_experiment", "update_notes", "~/.vib/autoresearch"];
 
 /** Remove the sanctioned path refs (`./autoresearch.sh`, session state) before dead-reference checks. */
 function stripLegitPathRefs(text: string): string {
@@ -32,7 +32,7 @@ describe("autoresearch two-phase prompts", () => {
 		expect(rendered).toContain("bash autoresearch.sh");
 		expect(rendered).toContain("Optimize the tokenizer hot path");
 		expect(rendered).toContain("autoresearch/tokenizer-20260812");
-		expect(rendered).toContain("gjc autoresearch");
+		expect(rendered).toContain("vib autoresearch");
 	});
 
 	it("phase 1 renders the goal-less branch with baseline warning", () => {
@@ -170,7 +170,7 @@ describe("autoresearch two-phase prompts", () => {
 			}
 		}
 		// Session-scoped state is the sanctioned location.
-		expect(iteratePromptTemplate).toContain(".gjc/_session-{id}/autoresearch/");
+		expect(iteratePromptTemplate).toContain(".vib/_session-{id}/autoresearch/");
 		expect(iteratePromptTemplate).toContain("bash autoresearch.sh");
 		expect(iteratePromptTemplate).toContain("METRIC name=value");
 		expect(iteratePromptTemplate).toContain("ASI key=value");

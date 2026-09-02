@@ -3,9 +3,9 @@
  */
 
 import { createHash } from "node:crypto";
-import type { Component } from "@gajae-code/tui";
-import { Text, visibleWidth, wrapTextWithAnsi } from "@gajae-code/tui";
-import { sanitizeText } from "@gajae-code/utils";
+import type { Component } from "@vib-rato/tui";
+import { Text, visibleWidth, wrapTextWithAnsi } from "@vib-rato/tui";
+import { sanitizeText } from "@vib-rato/utils";
 import type { RenderResultOptions } from "../extensibility/custom-tools/types";
 import type { FileDiagnosticsResult } from "../lsp";
 import { renderDiff as renderDiffColored } from "../modes/components/diff";

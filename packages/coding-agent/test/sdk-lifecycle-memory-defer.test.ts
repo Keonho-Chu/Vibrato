@@ -2,12 +2,12 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { AuthStorage, getBundledModel } from "@gajae-code/ai";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { localBackend } from "@gajae-code/coding-agent/memory-backend/local-backend";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { logger } from "@gajae-code/utils";
+import { AuthStorage, getBundledModel } from "@vib-rato/ai";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { localBackend } from "@vib-rato/coding-agent/memory-backend/local-backend";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { logger } from "@vib-rato/utils";
 import { startMemoryBackendAfterReadiness } from "../src/commands/sdk";
 import { createLifecycleAgentSession } from "../src/sdk/lifecycle-session";
 
@@ -33,7 +33,7 @@ describe("lifecycle session memory startup", () => {
 	// local memory startup summarises every queued rollout through the model, so
 	// construction must never reach the backend.
 	test("never starts the memory backend while building the session", async () => {
-		const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-lifecycle-memory-"));
+		const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-lifecycle-memory-"));
 		createdDirs.add(cwd);
 		const startSpy = vi.spyOn(localBackend, "start").mockImplementation(() => {});
 

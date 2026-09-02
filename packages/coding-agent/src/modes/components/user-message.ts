@@ -6,7 +6,7 @@ import {
 	Text,
 	type ViewportAnchorRender,
 	type ViewportAnchorSource,
-} from "@gajae-code/tui";
+} from "@vib-rato/tui";
 import { getMarkdownTheme, theme } from "../../modes/theme/theme";
 
 // OSC 133 shell integration: marks prompt zones for terminal multiplexers

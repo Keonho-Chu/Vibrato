@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from "bun:test";
 import * as path from "node:path";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import * as lsp from "@gajae-code/coding-agent/lsp";
-import { createAgentSession } from "@gajae-code/coding-agent/sdk";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { TempDir } from "@gajae-code/utils";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import * as lsp from "@vib-rato/coding-agent/lsp";
+import { createAgentSession } from "@vib-rato/coding-agent/sdk";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { TempDir } from "@vib-rato/utils";
 import {
 	getLspStartupWarningMessage,
 	LSP_STARTUP_EVENT_CHANNEL,
@@ -31,7 +31,7 @@ describe("InteractiveMode LSP startup events", () => {
 		expect(received).toEqual([event]);
 	});
 	it("does not warm configured LSP servers when creating an interactive session", async () => {
-		const tempDir = TempDir.createSync("@gjc-lsp-lazy-startup-");
+		const tempDir = TempDir.createSync("@vib-lsp-lazy-startup-");
 		const authStorage = await AuthStorage.create(path.join(tempDir.path(), "auth.db"));
 		const discoverSpy = vi
 			.spyOn(lsp, "discoverStartupLspServers")

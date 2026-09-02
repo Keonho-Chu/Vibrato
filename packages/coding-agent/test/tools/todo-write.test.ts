@@ -1,9 +1,9 @@
 import { describe, expect, it } from "bun:test";
-import { validateToolArguments } from "@gajae-code/ai";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import * as themeModule from "@gajae-code/coding-agent/modes/theme/theme";
-import type { ToolSession } from "@gajae-code/coding-agent/tools";
-import { applyOpsToPhases, type TodoPhase, TodoWriteTool } from "@gajae-code/coding-agent/tools/implementations";
+import { validateToolArguments } from "@vib-rato/ai";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import * as themeModule from "@vib-rato/coding-agent/modes/theme/theme";
+import type { ToolSession } from "@vib-rato/coding-agent/tools";
+import { applyOpsToPhases, type TodoPhase, TodoWriteTool } from "@vib-rato/coding-agent/tools/implementations";
 import { todoWriteToolRenderer } from "../../src/tools/todo-write";
 
 function captureValidationError(run: () => void): string {

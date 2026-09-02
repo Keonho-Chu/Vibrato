@@ -6,7 +6,7 @@ import * as path from "node:path";
 import {
 	MarketplaceManager,
 	readInstalledPluginsRegistry,
-} from "@gajae-code/coding-agent/extensibility/plugins/marketplace";
+} from "@vib-rato/coding-agent/extensibility/plugins/marketplace";
 
 // Fixture: the valid-marketplace directory used across all tests.
 const FIXTURE_DIR = path.join(import.meta.dir, "fixtures", "valid-marketplace");
@@ -34,7 +34,7 @@ async function overwriteInstalledEntry(
 }
 
 function createTestContext(): TestContext {
-	const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-mgr-test-"));
+	const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-mgr-test-"));
 
 	const dirs = {
 		mktRegistry: path.join(tmpDir, "marketplaces.json"),
@@ -473,7 +473,7 @@ describe("MarketplaceManager", () => {
 	});
 
 	it("installPlugin scope:project when no projectInstalledRegistryPath → throws", async () => {
-		const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-mgr-noproj-"));
+		const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "vib-mgr-noproj-"));
 		try {
 			const noProjectManager = new MarketplaceManager({
 				marketplacesRegistryPath: path.join(tmp, "marketplaces.json"),

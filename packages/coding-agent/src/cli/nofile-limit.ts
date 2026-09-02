@@ -12,13 +12,13 @@ export function parseNoFileLimit(text: string): number | undefined {
 export function buildMacOSNoFileLimitWarning(currentLimit: number): string {
 	return [
 		`Warning: macOS file descriptor limit is low (ulimit -n = ${currentLimit}).`,
-		'GJC and project dev servers can hit EMFILE / "too many open files" while scanning or watching repositories.',
+		'Vibrato and project dev servers can hit EMFILE / "too many open files" while scanning or watching repositories.',
 		"For this terminal session, run:",
 		`  ulimit -n ${RECOMMENDED_MACOS_NOFILE_LIMIT}`,
 		"If your shell refuses that value, raise the per-user launchd limit and restart the terminal:",
 		`  sudo launchctl limit maxfiles ${RECOMMENDED_MACOS_NOFILE_LIMIT} 65536`,
 		"Avoid using huge values such as 2147483646 on macOS; they are commonly rejected or clamped.",
-		"Set GJC_SKIP_NOFILE_CHECK=1 to silence this preflight warning.",
+		"Set VIB_SKIP_NOFILE_CHECK=1 to silence this preflight warning.",
 	].join("\n");
 }
 
@@ -33,7 +33,7 @@ export function warnIfMacOSNoFileLimitTooLow(deps: WarnIfMacOSNoFileLimitTooLowD
 	const platform = deps.platform ?? process.platform;
 	if (platform !== "darwin") return;
 	const env = deps.env ?? process.env;
-	if (env.GJC_SKIP_NOFILE_CHECK === "1" || env.GJC_SKIP_NOFILE_CHECK === "true") return;
+	if (env.VIB_SKIP_NOFILE_CHECK === "1" || env.VIB_SKIP_NOFILE_CHECK === "true") return;
 
 	const run = deps.execFileSync ?? execFileSync;
 	let currentLimit: number | undefined;

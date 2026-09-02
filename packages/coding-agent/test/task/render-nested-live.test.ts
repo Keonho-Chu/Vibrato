@@ -1,8 +1,8 @@
 import { beforeAll, describe, expect, it } from "bun:test";
-import { getThemeByName, setThemeInstance } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { AgentProgress, TaskResultReceipt, TaskToolDetails } from "@gajae-code/coding-agent/task";
-import { taskToolRenderer } from "@gajae-code/coding-agent/task/render";
-import { type Component, Container } from "@gajae-code/tui";
+import { getThemeByName, setThemeInstance } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { AgentProgress, TaskResultReceipt, TaskToolDetails } from "@vib-rato/coding-agent/task";
+import { taskToolRenderer } from "@vib-rato/coding-agent/task/render";
+import { type Component, Container } from "@vib-rato/tui";
 import { collectProviderDegradationGroups } from "../../src/task/provider-retry-status";
 
 // Defends the live-rendering contract for the `task` tool: while a Level-1

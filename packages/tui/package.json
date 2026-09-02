@@ -1,18 +1,18 @@
 {
 	"type": "module",
-	"name": "@gajae-code/tui",
+	"name": "@vib-rato/tui",
 	"version": "0.15.6",
 	"description": "Terminal User Interface library with differential rendering for efficient text-based applications",
-	"homepage": "https://gajae-code.com",
-	"author": "Yeachan-Heo and Gajae Code Contributors",
+	"homepage": "https://vib-rato.com",
+	"author": "Yeachan-Heo and Vibrato Contributors",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/Yeachan-Heo/gajae-code.git",
+		"url": "git+https://github.com/Keonho-Chu/Vibrato.git",
 		"directory": "packages/tui"
 	},
 	"bugs": {
-		"url": "https://github.com/Yeachan-Heo/gajae-code/issues"
+		"url": "https://github.com/Keonho-Chu/Vibrato/issues"
 	},
 	"keywords": [
 		"tui",
@@ -36,8 +36,8 @@
 		"fmt": "biome format --write ."
 	},
 	"dependencies": {
-		"@gajae-code/natives": "catalog:",
-		"@gajae-code/utils": "catalog:",
+		"@vib-rato/natives": "catalog:",
+		"@vib-rato/utils": "catalog:",
 		"lru-cache": "catalog:",
 		"marked": "catalog:"
 	},

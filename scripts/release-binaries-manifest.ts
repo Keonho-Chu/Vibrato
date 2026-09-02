@@ -1,22 +1,22 @@
 #!/usr/bin/env bun
 /**
  * Build the installer/update checksum assets for a directory of standalone
- * GJC binaries. Writes `gajae-release-binaries-v1.json` and
- * `gajae-release-binaries.sha256` next to those binaries.
+ * Vibrato binaries. Writes `vibrato-release-binaries-v1.json` and
+ * `vibrato-release-binaries.sha256` next to those binaries.
  */
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { createHash } from "node:crypto";
 
-export const BINARY_MANIFEST_FILE = "gajae-release-binaries-v1.json";
-export const BINARY_SHA256_FILE = "gajae-release-binaries.sha256";
+export const BINARY_MANIFEST_FILE = "vibrato-release-binaries-v1.json";
+export const BINARY_SHA256_FILE = "vibrato-release-binaries.sha256";
 
 export const RELEASE_BINARY_NAMES = [
-	"gjc-linux-x64",
-	"gjc-linux-arm64",
-	"gjc-darwin-arm64",
-	"gjc-darwin-x64",
-	"gjc-windows-x64.exe",
+	"vib-linux-x64",
+	"vib-linux-arm64",
+	"vib-darwin-arm64",
+	"vib-darwin-x64",
+	"vib-windows-x64.exe",
 ] as const;
 
 export type ReleaseBinaryName = (typeof RELEASE_BINARY_NAMES)[number];
@@ -28,7 +28,7 @@ export interface ReleaseBinaryRecord {
 }
 
 export interface ReleaseBinariesManifest {
-	schema: "gajae-release-binaries-v1";
+	schema: "vibrato-release-binaries-v1";
 	schema_version: 1;
 	release_version: string;
 	release_channel: "stable" | "nightly";
@@ -52,7 +52,7 @@ export function parseReleaseTag(tag: string): { tag: string; version: string; ch
 	const version = tag.slice(1);
 	if (STABLE_VERSION_RE.test(version)) return { tag, version, channel: "stable" };
 	if (NIGHTLY_VERSION_RE.test(version)) return { tag, version, channel: "nightly" };
-	throw new Error(`Release tag ${tag} is not a stable or nightly GJC version`);
+	throw new Error(`Release tag ${tag} is not a stable or nightly Vibrato version`);
 }
 
 export function buildReleaseBinariesManifest(options: {
@@ -80,7 +80,7 @@ export function buildReleaseBinariesManifest(options: {
 		binaries.push({ name, sha256: digest, size: stat.size });
 	}
 	return {
-		schema: "gajae-release-binaries-v1",
+		schema: "vibrato-release-binaries-v1",
 		schema_version: 1,
 		release_version: parsed.version,
 		release_channel: channel,

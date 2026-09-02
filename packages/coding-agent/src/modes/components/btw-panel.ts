@@ -1,4 +1,4 @@
-import { type Component, Container, Markdown, Spacer, Text, type TUI } from "@gajae-code/tui";
+import { type Component, Container, Markdown, Spacer, Text, type TUI } from "@vib-rato/tui";
 import {
 	BTW_MAX_ANSWER_UTF8_BYTES,
 	BTW_MAX_CONTEXT_TURNS,

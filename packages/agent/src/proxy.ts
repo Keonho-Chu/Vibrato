@@ -11,10 +11,10 @@ import {
 	type SimpleStreamOptions,
 	type StopReason,
 	type ToolCall,
-} from "@gajae-code/ai";
-import { calculateCost } from "@gajae-code/ai/models";
-import { captureUnicodeEscapeEvidence, parseStreamingJson } from "@gajae-code/ai/utils/json-parse";
-import { readSseJson } from "@gajae-code/utils";
+} from "@vib-rato/ai";
+import { calculateCost } from "@vib-rato/ai/models";
+import { captureUnicodeEscapeEvidence, parseStreamingJson } from "@vib-rato/ai/utils/json-parse";
+import { readSseJson } from "@vib-rato/utils";
 
 // Create stream class matching ProxyMessageEventStream
 class ProxyMessageEventStream extends EventStream<AssistantMessageEvent, AssistantMessage> {

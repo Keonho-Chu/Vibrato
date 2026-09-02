@@ -1,4 +1,4 @@
-import { visibleWidth } from "@gajae-code/tui";
+import { visibleWidth } from "@vib-rato/tui";
 import { STTController, type SttState } from "../../stt";
 import { theme } from "../theme/theme";
 

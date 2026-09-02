@@ -1,6 +1,6 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { APP_NAME, extractHttpStatusFromError, getLogsDir } from "@gajae-code/utils";
+import { APP_NAME, extractHttpStatusFromError, getLogsDir } from "@vib-rato/utils";
 import { isCopilotTransientModelError } from "./retry.js";
 import { formatErrorMessageWithRetryAfter } from "./retry-after.js";
 

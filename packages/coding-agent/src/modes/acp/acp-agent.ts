@@ -36,7 +36,7 @@ import {
 	type SetSessionModeRequest,
 	type SetSessionModeResponse,
 } from "@agentclientprotocol/sdk";
-import { getAgentDir, logger } from "@gajae-code/utils";
+import { getAgentDir, logger } from "@vib-rato/utils";
 import packageJson from "../../../package.json" with { type: "json" };
 import {
 	ACP_SESSION_RECONNECT,
@@ -89,7 +89,7 @@ const SETTLED_PROMPT_CORRELATION_RETENTION = 16;
  */
 const CANCEL_SETTLEMENT_GRACE_MS = 5_000;
 /**
- * Mirrors `REQUEST_FRAME_BYTES` in `crates/gjc-sdk/src/query.rs`: the SDK WebSocket
+ * Mirrors `REQUEST_FRAME_BYTES` in `crates/vib-sdk/src/query.rs`: the SDK WebSocket
  * server sets `max_message_size`/`max_frame_size` to 256 KiB and closes the socket on
  * an oversize frame, so an over-limit prompt must be refused before it is sent.
  */
@@ -749,7 +749,7 @@ function modelConfigOptions(
 	for (const item of pageItems(query)) {
 		const model = object(item);
 		if (!model || typeof model.provider !== "string" || typeof model.id !== "string") continue;
-		// The reserved `gajae-code` namespace is a logical facade, not a real
+		// The reserved `vib-rato` namespace is a logical facade, not a real
 		// active provider: the Q10 projection already availability-filters the
 		// synthetic rows, so the Q29 provider filter must not drop them.
 		if (
@@ -791,10 +791,10 @@ function queryPage(query: unknown): { items?: unknown; complete?: unknown; conti
 }
 
 /**
- * Collect every page of `providers.list/active` (Q29, GJC >= 0.12.8) and
+ * Collect every page of `providers.list/active` (Q29, Vibrato >= 0.12.8) and
  * return the providers with usable stored credentials or credentialless
  * connection kinds, mirroring the TUI model picker's
- * `modelRegistry.getAvailable()`. The openwebui-gjc-adapter applies the same
+ * `modelRegistry.getAvailable()`. The openwebui-vib-adapter applies the same
  * filter to `/v1/models`. Q29 pages are byte-bounded and can span multiple
  * pages when custom provider ids inflate the payload, so all pages are
  * consumed before the provider set is built. Returns undefined only when the
@@ -1279,21 +1279,21 @@ export class AcpAgent implements Agent {
 			{
 				id: "agent",
 				name: "Use existing local credentials",
-				description: "Authenticate via the provider keys/OAuth state already configured under ~/.gjc.",
+				description: "Authenticate via the provider keys/OAuth state already configured under ~/.vib.",
 			},
 		];
 		if (params.clientCapabilities?.auth?.terminal === true) {
 			authMethods.push({
 				type: "terminal",
 				id: "terminal",
-				name: "Set up Gajae Code in terminal",
-				description: "Launch the gjc TUI to add provider keys and select models.",
+				name: "Set up Vibrato in terminal",
+				description: "Launch the vib TUI to add provider keys and select models.",
 				args: [ACP_TERMINAL_AUTH_FLAG],
 			});
 		}
 		return {
 			protocolVersion: PROTOCOL_VERSION,
-			agentInfo: { name: "gajae-code", title: "Gajae Code", version: packageJson.version },
+			agentInfo: { name: "vib-rato", title: "Vibrato", version: packageJson.version },
 			authMethods,
 			agentCapabilities: {
 				loadSession: true,
@@ -1601,7 +1601,7 @@ export class AcpAgent implements Agent {
 			return { stopReason: "end_turn" };
 		}
 		// The SDK transport hard-caps a single request frame at 256 KiB and answers an
-		// oversize frame by closing the socket (CloseCode::Size, crates/gjc-sdk/src/server.rs),
+		// oversize frame by closing the socket (CloseCode::Size, crates/vib-sdk/src/server.rs),
 		// which surfaces to the client as an opaque `connection_closed` mid-turn. Reject
 		// the prompt up front with a typed, actionable error instead of losing the session.
 		// Measure the frame the server actually receives, not just the payload: SdkClient
@@ -1805,7 +1805,7 @@ export class AcpAgent implements Agent {
 				record.cancelRequested = false;
 				// The client's turn is settled by the return; the advisory idle publication
 				// must not gate it and must still be attempted so the running phase is
-				// released (gjcRunning:false) instead of spinning behind a settled cancel.
+				// released (vibRunning:false) instead of spinning behind a settled cancel.
 				void this.#publishPromptPhaseIdle(params.sessionId, record.adapter);
 				return { stopReason: "cancelled" };
 			}
@@ -1823,7 +1823,7 @@ export class AcpAgent implements Agent {
 		// (`scope:"turn"`, the default, matching the SDK `turn.abort` default and
 		// other ACP clients' cancel behavior). A client that also wants exact owned
 		// subagents and background tasks stopped opts in with
-		// `_meta.gjc.abortScope: "owned"` (or `GJC_ACP_ABORT_SCOPE=owned`).
+		// `_meta.vib.abortScope: "owned"` (or `VIB_ACP_ABORT_SCOPE=owned`).
 		const scope = resolveAcpAbortScope(params._meta, process.env);
 		const waiter = record.activePrompt;
 		if (waiter) {
@@ -1959,12 +1959,12 @@ export class AcpAgent implements Agent {
 	async extMethod(method: string, params: JsonObject): Promise<JsonObject> {
 		// An unrecognized extension method is a protocol failure, not an application
 		// result: it must reach the client as JSON-RPC -32601 rather than a resolved
-		// payload. Recognized `_gjc/*` methods keep their `{ok:false}` result contract.
+		// payload. Recognized `_vib/*` methods keep their `{ok:false}` result contract.
 		if (
 			method !== "session/set_model" &&
-			method !== "_gjc/sdk/global" &&
-			method !== "_gjc/sdk/control" &&
-			method !== "_gjc/sdk/query"
+			method !== "_vib/sdk/global" &&
+			method !== "_vib/sdk/control" &&
+			method !== "_vib/sdk/query"
 		)
 			throw RequestError.methodNotFound(method);
 		try {
@@ -1976,7 +1976,7 @@ export class AcpAgent implements Agent {
 				await this.setSessionConfigOption({ sessionId, configId: MODEL_CONFIG_ID, value: modelId });
 				return {};
 			}
-			if (method === "_gjc/sdk/global") {
+			if (method === "_vib/sdk/global") {
 				const result = await (await this.#brokerAdapter()).handle(method, params);
 				return object(result) ?? {};
 			}
@@ -2231,7 +2231,7 @@ export class AcpAgent implements Agent {
 			if (capabilities?.promptTerminalOutcomeVersion !== 1)
 				throw new AcpSdkAdapterError(
 					"unavailable",
-					"This ACP client requires a newer GJC SDK session; restart the session.",
+					"This ACP client requires a newer Vibrato SDK session; restart the session.",
 				);
 			this.#assertSessionEpoch(id, epoch);
 			const exactAttachment = this.#router.attachment(id) ?? currentAttachment;
@@ -2339,7 +2339,7 @@ export class AcpAgent implements Agent {
 					sessionId: id,
 					update: {
 						sessionUpdate: "session_info_update",
-						_meta: { gjcRecoverFailed: true, gjcRecoverError: detail },
+						_meta: { vibRecoverFailed: true, vibRecoverError: detail },
 					},
 				});
 			} catch {}
@@ -2787,7 +2787,7 @@ export class AcpAgent implements Agent {
 					update: {
 						sessionUpdate: "session_info_update",
 						updatedAt: new Date().toISOString(),
-						_meta: { gjcPhase: "working", running: true, gjcRunning: true },
+						_meta: { vibPhase: "working", running: true, vibRunning: true },
 					},
 				},
 				adapter,
@@ -2810,7 +2810,7 @@ export class AcpAgent implements Agent {
 							update: {
 								sessionUpdate: "agent_message_chunk",
 								content: { type: "text", text: resolution.text },
-								...(resolution.final.truncated ? { _meta: { gjcFinalTextTruncated: true } } : {}),
+								...(resolution.final.truncated ? { _meta: { vibFinalTextTruncated: true } } : {}),
 							},
 						},
 						adapter,
@@ -2883,7 +2883,7 @@ export class AcpAgent implements Agent {
 				sessionId: id,
 				update: {
 					sessionUpdate: "session_info_update",
-					_meta: { gjcPhase: "idle", running: false, gjcRunning: false },
+					_meta: { vibPhase: "idle", running: false, vibRunning: false },
 				},
 			});
 		} catch {
@@ -2961,7 +2961,7 @@ export class AcpAgent implements Agent {
 					sessionUpdate: "session_info_update",
 					...(title ? { title } : {}),
 					updatedAt,
-					_meta: { gjcPhase: "idle", running: false, gjcRunning: false },
+					_meta: { vibPhase: "idle", running: false, vibRunning: false },
 				},
 			},
 			adapter,
@@ -3023,7 +3023,7 @@ export class AcpAgent implements Agent {
 			if (activePreset && activeProfile?.available === false) {
 				record.authFailure =
 					`Model preset "${activePreset}" has no usable provider credentials. ` +
-					"Authenticate the required provider in Gajae Code or select an available preset before prompting.";
+					"Authenticate the required provider in Vibrato or select an available preset before prompting.";
 				if (rejectUnavailableStartupPreset && activePreset === modelPreset)
 					throw new AcpSdkAdapterError("authentication_failed", record.authFailure);
 			}
@@ -3300,7 +3300,7 @@ export class AcpAgent implements Agent {
 							sessionId: id,
 							update: {
 								sessionUpdate: "session_info_update",
-								_meta: { gjcTranscriptImageReplay: content.images },
+								_meta: { vibTranscriptImageReplay: content.images },
 							},
 						},
 						adapter,
@@ -3456,7 +3456,7 @@ export class AcpAgent implements Agent {
 						update: {
 							sessionUpdate: "session_info_update",
 							_meta: {
-								gjcTranscriptReplaySkipped: { count: unreplayableEntries, reason: unreplayableReason },
+								vibTranscriptReplaySkipped: { count: unreplayableEntries, reason: unreplayableReason },
 							},
 						},
 					},
@@ -3522,7 +3522,7 @@ export class AcpAgent implements Agent {
 						sessionId: id,
 						update: {
 							sessionUpdate: "session_info_update",
-							_meta: { gjcPhase: "idle", running: false, gjcRunning: false },
+							_meta: { vibPhase: "idle", running: false, vibRunning: false },
 						},
 					},
 					record.adapter,

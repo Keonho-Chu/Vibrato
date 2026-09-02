@@ -8,9 +8,9 @@ import {
 	mergeModelProfiles,
 	recommendModelProfileForProvider,
 	resolveProfileBindings,
-} from "@gajae-code/coding-agent/config/model-profiles";
-import { parseModelString, splitSelectorThinkingSuffix } from "@gajae-code/coding-agent/config/model-resolver";
-import { ProfileModelSelectorSchema } from "@gajae-code/coding-agent/config/models-config-schema";
+} from "@vib-rato/coding-agent/config/model-profiles";
+import { parseModelString, splitSelectorThinkingSuffix } from "@vib-rato/coding-agent/config/model-resolver";
+import { ProfileModelSelectorSchema } from "@vib-rato/coding-agent/config/models-config-schema";
 import modelsJson from "../../ai/src/models.json";
 import { type ModelSelectorValue, normalizeModelSelectorValue, selectorHead } from "../src/config/model-selector-value";
 
@@ -899,8 +899,12 @@ describe("built-in model profile catalog", () => {
 
 	test("plain minimax provider does not appear in catalog or recommendations", () => {
 		expect(JSON.stringify(BUILTIN_MODEL_PROFILES)).not.toContain("minimax/");
+		// `minimax` was never a mapped provider at all...
 		expect(recommendModelProfileForProvider("minimax", mergeModelProfiles())).toBeUndefined();
-		expect(recommendModelProfileForProvider("minimax-code", mergeModelProfiles())?.name).toBe("minimax-medium");
+		// ...while `minimax-code` is mapped but hidden by the product allowlist, so
+		// the profile stays in the catalog and only the recommendation is withheld.
+		expect(mergeModelProfiles().get("minimax-medium")?.requiredProviders).toEqual(["minimax-code"]);
+		expect(recommendModelProfileForProvider("minimax-code", mergeModelProfiles())).toBeUndefined();
 	});
 
 	test("presentation groups and provider recommendations are pure catalog helpers", () => {
@@ -936,33 +940,39 @@ describe("built-in model profile catalog", () => {
 		})) {
 			expect(getModelProfilePresentation(name)).toEqual({ displayName, providerGroup: "GROK" });
 		}
+		// Presentation above is pure metadata for every profile; the landing grouping
+		// is a selection surface, so it drops profiles pinning a hidden provider.
 		expect([...groupModelProfilesForPresetLanding(profiles).keys()]).toEqual([
 			"CODEX",
+			"OPEN WEIGHT MODELS (PROVIDER AGNOSTIC)",
+			"CLAUDE",
+			"GROK",
+			"COMBOS",
+		]);
+		for (const dropped of [
 			"OPENCODEGO",
 			"COMMAND CODE GOAT",
 			"macOS Local (oMLX)",
-			"OPEN WEIGHT MODELS (PROVIDER AGNOSTIC)",
-			"CLAUDE",
 			"GLM",
 			"KIMI CODING PLAN",
 			"MIMO",
-			"GROK",
 			"CURSOR",
 			"MINIMAX",
 			"ALIBABA TOKEN PLAN",
-			"COMBOS",
-		]);
+		]) {
+			expect(groupModelProfilesForPresetLanding(profiles).has(dropped)).toBe(false);
+		}
+		// Only the combos and Grok entries that pin selectable providers survive.
 		expect(
 			groupModelProfilesForPresetLanding(profiles)
-				.get("macOS Local (oMLX)")
+				.get("COMBOS")
 				?.map(profile => profile.name),
-		).toEqual([
-			"macos-omlx-fast",
-			"macos-omlx-balanced",
-			"macos-omlx-quality",
-			"macos-omlx-abliterated-fast",
-			"macos-omlx-abliterated-balanced",
-		]);
+		).toEqual(["fable-opus-codex", "opus-codex"]);
+		expect(
+			groupModelProfilesForPresetLanding(profiles)
+				.get("GROK")
+				?.map(profile => profile.name),
+		).toEqual(["grok-build-pro"]);
 		expect(
 			groupModelProfilesForPresetLanding(profiles)
 				.get("OPEN WEIGHT MODELS (PROVIDER AGNOSTIC)")
@@ -981,23 +991,29 @@ describe("built-in model profile catalog", () => {
 			"open-weights-kimi-glm-deepseek",
 			"open-weights-all",
 		]);
+		// Recommendations survive for allowlisted providers and for `grok-build`,
+		// which is not a built-in id and so counts as a user endpoint.
 		expect(recommendModelProfileForProvider("openai-codex", profiles)?.name).toBe("codex-medium");
 		expect(recommendModelProfileForProvider("anthropic", profiles)?.name).toBe("claude-opus");
-		expect(recommendModelProfileForProvider("opencode-go", profiles)?.name).toBe("opencodego");
-		expect(recommendModelProfileForProvider("commandcode-goat", profiles)?.name).toBe("commandcode-goat");
-		expect(recommendModelProfileForProvider("zai", profiles)?.name).toBe("glm-medium");
-		expect(recommendModelProfileForProvider("kimi-code", profiles)?.name).toBe("kimi-coding-plan-medium");
-		expect(recommendModelProfileForProvider("xiaomi", profiles)?.name).toBe("mimo-medium");
-		expect(recommendModelProfileForProvider("xiaomi-token-plan-sgp", profiles)?.name).toBe("mimo-medium");
-		expect(recommendModelProfileForProvider("xiaomi-token-plan-ams", profiles)?.name).toBe("mimo-medium");
-		expect(recommendModelProfileForProvider("xiaomi-token-plan-cn", profiles)?.name).toBe("mimo-medium");
-		expect(recommendModelProfileForProvider("xai", profiles)?.name).toBe("grok-46-medium");
-		expect(recommendModelProfileForProvider("omlx", profiles)?.name).toBe("macos-omlx-balanced");
 		expect(recommendModelProfileForProvider("grok-build", profiles)?.name).toBe("grok-build-pro");
-		expect(recommendModelProfileForProvider("cursor", profiles)?.name).toBe("cursor-medium");
-		expect(recommendModelProfileForProvider("alibaba-token-plan", profiles)?.name).toBe(
-			"alibaba-token-plan-balanced",
-		);
+		// Every mapping that pins a hidden built-in provider is withheld, even
+		// though the mapping itself is still in the table.
+		for (const hidden of [
+			"opencode-go",
+			"commandcode-goat",
+			"zai",
+			"kimi-code",
+			"xiaomi",
+			"xiaomi-token-plan-sgp",
+			"xiaomi-token-plan-ams",
+			"xiaomi-token-plan-cn",
+			"xai",
+			"omlx",
+			"cursor",
+			"alibaba-token-plan",
+		]) {
+			expect(recommendModelProfileForProvider(hidden, profiles)).toBeUndefined();
+		}
 		expect(getModelProfilePresentation("alibaba-token-plan-balanced")).toEqual({
 			displayName: "Balanced",
 			providerGroup: "ALIBABA TOKEN PLAN",

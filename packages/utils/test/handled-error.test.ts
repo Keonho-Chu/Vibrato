@@ -7,10 +7,10 @@ import { parseCrashEventLine } from "../src/crash-journal";
 import { recordHandledError, resetHandledErrorDedupeForTest } from "../src/postmortem";
 
 function handledStore(): { readonly log: string; readonly journal: string } {
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-handled-error-"));
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-handled-error-"));
 	return {
-		log: path.join(dir, "gjc-error.log"),
-		journal: path.join(dir, "gjc-error-events.jsonl"),
+		log: path.join(dir, "vib-error.log"),
+		journal: path.join(dir, "vib-error-events.jsonl"),
 	};
 }
 
@@ -27,7 +27,7 @@ describe("recordHandledError", () => {
 
 		expect(written).toBe(store.log);
 		const record = await Bun.file(store.log).text();
-		const markerLine = record.split("\n").find(line => line.startsWith("gjc-crash-record.v1 "));
+		const markerLine = record.split("\n").find(line => line.startsWith("vib-crash-record.v1 "));
 		const marker = parseCrashRecordMarker(markerLine ?? "");
 		const fingerprint = computeCrashFingerprint({
 			name: error.name,
@@ -70,7 +70,7 @@ describe("recordHandledError", () => {
 		expect(recordHandledError("Tool functions.read", new Error("different failure"), { path: store.log })).toBe(
 			store.log,
 		);
-		expect((await Bun.file(store.log).text()).match(/gjc-crash-record\.v1 /g)).toHaveLength(2);
+		expect((await Bun.file(store.log).text()).match(/vib-crash-record\.v1 /g)).toHaveLength(2);
 		expect(await journalLines(store.journal)).toHaveLength(2);
 	});
 
@@ -82,7 +82,7 @@ describe("recordHandledError", () => {
 		recordHandledError("Tool functions.read", error, { path: store.log });
 		resetHandledErrorDedupeForTest();
 		expect(recordHandledError("Tool functions.read", error, { path: store.log })).toBe(store.log);
-		expect((await Bun.file(store.log).text()).match(/gjc-crash-record\.v1 /g)).toHaveLength(2);
+		expect((await Bun.file(store.log).text()).match(/vib-crash-record\.v1 /g)).toHaveLength(2);
 		expect(await journalLines(store.journal)).toHaveLength(2);
 	});
 
@@ -136,6 +136,6 @@ describe("recordHandledError", () => {
 		expect(spawned.exitCode).toBe(0);
 
 		expect(await journalLines(handled.journal)).toHaveLength(1);
-		expect(await journalLines(path.join(path.dirname(fatal.log), "gjc-crash-events.jsonl"))).toHaveLength(1);
+		expect(await journalLines(path.join(path.dirname(fatal.log), "vib-crash-events.jsonl"))).toHaveLength(1);
 	});
 });

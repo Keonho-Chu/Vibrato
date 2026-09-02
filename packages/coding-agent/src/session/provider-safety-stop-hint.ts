@@ -1,6 +1,6 @@
-import type { AssistantMessage, Model } from "@gajae-code/ai/core";
-import { truncateToWidth } from "@gajae-code/tui";
-import { sanitizeText } from "@gajae-code/utils";
+import type { AssistantMessage, Model } from "@vib-rato/ai/core";
+import { truncateToWidth } from "@vib-rato/tui";
+import { sanitizeText } from "@vib-rato/utils";
 import { resolveSelector } from "../config/model-resolver";
 import { type ModelSelectorValue, normalizeModelSelectorValue } from "../config/model-selector-value";
 import { splitSelectorThinkingSuffix } from "../thinking";

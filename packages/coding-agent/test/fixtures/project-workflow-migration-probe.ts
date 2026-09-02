@@ -1,15 +1,15 @@
 /**
  * Child-process probe for the project workflow-settings migration.
  *
- * Runs `Settings.loadForScope({ cwd })` in a temp project whose `.gjc/`
+ * Runs `Settings.loadForScope({ cwd })` in a temp project whose `.vib/`
  * directory may contain a legacy `settings.json` (and possibly a `config.yml`),
  * then reports the post-load state so tests can assert the migration contract:
- * the workflow keys land in the project `.gjc/config.yml` (absent-only) while
+ * the workflow keys land in the project `.vib/config.yml` (absent-only) while
  * the legacy source is preserved for its non-workflow settings.
  */
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { getLogPath } from "@gajae-code/utils";
+import { getLogPath } from "@vib-rato/utils";
 import { YAML } from "bun";
 import { ensureWorkflowSettingsMigrated, Settings, SettingsMigrationTestHooks } from "../../src/config/settings";
 
@@ -19,7 +19,7 @@ const cwd = process.cwd();
 // migrated values already committed, so the rollback path is exercised.
 if (process.env.SETTINGS_MIGRATION_TEST_MARKER_MERGE_DIR === "1") {
 	SettingsMigrationTestHooks.beforeProjectMarkerMerge = async () => {
-		const marker = path.join(cwd, ".gjc", "state", "settings.json.migrated-keys");
+		const marker = path.join(cwd, ".vib", "state", "settings.json.migrated-keys");
 		await fs.rm(marker, { force: true });
 		await fs.mkdir(marker, { recursive: true });
 	};
@@ -45,7 +45,7 @@ if (process.argv.includes("--via-trigger")) {
 	loaded = await Settings.loadForScope({ cwd });
 }
 
-const projectDir = path.resolve(cwd, ".gjc");
+const projectDir = path.resolve(cwd, ".vib");
 const source = path.resolve(projectDir, "settings.json");
 const target = path.resolve(projectDir, "config.yml");
 
@@ -61,7 +61,7 @@ const exists = async (targetPath: string): Promise<boolean> => {
 
 let maxIterations: unknown = null;
 let maxReviewPassesPerLane: unknown = null;
-let gjcValueType: string | null = null;
+let vibValueType: string | null = null;
 let configYmlRootType: string | null = null;
 const strictInvalidEvidencePath = path.resolve(projectDir, "state", "settings.json.strict-invalid");
 let strictInvalidEvidenceKeys: string[] = [];
@@ -91,14 +91,14 @@ if (await exists(target)) {
 	if (parsed === null) configYmlRootType = "null";
 	else if (Array.isArray(parsed)) configYmlRootType = "array";
 	else configYmlRootType = typeof parsed;
-	if (parsedRecord && typeof parsedRecord === "object" && Object.hasOwn(parsedRecord, "gjc")) {
-		gjcValueType = Array.isArray(parsedRecord.gjc)
+	if (parsedRecord && typeof parsedRecord === "object" && Object.hasOwn(parsedRecord, "vib")) {
+		vibValueType = Array.isArray(parsedRecord.vib)
 			? "array"
-			: parsedRecord.gjc === null
+			: parsedRecord.vib === null
 				? "null"
-				: typeof parsedRecord.gjc;
+				: typeof parsedRecord.vib;
 	}
-	const ralplan = (parsedRecord?.gjc as Record<string, unknown> | undefined)?.ralplan as
+	const ralplan = (parsedRecord?.vib as Record<string, unknown> | undefined)?.ralplan as
 		| Record<string, unknown>
 		| undefined;
 	maxIterations = ralplan?.maxIterations ?? null;
@@ -111,14 +111,14 @@ process.stdout.write(
 		sourceExists: await exists(source),
 		maxIterations,
 		maxReviewPassesPerLane,
-		gjcValueType,
+		vibValueType,
 		configYmlRootType,
 		strictInvalidEvidenceExists: await exists(strictInvalidEvidencePath),
 		strictInvalidEvidenceKeys,
 		strictInvalidEvidenceMalformed,
 		// The generic settings API must not resurrect retired workflow keys from
 		// the retained settings.json after a config.yml removal.
-		settingsGetMaxIterations: loaded?.get("gjc.ralplan.maxIterations") ?? null,
+		settingsGetMaxIterations: loaded?.get("vib.ralplan.maxIterations") ?? null,
 		migrationLog: await readMigrationLog(),
 	})}
 `,
@@ -126,20 +126,20 @@ process.stdout.write(
 
 /**
  * The logger writes to a file (never stderr, which would corrupt the TUI), so
- * tests that assert migration warnings opt in via GJC_PROBE_LOG and read the
+ * tests that assert migration warnings opt in via VIB_PROBE_LOG and read the
  * isolated log (HOME is pointed at a temp dir by the runner). Polls briefly:
  * winston's async transport may not have flushed the write the instant the
  * migration returns.
  */
 async function readMigrationLog(): Promise<string> {
-	if (process.env.GJC_PROBE_LOG !== "1") return "";
+	if (process.env.VIB_PROBE_LOG !== "1") return "";
 	// winston's DailyRotateFile names files by LOCAL date while getLogPath()
-	// uses the UTC date, so scan every gjc.*.log in the logs dir instead of
+	// uses the UTC date, so scan every vib.*.log in the logs dir instead of
 	// guessing the file name.
 	const logsDir = path.dirname(getLogPath());
 	for (let attempt = 0; attempt < 20; attempt++) {
 		try {
-			const files = (await fs.readdir(logsDir)).filter(name => name.startsWith("gjc.") && name.endsWith(".log"));
+			const files = (await fs.readdir(logsDir)).filter(name => name.startsWith("vib.") && name.endsWith(".log"));
 			let text = "";
 			for (const file of files) {
 				text += await Bun.file(path.join(logsDir, file)).text();

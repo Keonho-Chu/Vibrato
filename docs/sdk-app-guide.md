@@ -1,6 +1,6 @@
-# Building Applications on the Gajae-Code SDK
+# Building Applications on the Vibrato SDK
 
-A beginner-friendly guide to using Gajae-Code as the **agent runtime for your own
+A beginner-friendly guide to using Vibrato as the **agent runtime for your own
 application** — mobile apps, desktop apps, custom web frontends, chat bots, and
 vertical AI products.
 
@@ -14,14 +14,14 @@ Related references:
 - [Embedding SDK](./sdk-embedding.md) — the in-process TypeScript API
 - [External control readiness](./external-control-readiness.md) — supported surfaces
 
-## Why build on Gajae-Code?
+## Why build on Vibrato?
 
 Every vertical AI app ends up needing the same backend pieces: an agentic loop,
 tool execution, session persistence, model/auth management, streaming, retries,
 and compaction. Some also need a configured remote-notification integration.
 Teams keep rebuilding these from scratch.
 
-Gajae-Code packages the runtime as a reusable component:
+Vibrato packages the runtime as a reusable component:
 
 - **Drop the agentic loop from your codebase.** `createAgentSession()` gives you
   a production agent loop (tools, retries, compaction, session files, model
@@ -42,7 +42,7 @@ Gajae-Code packages the runtime as a reusable component:
 
 | | Embedding SDK (in-process) | Managed external control |
 | --- | --- | --- |
-| What it is | Import `@gajae-code/coding-agent` as a library | Use Coordinator MCP, SDK session CLI, or a configured Telegram/Discord/Slack adapter |
+| What it is | Import `@vib-rato/coding-agent` as a library | Use Coordinator MCP, SDK session CLI, or a configured Telegram/Discord/Slack adapter |
 | Language | TypeScript / Bun (Node-compatible) | Any client capable of the selected MCP/CLI/provider interface |
 | Telemetry | Full token deltas, tool events, and session events | Curated provider-neutral frames and queries |
 | Trust model | Your process hosts the runtime | SDK core retains endpoint credentials and issues exact opaque attachments |
@@ -56,11 +56,11 @@ WebSockets.
 ## Quick start: embed the runtime
 
 ```bash
-bun add @gajae-code/coding-agent
+bun add @vib-rato/coding-agent
 ```
 
 ```ts
-import { createAgentSession } from "@gajae-code/coding-agent";
+import { createAgentSession } from "@vib-rato/coding-agent";
 
 const { session } = await createAgentSession();
 
@@ -83,7 +83,7 @@ file-backed session store. Everything is overridable.
 
 ## Customizing the runtime for your vertical
 
-This is the part that turns Gajae-Code from "a coding agent" into a general
+This is the part that turns Vibrato from "a coding agent" into a general
 execution runtime. All of the following are `createAgentSession()` options; see
 the [Embedding SDK](./sdk-embedding.md) for the public API.
 
@@ -128,7 +128,7 @@ const { session } = await createAgentSession({
 ### Isolate state for request-scoped agents
 
 ```ts
-import { SessionManager, Settings } from "@gajae-code/coding-agent";
+import { SessionManager, Settings } from "@vib-rato/coding-agent";
 
 const { session } = await createAgentSession({
   sessionManager: SessionManager.inMemory(), // no filesystem persistence
@@ -153,12 +153,12 @@ Process-isolated integrations use an SDK-core adapter backed by `SessionRouter`.
 Managed adapters receive opaque `SessionAttachment` capabilities for live controls and submit lifecycle mutations through `SessionLifecycleService`. See [sdk.md](./sdk.md) for the ownership and adapter contract.
 
 The `models.list/current` (Q10) catalog also lists model profiles as synthetic
-`gajae-code/<profile>` entries (e.g. `gajae-code/codex-eco`). Treat them as
+`vib-rato/<profile>` entries (e.g. `vib-rato/codex-eco`). Treat them as
 logical selections, not API providers: sending the id back through `model.set`
 activates the profile for the live session only. Persisting remains an explicit
 TUI choice. Request Q27 (`models.profiles.list`) when you need the
 full profile catalog including unavailable profiles and their `available`
-status. See [Model profiles as synthetic models](./sdk.md#model-profiles-as-synthetic-models-gajae-codeprofile).
+status. See [Model profiles as synthetic models](./sdk.md#model-profiles-as-synthetic-models-vib-ratoprofile).
 
 ## Creating and supervising sessions
 
@@ -169,7 +169,7 @@ provides its operation and JSON input, and supplies a caller-chosen idempotency
 key:
 
 ```bash
-gjc sdk session raw global --op session.create \
+vib sdk session raw global --op session.create \
   --idempotency-key <unique-key> \
   --json-input '{"cwd":"/absolute/path/to/repo"}'
 ```
@@ -187,7 +187,7 @@ for the supported controller surfaces and lifecycle constraints.
   expose your own authenticated product API, or use Coordinator MCP for supported
   external orchestration. Do not relay the internal session endpoint.
 - **Mobile or desktop companion.** Pair through a configured managed notification
-  adapter for actions and approvals, or call an application backend that embeds GJC.
+  adapter for actions and approvals, or call an application backend that embeds Vibrato.
 - **Fleet orchestrator.** Use Coordinator MCP or daemon-session lifecycle operations
   to create and supervise worktree-scoped sessions.
 

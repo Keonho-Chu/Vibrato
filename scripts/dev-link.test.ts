@@ -4,7 +4,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import {
 	commandExtensions,
-	findGjcOnPath,
+	findVibOnPath,
 	isApprovedWorkspaceSource,
 	isRemovableWorkspaceShadow,
 	isLocalWindowsBunShim,
@@ -21,7 +21,7 @@ async function makeExecutable(file: string, content: string): Promise<void> {
 	await fs.chmod(file, 0o755);
 }
 
-function bunMetadata(target = "@gajae-code\\coding-agent\\bin\\gjc.js", command = "bun "): Buffer {
+function bunMetadata(target = "@vib-rato\\coding-agent\\bin\\vib.js", command = "bun "): Buffer {
 	const pathBytes = Buffer.from(target, "utf16le");
 	const framing = Buffer.from('"\0', "utf16le");
 	const shebang = Buffer.from(command, "utf16le");
@@ -58,25 +58,25 @@ function isFixtureSource(file: string, real: string | null, root: string, platfo
 }
 
 async function workspaceFixture(): Promise<string> {
-	const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-dev-link-windows-"));
+	const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-dev-link-windows-"));
 	tempRoots.push(root);
 	const packageRoot = path.join(root, "packages", "coding-agent");
 	await fs.mkdir(path.join(packageRoot, "bin"), { recursive: true });
 	await fs.mkdir(path.join(packageRoot, "src"), { recursive: true });
 	await Bun.write(
 		path.join(packageRoot, "package.json"),
-		JSON.stringify({ bin: { gjc: "bin/gjc.js" }, exports: { "./cli": "./src/cli.ts" } }),
+		JSON.stringify({ bin: { vib: "bin/vib.js" }, exports: { "./cli": "./src/cli.ts" } }),
 	);
 	await Bun.write(
-		path.join(packageRoot, "bin", "gjc.js"),
-		'#!/usr/bin/env bun\nimport { runCli } from "@gajae-code/coding-agent/cli";\n\nawait runCli(process.argv.slice(2));\n',
+		path.join(packageRoot, "bin", "vib.js"),
+		'#!/usr/bin/env bun\nimport { runCli } from "@vib-rato/coding-agent/cli";\n\nawait runCli(process.argv.slice(2));\n',
 	);
 	await Bun.write(path.join(packageRoot, "src", "cli.ts"), "export {};\n");
-	await fs.mkdir(path.join(root, "node_modules", "@gajae-code"), { recursive: true });
-	await fs.symlink(packageRoot, path.join(root, "node_modules", "@gajae-code", "coding-agent"), "dir");
+	await fs.mkdir(path.join(root, "node_modules", "@vib-rato"), { recursive: true });
+	await fs.symlink(packageRoot, path.join(root, "node_modules", "@vib-rato", "coding-agent"), "dir");
 	await fs.mkdir(path.join(root, "node_modules", ".bin"), { recursive: true });
-	await Bun.write(path.join(root, "node_modules", ".bin", "gjc.exe"), windowsShimExecutable());
-	await Bun.write(path.join(root, "node_modules", ".bin", "gjc.bunx"), bunMetadata());
+	await Bun.write(path.join(root, "node_modules", ".bin", "vib.exe"), windowsShimExecutable());
+	await Bun.write(path.join(root, "node_modules", ".bin", "vib.bunx"), bunMetadata());
 	await Bun.write(fixtureBun(root), Buffer.concat([Buffer.from("bun-runtime"), windowsShimExecutable(), Buffer.from("tail")]));
 	return root;
 }
@@ -87,19 +87,19 @@ afterEach(async () => {
 
 describe("dev:link command discovery", () => {
 	test("uses Windows PATH directory order and PATHEXT order with case-insensitive deduplication", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-dev-link-path-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-dev-link-path-"));
 		tempRoots.push(root);
 		const first = path.join(root, "first");
 		const second = path.join(root, "second");
-		await makeExecutable(path.join(first, "gjc.CMD"), "");
-		await makeExecutable(path.join(first, "gjc.exe"), "");
-		await makeExecutable(path.join(second, "gjc.exe"), "");
+		await makeExecutable(path.join(first, "vib.CMD"), "");
+		await makeExecutable(path.join(first, "vib.exe"), "");
+		await makeExecutable(path.join(second, "vib.exe"), "");
 		expect(pathDirs(`${first};${second}`, "win32")).toEqual([first, second]);
 		expect(commandExtensions("win32", ".CMD;.exe;.CMD;.EXE")).toEqual([".CMD", ".exe"]);
-		expect(findGjcOnPath(`${first};${second}`, "win32", ".CMD;.exe;.CMD;.EXE").map(hit => hit.file)).toEqual([
-			path.join(first, "gjc.CMD"),
-			path.join(first, "gjc.exe"),
-			path.join(second, "gjc.exe"),
+		expect(findVibOnPath(`${first};${second}`, "win32", ".CMD;.exe;.CMD;.EXE").map(hit => hit.file)).toEqual([
+			path.join(first, "vib.CMD"),
+			path.join(first, "vib.exe"),
+			path.join(second, "vib.exe"),
 		]);
 	});
 
@@ -110,12 +110,12 @@ describe("dev:link command discovery", () => {
 });
 describe("dev:link workspace shadow cleanup", () => {
 	test("accepts only launchers resolving to this checkout wrapper", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-dev-link-shadow-provenance-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-dev-link-shadow-provenance-"));
 		tempRoots.push(root);
-		const wrapper = path.join(root, "packages", "coding-agent", "bin", "gjc.js");
-		const repoBinShadow = path.join(root, "node_modules", ".bin", "gjc");
-		const bunGlobalShadow = path.join(root, "bun-bin", "gjc");
-		const foreignShadow = path.join(root, "foreign-bin", "gjc");
+		const wrapper = path.join(root, "packages", "coding-agent", "bin", "vib.js");
+		const repoBinShadow = path.join(root, "node_modules", ".bin", "vib");
+		const bunGlobalShadow = path.join(root, "bun-bin", "vib");
+		const foreignShadow = path.join(root, "foreign-bin", "vib");
 		await makeExecutable(wrapper, "#!/usr/bin/env bun\n");
 		await fs.mkdir(path.dirname(repoBinShadow), { recursive: true });
 		await fs.mkdir(path.dirname(bunGlobalShadow), { recursive: true });
@@ -139,7 +139,7 @@ describe.skipIf(process.platform === "win32")("dev:link Windows Bun workspace sh
 	test("accepts a direct canonical source link and the exact valid Bun workspace shim", async () => {
 		const root = await workspaceFixture();
 		const source = path.join(root, "packages", "coding-agent", "src", "cli.ts");
-		const shim = path.join(root, "node_modules", ".bin", "gjc.exe");
+		const shim = path.join(root, "node_modules", ".bin", "vib.exe");
 		expect(isFixtureSource("ignored", source, root, "win32")).toBe(true);
 		expect(isFixtureShim(shim, root)).toBe(true);
 		expect(isFixtureSource(shim, null, root, "win32")).toBe(true);
@@ -147,7 +147,7 @@ describe.skipIf(process.platform === "win32")("dev:link Windows Bun workspace sh
 
 	test("keeps smoke health independent from accepted provenance", async () => {
 		const root = await workspaceFixture();
-		const shim = path.join(root, "node_modules", ".bin", "gjc.exe");
+		const shim = path.join(root, "node_modules", ".bin", "vib.exe");
 		const failedSmoke = path.join(root, "failed-smoke");
 		await makeExecutable(failedSmoke, "#!/usr/bin/env sh\necho smoke-test: failed\nexit 1\n");
 		expect(isFixtureSource(shim, null, root, "win32")).toBe(true);
@@ -156,15 +156,15 @@ describe.skipIf(process.platform === "win32")("dev:link Windows Bun workspace sh
 
 	test("fails closed for missing, corrupt, foreign, or substituted shim metadata", async () => {
 		const root = await workspaceFixture();
-		const shim = path.join(root, "node_modules", ".bin", "gjc.exe");
-		const metadata = path.join(root, "node_modules", ".bin", "gjc.bunx");
+		const shim = path.join(root, "node_modules", ".bin", "vib.exe");
+		const metadata = path.join(root, "node_modules", ".bin", "vib.bunx");
 		await fs.rm(metadata);
 		expect(isFixtureShim(shim, root)).toBe(false);
 		await Bun.write(metadata, Buffer.from("corrupt"));
 		expect(isFixtureShim(shim, root)).toBe(false);
 		await fs.mkdir(path.join(root, "node_modules", "foreign", "bin"), { recursive: true });
-		await Bun.write(path.join(root, "node_modules", "foreign", "bin", "gjc.js"), "#!/usr/bin/env bun\n");
-		await Bun.write(metadata, bunMetadata("foreign\\bin\\gjc.js"));
+		await Bun.write(path.join(root, "node_modules", "foreign", "bin", "vib.js"), "#!/usr/bin/env bun\n");
+		await Bun.write(metadata, bunMetadata("foreign\\bin\\vib.js"));
 		expect(isFixtureShim(shim, root)).toBe(false);
 		await Bun.write(metadata, bunMetadata());
 		const trusted = windowsShimExecutable();
@@ -189,8 +189,8 @@ describe.skipIf(process.platform === "win32")("dev:link Windows Bun workspace sh
 
 	test("rejects inconsistent metadata lengths, trailing bytes, versions, flags, commands, and oversized files", async () => {
 		const root = await workspaceFixture();
-		const shim = path.join(root, "node_modules", ".bin", "gjc.exe");
-		const metadata = path.join(root, "node_modules", ".bin", "gjc.bunx");
+		const shim = path.join(root, "node_modules", ".bin", "vib.exe");
+		const metadata = path.join(root, "node_modules", ".bin", "vib.bunx");
 		const valid = bunMetadata();
 
 		const badLength = Buffer.from(valid);
@@ -226,36 +226,36 @@ describe.skipIf(process.platform === "win32")("dev:link Windows Bun workspace sh
 
 	test("rejects bin and canonical export mismatches", async () => {
 		const root = await workspaceFixture();
-		const shim = path.join(root, "node_modules", ".bin", "gjc.exe");
-		await Bun.write(path.join(root, "packages", "coding-agent", "package.json"), JSON.stringify({ bin: { gjc: "bin/other.js" } }));
+		const shim = path.join(root, "node_modules", ".bin", "vib.exe");
+		await Bun.write(path.join(root, "packages", "coding-agent", "package.json"), JSON.stringify({ bin: { vib: "bin/other.js" } }));
 		expect(isFixtureShim(shim, root)).toBe(false);
 		const exportRoot = await workspaceFixture();
-		const exportShim = path.join(exportRoot, "node_modules", ".bin", "gjc.exe");
+		const exportShim = path.join(exportRoot, "node_modules", ".bin", "vib.exe");
 		await Bun.write(
 			path.join(exportRoot, "packages", "coding-agent", "package.json"),
-			JSON.stringify({ bin: { gjc: "bin/gjc.js" }, exports: { "./cli": "./src/other.ts" } }),
+			JSON.stringify({ bin: { vib: "bin/vib.js" }, exports: { "./cli": "./src/other.ts" } }),
 		);
 		await Bun.write(path.join(exportRoot, "packages", "coding-agent", "src", "other.ts"), "export {};\n");
 		expect(isFixtureShim(exportShim, exportRoot)).toBe(false);
 
 		const markerRoot = await workspaceFixture();
-		const markerShim = path.join(markerRoot, "node_modules", ".bin", "gjc.exe");
+		const markerShim = path.join(markerRoot, "node_modules", ".bin", "vib.exe");
 		await Bun.write(
-			path.join(markerRoot, "packages", "coding-agent", "bin", "gjc.js"),
-			'#!/usr/bin/env bun\n// from "@gajae-code/coding-agent/cli"\nconsole.log("smoke-test: ok");\n',
+			path.join(markerRoot, "packages", "coding-agent", "bin", "vib.js"),
+			'#!/usr/bin/env bun\n// from "@vib-rato/coding-agent/cli"\nconsole.log("smoke-test: ok");\n',
 		);
 		expect(isFixtureShim(markerShim, markerRoot)).toBe(false);
 	});
 
 	test("rejects wrong-extension, compiled, and published targets even at an allowlisted path", async () => {
 		const root = await workspaceFixture();
-		const shim = path.join(root, "node_modules", ".bin", "gjc.exe");
-		expect(isFixtureSource(path.join(root, "node_modules", ".bin", "gjc.cmd"), null, root, "win32")).toBe(false);
-		expect(isFixtureSource(path.join(root, "dist", "gjc.exe"), path.join(root, "dist", "gjc.exe"), root, "win32")).toBe(false);
+		const shim = path.join(root, "node_modules", ".bin", "vib.exe");
+		expect(isFixtureSource(path.join(root, "node_modules", ".bin", "vib.cmd"), null, root, "win32")).toBe(false);
+		expect(isFixtureSource(path.join(root, "dist", "vib.exe"), path.join(root, "dist", "vib.exe"), root, "win32")).toBe(false);
 		expect(
 			isFixtureSource(
-				path.join(root, "node_modules", "gajae-code", "bin", "gjc.js"),
-				path.join(root, "node_modules", "gajae-code", "bin", "gjc.js"),
+				path.join(root, "node_modules", "vib-rato", "bin", "vib.js"),
+				path.join(root, "node_modules", "vib-rato", "bin", "vib.js"),
 				root,
 				"win32",
 			),
@@ -266,11 +266,11 @@ describe.skipIf(process.platform === "win32")("dev:link Windows Bun workspace sh
 
 describe("dev:link", () => {
 	test.skipIf(process.platform === "win32")("fails when --binary is shadowed by this checkout's source", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-dev-link-mode-shadow-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-dev-link-mode-shadow-"));
 		tempRoots.push(root);
 		const fixtureScript = path.join(root, "scripts", "dev-link.ts");
 		const source = path.join(root, "packages", "coding-agent", "src", "cli.ts");
-		const binary = path.join(root, "packages", "coding-agent", "dist", "gjc");
+		const binary = path.join(root, "packages", "coding-agent", "dist", "vib");
 		const shadowDir = path.join(root, "shadow-bin");
 		const targetDir = path.join(root, "managed-bin");
 		const smokeFixture = '#!/bin/sh\nif [ "$1" = "--smoke-test" ]; then echo "smoke-test: ok"; fi\n';
@@ -280,32 +280,32 @@ describe("dev:link", () => {
 		await makeExecutable(source, smokeFixture);
 		await makeExecutable(binary, smokeFixture);
 		await fs.mkdir(shadowDir, { recursive: true });
-		await fs.symlink(source, path.join(shadowDir, "gjc"));
+		await fs.symlink(source, path.join(shadowDir, "vib"));
 
 		const result = Bun.spawnSync([process.execPath, fixtureScript, "--binary"], {
 			cwd: root,
-			env: { ...process.env, GJC_DEV_LINK_DIR: targetDir, PATH: `${shadowDir}:${targetDir}` },
+			env: { ...process.env, VIB_DEV_LINK_DIR: targetDir, PATH: `${shadowDir}:${targetDir}` },
 			stderr: "pipe",
 			stdout: "pipe",
 		});
 
 		expect(result.exitCode).not.toBe(0);
 		expect(result.stderr.toString()).toContain("still resolves to a different command earlier on PATH");
-		expect(result.stderr.toString()).toContain(path.join(shadowDir, "gjc"));
+		expect(result.stderr.toString()).toContain(path.join(shadowDir, "vib"));
 	});
 
 	test.skipIf(process.platform === "win32")("removes Bun global links that resolve to this checkout wrapper", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-dev-link-bun-shadow-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-dev-link-bun-shadow-"));
 		tempRoots.push(root);
 		const shadowDir = path.join(root, "bun-bin");
 		const targetDir = path.join(root, "managed-bin");
-		const shadow = path.join(shadowDir, "gjc");
-		const workspaceWrapper = path.join(import.meta.dir, "..", "packages", "coding-agent", "bin", "gjc.js");
+		const shadow = path.join(shadowDir, "vib");
+		const workspaceWrapper = path.join(import.meta.dir, "..", "packages", "coding-agent", "bin", "vib.js");
 		await fs.mkdir(shadowDir, { recursive: true });
 		await fs.symlink(workspaceWrapper, shadow);
 
 		const result = Bun.spawnSync([process.execPath, "scripts/dev-link.ts"], {
-			env: { ...process.env, GJC_DEV_LINK_DIR: targetDir, PATH: `${shadowDir}:${targetDir}:${process.env.PATH ?? ""}` },
+			env: { ...process.env, VIB_DEV_LINK_DIR: targetDir, PATH: `${shadowDir}:${targetDir}:${process.env.PATH ?? ""}` },
 			stderr: "pipe",
 			stdout: "pipe",
 		});
@@ -313,25 +313,25 @@ describe("dev:link", () => {
 		expect(result.stderr.toString()).not.toContain("still resolves to a different command earlier on PATH");
 		expect(result.stdout.toString()).toContain(`Removed workspace shadow: ${shadow}`);
 		expect(await Bun.file(shadow).exists()).toBe(false);
-		expect(await Bun.file(path.join(targetDir, "gjc")).exists()).toBe(true);
+		expect(await Bun.file(path.join(targetDir, "vib")).exists()).toBe(true);
 	});
-	test.skipIf(process.platform === "win32")("fails when a shadow gjc earlier on PATH would make smoke-test validate the wrong command", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-dev-link-shadow-"));
+	test.skipIf(process.platform === "win32")("fails when a shadow vib earlier on PATH would make smoke-test validate the wrong command", async () => {
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-dev-link-shadow-"));
 		tempRoots.push(root);
 		const shadowDir = path.join(root, "shadow-bin");
 		const targetDir = path.join(root, "managed-bin");
 		await makeExecutable(
-			path.join(shadowDir, "gjc"),
+			path.join(shadowDir, "vib"),
 			`#!/usr/bin/env sh\nif [ "$1" = "--smoke-test" ]; then echo "smoke-test: ok"; exit 0; fi\necho shadow\nexit 0\n`,
 		);
 		const result = Bun.spawnSync([process.execPath, "scripts/dev-link.ts"], {
-			env: { ...process.env, GJC_DEV_LINK_DIR: targetDir, PATH: `${shadowDir}:${targetDir}` },
+			env: { ...process.env, VIB_DEV_LINK_DIR: targetDir, PATH: `${shadowDir}:${targetDir}` },
 			stderr: "pipe",
 			stdout: "pipe",
 		});
 		expect(result.exitCode).not.toBe(0);
-		expect(result.stdout.toString()).toContain(`Linked ${path.join(targetDir, "gjc")}`);
+		expect(result.stdout.toString()).toContain(`Linked ${path.join(targetDir, "vib")}`);
 		expect(result.stderr.toString()).toContain("still resolves to a different command earlier on PATH");
-		expect(result.stderr.toString()).toContain(path.join(shadowDir, "gjc"));
+		expect(result.stderr.toString()).toContain(path.join(shadowDir, "vib"));
 	});
 });

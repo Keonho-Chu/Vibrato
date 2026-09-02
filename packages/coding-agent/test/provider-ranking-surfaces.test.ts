@@ -1,18 +1,18 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "bun:test";
-import type { Model } from "@gajae-code/ai";
-import { getOAuthProviders } from "@gajae-code/ai/utils/oauth";
-import type { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
+import type { Model } from "@vib-rato/ai";
+import { getOAuthProviders } from "@vib-rato/ai/utils/oauth";
+import type { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
 import {
 	clearProviderAuthHealth,
 	getProviderAuthHealth,
 	recordProviderAuthHealth,
-} from "@gajae-code/coding-agent/config/provider-auth-health";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { ModelSelectorComponent } from "@gajae-code/coding-agent/modes/components/model-selector";
-import { OAuthSelectorComponent } from "@gajae-code/coding-agent/modes/components/oauth-selector";
-import { getThemeByName, setThemeInstance } from "@gajae-code/coding-agent/modes/theme/theme";
-import { AuthStorage, type AuthStorage as AuthStorageType } from "@gajae-code/coding-agent/session/auth-storage";
-import type { TUI } from "@gajae-code/tui";
+} from "@vib-rato/coding-agent/config/provider-auth-health";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { ModelSelectorComponent } from "@vib-rato/coding-agent/modes/components/model-selector";
+import { OAuthSelectorComponent } from "@vib-rato/coding-agent/modes/components/oauth-selector";
+import { getThemeByName, setThemeInstance } from "@vib-rato/coding-agent/modes/theme/theme";
+import { AuthStorage, type AuthStorage as AuthStorageType } from "@vib-rato/coding-agent/session/auth-storage";
+import type { TUI } from "@vib-rato/tui";
 
 const model = (provider: string, id: string): Model =>
 	({ provider, id, name: id, api: "openai-responses", contextWindow: 1000, maxTokens: 1000 }) as Model;
@@ -200,7 +200,7 @@ describe("/login provider ranking surface", () => {
 describe("/model provider ranking surface", () => {
 	test("keeps static tabs first and preserves role and MRU precedence over provider tier", async () => {
 		const defaultModel = model("anthropic", "default");
-		const mruModel = model("cursor", "mru");
+		const mruModel = model("sglang", "mru");
 		const configuredModel = model("configured-provider", "configured");
 		const settings = Settings.isolated({ modelRoles: { default: "anthropic/default" } });
 		vi.spyOn(settings, "getStorage").mockReturnValue({
@@ -219,6 +219,20 @@ describe("/model provider ranking surface", () => {
 			`${configuredModel.provider}/${configuredModel.id}`,
 		]);
 		expect(rendered.indexOf("ALL")).toBeLessThan(rendered.indexOf("CANONICAL"));
+		selector.dispose();
+	});
+
+	test("recent use does not readmit a model whose provider the allowlist hides", async () => {
+		const allowedModel = model("anthropic", "allowed");
+		const hiddenModel = model("cursor", "recently-used");
+		const settings = Settings.isolated({});
+		vi.spyOn(settings, "getStorage").mockReturnValue({
+			getModelUsageOrder: () => [`${hiddenModel.provider}/${hiddenModel.id}`],
+		} as never);
+		const selector = await createModelSelector([hiddenModel, allowedModel], { settings });
+
+		// MRU normally floats a model to the top; a hidden provider gets no row at all.
+		expect(modelRows(selector, [hiddenModel, allowedModel])).toEqual([`${allowedModel.provider}/${allowedModel.id}`]);
 		selector.dispose();
 	});
 

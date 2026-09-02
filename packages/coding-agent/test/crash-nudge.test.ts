@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { appendCrashEvent } from "@gajae-code/utils";
+import { appendCrashEvent } from "@vib-rato/utils";
 import { type CrashStatePaths, compactCrashIndex, emptyCrashIndex, readCrashIndex } from "../src/crash/index-store";
 import { CRASH_NUDGE_INTERVAL_MS, crashNudgeGate, decideCrashNudge, maybeShowCrashNudge } from "../src/crash/nudge";
 
@@ -31,11 +31,11 @@ function indexWith(
 }
 
 async function tempPaths(): Promise<CrashStatePaths> {
-	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-crash-nudge-"));
+	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-crash-nudge-"));
 	return {
-		index: path.join(dir, "gjc-crash-index.json"),
-		events: path.join(dir, "gjc-crash-events.jsonl"),
-		crashLog: path.join(dir, "gjc-crash.log"),
+		index: path.join(dir, "vib-crash-index.json"),
+		events: path.join(dir, "vib-crash-events.jsonl"),
+		crashLog: path.join(dir, "vib-crash.log"),
 	};
 }
 
@@ -53,7 +53,7 @@ describe("decideCrashNudge", () => {
 		const decision = decideCrashNudge(indexWith(), NOW);
 		expect(decision.show).toBe(true);
 		expect(decision.message).toContain("1 unreported crash signature");
-		expect(decision.message).toContain("gjc crash report");
+		expect(decision.message).toContain("vib crash report");
 		expect(decision.message).toContain("nothing is sent");
 	});
 

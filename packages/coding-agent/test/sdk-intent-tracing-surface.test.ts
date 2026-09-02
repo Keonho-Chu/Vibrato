@@ -2,13 +2,13 @@ import { afterEach, beforeEach, describe, expect, setDefaultTimeout, test } from
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { INTENT_FIELD, normalizeTools } from "@gajae-code/agent-core";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { resetSettingsForTest, Settings } from "@gajae-code/coding-agent/config/settings";
-import { createAgentSession } from "@gajae-code/coding-agent/sdk";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { Snowflake } from "@gajae-code/utils";
+import { INTENT_FIELD, normalizeTools } from "@vib-rato/agent-core";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { resetSettingsForTest, Settings } from "@vib-rato/coding-agent/config/settings";
+import { createAgentSession } from "@vib-rato/coding-agent/sdk";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { Snowflake } from "@vib-rato/utils";
 
 setDefaultTimeout(30_000);
 
@@ -26,7 +26,7 @@ describe("intent tracing does not depend on the session surface", () => {
 
 	beforeEach(async () => {
 		resetSettingsForTest();
-		tempDir = path.join(os.tmpdir(), `gjc-intent-surface-${Snowflake.next()}`);
+		tempDir = path.join(os.tmpdir(), `vib-intent-surface-${Snowflake.next()}`);
 		fs.mkdirSync(tempDir, { recursive: true });
 		authStorage = await AuthStorage.create(path.join(tempDir, "testauth.db"));
 		modelRegistry = new ModelRegistry(authStorage, path.join(tempDir, "models.yml"));

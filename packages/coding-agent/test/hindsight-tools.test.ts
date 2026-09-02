@@ -9,14 +9,14 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
-import { resetSettingsForTest, Settings } from "@gajae-code/coding-agent/config/settings";
-import { HindsightApi } from "@gajae-code/coding-agent/hindsight/client";
-import type { HindsightConfig } from "@gajae-code/coding-agent/hindsight/config";
-import { HindsightSessionState } from "@gajae-code/coding-agent/hindsight/state";
-import { HindsightRecallTool } from "@gajae-code/coding-agent/tools/hindsight-recall";
-import { HindsightReflectTool } from "@gajae-code/coding-agent/tools/hindsight-reflect";
-import { HindsightRetainTool } from "@gajae-code/coding-agent/tools/hindsight-retain";
-import type { ToolSession } from "@gajae-code/coding-agent/tools/index";
+import { resetSettingsForTest, Settings } from "@vib-rato/coding-agent/config/settings";
+import { HindsightApi } from "@vib-rato/coding-agent/hindsight/client";
+import type { HindsightConfig } from "@vib-rato/coding-agent/hindsight/config";
+import { HindsightSessionState } from "@vib-rato/coding-agent/hindsight/state";
+import { HindsightRecallTool } from "@vib-rato/coding-agent/tools/hindsight-recall";
+import { HindsightReflectTool } from "@vib-rato/coding-agent/tools/hindsight-reflect";
+import { HindsightRetainTool } from "@vib-rato/coding-agent/tools/hindsight-retain";
+import type { ToolSession } from "@vib-rato/coding-agent/tools/index";
 
 const TEST_SESSION_ID = "test-session-id";
 let registeredState: HindsightSessionState | undefined;
@@ -35,7 +35,7 @@ function makeConfig(overrides: Partial<HindsightConfig> = {}): HindsightConfig {
 		retainMode: "full-session",
 		retainEveryNTurns: 3,
 		retainOverlapTurns: 2,
-		retainContext: "gjc",
+		retainContext: "vib",
 		recallBudget: "mid",
 		recallMaxTokens: 1024,
 		recallTypes: ["world", "experience"],

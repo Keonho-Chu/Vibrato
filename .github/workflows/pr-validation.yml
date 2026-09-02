@@ -115,7 +115,7 @@ jobs:
             echo "::notice::immutable base ${{ steps.pr.outputs.base_sha }} predates the trusted validator; Dev CI PR contract bootstrap remains authoritative"
             exit 0
           fi
-          empty_bunfig="$RUNNER_TEMP/gjc-pr-contract-empty-bunfig.toml"
+          empty_bunfig="$RUNNER_TEMP/vib-pr-contract-empty-bunfig.toml"
           printf '# trusted empty Bun configuration\n' > "$empty_bunfig"
           cd "$trusted_root"
           bun --no-env-file --config="$empty_bunfig" "$trusted_root/scripts/verify-pr-verdict.ts" \
@@ -149,7 +149,7 @@ jobs:
             # A trusted base that predates the self-review-aware validator cannot
             # authorize anything; never publish success for that case.
             if [[ -f "$trusted_root/scripts/verify-pr-verdict.ts" ]] \
-              && ! grep -q "gajae.pr-self-review.v1" "$trusted_root/scripts/verify-pr-verdict.ts"; then
+              && ! grep -q "vibrato.pr-self-review.v1" "$trusted_root/scripts/verify-pr-verdict.ts"; then
               conclusion="failure"
               summary="trusted base ${base_sha:0:10} predates self-review validation; bootstrap remains authoritative"
             fi

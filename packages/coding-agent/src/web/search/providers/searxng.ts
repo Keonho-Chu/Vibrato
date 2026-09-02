@@ -26,8 +26,8 @@
  */
 
 import * as path from "node:path";
-import type { AuthStorage } from "@gajae-code/ai/core";
-import { $credentialEnv, parseEnvFile } from "@gajae-code/utils";
+import type { AuthStorage } from "@vib-rato/ai/core";
+import { $credentialEnv, parseEnvFile } from "@vib-rato/utils";
 import type { Settings } from "../../../config/settings";
 import { settings } from "../../../config/settings";
 import type { SearchResponse, SearchSource } from "../../../web/search/types";

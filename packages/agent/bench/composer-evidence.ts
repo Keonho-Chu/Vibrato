@@ -36,7 +36,7 @@ type ModelIdsByRole = {
 };
 
 export type EvidenceReportMeta = {
-	gjc_version?: string;
+	vib_version?: string;
 	git_sha?: string;
 	capture_mode?: CaptureMode;
 	comparison_kind?: ComparisonKind;

@@ -1,13 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
-import { Agent, type AgentMessage } from "@gajae-code/agent-core";
-import type { AssistantMessage, Context, Usage } from "@gajae-code/ai";
-import { createMockModel, type MockModel, registerMockApi } from "@gajae-code/ai/providers/mock";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { RawSseDebugBuffer } from "@gajae-code/coding-agent/debug/raw-sse-buffer";
-import { AgentRegistry } from "@gajae-code/coding-agent/registry/agent-registry";
-import { AgentSession } from "@gajae-code/coding-agent/session/agent-session";
-import { convertToLlm } from "@gajae-code/coding-agent/session/messages";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
+import { Agent, type AgentMessage } from "@vib-rato/agent-core";
+import type { AssistantMessage, Context, Usage } from "@vib-rato/ai";
+import { createMockModel, type MockModel, registerMockApi } from "@vib-rato/ai/providers/mock";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { RawSseDebugBuffer } from "@vib-rato/coding-agent/debug/raw-sse-buffer";
+import { AgentRegistry } from "@vib-rato/coding-agent/registry/agent-registry";
+import { AgentSession } from "@vib-rato/coding-agent/session/agent-session";
+import { convertToLlm } from "@vib-rato/coding-agent/session/messages";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
 
 registerMockApi();
 

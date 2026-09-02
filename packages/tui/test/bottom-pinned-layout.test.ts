@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
-import { type Component, TUI } from "@gajae-code/tui";
+import { type Component, TUI } from "@vib-rato/tui";
 import { VirtualTerminal } from "./virtual-terminal";
 
 class LinesComponent implements Component {
@@ -58,7 +58,7 @@ describe("TUI bottom-pinned layout", () => {
 		}
 	});
 
-	describe("with the GJC psmux launch marker", () => {
+	describe("with the Vibrato psmux launch marker", () => {
 		let origTmux: string | undefined;
 		let origTmuxPane: string | undefined;
 		let origLaunched: string | undefined;
@@ -66,10 +66,10 @@ describe("TUI bottom-pinned layout", () => {
 		beforeEach(() => {
 			origTmux = process.env.TMUX;
 			origTmuxPane = process.env.TMUX_PANE;
-			origLaunched = process.env.GJC_TMUX_LAUNCHED;
+			origLaunched = process.env.VIB_TMUX_LAUNCHED;
 			delete process.env.TMUX;
 			delete process.env.TMUX_PANE;
-			process.env.GJC_TMUX_LAUNCHED = "1";
+			process.env.VIB_TMUX_LAUNCHED = "1";
 		});
 
 		afterEach(() => {
@@ -77,8 +77,8 @@ describe("TUI bottom-pinned layout", () => {
 			else process.env.TMUX = origTmux;
 			if (origTmuxPane === undefined) delete process.env.TMUX_PANE;
 			else process.env.TMUX_PANE = origTmuxPane;
-			if (origLaunched === undefined) delete process.env.GJC_TMUX_LAUNCHED;
-			else process.env.GJC_TMUX_LAUNCHED = origLaunched;
+			if (origLaunched === undefined) delete process.env.VIB_TMUX_LAUNCHED;
+			else process.env.VIB_TMUX_LAUNCHED = origLaunched;
 		});
 
 		it("keeps the pinned group on the last row after a viewport resize", async () => {

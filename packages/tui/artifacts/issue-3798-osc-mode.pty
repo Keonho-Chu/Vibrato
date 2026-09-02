@@ -1,9 +1,9 @@
-GJC issue #3798 controlled Byobu active-harness transcript
-session=gjc-3798-osc-31832 geometry=100x30 observationAfterFinalInputMs=7000
+Vibrato issue #3798 controlled Byobu active-harness transcript
+session=vib-3798-osc-31832 geometry=100x30 observationAfterFinalInputMs=7000
 queryCountDerivation=exact byte counts over PANE_OUTPUT: OSC11=ESC]11;?BEL; DA1=ESC[c
 --- PANE_OUTPUT BEGIN ---
-bun /tmp/gjc-3798-byobu-harness.ts osc 8000
-[1m[7m%[27m[1m[0m                                                                                                    k..es/issue-3798\[0m[27m[24m[J[01;32m➜  [36missue-3798[00m [K[?1h=[?2004hbbun /tmp/gjc-3798-byobu-harness.ts osc 8000[?1l>[?2004l
+bun /tmp/vib-3798-byobu-harness.ts osc 8000
+[1m[7m%[27m[1m[0m                                                                                                    k..es/issue-3798\[0m[27m[24m[J[01;32m➜  [36missue-3798[00m [K[?1h=[?2004hbbun /tmp/vib-3798-byobu-harness.ts osc 8000[?1l>[?2004l
 kbun\[?2004h[?1000l[?1002l[?1006l[?1007l[?u]11;?[c[?2031h]11;?[c[>4;2m
 --- PANE_OUTPUT END ---
 --- INJECTED_INPUT_EVENTS BEGIN ---

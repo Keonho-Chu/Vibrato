@@ -163,7 +163,7 @@ export interface DirectoryHookInput {
 /** Normalize discovery metadata for native, Claude, or Codex hook modules. */
 export function normalizeDirectoryHook(input: DirectoryHookInput): NormalizeHookResult {
 	if (
-		input.convention !== HookSourceConvention.NativeGjc &&
+		input.convention !== HookSourceConvention.NativeVib &&
 		input.convention !== HookSourceConvention.ClaudeCode &&
 		input.convention !== HookSourceConvention.Codex
 	) {
@@ -198,7 +198,7 @@ export interface ManagedJsonHookInput {
 	source: string;
 }
 
-/** Normalize the two GJC-managed Codex hooks.json entries. */
+/** Normalize the two Vibrato-managed Codex hooks.json entries. */
 export function normalizeManagedJsonHook(input: ManagedJsonHookInput): NormalizeHookResult {
 	if (!input.command.trim()) {
 		return invalid(
@@ -240,12 +240,12 @@ export function normalizePluginHook(input: PluginHookInput): NormalizeHookResult
 			return invalid(
 				HookDiagnosticCode.InvalidPluginPhase,
 				`Plugin "${input.plugin}" ${input.declaredEvent} hooks do not accept target or phase.`,
-				HookSourceConvention.GjcPlugin,
+				HookSourceConvention.VibPlugin,
 				{ source: input.source, externalEvent: input.declaredEvent },
 			);
 		}
 		return buildHook(
-			HookSourceConvention.GjcPlugin,
+			HookSourceConvention.VibPlugin,
 			input.declaredEvent === "session_start" ? HookEventKind.SessionStart : HookEventKind.SessionShutdown,
 			"*",
 			input.source,
@@ -255,7 +255,7 @@ export function normalizePluginHook(input: PluginHookInput): NormalizeHookResult
 		return invalid(
 			HookDiagnosticCode.UnrecognizedPluginEvent,
 			`Plugin "${input.plugin}" declared unsupported event "${input.declaredEvent}"; aliases cannot expand plugin authority.`,
-			HookSourceConvention.GjcPlugin,
+			HookSourceConvention.VibPlugin,
 			{ source: input.source, externalEvent: input.declaredEvent },
 		);
 	}
@@ -265,12 +265,12 @@ export function normalizePluginHook(input: PluginHookInput): NormalizeHookResult
 			return invalid(
 				HookDiagnosticCode.InvalidPluginPhase,
 				`Plugin "${input.plugin}" tool_call hooks require both target and before/after phase.`,
-				HookSourceConvention.GjcPlugin,
+				HookSourceConvention.VibPlugin,
 				{ source: input.source, externalEvent: input.declaredEvent },
 			);
 		}
 		return buildHook(
-			HookSourceConvention.GjcPlugin,
+			HookSourceConvention.VibPlugin,
 			input.phase === "before" ? HookEventKind.PreToolUse : HookEventKind.PostToolUse,
 			input.target,
 			input.source,
@@ -281,11 +281,11 @@ export function normalizePluginHook(input: PluginHookInput): NormalizeHookResult
 		return invalid(
 			HookDiagnosticCode.InvalidPluginPhase,
 			`Plugin "${input.plugin}" tool_result hooks require phase "after".`,
-			HookSourceConvention.GjcPlugin,
+			HookSourceConvention.VibPlugin,
 			{ source: input.source, externalEvent: input.declaredEvent },
 		);
 	}
-	return buildHook(HookSourceConvention.GjcPlugin, HookEventKind.PostToolUse, input.target ?? "*", input.source);
+	return buildHook(HookSourceConvention.VibPlugin, HookEventKind.PostToolUse, input.target ?? "*", input.source);
 }
 
 export interface InProcessHookInput {

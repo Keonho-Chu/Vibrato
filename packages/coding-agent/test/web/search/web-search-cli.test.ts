@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { getConfigRootDir, setAgentDir } from "@gajae-code/utils";
+import { getConfigRootDir, setAgentDir } from "@vib-rato/utils";
 import { parseSearchArgs, runSearchCommand } from "../../../src/cli/web-search-cli";
 import Search from "../../../src/commands/web-search";
 import { resetSettingsForTest, Settings } from "../../../src/config/settings";
@@ -66,14 +66,14 @@ describe("web search CLI args", () => {
 	});
 });
 
-const originalAgentDir = process.env.GJC_CODING_AGENT_DIR;
+const originalAgentDir = process.env.VIB_CODING_AGENT_DIR;
 const originalXaiApiKey = process.env.XAI_API_KEY;
 const fallbackAgentDir = path.join(getConfigRootDir(), "agent");
 let testAgentDir = "";
 
 beforeEach(async () => {
 	resetSettingsForTest();
-	testAgentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-web-search-cli-"));
+	testAgentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-web-search-cli-"));
 	setAgentDir(testAgentDir);
 });
 
@@ -84,7 +84,7 @@ afterEach(async () => {
 		setAgentDir(originalAgentDir);
 	} else {
 		setAgentDir(fallbackAgentDir);
-		delete process.env.GJC_CODING_AGENT_DIR;
+		delete process.env.VIB_CODING_AGENT_DIR;
 	}
 	if (originalXaiApiKey === undefined) delete process.env.XAI_API_KEY;
 	else process.env.XAI_API_KEY = originalXaiApiKey;

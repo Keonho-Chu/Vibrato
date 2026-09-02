@@ -244,10 +244,10 @@ describe("dev-ci Telegram daemon generation guard topology", () => {
 		}
 		expect(offenders).toEqual([]);
 	});
-	test("builds and restores Linux native addons before GJC state-gate shards", async () => {
+	test("builds and restores Linux native addons before Vibrato state-gate shards", async () => {
 		const d = await workflow();
-		const native = requiredJob(d, "gjc-state-gates-native");
-		const matrix = requiredJob(d, "gjc-state-gates-matrix");
+		const native = requiredJob(d, "vib-state-gates-native");
+		const matrix = requiredJob(d, "vib-state-gates-matrix");
 		expect(native.steps.some(step => step.uses?.includes("actions/checkout"))).toBe(true);
 		expect(native.steps.some(step => step.uses?.includes("dtolnay/rust-toolchain"))).toBe(true);
 		const build = namedStep(native, "Build required Linux native addon variants");
@@ -260,7 +260,7 @@ describe("dev-ci Telegram daemon generation guard topology", () => {
 		expect(verify.run).toContain("pi_natives.linux-x64-modern.node");
 		const upload = namedStep(native, "Upload state-gate native addon(s)");
 		expect(upload.with?.name).toBe("dev-state-gates-native-${{ github.run_id }}");
-		expect(matrix.needs).toEqual(["gjc-state-gates-native"]);
+		expect(matrix.needs).toEqual(["vib-state-gates-native"]);
 		const download = namedStep(matrix, "Download state-gate native addon(s)");
 		expect(download.with?.name).toBe("dev-state-gates-native-${{ github.run_id }}");
 		expect(download.with?.path).toBe("packages/natives/native");

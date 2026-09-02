@@ -8,7 +8,7 @@
 // The `label`/`id` metadata is kept inline so callers needing a display name
 // (error formatting, UI listings) do not force a load.
 
-import type { AuthStorage } from "@gajae-code/ai/core";
+import type { AuthStorage } from "@vib-rato/ai/core";
 import type { Settings } from "../../config/settings";
 import type { SearchProvider, SearchProviderSettings } from "./providers/base";
 import type { ActiveSearchModelContext, SearchProviderId } from "./types";

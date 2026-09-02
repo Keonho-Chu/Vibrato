@@ -1,18 +1,18 @@
 {
-	"name": "@gajae-code/natives-linux-arm64",
+	"name": "@vib-rato/natives-linux-arm64",
 	"version": "0.15.6",
-	"description": "Linux arm64 native addon for @gajae-code/natives",
+	"description": "Linux arm64 native addon for @vib-rato/natives",
 	"type": "module",
-	"homepage": "https://gajae-code.com",
+	"homepage": "https://vib-rato.com",
 	"author": "Yeachan-Heo",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/Yeachan-Heo/gajae-code.git",
+		"url": "git+https://github.com/Keonho-Chu/Vibrato.git",
 		"directory": "packages/natives-linux-arm64"
 	},
 	"bugs": {
-		"url": "https://github.com/Yeachan-Heo/gajae-code/issues"
+		"url": "https://github.com/Keonho-Chu/Vibrato/issues"
 	},
 	"os": [
 		"linux"

@@ -64,7 +64,7 @@ test("napi directed receipt binds dependent idle to the accepting generation", a
 		const identity = {
 			type: "identity_header",
 			sessionId,
-			repo: "gajae-code",
+			repo: "vib-rato",
 			branch: "dev",
 			machine: "test",
 		} as const;
@@ -196,7 +196,7 @@ test("napi NotificationServer stops cleanly when an inbound callback is in fligh
 }, 30_000);
 
 test("napi NotificationServer awaited stop releases connected-client state roots", async () => {
-	const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-sdk-stop-wait-"));
+	const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-sdk-stop-wait-"));
 	const sessionId = `stop-wait-${process.pid}-${Date.now()}`;
 	const token = "stop-wait-token";
 	const server = new NotificationServer(sessionId, token, root, true);

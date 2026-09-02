@@ -1,25 +1,25 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, type Mock, vi } from "bun:test";
 import * as path from "node:path";
-import { Agent } from "@gajae-code/agent-core";
-import { KeybindingsManager } from "@gajae-code/coding-agent/config/keybindings";
-import { resetSettingsForTest, Settings } from "@gajae-code/coding-agent/config/settings";
-import type { LoadedCustomCommand } from "@gajae-code/coding-agent/extensibility/custom-commands";
+import { Agent } from "@vib-rato/agent-core";
+import { KeybindingsManager } from "@vib-rato/coding-agent/config/keybindings";
+import { resetSettingsForTest, Settings } from "@vib-rato/coding-agent/config/settings";
+import type { LoadedCustomCommand } from "@vib-rato/coding-agent/extensibility/custom-commands";
 import {
 	ExtensionRunner,
 	loadExtensions,
 	type RegisteredCommand,
-} from "@gajae-code/coding-agent/extensibility/extensions";
-import type { Skill } from "@gajae-code/coding-agent/extensibility/skills";
-import { CommandPaletteComponent } from "@gajae-code/coding-agent/modes/components/command-palette";
-import { InteractiveMode } from "@gajae-code/coding-agent/modes/interactive-mode";
-import { initTheme } from "@gajae-code/coding-agent/modes/theme/theme";
-import { AgentSession } from "@gajae-code/coding-agent/session/agent-session";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { HistoryStorage } from "@gajae-code/coding-agent/session/history-storage";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import * as titleGenerator from "@gajae-code/coding-agent/utils/title-generator";
-import { setKeybindings } from "@gajae-code/tui";
-import { TempDir } from "@gajae-code/utils";
+} from "@vib-rato/coding-agent/extensibility/extensions";
+import type { Skill } from "@vib-rato/coding-agent/extensibility/skills";
+import { CommandPaletteComponent } from "@vib-rato/coding-agent/modes/components/command-palette";
+import { InteractiveMode } from "@vib-rato/coding-agent/modes/interactive-mode";
+import { initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
+import { AgentSession } from "@vib-rato/coding-agent/session/agent-session";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { HistoryStorage } from "@vib-rato/coding-agent/session/history-storage";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import * as titleGenerator from "@vib-rato/coding-agent/utils/title-generator";
+import { setKeybindings } from "@vib-rato/tui";
+import { TempDir } from "@vib-rato/utils";
 import { ModelRegistry } from "../src/config/model-registry";
 
 interface InteractivePaletteHost {
@@ -145,7 +145,7 @@ async function waitForPaletteCommandGuardToClear(host: InteractivePaletteHost): 
 
 async function createHost(): Promise<InteractivePaletteHost> {
 	const partialHost: PartialInteractivePaletteHost = {
-		tempDir: TempDir.createSync("@gjc-command-palette-host-"),
+		tempDir: TempDir.createSync("@vib-command-palette-host-"),
 	};
 	try {
 		const tempDir = partialHost.tempDir;

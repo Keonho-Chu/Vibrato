@@ -1,11 +1,11 @@
 /**
  * Agents CLI command handlers.
  *
- * Handles `gjc agents unpack` for writing bundled agent definitions to disk.
+ * Handles `vib agents unpack` for writing bundled agent definitions to disk.
  */
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { getAgentDir, getProjectDir, isEnoent } from "@gajae-code/utils";
+import { getAgentDir, getProjectDir, isEnoent } from "@vib-rato/utils";
 import { YAML } from "bun";
 import chalk from "chalk";
 import { theme } from "../modes/theme/theme";
@@ -46,7 +46,7 @@ function resolveTargetDir(flags: AgentsCommandArgs["flags"]): string {
 	}
 
 	if (flags.project) {
-		return path.resolve(getProjectDir(), ".gjc", "agents");
+		return path.resolve(getProjectDir(), ".vib", "agents");
 	}
 
 	return path.join(getAgentDir(), "agents");

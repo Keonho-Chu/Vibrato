@@ -22,7 +22,7 @@
  * keeps the schema in charge of acceptance — we never invent values, only
  * massage shapes the LLM almost got right.
  */
-import { structuredCloneJSON } from "@gajae-code/utils";
+import { structuredCloneJSON } from "@vib-rato/utils";
 import type { ZodType } from "zod/v4";
 import type { $ZodIssue as ZodIssue } from "zod/v4/core";
 import type { RawArgumentRejectionCode, RawArgumentRejectionDetail, Tool, ToolCall } from "../types";

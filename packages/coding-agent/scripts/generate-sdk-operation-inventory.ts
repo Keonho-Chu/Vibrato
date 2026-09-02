@@ -5,8 +5,8 @@ import * as path from "node:path";
 import { ADAPTERS, OPERATIONS, type Operation } from "../src/sdk/protocol/operation-registry";
 
 const repoRoot = path.resolve(import.meta.dir, "..", "..", "..");
-const inventoryPath = process.env.GJC_SDK_OPERATION_INVENTORY
-	? path.resolve(process.env.GJC_SDK_OPERATION_INVENTORY)
+const inventoryPath = process.env.VIB_SDK_OPERATION_INVENTORY
+	? path.resolve(process.env.VIB_SDK_OPERATION_INVENTORY)
 	: path.join(repoRoot, "packages/coding-agent/src/sdk/protocol/operation-inventory.generated.json");
 
 /** Reviewed seams deliberately excluded from the public SDK operation surface. */
@@ -140,7 +140,7 @@ const LOCKED_EXCLUSIONS: Readonly<Record<string, string>> = {
 	"agent_session:refreshSshTool": "internal accessor/plumbing, not a user-facing control seam",
 	"agent_session:refreshBaseSystemPrompt": "internal accessor/plumbing, not a user-facing control seam",
 	"agent_session:refreshMCPTools": "internal accessor/plumbing, not a user-facing control seam",
-	"agent_session:refreshGjcSubskillTools": "internal accessor/plumbing, not a user-facing control seam",
+	"agent_session:refreshVibSubskillTools": "internal accessor/plumbing, not a user-facing control seam",
 	"agent_session:buildDisplaySessionContext": "internal accessor/plumbing, not a user-facing control seam",
 	"agent_session:buildPreparedDisplaySessionContext": "internal accessor/plumbing, not a user-facing control seam",
 	"agent_session:convertMessagesToLlm": "internal accessor/plumbing, not a user-facing control seam",
@@ -194,7 +194,7 @@ const LOCKED_EXCLUSIONS: Readonly<Record<string, string>> = {
 	"agent_session:setModelTemporaryForControl":
 		"internal Telegram control wrapper over the reviewed model.set seam, not an independent public SDK operation",
 	"agent_session:setDefaultModelProfileForControl":
-		"internal control wrapper behind the reviewed model.set seam (session-scoped synthetic gajae-code selection), not an independent public SDK operation",
+		"internal control wrapper behind the reviewed model.set seam (session-scoped synthetic vib-rato selection), not an independent public SDK operation",
 	"agent_session:withSdkControlMutation":
 		"internal session admission wrapper for the reviewed config.patch seam, not an independent public SDK operation",
 	"agent_session:setThinkingLevelForControl":
@@ -836,7 +836,7 @@ export function scanAcpMethods(sourceText: string): string[] {
 }
 
 async function scanSeams(): Promise<SourceSeam[]> {
-	const root = process.env.GJC_SDK_SEAM_SCAN_ROOT;
+	const root = process.env.VIB_SDK_SEAM_SCAN_ROOT;
 	if (root) {
 		const files = await fs.readdir(root, { recursive: true });
 		const seams: SourceSeam[] = [];

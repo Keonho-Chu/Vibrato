@@ -25,17 +25,17 @@ async function readTaskOutputLimits(
 	options: TaskOutputLimitProbeOptions = {},
 ): Promise<TaskOutputLimits> {
 	const env = { ...process.env };
-	delete env.GJC_TASK_MAX_OUTPUT_BYTES;
+	delete env.VIB_TASK_MAX_OUTPUT_BYTES;
 	delete env.PI_TASK_MAX_OUTPUT_BYTES;
-	delete env.GJC_TASK_MAX_OUTPUT_LINES;
+	delete env.VIB_TASK_MAX_OUTPUT_LINES;
 	delete env.PI_TASK_MAX_OUTPUT_LINES;
 	Object.assign(env, overrides);
 
 	let tempRoot: string | undefined;
 	if (options.dotenv) {
-		tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-task-output-env-"));
+		tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "vib-task-output-env-"));
 		const home = path.join(tempRoot, "home");
-		const configRoot = path.join(home, ".gjc");
+		const configRoot = path.join(home, ".vib");
 		const agentDir = path.join(configRoot, "agent");
 		await fs.mkdir(agentDir, { recursive: true });
 
@@ -47,8 +47,8 @@ async function readTaskOutputLimits(
 		await Bun.write(path.join(dotenvDirectory, ".env"), `${dotenvContents}\n`);
 
 		env.HOME = home;
-		env.GJC_CONFIG_DIR = ".gjc";
-		env.GJC_CODING_AGENT_DIR = agentDir;
+		env.VIB_CONFIG_DIR = ".vib";
+		env.VIB_CODING_AGENT_DIR = agentDir;
 		delete env.PI_CONFIG_DIR;
 		delete env.PI_CODING_AGENT_DIR;
 	}
@@ -87,8 +87,8 @@ describe("task output limit environment parsing", () => {
 	it("accepts complete positive decimal integers from canonical variables", async () => {
 		expect(
 			await readTaskOutputLimits({
-				GJC_TASK_MAX_OUTPUT_BYTES: "00064000",
-				GJC_TASK_MAX_OUTPUT_LINES: "250",
+				VIB_TASK_MAX_OUTPUT_BYTES: "00064000",
+				VIB_TASK_MAX_OUTPUT_LINES: "250",
 			}),
 		).toEqual({ bytes: 64_000, lines: 250 });
 	});
@@ -114,8 +114,8 @@ describe("task output limit environment parsing", () => {
 					dotenv: {
 						location,
 						values: {
-							GJC_TASK_MAX_OUTPUT_BYTES: "64000",
-							GJC_TASK_MAX_OUTPUT_LINES: "250",
+							VIB_TASK_MAX_OUTPUT_BYTES: "64000",
+							VIB_TASK_MAX_OUTPUT_LINES: "250",
 						},
 					},
 				},
@@ -134,8 +134,8 @@ describe("task output limit environment parsing", () => {
 	])("falls back for invalid or inexact override %j", async value => {
 		expect(
 			await readTaskOutputLimits({
-				GJC_TASK_MAX_OUTPUT_BYTES: value,
-				GJC_TASK_MAX_OUTPUT_LINES: value,
+				VIB_TASK_MAX_OUTPUT_BYTES: value,
+				VIB_TASK_MAX_OUTPUT_LINES: value,
 			}),
 		).toEqual(defaults);
 	});

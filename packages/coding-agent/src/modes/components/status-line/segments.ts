@@ -1,8 +1,8 @@
 import * as os from "node:os";
 import * as path from "node:path";
-import { ThinkingLevel } from "@gajae-code/agent-core";
-import { TERMINAL } from "@gajae-code/tui";
-import { formatDuration, formatNumber, getProjectDir, pathIsWithin, relativePathWithinRoot } from "@gajae-code/utils";
+import { ThinkingLevel } from "@vib-rato/agent-core";
+import { TERMINAL } from "@vib-rato/tui";
+import { formatDuration, formatNumber, getProjectDir, pathIsWithin, relativePathWithinRoot } from "@vib-rato/utils";
 import { type ThemeColor, theme } from "../../../modes/theme/theme";
 import { shortenPath } from "../../../tools/render-utils";
 import { getSessionAccentAnsi, getSessionAccentHex } from "../../../utils/session-color";
@@ -78,18 +78,18 @@ function classifyProjectDir(pwd: string): { scratch: boolean; relative: string |
 // Segment Implementations
 // ═══════════════════════════════════════════════════════════════════════════
 
-const gajaeSegment: StatusLineSegment = {
-	id: "gajae",
+const vibratoSegment: StatusLineSegment = {
+	id: "vibrato",
 	render(_ctx) {
-		return { content: theme.fg("accent", "🦞"), visible: true };
+		return { content: theme.fg("accent", theme.symbol("icon.pi")), visible: true };
 	},
 };
 
-// Legacy custom-config alias only. Public presets must use `gajae`.
+// Legacy custom-config alias only. Public presets must use `vibrato`.
 const legacyPiSegment: StatusLineSegment = {
 	id: "pi",
 	render(_ctx) {
-		return gajaeSegment.render(_ctx);
+		return vibratoSegment.render(_ctx);
 	},
 };
 
@@ -575,7 +575,7 @@ const usageSegment: StatusLineSegment = {
 // ═══════════════════════════════════════════════════════════════════════════
 
 export const SEGMENTS: Record<StatusLineSegmentId, StatusLineSegment> = {
-	gajae: gajaeSegment,
+	vibrato: vibratoSegment,
 	pi: legacyPiSegment,
 	model: modelSegment,
 	mode: modeSegment,

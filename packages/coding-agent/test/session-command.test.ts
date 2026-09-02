@@ -3,7 +3,7 @@ import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 import SessionCommand from "../src/commands/session";
-import * as tmuxSessions from "../src/gjc-runtime/tmux-sessions";
+import * as tmuxSessions from "../src/vib-runtime/tmux-sessions";
 
 type SpawnSyncMock = {
 	mockImplementation: (implementation: (cmd: string[]) => unknown) => void;
@@ -59,7 +59,7 @@ function expectNoTmuxMutation(calls: readonly string[][]): void {
 	}
 }
 
-function sessionLine(name = "gajae_code_test", branch = ""): string {
+function sessionLine(name = "vib_rato_test", branch = ""): string {
 	return `${name}\t1\t0\t1770000000\t1\troot\t2\t${branch}\tfeature-demo\n`;
 }
 
@@ -69,7 +69,7 @@ function injectSafeAbsentToSafeOwnerProof(plannedExecutions: string[][]): string
 	tmuxSessions.__setMutationServerProofForTests(() => ({ pid: 1, startTime: "test" }));
 	tmuxSessions.__setCreateOwnerIsolationForTests({
 		probe: {
-			readCallerCgroup: () => "0::/gjc-owner-test.scope\n",
+			readCallerCgroup: () => "0::/vib-owner-test.scope\n",
 			probeServer: socketKey => {
 				probedSockets.push(socketKey);
 				expect(socketKey).toBe("tmux");
@@ -114,7 +114,7 @@ async function runSessionCommand(argv: string[]): Promise<string> {
 		return true;
 	});
 	try {
-		const command = new SessionCommand(argv, { bin: "gjc", version: "0.0.0-test", commands: new Map() });
+		const command = new SessionCommand(argv, { bin: "vib", version: "0.0.0-test", commands: new Map() });
 		await command.run();
 		return output;
 	} finally {
@@ -125,16 +125,16 @@ async function runSessionCommand(argv: string[]): Promise<string> {
 afterEach(() => {
 	process.stdout.write = ORIGINAL_STDOUT_WRITE;
 	(Bun.spawnSync as unknown as SpawnSyncMock).mockRestore?.();
-	mock.module("../src/gjc-runtime/tmux-sessions", () => REAL_TMUX_SESSIONS);
+	mock.module("../src/vib-runtime/tmux-sessions", () => REAL_TMUX_SESSIONS);
 	mock.restore();
 	tmuxSessions.__setCreateOwnerIsolationForTests(null);
 	tmuxSessions.__setMutationServerProofForTests(null);
 });
 
-describe("gjc session command", () => {
+describe("vib session command", () => {
 	it("emits exact list JSON DTOs with flags before action", async () => {
 		mockSpawnSync(() =>
-			spawnResult(0, `${sessionLine("gajae_code_test", "feature/demo")}untagged\t1\t0\t1770000001\t\troot\t1\t\t\n`),
+			spawnResult(0, `${sessionLine("vib_rato_test", "feature/demo")}untagged\t1\t0\t1770000001\t\troot\t1\t\t\n`),
 		);
 
 		const output = await runSessionCommand(["--json", "list"]);
@@ -144,7 +144,7 @@ describe("gjc session command", () => {
 			ok: true,
 			sessions: [
 				{
-					name: "gajae_code_test",
+					name: "vib_rato_test",
 					attached: false,
 					windows: 1,
 					panes: 2,
@@ -161,19 +161,19 @@ describe("gjc session command", () => {
 		const output = await runSessionCommand(["status", "missing", "--json"]);
 		const payload = JSON.parse(output);
 
-		expect(payload).toEqual({ ok: false, reason: "gjc_tmux_session_not_found" });
+		expect(payload).toEqual({ ok: false, reason: "vib_tmux_session_not_found" });
 	});
 
 	it("creates and reports a detached managed session as exact JSON DTO", async () => {
 		const calls: string[][] = [];
-		const stateRoot = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-session-command-"));
-		const previousSession = process.env.GJC_TMUX_SESSION;
-		const previousStateFile = process.env.GJC_COORDINATOR_SESSION_STATE_FILE;
-		process.env.GJC_TMUX_SESSION = "custom_session";
-		process.env.GJC_COORDINATOR_SESSION_STATE_FILE = path.join(stateRoot, "state.json");
+		const stateRoot = await fs.mkdtemp(path.join(os.tmpdir(), "vib-session-command-"));
+		const previousSession = process.env.VIB_TMUX_SESSION;
+		const previousStateFile = process.env.VIB_COORDINATOR_SESSION_STATE_FILE;
+		process.env.VIB_TMUX_SESSION = "custom_session";
+		process.env.VIB_COORDINATOR_SESSION_STATE_FILE = path.join(stateRoot, "state.json");
 		const plannedExecutions: string[][] = [];
 		const probedSockets = injectSafeAbsentToSafeOwnerProof(plannedExecutions);
-		// Production re-reads every `@gjc-*` option it just wrote and requires an exact
+		// Production re-reads every `@vib-*` option it just wrote and requires an exact
 		// round-trip (`createdTmuxMetadataMatches`). Real tmux persists user options, so
 		// model that here: record what the guarded mutation writes and serve it back to
 		// `show-options -qv`. Returning "" for unmodelled reads would fail the round-trip
@@ -185,9 +185,9 @@ describe("gjc session command", () => {
 			expect(tmuxCommand).toBe("tmux");
 			if (cmd.includes("if-shell")) {
 				for (const arg of cmd)
-					for (const [, option, value] of arg.matchAll(/"(@gjc-[^"]+)" "([^"]*)"/g))
+					for (const [, option, value] of arg.matchAll(/"(@vib-[^"]+)" "([^"]*)"/g))
 						writtenOptions.set(option!, value!);
-				return spawnResult(0, "__gjc_tmux_guarded_mutation_ok__\n");
+				return spawnResult(0, "__vib_tmux_guarded_mutation_ok__\n");
 			}
 			if (cmd.includes("show-options") && cmd.includes("-qv"))
 				return spawnResult(0, `${writtenOptions.get(cmd.at(-1) ?? "") ?? ""}\n`);
@@ -203,10 +203,10 @@ describe("gjc session command", () => {
 		try {
 			output = await runSessionCommand(["create", "--json"]);
 		} finally {
-			if (previousSession === undefined) delete process.env.GJC_TMUX_SESSION;
-			else process.env.GJC_TMUX_SESSION = previousSession;
-			if (previousStateFile === undefined) delete process.env.GJC_COORDINATOR_SESSION_STATE_FILE;
-			else process.env.GJC_COORDINATOR_SESSION_STATE_FILE = previousStateFile;
+			if (previousSession === undefined) delete process.env.VIB_TMUX_SESSION;
+			else process.env.VIB_TMUX_SESSION = previousSession;
+			if (previousStateFile === undefined) delete process.env.VIB_COORDINATOR_SESSION_STATE_FILE;
+			else process.env.VIB_COORDINATOR_SESSION_STATE_FILE = previousStateFile;
 			await fs.rm(stateRoot, { recursive: true, force: true });
 		}
 		const payload = JSON.parse(output);
@@ -232,11 +232,11 @@ describe("gjc session command", () => {
 	});
 
 	it("refuses unsafe or unverifiable owner servers before any tmux mutation", async () => {
-		const stateRoot = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-session-command-preflight-"));
-		const previousSession = process.env.GJC_TMUX_SESSION;
-		const previousStateFile = process.env.GJC_COORDINATOR_SESSION_STATE_FILE;
-		process.env.GJC_TMUX_SESSION = "preflight_session";
-		process.env.GJC_COORDINATOR_SESSION_STATE_FILE = path.join(stateRoot, "state.json");
+		const stateRoot = await fs.mkdtemp(path.join(os.tmpdir(), "vib-session-command-preflight-"));
+		const previousSession = process.env.VIB_TMUX_SESSION;
+		const previousStateFile = process.env.VIB_COORDINATOR_SESSION_STATE_FILE;
+		process.env.VIB_TMUX_SESSION = "preflight_session";
+		process.env.VIB_COORDINATOR_SESSION_STATE_FILE = path.join(stateRoot, "state.json");
 		try {
 			for (const state of ["unsafe", "unverifiable"] as const) {
 				const calls: string[][] = [];
@@ -262,10 +262,10 @@ describe("gjc session command", () => {
 				(Bun.spawnSync as unknown as SpawnSyncMock).mockRestore?.();
 			}
 		} finally {
-			if (previousSession === undefined) delete process.env.GJC_TMUX_SESSION;
-			else process.env.GJC_TMUX_SESSION = previousSession;
-			if (previousStateFile === undefined) delete process.env.GJC_COORDINATOR_SESSION_STATE_FILE;
-			else process.env.GJC_COORDINATOR_SESSION_STATE_FILE = previousStateFile;
+			if (previousSession === undefined) delete process.env.VIB_TMUX_SESSION;
+			else process.env.VIB_TMUX_SESSION = previousSession;
+			if (previousStateFile === undefined) delete process.env.VIB_COORDINATOR_SESSION_STATE_FILE;
+			else process.env.VIB_COORDINATOR_SESSION_STATE_FILE = previousStateFile;
 			await fs.rm(stateRoot, { recursive: true, force: true });
 		}
 	});
@@ -284,9 +284,9 @@ describe("gjc session command", () => {
 		const payload = JSON.parse(output);
 
 		expect(payload.ok).toBe(false);
-		expect(payload.reason).toBe("gjc_tmux_session_untagged");
+		expect(payload.reason).toBe("vib_tmux_session_untagged");
 		expect(typeof payload.detail).toBe("string");
-		expect(payload.detail).toContain("did not return GJC's @gjc-profile ownership tag");
+		expect(payload.detail).toContain("did not return Vibrato's @vib-profile ownership tag");
 		expect(payload.detail).not.toContain(" — ");
 	});
 	it("awaits force-close before reporting JSON success", async () => {
@@ -299,9 +299,9 @@ describe("gjc session command", () => {
 			createdAt: string;
 		}>();
 		const received = { args: null as unknown[] | null };
-		mock.module("../src/gjc-runtime/tmux-sessions", () => ({
+		mock.module("../src/vib-runtime/tmux-sessions", () => ({
 			...REAL_TMUX_SESSIONS,
-			forceCloseGjcTmuxSession: (...args: unknown[]) => {
+			forceCloseVibTmuxSession: (...args: unknown[]) => {
 				received.args = args;
 				return closed.promise;
 			},
@@ -341,9 +341,9 @@ describe("gjc session command", () => {
 	});
 
 	it("preserves an asynchronous force-close error instead of reporting success", async () => {
-		mock.module("../src/gjc-runtime/tmux-sessions", () => ({
+		mock.module("../src/vib-runtime/tmux-sessions", () => ({
 			...REAL_TMUX_SESSIONS,
-			forceCloseGjcTmuxSession: async () => {
+			forceCloseVibTmuxSession: async () => {
 				throw new Error("owner_term_verdict_timeout");
 			},
 		}));
@@ -354,15 +354,15 @@ describe("gjc session command", () => {
 	});
 	it("returns exact JSON failures for owner identity and generation mismatches", async () => {
 		for (const reason of ["owner_pid_identity_mismatch", "owner_generation_mismatch"]) {
-			mock.module("../src/gjc-runtime/tmux-sessions", () => ({
+			mock.module("../src/vib-runtime/tmux-sessions", () => ({
 				...REAL_TMUX_SESSIONS,
-				forceCloseGjcTmuxSession: async () => {
+				forceCloseVibTmuxSession: async () => {
 					throw new Error(reason);
 				},
 			}));
 			const output = await runSessionCommand([
 				"force-close",
-				"gjc_lc_private",
+				"vib_lc_private",
 				"--session-id",
 				"private-id",
 				"--state-file",

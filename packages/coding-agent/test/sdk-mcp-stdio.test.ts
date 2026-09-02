@@ -12,8 +12,8 @@ type TestServer = {
 };
 
 test("shipped MCP stdio advertises confirm and forwards confirmed destructive controls", async () => {
-	const repo = await mkdtemp(path.join(tmpdir(), "gjc-sdk-mcp-stdio-"));
-	const agentDir = await mkdtemp(path.join(tmpdir(), "gjc-sdk-mcp-stdio-agent-"));
+	const repo = await mkdtemp(path.join(tmpdir(), "vib-sdk-mcp-stdio-"));
+	const agentDir = await mkdtemp(path.join(tmpdir(), "vib-sdk-mcp-stdio-agent-"));
 	const token = "mcp-stdio-token";
 	const received: Array<Record<string, unknown>> = [];
 	let server!: TestServer;
@@ -39,7 +39,7 @@ test("shipped MCP stdio advertises confirm and forwards confirmed destructive co
 
 	try {
 		const sessionId = "confirmed-control-session";
-		const stateRoot = path.join(repo, ".gjc", "state");
+		const stateRoot = path.join(repo, ".vib", "state");
 		const endpointPath = path.join(stateRoot, "sdk", `${sessionId}.json`);
 		await mkdir(path.dirname(endpointPath), { recursive: true });
 		await writeFile(
@@ -70,7 +70,7 @@ test("shipped MCP stdio advertises confirm and forwards confirmed destructive co
 		});
 		const child = Bun.spawn(["bun", "run", path.join(packageRoot, "src", "cli.ts"), "mcp-serve", "sdk"], {
 			cwd: repo,
-			env: { ...process.env, GJC_CODING_AGENT_DIR: agentDir },
+			env: { ...process.env, VIB_CODING_AGENT_DIR: agentDir },
 			stdin: "pipe",
 			stdout: "pipe",
 			stderr: "pipe",
@@ -82,7 +82,7 @@ test("shipped MCP stdio advertises confirm and forwards confirmed destructive co
 				id: 2,
 				method: "tools/call",
 				params: {
-					name: "gjc_session_control",
+					name: "vib_session_control",
 					arguments: { sessionId, operation: "context.clear", input: {}, confirm: true },
 				},
 			})}\n`,
@@ -100,7 +100,7 @@ test("shipped MCP stdio advertises confirm and forwards confirmed destructive co
 		const toolList = responses.find(response => response.id === 1)?.result as {
 			tools?: Array<Record<string, unknown>>;
 		};
-		const control = toolList.tools?.find(tool => tool.name === "gjc_session_control");
+		const control = toolList.tools?.find(tool => tool.name === "vib_session_control");
 		expect(control).toMatchObject({
 			inputSchema: {
 				additionalProperties: false,

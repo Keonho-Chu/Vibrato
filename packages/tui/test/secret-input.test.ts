@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { CURSOR_MARKER, SecretInput, type SecretValue } from "@gajae-code/tui";
+import { CURSOR_MARKER, SecretInput, type SecretValue } from "@vib-rato/tui";
 
 const TELEGRAM_TOKEN = "123456789:AbCdEfGhIjKlMnOpQrStUvWxYz0123456789";
 const TELEGRAM_TOKEN_PATTERN = /\d{6,}:[A-Za-z0-9_-]{10,}/;

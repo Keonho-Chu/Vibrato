@@ -1,4 +1,4 @@
-import { $credentialEnv } from "@gajae-code/utils";
+import { $credentialEnv } from "@vib-rato/utils";
 
 /**
  * Whether Anthropic requests run in Foundry gateway mode.
@@ -7,7 +7,7 @@ import { $credentialEnv } from "@gajae-code/utils";
  * request base URL and injects TLS client material, so whatever can set this
  * redirects authenticated traffic. `$env` merges the caller's `cwd/.env`, so
  * reading it there would let repository content flip the mode; resolve it the
- * same way the credentials themselves are (launching shell plus GJC/user-owned
+ * same way the credentials themselves are (launching shell plus Vibrato/user-owned
  * `.env` files, never the project `.env`).
  */
 export function isFoundryEnabled(): boolean {

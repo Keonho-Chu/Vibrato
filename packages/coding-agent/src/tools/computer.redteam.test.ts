@@ -1,5 +1,5 @@
 /**
- * Genuine computer-use red-team suite for the GJC `computer` tool safety envelope.
+ * Genuine computer-use red-team suite for the Vibrato `computer` tool safety envelope.
  *
  * Required because any edit to `src/config/settings-schema.ts` — the file that
  * defines computer.enabled / computer.alwaysOn / computer.killSwitchHotkey /
@@ -26,7 +26,7 @@ import { afterEach, describe, expect, test, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { AgentToolResult } from "@gajae-code/agent-core";
+import type { AgentToolResult } from "@vib-rato/agent-core";
 import { zlibSync } from "fflate";
 import { getDefault, getType, Settings } from "../config/settings";
 import {
@@ -360,7 +360,7 @@ describe("computer red-team 4: display-stale", () => {
 	const STALE_MS = 1000;
 
 	test("display-stale: stale screenshot fallback dirs are cleaned; recent and non-matching dirs are preserved", async () => {
-		const base = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-computer-redteam-gc-"));
+		const base = await fs.mkdtemp(path.join(os.tmpdir(), "vib-computer-redteam-gc-"));
 		try {
 			const makeDir = async (name: string, ageMs: number): Promise<string> => {
 				const dir = path.join(base, name);
@@ -740,7 +740,7 @@ describe("computer red-team 7: blast-radius", () => {
 	test("blast-radius: audit records are written with shape when computer.auditLog.enabled is true and skipped when false", async () => {
 		setComputerPlatformForTests("darwin");
 		setComputerArchForTests("arm64");
-		const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-computer-audit-redteam-"));
+		const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-computer-audit-redteam-"));
 		const sessionFile = path.join(tmpDir, "session.jsonl");
 		const auditPath = path.join(tmpDir, ".computer-audit.jsonl");
 		try {
@@ -802,7 +802,7 @@ describe("computer red-team 7: blast-radius", () => {
 	test("blast-radius: audit logging disabled writes nothing", async () => {
 		setComputerPlatformForTests("darwin");
 		setComputerArchForTests("arm64");
-		const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-computer-audit-off-"));
+		const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-computer-audit-off-"));
 		const sessionFile = path.join(tmpDir, "session.jsonl");
 		const auditPath = path.join(tmpDir, ".computer-audit.jsonl");
 		try {

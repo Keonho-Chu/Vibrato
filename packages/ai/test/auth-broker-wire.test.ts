@@ -294,7 +294,7 @@ describe("auth-broker wire surface", () => {
 
 	test("GET /v1/snapshot rejects legacy conditional revalidation across restarts", async () => {
 		const res = await fetch(`${handle!.url}/v1/snapshot`, {
-			headers: { Authorization: `Bearer ${token}`, "X-GJC-Auth-Broker-Epoch": "1" },
+			headers: { Authorization: `Bearer ${token}`, "X-Vibrato-Auth-Broker-Epoch": "1" },
 		});
 		expect(res.status).toBe(200);
 		const body = (await res.json()) as {

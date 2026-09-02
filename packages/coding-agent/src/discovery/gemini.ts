@@ -14,11 +14,11 @@
  * - extensions: From extensions/STAR/gemini-extension.json manifests (STAR = wildcard)
  * - settings: From settings.json
  *
- * MCP servers are intentionally NOT inherited live from Gemini config: GJC owns
- * MCP runtime execution. Copy definitions into GJC's own mcp.json instead.
+ * MCP servers are intentionally NOT inherited live from Gemini config: Vibrato owns
+ * MCP runtime execution. Copy definitions into Vibrato's own mcp.json instead.
  */
 import * as path from "node:path";
-import { tryParseJson } from "@gajae-code/utils";
+import { tryParseJson } from "@vib-rato/utils";
 import { registerProvider } from "../capability";
 import { type ContextFile, contextFileCapability } from "../capability/context-file";
 import { type Extension, type ExtensionManifest, extensionCapability } from "../capability/extension";

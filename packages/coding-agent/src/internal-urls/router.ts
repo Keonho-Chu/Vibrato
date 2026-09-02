@@ -1,5 +1,5 @@
 /**
- * Internal URL router for internal protocols (agent://, artifact://, memory://, rule://, gjc://, local://).
+ * Internal URL router for internal protocols (agent://, artifact://, memory://, rule://, vib://, local://).
  *
  * One process-global router with one handler per scheme. Access via
  * `InternalUrlRouter.instance()`. Handlers are stateless; per-session and
@@ -7,13 +7,13 @@
  */
 import { AgentProtocolHandler } from "./agent-protocol";
 import { ArtifactProtocolHandler } from "./artifact-protocol";
-import { GjcProtocolHandler } from "./gjc-protocol";
 import { IssueProtocolHandler, PrProtocolHandler } from "./issue-pr-protocol";
 import { LocalProtocolHandler } from "./local-protocol";
 import { MemoryProtocolHandler } from "./memory-protocol";
 import { parseInternalUrl } from "./parse";
 import { RuleProtocolHandler } from "./rule-protocol";
 import type { InternalResource, InternalUrl, ProtocolHandler, ResolveContext } from "./types";
+import { VibProtocolHandler } from "./vib-protocol";
 
 export class InternalUrlRouter {
 	static #instance: InternalUrlRouter | undefined;
@@ -21,7 +21,7 @@ export class InternalUrlRouter {
 	#handlers = new Map<string, ProtocolHandler>();
 
 	constructor() {
-		this.register(new GjcProtocolHandler());
+		this.register(new VibProtocolHandler());
 		this.register(new AgentProtocolHandler());
 		this.register(new ArtifactProtocolHandler());
 		this.register(new MemoryProtocolHandler());

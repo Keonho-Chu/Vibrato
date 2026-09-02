@@ -3,9 +3,9 @@ import {
 	buildOpenAiNativeHistory,
 	requestOpenAiRemoteCompaction,
 	requestRemoteCompaction,
-} from "@gajae-code/agent-core/compaction/openai";
-import type { AssistantMessage, Model, ToolResultMessage } from "@gajae-code/ai/types";
-import { hookFetch } from "@gajae-code/utils";
+} from "@vib-rato/agent-core/compaction/openai";
+import type { AssistantMessage, Model, ToolResultMessage } from "@vib-rato/ai/types";
+import { hookFetch } from "@vib-rato/utils";
 
 function setEnvForTest(key: string, value: string): () => void {
 	const previous = Bun.env[key];

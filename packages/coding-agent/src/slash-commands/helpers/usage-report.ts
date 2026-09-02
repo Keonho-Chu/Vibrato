@@ -1,5 +1,5 @@
-import type { UsageLimit, UsageReport } from "@gajae-code/ai/core";
-import { sanitizeText } from "@gajae-code/utils";
+import type { UsageLimit, UsageReport } from "@vib-rato/ai/core";
+import { sanitizeText } from "@vib-rato/utils";
 import {
 	type AccountInventoryRow,
 	buildAccountInventorySnapshot,

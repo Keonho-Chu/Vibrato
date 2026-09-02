@@ -25,7 +25,7 @@ const probe = path.join(import.meta.dir, "fixtures", "session-state-lock-debris-
 async function runProbe(scenario: string, native = false): Promise<ProbeResult> {
 	const child = Bun.spawn([process.execPath, probe, scenario], {
 		cwd: path.resolve(import.meta.dir, "../../.."),
-		env: { ...process.env, NO_COLOR: "1", GJC_SESSION_LOCK_PROBE_NATIVE: native ? "1" : undefined },
+		env: { ...process.env, NO_COLOR: "1", VIB_SESSION_LOCK_PROBE_NATIVE: native ? "1" : undefined },
 		stdout: "pipe",
 		stderr: "pipe",
 	});

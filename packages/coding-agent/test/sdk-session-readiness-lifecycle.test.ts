@@ -19,7 +19,7 @@ async function withHost(
 		frame: (value: SdkFrame) => Promise<void>;
 	}) => Promise<void>,
 ): Promise<void> {
-	const stateRoot = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-session-readiness-"));
+	const stateRoot = await fs.mkdtemp(path.join(os.tmpdir(), "vib-session-readiness-"));
 	let host: SessionSdkHost | undefined;
 	try {
 		const sent: Record<string, unknown>[] = [];

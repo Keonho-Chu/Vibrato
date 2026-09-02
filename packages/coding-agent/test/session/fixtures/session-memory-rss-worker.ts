@@ -9,7 +9,7 @@ const collect = (): { rss: number; heapUsed: number; external: number } => {
 	return { rss: usage.rss, heapUsed: usage.heapUsed, external: usage.external };
 };
 
-if (process.env.GJC_SESSION_MEMORY_RSS_CONTEXT === "1") {
+if (process.env.VIB_SESSION_MEMORY_RSS_CONTEXT === "1") {
 	const manager = SessionManager.inMemory();
 	const payload = `context-rss-${"x".repeat(24 * 1024 * 1024)}`;
 	manager.appendMessage({ role: "user", content: payload, timestamp: 0 });
@@ -28,10 +28,10 @@ if (process.env.GJC_SESSION_MEMORY_RSS_CONTEXT === "1") {
 	process.exit(0);
 }
 
-const recordCount = Number.parseInt(process.env.GJC_SESSION_MEMORY_RSS_RECORDS ?? "120000", 10);
+const recordCount = Number.parseInt(process.env.VIB_SESSION_MEMORY_RSS_RECORDS ?? "120000", 10);
 if (!Number.isSafeInteger(recordCount) || recordCount < 10) throw new Error("invalid_record_count");
 
-const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-session-memory-rss-"));
+const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-session-memory-rss-"));
 const sessionFile = path.join(root, "rss.jsonl");
 const fd = fs.openSync(sessionFile, "w", 0o600);
 const write = (value: unknown): void => {
@@ -63,7 +63,7 @@ try {
 }
 
 const baselineRss = collect();
-const boundedFirstOpen = process.env.GJC_SESSION_MEMORY_RSS_FIRST_OPEN === "1";
+const boundedFirstOpen = process.env.VIB_SESSION_MEMORY_RSS_FIRST_OPEN === "1";
 const manager = await SessionManager.open(
 	sessionFile,
 	SessionManager.explicitDestination(root),
@@ -74,8 +74,8 @@ const manager = await SessionManager.open(
 const eagerRss = collect();
 if (!boundedFirstOpen) manager.setSessionMemoryMode("enabled");
 const retiredRss = collect();
-const cycleCount = Number.parseInt(process.env.GJC_SESSION_MEMORY_RSS_CYCLES ?? "0", 10);
-const cycleRecords = Number.parseInt(process.env.GJC_SESSION_MEMORY_RSS_CYCLE_RECORDS ?? "5000", 10);
+const cycleCount = Number.parseInt(process.env.VIB_SESSION_MEMORY_RSS_CYCLES ?? "0", 10);
+const cycleRecords = Number.parseInt(process.env.VIB_SESSION_MEMORY_RSS_CYCLE_RECORDS ?? "5000", 10);
 const cycleSamples: Array<{ rss: number; heapUsed: number; external: number }> = [];
 for (let cycle = 0; cycle < cycleCount; cycle++) {
 	let firstKeptEntryId = "";
@@ -86,7 +86,7 @@ for (let cycle = 0; cycle < cycleCount; cycle++) {
 	cycleSamples.push(collect());
 }
 let selectionSamples: Array<{ rss: number; heapUsed: number; external: number }> = [];
-if (process.env.GJC_SESSION_MEMORY_RSS_SELECTION === "1") {
+if (process.env.VIB_SESSION_MEMORY_RSS_SELECTION === "1") {
 	selectionSamples = [collect()];
 	const stage = await manager.stageDefaultModelSelection("provider/model", "high", { appendThinkingLevel: true });
 	selectionSamples.push(collect());
@@ -97,7 +97,7 @@ if (process.env.GJC_SESSION_MEMORY_RSS_SELECTION === "1") {
 let managerClosed = false;
 let branchSamples: Array<{ rss: number; heapUsed: number; external: number }> = [];
 let branchStats: { coldRetirementActive: boolean; totalAccountedBytes: number } | undefined;
-if (process.env.GJC_SESSION_MEMORY_RSS_BRANCH === "1") {
+if (process.env.VIB_SESSION_MEMORY_RSS_BRANCH === "1") {
 	await manager.close();
 	managerClosed = true;
 	const branchFile = path.join(root, "branch-rss.jsonl");
@@ -188,7 +188,7 @@ if (process.env.GJC_SESSION_MEMORY_RSS_BRANCH === "1") {
 const stats = branchStats ?? manager.getSessionMemoryStats();
 let forkSamples: Array<{ rss: number; heapUsed: number; external: number }> = [];
 let forkStats: { coldRetirementActive: boolean; totalAccountedBytes: number } | undefined;
-if (process.env.GJC_SESSION_MEMORY_RSS_FORK === "1") {
+if (process.env.VIB_SESSION_MEMORY_RSS_FORK === "1") {
 	await manager.close();
 	managerClosed = true;
 	const warmSource = path.join(root, "fork-warm.jsonl");
@@ -235,7 +235,7 @@ if (process.env.GJC_SESSION_MEMORY_RSS_FORK === "1") {
 }
 let capturedForkSamples: Array<{ rss: number; heapUsed: number; external: number }> = [];
 let capturedForkStats: { coldRetirementActive: boolean; totalAccountedBytes: number } | undefined;
-if (process.env.GJC_SESSION_MEMORY_RSS_CAPTURED_FORK === "1") {
+if (process.env.VIB_SESSION_MEMORY_RSS_CAPTURED_FORK === "1") {
 	if (!managerClosed) {
 		await manager.close();
 		managerClosed = true;
@@ -260,7 +260,7 @@ if (process.env.GJC_SESSION_MEMORY_RSS_CAPTURED_FORK === "1") {
 	captured.snapshot.close();
 }
 if (!managerClosed) await manager.close();
-if (process.env.GJC_SESSION_MEMORY_RSS_KEEP !== "1") fs.rmSync(root, { recursive: true, force: true });
+if (process.env.VIB_SESSION_MEMORY_RSS_KEEP !== "1") fs.rmSync(root, { recursive: true, force: true });
 
 process.stdout.write(
 	`${JSON.stringify({

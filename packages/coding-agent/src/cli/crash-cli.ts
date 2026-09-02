@@ -1,5 +1,5 @@
 /**
- * Terminal adapter for `gjc crash`.
+ * Terminal adapter for `vib crash`.
  *
  * Keeps all I/O concerns (readline, TTY detection, stdout) out of the flow in
  * `crash/report.ts`, which is the part that carries the consent contract and is
@@ -8,7 +8,7 @@
 
 import * as path from "node:path";
 import { createInterface } from "node:readline/promises";
-import { getCrashIndexPath } from "@gajae-code/utils";
+import { getCrashIndexPath } from "@vib-rato/utils";
 import type { Settings } from "../config/settings";
 import { compactCrashIndex, listCrashSignatures, resolveCrashStatePaths } from "../crash/index-store";
 import { type CrashReportIo, type CrashReportOutcome, runCrashReportFlow } from "../crash/report";
@@ -97,7 +97,7 @@ export async function runCrashRelayCommand(settings: Settings): Promise<void> {
 	if (outcome.status === "skipped") {
 		const explain: Record<string, string> = {
 			disabled: "crashReport.upstream is off; nothing was transmitted.",
-			"no-dsn": "No upstream DSN configured (crashReport.upstreamDsn or GJC_CRASH_SENTRY_DSN).",
+			"no-dsn": "No upstream DSN configured (crashReport.upstreamDsn or VIB_CRASH_SENTRY_DSN).",
 			"invalid-dsn": "The configured upstream DSN could not be parsed; refusing to send.",
 			"nothing-to-relay": "No crash signatures are due for relay.",
 		};

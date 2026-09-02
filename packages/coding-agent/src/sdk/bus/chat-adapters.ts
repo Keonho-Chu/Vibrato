@@ -55,7 +55,7 @@ function frameText(event: Extract<NotificationEvent, { type: "frame" }>): string
 	const frame = event.frame;
 	const kind = text(frame.type);
 	if (!kind) return undefined;
-	const lines = [`GJC ${kind.replace(/_/g, " ")}`];
+	const lines = [`Vibrato ${kind.replace(/_/g, " ")}`];
 	for (const line of [
 		publicLine("title", frame.title),
 		publicLine("repo", frame.repo),

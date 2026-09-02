@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "bun:test";
 // Imported from the module rather than the package barrel: the barrel pulls in
 // the native addon, which this suite does not need and which is not built in
 // every checkout.
-import { __animationSchedulerTestHooks, registerAnimationCallback } from "@gajae-code/tui/animation-scheduler";
+import { __animationSchedulerTestHooks, registerAnimationCallback } from "@vib-rato/tui/animation-scheduler";
 
 /**
  * Animation ticks are decorative and droppable. When the output sink is backed

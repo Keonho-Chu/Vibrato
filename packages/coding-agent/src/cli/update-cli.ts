@@ -1,7 +1,7 @@
 /**
  * Update CLI command handler.
  *
- * Handles `gjc update` to check for and install standalone GitHub release
+ * Handles `vib update` to check for and install standalone GitHub release
  * binaries. Package-manager installs are migrated to a user binary path
  * rather than overwritten. Source checkouts and dev-links are never replaced.
  */
@@ -9,12 +9,12 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { pipeline } from "node:stream/promises";
-import { $which, APP_NAME, isCompiledBinary, isEnoent, VERSION } from "@gajae-code/utils";
+import { $which, APP_NAME, isCompiledBinary, isEnoent, VERSION } from "@vib-rato/utils";
 import { $ } from "bun";
 import chalk from "chalk";
 import { Settings } from "../config/settings";
 import { isUpdateChannel, UPDATE_CHANNELS, type UpdateChannel } from "../config/update-channel";
-import { installDefaultGjcDefinitions } from "../defaults/gjc-defaults";
+import { installDefaultVibDefinitions } from "../defaults/vib-defaults";
 import { theme } from "../modes/theme/theme";
 import { getNotificationConfig, type NotificationProvider, resolveNotificationProvider } from "../sdk/bus/config";
 import type { TelemetryDetails, TelemetryEventName } from "../telemetry";
@@ -31,8 +31,8 @@ import {
 } from "./github-release";
 import { runNotifyCommand } from "./notify-cli";
 
-const PACKAGE = "@gajae-code/coding-agent";
-const NPM_WRAPPER_PACKAGE = "gajae-code";
+const PACKAGE = "@vib-rato/coding-agent";
+const NPM_WRAPPER_PACKAGE = "vib-rato";
 const NPM_MANAGED_PACKAGES = [NPM_WRAPPER_PACKAGE, PACKAGE] as const;
 
 export interface UpdateCommandOptions {
@@ -152,7 +152,7 @@ function isPathInDirectory(filePath: string, directoryPath: string): boolean {
 	if (isPathInDirectoryLexical(filePath, directoryPath)) return true;
 	// Layer realpath resolution on top of the lexical guard. On Windows, ~/.bun
 	// is a junction when Bun is installed via Scoop, so `bun pm bin -g` and the
-	// PATH-resolved gjc path can refer to the same directory through different
+	// PATH-resolved vib path can refer to the same directory through different
 	// strings. path.resolve does not traverse junctions/symlinks; realpath does.
 	// Resolve the file's parent directory to tolerate the file itself not yet
 	// existing (e.g. a fresh install path) while still catching link-traversed
@@ -236,12 +236,12 @@ function readPackageName(packageJsonPath: string): string | undefined {
 	}
 }
 
-function findGajaeCodeRepoRoot(startDir: string): string | undefined {
+function findVibratoCodeRepoRoot(startDir: string): string | undefined {
 	let current = path.resolve(startDir);
 	while (true) {
 		if (
 			fs.existsSync(path.join(current, ".git")) &&
-			readPackageName(path.join(current, "package.json")) === "gajae-code"
+			readPackageName(path.join(current, "package.json")) === "vib-rato"
 		) {
 			return current;
 		}
@@ -253,7 +253,7 @@ function findGajaeCodeRepoRoot(startDir: string): string | undefined {
 
 function isProtectedSourcePath(filePath: string): boolean {
 	const real = tryRealpath(filePath) ?? path.resolve(filePath);
-	return findGajaeCodeRepoRoot(path.dirname(real)) !== undefined;
+	return findVibratoCodeRepoRoot(path.dirname(real)) !== undefined;
 }
 
 function fileStartsWithShebang(filePath: string): boolean {
@@ -284,14 +284,14 @@ export function defaultUserBinaryPath(
 	env: NodeJS.ProcessEnv = process.env,
 ): string {
 	const pathApi = pathApiForPlatform(platform);
-	if (env.GJC_INSTALL_DIR && env.GJC_INSTALL_DIR.length > 0) {
-		return pathApi.join(env.GJC_INSTALL_DIR, platform === "win32" ? "gjc.exe" : "gjc");
+	if (env.VIB_INSTALL_DIR && env.VIB_INSTALL_DIR.length > 0) {
+		return pathApi.join(env.VIB_INSTALL_DIR, platform === "win32" ? "vib.exe" : "vib");
 	}
 	if (platform === "win32") {
 		const base = env.LOCALAPPDATA || pathApi.join(env.USERPROFILE || os.homedir(), "AppData", "Local");
-		return pathApi.join(base, "gjc", "gjc.exe");
+		return pathApi.join(base, "vib", "vib.exe");
 	}
-	return pathApi.join(env.HOME || os.homedir(), ".local", "bin", "gjc");
+	return pathApi.join(env.HOME || os.homedir(), ".local", "bin", "vib");
 }
 
 export function isProtectedSourcePathForTest(filePath: string): boolean {
@@ -307,7 +307,7 @@ export function defaultUserBinaryPathForTest(
 
 async function resolveUpdateTarget(): Promise<UpdateTarget> {
 	const bunBinDir = await getBunGlobalBinDir();
-	const ompPath = resolveGjcPath();
+	const ompPath = resolveVibPath();
 	const userPath = defaultUserBinaryPath();
 
 	if (ompPath && isProtectedSourcePath(ompPath)) {
@@ -325,7 +325,7 @@ async function resolveUpdateTarget(): Promise<UpdateTarget> {
 		if (path.resolve(userPath) === path.resolve(ompPath)) {
 			throw new Error(
 				formatUnsupportedTargetMessage(
-					`Current install at ${ompPath} is a package-manager shim in the default binary directory. Set GJC_INSTALL_DIR to a different directory, or remove the shim and reinstall with the binary installer`,
+					`Current install at ${ompPath} is a package-manager shim in the default binary directory. Set VIB_INSTALL_DIR to a different directory, or remove the shim and reinstall with the binary installer`,
 				),
 			);
 		}
@@ -424,8 +424,8 @@ function getBinaryName(platform: NodeJS.Platform = process.platform, arch: strin
 }
 
 /**
- * Resolve the running GJC image. Compiled binaries update themselves via
- * execPath (realpath when available), not whichever `gjc` is first on PATH.
+ * Resolve the running Vibrato image. Compiled binaries update themselves via
+ * execPath (realpath when available), not whichever `vib` is first on PATH.
  */
 function resolveRunningImagePath(execPath: string): string {
 	try {
@@ -435,12 +435,12 @@ function resolveRunningImagePath(execPath: string): string {
 	}
 }
 
-function resolveGjcPath(): string | undefined {
+function resolveVibPath(): string | undefined {
 	if (isCompiledBinary()) return resolveRunningImagePath(process.execPath);
 	return $which(APP_NAME) ?? undefined;
 }
 
-export function resolveGjcPathForTest(options: {
+export function resolveVibPathForTest(options: {
 	compiled: boolean;
 	execPath: string;
 	whichPath: string | undefined;
@@ -450,10 +450,10 @@ export function resolveGjcPathForTest(options: {
 }
 
 /**
- * Parse the version reported by `gjc --version` ("gjc/X.Y.Z" or a nightly prerelease variant).
+ * Parse the version reported by `vib --version` ("vib/X.Y.Z" or a nightly prerelease variant).
  */
 function parseReportedVersion(output: string): string | undefined {
-	// Output format: "gjc/X.Y.Z" (stable) or "gjc/X.Y.Z-nightly.<ts>.<run>.g<sha>" (nightly prerelease)
+	// Output format: "vib/X.Y.Z" (stable) or "vib/X.Y.Z-nightly.<ts>.<run>.g<sha>" (nightly prerelease)
 	const match = output.trim().match(/\/(\d+\.\d+\.\d+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?)/);
 	return match?.[1];
 }
@@ -463,11 +463,11 @@ export function parseReportedVersionForTest(output: string): string | undefined 
 }
 
 /**
- * Run the resolved gjc binary and check if it reports the expected version.
+ * Run the resolved vib binary and check if it reports the expected version.
  */
 async function verifyInstalledVersion(
 	expectedVersion: string,
-	runtimePath: string | undefined = resolveGjcPath(),
+	runtimePath: string | undefined = resolveVibPath(),
 ): Promise<InstalledVersionVerification> {
 	if (!runtimePath) return { ok: false };
 	try {
@@ -484,7 +484,7 @@ async function verifyInstalledRuntime(
 	expectedVersion: string,
 	runtimePath?: string,
 ): Promise<InstalledVersionVerification> {
-	const versionResult = await verifyInstalledVersion(expectedVersion, runtimePath ?? resolveGjcPath());
+	const versionResult = await verifyInstalledVersion(expectedVersion, runtimePath ?? resolveVibPath());
 	if (!versionResult.ok || !versionResult.path) {
 		return versionResult;
 	}
@@ -780,7 +780,7 @@ export async function replaceBinaryForUpdate(options: BinaryReplacementOptions):
 			const dest = await fs.promises.lstat(options.targetPath);
 			if (dest.isSymbolicLink()) {
 				throw new Error(
-					`Refusing to replace symlink ${options.targetPath} with a regular binary. Set GJC_INSTALL_DIR to a real directory.`,
+					`Refusing to replace symlink ${options.targetPath} with a regular binary. Set VIB_INSTALL_DIR to a real directory.`,
 				);
 			}
 		} catch (err) {
@@ -809,7 +809,7 @@ export async function replaceBinaryForUpdate(options: BinaryReplacementOptions):
 					await fs.promises.copyFile(options.tempPath, nextPath);
 					stagedNext = true;
 					throw new Error(
-						`Running Windows image ${options.targetPath} could not be replaced in-process (${err}). Staged ${nextPath}. Close running gjc.exe and re-run gjc update.`,
+						`Running Windows image ${options.targetPath} could not be replaced in-process (${err}). Staged ${nextPath}. Close running vib.exe and re-run vib update.`,
 					);
 				}
 			}
@@ -907,7 +907,7 @@ async function updateViaPackageManager(options: PackageManagerUpdateOptions): Pr
  *
  * Critical on network filesystems (e.g. NFS home directories): `pipeline`
  * resolving does not guarantee the downloaded bytes are durable on the
- * server, so the post-install `gjc --version` check can exec a binary whose
+ * server, so the post-install `vib --version` check can exec a binary whose
  * pages are not yet consistent. The child then faults, the version check
  * fails, and the update is rolled back with "could not verify updated
  * version" even though the download itself succeeded. Explicitly fsyncing
@@ -1029,7 +1029,7 @@ export async function runBinaryUpdateFlow(
 }
 
 async function acquireBinaryUpdateLock(targetPath: string): Promise<() => Promise<void>> {
-	const lockFile = path.join(path.dirname(targetPath), ".gjc-install.lock");
+	const lockFile = path.join(path.dirname(targetPath), ".vib-install.lock");
 	const nonce = `${process.pid}.${Date.now().toString(16)}.${Math.random().toString(16).slice(2)}`;
 	const claim = `${process.pid} ${nonce}\n`;
 	const publish = async (): Promise<void> => {
@@ -1500,14 +1500,14 @@ export async function runUpdateCommand(
 /**
  * Refresh opted-in on-disk default workflow skill copies after a successful
  * update. The four default skills ship embedded in the binary, so most users
- * need nothing here. But users who ran `gjc setup defaults` have on-disk copies
+ * need nothing here. But users who ran `vib setup defaults` have on-disk copies
  * under the agent dir that shadow the embedded defaults; those would otherwise
  * go stale after an update. Only rewrite files that already exist and differ —
  * never materialize new copies for users who never opted in.
  */
 async function refreshInstalledDefaultSkills(): Promise<void> {
 	try {
-		const result = await installDefaultGjcDefinitions({ refreshOnly: true });
+		const result = await installDefaultVibDefinitions({ refreshOnly: true });
 		if (result.written > 0) {
 			console.log(
 				chalk.dim(`Refreshed ${result.written} local default workflow skill file(s) at ${result.targetRoot}`),
@@ -1533,7 +1533,7 @@ ${chalk.bold("Options:")}
   --channel <stable|nightly>  Release channel to update from (default: stable or startup.updateChannel setting)
 
 ${chalk.bold("After a verified update:")}
-  When a complete managed notification provider is configured, GJC serially stops the daemon with --force, restarts it, then runs notify recovery. Globally disabled delivery still receives this lock recovery.
+  When a complete managed notification provider is configured, Vibrato serially stops the daemon with --force, restarts it, then runs notify recovery. Globally disabled delivery still receives this lock recovery.
 
 ${chalk.bold("Examples:")}
   ${APP_NAME} update                    Update to latest version

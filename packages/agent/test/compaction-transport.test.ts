@@ -17,10 +17,10 @@ import {
 	generateBranchSummary,
 	generateHandoff,
 	generateSummary,
-} from "@gajae-code/agent-core/compaction";
-import type { AgentMessage } from "@gajae-code/agent-core/types";
-import type { AssistantMessage, Model, ProviderSessionState, SimpleStreamOptions, Usage } from "@gajae-code/ai";
-import * as ai from "@gajae-code/ai";
+} from "@vib-rato/agent-core/compaction";
+import type { AgentMessage } from "@vib-rato/agent-core/types";
+import type { AssistantMessage, Model, ProviderSessionState, SimpleStreamOptions, Usage } from "@vib-rato/ai";
+import * as ai from "@vib-rato/ai";
 
 const MODEL: Model = {
 	id: "mock-model",

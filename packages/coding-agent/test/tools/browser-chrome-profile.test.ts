@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { Process, ProcessStatus } from "@gajae-code/natives";
+import { Process, ProcessStatus } from "@vib-rato/natives";
 import type { Browser } from "puppeteer-core";
 import type { ToolSession } from "../../src/sdk";
 import {
@@ -344,7 +344,7 @@ describe("Chrome profile browser mode (#809)", () => {
 		const resolution = resolveBrowserKindForTest(
 			{
 				action: "open",
-				app: { browser: "chrome", path: "/usr/bin/google-chrome", user_data_dir: "/tmp/gjc-chrome" },
+				app: { browser: "chrome", path: "/usr/bin/google-chrome", user_data_dir: "/tmp/vib-chrome" },
 			},
 			makeSession("/work"),
 			controller.signal,
@@ -441,10 +441,10 @@ describe("Chrome profile browser mode (#809)", () => {
 		for (const exe of ["/usr/bin/google-chrome-beta", "/usr/bin/chromium"]) {
 			expect(
 				await resolveBrowserKindForTest(
-					{ action: "open", app: { browser: "chrome", path: exe, user_data_dir: "/tmp/gjc-chrome" } },
+					{ action: "open", app: { browser: "chrome", path: exe, user_data_dir: "/tmp/vib-chrome" } },
 					makeSession("/work"),
 				),
-			).toMatchObject({ path: exe, userDataDir: "/tmp/gjc-chrome", profileDirectory: "Default" });
+			).toMatchObject({ path: exe, userDataDir: "/tmp/vib-chrome", profileDirectory: "Default" });
 		}
 	});
 
@@ -485,7 +485,7 @@ describe("Chrome profile browser mode (#809)", () => {
 						status: () => ProcessStatus.Running,
 						args: () => [
 							"/opt/google/chrome/chrome",
-							"--user-data-dir=/tmp/gjc-chrome",
+							"--user-data-dir=/tmp/vib-chrome",
 							"--profile-directory=Default",
 							"--remote-debugging-port=9222",
 							"--remote-debugging-address=127.0.0.1",
@@ -498,7 +498,7 @@ describe("Chrome profile browser mode (#809)", () => {
 		await expect(
 			findRunningChromeProfileForTest(
 				"/usr/bin/google-chrome",
-				{ userDataDir: "/tmp/gjc-chrome", profileDirectory: "Default" },
+				{ userDataDir: "/tmp/vib-chrome", profileDirectory: "Default" },
 				{
 					platform: "linux",
 					linuxPids: [321],
@@ -515,7 +515,7 @@ describe("Chrome profile browser mode (#809)", () => {
 			status: () => ProcessStatus.Running,
 			args: () => [
 				"/opt/google/chrome/chrome",
-				"--user-data-dir=/tmp/gjc-chrome",
+				"--user-data-dir=/tmp/vib-chrome",
 				"--profile-directory=Default",
 				"--remote-debugging-port=9222",
 			],
@@ -525,7 +525,7 @@ describe("Chrome profile browser mode (#809)", () => {
 		await expect(
 			findRunningChromeProfileForTest(
 				"/snap/bin/chromium",
-				{ userDataDir: "/tmp/gjc-chrome", profileDirectory: "Default" },
+				{ userDataDir: "/tmp/vib-chrome", profileDirectory: "Default" },
 				{
 					platform: "linux",
 					linuxPids: [654],
@@ -545,7 +545,7 @@ describe("Chrome profile browser mode (#809)", () => {
 		await expect(
 			findRunningChromeProfileForTest(
 				"/snap/bin/chromium",
-				{ userDataDir: "/tmp/gjc-chrome", profileDirectory: "Default" },
+				{ userDataDir: "/tmp/vib-chrome", profileDirectory: "Default" },
 				{ platform: "linux", linuxPids: [321], signal: controller.signal },
 			),
 		).rejects.toThrow(/aborted/i);
@@ -666,7 +666,7 @@ describe("Chrome profile browser mode (#809)", () => {
 	});
 
 	it("refuses a locked Chrome user data directory without killing or spawning", async () => {
-		const userDataDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-chrome-profile-"));
+		const userDataDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-chrome-profile-"));
 		await Bun.write(path.join(userDataDir, "SingletonLock"), "");
 		vi.spyOn(attach, "findRunningChromeProfile").mockResolvedValue(null);
 		const killSpy = vi.spyOn(attach, "gracefulKillTreeOnce").mockResolvedValue(undefined);
@@ -695,7 +695,7 @@ describe("Chrome profile browser mode (#809)", () => {
 		expect(killSpy).not.toHaveBeenCalled();
 	});
 
-	it("kills only a GJC-launched profile browser on cleanup", async () => {
+	it("kills only a Vibrato-launched profile browser on cleanup", async () => {
 		const browser = fakeConnectedBrowser();
 		const handle: BrowserHandle = {
 			key: "chrome-profile:test",

@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 import { SdkClientError } from "../client/client";
 import { type SessionAttachment, SessionRouterError } from "../router";
 import type { ChatDeliveryError } from "./chat-daemon-runtime";
@@ -1510,7 +1510,7 @@ export class DiscordNotificationDaemon {
 		sessionId: string,
 		endpointGeneration: number,
 		nonce: string,
-		name = "GJC session",
+		name = "Vibrato session",
 		attachmentAuthorityId?: string,
 	): Promise<DiscordConversation> {
 		const intentKey = this.#intentKey(sessionId);
@@ -2628,7 +2628,7 @@ export class DiscordNotificationDaemon {
 }
 
 function decodeCustomId(value: string): { generation: number; actionId: string; actionNonce: string } | undefined {
-	const match = /^gjc:(\d+):([^:]+):([0-9a-f-]{36})$/.exec(value);
+	const match = /^vib:(\d+):([^:]+):([0-9a-f-]{36})$/.exec(value);
 	if (!match) return undefined;
 	const generation = Number(match[1]);
 	return Number.isSafeInteger(generation) && generation >= 0
@@ -2662,7 +2662,7 @@ function actionComponents(
 			components: [
 				{
 					type: 3,
-					customId: `gjc:${generation}:${actionId}:${actionNonce}`,
+					customId: `vib:${generation}:${actionId}:${actionNonce}`,
 					placeholder: "Choose an option",
 					minValues: 1,
 					maxValues: 1,
@@ -2687,5 +2687,5 @@ function componentAnswer(value: string | number): string | number {
 function discordEffectNonce(effectId: string): string {
 	// Discord nonces are bounded; hash the durable effect identifier rather than
 	// truncating its potentially shared prefix.
-	return `gjc-${createHash("sha256").update(effectId).digest("hex").slice(0, 21)}`;
+	return `vib-${createHash("sha256").update(effectId).digest("hex").slice(0, 21)}`;
 }

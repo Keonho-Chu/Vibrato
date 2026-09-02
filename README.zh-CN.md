@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <img src="assets/hero.png" alt="Gajae-Code 自主编码代理主视觉插图" width="100%" />
+  <img src="assets/hero.png" alt="Vibrato 自主编码代理主视觉插图" width="100%" />
 </p>
 
 <h1 align="center">G A J A E - C O D E</h1>
@@ -15,40 +15,40 @@
 </p>
 
 <p align="center">
-  <a href="https://gajae-code.com"><img alt="Website" src="https://img.shields.io/badge/website-gajae--code.com-ff4d4f?style=flat-square"></a>
-  <a href="https://www.npmjs.com/package/gajae-code"><img alt="npm package" src="https://img.shields.io/npm/v/gajae-code?style=flat-square"></a>
+  <a href="https://vib-rato.com"><img alt="Website" src="https://img.shields.io/badge/website-vibrato--code.com-ff4d4f?style=flat-square"></a>
+  <a href="https://www.npmjs.com/package/vib-rato"><img alt="npm package" src="https://img.shields.io/npm/v/vib-rato?style=flat-square"></a>
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-green?style=flat-square"></a>
   <a href="https://discord.gg/wSyUQYfhAw"><img alt="Discord" src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white"></a>
 </p>
 
 <p align="center">
   <a href="#快速开始">快速开始</a> ·
-  <a href="#为什么选-gajae-code">为什么</a> ·
+  <a href="#为什么选-vib-rato">为什么</a> ·
   <a href="#带上你的编程订阅">编程订阅</a> ·
   <a href="#用手机回复">手机</a> ·
   <a href="#先计划后修改">工作流</a> ·
   <a href="#花更少的-token">Token 瘦身</a> ·
-  <a href="#让-openclaw--hermes-驱动-gjc">控制器</a> ·
+  <a href="#让-openclaw--hermes-驱动-vib">控制器</a> ·
   <a href="#文档">文档</a>
 </p>
 
 **用你已有的订阅登录，在任何文件被修改之前先计划，带着证据执行 — 代理的提问在终端、手机或你自己的 bot 上随时回复。**
 
-Gajae-Code（`gjc`）是一个外置编码代理 harness：丢进任意仓库或 worktree 就能跑。没有额外 API 计费。没有按 token 的焦虑。不用守在终端前。
+Vibrato（`vib`）是一个外置编码代理 harness：丢进任意仓库或 worktree 就能跑。没有额外 API 计费。没有按 token 的焦虑。不用守在终端前。
 
-> Gajae-Code 是实验性的 beta 阶段项目。可能存在粗糙之处，重要工作请先验证输出再依赖。
+> Vibrato 是实验性的 beta 阶段项目。可能存在粗糙之处，重要工作请先验证输出再依赖。
 >
 > 本文档是英文 [README.md](README.md) 的译本。若内容有出入，以英文版为准（SSOT）。
 
 ---
 
-## 为什么选 Gajae-Code？
+## 为什么选 Vibrato？
 
 大多数编码代理在三个地方翻车：向你收两次钱、没搞懂就改代码、你一离开键盘就沉默。
 
-| 问题 | 后果 | Gajae-Code 的解法 |
+| 问题 | 后果 | Vibrato 的解法 |
 | :--- | :--- | :--- |
-| 额外 API 计费 | 订阅费*加上*按 token 的 API 费用 | 用你已在付费的编程订阅 `/login` — Claude、Codex、Cursor、Copilot、OpenCode Go、GOAT、ClinePass 等 |
+| 额外 API 计费 | 订阅费*加上*按 token 的 API 费用 | 用你已在付费的编程订阅（Claude 或 Codex）`/login` — 或指向自托管的 vLLM/SGLang 端点,完全没有按 token 计费 |
 | 上来就改代码的代理 | 没理解就动手，你来返工 | 计划门控工作流：访谈 → 计划 → 评审 → *然后才*修改，带审批门 |
 | 绑死终端的会话 | 凌晨两点代理提问，工作停到早上 | 提问路由到 Telegram/Discord/Slack，随时随地回复 |
 | 上下文膨胀 | 整文件读取和日志洪水烧掉窗口 | 结构化摘要、artifact 溢出、缓存感知路由、压缩 |
@@ -60,9 +60,9 @@ Gajae-Code（`gjc`）是一个外置编码代理 harness：丢进任意仓库或
 **安装** — 提供 Linux（x64/arm64）、macOS（arm64/x64）、Windows（x64）预编译二进制。不需要 Bun：
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/Yeachan-Heo/gajae-code/v0.15.3/scripts/install.sh -o gjc-install.sh
-sh gjc-install.sh
-gjc
+curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.15.3/scripts/install.sh -o vib-install.sh
+sh vib-install.sh
+vib
 ```
 
 从 `main` 管道执行会运行可变安装脚本。仅在需要最新安装器时使用。
@@ -70,8 +70,8 @@ gjc
 Windows（PowerShell，固定标签）：
 
 ```powershell
-Invoke-WebRequest -UseBasicParsing https://raw.githubusercontent.com/Yeachan-Heo/gajae-code/v0.15.3/scripts/install.ps1 -OutFile gjc-install.ps1
-powershell -File gjc-install.ps1
+Invoke-WebRequest -UseBasicParsing https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.15.3/scripts/install.ps1 -OutFile vib-install.ps1
+powershell -File vib-install.ps1
 ```
 
 **首次使用** — 选好订阅就出发：
@@ -80,62 +80,52 @@ powershell -File gjc-install.ps1
 /login                       选择提供商 / 编程订阅
 /skill:deep-interview        澄清模糊需求
 /skill:ralplan               制定并评审计划
-gjc ultragoal create-goals --brief-file <已批准的计划>
+vib ultragoal create-goals --brief-file <已批准的计划>
 ```
 
 **运行模式：**
 
 ```sh
-gjc                                # 在当前 checkout 中运行
-gjc --tmux                         # tmux 领导会话
-gjc --tmux --worktree my-task      # 高风险工作用隔离 worktree
-gjc @screenshot.png "该改什么？"      # 图片输入
+vib                                # 在当前 checkout 中运行
+vib --tmux                         # tmux 领导会话
+vib --tmux --worktree my-task      # 高风险工作用隔离 worktree
+vib @screenshot.png "该改什么？"      # 图片输入
 ```
 
-Nightly 渠道：`sh gjc-install.sh --channel nightly`（使用上面下载的 tagged 安装器）。完整安装矩阵、Windows 设置、更新渠道与 shell 补全：[docs/install.md](docs/install.md)。Bun 仅用于从源码构建。
+Nightly 渠道：`sh vib-install.sh --channel nightly`（使用上面下载的 tagged 安装器）。完整安装矩阵、Windows 设置、更新渠道与 shell 补全：[docs/install.md](docs/install.md)。Bun 仅用于从源码构建。
 
 ---
 
 ## 带上你的编程订阅
 
 <p align="center">
-  <img src="assets/coding-plans-banner.png" alt="GJC 支持的编程订阅与提供商：Claude、ChatGPT/Codex、Cursor、GitHub Copilot、OpenCode Go、Kimi、GLM/Z.AI、MiniMax、Grok、Qwen、Command Code GOAT、ClinePass" width="100%" />
+  <img src="assets/coding-plans-banner.png" alt="Vibrato 支持的提供商：Claude、ChatGPT/Codex，以及自托管的 vLLM/SGLang 端点" width="100%" />
 </p>
 
-登录一次，GJC 就跑在你已经付费的订阅上。在会话内运行 `/login` 并选择你的订阅：
+Vibrato 只暴露四个可选提供商：Claude、OpenAI Codex、vLLM、SGLang。登录一次，Vibrato 就跑在你已经付费的订阅上。两个基于 OAuth 的订阅在会话内运行 `/login`：
 
 | 订阅 / 计划 | OAuth 登录 |
 | :--- | :--- |
 | Claude Pro / Max | `anthropic` |
 | ChatGPT Plus / Pro（Codex） | `openai-codex`（浏览器）· `openai-codex-device`（无头） |
-| Cursor | `cursor` |
-| GitHub Copilot | `github-copilot` |
-| OpenCode Zen / OpenCode Go | `opencode-zen` · `opencode-go` |
-| Kimi Code / Coding Plan / Moonshot | `kimi-code` · `moonshot` |
-| Z.AI GLM Coding Plan | `zai` |
-| MiniMax Coding Plan（国际 / 国内） | `minimax-code` · `minimax-code-cn` |
-| xAI（Grok） | `xai` |
-| 阿里 Token Plan / Qwen Portal | `alibaba-token-plan` · `qwen-portal` |
 
-更多 OAuth 订阅 — Google Gemini CLI、GitLab Duo、Perplexity Pro/Max、Fire Pass、小米 Token Plan — 见 [docs/models.md](docs/models.md)。
+### 用 vLLM 快速开始
 
-### 新增：编程订阅预设
+vLLM 和 SGLang 是自托管的 OpenAI 兼容运行时 — 不需要订阅，也不需要 OAuth，API key 是可选的（未鉴权的本地服务器留空即可）。首次交互式启动且没有可用提供商时，Vibrato 会自动打开提供商引导菜单；第一项 **Connect a vLLM endpoint** 只会询问服务器 URL（默认 `http://127.0.0.1:8000/v1`）和 API key（未鉴权的本地 vLLM 留空即可），随后直接从服务器发现模型。第二项对 SGLang（`http://127.0.0.1:30000/v1`）做同样的事。同一个菜单随时可以用 `/provider` 打开。
 
-基于 API key 的编程订阅一条命令即可接入 — 预设会一并写入 API 类型、base URL、环境变量、兼容性标志和**实时模型目录**，新模型无需升级 GJC 就能出现：
+对应的 CLI 命令：
 
 ```sh
-gjc setup provider --preset commandcode-goat   # Command Code GOAT 订阅（CMD_API_KEY）
-gjc setup provider --preset cline-pass         # ClinePass（CLINE_API_KEY）
+vib setup provider --preset vllm --base-url http://HOST:8000/v1     # 密钥来自 VLLM_API_KEY（如有）
+vib setup provider --preset sglang --base-url http://HOST:30000/v1  # 密钥来自 SGLANG_API_KEY（如有）
 ```
 
-- **Command Code GOAT** — 拉取提供商实时 `/models` 目录；`claude-*` 模型走原生 Anthropic Messages，其余走 Chat Completions。别名：`commandcode`、`goat`。
-- **ClinePass** — 不硬编码模型；GJC 按 Cline 自己生成目录的方式抓取其实时目录。别名：`clinepass`、`cline`。
-- 其他可用预设：`minimax`、`minimax-cn`、`glm`、`alibaba-token-plan` — 或在 TUI 中使用 `/provider add --preset <name>`。
+纯 `http://` 的 base URL 仅对 localhost、loopback 和私网主机（`10/8`、`172.16/12`、`192.168/16`、link-local、`.local`/`.internal`/`.lan` 名称，以及裸 LAN 主机名）放行；公网主机仍需 `https://`。
 
 <details>
-<summary><strong>编程订阅之外：50+ 提供商、网关、本地运行时</strong></summary>
+<summary><strong>默认四个之外：自定义端点与高级路由</strong></summary>
 
-API key 提供商、本地运行时（Ollama、LM Studio、vLLM）与网关（Cloudflare AI Gateway、Vercel AI Gateway、LiteLLM 等）全部可用。在 `models.yml` 注册自有端点，按用量在每个提供商的多账户间路由，用模型预设/配置按代理角色混搭厂商，或用 auth broker/gateway 集中管理团队凭据。
+其他内置提供商（OpenAI API、Google、Bedrock、OpenRouter、xAI、Mistral、MiniMax、GLM、Kimi、Cursor、Copilot、OpenCode Go、Ollama/LM Studio 等本地运行时等等）会从 `/login`、`/model` 和预设选择器中隐藏，但对应的传输层依然内置。在 `models.yml` 里用自定义 id 注册端点——包括复用某个被隐藏提供商 API 形态的情况——它依然完全可选，可按用量在每个提供商的多账户间池化路由，也可以用模型预设/配置按代理角色混搭厂商。团队凭据依然可以用 auth broker/gateway 集中管理。
 
 - [模型、提供商与认证解析](docs/models.md)
 - [自定义提供商与多账户路由](docs/custom-providers-and-multi-account.md)
@@ -149,14 +139,14 @@ API key 提供商、本地运行时（Ollama、LM Studio、vLLM）与网关（Cl
 ## 用手机回复
 
 <p align="center">
-  <img src="assets/telegram-mobile-hero.png" alt="Gajae Code 移动端回复主视觉插图" width="100%" />
+  <img src="assets/telegram-mobile-hero.png" alt="Vibrato 移动端回复主视觉插图" width="100%" />
 </p>
 
 代理需要决策时会 ping 你的 Telegram — 你在任何地方都能回复：
 
 - **仅限协调器/生命周期会话的论坛话题**：实时/最终输出、上下文更新、图片附件、内联按钮、自由文本回复、输入中指示。
-- **一次配置**：在运行中会话的 `/settings` → Notifications，或无头方式 `gjc notify setup|status|health|test|recovery`。令牌输入即打码，之后永不显示。
-- **`gjc daemon`** 为每个 bot 令牌维持唯一的安全 long-poll 所有者，新会话干净接入，不会触发 Telegram 409 冲突。
+- **一次配置**：在运行中会话的 `/settings` → Notifications，或无头方式 `vib notify setup|status|health|test|recovery`。令牌输入即打码，之后永不显示。
+- **`vib daemon`** 为每个 bot 令牌维持唯一的安全 long-poll 所有者，新会话干净接入，不会触发 Telegram 409 冲突。
 - Discord 与 Slack 投递同步提供；通用 `action_needed`/`reply` 协议让任何 bot 或移动应用都能把回答路由回来，无需抓取终端。
 
 [Telegram 上手](docs/telegram-onboarding.md) · [Discord](docs/discord-onboarding.md) · [Slack](docs/slack-onboarding.md)
@@ -186,7 +176,7 @@ deep-interview -> ralplan -> ultragoal
 
 ## 花更少的 token
 
-GJC 同时优化 token 账单的两端：
+Vibrato 同时优化 token 账单的两端：
 
 - **缓存命中** — 按提供商的 `cacheRetention` 控制；Anthropic 默认长效（1 小时）缓存，因为短缓存对长代理运行太脆弱；提供商排序优先廉价的 `cacheRead` 路径；可选的 session-affinity 头让 OpenAI 兼容中继复用服务端提示缓存。
 - **上下文节省** — 文件读取返回结构化摘要而非整个文件；超大 shell 输出被最小化并溢出为可取回的 `artifact://` 引用，不冲垮上下文；压缩与分支摘要让长会话留在窗口内且不丢先前工作。
@@ -195,9 +185,9 @@ GJC 同时优化 token 账单的两端：
 
 ---
 
-## 让 OpenClaw / Hermes 驱动 GJC
+## 让 OpenClaw / Hermes 驱动 Vibrato
 
-GJC 内置原生 Coordinator MCP 桥，OpenClaw 或 Hermes 等外部控制器通过持久 turn 编排真实的 GJC 会话 — 绝不抓取终端。
+Vibrato 内置原生 Coordinator MCP 桥，OpenClaw 或 Hermes 等外部控制器通过持久 turn 编排真实的 Vibrato 会话 — 绝不抓取终端。
 
 不用读指南 — 把这段提示词粘贴进你的 OpenClaw/Hermes 控制器，它会自己接好线：
 
@@ -205,43 +195,43 @@ GJC 内置原生 Coordinator MCP 桥，OpenClaw 或 Hermes 等外部控制器通
 <summary><strong>复制粘贴的控制器配置提示词</strong></summary>
 
 ```text
-Set up Gajae-Code (gjc) as your coding-agent backend on this machine. gjc is already installed.
+Set up Vibrato (vib) as your coding-agent backend on this machine. vib is already installed.
 
 1. Render and install the coordinator MCP setup package (replace the paths):
-   gjc setup hermes --root <ABS_REPO_PATH> --profile <PROFILE_NAME> --repo <REPO_NAME> \
+   vib setup hermes --root <ABS_REPO_PATH> --profile <PROFILE_NAME> --repo <REPO_NAME> \
      --mutation sessions,questions,reports --profile-dir <YOUR_PROFILE_DIR> --install
    Without --install the command is render-only; re-run with --install to write files.
 
 2. Verify the contract (non-mutating, no LLM call). Both must report ok:
-   gjc setup hermes --root <ABS_REPO_PATH> --smoke
-   gjc mcp-serve coordinator --check --json
+   vib setup hermes --root <ABS_REPO_PATH> --smoke
+   vib mcp-serve coordinator --check --json
 
 3. Register the MCP server from the installed config. It is equivalent to:
-   command: gjc, args: ["mcp-serve", "coordinator"]
-   env: GJC_COORDINATOR_MCP_WORKDIR_ROOTS=<ABS_REPO_PATH>,
-        GJC_COORDINATOR_MCP_PROFILE=<PROFILE_NAME>,
-        GJC_COORDINATOR_MCP_REPO=<REPO_NAME>,
-        GJC_COORDINATOR_MCP_SESSION_COMMAND="gjc --worktree",
-        GJC_COORDINATOR_MCP_MUTATIONS=sessions,questions,reports
+   command: vib, args: ["mcp-serve", "coordinator"]
+   env: VIB_COORDINATOR_MCP_WORKDIR_ROOTS=<ABS_REPO_PATH>,
+        VIB_COORDINATOR_MCP_PROFILE=<PROFILE_NAME>,
+        VIB_COORDINATOR_MCP_REPO=<REPO_NAME>,
+        VIB_COORDINATOR_MCP_SESSION_COMMAND="vib --worktree",
+        VIB_COORDINATOR_MCP_MUTATIONS=sessions,questions,reports
 
 4. To delegate coding work, prefer one call per workflow:
-   gjc_delegate_plan / gjc_delegate_execute
+   vib_delegate_plan / vib_delegate_execute
    with { cwd, task, allow_mutation: true, idempotency_key: <fresh-uuid> }.
    Each starts an isolated worktree session and returns a durable turn_id and artifacts.
 
-5. For finer control: gjc_coordinator_start_session -> gjc_coordinator_send_prompt ->
-   poll gjc_coordinator_read_turn or bounded gjc_coordinator_await_turn ->
-   answer gjc_coordinator_list_questions rows via gjc_coordinator_submit_question_answer ->
-   close with gjc_coordinator_report_status.
+5. For finer control: vib_coordinator_start_session -> vib_coordinator_send_prompt ->
+   poll vib_coordinator_read_turn or bounded vib_coordinator_await_turn ->
+   answer vib_coordinator_list_questions rows via vib_coordinator_submit_question_answer ->
+   close with vib_coordinator_report_status.
 
 Rules: every mutating call needs allow_mutation: true plus a fresh idempotency_key.
 Treat durable turn state as authoritative; never scrape terminal output.
-The session command selector accepts only "gjc" or "gjc --worktree [name]".
+The session command selector accepts only "vib" or "vib --worktree [name]".
 ```
 
 </details>
 
-若控制器要直接驱动单个在线会话，每个会话还暴露回环 **SDK WebSocket** 端点、`gjc sdk session` CLI（`list|inspect|send|status|tail`）以及内置 `sdk-skills/`（`gjc-sdk-discover` · `gjc-sdk-operate` · `gjc-sdk-author`）— 任何控制器托管的代理都能遵循的、经过审阅且带审批门的流程。
+若控制器要直接驱动单个在线会话，每个会话还暴露回环 **SDK WebSocket** 端点、`vib sdk session` CLI（`list|inspect|send|status|tail`）以及内置 `sdk-skills/`（`vib-sdk-discover` · `vib-sdk-operate` · `vib-sdk-author`）— 任何控制器托管的代理都能遵循的、经过审阅且带审批门的流程。
 
 - [外部控制器集成指南](docs/bot-integration.md) · [Coordinator MCP 桥](docs/hermes-mcp-bridge.md)
 - [外部控制器 / 机器人](docs/bot-integration.md) — 提供商无关冒烟测试；[`docs/aside-integration.md`](docs/aside-integration.md) 涵盖可选的搜索/上下文边车和 `/aside` 编辑器命令
@@ -251,7 +241,7 @@ The session command selector accepts only "gjc" or "gjc --worktree [name]".
 
 ## 文档
 
-从 **[gajae-code.com](https://gajae-code.com)** 或 `docs/` 开始：
+从 **[vib-rato.com](https://vib-rato.com)** 或 `docs/` 开始：
 
 - [安装与更新](docs/install.md) · [环境变量](docs/environment-variables.md) · [快捷键](docs/keybindings.md) · [主题](docs/theme.md)
 - [模型与提供商](docs/models.md) · [自定义提供商与多账户路由](docs/custom-providers-and-multi-account.md) · [多厂商配置](docs/multi-vendor-profiles.md) · [Auth broker](docs/auth-broker-gateway.md)
@@ -260,20 +250,20 @@ The session command selector accepts only "gjc" or "gjc --worktree [name]".
 - [代码库概览](docs/codebase-overview.md) · [贡献 / 开发环境](CONTRIBUTING.md)
 - [macOS Option/Alt 键设置（iTerm2）](docs/macos-option-key.md) · [GEO 可见性基准](docs/geobench.md)
 
-默认深色 TUI 标识是 GJC red-claw 主题；浅色外观终端默认使用内置 blue-crab 主题。换主题或自建主题见[主题](docs/theme.md)。
+默认深色 TUI 标识是应用 LIG System 企业识别（CI）的 lig-blue 主题；浅色外观终端默认使用内置 lig-white 主题。换主题或自建主题见[主题](docs/theme.md)。
 
 ## SDK 扩展
 
-- [gjc-remote](https://github.com/kogangdon/gjc-remote) — 从 Discord 控制远程主机上白名单内的 GJC 会话。
-- [oh-my-gajae-code](https://github.com/devswha/oh-my-gajae-code) — 提供额外技能与斜杠命令的社区插件市场。
-- [GJC 多厂商配置指南](https://github.com/project820/gjc-multivendor-setup-guide) — 面向多厂商配置的角色化提供商方案。
+- [vib-remote](https://github.com/kogangdon/vib-remote) — 从 Discord 控制远程主机上白名单内的 Vibrato 会话。
+- [oh-my-vib-rato](https://github.com/devswha/oh-my-vib-rato) — 提供额外技能与斜杠命令的社区插件市场。
+- [Vibrato 多厂商配置指南](https://github.com/project820/vib-multivendor-setup-guide) — 面向多厂商配置的角色化提供商方案。写作时间早于当前的四提供商许可名单；Claude/Codex/vLLM/SGLang 之外的角色需要用相应的自定义 `models.yml` 条目自行还原。
 
 ## 开发
 
 ```sh
 bun install
 bun run build:native
-bun run dev:link       # 全局 `gjc` 运行本 checkout 的源码
+bun run dev:link       # 全局 `vib` 运行本 checkout 的源码
 bun run dev:doctor     # 验证链接
 ```
 
@@ -281,7 +271,7 @@ bun run dev:doctor     # 验证链接
 
 ## 贡献者与谱系
 
-感谢 [Yeachan-Heo](https://github.com/Yeachan-Heo)、[IYENTeam](https://github.com/IYENTeam)、[HaD0Yun](https://github.com/HaD0Yun) 和 [probepark](https://github.com/probepark)。GJC 建立在一小族代理 harness 的经验之上；历史归属见 [NOTICE.md](NOTICE.md)。
+感谢 [Yeachan-Heo](https://github.com/Yeachan-Heo)、[IYENTeam](https://github.com/IYENTeam)、[HaD0Yun](https://github.com/HaD0Yun) 和 [probepark](https://github.com/probepark)。Vibrato 建立在一小族代理 harness 的经验之上；历史归属见 [NOTICE.md](NOTICE.md)。
 
 ## 许可证
 

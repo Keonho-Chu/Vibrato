@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/Yeachan-Heo/gajae-code/main/packages/coding-agent/src/config/mcp-schema.json",
-  "title": "GJC MCP configuration",
-  "description": "Schema for stored MCP server definitions in mcp.json, .mcp.json, .gjc/mcp.json, and ~/.gjc/agent/mcp.json. Ordinary standalone gjc sessions consume enabled registrations at startup (conventional autoload); --no-mcp opts a session out.",
+  "$id": "https://raw.githubusercontent.com/Keonho-Chu/Vibrato/main/packages/coding-agent/src/config/mcp-schema.json",
+  "title": "Vibrato MCP configuration",
+  "description": "Schema for stored MCP server definitions in mcp.json, .mcp.json, .vib/mcp.json, and ~/.vib/agent/mcp.json. Ordinary standalone vib sessions consume enabled registrations at startup (conventional autoload); --no-mcp opts a session out.",
   "type": "object",
   "additionalProperties": false,
   "properties": {
@@ -50,7 +50,7 @@
             "oauth",
             "apikey"
           ],
-          "description": "Auth strategy understood by GJC."
+          "description": "Auth strategy understood by Vibrato."
         },
         "credentialId": {
           "type": "string",
@@ -103,7 +103,7 @@
         },
         "autoload": {
           "type": "boolean",
-          "description": "Whether an explicit runtime MCP consumer should connect this server automatically when that consumer starts (default: true). Ordinary standalone gjc, gjc --tmux, and print-mode sessions honor autoload for conventional registrations; false keeps the server configured for on-demand /mcp connection, and --no-mcp opts a session out."
+          "description": "Whether an explicit runtime MCP consumer should connect this server automatically when that consumer starts (default: true). Ordinary standalone vib, vib --tmux, and print-mode sessions honor autoload for conventional registrations; false keeps the server configured for on-demand /mcp connection, and --no-mcp opts a session out."
         },
         "sharing": {
           "type": "string",

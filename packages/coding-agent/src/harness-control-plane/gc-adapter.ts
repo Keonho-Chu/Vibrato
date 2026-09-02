@@ -9,7 +9,7 @@ import {
 	type GcStoreAdapter,
 	gcPidStatusLabel,
 	gcProbeToLeasePidStatus,
-} from "../gjc-runtime/gc-runtime";
+} from "../vib-runtime/gc-runtime";
 import { classifyLeaseStatus, readLease, reapDeadOwnerArtifacts } from "./session-lease";
 import {
 	type HarnessRootRegistryForGc,

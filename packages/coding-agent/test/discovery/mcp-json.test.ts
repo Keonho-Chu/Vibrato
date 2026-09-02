@@ -3,7 +3,7 @@ import type { BigIntStats } from "node:fs";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { loadCapability } from "@gajae-code/coding-agent/discovery";
+import { loadCapability } from "@vib-rato/coding-agent/discovery";
 import { type MCPServer, mcpCapability } from "../../src/capability/mcp";
 import { loadMCPJsonFile } from "../../src/discovery/mcp-json";
 import { loadAllMCPConfigs } from "../../src/runtime-mcp/config";
@@ -27,7 +27,7 @@ function isSymlinkUnavailable(error: unknown): boolean {
 }
 
 async function canCreateFileSymlink(): Promise<boolean> {
-	const probeDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-mcp-symlink-probe-"));
+	const probeDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-mcp-symlink-probe-"));
 	const targetPath = path.join(probeDir, "target.json");
 	const symlinkPath = path.join(probeDir, "link.json");
 	try {
@@ -42,7 +42,7 @@ async function canCreateFileSymlink(): Promise<boolean> {
 	}
 }
 async function canCreateDirectoryLink(): Promise<boolean> {
-	const probeDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-mcp-directory-link-probe-"));
+	const probeDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-mcp-directory-link-probe-"));
 	const targetPath = path.join(probeDir, "target");
 	const linkPath = path.join(probeDir, "link");
 	try {
@@ -64,7 +64,7 @@ function isHardLinkUnavailable(error: unknown): boolean {
 }
 
 async function canCreateHardLink(): Promise<boolean> {
-	const probeDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-mcp-hard-link-probe-"));
+	const probeDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-mcp-hard-link-probe-"));
 	const targetPath = path.join(probeDir, "target.json");
 	const linkPath = path.join(probeDir, "link.json");
 	try {
@@ -155,7 +155,7 @@ describe("standalone mcp.json oauth env expansion", () => {
 	};
 
 	beforeEach(async () => {
-		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-mcp-json-"));
+		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-mcp-json-"));
 		process.env.PI_OAUTH_TOKEN_URL = "https://provider.example/token";
 		process.env.PI_OAUTH_CLIENT_ID = "oauth-client-id";
 		process.env.PI_OAUTH_CLIENT_SECRET = "oauth-client-secret";
@@ -274,7 +274,7 @@ describe("explicit MCP JSON exact-file trust", () => {
 	let tempDir = "";
 
 	beforeEach(async () => {
-		tempDir = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), "gjc-mcp-exact-file-")));
+		tempDir = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), "vib-mcp-exact-file-")));
 	});
 
 	afterEach(async () => {

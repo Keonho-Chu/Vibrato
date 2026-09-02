@@ -1,11 +1,11 @@
 {
-  "bundle": "gjc-sdk-skills",
+  "bundle": "vib-sdk-skills",
   "formatVersion": 1,
   "files": [
-    "gjc-sdk-author/SKILL.md",
-    "gjc-sdk-author/templates/direct-sdk.py",
-    "gjc-sdk-author/templates/direct-sdk.ts",
-    "gjc-sdk-discover/SKILL.md",
-    "gjc-sdk-operate/SKILL.md"
+    "vib-sdk-author/SKILL.md",
+    "vib-sdk-author/templates/direct-sdk.py",
+    "vib-sdk-author/templates/direct-sdk.ts",
+    "vib-sdk-discover/SKILL.md",
+    "vib-sdk-operate/SKILL.md"
   ]
 }

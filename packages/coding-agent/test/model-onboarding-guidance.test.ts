@@ -2,9 +2,9 @@ import { afterEach, describe, expect, it } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { Agent } from "@gajae-code/agent-core";
-import type { Model } from "@gajae-code/ai";
-import { getBundledModel } from "@gajae-code/ai/models";
+import { Agent } from "@vib-rato/agent-core";
+import type { Model } from "@vib-rato/ai";
+import { getBundledModel } from "@vib-rato/ai/models";
 import { Settings } from "../src/config/settings";
 import { createAgentSession } from "../src/sdk";
 import { AgentSession } from "../src/session/agent-session";
@@ -28,7 +28,7 @@ afterEach(async () => {
 });
 
 async function createTempDir(): Promise<string> {
-	const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-model-onboarding-"));
+	const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-model-onboarding-"));
 	tempDirs.push(tempDir);
 	return tempDir;
 }
@@ -52,7 +52,7 @@ function createSessionOptions(agentDir: string, options?: { modelPattern?: strin
 
 function expectProviderOnboardingGuidance(text: string): void {
 	expect(text).toContain("/provider add --compat <openai|anthropic>");
-	expect(text).toContain("gjc setup provider");
+	expect(text).toContain("vib setup provider");
 	expect(text).toContain("/provider login [provider-id]");
 	expect(text).toContain("/login [provider-id]");
 	expect(text).toContain("/model");
@@ -101,7 +101,7 @@ describe("model onboarding guidance", () => {
 		expect(text).toContain("https://opencode.ai/auth");
 		expect(text).toContain("OPENCODE_API_KEY");
 		expect(text).toContain("project .env is intentionally ignored");
-		expect(text).toContain("gjc auth-broker login opencode-go");
+		expect(text).toContain("vib auth-broker login opencode-go");
 	});
 
 	it("updates /model status output with provider setup and login routes", async () => {

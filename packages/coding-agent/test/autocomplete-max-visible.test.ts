@@ -2,9 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { resetSettingsForTest, Settings } from "@gajae-code/coding-agent/config/settings";
-import { SelectorController } from "@gajae-code/coding-agent/modes/controllers/selector-controller";
-import { getProjectAgentDir, Snowflake } from "@gajae-code/utils";
+import { resetSettingsForTest, Settings } from "@vib-rato/coding-agent/config/settings";
+import { SelectorController } from "@vib-rato/coding-agent/modes/controllers/selector-controller";
+import { getProjectAgentDir, Snowflake } from "@vib-rato/utils";
 import { YAML } from "bun";
 
 describe("autocompleteMaxVisible setting", () => {

@@ -2,11 +2,11 @@ import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { DEFAULT_GJC_DEFINITION_NAMES } from "@gajae-code/coding-agent/defaults/gjc-defaults";
-import type { Skill } from "@gajae-code/coding-agent/sdk";
-import { createAgentSession } from "@gajae-code/coding-agent/sdk";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { DEFAULT_VIB_DEFINITION_NAMES } from "@vib-rato/coding-agent/defaults/vib-defaults";
+import type { Skill } from "@vib-rato/coding-agent/sdk";
+import { createAgentSession } from "@vib-rato/coding-agent/sdk";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
 import { safeRmSync } from "../../../scripts/safe-cleanup";
 import { cleanupTempHome } from "./helpers/temp-home-cleanup";
 
@@ -28,17 +28,17 @@ describe("createAgentSession skills option", () => {
 	let originalHome: string | undefined;
 
 	beforeEach(() => {
-		tempDir = path.join(os.tmpdir(), `gjc-sdk-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
-		// Create skill in .gjc/skills/ for native project-level discovery.
-		skillsDir = path.join(tempDir, ".gjc", "skills", "test-skill");
+		tempDir = path.join(os.tmpdir(), `vib-sdk-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+		// Create skill in .vib/skills/ for native project-level discovery.
+		skillsDir = path.join(tempDir, ".vib", "skills", "test-skill");
 		fs.mkdirSync(skillsDir, { recursive: true });
 		originalHome = process.env.HOME;
-		tempHomeDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-home-"));
+		tempHomeDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-home-"));
 		process.env.HOME = tempHomeDir;
-		const nativeUserSkillsDir = path.join(tempHomeDir, ".gjc", "agent", "skills");
+		const nativeUserSkillsDir = path.join(tempHomeDir, ".vib", "agent", "skills");
 		fs.mkdirSync(nativeUserSkillsDir, { recursive: true });
 
-		// Create a test skill in the native GJC skills directory
+		// Create a test skill in the native Vibrato skills directory
 		fs.writeFileSync(
 			path.join(skillsDir, "SKILL.md"),
 			`---
@@ -71,18 +71,18 @@ Loaded via symbolic link.
 
 	afterEach(cleanupTempHome(() => ({ tempDir, tempHomeDir, originalHome })));
 
-	it("loads embedded default GJC workflow skills even when .gjc is absent and arbitrary skill discovery is disabled", async () => {
-		safeRmSync(path.join(tempDir, ".gjc"), { recursive: true, force: true });
+	it("loads embedded default Vibrato workflow skills even when .vib is absent and arbitrary skill discovery is disabled", async () => {
+		safeRmSync(path.join(tempDir, ".vib"), { recursive: true, force: true });
 		const { session } = await createAgentSession({
 			cwd: tempDir,
 			agentDir: tempDir,
 			sessionManager: SessionManager.inMemory(),
 			settings: Settings.isolated({ "skills.enabled": false }),
 		});
-		const expected = [...DEFAULT_GJC_DEFINITION_NAMES].sort();
+		const expected = [...DEFAULT_VIB_DEFINITION_NAMES].sort();
 
 		expect(session.skills.map(skill => skill.name).sort()).toEqual(expected);
-		expect(session.skills.every(skill => skill.filePath.startsWith("embedded:gjc/skills/"))).toBe(true);
+		expect(session.skills.every(skill => skill.filePath.startsWith("embedded:vib/skills/"))).toBe(true);
 	}, 15_000);
 
 	it("should discover skills by default and expose them on session.skills", async () => {
@@ -110,7 +110,7 @@ Loaded via symbolic link.
 	});
 
 	it("should still discover project skills when user skills directory is missing", async () => {
-		const userAgentDir = path.join(tempHomeDir, ".gjc", "agent");
+		const userAgentDir = path.join(tempHomeDir, ".vib", "agent");
 		safeRmSync(path.join(userAgentDir, "skills"), { recursive: true, force: true });
 		fs.writeFileSync(path.join(userAgentDir, "placeholder.txt"), "placeholder");
 
@@ -155,7 +155,7 @@ description: Skill installed into an explicit agent-directory profile.
 		}
 	});
 
-	it("keeps bundled GJC workflow skills even when options.skills is empty", async () => {
+	it("keeps bundled Vibrato workflow skills even when options.skills is empty", async () => {
 		const { session } = await createAgentSession({
 			cwd: tempDir,
 			agentDir: tempDir,
@@ -164,12 +164,12 @@ description: Skill installed into an explicit agent-directory profile.
 			settings: createIsolatedSkillsSettings(),
 		});
 
-		expect(session.skills.map(skill => skill.name).sort()).toEqual([...DEFAULT_GJC_DEFINITION_NAMES].sort());
+		expect(session.skills.map(skill => skill.name).sort()).toEqual([...DEFAULT_VIB_DEFINITION_NAMES].sort());
 		expect(session.skillWarnings).toEqual([]);
 	});
 
 	it("keeps bundled workflow skills authoritative when a disk skill shares their name", async () => {
-		const impostorDir = path.join(tempDir, ".gjc", "skills", "ralplan");
+		const impostorDir = path.join(tempDir, ".vib", "skills", "ralplan");
 		fs.mkdirSync(impostorDir, { recursive: true });
 		fs.writeFileSync(
 			path.join(impostorDir, "SKILL.md"),
@@ -193,10 +193,10 @@ This body must never reach a session.
 
 		const ralplan = session.skills.find(skill => skill.name === "ralplan");
 		expect(ralplan).toBeDefined();
-		expect(ralplan?.filePath.startsWith("embedded:gjc/skills/ralplan")).toBe(true);
+		expect(ralplan?.filePath.startsWith("embedded:vib/skills/ralplan")).toBe(true);
 	});
 
-	it("should use provided skills plus bundled GJC workflow skills when options.skills is explicitly set", async () => {
+	it("should use provided skills plus bundled Vibrato workflow skills when options.skills is explicitly set", async () => {
 		const customSkill: Skill = {
 			name: "custom-skill",
 			description: "A custom skill",
@@ -214,7 +214,7 @@ This body must never reach a session.
 		});
 
 		expect(session.skills).toContainEqual(customSkill);
-		for (const name of DEFAULT_GJC_DEFINITION_NAMES) {
+		for (const name of DEFAULT_VIB_DEFINITION_NAMES) {
 			expect(session.skills.some(skill => skill.name === name)).toBe(true);
 		}
 		expect(session.skillWarnings).toEqual([]);

@@ -1,6 +1,6 @@
 /**
  * Regression test for #1075:
- * discoverAgents() must skip GJC plugin roots when the plugin provider is disabled.
+ * discoverAgents() must skip Vibrato plugin roots when the plugin provider is disabled.
  */
 import { afterEach, beforeEach, describe, expect, test, vi } from "bun:test";
 import * as fs from "node:fs";
@@ -22,7 +22,7 @@ import { discoverAgents } from "../../src/task/discovery";
 const PLUGIN_AGENT_MD = [
 	"---",
 	"name: simplifier",
-	"description: A code simplifier agent from a GJC plugin",
+	"description: A code simplifier agent from a Vibrato plugin",
 	"---",
 	"Simplify code.",
 ].join("\n");
@@ -35,17 +35,17 @@ describe("discoverAgents — claude-plugins disabled provider", () => {
 		resetSettingsForTest();
 		tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "pi-agent-disco-home-"));
 
-		// Build a fake GJC plugin install with an agents/ subdirectory.
+		// Build a fake Vibrato plugin install with an agents/ subdirectory.
 		const pluginInstallPath = path.join(tempHome, "plugin-cache", "code-simplifier");
 		const agentsDir = path.join(pluginInstallPath, "agents");
 		fs.mkdirSync(agentsDir, { recursive: true });
 		fs.writeFileSync(path.join(agentsDir, "simplifier.md"), PLUGIN_AGENT_MD);
 
-		// Register the plugin in the GJC registry so listAnthropic modelPluginRoots picks it up.
-		const gjcPluginsDir = path.join(tempHome, ".gjc", "plugins");
-		fs.mkdirSync(gjcPluginsDir, { recursive: true });
+		// Register the plugin in the Vibrato registry so listAnthropic modelPluginRoots picks it up.
+		const vibPluginsDir = path.join(tempHome, ".vib", "plugins");
+		fs.mkdirSync(vibPluginsDir, { recursive: true });
 		fs.writeFileSync(
-			path.join(gjcPluginsDir, "installed_plugins.json"),
+			path.join(vibPluginsDir, "installed_plugins.json"),
 			JSON.stringify({
 				version: 2,
 				plugins: {

@@ -324,11 +324,11 @@ export function formatLifecycleOutcome(r: SessionLifecycleResponse, verb?: Lifec
 		case "readiness_timeout":
 			return "\u23f3 The session did not become ready in time. It may still be starting \u2014 check /session_recent.";
 		case "close_refused":
-			return "\u26a0\ufe0f Close refused: that session is not GJC-managed or did not match.";
+			return "\u26a0\ufe0f Close refused: that session is not Vibrato-managed or did not match.";
 		case "not_found":
 			return "\u2753 No matching session was found.";
 		case "unsupported_platform":
-			return "Remote session lifecycle is unavailable on this psmux host because GJC cannot prove immutable session identity. No lifecycle action was performed. Use a local GJC terminal with a supported tmux provider.";
+			return "Remote session lifecycle is unavailable on this psmux host because Vibrato cannot prove immutable session identity. No lifecycle action was performed. Use a local Vibrato terminal with a supported tmux provider.";
 		case "terminal_uncertain":
 			if (/in progress/i.test(r.message)) return "\u23f3 That request is already in progress \u2014 hold on.";
 			switch (verb) {

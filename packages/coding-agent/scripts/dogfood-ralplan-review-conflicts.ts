@@ -1,7 +1,7 @@
 /**
  * Product-surface dogfood for #2902 ralplan typed review conflicts.
  *
- * Uses the **compiled** `packages/coding-agent/dist/gjc` binary (not source
+ * Uses the **compiled** `packages/coding-agent/dist/vib` binary (not source
  * `cli.ts`) so evidence matches the owner exact-head compiled-binary gate:
  *   1) open conflicts fail closed (exit 2, Join blocked)
  *   2) complete disposition document is accepted and persisted
@@ -12,7 +12,7 @@
  *   bun run build
  *   bun packages/coding-agent/scripts/dogfood-ralplan-review-conflicts.ts
  *
- * Optional: GJC_BINARY=/path/to/gjc overrides the default dist path.
+ * Optional: VIB_BINARY=/path/to/vib overrides the default dist path.
  */
 import * as fsp from "node:fs/promises";
 import * as os from "node:os";
@@ -20,10 +20,10 @@ import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
-const defaultBinary = path.join(repoRoot, "packages/coding-agent/dist/gjc");
+const defaultBinary = path.join(repoRoot, "packages/coding-agent/dist/vib");
 
 async function resolveCompiledBinary(): Promise<string> {
-	const binary = process.env.GJC_BINARY?.trim() || defaultBinary;
+	const binary = process.env.VIB_BINARY?.trim() || defaultBinary;
 	try {
 		const st = await fsp.stat(binary);
 		if (!st.isFile()) throw new Error(`not a file: ${binary}`);
@@ -39,7 +39,7 @@ async function resolveCompiledBinary(): Promise<string> {
 	return binary;
 }
 
-async function runGjc(
+async function runVib(
 	binary: string,
 	cwd: string,
 	args: string[],
@@ -56,9 +56,9 @@ async function runGjc(
 
 async function main(): Promise<void> {
 	const binary = await resolveCompiledBinary();
-	const dogfoodRoot = await fsp.mkdtemp(path.join(os.tmpdir(), "gjc-dogfood-2902-"));
+	const dogfoodRoot = await fsp.mkdtemp(path.join(os.tmpdir(), "vib-dogfood-2902-"));
 	const sessionId = `dogfood-2902-${process.pid}`;
-	const env = { ...process.env, GJC_SESSION_ID: sessionId };
+	const env = { ...process.env, VIB_SESSION_ID: sessionId };
 	const full = Bun.spawnSync(["git", "-C", repoRoot, "rev-parse", "HEAD"]).stdout.toString().trim();
 	const short = Bun.spawnSync(["git", "-C", repoRoot, "rev-parse", "--short=8", "HEAD"]).stdout.toString().trim();
 	const binaryStat = await fsp.stat(binary);
@@ -75,8 +75,8 @@ async function main(): Promise<void> {
 	console.log();
 
 	// Seed ralplan run state so --write has an active run.
-	console.log("## 1) compiled gjc ralplan seed");
-	const seed = await runGjc(binary, dogfoodRoot, ["ralplan", "--deliberate", "--json", "dogfood #2902"], env);
+	console.log("## 1) compiled vib ralplan seed");
+	const seed = await runVib(binary, dogfoodRoot, ["ralplan", "--deliberate", "--json", "dogfood #2902"], env);
 	console.log(`exit=${seed.code}`);
 	console.log((seed.stdout || seed.stderr).trim());
 	if (seed.code !== 0) process.exit(1);
@@ -84,7 +84,7 @@ async function main(): Promise<void> {
 	// Persist same-pass Architect/Critic artifacts so disposition receipts resolve.
 	console.log();
 	console.log("## 2) seed architect + critic stage artifacts (same-pass stage_n=1)");
-	const architect = await runGjc(
+	const architect = await runVib(
 		binary,
 		dogfoodRoot,
 		["ralplan", "--write", "--stage", "architect", "--stage_n", "1", "--artifact", "# architect", "--json"],
@@ -95,7 +95,7 @@ async function main(): Promise<void> {
 		console.error(architect.stderr || architect.stdout);
 		process.exit(1);
 	}
-	const critic = await runGjc(
+	const critic = await runVib(
 		binary,
 		dogfoodRoot,
 		["ralplan", "--write", "--stage", "critic", "--stage_n", "1", "--artifact", "# critic", "--json"],
@@ -155,7 +155,7 @@ async function main(): Promise<void> {
 	);
 	console.log();
 	console.log("## 3) disposition stage with open conflicts (expect fail-closed)");
-	const open = await runGjc(
+	const open = await runVib(
 		binary,
 		dogfoodRoot,
 		["ralplan", "--write", "--stage", "disposition", "--stage_n", "1", "--artifact", openPath],
@@ -201,7 +201,7 @@ async function main(): Promise<void> {
 	);
 	console.log();
 	console.log("## 4) disposition with spoofed receipt (expect fail-closed)");
-	const spoof = await runGjc(
+	const spoof = await runVib(
 		binary,
 		dogfoodRoot,
 		["ralplan", "--write", "--stage", "disposition", "--stage_n", "1", "--artifact", spoofPath],
@@ -236,7 +236,7 @@ async function main(): Promise<void> {
 	);
 	console.log();
 	console.log("## 5) disposition stage with complete dispositions (expect accept)");
-	const closed = await runGjc(
+	const closed = await runVib(
 		binary,
 		dogfoodRoot,
 		["ralplan", "--write", "--stage", "disposition", "--stage_n", "1", "--artifact", closedPath, "--json"],

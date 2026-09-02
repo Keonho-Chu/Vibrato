@@ -1,6 +1,6 @@
 Execute Python in a persistent per-session REPL kernel.
 
-Variables, imports, and loaded data persist across calls in the current GJC session. The kernel runs in the session working directory. Each `execute` call is appended to a JSONL transcript under `.gjc/_session-{sessionid}/ipykernels/`; display artifacts are stored under `.gjc/_session-{sessionid}/ipykernels/artifacts/`.
+Variables, imports, and loaded data persist across calls in the current Vibrato session. The kernel runs in the session working directory. Each `execute` call is appended to a JSONL transcript under `.vib/_session-{sessionid}/ipykernels/`; display artifacts are stored under `.vib/_session-{sessionid}/ipykernels/artifacts/`.
 
 ## Actions
 

@@ -1,6 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 import type { Subprocess } from "bun";
 import type { Browser, CDPSession } from "puppeteer-core";
 import { ToolAbortError, ToolError } from "../tool-errors";
@@ -282,13 +282,13 @@ export async function openChromeProfileHandle(
 		throw new ToolError(
 			running.unsafeCdpReason ??
 				`Chrome profile ${JSON.stringify(kind.profileDirectory)} under ${kind.userDataDir} is already running without an attachable localhost CDP endpoint. ` +
-					"GJC will not kill or relaunch an existing Chrome profile. Close that Chrome profile first, or restart Chrome yourself with --remote-debugging-address=127.0.0.1 and --remote-debugging-port=<port> then use app.cdp_url.",
+					"Vibrato will not kill or relaunch an existing Chrome profile. Close that Chrome profile first, or restart Chrome yourself with --remote-debugging-address=127.0.0.1 and --remote-debugging-port=<port> then use app.cdp_url.",
 		);
 	} else {
 		if (await hasChromeProfileLock(kind.userDataDir)) {
 			throw new ToolError(
 				`Chrome user data directory ${kind.userDataDir} appears to be locked by an existing Chrome process without an attachable localhost CDP endpoint. ` +
-					"GJC will not kill or relaunch an existing Chrome profile. Close that Chrome profile first, or restart Chrome yourself with --remote-debugging-address=127.0.0.1 and --remote-debugging-port=<port> then use app.cdp_url.",
+					"Vibrato will not kill or relaunch an existing Chrome profile. Close that Chrome profile first, or restart Chrome yourself with --remote-debugging-address=127.0.0.1 and --remote-debugging-port=<port> then use app.cdp_url.",
 			);
 		}
 		const port = kind.cdpPort ?? (await findFreeCdpPort());

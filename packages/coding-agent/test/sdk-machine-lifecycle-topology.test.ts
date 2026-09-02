@@ -59,13 +59,13 @@ async function mcpGlobal(
 ) {
 	const child = Bun.spawn([process.execPath, "run", cliEntrypoint, "mcp-serve", "sdk"], {
 		cwd: repo,
-		env: { ...(environment ?? process.env), GJC_CODING_AGENT_DIR: agentDir, GJC_AGENT_DIR: agentDir },
+		env: { ...(environment ?? process.env), VIB_CODING_AGENT_DIR: agentDir, VIB_AGENT_DIR: agentDir },
 		stdin: "pipe",
 		stdout: "pipe",
 		stderr: "pipe",
 	});
 	child.stdin.write(
-		`${JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: "gjc_session_global", arguments: { operation, input, idempotencyKey } } })}\n`,
+		`${JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: "vib_session_global", arguments: { operation, input, idempotencyKey } } })}\n`,
 	);
 	await child.stdin.end();
 	const [exitCode, stdout, stderr] = await Promise.all([
@@ -104,7 +104,7 @@ async function daemonGlobal(
 		],
 		{
 			cwd: repo,
-			env: { ...(environment ?? process.env), GJC_CODING_AGENT_DIR: agentDir, GJC_AGENT_DIR: agentDir },
+			env: { ...(environment ?? process.env), VIB_CODING_AGENT_DIR: agentDir, VIB_AGENT_DIR: agentDir },
 			stdout: "pipe",
 			stderr: "pipe",
 		},
@@ -129,7 +129,7 @@ async function acpGlobal(
 ) {
 	const child = Bun.spawn([process.execPath, cliEntrypoint, "--mode", "acp"], {
 		cwd: repo,
-		env: { ...process.env, GJC_CODING_AGENT_DIR: agentDir, GJC_AGENT_DIR: agentDir, PI_NO_TITLE: "1", NO_COLOR: "1" },
+		env: { ...process.env, VIB_CODING_AGENT_DIR: agentDir, VIB_AGENT_DIR: agentDir, PI_NO_TITLE: "1", NO_COLOR: "1" },
 		stdin: "pipe",
 		stdout: "pipe",
 		stderr: "pipe",
@@ -166,7 +166,7 @@ async function acpGlobal(
 	child.stdin.flush();
 	await readFrame();
 	child.stdin.write(
-		`${JSON.stringify({ jsonrpc: "2.0", id: 2, method: "_gjc/sdk/global", params: { operation, input, idempotencyKey } })}\n`,
+		`${JSON.stringify({ jsonrpc: "2.0", id: 2, method: "_vib/sdk/global", params: { operation, input, idempotencyKey } })}\n`,
 	);
 	child.stdin.flush();
 	const response = await readFrame();

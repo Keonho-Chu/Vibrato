@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { type KeyId, TUI_KEYBINDINGS } from "@gajae-code/tui";
+import { type KeyId, TUI_KEYBINDINGS } from "@vib-rato/tui";
 import { defaultForegroundFoldKeysForPlatform, KEYBINDINGS } from "../src/config/keybindings";
 
 function withPlatform<T>(platform: NodeJS.Platform, callback: () => T): T {

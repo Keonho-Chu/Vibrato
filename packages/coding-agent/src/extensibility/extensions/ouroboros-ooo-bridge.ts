@@ -88,7 +88,7 @@ export function createOuroborosOooBridge(options: OuroborosOooBridgeOptions = {}
 	const commandBridge = createExactPrefixCommandBridge({
 		prefix: "ooo",
 		command: resolveOuroborosCommand(),
-		args: ["dispatch", "--runtime", "gjc"],
+		args: ["dispatch", "--runtime", "vib"],
 	});
 
 	function assertCurrent(generation: number, signal: AbortSignal | undefined): void {
@@ -129,7 +129,7 @@ export function createOuroborosOooBridge(options: OuroborosOooBridgeOptions = {}
 				{
 					type: "stdio",
 					command: resolveOuroborosCommand(),
-					args: ["mcp", "serve", "--runtime", "gjc"],
+					args: ["mcp", "serve", "--runtime", "vib"],
 					cwd: ctx.cwd,
 				},
 				{ signal: ctx.signal },

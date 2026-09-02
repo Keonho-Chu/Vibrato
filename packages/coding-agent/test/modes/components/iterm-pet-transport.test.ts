@@ -6,7 +6,7 @@ import {
 	isItermCandidate,
 	type NativePetUi,
 	type PetTransportClock,
-} from "@gajae-code/coding-agent/modes/components/iterm-pet-transport";
+} from "@vib-rato/coding-agent/modes/components/iterm-pet-transport";
 
 const clock: PetTransportClock = {
 	now: () => 0,

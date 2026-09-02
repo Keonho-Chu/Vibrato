@@ -2,7 +2,7 @@
 
 > A single inline tool that schedules recurring or one-shot prompts within the current session. Select the operation with the `op` field (`create` | `list` | `delete`).
 >
-> **Note on upstream parity:** upstream Claude Code exposes three sibling tools (`CronCreate`, `CronList`, `CronDelete`). GJC intentionally consolidates them into one `cron` tool with an `op` discriminator (matching the `op`/`action` pattern used by `job`, `subagent`, `goal`, and `irc`). The frozen upstream schema fixtures are retained as a historical record; see "Parity oracle" below.
+> **Note on upstream parity:** upstream Claude Code exposes three sibling tools (`CronCreate`, `CronList`, `CronDelete`). Vibrato intentionally consolidates them into one `cron` tool with an `op` discriminator (matching the `op`/`action` pattern used by `job`, `subagent`, `goal`, and `irc`). The frozen upstream schema fixtures are retained as a historical record; see "Parity oracle" below.
 
 ## Source
 
@@ -118,6 +118,6 @@ The upstream Claude Code per-tool schemas remain frozen as a historical record u
 - `cron-delete.schema.json`
 
 These fixtures were captured from the upstream Claude Code CLI (`claude --version 2.1.152`)
-and document the upstream three-tool surface. GJC's consolidated `cron` tool intentionally
+and document the upstream three-tool surface. Vibrato's consolidated `cron` tool intentionally
 diverges from that surface; the fixtures and `claude-code-tools-fixtures.test.ts` validate
-the frozen upstream records, not GJC's live tool shape.
+the frozen upstream records, not Vibrato's live tool shape.

@@ -428,9 +428,9 @@ describe("openai-responses cache affinity", () => {
 	});
 
 	it("isolates environment retention overrides", async () => {
-		const previousGjc = Bun.env.GJC_CACHE_RETENTION;
+		const previousVib = Bun.env.VIB_CACHE_RETENTION;
 		const previousPi = Bun.env.PI_CACHE_RETENTION;
-		Bun.env.GJC_CACHE_RETENTION = "long";
+		Bun.env.VIB_CACHE_RETENTION = "long";
 		delete Bun.env.PI_CACHE_RETENTION;
 		try {
 			const captured = await captureOpenAIResponseHeaders(
@@ -439,8 +439,8 @@ describe("openai-responses cache affinity", () => {
 			);
 			expect(captured.body?.prompt_cache_retention).toBe("24h");
 		} finally {
-			if (previousGjc === undefined) delete Bun.env.GJC_CACHE_RETENTION;
-			else Bun.env.GJC_CACHE_RETENTION = previousGjc;
+			if (previousVib === undefined) delete Bun.env.VIB_CACHE_RETENTION;
+			else Bun.env.VIB_CACHE_RETENTION = previousVib;
 			if (previousPi === undefined) delete Bun.env.PI_CACHE_RETENTION;
 			else Bun.env.PI_CACHE_RETENTION = previousPi;
 		}

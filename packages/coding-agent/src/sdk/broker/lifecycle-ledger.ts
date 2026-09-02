@@ -119,7 +119,7 @@ const DEFAULT_LIFECYCLE_LEDGER_LIMITS: Required<LifecycleLedgerLimits> = {
 };
 
 /** Appended when a quarantined row is clipped to the sidecar cap. */
-const LIFECYCLE_QUARANTINE_TRUNCATION_MARKER = "\n[gjc: quarantined row truncated at the corrupt-ledger cap]";
+const LIFECYCLE_QUARANTINE_TRUNCATION_MARKER = "\n[vib: quarantined row truncated at the corrupt-ledger cap]";
 const MAX_LIFECYCLE_LEDGER_JSON_DEPTH = 64;
 const MAX_LIFECYCLE_LEDGER_JSON_FIELDS = 1024;
 

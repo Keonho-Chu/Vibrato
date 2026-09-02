@@ -4,9 +4,9 @@
  * Skills provide specialized instructions loaded into the system prompt.
  * Discover, filter, merge, or replace them.
  */
-import { createAgentSession, discoverSkills, SessionManager, type Skill } from "@gajae-code/coding-agent";
+import { createAgentSession, discoverSkills, SessionManager, type Skill } from "@vib-rato/coding-agent";
 
-// Discover all skills from cwd/.gjc/skills, ~/.gjc/agent/skills, etc.
+// Discover all skills from cwd/.vib/skills, ~/.vib/agent/skills, etc.
 const { skills: allSkills } = await discoverSkills();
 console.log(
 	"Discovered skills:",

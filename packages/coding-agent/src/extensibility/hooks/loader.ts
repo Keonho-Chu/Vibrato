@@ -2,7 +2,7 @@
  * Hook loader - loads TypeScript hook modules using native Bun import.
  */
 import * as path from "node:path";
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 import * as zod from "zod/v4";
 import { hookCapability } from "../../capability/hook";
 import type { Hook } from "../../discovery";
@@ -162,7 +162,7 @@ async function createHookAPI(
 		logger,
 		typebox,
 		zod,
-		pi: await import("@gajae-code/coding-agent"),
+		pi: await import("@vib-rato/coding-agent"),
 	} as HookAPI;
 
 	return {
@@ -247,7 +247,7 @@ export async function loadHooks(paths: string[], cwd: string): Promise<LoadHooks
 }
 
 /**
- * Discover and load hooks from canonical native GJC configuration.
+ * Discover and load hooks from canonical native Vibrato configuration.
  * Claude Code and Codex hook layouts remain registered capability providers for
  * explicit import and diagnostics, but are not competing runtime authorities.
  *
@@ -276,7 +276,7 @@ export async function discoverAndLoadHooks(configuredPaths: string[], cwd: strin
 	for (const hook of discovered.items) {
 		const convention =
 			hook._source.provider === "native"
-				? HookSourceConvention.NativeGjc
+				? HookSourceConvention.NativeVib
 				: hook._source.provider === "claude"
 					? HookSourceConvention.ClaudeCode
 					: hook._source.provider === "codex"

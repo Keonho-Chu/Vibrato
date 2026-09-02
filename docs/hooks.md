@@ -1,13 +1,13 @@
 # Hooks
 
-GJC currently has three execution surfaces that are all called hooks. The canonical model in `packages/coding-agent/src/hooks/events.ts` is a **normalization and adaptation layer** over those existing runtimes. It does not create a second dispatcher: GJC adapters register accepted hooks on the authoritative `ExtensionRunner`, while Codex continues to own managed command execution.
+Vibrato currently has three execution surfaces that are all called hooks. The canonical model in `packages/coding-agent/src/hooks/events.ts` is a **normalization and adaptation layer** over those existing runtimes. It does not create a second dispatcher: Vibrato adapters register accepted hooks on the authoritative `ExtensionRunner`, while Codex continues to own managed command execution.
 
 | Surface | Runtime authority | Distribution | Runtime owner |
 |---|---|---|---|
-| Native GJC hook directories | In-process `HookAPI` module adapted to `ExtensionRunner` | Canonical user/project `.gjc` files | GJC `ExtensionRunner` |
-| Claude/Codex hook directories | Import and diagnostic sources only | Foreign user/project convention files | No ordinary GJC runtime authority |
-| Codex managed `hooks.json` | External command | User Codex configuration | Codex invokes `gjc codex-native-hook` |
-| Distributable plugin hooks | Constrained GJC API; ambient host-process authority | Installed plugin bundle | GJC `ExtensionRunner` adapter |
+| Native Vibrato hook directories | In-process `HookAPI` module adapted to `ExtensionRunner` | Canonical user/project `.vib` files | Vibrato `ExtensionRunner` |
+| Claude/Codex hook directories | Import and diagnostic sources only | Foreign user/project convention files | No ordinary Vibrato runtime authority |
+| Codex managed `hooks.json` | External command | User Codex configuration | Codex invokes `vib codex-native-hook` |
+| Distributable plugin hooks | Constrained Vibrato API; ambient host-process authority | Installed plugin bundle | Vibrato `ExtensionRunner` adapter |
 
 The broader in-process `HookAPI` also contains lifecycle/context events. Only semantically safe overlaps are assigned one of the six canonical names.
 
@@ -28,13 +28,13 @@ Unknown names and unsupported convention/event pairs produce bounded diagnostics
 
 The authoritative per-convention table is `CONVENTION_EVENT_CONTRACTS`. A single global timeout/error table would be false because the runtimes differ.
 
-### Native GJC hook directories
+### Native Vibrato hook directories
 
 Runtime discovery paths:
 
-- native GJC: `~/.gjc/hooks/{pre,post}/` and `.gjc/hooks/{pre,post}/`;
+- native Vibrato: `~/.vib/hooks/{pre,post}/` and `.vib/hooks/{pre,post}/`;
 
-Claude `.claude/hooks/{pre,post}/` and Codex `.codex/hooks/pre-<tool>.{ts,js}` / `post-<tool>.{ts,js}` layouts remain registered discovery providers for explicit import and diagnostics. Ordinary sessions do not import or execute them directly; importing an accepted hook writes the canonical `.gjc/hooks/` copy that becomes runtime authority.
+Claude `.claude/hooks/{pre,post}/` and Codex `.codex/hooks/pre-<tool>.{ts,js}` / `post-<tool>.{ts,js}` layouts remain registered discovery providers for explicit import and diagnostics. Ordinary sessions do not import or execute them directly; importing an accepted hook writes the canonical `.vib/hooks/` copy that becomes runtime authority.
 
 These files are loaded with Bun `import()` and must export a hook factory. They receive the full in-process `HookAPI`, including `exec`, messages, renderers, and command registration. They are **not command/shell-script hooks** merely because some legacy discovery comments use that terminology.
 
@@ -52,14 +52,14 @@ Extension error listeners receive the extension path, event name, error message,
 
 ## Codex managed `hooks.json`
 
-`gjc setup hooks` merges two managed entries into `~/.codex/hooks.json`:
+`vib setup hooks` merges two managed entries into `~/.codex/hooks.json`:
 
 - `UserPromptSubmit`;
 - `Stop`.
 
-Both invoke `gjc codex-native-hook`. GJC validates and handles its command payload, but Codex owns scheduling, ordering, timeout, cancellation, environment, and command logging. Those fields are marked `external-runtime` or `provider-owned`; they are not guessed from the in-process runner.
+Both invoke `vib codex-native-hook`. Vibrato validates and handles its command payload, but Codex owns scheduling, ordering, timeout, cancellation, environment, and command logging. Those fields are marked `external-runtime` or `provider-owned`; they are not guessed from the in-process runner.
 
-The adapter rejects unknown event names and empty commands. It does not claim Claude settings-hook execution: GJC currently discovers Claude `pre/` and `post/` modules only.
+The adapter rejects unknown event names and empty commands. It does not claim Claude settings-hook execution: Vibrato currently discovers Claude `pre/` and `post/` modules only.
 
 ## Distributable plugin hooks
 
@@ -71,9 +71,9 @@ Plugin manifests support the compiler-accepted constrained shapes:
 
 `tool_call/after` is a post-tool observation and normalizes to `post_tool_use`; it must never gain pre-tool blocking authority. Aliases such as `pre_tool_use`, `UserPromptSubmit`, or `session_start` are rejected for plugins even if those names exist elsewhere.
 
-The loader realpath-confines the implementation beneath the installed plugin root, verifies hashes, requires exactly one registration for the declared event, and provides a constrained **GJC API**. Calls to `exec`, `sendMessage`, `appendEntry`, `registerCommand`, or `registerMessageRenderer` throw `security_policy`.
+The loader realpath-confines the implementation beneath the installed plugin root, verifies hashes, requires exactly one registration for the declared event, and provides a constrained **Vibrato API**. Calls to `exec`, `sendMessage`, `appendEntry`, `registerCommand`, or `registerMessageRenderer` throw `security_policy`.
 
-This is not a JavaScript or operating-system sandbox. The module is imported into the GJC process and retains ambient Bun/JavaScript globals, so an installed plugin must still be treated as trusted executable code. `Constrained` means it cannot obtain broader GJC extension capabilities through the normalizer or supplied API; it does not mean the host process has removed every process/filesystem/network primitive. The contract records `ambient-host` process authority instead of claiming isolation that does not exist.
+This is not a JavaScript or operating-system sandbox. The module is imported into the Vibrato process and retains ambient Bun/JavaScript globals, so an installed plugin must still be treated as trusted executable code. `Constrained` means it cannot obtain broader Vibrato extension capabilities through the normalizer or supplied API; it does not mean the host process has removed every process/filesystem/network primitive. The contract records `ambient-host` process authority instead of claiming isolation that does not exist.
 
 The runtime adapter filters target tool names with exact, case-sensitive logical-name matching. Normalization rejects empty names, path separators, NUL, `.` and `..`; `*` is the only wildcard. Filesystem case rules do not change logical tool matching.
 
@@ -81,11 +81,11 @@ Plugin execution uses `ExtensionRunner` after adaptation:
 
 | Shape | Canonical kind | Timeout | Error behavior | Authority |
 |---|---|---|---|---|
-| `tool_call/before` | `pre_tool_use` | none | thrown error fails closed and blocks | constrained GJC API; ambient host |
-| `tool_call/after` | `post_tool_use` | 30s | timeout/error isolated | constrained GJC API; ambient host |
-| `tool_result/after` | `post_tool_use` | 30s | timeout/error isolated | constrained GJC API; ambient host |
-| `session_start` | `session_start` | 30s | timeout/error isolated | constrained GJC API; ambient host |
-| `session_shutdown` | `session_shutdown` | 30s | timeout/error isolated | constrained GJC API; ambient host |
+| `tool_call/before` | `pre_tool_use` | none | thrown error fails closed and blocks | constrained Vibrato API; ambient host |
+| `tool_call/after` | `post_tool_use` | 30s | timeout/error isolated | constrained Vibrato API; ambient host |
+| `tool_result/after` | `post_tool_use` | 30s | timeout/error isolated | constrained Vibrato API; ambient host |
+| `session_start` | `session_start` | 30s | timeout/error isolated | constrained Vibrato API; ambient host |
+| `session_shutdown` | `session_shutdown` | 30s | timeout/error isolated | constrained Vibrato API; ambient host |
 
 ## In-process lifecycle normalization
 
@@ -111,7 +111,7 @@ Batch normalization accepts already-bounded adapter results, preserves input ord
 
 ## Runtime integration boundary
 
-Native GJC discovery is validated through `normalizeDirectoryHook` before discovered modules are imported, then accepted hook factories are adapted into the session's `ExtensionRunner`. Claude/Codex providers remain available to the explicit import and diagnostic surfaces but are excluded from ordinary runtime discovery. Tool-scoped native directory handlers receive exact matcher filtering at the adapter boundary. Constrained plugin execution uses the same plugin normalization rules when selecting its runtime registration event and validates the complete batch before the first registration. The canonical layer therefore participates in startup/runtime adaptation without becoming a second dispatcher.
+Native Vibrato discovery is validated through `normalizeDirectoryHook` before discovered modules are imported, then accepted hook factories are adapted into the session's `ExtensionRunner`. Claude/Codex providers remain available to the explicit import and diagnostic surfaces but are excluded from ordinary runtime discovery. Tool-scoped native directory handlers receive exact matcher filtering at the adapter boundary. Constrained plugin execution uses the same plugin normalization rules when selecting its runtime registration event and validates the complete batch before the first registration. The canonical layer therefore participates in startup/runtime adaptation without becoming a second dispatcher.
 
 It does **not**:
 

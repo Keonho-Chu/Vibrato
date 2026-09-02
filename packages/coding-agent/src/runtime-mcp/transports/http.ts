@@ -7,7 +7,7 @@
  * Modern era (2026-07-28): stateless per-request `_meta` + mirrored headers,
  * no sessions, no standalone stream, no replay. See ../protocol.ts.
  */
-import { logger, readSseJson, Snowflake } from "@gajae-code/utils";
+import { logger, readSseJson, Snowflake } from "@vib-rato/utils";
 import type {
 	JsonRpcError,
 	JsonRpcMessage,

@@ -1,19 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as path from "node:path";
-import { Agent } from "@gajae-code/agent-core";
-import type { AssistantMessage, ToolCall } from "@gajae-code/ai";
-import { getBundledModel } from "@gajae-code/ai/models";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
+import { Agent } from "@vib-rato/agent-core";
+import type { AssistantMessage, ToolCall } from "@vib-rato/ai";
+import { getBundledModel } from "@vib-rato/ai/models";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import type { GoalModeState } from "@vib-rato/coding-agent/goals/state";
+import { AgentSession } from "@vib-rato/coding-agent/session/agent-session";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
 import {
-	GJC_COORDINATOR_SESSION_ID_ENV,
-	GJC_COORDINATOR_SESSION_STATE_FILE_ENV,
-} from "@gajae-code/coding-agent/gjc-runtime/session-state-sidecar";
-import type { GoalModeState } from "@gajae-code/coding-agent/goals/state";
-import { AgentSession } from "@gajae-code/coding-agent/session/agent-session";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { logger, TempDir } from "@gajae-code/utils";
+	VIB_COORDINATOR_SESSION_ID_ENV,
+	VIB_COORDINATOR_SESSION_STATE_FILE_ENV,
+} from "@vib-rato/coding-agent/vib-runtime/session-state-sidecar";
+import { logger, TempDir } from "@vib-rato/utils";
 import { createAssistantMessage } from "./helpers/agent-session-setup";
 import { installExactIdentityNatives } from "./helpers/exact-identity-natives";
 
@@ -328,10 +328,10 @@ describe("AgentSession active goal reminders", () => {
 	it("contains background coordinator state persistence failures without leaking sidecar data", async () => {
 		const stateFile = path.join(tempDir.path(), "corrupt-runtime-state.json");
 		await Bun.write(stateFile, '{"private_payload":"must-not-reach-logs"}');
-		const previousStateFile = process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV];
-		const previousSessionId = process.env[GJC_COORDINATOR_SESSION_ID_ENV];
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = session.sessionId;
+		const previousStateFile = process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV];
+		const previousSessionId = process.env[VIB_COORDINATOR_SESSION_ID_ENV];
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = session.sessionId;
 		const deliveredEvents: string[] = [];
 		session.subscribe(event => deliveredEvents.push(event.type));
 		let resolveWarning: (() => void) | undefined;
@@ -354,10 +354,10 @@ describe("AgentSession active goal reminders", () => {
 			]);
 			expect(warnSpy).toHaveBeenCalledWith("Failed to persist coordinator runtime state", { event: "turn_start" });
 		} finally {
-			if (previousStateFile === undefined) delete process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV];
-			else process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = previousStateFile;
-			if (previousSessionId === undefined) delete process.env[GJC_COORDINATOR_SESSION_ID_ENV];
-			else process.env[GJC_COORDINATOR_SESSION_ID_ENV] = previousSessionId;
+			if (previousStateFile === undefined) delete process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV];
+			else process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = previousStateFile;
+			if (previousSessionId === undefined) delete process.env[VIB_COORDINATOR_SESSION_ID_ENV];
+			else process.env[VIB_COORDINATOR_SESSION_ID_ENV] = previousSessionId;
 		}
 	});
 });

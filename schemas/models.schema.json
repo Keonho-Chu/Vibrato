@@ -1,8 +1,8 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "https://gajae.ai/schemas/models.schema.json",
-	"title": "GJC models.yml",
-	"description": "Custom provider and model configuration for GJC. Generated from packages/coding-agent/src/config/models-config-schema.ts.",
+	"$id": "https://vibrato.ai/schemas/models.schema.json",
+	"title": "Vibrato models.yml",
+	"description": "Custom provider and model configuration for Vibrato. Generated from packages/coding-agent/src/config/models-config-schema.ts.",
 	"type": "object",
 	"properties": {
 		"providers": {

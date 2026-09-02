@@ -1,4 +1,4 @@
-import { getShellConfig, type ShellConfig } from "@gajae-code/utils/shell-config";
+import { getShellConfig, type ShellConfig } from "@vib-rato/utils/shell-config";
 import type { ShellMinimizerSettings } from "../../src/config/settings-schema";
 
 /**

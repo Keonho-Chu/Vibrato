@@ -1,4 +1,4 @@
-import { Command, Flags } from "@gajae-code/utils/cli";
+import { Command, Flags } from "@vib-rato/utils/cli";
 
 function writeText(lines: string[]): void {
 	process.stdout.write(`${lines.join("\n")}\n`);
@@ -9,12 +9,12 @@ export default class ContributionPrep extends Command {
 	static strict = false;
 
 	static flags = {
-		"no-spawn": Flags.boolean({ description: "Only write artifacts; do not spawn a fresh GJC worker" }),
+		"no-spawn": Flags.boolean({ description: "Only write artifacts; do not spawn a fresh Vibrato worker" }),
 		"source-session-id": Flags.string({ description: "Source session id to record in the manifest" }),
 		"artifact-root": Flags.string({ description: "Directory where contribute-pr artifacts are written" }),
 	};
 
-	static examples = ["gjc contribute-pr", "gjc contribute-pr --no-spawn"];
+	static examples = ["vib contribute-pr", "vib contribute-pr --no-spawn"];
 
 	async run(): Promise<void> {
 		const { flags } = await this.parse(ContributionPrep);

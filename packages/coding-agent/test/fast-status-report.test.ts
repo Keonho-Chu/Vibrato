@@ -1,12 +1,12 @@
 import { describe, expect, test } from "bun:test";
-import type { Model } from "@gajae-code/ai";
+import type { Model } from "@vib-rato/ai";
 import {
 	buildFastStatusReport,
 	FAST_STATUS_OFF,
 	FAST_STATUS_TITLE,
 	type FastStatusSessionLike,
 	formatFastStatusReport,
-} from "@gajae-code/coding-agent/slash-commands/helpers/fast-status-report";
+} from "@vib-rato/coding-agent/slash-commands/helpers/fast-status-report";
 
 const ICON = "\u26a1";
 

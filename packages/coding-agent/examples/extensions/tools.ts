@@ -5,12 +5,12 @@
  * Tool selection persists across session reloads and respects branch navigation.
  *
  * Usage:
- * 1. Copy this file to ~/.gjc/agent/extensions/ (legacy: ~/.pi/agent/extensions/) or your project's .gjc/extensions/
+ * 1. Copy this file to ~/.vib/agent/extensions/ (legacy: ~/.pi/agent/extensions/) or your project's .vib/extensions/
  * 2. Use /tools to open the tool selector
  */
-import type { ExtensionAPI, ExtensionContext } from "@gajae-code/coding-agent";
-import { getSettingsListTheme } from "@gajae-code/coding-agent";
-import { Container, type SettingItem, SettingsList } from "@gajae-code/tui";
+import type { ExtensionAPI, ExtensionContext } from "@vib-rato/coding-agent";
+import { getSettingsListTheme } from "@vib-rato/coding-agent";
+import { Container, type SettingItem, SettingsList } from "@vib-rato/tui";
 
 // State persisted to session
 interface ToolsState {

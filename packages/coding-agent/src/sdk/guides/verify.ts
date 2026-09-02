@@ -31,8 +31,8 @@ export interface GuidePinnedKey {
  */
 const guidePinnedKeys: GuidePinnedKey[] = [
 	{
-		keyId: "6c4b134ff9fb86a52d55cb6bb7c2fab938405b53b4148afc4249a2cb6f504bce",
-		spkiDerHex: "302a300506032b6570032100ef665d05c6795341dfc893866d8fe5be4b48891c0ed0d125940d7032de37723e",
+		keyId: "d3c91f0eac1143a9d8b3be6d4317c38cda7b884e2b6b2d71bf52387ebe86a0a6",
+		spkiDerHex: "302a300506032b657003210077d3d9c1c8344cc8f258e150624048fc2288e387d62da2b314a2d14cadeaa007",
 		source: "bundled",
 	},
 ];
@@ -67,14 +67,14 @@ const guideKeyCache = new Map<string, KeyObject>();
 
 /** Test-only override: installs an additional trusted key for deterministic tests. */
 export function addTestGuidePinnedKey(key: GuidePinnedKey): void {
-	if (process.env.GJC_TEST_GUIDE_KEYS !== "1") throw new Error("Test guide key injection is disabled.");
+	if (process.env.VIB_TEST_GUIDE_KEYS !== "1") throw new Error("Test guide key injection is disabled.");
 	guideKeyCache.delete(key.keyId);
 	guidePinnedKeys.push(key);
 }
 
 /** Test-only override: removes a previously installed test key. */
 export function removeTestGuidePinnedKey(keyId: string): void {
-	if (process.env.GJC_TEST_GUIDE_KEYS !== "1") throw new Error("Test guide key injection is disabled.");
+	if (process.env.VIB_TEST_GUIDE_KEYS !== "1") throw new Error("Test guide key injection is disabled.");
 	guideKeyCache.delete(keyId);
 	const index = guidePinnedKeys.findIndex(key => key.keyId === keyId);
 	if (index >= 0) guidePinnedKeys.splice(index, 1);

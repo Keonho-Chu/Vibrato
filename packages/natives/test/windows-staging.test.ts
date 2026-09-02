@@ -11,9 +11,9 @@ import {
 } from "../native/loader-state.js";
 import packageJson from "../package.json" with { type: "json" };
 
-const winNodeModulesNativeDir = "C:\\Users\\Admin\\node_modules\\@gajae-code\\pi-natives\\native";
-const winWorkspaceNativeDir = "C:\\Users\\Admin\\dev\\gajae-code\\packages\\natives\\native";
-const posixNodeModulesNativeDir = "/home/u/proj/node_modules/@gajae-code/natives/native";
+const winNodeModulesNativeDir = "C:\\Users\\Admin\\node_modules\\@vib-rato\\pi-natives\\native";
+const winWorkspaceNativeDir = "C:\\Users\\Admin\\dev\\vib-rato\\packages\\natives\\native";
+const posixNodeModulesNativeDir = "/home/u/proj/node_modules/@vib-rato/natives/native";
 
 function contentPath(versionedDir: string, filename: string, bytes: string): string {
 	const hash = createHash("sha256").update(bytes).digest("hex");
@@ -21,7 +21,7 @@ function contentPath(versionedDir: string, filename: string, bytes: string): str
 }
 
 async function makeInstalledContext(root: string, filenames: string[], bytes: string | Record<string, string>) {
-	const nativeDir = path.join(root, "node_modules", "@gajae-code", "natives", "native");
+	const nativeDir = path.join(root, "node_modules", "@vib-rato", "natives", "native");
 	const versionedDir = path.join(root, "cache", "0.14.2");
 	await fs.mkdir(nativeDir, { recursive: true });
 	for (const filename of filenames) {
@@ -95,7 +95,7 @@ describe("windows native addon loading", () => {
 	});
 
 	it("keeps package fallback order without synthesizing the retired fixed cache path", () => {
-		const versionedDir = "C:\\Users\\Admin\\AppData\\Local\\gjc\\0.14.2";
+		const versionedDir = "C:\\Users\\Admin\\AppData\\Local\\vib\\0.14.2";
 		const filenames = getAddonFilenames({ tag: "win32-x64", arch: "x64", variant: "modern" });
 		const candidates = resolveLoaderCandidates({
 			addonFilenames: filenames,
@@ -104,7 +104,7 @@ describe("windows native addon loading", () => {
 			nativeDir: winNodeModulesNativeDir,
 			execDir: "C:\\Users\\Admin\\node_modules\\.bin",
 			versionedDir,
-			userDataDir: "C:\\Users\\Admin\\AppData\\Local\\gjc",
+			userDataDir: "C:\\Users\\Admin\\AppData\\Local\\vib",
 		});
 		const direct = filenames.map(filename => path.join(winNodeModulesNativeDir, filename));
 		expect(candidates).not.toContain(path.join(versionedDir, filenames[0]));
@@ -114,7 +114,7 @@ describe("windows native addon loading", () => {
 	});
 
 	it("reuses unchanged content and never attempts the direct node_modules candidate", async () => {
-		const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-native-stage-reuse-"));
+		const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-native-stage-reuse-"));
 		const filename = "pi_natives.win32-x64-baseline.node";
 		try {
 			const firstContext = await makeInstalledContext(root, [filename], "same-addon");
@@ -133,7 +133,7 @@ describe("windows native addon loading", () => {
 	});
 
 	it("holds the staged candidate lease through validation and native loading", async () => {
-		const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-native-stage-lease-"));
+		const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-native-stage-lease-"));
 		const filename = "pi_natives.win32-x64.node";
 		try {
 			const context = await makeInstalledContext(root, [filename], "leased-addon");
@@ -159,7 +159,7 @@ describe("windows native addon loading", () => {
 	});
 
 	it("fails closed when the staged candidate lease cannot be acquired", async () => {
-		const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-native-stage-lease-fail-"));
+		const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-native-stage-lease-fail-"));
 		const filename = "pi_natives.win32-x64.node";
 		try {
 			const context = await makeInstalledContext(root, [filename], "leased-addon");
@@ -184,7 +184,7 @@ describe("windows native addon loading", () => {
 	});
 
 	it("creates a new content path for same-version package drift without pruning the old winner", async () => {
-		const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-native-stage-drift-"));
+		const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-native-stage-drift-"));
 		const filename = "pi_natives.win32-x64.node";
 		try {
 			const firstContext = await makeInstalledContext(root, [filename], "old-addon");
@@ -202,7 +202,7 @@ describe("windows native addon loading", () => {
 	});
 
 	it("preserves modern, baseline, and default staging order", async () => {
-		const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-native-stage-order-"));
+		const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-native-stage-order-"));
 		const filenames = getAddonFilenames({ tag: "win32-x64", arch: "x64", variant: "modern" });
 		try {
 			const context = await makeInstalledContext(root, filenames, {
@@ -232,7 +232,7 @@ describe("windows native addon loading", () => {
 	});
 
 	it("reuses a byte-identical concurrent winner", async () => {
-		const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-native-stage-race-"));
+		const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-native-stage-race-"));
 		const filename = "pi_natives.win32-x64.node";
 		try {
 			const first = await makeInstalledContext(root, [filename], "winner-addon");
@@ -251,7 +251,7 @@ describe("windows native addon loading", () => {
 	});
 
 	it("fails closed on a partial or mismatched content winner", async () => {
-		const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-native-stage-winner-"));
+		const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-native-stage-winner-"));
 		const filename = "pi_natives.win32-x64.node";
 		try {
 			const context = await makeInstalledContext(root, [filename], "complete-addon");
@@ -268,7 +268,7 @@ describe("windows native addon loading", () => {
 	});
 
 	it("does not fall through to execDir when installed addon staging fails", async () => {
-		const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-native-stage-fallback-"));
+		const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-native-stage-fallback-"));
 		const filename = "pi_natives.win32-x64.node";
 		try {
 			const context = await makeInstalledContext(root, [filename], "complete-addon");

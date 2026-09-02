@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
-import { ImageProtocol, setTerminalImageProtocol, TERMINAL, type TUI } from "@gajae-code/tui";
+import { ImageProtocol, setTerminalImageProtocol, TERMINAL, type TUI } from "@vib-rato/tui";
 import { resetSettingsForTest, Settings } from "../../../src/config/settings";
 import { EDIT_MODE_STRATEGIES, type PerFileDiffPreview } from "../../../src/edit";
 import { AssistantMessageComponent } from "../../../src/modes/components/assistant-message";

@@ -3,7 +3,7 @@ set -u
 
 fail=0
 
-tmpdir=$(mktemp -d "${TMPDIR:-/tmp}/gjc-option-key.XXXXXX") || {
+tmpdir=$(mktemp -d "${TMPDIR:-/tmp}/vib-option-key.XXXXXX") || {
   printf '%s\n' 'FAIL: could not create a temporary directory.' >&2
   exit 1
 }
@@ -192,14 +192,14 @@ else
   fail=1
 fi
 
-if command -v gjc >/dev/null 2>&1; then
-  printf 'GJC: '; gjc --version
-  if ! gjc --smoke-test; then
-    printf '%s\n' 'FAIL: gjc --smoke-test failed.' >&2
+if command -v vib >/dev/null 2>&1; then
+  printf 'Vibrato: '; vib --version
+  if ! vib --smoke-test; then
+    printf '%s\n' 'FAIL: vib --smoke-test failed.' >&2
     fail=1
   fi
 else
-  printf '%s\n' 'FAIL: gjc is not on PATH.' >&2
+  printf '%s\n' 'FAIL: vib is not on PATH.' >&2
   fail=1
 fi
 

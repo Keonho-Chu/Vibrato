@@ -582,7 +582,7 @@ describe("BashTool ACP terminal routing", () => {
 			getSessionAgentDir: () => "tenant-profile",
 		} as unknown as ToolSession;
 
-		const result = await new BashTool(session).execute("call", { command: 'echo "$GJC_CODING_AGENT_DIR"' });
+		const result = await new BashTool(session).execute("call", { command: 'echo "$VIB_CODING_AGENT_DIR"' });
 		const text = result.content.find(block => block.type === "text")?.text ?? "";
 		expect(text).toContain("tenant-profile");
 		expect(text).not.toContain("default-profile");
@@ -605,7 +605,7 @@ describe("BashTool ACP terminal routing", () => {
 		// canonical variable must be suppressed, or the child's getAgentDir()
 		// would prefer it over the caller's explicit override.
 		const result = await new BashTool(session).execute("call", {
-			command: 'echo "gjc=$GJC_CODING_AGENT_DIR pi=$PI_CODING_AGENT_DIR"',
+			command: 'echo "vib=$VIB_CODING_AGENT_DIR pi=$PI_CODING_AGENT_DIR"',
 			env: { PI_CODING_AGENT_DIR: "legacy-profile" },
 		});
 		const text = result.content.find(block => block.type === "text")?.text ?? "";

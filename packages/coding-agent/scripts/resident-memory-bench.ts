@@ -6,20 +6,20 @@
  * local smoke checks, not performance comparisons.
  *
  * Normal measurements (five child runs per command):
- *   TMPDIR="$HOME/tmp-gjc-tests/" GJC_CODING_AGENT_DIR="$(mktemp -d)" NO_COLOR=1 bun packages/coding-agent/scripts/resident-memory-bench.ts --mode rss --runs 5
- *   TMPDIR="$HOME/tmp-gjc-tests/" GJC_CODING_AGENT_DIR="$(mktemp -d)" NO_COLOR=1 bun packages/coding-agent/scripts/resident-memory-bench.ts --mode put-latency --runs 5
- *   TMPDIR="$HOME/tmp-gjc-tests/" GJC_CODING_AGENT_DIR="$(mktemp -d)" NO_COLOR=1 bun packages/coding-agent/scripts/resident-memory-bench.ts --mode read-churn --runs 5
+ *   TMPDIR="$HOME/tmp-vib-tests/" VIB_CODING_AGENT_DIR="$(mktemp -d)" NO_COLOR=1 bun packages/coding-agent/scripts/resident-memory-bench.ts --mode rss --runs 5
+ *   TMPDIR="$HOME/tmp-vib-tests/" VIB_CODING_AGENT_DIR="$(mktemp -d)" NO_COLOR=1 bun packages/coding-agent/scripts/resident-memory-bench.ts --mode put-latency --runs 5
+ *   TMPDIR="$HOME/tmp-vib-tests/" VIB_CODING_AGENT_DIR="$(mktemp -d)" NO_COLOR=1 bun packages/coding-agent/scripts/resident-memory-bench.ts --mode read-churn --runs 5
  *
  * HEAD forced-rebuild baseline (copy this script to the pinned HEAD worktree):
- *   git worktree add /tmp/gjc-bench-head 3649db42e
- *   TMPDIR="$HOME/tmp-gjc-tests/" GJC_CODING_AGENT_DIR="$(mktemp -d)" NO_COLOR=1 bun packages/coding-agent/scripts/resident-memory-bench.ts --mode read-churn --baseline forced-rebuild --runs 5
+ *   git worktree add /tmp/vib-bench-head 3649db42e
+ *   TMPDIR="$HOME/tmp-vib-tests/" VIB_CODING_AGENT_DIR="$(mktemp -d)" NO_COLOR=1 bun packages/coding-agent/scripts/resident-memory-bench.ts --mode read-churn --baseline forced-rebuild --runs 5
  *
  * Small smoke fixture and deliberate invalid-run demonstration:
- *   TMPDIR="$HOME/tmp-gjc-tests/" GJC_CODING_AGENT_DIR="$(mktemp -d)" NO_COLOR=1 bun packages/coding-agent/scripts/resident-memory-bench.ts --mode rss --entries 8 --bytes-per-entry 4096 --runs 1
- *   TMPDIR="$HOME/tmp-gjc-tests/" GJC_CODING_AGENT_DIR="$(mktemp -d)" NO_COLOR=1 bun packages/coding-agent/scripts/resident-memory-bench.ts --mode put-latency --puts 64 --runs 1
- *   TMPDIR="$HOME/tmp-gjc-tests/" GJC_CODING_AGENT_DIR="$(mktemp -d)" NO_COLOR=1 bun packages/coding-agent/scripts/resident-memory-bench.ts --mode read-churn --entries 8 --bytes-per-entry 4096 --cache-cap-bytes 1024 --runs 1
- *   TMPDIR="$HOME/tmp-gjc-tests/" GJC_CODING_AGENT_DIR="$(mktemp -d)" NO_COLOR=1 bun packages/coding-agent/scripts/resident-memory-bench.ts --mode read-churn --entries 8 --bytes-per-entry 4096 --cache-cap-bytes 1024 --skip-gc --runs 1
- *   TMPDIR="$HOME/tmp-gjc-tests/" GJC_CODING_AGENT_DIR="$(mktemp -d)" NO_COLOR=1 bun packages/coding-agent/scripts/resident-memory-bench.ts --mode rss --force-memory-only --runs 1
+ *   TMPDIR="$HOME/tmp-vib-tests/" VIB_CODING_AGENT_DIR="$(mktemp -d)" NO_COLOR=1 bun packages/coding-agent/scripts/resident-memory-bench.ts --mode rss --entries 8 --bytes-per-entry 4096 --runs 1
+ *   TMPDIR="$HOME/tmp-vib-tests/" VIB_CODING_AGENT_DIR="$(mktemp -d)" NO_COLOR=1 bun packages/coding-agent/scripts/resident-memory-bench.ts --mode put-latency --puts 64 --runs 1
+ *   TMPDIR="$HOME/tmp-vib-tests/" VIB_CODING_AGENT_DIR="$(mktemp -d)" NO_COLOR=1 bun packages/coding-agent/scripts/resident-memory-bench.ts --mode read-churn --entries 8 --bytes-per-entry 4096 --cache-cap-bytes 1024 --runs 1
+ *   TMPDIR="$HOME/tmp-vib-tests/" VIB_CODING_AGENT_DIR="$(mktemp -d)" NO_COLOR=1 bun packages/coding-agent/scripts/resident-memory-bench.ts --mode read-churn --entries 8 --bytes-per-entry 4096 --cache-cap-bytes 1024 --skip-gc --runs 1
+ *   TMPDIR="$HOME/tmp-vib-tests/" VIB_CODING_AGENT_DIR="$(mktemp -d)" NO_COLOR=1 bun packages/coding-agent/scripts/resident-memory-bench.ts --mode rss --force-memory-only --runs 1
  *
  * `--skip-gc` deliberately bypasses the required turn boundary and forced GC;
  * the --skip-gc command must exit non-zero with the invalid-run diagnostic. Do not
@@ -64,7 +64,7 @@ const BASELINE_MARKER_BYTES = 128;
 const AC1_APPEND_PHASE_RSS_LIMIT_BYTES = 100 * 1024 * 1024;
 const MEMORY_RECLAIM_GC_ROUNDS = 4;
 const SYNTHETIC_TEXT_PATTERN =
-	"gjc-resident-cache-fixture-abcdefghijklmnopqrstuvwxyz-ABCDEFGHIJKLMNOPQRSTUVWXYZ-0123456789";
+	"vib-resident-cache-fixture-abcdefghijklmnopqrstuvwxyz-ABCDEFGHIJKLMNOPQRSTUVWXYZ-0123456789";
 const AC2_DIRECT_STORE_MEDIAN_RATIO_LIMIT = 1.5;
 
 type Mode = "rss" | "put-latency" | "read-churn";
@@ -526,7 +526,7 @@ async function withPersistentFixture<T>(
 	forceMemoryOnly: boolean,
 	operation: (manager: SessionManagerType) => Promise<T>,
 ): Promise<T> {
-	const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-resident-memory-bench-"));
+	const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-resident-memory-bench-"));
 	let manager: SessionManagerType | undefined;
 	try {
 		if (forceMemoryOnly) await forceResidentCacheMemoryFallback();
@@ -540,8 +540,8 @@ async function withPersistentFixture<T>(
 }
 
 async function forceResidentCacheMemoryFallback(): Promise<void> {
-	const agentDir = process.env.GJC_CODING_AGENT_DIR;
-	if (!agentDir) throw new Error("--force-memory-only requires GJC_CODING_AGENT_DIR to be set.");
+	const agentDir = process.env.VIB_CODING_AGENT_DIR;
+	if (!agentDir) throw new Error("--force-memory-only requires VIB_CODING_AGENT_DIR to be set.");
 	await fs.mkdir(agentDir, { recursive: true, mode: 0o700 });
 	await fs.writeFile(path.join(agentDir, "resident-cache"), "forced resident cache memory fallback\n", {
 		encoding: "utf8",
@@ -551,7 +551,7 @@ async function forceResidentCacheMemoryFallback(): Promise<void> {
 }
 
 async function residentCacheDiskBytes(): Promise<number | null> {
-	const agentDir = process.env.GJC_CODING_AGENT_DIR;
+	const agentDir = process.env.VIB_CODING_AGENT_DIR;
 	if (!agentDir) return null;
 	const root = path.join(agentDir, "resident-cache");
 	const instanceDirs = await fs.readdir(root, { withFileTypes: true }).catch(() => undefined);
@@ -674,7 +674,7 @@ async function runFreshOpenRss(args: CliArgs): Promise<FreshOpenRssWorkerResult>
 async function runRss(args: CliArgs): Promise<RssWorkerResult> {
 	const fixture = fixtureFor(args);
 	const restoreCacheCap = installCacheCapOverride(args);
-	const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-resident-memory-bench-"));
+	const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-resident-memory-bench-"));
 	let manager: SessionManagerType | undefined;
 	try {
 		await settleAndForceGcTwice();
@@ -810,7 +810,7 @@ async function runPutLatency(args: CliArgs): Promise<PutLatencyWorkerResult> {
 	const canonicalMemorySamples = benchmarkCanonicalMemoryStorePuts(payloadBuffers, measureIterations);
 	await settleAndForceGcTwice();
 
-	const directStoreRoot = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-resident-direct-put-bench-"));
+	const directStoreRoot = await fs.mkdtemp(path.join(os.tmpdir(), "vib-resident-direct-put-bench-"));
 	let adoptedEphemeralStore: EphemeralBlobStore | undefined;
 	let adoptedEphemeralSamples: number[] = [];
 	let adoptedEphemeralPutFsyncCalls = 0;
@@ -845,7 +845,7 @@ async function runPutLatency(args: CliArgs): Promise<PutLatencyWorkerResult> {
 		await memoryManager.close();
 	}
 
-	const appendRoot = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-resident-append-bench-"));
+	const appendRoot = await fs.mkdtemp(path.join(os.tmpdir(), "vib-resident-append-bench-"));
 	let residentManager: SessionManagerType | undefined;
 	let residentAppendSamples: number[] = [];
 	let residentEndToEndAppendWallMs = 0;

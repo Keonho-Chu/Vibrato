@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import type { AgentMessage } from "@gajae-code/agent-core";
+import type { AgentMessage } from "@vib-rato/agent-core";
 import { reconcileTrailingToolCalls } from "../src/sdk/session";
 
 function assistantWithToolCall(id: string, name = "yield"): AgentMessage {

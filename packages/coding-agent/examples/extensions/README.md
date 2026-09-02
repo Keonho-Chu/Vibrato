@@ -1,51 +1,51 @@
 # Extension Examples
 
-Example extensions for gajae-code.
+Example extensions for vib-rato.
 
 ## Usage
 
 ```bash
 # Copy an existing extension into the user extension directory for auto-discovery
-mkdir -p ~/.gjc/agent/extensions
-cp packages/coding-agent/examples/extensions/hello.ts ~/.gjc/agent/extensions/
+mkdir -p ~/.vib/agent/extensions
+cp packages/coding-agent/examples/extensions/hello.ts ~/.vib/agent/extensions/
 
-# Project-local extensions can live in .gjc/extensions/
-mkdir -p .gjc/extensions
-cp packages/coding-agent/examples/extensions/pirate.ts .gjc/extensions/
+# Project-local extensions can live in .vib/extensions/
+mkdir -p .vib/extensions
+cp packages/coding-agent/examples/extensions/pirate.ts .vib/extensions/
 ```
 
 ### Enable the Ouroboros `ooo` bridge
 
-Install the version-pinned Ouroboros `v0.50.7` MCP profile, then configure its GJC runtime:
+Install the version-pinned Ouroboros `v0.50.7` MCP profile, then configure its Vibrato runtime:
 
 ```bash
 uv tool install 'ouroboros-ai[mcp]==0.50.7'
-ouroboros setup --runtime gjc
+ouroboros setup --runtime vib
 ```
 
 `pipx install 'ouroboros-ai[mcp]==0.50.7'` is the equivalent pipx installation. Do not pipe a mutable branch installer into a shell. Pin source audits to commit `cb658aa819bfabafecbbe91bc36327f10691171b`. The [v0.50.7 release](https://github.com/Q00/ouroboros/releases/tag/v0.50.7) publishes `ouroboros_ai-0.50.7-py3-none-any.whl` with SHA-256 `df42f4ef10e032f2edc3249534bf91e8612dee789dfc3517895a9eb2df7f82c4`; verify downloaded release assets before installing them.
 
-Ouroboros setup installs its own managed bridge. Replace that file with this standalone GJC bridge, which preserves the interview session across serialized follow-up answers, disposes it on GJC session switches, and drops queued predecessor-session starts. Download the example from immutable GJC commit `4311fefd49e9c6781c4d1111b8dd3f758e7d8974` and verify it before installation:
+Ouroboros setup installs its own managed bridge. Replace that file with this standalone Vibrato bridge, which preserves the interview session across serialized follow-up answers, disposes it on Vibrato session switches, and drops queued predecessor-session starts. Download the example from immutable Vibrato commit `4311fefd49e9c6781c4d1111b8dd3f758e7d8974` and verify it before installation:
 
 ```bash
-curl -fL https://raw.githubusercontent.com/Yeachan-Heo/gajae-code/4311fefd49e9c6781c4d1111b8dd3f758e7d8974/packages/coding-agent/examples/extensions/ooo-bridge.ts -o /tmp/gjc-ooo-bridge.ts
-shasum -a 256 /tmp/gjc-ooo-bridge.ts
-mkdir -p "${HOME}/${GJC_CONFIG_DIR:-.gjc}/agent/extensions/ouroboros-ooo-bridge" && cp /tmp/gjc-ooo-bridge.ts "${HOME}/${GJC_CONFIG_DIR:-.gjc}/agent/extensions/ouroboros-ooo-bridge/index.ts"
+curl -fL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/4311fefd49e9c6781c4d1111b8dd3f758e7d8974/packages/coding-agent/examples/extensions/ooo-bridge.ts -o /tmp/vib-ooo-bridge.ts
+shasum -a 256 /tmp/vib-ooo-bridge.ts
+mkdir -p "${HOME}/${VIB_CONFIG_DIR:-.vib}/agent/extensions/ouroboros-ooo-bridge" && cp /tmp/vib-ooo-bridge.ts "${HOME}/${VIB_CONFIG_DIR:-.vib}/agent/extensions/ouroboros-ooo-bridge/index.ts"
 ```
 
-The `shasum` output must match `2b0e1e25ac145331f112da629076875542db6f6e63c3c17adcd6770a4dcaf7bd` before the copy. The file has no runtime package imports and uses the host API injected by GJC, so compiled binaries do not require a peer `node_modules` directory beside the installation.
+The `shasum` output must match `2b0e1e25ac145331f112da629076875542db6f6e63c3c17adcd6770a4dcaf7bd` before the copy. The file has no runtime package imports and uses the host API injected by Vibrato, so compiled binaries do not require a peer `node_modules` directory beside the installation.
 
-For a project-only installation, copy the same verified file to `.gjc/extensions/ouroboros-ooo-bridge/index.ts`. Start a new GJC session after installation, then enter:
+For a project-only installation, copy the same verified file to `.vib/extensions/ouroboros-ooo-bridge/index.ts`. Start a new Vibrato session after installation, then enter:
 
 ```text
 ooo interview "I want to build a task management CLI"
 ```
 
-The first question is rendered in GJC. While that interview remains active, ordinary interactive input is sent as the answer with the same Ouroboros session ID; completion clears the correlation and returns subsequent ordinary prompts to GJC. Other `ooo ...` commands continue through `ouroboros dispatch --runtime gjc`, including exit-code `78` pass-through.
+The first question is rendered in Vibrato. While that interview remains active, ordinary interactive input is sent as the answer with the same Ouroboros session ID; completion clears the correlation and returns subsequent ordinary prompts to Vibrato. Other `ooo ...` commands continue through `ouroboros dispatch --runtime vib`, including exit-code `78` pass-through.
 
-Set `OUROBOROS_CLI=/absolute/path/to/ouroboros` when the executable is outside `PATH`. Missing executable, MCP startup, and dispatch failures produce an error notification for the claimed input without preventing GJC startup or ordinary prompts.
+Set `OUROBOROS_CLI=/absolute/path/to/ouroboros` when the executable is outside `PATH`. Missing executable, MCP startup, and dispatch failures produce an error notification for the claimed input without preventing Vibrato startup or ordinary prompts.
 
-This external path is separate from GJC's native `/skill:deep-interview`: the native skill runs GJC's bundled interview workflow, while `ooo interview` delegates to the installed Ouroboros MCP interview tool.
+This external path is separate from Vibrato's native `/skill:deep-interview`: the native skill runs Vibrato's bundled interview workflow, while `ooo interview` delegates to the installed Ouroboros MCP interview tool.
 
 ## Examples
 
@@ -83,7 +83,7 @@ This external path is separate from GJC's native `/skill:deep-interview`: the na
 The examples below show the core extension patterns used by this directory.
 
 ```typescript
-import type { ExtensionAPI } from "@gajae-code/coding-agent";
+import type { ExtensionAPI } from "@vib-rato/coding-agent";
 
 export default function (pi: ExtensionAPI) {
 	const z = pi.zod;

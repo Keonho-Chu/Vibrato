@@ -1,5 +1,5 @@
 /**
- * Map raw source MCP server entries onto GJC `MCPServerConfig`.
+ * Map raw source MCP server entries onto Vibrato `MCPServerConfig`.
  *
  * Implements the source-schema compatibility matrix from the consensus plan:
  * preserved (P), transformed (T), omitted-with-warning (OW), skipped (S,
@@ -73,7 +73,7 @@ const RECOGNIZED_FIELDS: Record<MigrateSource, ReadonlySet<string>> = {
 	opencode: new Set(["type", "command", "args", "env", "url", "headers", "enabled", "timeout", "cwd", "protocol"]),
 };
 
-/** Fields with no GJC equivalent: omitted-with-warning (named explicitly so the warning is precise). */
+/** Fields with no Vibrato equivalent: omitted-with-warning (named explicitly so the warning is precise). */
 const OMITTED_FIELDS: Record<MigrateSource, string[]> = {
 	"claude-code": [],
 	codex: ["startup_timeout_sec", "enabled_tools", "disabled_tools"],

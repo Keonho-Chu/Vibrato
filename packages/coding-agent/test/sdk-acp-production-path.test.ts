@@ -43,9 +43,9 @@ type SessionListResponse = Record<string, unknown>;
 async function createSessionListBroker(
 	responder: (input: Record<string, unknown>) => SessionListResponse,
 ): Promise<{ directory: string; agentDir: string; requests: Array<Record<string, unknown>> }> {
-	const directory = await mkdtemp(path.join(tmpdir(), "gjc-sdk-acp-session-list-"));
+	const directory = await mkdtemp(path.join(tmpdir(), "vib-sdk-acp-session-list-"));
 	directories.push(directory);
-	const agentDir = path.join(directory, ".gjc", "agent");
+	const agentDir = path.join(directory, ".vib", "agent");
 	const token = "acp-session-list-token";
 	const requests: Array<Record<string, unknown>> = [];
 	let server!: TestServer;
@@ -104,9 +104,9 @@ test("ACP advertised skill commands require one complete canonical text block", 
 	});
 });
 test("production ACP routes zero-session SDK globals through the broker adapter", async () => {
-	const directory = await mkdtemp(path.join(tmpdir(), "gjc-sdk-acp-production-"));
+	const directory = await mkdtemp(path.join(tmpdir(), "vib-sdk-acp-production-"));
 	directories.push(directory);
-	const agentDir = path.join(directory, ".gjc", "agent");
+	const agentDir = path.join(directory, ".vib", "agent");
 	const token = "acp-broker-token";
 	const requests: Array<Record<string, unknown>> = [];
 	let server!: TestServer;
@@ -146,14 +146,14 @@ test("production ACP routes zero-session SDK globals through the broker adapter"
 
 	const abort = new AbortController();
 	const agent = new AcpAgent({ signal: abort.signal } as unknown as AgentSideConnection, { agentDir });
-	const result = await agent.extMethod("_gjc/sdk/global", { operation: "session.list" });
+	const result = await agent.extMethod("_vib/sdk/global", { operation: "session.list" });
 
 	expect(result).toMatchObject({ ok: true, result: { sessions: [] } });
 	expect(requests).toEqual([
 		expect.objectContaining({ type: "broker_request", operation: "session.list", input: {} }),
 	]);
 	expect(requests[0]).not.toHaveProperty("sessionId");
-	const lifecycle = await agent.extMethod("_gjc/sdk/global", {
+	const lifecycle = await agent.extMethod("_vib/sdk/global", {
 		operation: "session.create",
 		input: { cwd: directory },
 		idempotencyKey: "must-not-reach-broker",
@@ -248,9 +248,9 @@ test("production ACP rejects malformed session.list continuation pages without p
 	}
 });
 test("production ACP preserves lifecycle, turn, replay, and connection ownership contracts over SDK WebSockets", async () => {
-	const directory = await mkdtemp(path.join(tmpdir(), "gjc-sdk-acp-contract-"));
+	const directory = await mkdtemp(path.join(tmpdir(), "vib-sdk-acp-contract-"));
 	directories.push(directory);
-	const agentDir = path.join(directory, ".gjc", "agent");
+	const agentDir = path.join(directory, ".vib", "agent");
 	const cwd = path.join(directory, "workspace");
 	const token = "acp-contract-token";
 	const brokerSessions: Record<string, unknown>[] = [
@@ -612,7 +612,7 @@ test("production ACP preserves lifecycle, turn, replay, and connection ownership
 	});
 	servers.push(server);
 	await mkdir(cwd, { recursive: true });
-	const endpointPath = path.join(cwd, ".gjc", "state", "sdk", "owned-session.json");
+	const endpointPath = path.join(cwd, ".vib", "state", "sdk", "owned-session.json");
 	await mkdir(path.dirname(endpointPath), { recursive: true });
 	await Bun.write(
 		endpointPath,
@@ -634,7 +634,7 @@ test("production ACP preserves lifecycle, turn, replay, and connection ownership
 	await index.append({
 		type: "host_registered",
 		sessionId: "owned-session",
-		locator: { repo: cwd, stateRoot: path.join(cwd, ".gjc", "state") },
+		locator: { repo: cwd, stateRoot: path.join(cwd, ".vib", "state") },
 		endpointGeneration: 1,
 		pid: process.pid,
 		endpointMtimeMs,
@@ -922,7 +922,7 @@ test("production ACP preserves lifecycle, turn, replay, and connection ownership
 			toolCallId: "tool-read-1",
 			toolName: "read",
 			isError: false,
-			result: { content: [{ type: "text", text: "# Gajae Code" }] },
+			result: { content: [{ type: "text", text: "# Vibrato" }] },
 		},
 	]) {
 		promptSocket!.send(
@@ -1067,11 +1067,11 @@ test("production ACP preserves lifecycle, turn, replay, and connection ownership
 			return payload.sessionUpdate === "agent_message_chunk" && /failed/i.test(payload.content?.text ?? "");
 		}),
 	).toHaveLength(0);
-	// `_meta.gjc.abortScope: "turn"` matches the default now: the turn aborts and
+	// `_meta.vib.abortScope: "turn"` matches the default now: the turn aborts and
 	// exact owned subagents and background tasks keep running, same as a plain
 	// cancel.
 	await bounded(
-		agent.cancel({ sessionId: created.sessionId, _meta: { gjc: { abortScope: "turn" } } }),
+		agent.cancel({ sessionId: created.sessionId, _meta: { vib: { abortScope: "turn" } } }),
 		"turn-scope cancel acknowledgement",
 	);
 	expect(abortFrames.at(-1)).toMatchObject({
@@ -1288,7 +1288,7 @@ test("production ACP preserves lifecycle, turn, replay, and connection ownership
 				update: expect.objectContaining({
 					sessionUpdate: "session_info_update",
 					_meta: {
-						gjcTranscriptImageReplay: { available: false, reason: "historical_transcript_images_unavailable" },
+						vibTranscriptImageReplay: { available: false, reason: "historical_transcript_images_unavailable" },
 					},
 				}),
 			}),

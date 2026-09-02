@@ -46,8 +46,8 @@ export function getCurrentAutoresearchBranch(workDir: string): Promise<string | 
  * dependencies, and every other path stay blocked by the research-only
  * mutation guard regardless of branch name.
  *
- * Mission state under `.gjc/**` is intentionally NOT listed here: it is
- * runtime-owned and only the sanctioned `gjc autoresearch` CLI writes it.
+ * Mission state under `.vib/**` is intentionally NOT listed here: it is
+ * runtime-owned and only the sanctioned `vib autoresearch` CLI writes it.
  */
 export function isAutoresearchAuthorizedResearchPath(_cwd: string, rawPath: string): boolean {
 	const normalized = normalizePathSpec(rawPath);

@@ -1,7 +1,7 @@
 import * as crypto from "node:crypto";
-import type { AgentMessage } from "@gajae-code/agent-core";
-import { getSegmenter } from "@gajae-code/tui";
-import { sanitizeText } from "@gajae-code/utils";
+import type { AgentMessage } from "@vib-rato/agent-core";
+import { getSegmenter } from "@vib-rato/tui";
+import { sanitizeText } from "@vib-rato/utils";
 import { associateSessionMessageObservationId, getSessionMessageObservationId } from "../../session/session-manager";
 
 const graphemeSegmenter = getSegmenter();
@@ -83,7 +83,7 @@ function stringDetail(details: unknown, key: string): string {
 
 function legacyObservationId(fields: readonly string[]): string {
 	const hash = crypto.createHash("sha256");
-	hash.update("gjc:irc:legacy-observation:v1\0");
+	hash.update("vib:irc:legacy-observation:v1\0");
 	for (const field of fields) {
 		hash.update(String(Buffer.byteLength(field, "utf8")));
 		hash.update(":");

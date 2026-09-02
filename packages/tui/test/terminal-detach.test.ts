@@ -7,8 +7,8 @@ import {
 	ProcessTerminal,
 	type Terminal,
 	type TerminalAppearance,
-} from "@gajae-code/tui/terminal";
-import { type Component, CURSOR_MARKER, TUI } from "@gajae-code/tui/tui";
+} from "@vib-rato/tui/terminal";
+import { type Component, CURSOR_MARKER, TUI } from "@vib-rato/tui/tui";
 
 class StaticComponent implements Component {
 	#line: string;
@@ -577,8 +577,8 @@ describe("terminal detach handling", () => {
 		tui.stop();
 	});
 	it("commits neither frame nor frontier when the render-buffer write fails before an IME cursor write", async () => {
-		const previousIme = Bun.env.GJC_TUI_IME_CURSOR;
-		Bun.env.GJC_TUI_IME_CURSOR = "1";
+		const previousIme = Bun.env.VIB_TUI_IME_CURSOR;
+		Bun.env.VIB_TUI_IME_CURSOR = "1";
 		const terminal = new DetachingTerminal();
 		const tui = new TUI(terminal, false);
 		const transcript = new StaticComponent("before");
@@ -617,14 +617,14 @@ describe("terminal detach handling", () => {
 			expect(recoveryFrame).not.toContain("draft");
 		} finally {
 			tui.stop();
-			if (previousIme === undefined) delete Bun.env.GJC_TUI_IME_CURSOR;
-			else Bun.env.GJC_TUI_IME_CURSOR = previousIme;
+			if (previousIme === undefined) delete Bun.env.VIB_TUI_IME_CURSOR;
+			else Bun.env.VIB_TUI_IME_CURSOR = previousIme;
 		}
 	});
 
 	it("commits the painted frame before a subsequent IME cursor write fails", async () => {
-		const previousIme = Bun.env.GJC_TUI_IME_CURSOR;
-		Bun.env.GJC_TUI_IME_CURSOR = "1";
+		const previousIme = Bun.env.VIB_TUI_IME_CURSOR;
+		Bun.env.VIB_TUI_IME_CURSOR = "1";
 		const terminal = new DetachingTerminal();
 		const tui = new TUI(terminal, false);
 		const transcript = new StaticComponent("before");
@@ -665,8 +665,8 @@ describe("terminal detach handling", () => {
 			expect(recoveryFrame).not.toContain("draft");
 		} finally {
 			tui.stop();
-			if (previousIme === undefined) delete Bun.env.GJC_TUI_IME_CURSOR;
-			else Bun.env.GJC_TUI_IME_CURSOR = previousIme;
+			if (previousIme === undefined) delete Bun.env.VIB_TUI_IME_CURSOR;
+			else Bun.env.VIB_TUI_IME_CURSOR = previousIme;
 		}
 	});
 	it("preserves manual follow intent when the repaint write fails and retries after restart", async () => {
@@ -715,8 +715,8 @@ describe("terminal detach handling", () => {
 		expect(recoveryFrame).not.toContain("New output — type to follow");
 	});
 	it("commits the follow-live transition before a later IME cursor write fails", async () => {
-		const previousIme = Bun.env.GJC_TUI_IME_CURSOR;
-		Bun.env.GJC_TUI_IME_CURSOR = "1";
+		const previousIme = Bun.env.VIB_TUI_IME_CURSOR;
+		Bun.env.VIB_TUI_IME_CURSOR = "1";
 		const terminal = new DetachingTerminal();
 		const tui = new TUI(terminal, false);
 		const component = new MultiLineComponent(
@@ -754,8 +754,8 @@ describe("terminal detach handling", () => {
 			expect(recoveryFrame).not.toContain("New output — type to follow");
 		} finally {
 			tui.stop();
-			if (previousIme === undefined) delete Bun.env.GJC_TUI_IME_CURSOR;
-			else Bun.env.GJC_TUI_IME_CURSOR = previousIme;
+			if (previousIme === undefined) delete Bun.env.VIB_TUI_IME_CURSOR;
+			else Bun.env.VIB_TUI_IME_CURSOR = previousIme;
 		}
 	});
 });

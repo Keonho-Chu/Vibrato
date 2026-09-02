@@ -1,9 +1,9 @@
-import type { ExtractSegmentsResult, SliceResult } from "@gajae-code/natives";
-import { getDefaultTabWidth, getIndentation, onDefaultTabWidthChange } from "@gajae-code/utils";
+import type { ExtractSegmentsResult, SliceResult } from "@vib-rato/natives";
+import { getDefaultTabWidth, getIndentation, onDefaultTabWidthChange } from "@vib-rato/utils";
 import { renderMetrics } from "./metrics";
 
 type NativeTuiUtils = Pick<
-	typeof import("@gajae-code/natives"),
+	typeof import("@vib-rato/natives"),
 	| "extractSegments"
 	| "sliceWithWidth"
 	| "truncateLinesToWidth"
@@ -17,7 +17,7 @@ let nativeTuiUtilsBindings: NativeTuiUtils | undefined;
 
 function nativeTuiUtils(): NativeTuiUtils {
 	if (!nativeTuiUtilsBindings) {
-		nativeTuiUtilsBindings = require("@gajae-code/natives") as NativeTuiUtils;
+		nativeTuiUtilsBindings = require("@vib-rato/natives") as NativeTuiUtils;
 	}
 	return nativeTuiUtilsBindings;
 }
@@ -29,7 +29,7 @@ export enum Ellipsis {
 	Omit = 2,
 }
 
-export { getDefaultTabWidth, getIndentation } from "@gajae-code/utils";
+export { getDefaultTabWidth, getIndentation } from "@vib-rato/utils";
 /** Test-only performance counters for advisory baseline tests. */
 export const __textHelperPerfCounters = {
 	truncateToWidthCalls: 0,
@@ -197,7 +197,7 @@ export interface ViewportAnchorAnnotation {
 // Kitty graphics prefix and TERMINAL.isImageLine() would misclassify every
 // annotated line as an image line, which skips wrapping (issue: assistant
 // prose overflowing the terminal on Kitty-protocol terminals).
-export const VIEWPORT_ANCHOR_PREFIX = "\x1b_AGJC_ANCHOR:";
+export const VIEWPORT_ANCHOR_PREFIX = "\x1b_AVIB_ANCHOR:";
 const VIEWPORT_ANCHOR_SUFFIX = "\x1b\\";
 
 function ansiSequenceEnd(text: string, start: number): number {
@@ -267,7 +267,7 @@ export function extractViewportAnchorRows(
 	lines: readonly string[],
 	token: string,
 ): { lines: string[]; spans: Array<ViewportAnchorSpan | null> } {
-	const markerRegex = new RegExp(`\\x1b_AGJC_ANCHOR:${token}:(\\d+):(\\d+):(\\d+):(\\d+)\\x1b\\\\`, "g");
+	const markerRegex = new RegExp(`\\x1b_AVIB_ANCHOR:${token}:(\\d+):(\\d+):(\\d+):(\\d+)\\x1b\\\\`, "g");
 	const cleanLines: string[] = [];
 	const spans: Array<ViewportAnchorSpan | null> = [];
 	for (const line of lines) {

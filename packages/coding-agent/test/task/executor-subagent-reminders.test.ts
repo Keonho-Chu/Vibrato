@@ -2,9 +2,9 @@ import { afterEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { AgentBusyError, type AgentTelemetryConfig, type Tracer } from "@gajae-code/agent-core";
-import { type AssistantMessage, type AssistantMessageEvent, Effort, type Model } from "@gajae-code/ai";
-import type { RecoveryFsRoot } from "@gajae-code/natives";
+import { AgentBusyError, type AgentTelemetryConfig, type Tracer } from "@vib-rato/agent-core";
+import { type AssistantMessage, type AssistantMessageEvent, Effort, type Model } from "@vib-rato/ai";
+import type { RecoveryFsRoot } from "@vib-rato/natives";
 import type { AsyncJobManager } from "../../src/async/job-manager";
 import { kNoAuth } from "../../src/config/model-registry";
 import { Settings } from "../../src/config/settings";
@@ -882,7 +882,7 @@ describe("runSubprocess yield reminders", () => {
 		expect(authSessionIds).toEqual(["credential-pool"]);
 	});
 	it("keeps managed fork siblings on distinct canonical provider scopes", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-managed-fork-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-managed-fork-"));
 		const retainedAuthorities: RecoveryFsRoot[] = [];
 		const retainedAuthorityCloseCounts = new Map<RecoveryFsRoot, number>();
 		const childRuns: Promise<unknown>[] = [];

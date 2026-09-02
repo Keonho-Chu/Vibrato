@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import * as os from "node:os";
 import * as path from "node:path";
-import { CliParseError } from "@gajae-code/utils/cli";
+import { CliParseError } from "@vib-rato/utils/cli";
 import { parseArgs } from "../../src/cli/args";
 
 describe("--no-mcp", () => {

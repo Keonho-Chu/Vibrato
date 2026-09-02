@@ -10,9 +10,9 @@
  */
 
 /** Error code a remote ask source uses to signal that its own timeout fired. */
-export const GJC_ASK_TIMEOUT_CODE = "gjc.ask.timeout";
+export const VIB_ASK_TIMEOUT_CODE = "vib.ask.timeout";
 
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 import type { WorkflowGateEmitter } from "../modes/shared/agent-wire/workflow-gate-broker";
 import type { AskAnswerSource } from "./index";
 

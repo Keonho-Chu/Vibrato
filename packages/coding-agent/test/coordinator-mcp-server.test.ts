@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { Model } from "@gajae-code/ai";
+import type { Model } from "@vib-rato/ai";
 import {
 	type CodexHandoffOriginV1,
 	readCodexHandoff,
@@ -37,7 +37,6 @@ import {
 	createCoordinatorMcpServer,
 	readCoordinatorArtifact,
 } from "../src/coordinator-mcp/server";
-import { withSessionStateFileLock } from "../src/gjc-runtime/session-state-lock";
 import { persistMcpDelegateHostContext } from "../src/hooks/mcp-delegate-host-context";
 import { schemaHash } from "../src/modes/shared/agent-wire/workflow-gate-schema";
 import {
@@ -62,6 +61,7 @@ import { UnsupportedStateVersionError } from "../src/sdk/broker/state-version";
 import { type SdkClient, SdkClientError } from "../src/sdk/client/client";
 import { resolveSdkHostModel, type SdkHostModelRegistryLoader } from "../src/sdk/host/model-pin";
 import { type SessionRouterClient, SessionRouterError } from "../src/sdk/router";
+import { withSessionStateFileLock } from "../src/vib-runtime/session-state-lock";
 import { installExactIdentityNatives } from "./helpers/exact-identity-natives";
 import {
 	cleanupFixtureRoot,
@@ -77,7 +77,7 @@ installExactIdentityNatives();
 const tempDirs: string[] = [];
 
 async function tempRoot(): Promise<string> {
-	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-coordinator-server-"));
+	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-coordinator-server-"));
 	const canonical = await fs.realpath(dir);
 	tempDirs.push(canonical);
 	return canonical;
@@ -126,7 +126,7 @@ async function injectPendingDeliveryForTest(
 
 /** Real detached-broker fixtures are cleaned solely by cleanupFixtureRoot. */
 async function managedFixtureRoot(): Promise<string> {
-	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-coordinator-managed-broker-"));
+	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-coordinator-managed-broker-"));
 	return fs.realpath(dir);
 }
 
@@ -244,10 +244,10 @@ function testBrokerDiscovery(): BrokerDiscovery {
 function createBrokerTestServer(root: string, services: BrokerTestServices) {
 	return createCoordinatorMcpServer({
 		env: {
-			GJC_COORDINATOR_MCP_WORKDIR_ROOTS: root,
-			GJC_COORDINATOR_MCP_STATE_ROOT: path.join(root, ".gjc", "coordinator-state"),
-			GJC_COORDINATOR_MCP_PROFILE: "local",
-			GJC_COORDINATOR_MCP_REPO: "repo",
+			VIB_COORDINATOR_MCP_WORKDIR_ROOTS: root,
+			VIB_COORDINATOR_MCP_STATE_ROOT: path.join(root, ".vib", "coordinator-state"),
+			VIB_COORDINATOR_MCP_PROFILE: "local",
+			VIB_COORDINATOR_MCP_REPO: "repo",
 		},
 		services: { ...services, getAgentDir: () => path.join(root, "agent-global") },
 	});
@@ -255,10 +255,10 @@ function createBrokerTestServer(root: string, services: BrokerTestServices) {
 function createRealBrokerServer(root: string, agentDir: string) {
 	return createCoordinatorMcpServer({
 		env: {
-			GJC_COORDINATOR_MCP_WORKDIR_ROOTS: root,
-			GJC_COORDINATOR_MCP_STATE_ROOT: path.join(root, ".gjc", "coordinator-state"),
-			GJC_COORDINATOR_MCP_PROFILE: "local",
-			GJC_COORDINATOR_MCP_REPO: "repo",
+			VIB_COORDINATOR_MCP_WORKDIR_ROOTS: root,
+			VIB_COORDINATOR_MCP_STATE_ROOT: path.join(root, ".vib", "coordinator-state"),
+			VIB_COORDINATOR_MCP_PROFILE: "local",
+			VIB_COORDINATOR_MCP_REPO: "repo",
 		},
 		services: { getAgentDir: () => agentDir },
 	});
@@ -304,7 +304,7 @@ async function createSdkControlServer(
 	_reserved?: never,
 	serverOptions: SdkControlServerOptions = {},
 ): Promise<CoordinatorMcpServer> {
-	const stateRoot = path.join(root, ".gjc", "coordinator-state");
+	const stateRoot = path.join(root, ".vib", "coordinator-state");
 	const agentDir = path.join(root, "agent-global");
 	let createdSessions = 0;
 	for (const session of brokerSessions) {
@@ -366,7 +366,7 @@ async function createSdkControlServer(
 				const repo = root;
 				return {
 					sessionId,
-					locator: { repo, stateRoot: path.join(repo, ".gjc", "state") },
+					locator: { repo, stateRoot: path.join(repo, ".vib", "state") },
 					live: session.live === true,
 					terminalUncertain: session.terminalUncertain === true,
 					endpointGeneration: session.endpointGeneration,
@@ -380,15 +380,15 @@ async function createSdkControlServer(
 	} as unknown as SessionIndex;
 	const server = createCoordinatorMcpServer({
 		env: {
-			GJC_COORDINATOR_MCP_WORKDIR_ROOTS: root,
-			GJC_COORDINATOR_MCP_STATE_ROOT: stateRoot,
-			GJC_COORDINATOR_MCP_MUTATIONS: "sessions,questions,reports",
-			GJC_COORDINATOR_MCP_PROFILE: "local",
-			GJC_COORDINATOR_MCP_REPO: "repo",
-			...(sessionCommand ? { GJC_COORDINATOR_MCP_SESSION_COMMAND: sessionCommand } : {}),
+			VIB_COORDINATOR_MCP_WORKDIR_ROOTS: root,
+			VIB_COORDINATOR_MCP_STATE_ROOT: stateRoot,
+			VIB_COORDINATOR_MCP_MUTATIONS: "sessions,questions,reports",
+			VIB_COORDINATOR_MCP_PROFILE: "local",
+			VIB_COORDINATOR_MCP_REPO: "repo",
+			...(sessionCommand ? { VIB_COORDINATOR_MCP_SESSION_COMMAND: sessionCommand } : {}),
 			...(serverOptions.promptAckTimeoutMs === undefined
 				? {}
-				: { GJC_COORDINATOR_MCP_PROMPT_ACK_TIMEOUT_MS: String(serverOptions.promptAckTimeoutMs) }),
+				: { VIB_COORDINATOR_MCP_PROMPT_ACK_TIMEOUT_MS: String(serverOptions.promptAckTimeoutMs) }),
 			...(serverOptions.eventWebhookEnv ?? {}),
 		},
 		platform: serverOptions.platform,
@@ -427,7 +427,7 @@ async function createSdkControlServer(
 							const lifecycleCwd = worktree?.enabled === true ? path.join(root, "hermes-worktree") : undefined;
 							const sessionId = `created-session-${++createdSessions}`;
 							const sessionCwd = lifecycleCwd ?? root;
-							const endpointPath = path.join(sessionCwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+							const endpointPath = path.join(sessionCwd, ".vib", "state", "sdk", `${sessionId}.json`);
 							await fs.mkdir(path.dirname(endpointPath), { recursive: true });
 							await Bun.write(
 								endpointPath,
@@ -525,7 +525,7 @@ async function createSdkControlServer(
 			},
 		},
 	});
-	await fs.mkdir(path.join(root, ".gjc", "state", "sdk"), { recursive: true });
+	await fs.mkdir(path.join(root, ".vib", "state", "sdk"), { recursive: true });
 	await writeBrokerDiscovery(agentDir, {
 		version: 1,
 		protocolVersion: 3,
@@ -545,7 +545,7 @@ async function createSdkControlServer(
 }
 
 async function registerSdkSession(server: CoordinatorMcpServer, root: string) {
-	return await server.callTool("gjc_coordinator_register_session", {
+	return await server.callTool("vib_coordinator_register_session", {
 		session_id: "visible-session",
 		cwd: root,
 		tmux_session: "visible-session",
@@ -557,9 +557,9 @@ async function registerSdkSession(server: CoordinatorMcpServer, root: string) {
 
 function coordinatorNamespace(root: string): string {
 	const config = buildCoordinatorMcpConfig({
-		GJC_COORDINATOR_MCP_STATE_ROOT: path.join(root, ".gjc", "coordinator-state"),
-		GJC_COORDINATOR_MCP_PROFILE: "local",
-		GJC_COORDINATOR_MCP_REPO: "repo",
+		VIB_COORDINATOR_MCP_STATE_ROOT: path.join(root, ".vib", "coordinator-state"),
+		VIB_COORDINATOR_MCP_PROFILE: "local",
+		VIB_COORDINATOR_MCP_REPO: "repo",
 	});
 	return path.join(config.stateRoot, "v1", config.namespace.identity, "projections");
 }
@@ -574,7 +574,7 @@ async function materializeLegacyProjectionFixture(
 	sessionId: string,
 ): Promise<string> {
 	const projections = coordinatorNamespace(root);
-	const legacy = path.join(root, ".gjc", "coordinator-state", "local", "repo");
+	const legacy = path.join(root, ".vib", "coordinator-state", "local", "repo");
 	for (const directory of ["sessions", "turns", "active-turns", "questions", "reports", "session-states"]) {
 		const sourceDirectory = path.join(projections, directory);
 		const names = await fs.readdir(sourceDirectory).catch(error => {
@@ -649,7 +649,7 @@ describe("Coordinator MCP canonical SDK controls", () => {
 			establishedSidecarAuthority: false,
 		});
 		await expect(
-			server.callTool("gjc_coordinator_register_session", {
+			server.callTool("vib_coordinator_register_session", {
 				session_id: "visible-session",
 				cwd: root,
 				idempotency_key: "unowned-runtime",
@@ -721,10 +721,10 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 	async function pingServer(root: string) {
 		const server = createCoordinatorMcpServer({
 			env: {
-				GJC_COORDINATOR_MCP_WORKDIR_ROOTS: root,
-				GJC_COORDINATOR_MCP_STATE_ROOT: path.join(root, ".gjc", "coordinator-state"),
-				GJC_COORDINATOR_MCP_PROFILE: "local",
-				GJC_COORDINATOR_MCP_REPO: "repo",
+				VIB_COORDINATOR_MCP_WORKDIR_ROOTS: root,
+				VIB_COORDINATOR_MCP_STATE_ROOT: path.join(root, ".vib", "coordinator-state"),
+				VIB_COORDINATOR_MCP_PROFILE: "local",
+				VIB_COORDINATOR_MCP_REPO: "repo",
 			},
 			services: { getAgentDir: () => path.join(root, "agent-global") },
 		});
@@ -759,7 +759,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 
 	it("does not write any coordinator state files for a ping keepalive", async () => {
 		const root = await tempRoot();
-		const stateRoot = path.join(root, ".gjc", "coordinator-state");
+		const stateRoot = path.join(root, ".vib", "coordinator-state");
 		const server = await pingServer(root);
 		await server.handleJsonRpc({ jsonrpc: "2.0", id: 1, method: "ping" });
 		const exists = await fs
@@ -798,7 +798,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 				reason: "Bearer session-state-secret",
 			}),
 		);
-		const status = await server.callTool("gjc_coordinator_read_status", { session_id: "visible-session" });
+		const status = await server.callTool("vib_coordinator_read_status", { session_id: "visible-session" });
 		expect(status).toMatchObject({
 			ok: true,
 			session: { session_id: "visible-session" },
@@ -862,7 +862,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 	async function readStatusActivity(
 		server: CoordinatorMcpServer,
 	): Promise<{ status: Record<string, unknown>; activity: Record<string, unknown> | undefined }> {
-		const status = await server.callTool("gjc_coordinator_read_status", { session_id: "visible-session" });
+		const status = await server.callTool("vib_coordinator_read_status", { session_id: "visible-session" });
 		const sessionState = status.session_state as Record<string, unknown>;
 		return { status, activity: sessionState.activity as Record<string, unknown> | undefined };
 	}
@@ -988,7 +988,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		});
 		await Bun.sleep(25);
 
-		const response = await server.callTool("gjc_coordinator_send_prompt", {
+		const response = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "work",
 			idempotency_key: "state-lock-1",
@@ -1008,7 +1008,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const controls: SdkControl[] = [];
 		const server = await createSdkControlServer(root, controls);
 		await registerSdkSession(server, root);
-		const prompted = await server.callTool("gjc_coordinator_send_prompt", {
+		const prompted = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "work",
 			idempotency_key: "repair-prompt-1",
@@ -1033,7 +1033,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		);
 
 		// A terminal report rebuilds every legacy projection from canonical state.
-		const report = await server.callTool("gjc_coordinator_report_status", {
+		const report = await server.callTool("vib_coordinator_report_status", {
 			session_id: "visible-session",
 			turn_id: prompted.turn_id,
 			status: "completed",
@@ -1070,7 +1070,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const controls: SdkControl[] = [];
 		const server = await createSdkControlServer(root, controls);
 		await registerSdkSession(server, root);
-		const prompted = await server.callTool("gjc_coordinator_send_prompt", {
+		const prompted = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "work",
 			idempotency_key: "settled-prompt-1",
@@ -1090,7 +1090,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		};
 		await annotateSessionState(root, settled);
 
-		const report = await server.callTool("gjc_coordinator_report_status", {
+		const report = await server.callTool("vib_coordinator_report_status", {
 			session_id: "visible-session",
 			turn_id: prompted.turn_id,
 			status: "completed",
@@ -1109,7 +1109,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const controls: SdkControl[] = [];
 		const server = await createSdkControlServer(root, controls);
 		await registerSdkSession(server, root);
-		const prompted = await server.callTool("gjc_coordinator_send_prompt", {
+		const prompted = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "work",
 			idempotency_key: "malformed-prompt-1",
@@ -1118,7 +1118,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		expect(prompted).toMatchObject({ ok: true });
 		await annotateSessionState(root, activitySnapshot({ phase: "exfiltrating", note: "LEAKY-NOTE" }));
 
-		const report = await server.callTool("gjc_coordinator_report_status", {
+		const report = await server.callTool("vib_coordinator_report_status", {
 			session_id: "visible-session",
 			turn_id: prompted.turn_id,
 			status: "completed",
@@ -1139,7 +1139,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const controls: SdkControl[] = [];
 		const server = await createSdkControlServer(root, controls);
 
-		const started = await server.callTool("gjc_coordinator_start_session", {
+		const started = await server.callTool("vib_coordinator_start_session", {
 			cwd: root,
 			idempotency_key: "ready-after-binding",
 			allow_mutation: true,
@@ -1163,9 +1163,9 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			idempotency_key: "session-start-cardinality",
 			allow_mutation: true,
 		};
-		await server.callTool("gjc_coordinator_start_session", args);
-		await server.callTool("gjc_coordinator_start_session", args);
-		await server.callTool("gjc_coordinator_watch_events", { after_seq: 0, timeout_ms: 0 });
+		await server.callTool("vib_coordinator_start_session", args);
+		await server.callTool("vib_coordinator_start_session", args);
+		await server.callTool("vib_coordinator_watch_events", { after_seq: 0, timeout_ms: 0 });
 		const journal = (
 			await fs.readFile(path.join(coordinatorNamespace(root), "events", "event-journal.jsonl"), "utf8")
 		)
@@ -1187,7 +1187,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			},
 		});
 
-		const result = await server.callTool("gjc_coordinator_start_session", {
+		const result = await server.callTool("vib_coordinator_start_session", {
 			cwd: root,
 			idempotency_key: "compensate-unbound-session",
 			allow_mutation: true,
@@ -1208,8 +1208,8 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		});
 		const args = { cwd: root, idempotency_key: "ambiguous-remote-create", allow_mutation: true };
 
-		const first = await server.callTool("gjc_coordinator_start_session", args);
-		const second = await server.callTool("gjc_coordinator_start_session", args);
+		const first = await server.callTool("vib_coordinator_start_session", args);
+		const second = await server.callTool("vib_coordinator_start_session", args);
 
 		expect(first).toMatchObject({ ok: false, error: { code: "broker_compensation_unobserved" } });
 		expect(second).toEqual(first);
@@ -1222,7 +1222,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const controls: SdkControl[] = [];
 		const creationKey = "stranded-start-to-retire";
 		const remoteCreateKey = `remote_${createHash("sha256")
-			.update(`gjc_coordinator_start_session\0${creationKey}`)
+			.update(`vib_coordinator_start_session\0${creationKey}`)
 			.digest("hex")}`;
 		const server = await createSdkControlServer(root, controls, [], undefined, [], undefined, undefined, {
 			globalResult: operation =>
@@ -1236,7 +1236,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 									retired: true,
 									ledgerState: "terminal_error",
 									indexType: "session_closed",
-									stateRoot: path.join(root, ".gjc", "state"),
+									stateRoot: path.join(root, ".vib", "state"),
 									endpointGeneration: 2,
 									endpointMtimeMs: 1,
 									processIncarnation: "linux:123",
@@ -1248,7 +1248,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 						: undefined,
 		});
 		const startArgs = { cwd: root, idempotency_key: creationKey, allow_mutation: true };
-		await expect(server.callTool("gjc_coordinator_start_session", startArgs)).resolves.toMatchObject({ ok: false });
+		await expect(server.callTool("vib_coordinator_start_session", startArgs)).resolves.toMatchObject({ ok: false });
 		const originalPath = path.join(
 			coordinatorNamespace(root),
 			"idempotency",
@@ -1257,10 +1257,10 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const original = JSON.parse(await fs.readFile(originalPath, "utf8")) as { request_digest: string; state: string };
 		expect(original.state).toBe("in_progress");
 
-		const retired = await server.callTool("gjc_coordinator_retire_start_session", {
+		const retired = await server.callTool("vib_coordinator_retire_start_session", {
 			cwd: root,
 			session_id: "retired-session",
-			state_root: path.join(root, ".gjc", "state"),
+			state_root: path.join(root, ".vib", "state"),
 			endpoint_generation: 2,
 			endpoint_mtime_ms: 1,
 			process_incarnation: "linux:123",
@@ -1283,14 +1283,14 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		});
 		expect(JSON.stringify(retired)).not.toContain("processIncarnation");
 		expect(JSON.stringify(retired)).not.toContain("hostIncarnation");
-		expect(JSON.stringify(retired)).not.toContain(path.join(root, ".gjc", "state"));
+		expect(JSON.stringify(retired)).not.toContain(path.join(root, ".vib", "state"));
 		expect(JSON.parse(await fs.readFile(originalPath, "utf8"))).toMatchObject({
 			state: "completed",
 			response: { ok: false, error: { code: "retired" } },
 		});
 		expect(controls.filter(control => control.operation === "session.create")).toHaveLength(1);
 		expect(controls.filter(control => control.operation === "session.reconcile_uncertain")).toHaveLength(1);
-		await expect(server.callTool("gjc_coordinator_start_session", startArgs)).resolves.toMatchObject({
+		await expect(server.callTool("vib_coordinator_start_session", startArgs)).resolves.toMatchObject({
 			ok: false,
 			error: { code: "retired" },
 		});
@@ -1298,7 +1298,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const retirementArgs = {
 			cwd: root,
 			session_id: "retired-session",
-			state_root: path.join(root, ".gjc", "state"),
+			state_root: path.join(root, ".vib", "state"),
 			endpoint_generation: 2,
 			endpoint_mtime_ms: 1,
 			process_incarnation: "linux:123",
@@ -1310,11 +1310,11 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			idempotency_key: "retire-start-intent",
 			allow_mutation: true,
 		};
-		const replay = await server.callTool("gjc_coordinator_retire_start_session", retirementArgs);
+		const replay = await server.callTool("vib_coordinator_retire_start_session", retirementArgs);
 		expect(replay).toEqual(retired);
 		expect(controls.filter(control => control.operation === "session.reconcile_uncertain")).toHaveLength(1);
 		await expect(
-			server.callTool("gjc_coordinator_retire_start_session", {
+			server.callTool("vib_coordinator_retire_start_session", {
 				...retirementArgs,
 				idempotency_key: "retire-start-different-key",
 			}),
@@ -1327,7 +1327,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const controls: SdkControl[] = [];
 		const creationKey = "malformed-retirement-proof";
 		const remoteCreateKey = `remote_${createHash("sha256")
-			.update(`gjc_coordinator_start_session\0${creationKey}`)
+			.update(`vib_coordinator_start_session\0${creationKey}`)
 			.digest("hex")}`;
 		let validAcknowledgement = false;
 		const server = await createSdkControlServer(root, controls, [], undefined, [], undefined, undefined, {
@@ -1357,7 +1357,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			},
 		});
 		await expect(
-			server.callTool("gjc_coordinator_start_session", {
+			server.callTool("vib_coordinator_start_session", {
 				cwd: root,
 				idempotency_key: creationKey,
 				allow_mutation: true,
@@ -1372,7 +1372,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const retirementArgs = {
 			cwd: root,
 			session_id: "retired-session",
-			state_root: path.join(root, ".gjc", "state"),
+			state_root: path.join(root, ".vib", "state"),
 			endpoint_generation: 2,
 			endpoint_mtime_ms: 1,
 			process_incarnation: "linux:123",
@@ -1385,24 +1385,24 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			allow_mutation: true,
 		};
 		await expect(
-			server.callTool("gjc_coordinator_retire_start_session", {
+			server.callTool("vib_coordinator_retire_start_session", {
 				...retirementArgs,
 				idempotency_key: creationKey,
 			}),
 		).resolves.toMatchObject({ ok: false, error: { code: "idempotency_conflict" } });
-		const staleResponse = await server.callTool("gjc_coordinator_retire_start_session", {
+		const staleResponse = await server.callTool("vib_coordinator_retire_start_session", {
 			...retirementArgs,
 			lifecycle_request_id: "stale-effect",
 		});
 		expect(staleResponse).toMatchObject({ ok: false, error: { code: "retirement_proof_stale" } });
-		const malformed = await server.callTool("gjc_coordinator_retire_start_session", retirementArgs);
+		const malformed = await server.callTool("vib_coordinator_retire_start_session", retirementArgs);
 		expect(malformed).toMatchObject({ ok: false, error: { code: "protocol_error" } });
 		expect(controls.at(-1)).toMatchObject({
 			operation: "session.reconcile_uncertain",
 			input: {
 				sessionId: "retired-session",
 				cwd: root,
-				stateRoot: path.join(root, ".gjc", "state"),
+				stateRoot: path.join(root, ".vib", "state"),
 				endpointGeneration: 2,
 				endpointMtimeMs: 1,
 				processIncarnation: "linux:123",
@@ -1412,7 +1412,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			},
 		});
 		validAcknowledgement = true;
-		const retried = await server.callTool("gjc_coordinator_retire_start_session", retirementArgs);
+		const retried = await server.callTool("vib_coordinator_retire_start_session", retirementArgs);
 		expect(retried).toMatchObject({ ok: true, session_id: "retired-session", retired: true });
 		expect(controls.filter(control => control.operation === "session.reconcile_uncertain")).toHaveLength(3);
 	});
@@ -1422,13 +1422,13 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const controls: SdkControl[] = [];
 		const creationKey = "retirement-proof-validation";
 		const remoteCreateKey = `remote_${createHash("sha256")
-			.update(`gjc_coordinator_start_session\0${creationKey}`)
+			.update(`vib_coordinator_start_session\0${creationKey}`)
 			.digest("hex")}`;
 		const server = await createSdkControlServer(root, controls, [], undefined, [], undefined, undefined, {
 			globalResult: operation => (operation === "session.create" ? { ok: true, result: { cwd: root } } : undefined),
 		});
 		await expect(
-			server.callTool("gjc_coordinator_start_session", {
+			server.callTool("vib_coordinator_start_session", {
 				cwd: root,
 				idempotency_key: creationKey,
 				allow_mutation: true,
@@ -1443,7 +1443,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const base = {
 			cwd: root,
 			session_id: "retired-session",
-			state_root: path.join(root, ".gjc", "state"),
+			state_root: path.join(root, ".vib", "state"),
 			endpoint_generation: 2,
 			endpoint_mtime_ms: 1,
 			process_incarnation: "linux:123",
@@ -1455,28 +1455,28 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			allow_mutation: true,
 		};
 		await expect(
-			server.callTool("gjc_coordinator_retire_start_session", {
+			server.callTool("vib_coordinator_retire_start_session", {
 				...base,
 				lifecycle_request_id: "bad/id",
 				idempotency_key: "invalid-marker-key",
 			}),
 		).resolves.toMatchObject({ ok: false, error: { code: "invalid_input" } });
 		await expect(
-			server.callTool("gjc_coordinator_retire_start_session", {
+			server.callTool("vib_coordinator_retire_start_session", {
 				...base,
 				idempotency_key: "missing-proof-key",
 				remote_create_key: undefined,
 			}),
 		).resolves.toMatchObject({ ok: false, error: { code: "invalid_input" } });
 		await expect(
-			server.callTool("gjc_coordinator_retire_start_session", {
+			server.callTool("vib_coordinator_retire_start_session", {
 				...base,
 				idempotency_key: "malformed-marker-key",
 				lifecycle_request_id: "retire/effect",
 			}),
 		).resolves.toMatchObject({ ok: false, error: { code: "invalid_input" } });
 		await expect(
-			server.callTool("gjc_coordinator_retire_start_session", {
+			server.callTool("vib_coordinator_retire_start_session", {
 				...base,
 				idempotency_key: "wrong-proof-key",
 				remote_create_key: "remote_wrong",
@@ -1490,7 +1490,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const controls: SdkControl[] = [];
 		const creationKey = "retirement-key-race";
 		const remoteCreateKey = `remote_${createHash("sha256")
-			.update(`gjc_coordinator_start_session\0${creationKey}`)
+			.update(`vib_coordinator_start_session\0${creationKey}`)
 			.digest("hex")}`;
 		const server = await createSdkControlServer(root, controls, [], undefined, [], undefined, undefined, {
 			globalResult: (operation, input) => {
@@ -1515,7 +1515,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			},
 		});
 		await expect(
-			server.callTool("gjc_coordinator_start_session", {
+			server.callTool("vib_coordinator_start_session", {
 				cwd: root,
 				idempotency_key: creationKey,
 				allow_mutation: true,
@@ -1530,7 +1530,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const base = {
 			cwd: root,
 			session_id: "retired-session",
-			state_root: path.join(root, ".gjc", "state"),
+			state_root: path.join(root, ".vib", "state"),
 			endpoint_generation: 2,
 			endpoint_mtime_ms: 1,
 			process_incarnation: "linux:123",
@@ -1542,8 +1542,8 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			allow_mutation: true,
 		};
 		const results = await Promise.all([
-			server.callTool("gjc_coordinator_retire_start_session", { ...base, idempotency_key: "race-one" }),
-			server.callTool("gjc_coordinator_retire_start_session", { ...base, idempotency_key: "race-two" }),
+			server.callTool("vib_coordinator_retire_start_session", { ...base, idempotency_key: "race-one" }),
+			server.callTool("vib_coordinator_retire_start_session", { ...base, idempotency_key: "race-two" }),
 		]);
 		expect(results.filter(result => result.ok === true)).toHaveLength(1);
 		expect(
@@ -1563,7 +1563,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const creationKey = "retirement-persistence-retry";
 		const retirementKey = "retirement-persistence-retry-effect";
 		const remoteCreateKey = `remote_${createHash("sha256")
-			.update(`gjc_coordinator_start_session\0${creationKey}`)
+			.update(`vib_coordinator_start_session\0${creationKey}`)
 			.digest("hex")}`;
 		const server = await createSdkControlServer(root, controls, [], undefined, [], undefined, undefined, {
 			globalResult: (operation, input) => {
@@ -1588,7 +1588,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			},
 		});
 		await expect(
-			server.callTool("gjc_coordinator_start_session", {
+			server.callTool("vib_coordinator_start_session", {
 				cwd: root,
 				idempotency_key: creationKey,
 				allow_mutation: true,
@@ -1603,7 +1603,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const retirementArgs = {
 			cwd: root,
 			session_id: "retired-session",
-			state_root: path.join(root, ".gjc", "state"),
+			state_root: path.join(root, ".vib", "state"),
 			endpoint_generation: 2,
 			endpoint_mtime_ms: 1,
 			process_incarnation: "linux:123",
@@ -1615,7 +1615,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			idempotency_key: retirementKey,
 			allow_mutation: true,
 		};
-		const first = await server.callTool("gjc_coordinator_retire_start_session", retirementArgs);
+		const first = await server.callTool("vib_coordinator_retire_start_session", retirementArgs);
 		expect(first).toMatchObject({ ok: true, retired: true });
 		expect(controls.filter(control => control.operation === "session.reconcile_uncertain")).toHaveLength(1);
 		const interruptedOriginal = JSON.parse(await fs.readFile(originalPath, "utf8")) as Record<string, unknown>;
@@ -1636,7 +1636,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const registry = JSON.parse(await fs.readFile(registryPath, "utf8")) as {
 			creations: Record<string, { retirement_intent?: { retirement_key_digest?: string } }>;
 		};
-		const creationDigest = createHash("sha256").update(`gjc_coordinator_start_session\0${creationKey}`).digest("hex");
+		const creationDigest = createHash("sha256").update(`vib_coordinator_start_session\0${creationKey}`).digest("hex");
 		const retirementIntent = registry.creations[creationDigest]?.retirement_intent;
 		const originalRetirementDigest = retirementIntent?.retirement_key_digest;
 		expect(originalRetirementDigest).toBeDefined();
@@ -1644,7 +1644,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			throw new Error("missing durable retirement intent");
 		retirementIntent.retirement_key_digest = "0".repeat(64);
 		await fs.writeFile(registryPath, `${JSON.stringify(registry)}\n`);
-		await expect(server.callTool("gjc_coordinator_retire_start_session", retirementArgs)).resolves.toMatchObject({
+		await expect(server.callTool("vib_coordinator_retire_start_session", retirementArgs)).resolves.toMatchObject({
 			ok: false,
 			error: { code: "retire_not_allowed" },
 		});
@@ -1655,7 +1655,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		delete interruptedRetirementOnly.completed_at;
 		await fs.writeFile(retirementPath, `${JSON.stringify(interruptedRetirementOnly)}\n`);
 		const replayAfterRetirementSealCrash = await server.callTool(
-			"gjc_coordinator_retire_start_session",
+			"vib_coordinator_retire_start_session",
 			retirementArgs,
 		);
 		expect(replayAfterRetirementSealCrash).toEqual(first);
@@ -1670,7 +1670,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		delete interruptedRetirement.response;
 		delete interruptedRetirement.completed_at;
 		await fs.writeFile(retirementPath, `${JSON.stringify(interruptedRetirement)}\n`);
-		const retried = await server.callTool("gjc_coordinator_retire_start_session", retirementArgs);
+		const retried = await server.callTool("vib_coordinator_retire_start_session", retirementArgs);
 		expect(retried).toEqual(first);
 		expect(controls.filter(control => control.operation === "session.reconcile_uncertain")).toHaveLength(1);
 	});
@@ -1689,7 +1689,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			},
 		});
 
-		const result = await server.callTool("gjc_coordinator_start_session", {
+		const result = await server.callTool("vib_coordinator_start_session", {
 			cwd: root,
 			idempotency_key: "close-rejected-compensation",
 			allow_mutation: true,
@@ -1712,7 +1712,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			},
 		});
 
-		const result = await server.callTool("gjc_coordinator_start_session", {
+		const result = await server.callTool("vib_coordinator_start_session", {
 			cwd: root,
 			prepare_existing_thread: true,
 			idempotency_key: "prepared-close-rejected",
@@ -1735,7 +1735,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			},
 		});
 
-		const result = await server.callTool("gjc_coordinator_start_session", {
+		const result = await server.callTool("vib_coordinator_start_session", {
 			cwd: root,
 			prepare_existing_thread: true,
 			idempotency_key: "prepared-close-success",
@@ -1760,7 +1760,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			},
 		});
 
-		const result = await server.callTool("gjc_coordinator_start_session", {
+		const result = await server.callTool("vib_coordinator_start_session", {
 			cwd: root,
 			idempotency_key: "malformed-close-compensation",
 			allow_mutation: true,
@@ -1781,7 +1781,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			},
 		});
 
-		const result = await server.callTool("gjc_coordinator_start_session", {
+		const result = await server.callTool("vib_coordinator_start_session", {
 			cwd: root,
 			idempotency_key: "unsafe-identity-compensation",
 			allow_mutation: true,
@@ -1801,7 +1801,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 				operation === "session.create" ? { ok: true, result: { readiness: "ready", cwd: root } } : undefined,
 		});
 
-		const result = await server.callTool("gjc_coordinator_start_session", {
+		const result = await server.callTool("vib_coordinator_start_session", {
 			cwd: root,
 			prepare_existing_thread: true,
 			idempotency_key: "prepared-missing-identity",
@@ -1819,7 +1819,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		await registerSdkSession(server, root);
 		const task = "first line\n\n  exact indentation\nlast line";
 
-		const delegated = await server.callTool("gjc_delegate_execute", {
+		const delegated = await server.callTool("vib_delegate_execute", {
 			cwd: root,
 			session_id: "visible-session",
 			task,
@@ -1850,7 +1850,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		});
 		await registerSdkSession(server, root);
 
-		const sent = await server.callTool("gjc_coordinator_send_prompt", {
+		const sent = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "acknowledged work",
 			idempotency_key: "camel-ack",
@@ -1903,12 +1903,12 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		);
 		const registered = await registerSdkSession(server, root);
 		expect(registered).toMatchObject({ ok: true, session: { cwd: canonicalWorkspace } });
-		expect(await server.callTool("gjc_coordinator_read_status", { session_id: "visible-session" })).toMatchObject({
+		expect(await server.callTool("vib_coordinator_read_status", { session_id: "visible-session" })).toMatchObject({
 			ok: true,
 			status: { live: true },
 		});
 		expect(
-			await server.callTool("gjc_coordinator_send_prompt", {
+			await server.callTool("vib_coordinator_send_prompt", {
 				session_id: "visible-session",
 				prompt: "case-safe workspace",
 				idempotency_key: "windows-case-safe",
@@ -1972,7 +1972,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			["follow-up-without-turn", true],
 		] as const) {
 			expect(
-				await server.callTool("gjc_coordinator_send_prompt", {
+				await server.callTool("vib_coordinator_send_prompt", {
 					session_id: "visible-session",
 					prompt: "must not be recorded",
 					idempotency_key: idempotencyKey,
@@ -1987,7 +1987,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			code: "ENOENT",
 		});
 		await expect(
-			server.callTool("gjc_coordinator_read_status", { session_id: "visible-session" }),
+			server.callTool("vib_coordinator_read_status", { session_id: "visible-session" }),
 		).resolves.toMatchObject({
 			ok: true,
 			status: { state: "ready_for_input", ready_for_input: true, current_turn_id: null },
@@ -2009,14 +2009,14 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 					: { accepted: true, command_id: "initial-command", turn_id: "initial-runtime-turn" },
 		});
 		await registerSdkSession(server, root);
-		const first = await server.callTool("gjc_coordinator_send_prompt", {
+		const first = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "keep this turn active",
 			idempotency_key: "rollback-initial",
 			allow_mutation: true,
 		});
 		expect(first).toMatchObject({ ok: true, status: "active" });
-		const failed = await server.callTool("gjc_coordinator_send_prompt", {
+		const failed = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "this replacement must not be recorded",
 			force: true,
@@ -2024,7 +2024,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			allow_mutation: true,
 		});
 		expect(failed).toMatchObject({ ok: false, error: { code: "unavailable" } });
-		expect(await server.callTool("gjc_coordinator_read_status", { session_id: "visible-session" })).toMatchObject({
+		expect(await server.callTool("vib_coordinator_read_status", { session_id: "visible-session" })).toMatchObject({
 			ok: true,
 			session_state: { state: "running", ready_for_input: false, current_turn_id: first.turn_id },
 		});
@@ -2057,7 +2057,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		await registerSdkSession(server, root);
 
 		expect(
-			await server.callTool("gjc_coordinator_send_prompt", {
+			await server.callTool("vib_coordinator_send_prompt", {
 				session_id: "visible-session",
 				prompt: "bounded timeout",
 				idempotency_key: "bounded-timeout",
@@ -2090,11 +2090,11 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			idempotency_key: "ambiguous-prompt",
 			allow_mutation: true,
 		};
-		const ambiguous = await server.callTool("gjc_coordinator_send_prompt", args);
+		const ambiguous = await server.callTool("vib_coordinator_send_prompt", args);
 		expect(ambiguous).toMatchObject({ ok: false, error: { code: "ambiguous" } });
-		const reconciled = await server.callTool("gjc_coordinator_send_prompt", args);
+		const reconciled = await server.callTool("vib_coordinator_send_prompt", args);
 		expect(reconciled).toMatchObject({ ok: true, result: { accepted: true } });
-		expect(await server.callTool("gjc_coordinator_send_prompt", args)).toEqual(reconciled);
+		expect(await server.callTool("vib_coordinator_send_prompt", args)).toEqual(reconciled);
 		expect(controls.filter(control => control.operation === "turn.prompt")).toHaveLength(2);
 	});
 	it("keeps prompt acknowledgement timing under Router ownership", async () => {
@@ -2111,7 +2111,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			});
 			await registerSdkSession(server, root);
 			expect(
-				await server.callTool("gjc_coordinator_send_prompt", {
+				await server.callTool("vib_coordinator_send_prompt", {
 					session_id: "visible-session",
 					prompt: "bounded prompt acknowledgement",
 					idempotency_key: `prompt-timeout-${expectedTimeoutMs}`,
@@ -2135,7 +2135,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			},
 			{ sessionId: "other-workdir", locator: { repo: path.join(root, "other") }, live: true },
 		]);
-		const status = await server.callTool("gjc_coordinator_read_status");
+		const status = await server.callTool("vib_coordinator_read_status");
 		expect(status).toEqual({
 			ok: true,
 			sessions: [
@@ -2170,7 +2170,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			},
 		});
 
-		const status = await server.callTool("gjc_coordinator_read_status");
+		const status = await server.callTool("vib_coordinator_read_status");
 		expect(status).toMatchObject({
 			ok: true,
 			sessions: [
@@ -2197,7 +2197,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			},
 		});
 
-		await expect(server.callTool("gjc_coordinator_read_status")).resolves.toMatchObject({
+		await expect(server.callTool("vib_coordinator_read_status")).resolves.toMatchObject({
 			ok: false,
 			error: { code: "unavailable", message: "Coordinator service is unavailable." },
 		});
@@ -2217,7 +2217,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 					: undefined,
 		});
 
-		const status = await server.callTool("gjc_coordinator_read_status");
+		const status = await server.callTool("vib_coordinator_read_status");
 
 		expect(status).toMatchObject({
 			ok: false,
@@ -2242,7 +2242,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			},
 		});
 
-		const status = await server.callTool("gjc_coordinator_read_status");
+		const status = await server.callTool("vib_coordinator_read_status");
 
 		expect(status).toMatchObject({
 			ok: false,
@@ -2262,7 +2262,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		await registerSdkSession(server, root);
 
 		await expect(
-			server.callTool("gjc_coordinator_read_tail", { session_id: "visible-session", lines: 1 }),
+			server.callTool("vib_coordinator_read_tail", { session_id: "visible-session", lines: 1 }),
 		).resolves.toEqual({ ok: true, source: "sdk", lines: ["latest assistant line"] });
 		expect(queries).toEqual(["session.last_assistant"]);
 	});
@@ -2279,7 +2279,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		await registerSdkSession(server, root);
 
 		await expect(
-			server.callTool("gjc_coordinator_read_tail", { session_id: "visible-session" }),
+			server.callTool("vib_coordinator_read_tail", { session_id: "visible-session" }),
 		).resolves.toMatchObject({
 			ok: false,
 			error: { code: "unavailable" },
@@ -2292,14 +2292,14 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const queries: string[] = [];
 		const server = await createSdkControlServer(root, controls, queries);
 		await registerSdkSession(server, root);
-		const sent = await server.callTool("gjc_coordinator_send_prompt", {
+		const sent = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "work",
 			idempotency_key: "prompt-1",
 			allow_mutation: true,
 		});
 
-		await expect(server.callTool("gjc_coordinator_read_turn", { turn_id: sent.turn_id })).resolves.toMatchObject({
+		await expect(server.callTool("vib_coordinator_read_turn", { turn_id: sent.turn_id })).resolves.toMatchObject({
 			ok: true,
 			advisory_status: { authority: "sdk", live: true, is_streaming: true },
 		});
@@ -2311,15 +2311,15 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const queries: string[] = [];
 		const server = await createSdkControlServer(root, controls, queries);
 		await registerSdkSession(server, root);
-		const sent = await server.callTool("gjc_coordinator_send_prompt", {
+		const sent = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "work",
 			idempotency_key: "prompt-1",
 			allow_mutation: true,
 		});
-		await fs.rm(path.join(root, ".gjc", "state", "sdk", "visible-session.json"));
+		await fs.rm(path.join(root, ".vib", "state", "sdk", "visible-session.json"));
 
-		await expect(server.callTool("gjc_coordinator_read_turn", { turn_id: sent.turn_id })).resolves.toMatchObject({
+		await expect(server.callTool("vib_coordinator_read_turn", { turn_id: sent.turn_id })).resolves.toMatchObject({
 			ok: true,
 			advisory_status: { authority: "sdk", live: null, reason: "endpoint_stale" },
 		});
@@ -2330,7 +2330,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const root = await tempRoot();
 		const controls: SdkControl[] = [];
 		const server = await createSdkControlServer(root, controls);
-		const started = await server.callTool("gjc_coordinator_start_session", {
+		const started = await server.callTool("vib_coordinator_start_session", {
 			cwd: root,
 			mpreset: "codex-eco",
 			idempotency_key: "preset-start",
@@ -2375,7 +2375,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 				pinnedModel("cursor", "composer-2.5"),
 			]),
 		});
-		const started = await server.callTool("gjc_coordinator_start_session", {
+		const started = await server.callTool("vib_coordinator_start_session", {
 			cwd: root,
 			model: "cursor/claude-fable-5-xhigh",
 			idempotency_key: "model-start",
@@ -2410,7 +2410,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const server = await createSdkControlServer(root, controls, [], undefined, undefined, undefined, undefined, {
 			modelResolver: pinnedModelResolver([pinnedModel("cursor", "default")]),
 		});
-		const started = await server.callTool("gjc_coordinator_start_session", {
+		const started = await server.callTool("vib_coordinator_start_session", {
 			cwd: root,
 			mpreset: "codex-eco",
 			model: "cursor/default",
@@ -2441,7 +2441,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const server = await createSdkControlServer(root, controls, [], undefined, undefined, undefined, undefined, {
 			modelResolver: pinnedModelResolver([pinnedModel("cursor", "claude-fable-5-xhigh")]),
 		});
-		const rejected = await server.callTool("gjc_coordinator_start_session", {
+		const rejected = await server.callTool("vib_coordinator_start_session", {
 			cwd: root,
 			model: "cursor:fable5-xhigh",
 			idempotency_key: "unknown-model-start",
@@ -2464,7 +2464,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const server = await createSdkControlServer(root, controls, [], undefined, undefined, undefined, undefined, {
 			modelResolver: pinnedModelResolver([pinnedModel("cursor", "composer-2.5")]),
 		});
-		const delegated = await server.callTool("gjc_delegate_plan", {
+		const delegated = await server.callTool("vib_delegate_plan", {
 			cwd: root,
 			task: "plan the thing",
 			model: "cursor/composer-2.5",
@@ -2496,7 +2496,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 				if (operation !== "session.create") return undefined;
 				lifecycleInput = input;
 				return deferred.promise.then(async result => {
-					const endpointPath = path.join(root, ".gjc", "state", "sdk", "created-session-1.json");
+					const endpointPath = path.join(root, ".vib", "state", "sdk", "created-session-1.json");
 					await fs.mkdir(path.dirname(endpointPath), { recursive: true });
 					await Bun.write(
 						endpointPath,
@@ -2525,7 +2525,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 				});
 			},
 		});
-		const startedPromise = server.callTool("gjc_coordinator_start_session", {
+		const startedPromise = server.callTool("vib_coordinator_start_session", {
 			cwd: root,
 			idempotency_key: "deferred-create-fence",
 			allow_mutation: true,
@@ -2566,7 +2566,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 				operation === "model.resolve" ? { ok: true, result: { ok: true, model: "cursor/default" } } : undefined,
 		});
 
-		const started = await server.callTool("gjc_coordinator_start_session", {
+		const started = await server.callTool("vib_coordinator_start_session", {
 			cwd: root,
 			model: "cursor/default",
 			idempotency_key: "broker-model-pin",
@@ -2590,7 +2590,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			[],
 			undefined,
 			undefined,
-			"gjc --worktree",
+			"vib --worktree",
 			undefined,
 			{
 				globalResult: (operation, input) => {
@@ -2603,7 +2603,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			},
 		);
 
-		const started = await server.callTool("gjc_coordinator_start_session", {
+		const started = await server.callTool("vib_coordinator_start_session", {
 			cwd: root,
 			model: "cursor/default",
 			idempotency_key: "broker-model-pin-worktree",
@@ -2617,7 +2617,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const controls: SdkControl[] = [];
 		const server = await createSdkControlServer(root, controls);
 
-		const started = await server.callTool("gjc_coordinator_start_session", {
+		const started = await server.callTool("vib_coordinator_start_session", {
 			cwd: root,
 			idempotency_key: "credential-free-start",
 			allow_mutation: true,
@@ -2631,7 +2631,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		expect(started.lifecycle).toEqual({ session_id: "created-session-1" });
 	});
 
-	it("translates the documented GJC worktree command into a typed SDK lifecycle target", async () => {
+	it("translates the documented Vibrato worktree command into a typed SDK lifecycle target", async () => {
 		const root = await tempRoot();
 		const controls: SdkControl[] = [];
 		const server = await createSdkControlServer(
@@ -2640,10 +2640,10 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			undefined,
 			undefined,
 			undefined,
-			"gjc --worktree hermes",
+			"vib --worktree hermes",
 		);
 
-		const started = await server.callTool("gjc_coordinator_start_session", {
+		const started = await server.callTool("vib_coordinator_start_session", {
 			cwd: root,
 			idempotency_key: "worktree-start",
 			allow_mutation: true,
@@ -2683,11 +2683,11 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			undefined,
 			undefined,
 			undefined,
-			"gjc --worktree --model provider/model",
+			"vib --worktree --model provider/model",
 		);
 
 		await expect(
-			server.callTool("gjc_coordinator_start_session", {
+			server.callTool("vib_coordinator_start_session", {
 				cwd: root,
 				idempotency_key: "invalid-worktree-command",
 				allow_mutation: true,
@@ -2704,11 +2704,11 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			undefined,
 			undefined,
 			undefined,
-			"wrapper gjc --worktree",
+			"wrapper vib --worktree",
 		);
 
 		await expect(
-			server.callTool("gjc_coordinator_start_session", {
+			server.callTool("vib_coordinator_start_session", {
 				cwd: root,
 				idempotency_key: "wrapper-command",
 				allow_mutation: true,
@@ -2721,13 +2721,13 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const controls: SdkControl[] = [];
 		const server = await createSdkControlServer(root, controls);
 		await registerSdkSession(server, root);
-		const first = await server.callTool("gjc_coordinator_send_prompt", {
+		const first = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "retry-safe prompt",
 			idempotency_key: "same-prompt-key",
 			allow_mutation: true,
 		});
-		const replay = await server.callTool("gjc_coordinator_send_prompt", {
+		const replay = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "retry-safe prompt",
 			idempotency_key: "same-prompt-key",
@@ -2736,7 +2736,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		expect(replay).toEqual(first);
 		expect(lifecycleControls(controls).filter(control => control.operation === "turn.prompt")).toHaveLength(1);
 		await expect(
-			server.callTool("gjc_coordinator_send_prompt", {
+			server.callTool("vib_coordinator_send_prompt", {
 				session_id: "visible-session",
 				prompt: "different prompt",
 				idempotency_key: "same-prompt-key",
@@ -2757,8 +2757,8 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			allow_mutation: true,
 		};
 		const [first, replay] = await Promise.all([
-			server.callTool("gjc_coordinator_send_prompt", request),
-			server.callTool("gjc_coordinator_send_prompt", request),
+			server.callTool("vib_coordinator_send_prompt", request),
+			server.callTool("vib_coordinator_send_prompt", request),
 		]);
 		expect(replay).toEqual(first);
 		expect(lifecycleControls(controls).filter(control => control.operation === "turn.prompt")).toHaveLength(1);
@@ -2768,7 +2768,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const controls: SdkControl[] = [];
 		const server = await createSdkControlServer(root, controls);
 		await registerSdkSession(server, root);
-		const sent = await server.callTool("gjc_coordinator_send_prompt", {
+		const sent = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "recover report",
 			idempotency_key: "recover-report-prompt",
@@ -2782,7 +2782,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			idempotency_key: "recover-report",
 			allow_mutation: true,
 		};
-		const first = await server.callTool("gjc_coordinator_report_status", request);
+		const first = await server.callTool("vib_coordinator_report_status", request);
 		const receiptPath = path.join(
 			coordinatorNamespace(root),
 			"idempotency",
@@ -2791,7 +2791,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const receipt = JSON.parse(await fs.readFile(receiptPath, "utf8")) as Record<string, unknown>;
 		const { response: _response, ...crashLeft } = receipt;
 		await fs.writeFile(receiptPath, JSON.stringify({ ...crashLeft, state: "in_progress" }));
-		const recovered = await server.callTool("gjc_coordinator_report_status", request);
+		const recovered = await server.callTool("vib_coordinator_report_status", request);
 		const firstSessionState = first.session_state as Record<string, unknown>;
 		const recoveredSessionState = recovered.session_state as Record<string, unknown>;
 		expect(recovered).toEqual(first);
@@ -2848,7 +2848,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		expect(journal.filter(event => event.kind === "turn.completed" && event.turn_id === sent.turn_id)).toHaveLength(
 			1,
 		);
-		await expect(server.callTool("gjc_coordinator_read_coordination_status")).resolves.toMatchObject({
+		await expect(server.callTool("vib_coordinator_read_coordination_status")).resolves.toMatchObject({
 			summary: { reports: 1 },
 		});
 	});
@@ -2878,7 +2878,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			idempotency_key: idempotencyKey,
 			allow_mutation: true,
 		};
-		await expect(server.callTool("gjc_coordinator_report_status", request)).resolves.toMatchObject({
+		await expect(server.callTool("vib_coordinator_report_status", request)).resolves.toMatchObject({
 			ok: true,
 			report: { summary: "torn namespace report" },
 		});
@@ -2900,7 +2900,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		expect(written).toHaveLength(1);
 		expect(written[0]).toMatchObject({ id: `report-written:${reportId}`, report_id: reportId });
 
-		await expect(server.callTool("gjc_coordinator_report_status", request)).resolves.toMatchObject({ ok: true });
+		await expect(server.callTool("vib_coordinator_report_status", request)).resolves.toMatchObject({ ok: true });
 		expect(await readWrittenEvents()).toHaveLength(1);
 	});
 	it("returns the canonical safe response exactly after a crash before outer report completion", async () => {
@@ -2918,7 +2918,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 					requests: { operations: Record<string, Record<string, unknown>> };
 				};
 				const operation = Object.values(transaction.requests.operations).find(
-					candidate => candidate.tool === "gjc_coordinator_report_status",
+					candidate => candidate.tool === "vib_coordinator_report_status",
 				);
 				expect(operation).toMatchObject({ phase: "completed", safe_response: response });
 				throw new Error("simulated_report_safe_response_crash");
@@ -2932,7 +2932,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			idempotency_key: "safe-response-barrier",
 			allow_mutation: true,
 		};
-		await expect(server.callTool("gjc_coordinator_report_status", request)).resolves.toMatchObject({ ok: false });
+		await expect(server.callTool("vib_coordinator_report_status", request)).resolves.toMatchObject({ ok: false });
 		if (!persistedSafeResponse) throw new Error("canonical safe response was not persisted");
 		const receiptPath = path.join(
 			coordinatorNamespace(root),
@@ -2942,7 +2942,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const receipt = JSON.parse(await fs.readFile(receiptPath, "utf8")) as Record<string, unknown>;
 		const { response: _response, ...crashLeft } = receipt;
 		await fs.writeFile(receiptPath, JSON.stringify({ ...crashLeft, state: "in_progress" }));
-		const recovered = await server.callTool("gjc_coordinator_report_status", request);
+		const recovered = await server.callTool("vib_coordinator_report_status", request);
 		expect(recovered).toEqual(persistedSafeResponse);
 		expect(JSON.stringify(recovered)).toBe(JSON.stringify(persistedSafeResponse));
 		const paths = coordinatorStatePaths(server.config.stateRoot, server.config.namespace.identity);
@@ -2951,7 +2951,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			requests: { operations: Record<string, Record<string, unknown>> };
 		};
 		const operation = Object.values(transaction.requests.operations).find(
-			candidate => candidate.tool === "gjc_coordinator_report_status",
+			candidate => candidate.tool === "vib_coordinator_report_status",
 		);
 		expect(operation).toMatchObject({ phase: "completed", safe_response: persistedSafeResponse });
 		const reportId = Object.keys(transaction.canonical.reports)[0];
@@ -2974,13 +2974,13 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			},
 		});
 		await registerSdkSession(server, root);
-		const sent = await server.callTool("gjc_coordinator_send_prompt", {
+		const sent = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "canonical report barrier",
 			idempotency_key: "barrier-report-prompt",
 			allow_mutation: true,
 		});
-		const queued = await server.callTool("gjc_coordinator_send_prompt", {
+		const queued = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "queued after report",
 			queue: true,
@@ -2995,7 +2995,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			idempotency_key: "barrier-report",
 			allow_mutation: true,
 		};
-		await expect(server.callTool("gjc_coordinator_report_status", request)).resolves.toMatchObject({ ok: false });
+		await expect(server.callTool("vib_coordinator_report_status", request)).resolves.toMatchObject({ ok: false });
 		const receiptPath = path.join(
 			coordinatorNamespace(root),
 			"idempotency",
@@ -3004,7 +3004,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const receipt = JSON.parse(await fs.readFile(receiptPath, "utf8")) as Record<string, unknown>;
 		const { response: _response, ...crashLeft } = receipt;
 		await fs.writeFile(receiptPath, JSON.stringify({ ...crashLeft, state: "in_progress" }));
-		const recovered = await server.callTool("gjc_coordinator_report_status", request);
+		const recovered = await server.callTool("vib_coordinator_report_status", request);
 		expect(recovered).toMatchObject({ ok: true, report: { summary: "barrier completion" } });
 		const paths = coordinatorStatePaths(server.config.stateRoot, server.config.namespace.identity);
 		const transaction = JSON.parse(await fs.readFile(transactionPath(paths, "visible-session"), "utf8")) as {
@@ -3055,9 +3055,9 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			idempotency_key: "evidence-replay",
 			allow_mutation: true,
 		};
-		const first = await server.callTool("gjc_coordinator_report_status", request);
+		const first = await server.callTool("vib_coordinator_report_status", request);
 		await fs.rm(evidencePath);
-		await expect(server.callTool("gjc_coordinator_report_status", request)).resolves.toEqual(first);
+		await expect(server.callTool("vib_coordinator_report_status", request)).resolves.toEqual(first);
 	});
 
 	it("keeps advertised answer text bounds aligned with runtime Unicode and whitespace rules", () => {
@@ -3136,8 +3136,8 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			idempotency_key: "composite-start",
 			allow_mutation: true,
 		};
-		const started = await server.callTool("gjc_coordinator_start_session", startArgs);
-		const replayedStart = await server.callTool("gjc_coordinator_start_session", startArgs);
+		const started = await server.callTool("vib_coordinator_start_session", startArgs);
+		const replayedStart = await server.callTool("vib_coordinator_start_session", startArgs);
 		expect(replayedStart).toEqual(started);
 		expect(lifecycleControls(controls).filter(control => control.operation === "session.create")).toHaveLength(1);
 		expect(lifecycleControls(controls).filter(control => control.operation === "turn.prompt")).toHaveLength(1);
@@ -3147,8 +3147,8 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			idempotency_key: "composite-delegate",
 			allow_mutation: true,
 		};
-		const delegated = await server.callTool("gjc_delegate_execute", delegateArgs);
-		const replayedDelegate = await server.callTool("gjc_delegate_execute", delegateArgs);
+		const delegated = await server.callTool("vib_delegate_execute", delegateArgs);
+		const replayedDelegate = await server.callTool("vib_delegate_execute", delegateArgs);
 		expect(replayedDelegate).toEqual(delegated);
 		expect(lifecycleControls(controls).filter(control => control.operation === "session.create")).toHaveLength(2);
 		expect(lifecycleControls(controls).filter(control => control.operation === "turn.prompt")).toHaveLength(2);
@@ -3159,13 +3159,13 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			idempotency_key: "composite-report",
 			allow_mutation: true,
 		};
-		const report = await server.callTool("gjc_coordinator_report_status", reportArgs);
-		const replayedReport = await server.callTool("gjc_coordinator_report_status", reportArgs);
+		const report = await server.callTool("vib_coordinator_report_status", reportArgs);
+		const replayedReport = await server.callTool("vib_coordinator_report_status", reportArgs);
 		expect(replayedReport).toEqual(report);
-		await expect(server.callTool("gjc_coordinator_read_coordination_status")).resolves.toMatchObject({
+		await expect(server.callTool("vib_coordinator_read_coordination_status")).resolves.toMatchObject({
 			summary: { reports: 1 },
 		});
-		const events = await server.callTool("gjc_coordinator_watch_events", { after_seq: 0 });
+		const events = await server.callTool("vib_coordinator_watch_events", { after_seq: 0 });
 		expect(
 			(events.events as Array<Record<string, unknown>>).filter(event => event.kind === "report.written"),
 		).toHaveLength(1);
@@ -3199,7 +3199,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			token: "successor-token",
 			endpointGeneration: 1,
 		});
-		const endpointPath = path.join(root, ".gjc", "state", "sdk", "visible-session.json");
+		const endpointPath = path.join(root, ".vib", "state", "sdk", "visible-session.json");
 		await fs.utimes(endpointPath, 0.002, 0.002);
 		sessions[0] = {
 			...sessions[0]!,
@@ -3208,7 +3208,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		};
 
 		await expect(
-			server.callTool("gjc_coordinator_send_prompt", {
+			server.callTool("vib_coordinator_send_prompt", {
 				session_id: "visible-session",
 				prompt: "stale successor",
 				idempotency_key: "stale-incarnation-prompt",
@@ -3216,7 +3216,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			}),
 		).resolves.toMatchObject({ ok: false, error: { code: "endpoint_stale" } });
 		await expect(
-			server.callTool("gjc_coordinator_stop_session", {
+			server.callTool("vib_coordinator_stop_session", {
 				session_id: "visible-session",
 				allow_mutation: true,
 			}),
@@ -3250,7 +3250,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			token: "successor-token",
 			endpointGeneration: 1,
 		});
-		const endpointPath = path.join(otherWorkspace, ".gjc", "state", "sdk", "visible-session.json");
+		const endpointPath = path.join(otherWorkspace, ".vib", "state", "sdk", "visible-session.json");
 		await fs.utimes(endpointPath, 0.003, 0.003);
 		sessions[0] = {
 			...sessions[0]!,
@@ -3259,7 +3259,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			endpointMtimeMs: (await fs.stat(endpointPath)).mtimeMs,
 		};
 		await expect(
-			server.callTool("gjc_coordinator_send_prompt", {
+			server.callTool("vib_coordinator_send_prompt", {
 				session_id: "visible-session",
 				prompt: "must not reach successor workspace",
 				idempotency_key: "stale-workspace-prompt",
@@ -3286,7 +3286,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		await server.router.start();
 		const staleAttachment = server.router.attachment("visible-session", 1);
 		if (!staleAttachment) throw new Error("missing initial session attachment");
-		const endpointPath = path.join(root, ".gjc", "state", "sdk", "visible-session.json");
+		const endpointPath = path.join(root, ".vib", "state", "sdk", "visible-session.json");
 		await Bun.write(endpointPath, JSON.stringify({ url: "ws://successor.test", token: "successor-endpoint-secret" }));
 		await fs.utimes(endpointPath, 0.002, 0.002);
 		sessions[0]!.endpointMtimeMs = 2;
@@ -3314,7 +3314,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		await fs.mkdir(path.dirname(corruptFile), { recursive: true });
 		await Bun.write(corruptFile, "{not-json");
 		await expect(
-			server.callTool("gjc_coordinator_report_status", {
+			server.callTool("vib_coordinator_report_status", {
 				status: "running",
 				summary: "must not write",
 				idempotency_key: corruptKey,
@@ -3359,7 +3359,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			endpointMtimeMs: 2,
 		});
 		await expect(
-			server.callTool("gjc_coordinator_register_session", {
+			server.callTool("vib_coordinator_register_session", {
 				session_id: "foreign-session",
 				cwd: root,
 				idempotency_key: "foreign-workspace",
@@ -3368,7 +3368,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		).resolves.toMatchObject({ ok: false, error: { code: "not_found" } });
 		sessions[0]!.endpointGeneration = 2;
 		await expect(
-			server.callTool("gjc_coordinator_send_prompt", {
+			server.callTool("vib_coordinator_send_prompt", {
 				session_id: "visible-session",
 				prompt: "stale generation",
 				idempotency_key: "stale-generation",
@@ -3377,7 +3377,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		).resolves.toMatchObject({ ok: false, error: { code: "endpoint_stale" } });
 		expect(lifecycleControls(controls).filter(control => control.operation === "turn.prompt")).toHaveLength(0);
 		await expect(
-			server.callTool("gjc_delegate_execute", {
+			server.callTool("vib_delegate_execute", {
 				cwd: otherWorkspace,
 				session_id: "visible-session",
 				task: "wrong workspace",
@@ -3438,7 +3438,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 				.digest("hex");
 			await Bun.write(recordPath, JSON.stringify(authorityRecord));
 			await expect(
-				server.callTool("gjc_coordinator_register_session", {
+				server.callTool("vib_coordinator_register_session", {
 					session_id: "visible-session",
 					cwd: root,
 					idempotency_key: registrationKey,
@@ -3455,7 +3455,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 				}),
 			);
 			await expect(
-				server.callTool("gjc_coordinator_stop_session", { session_id: "visible-session", allow_mutation: true }),
+				server.callTool("vib_coordinator_stop_session", { session_id: "visible-session", allow_mutation: true }),
 			).resolves.toMatchObject({ ok: true, closed: true });
 		}
 		const closes = controls.filter(control => control.operation === "session.close");
@@ -3483,7 +3483,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 				credentials: { nested: "reused-session-secret" },
 			}),
 		);
-		const delegated = await server.callTool("gjc_delegate_plan", {
+		const delegated = await server.callTool("vib_delegate_plan", {
 			cwd: root,
 			session_id: "visible-session",
 			task: "sanitize session",
@@ -3504,14 +3504,14 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			controlOptions,
 		});
 		await registerSdkSession(server, root);
-		const first = await server.callTool("gjc_coordinator_send_prompt", {
+		const first = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "first",
 			idempotency_key: "prompt-1",
 			allow_mutation: true,
 		});
 		expect(first).toMatchObject({ ok: true, operation: "turn.prompt", turn: { status: "active" } });
-		const queued = await server.callTool("gjc_coordinator_send_prompt", {
+		const queued = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "follow up",
 			queue: true,
@@ -3538,7 +3538,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			runtime_turn_id: queuedAcknowledgement.turn_id,
 		});
 		expect(
-			await server.callTool("gjc_coordinator_send_prompt", {
+			await server.callTool("vib_coordinator_send_prompt", {
 				session_id: "visible-session",
 				prompt: "replace",
 				force: true,
@@ -3605,7 +3605,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		);
 		const discovery = await server.handleJsonRpc({ jsonrpc: "2.0", id: "schema", method: "tools/list" });
 		const discoveredTools = (discovery.result as { tools: Array<Record<string, unknown>> }).tools;
-		const answerTool = discoveredTools.find(tool => tool.name === "gjc_coordinator_submit_question_answer");
+		const answerTool = discoveredTools.find(tool => tool.name === "vib_coordinator_submit_question_answer");
 		if (!answerTool) throw new Error("missing answer tool");
 		const answerInputSchema = answerTool.inputSchema as Record<string, unknown>;
 		const answerProperties = answerInputSchema.properties as Record<string, unknown>;
@@ -3618,7 +3618,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		if (!Array.isArray(discoveredAnswerSchema.oneOf)) throw new Error("answer schema oneOf is not an array");
 		expect(discoveredAnswerSchema.oneOf).toHaveLength(3);
 		await registerSdkSession(server, root);
-		const sent = await server.callTool("gjc_coordinator_send_prompt", {
+		const sent = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "open gate",
 			idempotency_key: "gate-owner",
@@ -3627,7 +3627,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const runtimeAcknowledgement = sent.result as { turn_id?: unknown };
 		if (typeof runtimeAcknowledgement.turn_id !== "string") throw new Error("missing runtime turn id");
 		runtimeTurnId = runtimeAcknowledgement.turn_id;
-		const listed = await server.callTool("gjc_coordinator_list_questions", { session_id: "visible-session" });
+		const listed = await server.callTool("vib_coordinator_list_questions", { session_id: "visible-session" });
 		expect(listed).toMatchObject({ ok: true, reconciliation: { complete: true, revision: "q12-r1" } });
 		expect(q12Calls).toEqual([undefined, "page-2"]);
 		const question = (listed.questions as Array<Record<string, unknown>>)[0]!;
@@ -3651,7 +3651,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		expect(question.answer_binding).toMatch(/^[A-Za-z0-9_-]{43}$/);
 		expect(controls.filter(control => control.operation === "workflow.gate_answer")).toEqual([]);
 
-		const answer = await server.callTool("gjc_coordinator_submit_question_answer", {
+		const answer = await server.callTool("vib_coordinator_submit_question_answer", {
 			session_id: "visible-session",
 			turn_id: sent.turn_id,
 			question_id: "gate-q12",
@@ -3671,7 +3671,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 				input: { id: "gate-q12", response: { selected: ["Continue"] }, expectedSessionId: "visible-session" },
 			}),
 		]);
-		const replay = await server.callTool("gjc_coordinator_submit_question_answer", {
+		const replay = await server.callTool("vib_coordinator_submit_question_answer", {
 			session_id: "visible-session",
 			turn_id: sent.turn_id,
 			question_id: "gate-q12",
@@ -3682,7 +3682,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		});
 		expect(replay).toMatchObject({ ok: true, status: "accepted", replayed: false });
 		expect(
-			await server.callTool("gjc_coordinator_submit_question_answer", {
+			await server.callTool("vib_coordinator_submit_question_answer", {
 				session_id: "visible-session",
 				turn_id: sent.turn_id,
 				question_id: "gate-q12",
@@ -3724,7 +3724,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			{ queryOptions },
 		);
 		await registerSdkSession(server, root);
-		const listed = await server.callTool("gjc_coordinator_list_questions", { session_id: "visible-session" });
+		const listed = await server.callTool("vib_coordinator_list_questions", { session_id: "visible-session" });
 		expect(listed).toMatchObject({ ok: true, reconciliation: { complete: true } });
 
 		const q12Budgets = queries
@@ -3759,7 +3759,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 				: { ok: true, page: { items: [], complete: true, revision: "context" } },
 		);
 		await registerSdkSession(server, root);
-		const sent = await server.callTool("gjc_coordinator_send_prompt", {
+		const sent = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "owner",
 			idempotency_key: "owner-bad",
@@ -3768,8 +3768,8 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const runtimeAcknowledgement = sent.result as { turn_id?: unknown };
 		if (typeof runtimeAcknowledgement.turn_id !== "string") throw new Error("missing runtime turn id");
 		runtimeTurnId = runtimeAcknowledgement.turn_id;
-		const first = await server.callTool("gjc_coordinator_list_questions", { session_id: "visible-session" });
-		const second = await server.callTool("gjc_coordinator_list_questions", { session_id: "visible-session" });
+		const first = await server.callTool("vib_coordinator_list_questions", { session_id: "visible-session" });
+		const second = await server.callTool("vib_coordinator_list_questions", { session_id: "visible-session" });
 		expect(first).toMatchObject({
 			questions: [],
 			diagnostics: expect.arrayContaining([
@@ -3802,7 +3802,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			};
 		});
 		await registerSdkSession(server, root);
-		const listed = await server.callTool("gjc_coordinator_list_questions", { session_id: "visible-session" });
+		const listed = await server.callTool("vib_coordinator_list_questions", { session_id: "visible-session" });
 		expect(listed).toMatchObject({
 			ok: true,
 			schema_version: 1,
@@ -3810,7 +3810,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			reconciliation: { attempted: true, complete: false, revision: "partial-q12" },
 		});
 		expect(JSON.stringify(listed)).not.toContain("answer_binding");
-		const status = await server.callTool("gjc_coordinator_read_coordination_status");
+		const status = await server.callTool("vib_coordinator_read_coordination_status");
 		expect(status).toMatchObject({
 			ok: true,
 			schema_version: 1,
@@ -3867,8 +3867,8 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const controls: SdkControl[] = [];
 		const server = await createSdkControlServer(root, controls);
 		for (const [tool, key] of [
-			["gjc_delegate_plan", "plan"],
-			["gjc_delegate_execute", "execute"],
+			["vib_delegate_plan", "plan"],
+			["vib_delegate_execute", "execute"],
 		] as const) {
 			const result = await server.callTool(tool, {
 				cwd: root,
@@ -3913,7 +3913,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			cwd: root,
 			sessionId: "visible-session",
 			turnId: "host-turn",
-			prompt: "$gjc-mcp-delegate-flow",
+			prompt: "$vib-mcp-delegate-flow",
 		});
 		if (!host) throw new Error("host context was not persisted");
 		const tokenRoot = path.join(namespace, "codex-tokens");
@@ -3931,7 +3931,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const sourceBefore = await fs.readFile(sourceFile, "utf8");
 		const results = await Promise.all(
 			["auto-bind-one", "auto-bind-two"].map(idempotency_key =>
-				server.callTool("gjc_delegate_execute", {
+				server.callTool("vib_delegate_execute", {
 					cwd: root,
 					task: idempotency_key,
 					idempotency_key,
@@ -3955,9 +3955,9 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 				endpoint: source.endpoint,
 				token_file: source.token_file,
 				origin: {
-					// GJC identity: the NEW delegate coordinator session and its accepted GJC turn.
-					gjc_session_id: sessionId,
-					gjc_turn_id: results[index]?.turn_id,
+					// Vibrato identity: the NEW delegate coordinator session and its accepted Vibrato turn.
+					vib_session_id: sessionId,
+					vib_turn_id: results[index]?.turn_id,
 					// Codex correlation: host thread (must equal source), host session, host turn.
 					codex_thread_id: source.thread_id,
 					codex_host_session_id: "visible-session",
@@ -3968,17 +3968,17 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			});
 			if (bound?.origin) origins.push(bound.origin);
 		}
-		// Two delegates: DISTINCT GJC session + turn identities...
-		expect(origins[0]?.gjc_session_id).not.toBe(origins[1]?.gjc_session_id);
-		expect(origins[0]?.gjc_turn_id).not.toBe(origins[1]?.gjc_turn_id);
+		// Two delegates: DISTINCT Vibrato session + turn identities...
+		expect(origins[0]?.vib_session_id).not.toBe(origins[1]?.vib_session_id);
+		expect(origins[0]?.vib_turn_id).not.toBe(origins[1]?.vib_turn_id);
 		// ...sharing one Codex thread and the SAME Codex host session/turn correlation.
 		expect(origins[0]?.codex_thread_id).toBe(origins[1]?.codex_thread_id);
 		expect(origins[0]?.codex_host_session_id).toBe(origins[1]?.codex_host_session_id);
 		expect(origins[0]?.codex_turn_id).toBe(origins[1]?.codex_turn_id);
-		// GJC ids never masquerade as Codex host ids and vice versa.
+		// Vibrato ids never masquerade as Codex host ids and vice versa.
 		for (const origin of origins) {
-			expect(origin.gjc_session_id).not.toBe(origin.codex_host_session_id);
-			expect(origin.gjc_turn_id).not.toBe(origin.codex_turn_id);
+			expect(origin.vib_session_id).not.toBe(origin.codex_host_session_id);
+			expect(origin.vib_turn_id).not.toBe(origin.codex_turn_id);
 		}
 		expect(await fs.readFile(sourceFile, "utf8")).toBe(sourceBefore);
 	});
@@ -3993,7 +3993,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			endpoint: { kind: "unix", path: "/tmp/codex-explicit-one.sock" },
 		});
 
-		const result = await server.callTool("gjc_delegate_execute", {
+		const result = await server.callTool("vib_delegate_execute", {
 			cwd: root,
 			task: "bind explicit Codex handoff",
 			idempotency_key: "explicit-codex-handoff",
@@ -4018,7 +4018,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		await persistMcpDelegateHostContext({
 			cwd: root,
 			sessionId: "ambient-codex-host",
-			prompt: "$gjc-mcp-delegate-flow",
+			prompt: "$vib-mcp-delegate-flow",
 		});
 		await Promise.all([
 			registerCodexHandoff(namespace, {
@@ -4034,7 +4034,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		]);
 
 		await expect(
-			server.callTool("gjc_delegate_execute", {
+			server.callTool("vib_delegate_execute", {
 				cwd: root,
 				task: "prefer explicit Codex handoff",
 				idempotency_key: "explicit-over-ambient",
@@ -4053,7 +4053,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const namespace = coordinatorNamespace(root);
 
 		await expect(
-			server.callTool("gjc_delegate_execute", {
+			server.callTool("vib_delegate_execute", {
 				cwd: root,
 				task: "skip missing explicit Codex handoff",
 				idempotency_key: "missing-explicit-codex-handoff",
@@ -4072,7 +4072,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const namespace = coordinatorNamespace(root);
 
 		await expect(
-			server.callTool("gjc_delegate_execute", {
+			server.callTool("vib_delegate_execute", {
 				cwd: root,
 				task: "reject malformed explicit Codex handoff",
 				idempotency_key: "malformed-explicit-codex-handoff",
@@ -4093,7 +4093,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		await fs.writeFile(path.join(namespace, "codex-handoffs", "corrupt-codex-host.json"), "{ not json", "utf8");
 
 		await expect(
-			server.callTool("gjc_delegate_execute", {
+			server.callTool("vib_delegate_execute", {
 				cwd: root,
 				task: "skip corrupt explicit Codex handoff",
 				idempotency_key: "corrupt-explicit-codex-handoff",
@@ -4117,7 +4117,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			["host-one", "thread-one"],
 			["host-two", "thread-two"],
 		] as const) {
-			await persistMcpDelegateHostContext({ cwd: root, sessionId, prompt: "$gjc-mcp-delegate-flow" });
+			await persistMcpDelegateHostContext({ cwd: root, sessionId, prompt: "$vib-mcp-delegate-flow" });
 			await registerCodexHandoff(namespace, {
 				work_unit: sessionId,
 				thread_id: threadId,
@@ -4126,7 +4126,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		}
 
 		await expect(
-			server.callTool("gjc_delegate_execute", {
+			server.callTool("vib_delegate_execute", {
 				cwd: root,
 				task: "reject conflicting host contexts",
 				idempotency_key: "conflicting-host-contexts",
@@ -4143,7 +4143,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const server = await createSdkControlServer(root, controls);
 		const namespace = coordinatorNamespace(root);
 		for (const sessionId of ["same-thread-one", "same-thread-two"]) {
-			await persistMcpDelegateHostContext({ cwd: root, sessionId, prompt: "$gjc-mcp-delegate-flow" });
+			await persistMcpDelegateHostContext({ cwd: root, sessionId, prompt: "$vib-mcp-delegate-flow" });
 			await registerCodexHandoff(namespace, {
 				work_unit: sessionId,
 				thread_id: "thread-shared-context",
@@ -4152,7 +4152,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		}
 
 		await expect(
-			server.callTool("gjc_delegate_execute", {
+			server.callTool("vib_delegate_execute", {
 				cwd: root,
 				task: "bind matching host contexts",
 				idempotency_key: "matching-host-contexts",
@@ -4172,13 +4172,13 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			["_session-traversal", "../evil", "resume"],
 			["_session-oversized", "oversized", "x".repeat(1024 * 1024)],
 		] as const) {
-			const contextPath = path.join(root, ".gjc", directory, "state", "mcp-delegate-host-context.json");
+			const contextPath = path.join(root, ".vib", directory, "state", "mcp-delegate-host-context.json");
 			await fs.mkdir(path.dirname(contextPath), { recursive: true });
 			await fs.writeFile(
 				contextPath,
 				JSON.stringify({
 					schema_version: 1,
-					activation: "$gjc-mcp-delegate-flow",
+					activation: "$vib-mcp-delegate-flow",
 					session_id: sessionId,
 					thread_id: null,
 					turn_id: null,
@@ -4190,7 +4190,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 				"utf8",
 			);
 		}
-		await persistMcpDelegateHostContext({ cwd: root, sessionId: "valid-host", prompt: "$gjc-mcp-delegate-flow" });
+		await persistMcpDelegateHostContext({ cwd: root, sessionId: "valid-host", prompt: "$vib-mcp-delegate-flow" });
 		await registerCodexHandoff(namespace, {
 			work_unit: "valid-host",
 			thread_id: "thread-valid-host",
@@ -4198,7 +4198,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		});
 
 		await expect(
-			server.callTool("gjc_delegate_execute", {
+			server.callTool("vib_delegate_execute", {
 				cwd: root,
 				task: "ignore invalid host evidence",
 				idempotency_key: "ignore-invalid-host-evidence",
@@ -4227,7 +4227,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			cwd: root,
 			sessionId: "visible-session",
 			turnId: "host-turn",
-			prompt: "$gjc-mcp-delegate-flow",
+			prompt: "$vib-mcp-delegate-flow",
 		});
 		await registerCodexHandoff(namespace, {
 			work_unit: "visible-session",
@@ -4236,7 +4236,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		});
 		const results = await Promise.all(
 			["wake-bind-one", "wake-bind-two"].map(idempotency_key =>
-				server.callTool("gjc_delegate_execute", {
+				server.callTool("vib_delegate_execute", {
 					cwd: root,
 					task: idempotency_key,
 					idempotency_key,
@@ -4260,7 +4260,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const startIds = starts.map(request => String(request.params.clientUserMessageId));
 		expect(new Set(startIds).size).toBe(startIds.length);
 		for (const [index, sessionId] of sessionIds.entries())
-			expect(startIds).toContain(`gjc-wake-${sessionId}:${events[index]?.seq}`);
+			expect(startIds).toContain(`vib-wake-${sessionId}:${events[index]?.seq}`);
 		for (let index = 0; index < requests.length; index++)
 			if (requests[index]?.method === "turn/start") expect(requests[index - 1]?.method).toBe("thread/resume");
 	});
@@ -4272,7 +4272,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		await persistMcpDelegateHostContext({
 			cwd: root,
 			sessionId: "host-without-handoff",
-			prompt: "$gjc-mcp-delegate-flow",
+			prompt: "$vib-mcp-delegate-flow",
 		});
 		await Promise.all([
 			registerCodexHandoff(namespace, {
@@ -4288,7 +4288,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		]);
 
 		await expect(
-			server.callTool("gjc_delegate_execute", {
+			server.callTool("vib_delegate_execute", {
 				cwd: root,
 				task: "ambiguous handoff",
 				idempotency_key: "ambiguous-handoff",
@@ -4307,15 +4307,15 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		await persistMcpDelegateHostContext({
 			cwd: root,
 			sessionId: "host-context",
-			prompt: "$gjc-mcp-delegate-flow",
+			prompt: "$vib-mcp-delegate-flow",
 		});
 		await registerCodexHandoff(namespace, {
 			work_unit: "delegate-source",
 			thread_id: "thread-shared",
 			endpoint: { kind: "unix", path: "/tmp/delegate-source.sock" },
 			origin: {
-				gjc_session_id: "delegate-source",
-				gjc_turn_id: null,
+				vib_session_id: "delegate-source",
+				vib_turn_id: null,
 				codex_host_session_id: "host-context",
 				codex_thread_id: "thread-shared",
 				codex_turn_id: null,
@@ -4330,7 +4330,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			endpoint: { kind: "unix", path: "/tmp/host-source.sock" },
 		});
 
-		const result = await server.callTool("gjc_delegate_execute", {
+		const result = await server.callTool("vib_delegate_execute", {
 			cwd: root,
 			task: "select host fallback",
 			idempotency_key: "select-host-fallback",
@@ -4351,7 +4351,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		await persistMcpDelegateHostContext({
 			cwd: root,
 			sessionId: "host-context",
-			prompt: "$gjc-mcp-delegate-flow",
+			prompt: "$vib-mcp-delegate-flow",
 		});
 		await registerCodexHandoff(namespace, {
 			work_unit: "stale-host",
@@ -4364,7 +4364,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		await fs.writeFile(sourceFile, JSON.stringify(stale), "utf8");
 
 		await expect(
-			server.callTool("gjc_delegate_execute", {
+			server.callTool("vib_delegate_execute", {
 				cwd: root,
 				task: "reject stale source",
 				idempotency_key: "reject-stale-source",
@@ -4383,7 +4383,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		await persistMcpDelegateHostContext({
 			cwd: root,
 			sessionId: "host-context-mixed",
-			prompt: "$gjc-mcp-delegate-flow",
+			prompt: "$vib-mcp-delegate-flow",
 		});
 		await registerCodexHandoff(namespace, {
 			work_unit: "a-stale-same-thread",
@@ -4407,7 +4407,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			endpoint: { kind: "unix", path: "/tmp/fresh-host.sock" },
 		});
 
-		const delegated = await server.callTool("gjc_delegate_execute", {
+		const delegated = await server.callTool("vib_delegate_execute", {
 			cwd: root,
 			task: "bind to the fresh source",
 			idempotency_key: "mixed-stale-fresh",
@@ -4427,7 +4427,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		await persistMcpDelegateHostContext({
 			cwd: root,
 			sessionId: "host-context-all-stale",
-			prompt: "$gjc-mcp-delegate-flow",
+			prompt: "$vib-mcp-delegate-flow",
 		});
 		for (const [workUnit, thread] of [
 			["stale-one", "thread-one"],
@@ -4445,7 +4445,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		}
 
 		await expect(
-			server.callTool("gjc_delegate_execute", {
+			server.callTool("vib_delegate_execute", {
 				cwd: root,
 				task: "all sources stale",
 				idempotency_key: "all-stale-threads",
@@ -4464,7 +4464,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		await persistMcpDelegateHostContext({
 			cwd: root,
 			sessionId: "direct-host",
-			prompt: "$gjc-mcp-delegate-flow",
+			prompt: "$vib-mcp-delegate-flow",
 		});
 		await registerCodexHandoff(namespace, {
 			work_unit: "direct-host",
@@ -4478,7 +4478,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		});
 
 		await expect(
-			server.callTool("gjc_delegate_execute", {
+			server.callTool("vib_delegate_execute", {
 				cwd: root,
 				task: "direct source wins",
 				idempotency_key: "direct-source-wins",
@@ -4494,11 +4494,11 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		await persistMcpDelegateHostContext({
 			cwd: root,
 			sessionId: "valid-host",
-			prompt: "$gjc-mcp-delegate-flow",
+			prompt: "$vib-mcp-delegate-flow",
 		});
-		await fs.mkdir(path.join(root, ".gjc", "_session-corrupt-host", "state"), { recursive: true });
+		await fs.mkdir(path.join(root, ".vib", "_session-corrupt-host", "state"), { recursive: true });
 		await fs.writeFile(
-			path.join(root, ".gjc", "_session-corrupt-host", "state", "mcp-delegate-host-context.json"),
+			path.join(root, ".vib", "_session-corrupt-host", "state", "mcp-delegate-host-context.json"),
 			"{",
 			"utf8",
 		);
@@ -4509,7 +4509,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		});
 
 		await expect(
-			server.callTool("gjc_delegate_execute", {
+			server.callTool("vib_delegate_execute", {
 				cwd: root,
 				task: "record corrupt context",
 				idempotency_key: "record-corrupt-context",
@@ -4525,12 +4525,12 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const controls: SdkControl[] = [];
 		const server = await createSdkControlServer(root, controls);
 		const namespace = coordinatorNamespace(root);
-		const contextPath = path.join(root, ".gjc", "_session-corrupt-host", "state", "mcp-delegate-host-context.json");
+		const contextPath = path.join(root, ".vib", "_session-corrupt-host", "state", "mcp-delegate-host-context.json");
 		await fs.mkdir(path.dirname(contextPath), { recursive: true });
 		await fs.writeFile(contextPath, "{", "utf8");
 
 		await expect(
-			server.callTool("gjc_delegate_execute", {
+			server.callTool("vib_delegate_execute", {
 				cwd: root,
 				task: "reject unreadable-only context",
 				idempotency_key: "reject-unreadable-only-context",
@@ -4548,14 +4548,14 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		await registerSdkSession(server, root);
 
 		const results = await Promise.all([
-			server.callTool("gjc_delegate_execute", {
+			server.callTool("vib_delegate_execute", {
 				cwd: root,
 				session_id: "visible-session",
 				task: "first delegated task",
 				idempotency_key: "delegate-first",
 				allow_mutation: true,
 			}),
-			server.callTool("gjc_delegate_execute", {
+			server.callTool("vib_delegate_execute", {
 				cwd: root,
 				session_id: "visible-session",
 				task: "second delegated task",
@@ -4578,7 +4578,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const root = await tempRoot();
 		const controls: SdkControl[] = [];
 		const server = await createSdkControlServer(root, controls);
-		const immediate = await server.callTool("gjc_delegate_plan", {
+		const immediate = await server.callTool("vib_delegate_plan", {
 			cwd: root,
 			task: "immediate",
 			idempotency_key: "immediate",
@@ -4586,7 +4586,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		});
 		expect(immediate).toMatchObject({ ok: true, delivered: true, turn: { status: "active" } });
 		expect(immediate.completion).toBeUndefined();
-		const awaited = await server.callTool("gjc_delegate_execute", {
+		const awaited = await server.callTool("vib_delegate_execute", {
 			cwd: root,
 			task: "timeout",
 			idempotency_key: "timeout",
@@ -4608,14 +4608,14 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const server = await createSdkControlServer(root, controls);
 		await registerSdkSession(server, root);
 		expect(
-			await server.callTool("gjc_coordinator_send_prompt", {
+			await server.callTool("vib_coordinator_send_prompt", {
 				session_id: "visible-session",
 				prompt: "work",
 				allow_mutation: true,
 			}),
 		).toMatchObject({ ok: false, error: { code: "invalid_request" } });
 		expect(
-			await server.callTool("gjc_coordinator_submit_question_answer", {
+			await server.callTool("vib_coordinator_submit_question_answer", {
 				session_id: "visible-session",
 				question_id: "ask-1",
 				answer: "yes",
@@ -4629,16 +4629,16 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const root = await tempRoot();
 		const server = createCoordinatorMcpServer({
 			env: {
-				GJC_COORDINATOR_MCP_WORKDIR_ROOTS: root,
-				GJC_COORDINATOR_MCP_STATE_ROOT: path.join(root, ".gjc", "coordinator-state"),
-				GJC_COORDINATOR_MCP_MUTATIONS: "sessions",
-				GJC_COORDINATOR_MCP_PROFILE: "local",
-				GJC_COORDINATOR_MCP_REPO: "repo",
+				VIB_COORDINATOR_MCP_WORKDIR_ROOTS: root,
+				VIB_COORDINATOR_MCP_STATE_ROOT: path.join(root, ".vib", "coordinator-state"),
+				VIB_COORDINATOR_MCP_MUTATIONS: "sessions",
+				VIB_COORDINATOR_MCP_PROFILE: "local",
+				VIB_COORDINATOR_MCP_REPO: "repo",
 			},
 		});
 		await registerSdkSession(server, root);
 		expect(
-			await server.callTool("gjc_coordinator_send_prompt", {
+			await server.callTool("vib_coordinator_send_prompt", {
 				session_id: "visible-session",
 				prompt: "work",
 				idempotency_key: "key-1",
@@ -4663,7 +4663,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 				expect.objectContaining({ kind: "session.registered", entity_id: "visible-session" }),
 			]),
 		);
-		const report = await server.callTool("gjc_coordinator_report_status", {
+		const report = await server.callTool("vib_coordinator_report_status", {
 			session_id: "visible-session",
 			status: "blocked",
 			summary: "Awaiting SDK turn completion.",
@@ -4671,7 +4671,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			allow_mutation: true,
 		});
 		expect(report).toMatchObject({ ok: true, report: { status: "blocked", session_id: "visible-session" } });
-		const events = await server.callTool("gjc_coordinator_watch_events", { after_seq: 0 });
+		const events = await server.callTool("vib_coordinator_watch_events", { after_seq: 0 });
 		expect((events.events as Array<{ kind: string }>).map(event => event.kind)).toEqual([
 			"session.state_changed",
 			"session.registered",
@@ -4684,7 +4684,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const controls: SdkControl[] = [];
 		const posts: Array<{ body: string; token: string | null }> = [];
 		const server = await createSdkControlServer(root, controls, [], undefined, undefined, undefined, undefined, {
-			eventWebhookEnv: { GJC_COORDINATOR_MCP_EVENT_WEBHOOK_URL: "https://sink.example.test/hook" },
+			eventWebhookEnv: { VIB_COORDINATOR_MCP_EVENT_WEBHOOK_URL: "https://sink.example.test/hook" },
 			eventWebhookDelivery: {
 				post: async (body, options) => {
 					posts.push({ body, token: options.token });
@@ -4695,7 +4695,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			},
 		});
 		await registerSdkSession(server, root);
-		await server.callTool("gjc_coordinator_report_status", {
+		await server.callTool("vib_coordinator_report_status", {
 			session_id: "visible-session",
 			status: "blocked",
 			summary: "Awaiting SDK turn completion.",
@@ -4704,7 +4704,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		});
 		const namespace = coordinatorNamespace(root);
 		await awaitEventWebhookDeliveriesForTest(namespace);
-		const events = await server.callTool("gjc_coordinator_watch_events", { after_seq: 0 });
+		const events = await server.callTool("vib_coordinator_watch_events", { after_seq: 0 });
 		const journalRows = events.events as Array<Record<string, unknown>>;
 		expect(journalRows.map(row => row.kind)).toEqual([
 			"session.state_changed",
@@ -4722,7 +4722,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const root = await tempRoot();
 		const controls: SdkControl[] = [];
 		const firstPosts: string[] = [];
-		const webhookEnv = { GJC_COORDINATOR_MCP_EVENT_WEBHOOK_URL: "https://sink.example.test/hook" };
+		const webhookEnv = { VIB_COORDINATOR_MCP_EVENT_WEBHOOK_URL: "https://sink.example.test/hook" };
 		const firstServer = await createSdkControlServer(root, controls, [], undefined, undefined, undefined, undefined, {
 			eventWebhookEnv: webhookEnv,
 			eventWebhookDelivery: {
@@ -4735,7 +4735,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			},
 		});
 		await registerSdkSession(firstServer, root);
-		await firstServer.callTool("gjc_coordinator_report_status", {
+		await firstServer.callTool("vib_coordinator_report_status", {
 			session_id: "visible-session",
 			status: "blocked",
 			summary: "Committed before restart.",
@@ -4744,7 +4744,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		});
 		const namespace = coordinatorNamespace(root);
 		await awaitEventWebhookDeliveriesForTest(namespace);
-		const journalRows = (await firstServer.callTool("gjc_coordinator_watch_events", { after_seq: 0 }))
+		const journalRows = (await firstServer.callTool("vib_coordinator_watch_events", { after_seq: 0 }))
 			.events as Array<Record<string, unknown>>;
 		const outboxDir = path.join(namespace, "webhook-outbox");
 		const firstEventId = String(journalRows[0]!.id);
@@ -4788,7 +4788,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			},
 		});
 		await registerSdkSession(server, root);
-		await server.callTool("gjc_coordinator_report_status", {
+		await server.callTool("vib_coordinator_report_status", {
 			session_id: "visible-session",
 			status: "blocked",
 			summary: "No webhook configured.",
@@ -4801,7 +4801,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		await expect(fs.readdir(path.join(namespace, "webhook-outbox"))).rejects.toMatchObject({
 			code: "ENOENT",
 		});
-		const events = await server.callTool("gjc_coordinator_watch_events", { after_seq: 0 });
+		const events = await server.callTool("vib_coordinator_watch_events", { after_seq: 0 });
 		expect((events.events as unknown[]).length).toBeGreaterThan(0);
 	});
 	it("disables webhook delivery instead of crashing when webhook config is invalid", async () => {
@@ -4809,7 +4809,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const controls: SdkControl[] = [];
 		const posts: string[] = [];
 		const server = await createSdkControlServer(root, controls, [], undefined, undefined, undefined, undefined, {
-			eventWebhookEnv: { GJC_COORDINATOR_MCP_EVENT_WEBHOOK_URL: "http://169.254.169.254/latest/meta-data" },
+			eventWebhookEnv: { VIB_COORDINATOR_MCP_EVENT_WEBHOOK_URL: "http://169.254.169.254/latest/meta-data" },
 			eventWebhookDelivery: {
 				post: async body => {
 					posts.push(body);
@@ -4820,7 +4820,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			},
 		});
 		await registerSdkSession(server, root);
-		const events = await server.callTool("gjc_coordinator_watch_events", { after_seq: 0 });
+		const events = await server.callTool("vib_coordinator_watch_events", { after_seq: 0 });
 		expect((events.events as unknown[]).length).toBeGreaterThan(0);
 		const namespace = coordinatorNamespace(root);
 		await awaitEventWebhookDeliveriesForTest(namespace);
@@ -4841,7 +4841,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		);
 
 		expect(
-			await server.callTool("gjc_coordinator_stop_session", {
+			await server.callTool("vib_coordinator_stop_session", {
 				session_id: "visible-session",
 				allow_mutation: true,
 			}),
@@ -4921,7 +4921,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		await fs.rm(transactionPath(paths, "visible-session"));
 
 		await expect(
-			server.callTool("gjc_coordinator_stop_session", {
+			server.callTool("vib_coordinator_stop_session", {
 				session_id: "visible-session",
 				allow_mutation: true,
 			}),
@@ -5002,7 +5002,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		);
 		await registerSdkSession(server, root);
 		await expect(
-			server.callTool("gjc_coordinator_report_status", {
+			server.callTool("vib_coordinator_report_status", {
 				session_id: "visible-session",
 				status: "blocked",
 				summary: "manifest durability probe",
@@ -5029,7 +5029,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		// broker_closed and the process dies before any post-close checkpoint, so
 		// only the manifest captured at admission can drive recovery.
 		await expect(
-			server.callTool("gjc_coordinator_stop_session", { session_id: "visible-session", allow_mutation: true }),
+			server.callTool("vib_coordinator_stop_session", { session_id: "visible-session", allow_mutation: true }),
 		).resolves.toMatchObject({ ok: false, reason: "close_failed" });
 		expect(manifestAtClose).not.toBeNull();
 		expect(manifestAtClose).toMatchObject({ turn_ids: [], report_ids: reportIds });
@@ -5043,7 +5043,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 
 		failNextPostCloseList = false;
 		await expect(
-			server.callTool("gjc_coordinator_stop_session", { session_id: "visible-session", allow_mutation: true }),
+			server.callTool("vib_coordinator_stop_session", { session_id: "visible-session", allow_mutation: true }),
 		).resolves.toMatchObject({ ok: true, closed: true });
 		expect(controls.filter(control => control.operation === "session.close")).toHaveLength(1);
 		await expect(
@@ -5075,7 +5075,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 				return undefined;
 			},
 		});
-		const started = await server.callTool("gjc_coordinator_start_session", {
+		const started = await server.callTool("vib_coordinator_start_session", {
 			cwd: root,
 			idempotency_key: "reap-recovery-start",
 			allow_mutation: true,
@@ -5085,13 +5085,13 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		const sessionRecord = JSON.parse(await fs.readFile(sessionFile, "utf8"));
 		await Bun.write(sessionFile, JSON.stringify({ ...sessionRecord, ephemeral: true }));
 
-		const first = await server.callTool("gjc_coordinator_stop_session", {
+		const first = await server.callTool("vib_coordinator_stop_session", {
 			session_id: "created-session-1",
 			allow_mutation: true,
 		});
 		expect(first).toMatchObject({ ok: false, reason: "close_failed" });
 		expect(await Bun.file(sessionFile).exists()).toBe(true);
-		const second = await server.callTool("gjc_coordinator_stop_session", {
+		const second = await server.callTool("vib_coordinator_stop_session", {
 			session_id: "created-session-1",
 			allow_mutation: true,
 		});
@@ -5115,7 +5115,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		];
 		const server = await createSdkControlServer(root, controls, undefined, undefined, brokerSessions);
 		await expect(
-			server.callTool("gjc_coordinator_register_session", {
+			server.callTool("vib_coordinator_register_session", {
 				session_id: "idle-session",
 				cwd: root,
 				idempotency_key: "register-idle",
@@ -5209,7 +5209,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 					}
 
 					const result = await createRealBrokerServer(root, agentDir).callTool(
-						"gjc_coordinator_list_sessions",
+						"vib_coordinator_list_sessions",
 						{},
 					);
 					expect(result).toMatchObject({ ok: true, sessions: [] });
@@ -5237,7 +5237,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 				cleanup.lease = started.lease;
 				const owner = brokerOwnerForTest(agentDir);
 				expect(owner).toBeDefined();
-				const result = await createRealBrokerServer(root, agentDir).callTool("gjc_coordinator_list_sessions", {});
+				const result = await createRealBrokerServer(root, agentDir).callTool("vib_coordinator_list_sessions", {});
 				expect(result).toMatchObject({ ok: true, sessions: [] });
 				const reused = await readBrokerDiscovery(agentDir);
 				expect(reused).toMatchObject({
@@ -5260,8 +5260,8 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			try {
 				const server = createRealBrokerServer(root, agentDir);
 				const results = await Promise.all([
-					server.callTool("gjc_coordinator_list_sessions", {}),
-					server.callTool("gjc_coordinator_list_sessions", {}),
+					server.callTool("vib_coordinator_list_sessions", {}),
+					server.callTool("vib_coordinator_list_sessions", {}),
 				]);
 				expect(results).toEqual([
 					{ ok: true, sessions: [] },
@@ -5271,7 +5271,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 				expect(owner).toBeDefined();
 				const discovery = await readBrokerDiscovery(agentDir);
 				expect(discovery).not.toBeNull();
-				await expect(server.callTool("gjc_coordinator_list_sessions", {})).resolves.toMatchObject({
+				await expect(server.callTool("vib_coordinator_list_sessions", {})).resolves.toMatchObject({
 					ok: true,
 					sessions: [],
 				});
@@ -5303,7 +5303,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 				} as unknown as SdkClient;
 			},
 		});
-		await expect(server.callTool("gjc_coordinator_list_sessions", {})).resolves.toMatchObject({
+		await expect(server.callTool("vib_coordinator_list_sessions", {})).resolves.toMatchObject({
 			ok: true,
 			sessions: [],
 		});
@@ -5335,8 +5335,8 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 		});
 		await expect(
 			Promise.all([
-				server.callTool("gjc_coordinator_list_sessions", {}),
-				server.callTool("gjc_coordinator_list_sessions", {}),
+				server.callTool("vib_coordinator_list_sessions", {}),
+				server.callTool("vib_coordinator_list_sessions", {}),
 			]),
 		).resolves.toEqual([
 			{ ok: true, sessions: [] },
@@ -5456,7 +5456,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 					return client;
 				},
 			});
-			const result = await server.callTool("gjc_coordinator_list_sessions", {});
+			const result = await server.callTool("vib_coordinator_list_sessions", {});
 			expect(result).toMatchObject({ ok: false, error: { code: testCase.code } });
 			if (testCase.message) expect(result).toMatchObject({ error: { message: testCase.message } });
 			expect(JSON.stringify(result)).not.toContain("token-secret");
@@ -5468,7 +5468,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 			connectBroker: async () =>
 				({ global: async () => ({ ok: true }), close: async () => {} }) as unknown as SdkClient,
 		});
-		await expect(nullServer.callTool("gjc_coordinator_list_sessions", {})).resolves.toMatchObject({
+		await expect(nullServer.callTool("vib_coordinator_list_sessions", {})).resolves.toMatchObject({
 			ok: false,
 			error: { code: "broker_unavailable", message: "SDK broker is unavailable." },
 		});
@@ -5495,7 +5495,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 						},
 					}) as unknown as SdkClient,
 			});
-			const result = await server.callTool("gjc_coordinator_list_sessions", {});
+			const result = await server.callTool("vib_coordinator_list_sessions", {});
 			expect(result).toMatchObject({
 				ok: false,
 				error: {
@@ -5518,7 +5518,7 @@ console.log(JSON.stringify(await appendCoordinatorEventForTest(${JSON.stringify(
 					},
 				}) as unknown as SdkClient,
 		});
-		await expect(closeFailureServer.callTool("gjc_coordinator_list_sessions", {})).resolves.toMatchObject({
+		await expect(closeFailureServer.callTool("vib_coordinator_list_sessions", {})).resolves.toMatchObject({
 			ok: false,
 			error: { code: "broker_transport_unavailable", message: "SDK broker transport is unavailable." },
 		});
@@ -5550,27 +5550,27 @@ it("repairs one terminal session without deleting another session's projections"
 	const server = await createSdkControlServer(root, controls, undefined, undefined, sessions);
 	await registerSdkSession(server, root);
 	await expect(
-		server.callTool("gjc_coordinator_register_session", {
+		server.callTool("vib_coordinator_register_session", {
 			session_id: "other-session",
 			cwd: root,
 			idempotency_key: "register-other",
 			allow_mutation: true,
 		}),
 	).resolves.toMatchObject({ ok: true });
-	const first = await server.callTool("gjc_coordinator_send_prompt", {
+	const first = await server.callTool("vib_coordinator_send_prompt", {
 		session_id: "visible-session",
 		prompt: "first",
 		idempotency_key: "prompt-first-session",
 		allow_mutation: true,
 	});
-	const second = await server.callTool("gjc_coordinator_send_prompt", {
+	const second = await server.callTool("vib_coordinator_send_prompt", {
 		session_id: "other-session",
 		prompt: "second",
 		idempotency_key: "prompt-second-session",
 		allow_mutation: true,
 	});
 	await expect(
-		server.callTool("gjc_coordinator_report_status", {
+		server.callTool("vib_coordinator_report_status", {
 			session_id: "visible-session",
 			turn_id: first.turn_id,
 			status: "completed",
@@ -5639,7 +5639,7 @@ async function callActivate(
 	server: { callTool: (name: string, args: Record<string, unknown>) => Promise<Record<string, unknown>> },
 	idempotencyKey: string,
 ): Promise<Record<string, unknown>> {
-	return await server.callTool("gjc_coordinator_activate_session", {
+	return await server.callTool("vib_coordinator_activate_session", {
 		session_id: "visible-session",
 		idempotency_key: idempotencyKey,
 		allow_mutation: true,
@@ -5821,7 +5821,7 @@ describe("Coordinator MCP prepared session activation", () => {
 				: { ok: true, page: { items: [], complete: true, revision: "context" } },
 		);
 		await registerSdkSession(server, root);
-		const sent = await server.callTool("gjc_coordinator_send_prompt", {
+		const sent = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "gate prompt text must not enter the event",
 			idempotency_key: "opened-prompt",
@@ -5831,7 +5831,7 @@ describe("Coordinator MCP prepared session activation", () => {
 		if (typeof runtimeAcknowledgement.turn_id !== "string") throw new Error("missing runtime turn id");
 		runtimeTurnId = runtimeAcknowledgement.turn_id;
 		await expect(
-			server.callTool("gjc_coordinator_register_codex_handoff", {
+			server.callTool("vib_coordinator_register_codex_handoff", {
 				session_id: "visible-session",
 				thread_id: "thread-opened",
 				endpoint: { kind: "unix", path: "/tmp/question-opened.sock" },
@@ -5840,7 +5840,7 @@ describe("Coordinator MCP prepared session activation", () => {
 			}),
 		).resolves.toMatchObject({ ok: true });
 
-		const first = await server.callTool("gjc_coordinator_list_questions", { session_id: "visible-session" });
+		const first = await server.callTool("vib_coordinator_list_questions", { session_id: "visible-session" });
 		const question = (first.questions as Array<Record<string, unknown>>)[0]!;
 		const journal = path.join(coordinatorNamespace(root), "events", "event-journal.jsonl");
 		const opened = (await fs.readFile(journal, "utf8"))
@@ -5855,7 +5855,7 @@ describe("Coordinator MCP prepared session activation", () => {
 			question_id: "gate-opened",
 		});
 		expect(String(opened[0]?.summary)).not.toContain("gate prompt text must not enter the event");
-		await server.callTool("gjc_coordinator_list_questions", { session_id: "visible-session" });
+		await server.callTool("vib_coordinator_list_questions", { session_id: "visible-session" });
 		const openedAfterReplay = (await fs.readFile(journal, "utf8"))
 			.trim()
 			.split("\n")
@@ -5906,13 +5906,13 @@ it("keeps parallel pending questions isolated when one answer is submitted", asy
 	);
 	await Promise.all([registerSdkSession(serverA, rootA), registerSdkSession(serverB, rootB)]);
 	const [sentA, sentB] = await Promise.all([
-		serverA.callTool("gjc_coordinator_send_prompt", {
+		serverA.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "open A",
 			idempotency_key: "isolation-prompt-a",
 			allow_mutation: true,
 		}),
-		serverB.callTool("gjc_coordinator_send_prompt", {
+		serverB.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "open B",
 			idempotency_key: "isolation-prompt-b",
@@ -5926,14 +5926,14 @@ it("keeps parallel pending questions isolated when one answer is submitted", asy
 	runtimeTurnA = acknowledgementA.turn_id;
 	runtimeTurnB = acknowledgementB.turn_id;
 	const [listedA, listedB] = await Promise.all([
-		serverA.callTool("gjc_coordinator_list_questions", { session_id: "visible-session" }),
-		serverB.callTool("gjc_coordinator_list_questions", { session_id: "visible-session" }),
+		serverA.callTool("vib_coordinator_list_questions", { session_id: "visible-session" }),
+		serverB.callTool("vib_coordinator_list_questions", { session_id: "visible-session" }),
 	]);
 	const questionA = (listedA.questions as Array<Record<string, unknown>>)[0]!;
 	const questionBBefore = (listedB.questions as Array<Record<string, unknown>>)[0]!;
 	expect(questionA.answer_binding).not.toBe(questionBBefore.answer_binding);
 	await expect(
-		serverA.callTool("gjc_coordinator_submit_question_answer", {
+		serverA.callTool("vib_coordinator_submit_question_answer", {
 			session_id: "visible-session",
 			turn_id: sentA.turn_id,
 			question_id: "gate-isolated-a",
@@ -5943,7 +5943,7 @@ it("keeps parallel pending questions isolated when one answer is submitted", asy
 			allow_mutation: true,
 		}),
 	).resolves.toMatchObject({ ok: true, status: "accepted" });
-	const listedBAfter = await serverB.callTool("gjc_coordinator_list_questions", { session_id: "visible-session" });
+	const listedBAfter = await serverB.callTool("vib_coordinator_list_questions", { session_id: "visible-session" });
 	const questionBAfter = (listedBAfter.questions as Array<Record<string, unknown>>)[0]!;
 	expect(questionBAfter).toMatchObject({
 		question_id: "gate-isolated-b",
@@ -5961,7 +5961,7 @@ it("issue-4351: completed coordinator session reports ready_for_input false and 
 	const controls: SdkControl[] = [];
 	const server = await createSdkControlServer(root, controls);
 	await registerSdkSession(server, root);
-	const sent = await server.callTool("gjc_coordinator_send_prompt", {
+	const sent = await server.callTool("vib_coordinator_send_prompt", {
 		session_id: "visible-session",
 		prompt: "terminal transition for issue-4351",
 		idempotency_key: "issue-4351-completed",
@@ -5969,7 +5969,7 @@ it("issue-4351: completed coordinator session reports ready_for_input false and 
 	});
 	const turnId = (sent as { turn_id?: unknown }).turn_id;
 	if (typeof turnId !== "string") throw new Error("expected turn id");
-	await server.callTool("gjc_coordinator_report_status", {
+	await server.callTool("vib_coordinator_report_status", {
 		session_id: "visible-session",
 		turn_id: turnId,
 		status: "completed",
@@ -5984,7 +5984,7 @@ it("issue-4351: completed coordinator session reports ready_for_input false and 
 	expect(typeof durable.ended_at).toBe("string");
 	expect(Number.isFinite(Date.parse(durable.ended_at as string))).toBe(true);
 
-	const status = await server.callTool("gjc_coordinator_read_status", { session_id: "visible-session" });
+	const status = await server.callTool("vib_coordinator_read_status", { session_id: "visible-session" });
 	expect(status).toMatchObject({
 		session_state: {
 			state: "completed",
@@ -6016,7 +6016,7 @@ describe("Coordinator MCP retained-delivery ordering", () => {
 			["beta-session", "register-empty-beta"],
 			["gamma-session", "register-empty-gamma"],
 		] as const)
-			await server.callTool("gjc_coordinator_register_session", {
+			await server.callTool("vib_coordinator_register_session", {
 				session_id: sessionId,
 				cwd: root,
 				idempotency_key: key,
@@ -6053,7 +6053,7 @@ describe("Coordinator MCP retained-delivery ordering", () => {
 			["zeta-session", "register-zeta-ordering"],
 		] as const)
 			await expect(
-				server.callTool("gjc_coordinator_register_session", {
+				server.callTool("vib_coordinator_register_session", {
 					session_id: sessionId,
 					cwd: root,
 					idempotency_key: key,
@@ -6110,7 +6110,7 @@ describe("Coordinator MCP retained-delivery ordering", () => {
 			["alpha-session", "register-aggregate-alpha"],
 			["beta-session", "register-aggregate-beta"],
 		] as const)
-			await server.callTool("gjc_coordinator_register_session", {
+			await server.callTool("vib_coordinator_register_session", {
 				session_id: sessionId,
 				cwd: root,
 				idempotency_key: key,
@@ -6161,7 +6161,7 @@ describe("Coordinator MCP retained-delivery ordering", () => {
 			};
 		});
 		await registerSdkSession(server, root);
-		const sent = await server.callTool("gjc_coordinator_send_prompt", {
+		const sent = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "wait for gate",
 			idempotency_key: "wake-gate-prompt",
@@ -6184,10 +6184,10 @@ describe("Coordinator MCP retained-delivery ordering", () => {
 				active_tools: [],
 			},
 		});
-		const initial = await server.callTool("gjc_coordinator_watch_events", { after_seq: 0, timeout_ms: 0 });
+		const initial = await server.callTool("vib_coordinator_watch_events", { after_seq: 0, timeout_ms: 0 });
 		const cursor = Number(initial.next_after_seq);
 		gateAvailable = true;
-		const pending = server.callTool("gjc_coordinator_watch_events", {
+		const pending = server.callTool("vib_coordinator_watch_events", {
 			session_id: "visible-session",
 			after_seq: cursor,
 			timeout_ms: 500,
@@ -6234,15 +6234,15 @@ describe("Coordinator MCP retained-delivery ordering", () => {
 			},
 		);
 		await registerSdkSession(server, root);
-		const sent = await server.callTool("gjc_coordinator_send_prompt", {
+		const sent = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "legacy waiting gate",
 			idempotency_key: "legacy-q12-prompt",
 			allow_mutation: true,
 		});
 		runtimeTurnId = String((sent.result as Record<string, unknown>).turn_id);
-		await server.callTool("gjc_coordinator_list_questions", { session_id: "visible-session" });
-		const queued = await server.callTool("gjc_coordinator_send_prompt", {
+		await server.callTool("vib_coordinator_list_questions", { session_id: "visible-session" });
+		const queued = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "queued legacy follow-up",
 			queue: true,
@@ -6261,7 +6261,7 @@ describe("Coordinator MCP retained-delivery ordering", () => {
 		await materializeLegacyProjectionFixture(root, server.config.namespace.identity, "visible-session");
 		await fs.rm(transactionPath(paths, "visible-session"));
 
-		const listed = await server.callTool("gjc_coordinator_list_questions", { session_id: "visible-session" });
+		const listed = await server.callTool("vib_coordinator_list_questions", { session_id: "visible-session" });
 		const question = (listed.questions as Array<Record<string, unknown>>)[0]!;
 		expect(listed).toMatchObject({
 			ok: true,
@@ -6288,7 +6288,7 @@ describe("Coordinator MCP retained-delivery ordering", () => {
 				runtime_turn_id: runtimeTurnId,
 			}),
 		});
-		const answer = await server.callTool("gjc_coordinator_submit_question_answer", {
+		const answer = await server.callTool("vib_coordinator_submit_question_answer", {
 			session_id: "visible-session",
 			turn_id: sent.turn_id,
 			question_id: "legacy-q12",
@@ -6298,7 +6298,7 @@ describe("Coordinator MCP retained-delivery ordering", () => {
 			allow_mutation: true,
 		});
 		expect(answer).toMatchObject({ ok: true, operation: "workflow.gate_answer", status: "accepted" });
-		const replay = await server.callTool("gjc_coordinator_submit_question_answer", {
+		const replay = await server.callTool("vib_coordinator_submit_question_answer", {
 			session_id: "visible-session",
 			turn_id: sent.turn_id,
 			question_id: "legacy-q12",
@@ -6315,7 +6315,7 @@ describe("Coordinator MCP retained-delivery ordering", () => {
 		const root = await tempRoot();
 		const server = await createSdkControlServer(root, []);
 		await registerSdkSession(server, root);
-		const sent = await server.callTool("gjc_coordinator_send_prompt", {
+		const sent = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "inconsistent legacy projection",
 			idempotency_key: "inconsistent-legacy-prompt",
@@ -6333,7 +6333,7 @@ describe("Coordinator MCP retained-delivery ordering", () => {
 		await fs.writeFile(activePath, hostileActive);
 		await fs.rm(transactionPath(paths, "visible-session"));
 
-		const result = await server.callTool("gjc_coordinator_list_questions", { session_id: "visible-session" });
+		const result = await server.callTool("vib_coordinator_list_questions", { session_id: "visible-session" });
 		expect(result).toMatchObject({ ok: false, error: { code: "unavailable" } });
 		await expect(fs.access(transactionPath(paths, "visible-session"))).rejects.toThrow();
 		expect(await fs.readFile(activePath, "utf8")).toBe(hostileActive);
@@ -6344,13 +6344,13 @@ describe("Coordinator MCP retained-delivery ordering", () => {
 		const root = await tempRoot();
 		const server = await createSdkControlServer(root, []);
 		await registerSdkSession(server, root);
-		const sent = await server.callTool("gjc_coordinator_send_prompt", {
+		const sent = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "terminal legacy validation",
 			idempotency_key: "terminal-legacy-validation",
 			allow_mutation: true,
 		});
-		await server.callTool("gjc_coordinator_report_status", {
+		await server.callTool("vib_coordinator_report_status", {
 			session_id: "visible-session",
 			turn_id: sent.turn_id,
 			status: "completed",
@@ -6388,7 +6388,7 @@ describe("Coordinator MCP retained-delivery ordering", () => {
 		await fs.writeFile(reportPath, hostileReport);
 		await fs.rm(transactionPath(paths, "visible-session"));
 
-		const result = await server.callTool("gjc_coordinator_list_questions", { session_id: "visible-session" });
+		const result = await server.callTool("vib_coordinator_list_questions", { session_id: "visible-session" });
 		expect(result).toMatchObject({ ok: false, error: { code: "unavailable" } });
 		await expect(fs.access(transactionPath(paths, "visible-session"))).rejects.toThrow();
 		expect(await fs.readFile(turnPath, "utf8")).toBe(hostileTurn);
@@ -6408,7 +6408,7 @@ describe("Coordinator MCP retained-delivery ordering", () => {
 		const root = await tempRoot();
 		const server = await createSdkControlServer(root, []);
 		await registerSdkSession(server, root);
-		await server.callTool("gjc_coordinator_send_prompt", {
+		await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "scalar root corruption",
 			idempotency_key: `scalar-root-${hostile}`,
@@ -6418,7 +6418,7 @@ describe("Coordinator MCP retained-delivery ordering", () => {
 		const file = transactionPath(paths, "visible-session");
 		await fs.writeFile(file, hostile);
 
-		expect(await server.callTool("gjc_coordinator_list_questions", { session_id: "visible-session" })).toEqual(
+		expect(await server.callTool("vib_coordinator_list_questions", { session_id: "visible-session" })).toEqual(
 			unavailableEnvelope,
 		);
 		expect(await fs.readFile(file, "utf8")).toBe(hostile);
@@ -6478,7 +6478,7 @@ describe("Coordinator MCP retained-delivery ordering", () => {
 		const root = await tempRoot();
 		const server = await createSdkControlServer(root, []);
 		await registerSdkSession(server, root);
-		await server.callTool("gjc_coordinator_send_prompt", {
+		await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "canonical corruption",
 			idempotency_key: `canonical-${_field.replaceAll(" ", "-")}`,
@@ -6490,7 +6490,7 @@ describe("Coordinator MCP retained-delivery ordering", () => {
 		corrupt(value);
 		const hostile = JSON.stringify(value);
 		await fs.writeFile(file, hostile);
-		const result = await server.callTool("gjc_coordinator_list_questions", { session_id: "visible-session" });
+		const result = await server.callTool("vib_coordinator_list_questions", { session_id: "visible-session" });
 		expect(result).toEqual(unavailableEnvelope);
 		expect(await fs.readFile(file, "utf8")).toBe(hostile);
 	});
@@ -6545,17 +6545,17 @@ describe("Coordinator MCP retained-delivery ordering", () => {
 			},
 		);
 		await registerSdkSession(server, root);
-		const sent = await server.callTool("gjc_coordinator_send_prompt", {
+		const sent = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "cross-record corruption",
 			idempotency_key: `cross-record-${_field.replaceAll(" ", "-")}`,
 			allow_mutation: true,
 		});
 		runtimeTurnId = String((sent.turn as Record<string, Record<string, unknown>>).delivery.runtime_turn_id);
-		const listed = await server.callTool("gjc_coordinator_list_questions", { session_id: "visible-session" });
+		const listed = await server.callTool("vib_coordinator_list_questions", { session_id: "visible-session" });
 		const question = (listed.questions as Array<Record<string, unknown>>)[0]!;
 		if (_field === "question-answer fence linkage")
-			await server.callTool("gjc_coordinator_submit_question_answer", {
+			await server.callTool("vib_coordinator_submit_question_answer", {
 				session_id: "visible-session",
 				turn_id: sent.turn_id,
 				question_id: "cross-record-corruption",
@@ -6571,7 +6571,7 @@ describe("Coordinator MCP retained-delivery ordering", () => {
 		const hostile = JSON.stringify(value);
 		await fs.writeFile(file, hostile);
 
-		expect(await server.callTool("gjc_coordinator_list_questions", { session_id: "visible-session" })).toEqual(
+		expect(await server.callTool("vib_coordinator_list_questions", { session_id: "visible-session" })).toEqual(
 			unavailableEnvelope,
 		);
 		expect(await fs.readFile(file, "utf8")).toBe(hostile);
@@ -6581,7 +6581,7 @@ describe("Coordinator MCP retained-delivery ordering", () => {
 		const root = await tempRoot();
 		const server = await createSdkControlServer(root, []);
 		await registerSdkSession(server, root);
-		await server.callTool("gjc_coordinator_send_prompt", {
+		await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "deferred authority",
 			idempotency_key: "deferred-authority-prompt",
@@ -6624,7 +6624,7 @@ describe("Coordinator MCP retained-delivery ordering", () => {
 		};
 		await fs.writeFile(file, JSON.stringify(transaction));
 
-		expect(await server.callTool("gjc_coordinator_list_questions", { session_id: "visible-session" })).toMatchObject({
+		expect(await server.callTool("vib_coordinator_list_questions", { session_id: "visible-session" })).toMatchObject({
 			ok: true,
 		});
 	});
@@ -6634,7 +6634,7 @@ describe("Coordinator MCP retained-delivery ordering", () => {
 		const controls: SdkControl[] = [];
 		const server = await createSdkControlServer(root, controls);
 		await registerSdkSession(server, root);
-		const sent = await server.callTool("gjc_coordinator_send_prompt", {
+		const sent = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "provenance mismatch",
 			idempotency_key: "provenance-mismatch-prompt",
@@ -6647,7 +6647,7 @@ describe("Coordinator MCP retained-delivery ordering", () => {
 			live: true,
 			session_id: "wrong-session",
 		});
-		const listed = await server.callTool("gjc_coordinator_list_questions", { session_id: "visible-session" });
+		const listed = await server.callTool("vib_coordinator_list_questions", { session_id: "visible-session" });
 		expect(listed).toMatchObject({ reconciliation: { complete: false, reason: "terminal_uncertain" } });
 	});
 
@@ -6666,7 +6666,7 @@ describe("Coordinator MCP retained-delivery ordering", () => {
 			};
 		});
 		await registerSdkSession(server, root);
-		const sent = await server.callTool("gjc_coordinator_send_prompt", {
+		const sent = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "wrong runtime owner",
 			idempotency_key: "wrong-runtime-owner-prompt",
@@ -6681,7 +6681,7 @@ describe("Coordinator MCP retained-delivery ordering", () => {
 			current_turn_id: sent.turn_id,
 			activity: { seq: 1, phase: "waiting", active_tool_count: 0, active_tools: [] },
 		});
-		const listed = await server.callTool("gjc_coordinator_list_questions", { session_id: "visible-session" });
+		const listed = await server.callTool("vib_coordinator_list_questions", { session_id: "visible-session" });
 		expect(listed).toMatchObject({
 			questions: [],
 			reconciliation: { complete: false, reason: "terminal_uncertain" },
@@ -6713,7 +6713,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 		const session = JSON.parse(await fs.readFile(sessionFile, "utf8")) as Record<string, unknown>;
 		await fs.writeFile(sessionFile, JSON.stringify({ ...session, ephemeral: true }));
 		await expect(
-			server.callTool("gjc_coordinator_stop_session", { session_id: "visible-session", allow_mutation: true }),
+			server.callTool("vib_coordinator_stop_session", { session_id: "visible-session", allow_mutation: true }),
 		).resolves.toMatchObject({ ok: false, reason: "delivery_pending", closed: false });
 		expect(controls.filter(control => control.operation === "session.close")).toHaveLength(1);
 		await withSessionTransaction(paths, "visible-session", async transaction => {
@@ -6724,7 +6724,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			retained.public_delivery.claim_expires_at = new Date(Date.now() - 1).toISOString();
 		});
 		await expect(
-			server.callTool("gjc_coordinator_stop_session", { session_id: "visible-session", allow_mutation: true }),
+			server.callTool("vib_coordinator_stop_session", { session_id: "visible-session", allow_mutation: true }),
 		).resolves.toMatchObject({ ok: true, closed: true });
 		expect(controls.filter(control => control.operation === "session.close")).toHaveLength(1);
 		const journal = (
@@ -6734,11 +6734,11 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			.filter(Boolean)
 			.map(line => JSON.parse(line) as { id: string; kind: string });
 		expect(journal.filter(event => event.id === "close-retained-lease")).toHaveLength(1);
-		const watched = await server.callTool("gjc_coordinator_watch_events", { after_seq: 0, timeout_ms: 0 });
+		const watched = await server.callTool("vib_coordinator_watch_events", { after_seq: 0, timeout_ms: 0 });
 		expect((watched.events as Array<{ kind: string }>).filter(event => event.kind === "session.reaped")).toHaveLength(
 			1,
 		);
-		const scopedWatched = await server.callTool("gjc_coordinator_watch_events", {
+		const scopedWatched = await server.callTool("vib_coordinator_watch_events", {
 			session_id: "visible-session",
 			after_seq: 0,
 			timeout_ms: 0,
@@ -6754,7 +6754,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 		const controls: SdkControl[] = [];
 		const server = await createSdkControlServer(root, controls);
 		await registerSdkSession(server, root);
-		const sent = await server.callTool("gjc_coordinator_send_prompt", {
+		const sent = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "errored terminal",
 			idempotency_key: "errored-terminal",
@@ -6775,7 +6775,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			execution_state: "failed",
 			receipt_state: "received",
 		});
-		const watched = await server.callTool("gjc_coordinator_watch_events", { after_seq: cursor, timeout_ms: 0 });
+		const watched = await server.callTool("vib_coordinator_watch_events", { after_seq: cursor, timeout_ms: 0 });
 		const terminal = (watched.events as Array<Record<string, unknown>>).filter(
 			event => event.turn_id === turnId && (event.kind === "turn.failed" || event.kind === "turn.completed"),
 		);
@@ -6824,14 +6824,14 @@ describe("Coordinator MCP deep-audit regressions", () => {
 				);
 				const discovery = await server.handleJsonRpc({ jsonrpc: "2.0", id: platform, method: "tools/list" });
 				const artifact = (discovery.result as { tools: Array<Record<string, unknown>> }).tools.find(
-					tool => tool.name === "gjc_coordinator_read_artifact",
+					tool => tool.name === "vib_coordinator_read_artifact",
 				);
 				expect(artifact?.description).toContain(
 					available ? "Read one bounded artifact" : "Unavailable on this platform",
 				);
 				if (!available) {
 					await expect(
-						server.callTool("gjc_coordinator_read_artifact", { path: "/unsupported" }),
+						server.callTool("vib_coordinator_read_artifact", { path: "/unsupported" }),
 					).resolves.toEqual({
 						ok: false,
 						error: { code: "artifact_unavailable", message: "Coordinator artifact could not be read." },
@@ -6850,10 +6850,10 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			const artifactRoot = path.join(root, "artifacts");
 			await fs.mkdir(artifactRoot, { recursive: true });
 			const config = buildCoordinatorMcpConfig({
-				GJC_COORDINATOR_MCP_WORKDIR_ROOTS: artifactRoot,
-				GJC_COORDINATOR_MCP_STATE_ROOT: path.join(root, "coordinator-state"),
-				GJC_COORDINATOR_MCP_PROFILE: "local",
-				GJC_COORDINATOR_MCP_REPO: "repo",
+				VIB_COORDINATOR_MCP_WORKDIR_ROOTS: artifactRoot,
+				VIB_COORDINATOR_MCP_STATE_ROOT: path.join(root, "coordinator-state"),
+				VIB_COORDINATOR_MCP_PROFILE: "local",
+				VIB_COORDINATOR_MCP_REPO: "repo",
 			});
 			const cases: Array<[string, Buffer, number, string]> = [
 				["exact", Buffer.from("a€"), 4, "a€"],
@@ -6879,10 +6879,10 @@ describe("Coordinator MCP deep-audit regressions", () => {
 		await fs.mkdir(artifactRoot, { recursive: true });
 		const server = createCoordinatorMcpServer({
 			env: {
-				GJC_COORDINATOR_MCP_WORKDIR_ROOTS: artifactRoot,
-				GJC_COORDINATOR_MCP_STATE_ROOT: path.join(root, "coordinator-state"),
-				GJC_COORDINATOR_MCP_PROFILE: "local",
-				GJC_COORDINATOR_MCP_REPO: "repo",
+				VIB_COORDINATOR_MCP_WORKDIR_ROOTS: artifactRoot,
+				VIB_COORDINATOR_MCP_STATE_ROOT: path.join(root, "coordinator-state"),
+				VIB_COORDINATOR_MCP_PROFILE: "local",
+				VIB_COORDINATOR_MCP_REPO: "repo",
 			},
 		});
 		const artifact = path.join(artifactRoot, "malformed-artifact.bin");
@@ -6890,7 +6890,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			artifact,
 			Buffer.concat([Buffer.from("valid-prefix"), Buffer.from([0xff]), Buffer.alloc(64 * 1024, 0x61)]),
 		);
-		await expect(server.callTool("gjc_coordinator_read_artifact", { path: artifact })).resolves.toMatchObject({
+		await expect(server.callTool("vib_coordinator_read_artifact", { path: artifact })).resolves.toMatchObject({
 			ok: true,
 			text: "valid-prefix",
 		});
@@ -6901,7 +6901,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 		const controls: SdkControl[] = [];
 		const server = await createSdkControlServer(root, controls);
 		await registerSdkSession(server, root);
-		const sent = await server.callTool("gjc_coordinator_send_prompt", {
+		const sent = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "pre-ack terminal",
 			idempotency_key: "pre-ack-terminal",
@@ -6931,7 +6931,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 				truncated: false,
 			},
 		});
-		const watched = await server.callTool("gjc_coordinator_watch_events", {
+		const watched = await server.callTool("vib_coordinator_watch_events", {
 			after_seq: cursor,
 			timeout_ms: 0,
 		});
@@ -6942,7 +6942,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			),
 		).toBe(false);
 		await expect(
-			server.callTool("gjc_coordinator_read_turn", { session_id: "visible-session", turn_id: turnId }),
+			server.callTool("vib_coordinator_read_turn", { session_id: "visible-session", turn_id: turnId }),
 		).resolves.toMatchObject({
 			ok: true,
 			turn: { turn_id: turnId, status: "active" },
@@ -6958,7 +6958,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 				: { ok: true, page: { items: [], complete: true, revision: "context" } },
 		);
 		await registerSdkSession(server, root);
-		const sent = await server.callTool("gjc_coordinator_send_prompt", {
+		const sent = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "pre-ack waiting",
 			idempotency_key: "pre-ack-waiting",
@@ -6981,7 +6981,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			live: true,
 			updated_at: "2026-08-19T00:00:00.000Z",
 		});
-		const watched = await server.callTool("gjc_coordinator_watch_events", {
+		const watched = await server.callTool("vib_coordinator_watch_events", {
 			after_seq: cursor,
 			timeout_ms: 0,
 		});
@@ -6994,7 +6994,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			),
 		).toBe(false);
 		await expect(
-			server.callTool("gjc_coordinator_read_turn", { session_id: "visible-session", turn_id: turnId }),
+			server.callTool("vib_coordinator_read_turn", { session_id: "visible-session", turn_id: turnId }),
 		).resolves.toMatchObject({
 			ok: true,
 			turn: { turn_id: turnId, status: "active" },
@@ -7020,7 +7020,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 				: { ok: true, page: { items: [], complete: true, revision: "zero-time-empty" } };
 		});
 		await registerSdkSession(server, root);
-		const sent = await server.callTool("gjc_coordinator_send_prompt", {
+		const sent = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "zero-time waiting",
 			idempotency_key: "zero-time-waiting",
@@ -7042,7 +7042,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			activity: { seq: 1, phase: "waiting", active_tool_count: 0, active_tools: [] },
 		});
 		gateAvailable = true;
-		const watched = await server.callTool("gjc_coordinator_watch_events", { after_seq: cursor, timeout_ms: 0 });
+		const watched = await server.callTool("vib_coordinator_watch_events", { after_seq: cursor, timeout_ms: 0 });
 		expect(watched).toMatchObject({
 			ok: true,
 			events: expect.arrayContaining([
@@ -7057,7 +7057,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 		const controls: SdkControl[] = [];
 		const server = await createSdkControlServer(root, controls);
 		await registerSdkSession(server, root);
-		const sent = await server.callTool("gjc_coordinator_send_prompt", {
+		const sent = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "zero-time terminal",
 			idempotency_key: "zero-time-terminal",
@@ -7089,7 +7089,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			},
 		});
 		await expect(
-			server.callTool("gjc_coordinator_watch_events", { after_seq: cursor, timeout_ms: 0 }),
+			server.callTool("vib_coordinator_watch_events", { after_seq: cursor, timeout_ms: 0 }),
 		).resolves.toMatchObject({
 			ok: true,
 			events: expect.arrayContaining([expect.objectContaining({ kind: "turn.completed", turn_id: sent.turn_id })]),
@@ -7140,7 +7140,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			["gamma-session", "fair-register-gamma"],
 		] as const)
 			await expect(
-				server.callTool("gjc_coordinator_register_session", {
+				server.callTool("vib_coordinator_register_session", {
 					session_id: sessionId,
 					cwd: root,
 					idempotency_key: key,
@@ -7148,7 +7148,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 				}),
 			).resolves.toMatchObject({ ok: true });
 		for (const sessionId of ["alpha-session", "beta-session", "gamma-session"] as const) {
-			const sent = await server.callTool("gjc_coordinator_send_prompt", {
+			const sent = await server.callTool("vib_coordinator_send_prompt", {
 				session_id: sessionId,
 				prompt: `fair ${sessionId}`,
 				idempotency_key: `fair-prompt-${sessionId}`,
@@ -7169,13 +7169,13 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			});
 		}
 		const cursor = await currentEventCursor(root);
-		const first = await server.callTool("gjc_coordinator_watch_events", { after_seq: cursor, timeout_ms: 0 });
+		const first = await server.callTool("vib_coordinator_watch_events", { after_seq: cursor, timeout_ms: 0 });
 		expect(
 			(first.events as Array<Record<string, unknown>>).some(
 				event => event.kind === "question.opened" && event.session_id === "gamma-session",
 			),
 		).toBe(false);
-		const second = await server.callTool("gjc_coordinator_watch_events", {
+		const second = await server.callTool("vib_coordinator_watch_events", {
 			after_seq: first.next_after_seq,
 			timeout_ms: 0,
 		});
@@ -7197,7 +7197,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 		const hermes = await fs.readFile(path.join(docsRoot, "hermes-mcp-bridge.md"), "utf8");
 		const bot = await fs.readFile(path.join(docsRoot, "bot-integration.md"), "utf8");
 		for (const guide of [hermes, bot]) {
-			expect(guide).toContain("gjc_coordinator_watch_events");
+			expect(guide).toContain("vib_coordinator_watch_events");
 			expect(guide).toContain("next_after_seq");
 			expect(guide).toContain("turn.waiting_for_answer");
 			expect(guide).toContain("question.opened");
@@ -7206,9 +7206,9 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			expect(guide).toContain("optional");
 		}
 		expect(hermes).not.toContain(
-			"Use `gjc_coordinator_report_status` with `session_id` and `turn_id` to write explicit completion/failure evidence.",
+			"Use `vib_coordinator_report_status` with `session_id` and `turn_id` to write explicit completion/failure evidence.",
 		);
-		expect(bot).not.toContain("When the work is done, your bot must call `gjc_coordinator_report_status`");
+		expect(bot).not.toContain("When the work is done, your bot must call `vib_coordinator_report_status`");
 		expect(bot).not.toContain("marks turn completion/failure with report_status");
 	});
 
@@ -7217,13 +7217,13 @@ describe("Coordinator MCP deep-audit regressions", () => {
 		const controls: SdkControl[] = [];
 		const server = await createSdkControlServer(root, controls);
 		await registerSdkSession(server, root);
-		const active = await server.callTool("gjc_coordinator_send_prompt", {
+		const active = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "active work",
 			idempotency_key: "audit-active-report",
 			allow_mutation: true,
 		});
-		const queued = await server.callTool("gjc_coordinator_send_prompt", {
+		const queued = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "queued work",
 			queue: true,
@@ -7231,7 +7231,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			allow_mutation: true,
 		});
 		const queuedTurnId = String(queued.turn_id);
-		const report = await server.callTool("gjc_coordinator_report_status", {
+		const report = await server.callTool("vib_coordinator_report_status", {
 			session_id: "visible-session",
 			turn_id: queuedTurnId,
 			status: "completed",
@@ -7240,12 +7240,12 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			allow_mutation: true,
 		});
 		expect(report).toMatchObject({ ok: true, turn: { turn_id: queuedTurnId, status: "completed" } });
-		await expect(server.callTool("gjc_coordinator_read_turn", { turn_id: active.turn_id })).resolves.toMatchObject({
+		await expect(server.callTool("vib_coordinator_read_turn", { turn_id: active.turn_id })).resolves.toMatchObject({
 			ok: true,
 			turn: { turn_id: active.turn_id, status: "active" },
 		});
 		await expect(
-			server.callTool("gjc_coordinator_read_coordination_status", { session_id: "visible-session" }),
+			server.callTool("vib_coordinator_read_coordination_status", { session_id: "visible-session" }),
 		).resolves.toMatchObject({
 			ok: true,
 			summary: { active_turns: 1, terminal_turns: 1 },
@@ -7257,13 +7257,13 @@ describe("Coordinator MCP deep-audit regressions", () => {
 		const controls: SdkControl[] = [];
 		const server = await createSdkControlServer(root, controls);
 		await registerSdkSession(server, root);
-		const active = await server.callTool("gjc_coordinator_send_prompt", {
+		const active = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "active race",
 			idempotency_key: "audit-race-active",
 			allow_mutation: true,
 		});
-		const queued = await server.callTool("gjc_coordinator_send_prompt", {
+		const queued = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "queued race",
 			queue: true,
@@ -7271,7 +7271,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			allow_mutation: true,
 		});
 		const [activeReport, queuedReport] = await Promise.all([
-			server.callTool("gjc_coordinator_report_status", {
+			server.callTool("vib_coordinator_report_status", {
 				session_id: "visible-session",
 				turn_id: active.turn_id,
 				status: "completed",
@@ -7279,7 +7279,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 				idempotency_key: "audit-race-active-report",
 				allow_mutation: true,
 			}),
-			server.callTool("gjc_coordinator_report_status", {
+			server.callTool("vib_coordinator_report_status", {
 				session_id: "visible-session",
 				turn_id: queued.turn_id,
 				status: "completed",
@@ -7291,7 +7291,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 		expect(activeReport).toMatchObject({ ok: true });
 		expect(queuedReport).toMatchObject({ ok: true });
 		await expect(
-			server.callTool("gjc_coordinator_read_coordination_status", { session_id: "visible-session" }),
+			server.callTool("vib_coordinator_read_coordination_status", { session_id: "visible-session" }),
 		).resolves.toMatchObject({
 			ok: true,
 			summary: { active_turns: 0, terminal_turns: 2 },
@@ -7303,20 +7303,20 @@ describe("Coordinator MCP deep-audit regressions", () => {
 		const controls: SdkControl[] = [];
 		const server = await createSdkControlServer(root, controls);
 		await registerSdkSession(server, root);
-		const active = await server.callTool("gjc_coordinator_send_prompt", {
+		const active = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "active work",
 			idempotency_key: "audit-promotion-active",
 			allow_mutation: true,
 		});
-		const queued = await server.callTool("gjc_coordinator_send_prompt", {
+		const queued = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "queued successor",
 			queue: true,
 			idempotency_key: "audit-promotion-queued",
 			allow_mutation: true,
 		});
-		await server.callTool("gjc_coordinator_report_status", {
+		await server.callTool("vib_coordinator_report_status", {
 			session_id: "visible-session",
 			turn_id: active.turn_id,
 			status: "completed",
@@ -7324,7 +7324,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			idempotency_key: "audit-promotion-report",
 			allow_mutation: true,
 		});
-		await expect(server.callTool("gjc_coordinator_read_turn", { turn_id: queued.turn_id })).resolves.toMatchObject({
+		await expect(server.callTool("vib_coordinator_read_turn", { turn_id: queued.turn_id })).resolves.toMatchObject({
 			ok: true,
 			turn: { turn_id: queued.turn_id, status: "active" },
 		});
@@ -7337,7 +7337,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 		await registerSdkSession(server, root);
 		const discovery = await server.handleJsonRpc({ jsonrpc: "2.0", id: "watch-schema", method: "tools/list" });
 		const watchTool = (discovery.result as { tools: Array<Record<string, unknown>> }).tools.find(
-			tool => tool.name === "gjc_coordinator_watch_events",
+			tool => tool.name === "vib_coordinator_watch_events",
 		);
 		expect(watchTool).toMatchObject({
 			inputSchema: { properties: { after_seq: { type: "integer", minimum: 0 } } },
@@ -7350,12 +7350,12 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			summary: "watermark",
 		});
 		await expect(
-			server.callTool("gjc_coordinator_watch_events", { after_seq: 1.5, timeout_ms: 0 }),
+			server.callTool("vib_coordinator_watch_events", { after_seq: 1.5, timeout_ms: 0 }),
 		).resolves.toMatchObject({
 			ok: false,
 			error: { code: "invalid_input" },
 		});
-		const immediate = await server.callTool("gjc_coordinator_watch_events", { after_seq: 0, timeout_ms: 0 });
+		const immediate = await server.callTool("vib_coordinator_watch_events", { after_seq: 0, timeout_ms: 0 });
 		if (
 			immediate.ok !== true ||
 			!Number.isSafeInteger(immediate.latest_seq) ||
@@ -7363,7 +7363,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 		)
 			throw new Error(`watch_events returned an invalid immediate snapshot: ${JSON.stringify(immediate)}`);
 		expect(immediate.next_after_seq as number).toBeLessThanOrEqual(immediate.latest_seq as number);
-		const deadline = await server.callTool("gjc_coordinator_watch_events", {
+		const deadline = await server.callTool("vib_coordinator_watch_events", {
 			after_seq: immediate.next_after_seq,
 			timeout_ms: 1,
 		});
@@ -7420,7 +7420,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 		expect(recovered.id).toBe(historicalIds[37]);
 		expect(await Bun.file(migrationFile).exists()).toBe(true);
 		expect((await fs.readdir(stableIndexDir)).length).toBeGreaterThanOrEqual(historicalIds.length);
-		await server.callTool("gjc_coordinator_watch_events", { after_seq: 0, timeout_ms: 0 });
+		await server.callTool("vib_coordinator_watch_events", { after_seq: 0, timeout_ms: 0 });
 		const legacyBefore = await fs.readFile(legacyFile);
 		for (let index = 0; index < 128; index++)
 			await appendCoordinatorEventForTest(namespace, {
@@ -7495,7 +7495,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			{ sessionId: "other-session", locator: { repo: root }, live: true, endpointGeneration: 1 },
 		]);
 		await registerSdkSession(server, root);
-		await server.callTool("gjc_coordinator_register_session", {
+		await server.callTool("vib_coordinator_register_session", {
 			session_id: "other-session",
 			cwd: root,
 			idempotency_key: "audit-status-register-other",
@@ -7503,7 +7503,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 		});
 		const evidencePath = path.join(root, "audit-evidence.txt");
 		await fs.writeFile(evidencePath, "evidence");
-		await server.callTool("gjc_coordinator_report_status", {
+		await server.callTool("vib_coordinator_report_status", {
 			session_id: "visible-session",
 			status: "blocked",
 			summary: "visible report",
@@ -7511,16 +7511,16 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			idempotency_key: "audit-status-visible",
 			allow_mutation: true,
 		});
-		await server.callTool("gjc_coordinator_report_status", {
+		await server.callTool("vib_coordinator_report_status", {
 			session_id: "other-session",
 			status: "blocked",
 			summary: "other report",
 			idempotency_key: "audit-status-other",
 			allow_mutation: true,
 		});
-		const global = await server.callTool("gjc_coordinator_read_coordination_status");
+		const global = await server.callTool("vib_coordinator_read_coordination_status");
 		expect(global).toMatchObject({ ok: true, summary: { sessions: 2, reports: 2 } });
-		const scoped = await server.callTool("gjc_coordinator_read_coordination_status", {
+		const scoped = await server.callTool("vib_coordinator_read_coordination_status", {
 			session_id: "visible-session",
 		});
 		expect(scoped).toMatchObject({
@@ -7545,7 +7545,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 					close: async () => {},
 				}) as unknown as SdkClient,
 		});
-		const response = await server.callTool("gjc_coordinator_list_sessions");
+		const response = await server.callTool("vib_coordinator_list_sessions");
 		expect(response).toEqual({
 			ok: false,
 			error: { code: "unavailable", message: "Coordinator service is unavailable." },
@@ -7567,7 +7567,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			idempotency_key: "receipt-recovery",
 			allow_mutation: true,
 		};
-		const first = await server.callTool("gjc_coordinator_send_prompt", args);
+		const first = await server.callTool("vib_coordinator_send_prompt", args);
 		const receiptFile = path.join(
 			coordinatorNamespace(root),
 			"idempotency",
@@ -7575,7 +7575,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 		);
 		const receipt = JSON.parse(await fs.readFile(receiptFile, "utf8")) as Record<string, unknown>;
 		await fs.writeFile(receiptFile, JSON.stringify({ ...receipt, state: "in_progress" }));
-		const recovered = await server.callTool("gjc_coordinator_send_prompt", args);
+		const recovered = await server.callTool("vib_coordinator_send_prompt", args);
 		expect(recovered).toEqual(first);
 		const remoteDispatches = lifecycleControls(controls).filter(
 			control =>
@@ -7596,11 +7596,11 @@ describe("Coordinator MCP deep-audit regressions", () => {
 		const server = await createSdkControlServer(root, controls);
 		await registerSdkSession(server, root);
 		await injectPendingDeliveryForTest(server, "visible-session", "audit-retained-event", 1);
-		const first = await server.callTool("gjc_coordinator_watch_events", { after_seq: 0, timeout_ms: 0 });
+		const first = await server.callTool("vib_coordinator_watch_events", { after_seq: 0, timeout_ms: 0 });
 		const firstEvents = first.events as Array<{ id: string }>;
 		expect(firstEvents.filter(event => event.id === "audit-retained-event")).toHaveLength(1);
 		const cursor = Number(first.next_after_seq);
-		const second = await server.callTool("gjc_coordinator_watch_events", { after_seq: cursor, timeout_ms: 0 });
+		const second = await server.callTool("vib_coordinator_watch_events", { after_seq: cursor, timeout_ms: 0 });
 		const secondEvents = second.events as Array<{ id: string }>;
 		expect(secondEvents.some(event => event.id === "audit-retained-event")).toBe(false);
 		const paths = coordinatorStatePaths(server.config.stateRoot, server.config.namespace.identity);
@@ -7626,13 +7626,13 @@ describe("Coordinator MCP deep-audit regressions", () => {
 		const serverB = await createSdkControlServer(root, controlsB, [], undefined, brokerSessions);
 		await registerSdkSession(serverA, root);
 		const [first, second] = await Promise.all([
-			serverA.callTool("gjc_coordinator_send_prompt", {
+			serverA.callTool("vib_coordinator_send_prompt", {
 				session_id: "visible-session",
 				prompt: "cross-process A",
 				idempotency_key: "cross-process-a",
 				allow_mutation: true,
 			}),
-			serverB.callTool("gjc_coordinator_send_prompt", {
+			serverB.callTool("vib_coordinator_send_prompt", {
 				session_id: "visible-session",
 				prompt: "cross-process B",
 				idempotency_key: "cross-process-b",
@@ -7693,7 +7693,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			},
 		});
 		await registerSdkSession(server, root);
-		const sent = await server.callTool("gjc_coordinator_send_prompt", {
+		const sent = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "terminal barrier prompt",
 			idempotency_key: "terminal-barrier-prompt",
@@ -7708,7 +7708,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			turn: { turn_id: reconciledTurnId, status: "active" },
 			result: { accepted: true, command_id: "barrier-command", turn_id: "barrier-runtime-turn" },
 		});
-		const watched = await server.callTool("gjc_coordinator_watch_events", { after_seq: 0, timeout_ms: 0 });
+		const watched = await server.callTool("vib_coordinator_watch_events", { after_seq: 0, timeout_ms: 0 });
 		const watchedEvents = watched.events as Array<Record<string, unknown>>;
 		expect(watched).toMatchObject({
 			ok: true,
@@ -7776,13 +7776,13 @@ describe("Coordinator MCP deep-audit regressions", () => {
 		const controls: SdkControl[] = [];
 		const server = await createSdkControlServer(root, controls);
 		await registerSdkSession(server, root);
-		const first = await server.callTool("gjc_coordinator_send_prompt", {
+		const first = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "first incarnation turn",
 			idempotency_key: "old-incarnation-first",
 			allow_mutation: true,
 		});
-		await server.callTool("gjc_coordinator_report_status", {
+		await server.callTool("vib_coordinator_report_status", {
 			session_id: "visible-session",
 			turn_id: first.turn_id,
 			status: "completed",
@@ -7790,7 +7790,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			idempotency_key: "old-incarnation-first-terminal",
 			allow_mutation: true,
 		});
-		const successor = await server.callTool("gjc_coordinator_send_prompt", {
+		const successor = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "successor turn",
 			idempotency_key: "old-incarnation-successor",
@@ -7821,7 +7821,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			}),
 		);
 		await expect(
-			server.callTool("gjc_coordinator_read_turn", { session_id: "visible-session", turn_id: successor.turn_id }),
+			server.callTool("vib_coordinator_read_turn", { session_id: "visible-session", turn_id: successor.turn_id }),
 		).resolves.toMatchObject({ ok: true, turn: { turn_id: successor.turn_id, status: "active" } });
 		const paths = coordinatorStatePaths(server.config.stateRoot, server.config.namespace.identity);
 		const transaction = await withSessionTransaction(paths, "visible-session", async current => current);
@@ -7841,7 +7841,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 		const controls: SdkControl[] = [];
 		const server = await createSdkControlServer(root, controls);
 		await registerSdkSession(server, root);
-		const sent = await server.callTool("gjc_coordinator_send_prompt", {
+		const sent = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "malformed runtime terminal",
 			idempotency_key: "malformed-runtime-terminal",
@@ -7866,7 +7866,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			final_response: { text: 7, format: null, source: [], artifact_path: 1, truncated: "no" },
 		});
 		await expect(
-			server.callTool("gjc_coordinator_read_turn", { session_id: "visible-session", turn_id: sent.turn_id }),
+			server.callTool("vib_coordinator_read_turn", { session_id: "visible-session", turn_id: sent.turn_id }),
 		).resolves.toMatchObject({ ok: true, turn: { turn_id: sent.turn_id, status: "active" } });
 		const afterTransaction = JSON.parse(await fs.readFile(wal, "utf8")) as {
 			revision: number;
@@ -7921,14 +7921,14 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			},
 		);
 		await registerSdkSession(server, root);
-		const sent = await server.callTool("gjc_coordinator_send_prompt", {
+		const sent = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "rejected answer",
 			idempotency_key: "rejected-answer-prompt",
 			allow_mutation: true,
 		});
 		runtimeTurnId = String((sent.turn as Record<string, Record<string, unknown>>).delivery.runtime_turn_id);
-		const listed = await server.callTool("gjc_coordinator_list_questions", { session_id: "visible-session" });
+		const listed = await server.callTool("vib_coordinator_list_questions", { session_id: "visible-session" });
 		const question = (listed.questions as Array<Record<string, unknown>>)[0]!;
 		const args = {
 			session_id: "visible-session",
@@ -7948,7 +7948,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			error: { code: "validation_rejected", message: "Coordinator answer failed workflow validation." },
 			question_status: "pending",
 		};
-		expect(await server.callTool("gjc_coordinator_submit_question_answer", args)).toEqual(expected);
+		expect(await server.callTool("vib_coordinator_submit_question_answer", args)).toEqual(expected);
 		const paths = coordinatorStatePaths(server.config.stateRoot, server.config.namespace.identity);
 		const persisted = await withSessionTransaction(paths, "visible-session", async current => current);
 		expect(persisted.canonical.questions["rejected-answer"]).toMatchObject({
@@ -7962,7 +7962,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			question_id: "rejected-answer",
 			safe_receipt: { status: "rejected" },
 		});
-		expect(await server.callTool("gjc_coordinator_submit_question_answer", args)).toEqual(expected);
+		expect(await server.callTool("vib_coordinator_submit_question_answer", args)).toEqual(expected);
 		expect(controls.filter(control => control.operation === "workflow.gate_answer")).toHaveLength(1);
 	});
 
@@ -8000,14 +8000,14 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			},
 		);
 		await registerSdkSession(server, root);
-		const sent = await server.callTool("gjc_coordinator_send_prompt", {
+		const sent = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "rejected then accepted answer",
 			idempotency_key: "rejected-then-accepted-prompt",
 			allow_mutation: true,
 		});
 		runtimeTurnId = String((sent.turn as Record<string, Record<string, unknown>>).delivery.runtime_turn_id);
-		const listed = await server.callTool("gjc_coordinator_list_questions", { session_id: "visible-session" });
+		const listed = await server.callTool("vib_coordinator_list_questions", { session_id: "visible-session" });
 		const question = (listed.questions as Array<Record<string, unknown>>)[0]!;
 		const firstArgs = {
 			session_id: "visible-session",
@@ -8018,9 +8018,9 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			idempotency_key: "rejected-then-accepted-first",
 			allow_mutation: true,
 		};
-		const rejected = await server.callTool("gjc_coordinator_submit_question_answer", firstArgs);
+		const rejected = await server.callTool("vib_coordinator_submit_question_answer", firstArgs);
 		expect(rejected).toMatchObject({ ok: false, error: { code: "validation_rejected" }, question_status: "pending" });
-		const accepted = await server.callTool("gjc_coordinator_submit_question_answer", {
+		const accepted = await server.callTool("vib_coordinator_submit_question_answer", {
 			...firstArgs,
 			idempotency_key: "rejected-then-accepted-corrected",
 		});
@@ -8040,7 +8040,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			answer_request_id: completedRequest?.request_id,
 			claim_fence_epoch: completedRequest?.claim_fence_epoch,
 		});
-		expect(await server.callTool("gjc_coordinator_submit_question_answer", firstArgs)).toEqual(rejected);
+		expect(await server.callTool("vib_coordinator_submit_question_answer", firstArgs)).toEqual(rejected);
 		expect(answerCalls).toBe(2);
 	});
 
@@ -8080,7 +8080,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			},
 		);
 		await registerSdkSession(server, root);
-		const sent = await server.callTool("gjc_coordinator_send_prompt", {
+		const sent = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "answer admission race",
 			idempotency_key: "answer-admission-race-prompt",
@@ -8096,7 +8096,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			live: true,
 			activity: { seq: 1, phase: "waiting", active_tool_count: 0, active_tools: [] },
 		});
-		const listed = await server.callTool("gjc_coordinator_list_questions", { session_id: "visible-session" });
+		const listed = await server.callTool("vib_coordinator_list_questions", { session_id: "visible-session" });
 		const question = (listed.questions as Array<Record<string, unknown>>)[0]!;
 		const args = {
 			session_id: "visible-session",
@@ -8107,7 +8107,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			idempotency_key: "answer-admission-race",
 			allow_mutation: true,
 		};
-		const admittedAnswer = server.callTool("gjc_coordinator_submit_question_answer", args);
+		const admittedAnswer = server.callTool("vib_coordinator_submit_question_answer", args);
 		await admissionStarted.promise;
 		await patchSessionState(server, root, "visible-session", { state: "running", ready_for_input: false });
 		releaseAdmission.resolve();
@@ -8131,7 +8131,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			source: "agent_session_event",
 			live: true,
 		});
-		await expect(server.callTool("gjc_coordinator_submit_question_answer", args)).resolves.toMatchObject({
+		await expect(server.callTool("vib_coordinator_submit_question_answer", args)).resolves.toMatchObject({
 			ok: true,
 			status: "accepted",
 		});
@@ -8173,7 +8173,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 					},
 				});
 				await expect(
-					server.callTool("gjc_coordinator_read_turn", {
+					server.callTool("vib_coordinator_read_turn", {
 						session_id: sessionId,
 						turn_id: finalizedTurnId,
 					}),
@@ -8184,7 +8184,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			},
 		});
 		await registerSdkSession(server, root);
-		const sent = await server.callTool("gjc_coordinator_send_prompt", {
+		const sent = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "terminal after finalization",
 			idempotency_key: "terminal-after-finalization",
@@ -8226,7 +8226,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 		const controls: SdkControl[] = [];
 		const server = await createSdkControlServer(root, controls);
 		await registerSdkSession(server, root);
-		const sent = await server.callTool("gjc_coordinator_send_prompt", {
+		const sent = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "close admission",
 			idempotency_key: "close-admission-prompt",
@@ -8249,7 +8249,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			updated_at: new Date().toISOString(),
 		};
 		await expect(admitSessionClose(paths, entry)).rejects.toThrow("active_turn_exists");
-		await server.callTool("gjc_coordinator_report_status", {
+		await server.callTool("vib_coordinator_report_status", {
 			session_id: "visible-session",
 			turn_id: sent.turn_id,
 			status: "completed",
@@ -8270,14 +8270,14 @@ describe("Coordinator MCP deep-audit regressions", () => {
 		const controls: SdkControl[] = [];
 		const server = await createSdkControlServer(root, controls);
 		await registerSdkSession(server, root);
-		const sent = await server.callTool("gjc_coordinator_send_prompt", {
+		const sent = await server.callTool("vib_coordinator_send_prompt", {
 			session_id: "visible-session",
 			prompt: "ack edge",
 			idempotency_key: "ack-edge-prompt",
 			allow_mutation: true,
 		});
-		await server.callTool("gjc_coordinator_read_turn", { session_id: "visible-session", turn_id: sent.turn_id });
-		await server.callTool("gjc_coordinator_read_turn", { session_id: "visible-session", turn_id: sent.turn_id });
+		await server.callTool("vib_coordinator_read_turn", { session_id: "visible-session", turn_id: sent.turn_id });
+		await server.callTool("vib_coordinator_read_turn", { session_id: "visible-session", turn_id: sent.turn_id });
 		const journal = path.join(coordinatorNamespace(root), "events", "event-journal.jsonl");
 		const acknowledged = (await fs.readFile(journal, "utf8"))
 			.trim()
@@ -8306,7 +8306,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			sessionId: "visible-session",
 			summary: "nonmatching tail",
 		});
-		const first = await server.callTool("gjc_coordinator_watch_events", {
+		const first = await server.callTool("vib_coordinator_watch_events", {
 			after_seq: 0,
 			event_types: ["delegation.started"],
 			limit: 1,
@@ -8314,7 +8314,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 		});
 		expect(first).toMatchObject({ ok: true, events: [expect.objectContaining({ id: "audit-filtered-match" })] });
 		expect(Number(first.next_after_seq)).toBeLessThan(Number(first.latest_seq));
-		const resumed = await server.callTool("gjc_coordinator_watch_events", {
+		const resumed = await server.callTool("vib_coordinator_watch_events", {
 			after_seq: first.next_after_seq,
 			event_types: ["delegation.started"],
 			limit: 1,
@@ -8327,7 +8327,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 		const root = await tempRoot();
 		const controls: SdkControl[] = [];
 		const server = await createSdkControlServer(root, controls);
-		const response = await server.callTool("gjc_coordinator_register_session", {
+		const response = await server.callTool("vib_coordinator_register_session", {
 			session_id: "colon:session",
 			cwd: root,
 			idempotency_key: "colon-session",
@@ -8339,14 +8339,14 @@ describe("Coordinator MCP deep-audit regressions", () => {
 	it("separates projection namespaces whose legacy labels collide", () => {
 		const root = "/tmp/coordinator-state";
 		const first = buildCoordinatorMcpConfig({
-			GJC_COORDINATOR_MCP_STATE_ROOT: root,
-			GJC_COORDINATOR_MCP_PROFILE: "team/a",
-			GJC_COORDINATOR_MCP_REPO: "repo",
+			VIB_COORDINATOR_MCP_STATE_ROOT: root,
+			VIB_COORDINATOR_MCP_PROFILE: "team/a",
+			VIB_COORDINATOR_MCP_REPO: "repo",
 		});
 		const second = buildCoordinatorMcpConfig({
-			GJC_COORDINATOR_MCP_STATE_ROOT: root,
-			GJC_COORDINATOR_MCP_PROFILE: "team:a",
-			GJC_COORDINATOR_MCP_REPO: "repo",
+			VIB_COORDINATOR_MCP_STATE_ROOT: root,
+			VIB_COORDINATOR_MCP_PROFILE: "team:a",
+			VIB_COORDINATOR_MCP_REPO: "repo",
 		});
 		expect(first.namespace.profile).toBe(second.namespace.profile);
 		expect(coordinatorNamespace(root)).not.toBe(path.join(root, "local", "repo"));
@@ -8360,7 +8360,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 		const root = await tempRoot();
 		const controls: SdkControl[] = [];
 		const server = await createSdkControlServer(root, controls);
-		const legacy = path.join(root, ".gjc", "coordinator-state", "local", "repo");
+		const legacy = path.join(root, ".vib", "coordinator-state", "local", "repo");
 		await fs.mkdir(path.join(legacy, "sessions"), { recursive: true });
 		await fs.mkdir(path.join(legacy, "reports"), { recursive: true });
 		await fs.writeFile(
@@ -8378,7 +8378,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			path.join(legacy, "reports", `${fileId}.json`),
 			JSON.stringify({ session_id: "visible-session", report_id: "../escape" }),
 		);
-		const response = await server.callTool("gjc_coordinator_list_questions", { session_id: "visible-session" });
+		const response = await server.callTool("vib_coordinator_list_questions", { session_id: "visible-session" });
 		expect(response.ok).toBe(false);
 	});
 
@@ -8386,7 +8386,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 		const root = await tempRoot();
 		const controls: SdkControl[] = [];
 		const server = await createSdkControlServer(root, controls);
-		const legacy = path.join(root, ".gjc", "coordinator-state", "local", "repo");
+		const legacy = path.join(root, ".vib", "coordinator-state", "local", "repo");
 		await fs.mkdir(path.join(legacy, "sessions"), { recursive: true });
 		await fs.mkdir(path.join(legacy, "active-turns"), { recursive: true });
 		await fs.writeFile(
@@ -8403,7 +8403,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 			path.join(legacy, "active-turns", "visible-session.json"),
 			JSON.stringify({ namespace_identity: "foreign-namespace", session_id: "visible-session" }),
 		);
-		const response = await server.callTool("gjc_coordinator_list_questions", { session_id: "visible-session" });
+		const response = await server.callTool("vib_coordinator_list_questions", { session_id: "visible-session" });
 		expect(response.ok).toBe(false);
 	});
 
@@ -8412,7 +8412,7 @@ describe("Coordinator MCP deep-audit regressions", () => {
 		const controls: SdkControl[] = [];
 		const server = await createSdkControlServer(root, controls);
 		await registerSdkSession(server, root);
-		await server.callTool("gjc_coordinator_report_status", {
+		await server.callTool("vib_coordinator_report_status", {
 			status: "blocked",
 			summary: "namespace report remains visible",
 			idempotency_key: "narrowed-root-namespace-report",
@@ -8421,24 +8421,24 @@ describe("Coordinator MCP deep-audit regressions", () => {
 		const narrowed = path.join(root, "narrowed");
 		await fs.mkdir(narrowed);
 		server.config.allowedRoots = [narrowed];
-		const scopedStatus = await server.callTool("gjc_coordinator_read_coordination_status", {
+		const scopedStatus = await server.callTool("vib_coordinator_read_coordination_status", {
 			session_id: "visible-session",
 		});
 		expect(scopedStatus.ok).toBe(false);
-		const globalStatus = await server.callTool("gjc_coordinator_read_coordination_status");
+		const globalStatus = await server.callTool("vib_coordinator_read_coordination_status");
 		expect(globalStatus).toMatchObject({
 			ok: true,
 			summary: { sessions: 0, turns: 0, reports: 1 },
 			reports: [expect.objectContaining({ session_id: null, summary: "namespace report remains visible" })],
 		});
 		expect(JSON.stringify(globalStatus)).not.toContain("visible-session");
-		const scopedWatch = await server.callTool("gjc_coordinator_watch_events", {
+		const scopedWatch = await server.callTool("vib_coordinator_watch_events", {
 			session_id: "visible-session",
 			after_seq: 0,
 			timeout_ms: 0,
 		});
 		expect(scopedWatch.ok).toBe(false);
-		const globalWatch = await server.callTool("gjc_coordinator_watch_events", { after_seq: 0, timeout_ms: 0 });
+		const globalWatch = await server.callTool("vib_coordinator_watch_events", { after_seq: 0, timeout_ms: 0 });
 		expect(globalWatch).toMatchObject({
 			ok: true,
 			events: [expect.objectContaining({ kind: "report.written", report_id: expect.any(String) })],

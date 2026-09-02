@@ -2,7 +2,8 @@ import { afterEach, describe, expect, test } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { fileLocksGcAdapter } from "@gajae-code/coding-agent/config/file-lock-gc";
+import { fileLocksGcAdapter } from "@vib-rato/coding-agent/config/file-lock-gc";
+import { harnessLeasesGcAdapter } from "@vib-rato/coding-agent/harness-control-plane/gc-adapter";
 import {
 	collectGcReport,
 	computeExitCode,
@@ -11,9 +12,8 @@ import {
 	type GcRecord,
 	type GcStoreAdapter,
 	gcPidProbe,
-	runGjcGcCommand,
-} from "@gajae-code/coding-agent/gjc-runtime/gc-runtime";
-import { harnessLeasesGcAdapter } from "@gajae-code/coding-agent/harness-control-plane/gc-adapter";
+	runVibGcCommand,
+} from "@vib-rato/coding-agent/vib-runtime/gc-runtime";
 
 const tempDirs: string[] = [];
 const originalKill = process.kill.bind(process);
@@ -46,8 +46,8 @@ function ctxFor(base: string, registryDir: string, probe: GcPidProbe): GcContext
 		force: false,
 		env: {
 			...process.env,
-			GJC_HARNESS_ROOT_REGISTRY_DIR: registryDir,
-			GJC_RECEIPT_SPOOL_DIR: path.join(base, "spool"),
+			VIB_HARNESS_ROOT_REGISTRY_DIR: registryDir,
+			VIB_RECEIPT_SPOOL_DIR: path.join(base, "spool"),
 		},
 		cwd: base,
 	};
@@ -201,12 +201,12 @@ describe("gc red-team invariants", () => {
 		const base = await makeTemp();
 		const registryDir = path.join(base, "reg");
 		const leaseFile = await seedHarnessLease(base, registryDir, "h-dry-run", await reapedPid());
-		const result = await runGjcGcCommand(
+		const result = await runVibGcCommand(
 			["--json"],
 			base,
 			{
 				...process.env,
-				GJC_HARNESS_ROOT_REGISTRY_DIR: registryDir,
+				VIB_HARNESS_ROOT_REGISTRY_DIR: registryDir,
 			},
 			[harnessLeasesGcAdapter],
 		);
@@ -255,7 +255,7 @@ describe("gc red-team invariants", () => {
 	});
 
 	test("unknown gc flag exits with parse status 2", async () => {
-		const result = await runGjcGcCommand(["--bogus"], "/tmp", process.env, []);
+		const result = await runVibGcCommand(["--bogus"], "/tmp", process.env, []);
 		expect(result.status).toBe(2);
 		expect(result.stderr).toContain("unknown_flag:--bogus");
 	});

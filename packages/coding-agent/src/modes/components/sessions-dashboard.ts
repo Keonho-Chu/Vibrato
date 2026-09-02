@@ -1,5 +1,5 @@
 import * as fs from "node:fs";
-import { type Component, Container, matchesKey, truncateToWidth } from "@gajae-code/tui";
+import { type Component, Container, matchesKey, truncateToWidth } from "@vib-rato/tui";
 import type { SessionInfo } from "../../session/session-manager";
 import { theme } from "../theme/theme";
 

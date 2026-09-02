@@ -1,12 +1,12 @@
 import { beforeAll, describe, expect, it, vi } from "bun:test";
-import { BtwPanelComponent } from "@gajae-code/coding-agent/modes/components/btw-panel";
-import { initTheme } from "@gajae-code/coding-agent/modes/theme/theme";
+import { BtwPanelComponent } from "@vib-rato/coding-agent/modes/components/btw-panel";
+import { initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
 import {
 	BTW_MAX_CONTEXT_TURNS,
 	BTW_MAX_ERROR_UTF8_BYTES,
 	utf8ByteLength,
-} from "@gajae-code/coding-agent/session/btw-contract";
-import type { Component, TUI } from "@gajae-code/tui";
+} from "@vib-rato/coding-agent/session/btw-contract";
+import type { Component, TUI } from "@vib-rato/tui";
 
 beforeAll(async () => {
 	await initTheme();

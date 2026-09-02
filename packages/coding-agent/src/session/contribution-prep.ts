@@ -1,10 +1,10 @@
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { AgentMessage } from "@gajae-code/agent-core";
-import type { AssistantMessage, ToolResultMessage, UserMessage } from "@gajae-code/ai/core";
+import type { AgentMessage } from "@vib-rato/agent-core";
+import type { AssistantMessage, ToolResultMessage, UserMessage } from "@vib-rato/ai/core";
 import { $ } from "bun";
-import { resolveGjcCommand } from "../task/gjc-command";
+import { resolveVibCommand } from "../task/vib-command";
 import { shortenPath } from "../tools/render-utils";
 
 export const CONTRIBUTION_PREP_SCHEMA_VERSION = 1;
@@ -196,7 +196,7 @@ export async function prepareContributionPrep(
 	const createdAt = (options.now ?? context.now ?? new Date()).toISOString();
 	const safeTimestamp = createdAt.replace(/[:.]/g, "-");
 	const artifactDir = path.join(
-		options.artifactRoot ?? path.join(context.cwd, ".gjc", "contribution-prep"),
+		options.artifactRoot ?? path.join(context.cwd, ".vib", "contribution-prep"),
 		safeTimestamp,
 	);
 	await fs.mkdir(artifactDir, { recursive: true });
@@ -307,7 +307,7 @@ export async function prepareContributionPrep(
 				}
 				Bun.spawn(args, { cwd, stdout: "inherit", stderr: "inherit", stdin: "inherit" });
 			});
-		const command = resolveGjcCommand();
+		const command = resolveVibCommand();
 		await spawn(
 			[command.cmd, ...command.args, "--no-skills", "--", `@${workerPromptPath}`],
 			context.cwd,

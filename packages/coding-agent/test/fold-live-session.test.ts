@@ -8,17 +8,17 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { Agent, type AgentTool } from "@gajae-code/agent-core";
-import { getBundledModel } from "@gajae-code/ai";
-import { createMockModel } from "@gajae-code/ai/providers/mock";
-import { type AsyncJob, AsyncJobManager } from "@gajae-code/coding-agent/async";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { AgentSession } from "@gajae-code/coding-agent/session/agent-session";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import type { FoldReceipt } from "@gajae-code/coding-agent/session/fold-coordinator";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { Snowflake } from "@gajae-code/utils";
+import { Agent, type AgentTool } from "@vib-rato/agent-core";
+import { getBundledModel } from "@vib-rato/ai";
+import { createMockModel } from "@vib-rato/ai/providers/mock";
+import { type AsyncJob, AsyncJobManager } from "@vib-rato/coding-agent/async";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { AgentSession } from "@vib-rato/coding-agent/session/agent-session";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import type { FoldReceipt } from "@vib-rato/coding-agent/session/fold-coordinator";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { Snowflake } from "@vib-rato/utils";
 import * as z from "zod/v4";
 
 function fakeJob(id: string, generation: string): AsyncJob {
@@ -129,7 +129,7 @@ describe("live session fold", () => {
 		try {
 			// Fail fast and legibly when the checkout cannot see its own agent package.
 			// A worktree whose node_modules is a symlink to another checkout resolves
-			// @gajae-code/agent-core there instead, so this method goes missing and the
+			// @vib-rato/agent-core there instead, so this method goes missing and the
 			// fold path throws deep inside the coordinator.
 			expect(typeof (agent as unknown as { setSteeringAdmissionFence?: unknown }).setSteeringAdmissionFence).toBe(
 				"function",

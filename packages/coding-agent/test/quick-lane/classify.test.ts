@@ -184,7 +184,7 @@ describe("quick-lane classifier (issue #3984)", () => {
 	});
 
 	describe("CLI surface", () => {
-		it("registers the quick-lane command so gjc quick-lane resolves", () => {
+		it("registers the quick-lane command so vib quick-lane resolves", () => {
 			const entry = commands.find(c => c.name === "quick-lane");
 			expect(entry).toBeDefined();
 		});

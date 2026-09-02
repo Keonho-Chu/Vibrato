@@ -1,10 +1,10 @@
 # Keybindings
 
-Run `/hotkeys` inside an `gjc` session to see the active chords for your current build. The list reflects any remaps loaded from disk and any bindings added by extensions.
+Run `/hotkeys` inside an `vib` session to see the active chords for your current build. The list reflects any remaps loaded from disk and any bindings added by extensions.
 
 ## Customize keybindings
 
-User remaps live in `~/.gjc/agent/keybindings.json`. The file is a JSON object whose keys are keybinding action IDs and whose values are either one chord string or an array of chord strings. It is not read from `~/.gjc/agent/config.yml`, and there is no nested `keybindings` object.
+User remaps live in `~/.vib/agent/keybindings.json`. The file is a JSON object whose keys are keybinding action IDs and whose values are either one chord string or an array of chord strings. It is not read from `~/.vib/agent/config.yml`, and there is no nested `keybindings` object.
 
 ```json
 {
@@ -19,9 +19,9 @@ Chord names are case-insensitive. New configuration should use canonical textual
 Configuration uses portable canonical key IDs, not the labels printed by a particular host: use `ctrl`, `alt`, `shift`, and `super` with a key name, for example `ctrl+p`, `alt+enter`, `shift+tab`, and `super+c`. macOS aliases `option`/`meta` normalize to `alt`, and `command`/`cmd` normalize to `super`; canonical names are recommended for portable files.
 
 Runtime UI labels are platform-native. On macOS, `Ctrl`, `Alt`, `Shift`, and `Super` display as `⌃`, `⌥`, `⇧`, and `⌘`; MacBook keycaps such as Return, Escape, Tab, Delete, and the arrow keys display as `↩`, `⎋`, `⇥`, `⌫`/`⌦`, and arrows. These glyphs are display labels only: configure `super+c`, not `⌘C`, and `alt+enter`, not `⌥↩`.
-On macOS, both left and right Option keys use the same terminal Meta/Esc path. Option shortcuts therefore require the terminal profile to forward Option as Meta/Esc or to use an enhanced keyboard protocol. In Apple Terminal, enable **Settings > Profiles > Keyboard > Use Option as Meta key** for the profile used by GJC; this setting covers both physical Option keys. In Ghostty, set `macos-option-as-alt = true` in `~/.config/ghostty/config`, then reload its configuration or restart it. The parser also accepts legacy Meta-wrapped arrows, paging, function keys, and other escape sequences.
-Apple Terminal reserves most Command shortcuts for its own menus, so those key events never enter the PTY and cannot be recovered by GJC. `super+...` bindings work when the terminal sends a Super modifier through Kitty/modifyOtherKeys or an explicit profile key mapping; map the desired Command chord under **Profiles > Keyboard > Key list** when using Terminal.app. Text produced by an Option key as composed Unicode cannot be reverse-inferred as an Option chord.
-For example, to bind Command+P, set the GJC action to `super+p` (or `command+p`, which is normalized), then add a Terminal.app profile mapping for Command+P that sends Kitty `CSI 112;9u` (`Send Escape Sequence` value `[112;9u`, or the equivalent hex bytes including the leading `ESC`). The mapping is required because no PTY application can recover a Command event that Terminal.app consumed.
+On macOS, both left and right Option keys use the same terminal Meta/Esc path. Option shortcuts therefore require the terminal profile to forward Option as Meta/Esc or to use an enhanced keyboard protocol. In Apple Terminal, enable **Settings > Profiles > Keyboard > Use Option as Meta key** for the profile used by Vibrato; this setting covers both physical Option keys. In Ghostty, set `macos-option-as-alt = true` in `~/.config/ghostty/config`, then reload its configuration or restart it. The parser also accepts legacy Meta-wrapped arrows, paging, function keys, and other escape sequences.
+Apple Terminal reserves most Command shortcuts for its own menus, so those key events never enter the PTY and cannot be recovered by Vibrato. `super+...` bindings work when the terminal sends a Super modifier through Kitty/modifyOtherKeys or an explicit profile key mapping; map the desired Command chord under **Profiles > Keyboard > Key list** when using Terminal.app. Text produced by an Option key as composed Unicode cannot be reverse-inferred as an Option chord.
+For example, to bind Command+P, set the Vibrato action to `super+p` (or `command+p`, which is normalized), then add a Terminal.app profile mapping for Command+P that sends Kitty `CSI 112;9u` (`Send Escape Sequence` value `[112;9u`, or the equivalent hex bytes including the leading `ESC`). The mapping is required because no PTY application can recover a Command event that Terminal.app consumed.
 For terminals that do not forward Option, remap the queue actions to canonical Control chords (choose unclaimed chords appropriate for your terminal), for example:
 
 ```json
@@ -69,17 +69,17 @@ For setup, microphone permissions, first-use behavior, and troubleshooting, see 
 
 Older unqualified action names are migrated when `keybindings.json` is loaded, but new docs and new configs should use the namespaced action IDs above.
 
-On macOS, Option+Q queues a message for the next turn when the active terminal profile forwards Option as Meta/Esc; in Apple Terminal, this is controlled by **Use Option as Meta key** and applies to both left and right Option keys. On native Windows terminals, the equivalent default is Alt+Q. Windows Terminal and PowerShell commonly reserve Alt+Enter for fullscreen before GJC can receive it. Users who prefer another chord can remap `app.message.queue` in `~/.gjc/agent/keybindings.json`.
+On macOS, Option+Q queues a message for the next turn when the active terminal profile forwards Option as Meta/Esc; in Apple Terminal, this is controlled by **Use Option as Meta key** and applies to both left and right Option keys. On native Windows terminals, the equivalent default is Alt+Q. Windows Terminal and PowerShell commonly reserve Alt+Enter for fullscreen before Vibrato can receive it. Users who prefer another chord can remap `app.message.queue` in `~/.vib/agent/keybindings.json`.
 
 When messages are queued, use Option+Up/Down on macOS (Alt+Up/Down on Windows) to open the queue and select a message. In the queue, Return edits the selected message, Forward Delete (`⌦`; Fn+Delete on compact Mac keyboards) removes it, Control+Up/Down reorders it within its delivery group, and Escape closes the queue. Reordering does not convert compaction, steer, and follow-up messages into one another.
 
-In the main GJC composer, plain `PageUp` / `PageDown` page the visible transcript lane instead of browsing prompt history; the status line and composer remain fixed at the bottom while manually scrolled. When GJC owns mouse input (`mouse.enabled: true`), the wheel moves the transcript by three rows per notch. Ordinary typing or paste keeps editor focus and returns to live output before editing; use `Up` / `Down` or `Ctrl+R` for prompt history. Autocomplete and selector surfaces still use `PageUp` / `PageDown` for list paging while they have focus.
+In the main Vibrato composer, plain `PageUp` / `PageDown` page the visible transcript lane instead of browsing prompt history; the status line and composer remain fixed at the bottom while manually scrolled. When Vibrato owns mouse input (`mouse.enabled: true`), the wheel moves the transcript by three rows per notch. Ordinary typing or paste keeps editor focus and returns to live output before editing; use `Up` / `Down` or `Ctrl+R` for prompt history. Autocomplete and selector surfaces still use `PageUp` / `PageDown` for list paging while they have focus.
 
 ## Auditing default-key collisions
 
 Some default chords are intentionally reused across different UI contexts, where the focused component disambiguates them at dispatch time. For example `Enter` maps to both input submit and selection confirm, and `Ctrl+C` maps to both input copy and selection cancel. These are not conflicts — only one context is active at a time.
 
-To audit the registry for keys whose default binding is claimed by more than one action, use `detectDefaultKeyCollisions(definitions)` from `@gajae-code/tui/keybindings`. It returns one entry per colliding key with the list of claiming action IDs, which is useful when adding new defaults or reviewing the surface. User-remap conflicts (multiple actions bound to the same chord in `keybindings.json`) continue to be reported separately by `KeybindingsManager.getConflicts()`.
+To audit the registry for keys whose default binding is claimed by more than one action, use `detectDefaultKeyCollisions(definitions)` from `@vib-rato/tui/keybindings`. It returns one entry per colliding key with the list of claiming action IDs, which is useful when adding new defaults or reviewing the surface. User-remap conflicts (multiple actions bound to the same chord in `keybindings.json`) continue to be reported separately by `KeybindingsManager.getConflicts()`.
 
 Two audit clarifications for the current surface:
 
@@ -90,7 +90,7 @@ The editor's configurable action defaults (including the platform-aware `app.cli
 
 ## Current surface audit
 
-Authoritative inventory of the keybinding registry, one row per action. Generated from `TUI_KEYBINDINGS` (`packages/tui/src/keybindings.ts`) and `KEYBINDINGS` (`packages/coding-agent/src/config/keybindings.ts`). Every action ID below is remappable via `~/.gjc/agent/keybindings.json` unless noted. A drift test (`packages/coding-agent/test/keybindings-audit.test.ts`) asserts every registry action ID appears in this table.
+Authoritative inventory of the keybinding registry, one row per action. Generated from `TUI_KEYBINDINGS` (`packages/tui/src/keybindings.ts`) and `KEYBINDINGS` (`packages/coding-agent/src/config/keybindings.ts`). Every action ID below is remappable via `~/.vib/agent/keybindings.json` unless noted. A drift test (`packages/coding-agent/test/keybindings-audit.test.ts`) asserts every registry action ID appears in this table.
 
 ### Editor context (`tui.editor.*`)
 

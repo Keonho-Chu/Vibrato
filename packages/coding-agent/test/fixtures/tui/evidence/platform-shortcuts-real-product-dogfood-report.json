@@ -11,15 +11,15 @@
   ],
   "smokeCommands": [
     [
-      "packages/coding-agent/dist/gjc",
+      "packages/coding-agent/dist/vib",
       "--version"
     ],
     [
-      "packages/coding-agent/dist/gjc",
+      "packages/coding-agent/dist/vib",
       "--smoke-test"
     ]
   ],
-  "dogfoodInvocation": "compiled packages/coding-agent/dist/gjc in a 120x36 xterm-256color PTY, opened /hotkeys, then Ctrl-C shutdown",
+  "dogfoodInvocation": "compiled packages/coding-agent/dist/vib in a 120x36 xterm-256color PTY, opened /hotkeys, then Ctrl-C shutdown",
   "binarySha256": "2692032ede9bc9442aa3be729bcd4b1e62059440e19b8664342d41218361e0a1",
   "rawAnsiArtifact": "packages/coding-agent/test/fixtures/tui/evidence/platform-shortcuts-real-product-dogfood.ansi.gz",
   "rawAnsiSha256": "e90f49f1be8c580237671925c9cc0eed16760eeacc785ca216f0d3c36d31cac7",

@@ -2,14 +2,14 @@ import { afterEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { Agent, type AgentMessage } from "@gajae-code/agent-core";
-import type { SimpleStreamOptions } from "@gajae-code/ai";
-import { createMockModel, type MockModel, registerMockApi } from "@gajae-code/ai/providers/mock";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { AgentRegistry } from "@gajae-code/coding-agent/registry/agent-registry";
-import { AgentSession, type EphemeralTurnPurpose } from "@gajae-code/coding-agent/session/agent-session";
-import { convertToLlm } from "@gajae-code/coding-agent/session/messages";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
+import { Agent, type AgentMessage } from "@vib-rato/agent-core";
+import type { SimpleStreamOptions } from "@vib-rato/ai";
+import { createMockModel, type MockModel, registerMockApi } from "@vib-rato/ai/providers/mock";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { AgentRegistry } from "@vib-rato/coding-agent/registry/agent-registry";
+import { AgentSession, type EphemeralTurnPurpose } from "@vib-rato/coding-agent/session/agent-session";
+import { convertToLlm } from "@vib-rato/coding-agent/session/messages";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
 
 registerMockApi();
 
@@ -462,7 +462,7 @@ describe("AgentSession IRC roster delivery", () => {
 	});
 
 	it("preserves the delivered roster signature across same-session reload", async () => {
-		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-irc-roster-"));
+		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-irc-roster-"));
 		tempDirs.push(dir);
 		const harness = createHarness({ sessionManager: SessionManager.create(dir, dir) });
 		addPeer(harness.registry);

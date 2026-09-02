@@ -1,6 +1,6 @@
 # Examples
 
-Example code for gjc-coding-agent SDK, hooks, and custom tools.
+Example code for vib-coding-agent SDK, hooks, and custom tools.
 
 ## Directories
 

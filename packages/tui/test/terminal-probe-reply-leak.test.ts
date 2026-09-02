@@ -10,9 +10,9 @@
  * as `^[]11;rgb:0000/0000/0000^G^[[?62;22;52c` typed into the prompt.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
-import type { Component } from "@gajae-code/tui";
-import { TUI } from "@gajae-code/tui";
-import { ProcessTerminal } from "@gajae-code/tui/terminal";
+import type { Component } from "@vib-rato/tui";
+import { TUI } from "@vib-rato/tui";
+import { ProcessTerminal } from "@vib-rato/tui/terminal";
 
 const stdinIsTtyDescriptor = Object.getOwnPropertyDescriptor(process.stdin, "isTTY");
 const stdoutIsTtyDescriptor = Object.getOwnPropertyDescriptor(process.stdout, "isTTY");

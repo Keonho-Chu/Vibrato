@@ -7,7 +7,7 @@ export const REVERSE_RECLAIM_GRACE_MS = 15_000;
 export const MAX_REVERSE_OUTSTANDING = 64;
 export const MAX_REVERSE_PAYLOAD_BYTES = 256 * 1024;
 /**
- * Matches the raw WebSocket frame ceiling in crates/gjc-sdk/src/server.rs.
+ * Matches the raw WebSocket frame ceiling in crates/vib-sdk/src/server.rs.
  * Reverse responses must fit after their protocol envelope is serialized.
  */
 export function assertReverseResponseFrame(frame: SdkFrame): void {

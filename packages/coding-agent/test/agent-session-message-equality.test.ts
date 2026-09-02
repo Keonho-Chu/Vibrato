@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import type { AgentMessage } from "@gajae-code/agent-core";
+import type { AgentMessage } from "@vib-rato/agent-core";
 
 function oldDidSessionMessagesChange(previousMessages: AgentMessage[], nextMessages: AgentMessage[]): boolean {
 	return (

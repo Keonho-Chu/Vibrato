@@ -3,9 +3,9 @@ import { createHash } from "node:crypto";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { InternalUrlRouter } from "@gajae-code/coding-agent/internal-urls";
-import type { ResolveContext } from "@gajae-code/coding-agent/internal-urls/types";
-import { AgentRegistry } from "@gajae-code/coding-agent/registry/agent-registry";
+import { InternalUrlRouter } from "@vib-rato/coding-agent/internal-urls";
+import type { ResolveContext } from "@vib-rato/coding-agent/internal-urls/types";
+import { AgentRegistry } from "@vib-rato/coding-agent/registry/agent-registry";
 
 let tempDir: string;
 

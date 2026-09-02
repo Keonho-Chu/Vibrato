@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import * as path from "node:path";
 import type { AgentSideConnection } from "@agentclientprotocol/sdk";
-import { type CliConfig, CliParseError } from "@gajae-code/utils/cli";
+import { type CliConfig, CliParseError } from "@vib-rato/utils/cli";
 import { parseArgs } from "../src/cli/args";
 import Acp from "../src/commands/acp";
 import { resolveAcpStartupOptions } from "../src/main";
@@ -26,7 +26,7 @@ import {
 const model = { provider: "openai-codex", id: "gpt-5.6" } as CreateAgentSessionOptions["model"];
 
 const TEST_CONFIG: CliConfig = {
-	bin: "gjc",
+	bin: "vib",
 	version: "0.0.0-test",
 	commands: new Map(),
 };
@@ -50,19 +50,19 @@ function providerNames(capabilities: unknown, env: NodeJS.ProcessEnv = {}): stri
 }
 
 test("ACP registers the permission channel for form-less clients regardless of permission mode", () => {
-	expect(providerNames({ _meta: { gjc: { permissionHandling: "prompt" } } })).toContain("permission");
+	expect(providerNames({ _meta: { vib: { permissionHandling: "prompt" } } })).toContain("permission");
 	// Form-less clients always get the permission channel so selector asks can
 	// be answered even in auto/always-allow mode (the mode only gates tools).
-	expect(providerNames({ _meta: { gjc: { permissionHandling: "auto" } } })).toContain("permission");
-	expect(providerNames({ _meta: { gjc: { permissionHandling: "always-allow" } } })).toContain("permission");
-	expect(providerNames(undefined, { GJC_ACP_PERMISSION_MODE: "prompt" })).toContain("permission");
-	expect(providerNames(undefined, { GJC_ACP_PERMISSION_MODE: "auto" })).toContain("permission");
-	expect(providerNames({ _meta: { gjc: { permissionHandling: "invalid" } } })).toContain("permission");
+	expect(providerNames({ _meta: { vib: { permissionHandling: "auto" } } })).toContain("permission");
+	expect(providerNames({ _meta: { vib: { permissionHandling: "always-allow" } } })).toContain("permission");
+	expect(providerNames(undefined, { VIB_ACP_PERMISSION_MODE: "prompt" })).toContain("permission");
+	expect(providerNames(undefined, { VIB_ACP_PERMISSION_MODE: "auto" })).toContain("permission");
+	expect(providerNames({ _meta: { vib: { permissionHandling: "invalid" } } })).toContain("permission");
 	// A form-eliciting client in allow mode keeps only the ui channel.
-	expect(providerNames({ _meta: { gjc: { permissionHandling: "auto" } }, elicitation: { form: {} } })).not.toContain(
+	expect(providerNames({ _meta: { vib: { permissionHandling: "auto" } }, elicitation: { form: {} } })).not.toContain(
 		"permission",
 	);
-	expect(providerNames({ _meta: { gjc: { permissionHandling: "auto" } }, elicitation: { form: {} } })).toContain("ui");
+	expect(providerNames({ _meta: { vib: { permissionHandling: "auto" } }, elicitation: { form: {} } })).toContain("ui");
 });
 
 test("ACP registers the SDK UI provider only for clients with form elicitation", () => {
@@ -153,9 +153,9 @@ test("ACP maps non-prompt permission handling to the SDK allow policy", async ()
 	const adapter = {
 		control: async (_operation: string, input: Record<string, unknown>) => modes.push(String(input.mode)),
 	} as never;
-	await applyAcpPermissionMode(adapter, { _meta: { gjc: { permissionHandling: "prompt" } } } as never);
-	await applyAcpPermissionMode(adapter, { _meta: { gjc: { permissionHandling: "auto" } } } as never);
-	await applyAcpPermissionMode(adapter, { _meta: { gjc: { permissionHandling: "always-allow" } } } as never);
+	await applyAcpPermissionMode(adapter, { _meta: { vib: { permissionHandling: "prompt" } } } as never);
+	await applyAcpPermissionMode(adapter, { _meta: { vib: { permissionHandling: "auto" } } } as never);
+	await applyAcpPermissionMode(adapter, { _meta: { vib: { permissionHandling: "always-allow" } } } as never);
 	expect(modes).toEqual(["prompt", "allow", "allow"]);
 });
 
@@ -761,7 +761,7 @@ test("opaque prompt values may start with a dash in explicit or separated form",
 	expect(parseArgs(["--append-system-prompt", "- Be concise"]).appendSystemPrompt).toBe("- Be concise");
 });
 test("ACP rejects --mcp-config instead of ignoring it", () => {
-	const parsed = parseArgs(["--mcp-config", "/tmp/gjc-mcp.json"]);
+	const parsed = parseArgs(["--mcp-config", "/tmp/vib-mcp.json"]);
 	expect(() => resolveAcpStartupOptions(parsed, {})).toThrow("Unsupported under SDK-backed ACP: --mcp-config");
 });
 test("ACP rejects --no-mcp instead of ignoring it", () => {
@@ -772,7 +772,7 @@ test("ACP preserves --models rejection alongside --mcp-config", () => {
 	const modelsOnly = parseArgs(["--models", "openai-codex/gpt-5.6"]);
 	expect(() => resolveAcpStartupOptions(modelsOnly, {})).toThrow("Unsupported under SDK-backed ACP: --models");
 
-	const both = parseArgs(["--models", "openai-codex/gpt-5.6", "--mcp-config", "/tmp/gjc-mcp.json"]);
+	const both = parseArgs(["--models", "openai-codex/gpt-5.6", "--mcp-config", "/tmp/vib-mcp.json"]);
 	expect(() => resolveAcpStartupOptions(both, {})).toThrow("Unsupported under SDK-backed ACP: --models, --mcp-config");
 });
 

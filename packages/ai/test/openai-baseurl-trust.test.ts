@@ -28,7 +28,7 @@ interface Resolved {
 const tempDirs: string[] = [];
 
 function projectDir(dotenv?: string): string {
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-openai-baseurl-trust-"));
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-openai-baseurl-trust-"));
 	tempDirs.push(dir);
 	if (dotenv !== undefined) fs.writeFileSync(path.join(dir, ".env"), dotenv);
 	return dir;
@@ -48,7 +48,7 @@ async function resolveIn(cwd: string, overrides: Record<string, string> = {}): P
 	const home = path.join(cwd, ".home");
 	fs.mkdirSync(home, { recursive: true });
 	env.HOME = home;
-	delete env.GJC_CONFIG_DIR;
+	delete env.VIB_CONFIG_DIR;
 	delete env.PI_CONFIG_DIR;
 	Object.assign(env, overrides);
 

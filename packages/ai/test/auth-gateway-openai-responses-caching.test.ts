@@ -7,16 +7,16 @@
  * input_tokens_details.cached_tokens in the response usage block".
  *
  * Skips unless a local gateway is reachable at the default `127.0.0.1:4000`
- * (override via `GJC_E2E_GATEWAY_URL`) AND the bearer token file exists at
- * `~/.gjc/auth-gateway.token`.
+ * (override via `VIB_E2E_GATEWAY_URL`) AND the bearer token file exists at
+ * `~/.vib/auth-gateway.token`.
  *
  * To run: `bun --cwd packages/ai test test/auth-gateway-openai-responses-caching.test.ts`
- * with the gateway live (`gjc auth-gateway serve --provider=<provider>` or pm2).
+ * with the gateway live (`vib auth-gateway serve --provider=<provider>` or pm2).
  */
 import { describe, expect, it } from "bun:test";
 import * as os from "node:os";
 import * as path from "node:path";
-import { isEnoent } from "@gajae-code/utils";
+import { isEnoent } from "@vib-rato/utils";
 import type { AuthGatewayE2ERequirements } from "./helpers";
 
 interface OpenAIResponsesUsage {
@@ -37,11 +37,11 @@ interface OpenAIResponse {
 	error?: { type?: string; message: string };
 }
 
-const GATEWAY_URL = Bun.env.GJC_E2E_GATEWAY_URL ?? "http://127.0.0.1:4000";
-const TOKEN_PATH = path.join(os.homedir(), ".gjc", "auth-gateway.token");
+const GATEWAY_URL = Bun.env.VIB_E2E_GATEWAY_URL ?? "http://127.0.0.1:4000";
+const TOKEN_PATH = path.join(os.homedir(), ".vib", "auth-gateway.token");
 // `gpt-5.3-OpenAI code backend` is the model we've verified the ChatGPT-subscription OpenAI code backend
 // backend accepts; older or higher-tier ids 4xx with "model not supported".
-const MODEL = Bun.env.GJC_E2E_OPENAI_RESPONSES_MODEL ?? "gpt-5.3-codex";
+const MODEL = Bun.env.VIB_E2E_OPENAI_RESPONSES_MODEL ?? "gpt-5.3-codex";
 
 async function checkGatewayAvailable(
 	requirements: AuthGatewayE2ERequirements,
@@ -89,7 +89,7 @@ const gateway = await checkGatewayAvailable({ provider: "openai-codex", modelId:
 // automatic-caching floor with plenty of headroom.
 const INSTRUCTIONS_PARAGRAPH = `
 You are a precise assistant participating in an automated end-to-end test of
-the gjc auth-gateway's OpenAI Responses prompt-caching pipeline. The same
+the vib auth-gateway's OpenAI Responses prompt-caching pipeline. The same
 instructions block will be reused across two turns; OpenAI automatically
 caches identical prefixes ≥1024 tokens, so the second turn must see the
 same prefix bytes as the first or the cache misses silently. Always respond
@@ -163,7 +163,7 @@ describe.skipIf(!gateway.ok)("auth-gateway: openai-responses prompt caching e2e"
 		// `prompt_cache_key` is set — caching is opt-in there, unlike public
 		// OpenAI Responses which caches automatically. Reusing the same key
 		// across both turns is the contract that makes turn 2 hit.
-		const cacheKey = `gjc-e2e-${nonce}`;
+		const cacheKey = `vib-e2e-${nonce}`;
 
 		// ── Turn 1 ───────────────────────────────────────────────────────
 		const turn1Input: ResponseInputMessage[] = [{ role: "user", content: "Respond with the single word: alpha" }];

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import { ThinkingLevel } from "@gajae-code/agent-core";
-import { type Api, Effort, type Model } from "@gajae-code/ai";
+import { ThinkingLevel } from "@vib-rato/agent-core";
+import { type Api, Effort, type Model } from "@vib-rato/ai";
 import { projectQ10Models } from "../src/sdk/models.js";
 
 const thinking = {
@@ -214,11 +214,11 @@ describe("Q10 synthetic profile facade", () => {
 		});
 		expect(rows.map(row => `${row.provider}/${row.id}`)).toEqual([
 			"test/plain",
-			"gajae-code/codex-eco",
-			"gajae-code/codex-medium",
+			"vib-rato/codex-eco",
+			"vib-rato/codex-medium",
 		]);
 		expect(rows[1]).toMatchObject({
-			provider: "gajae-code",
+			provider: "vib-rato",
 			id: "codex-eco",
 			name: "Codex Eco",
 			reasoning: false,
@@ -260,7 +260,7 @@ describe("Q10 synthetic profile facade", () => {
 		const currentRows = rows.filter(row => row.current);
 		expect(currentRows).toHaveLength(1);
 		expect(currentRows[0]).toMatchObject({
-			provider: "gajae-code",
+			provider: "vib-rato",
 			id: "codex-eco",
 			current: true,
 			currentThinkingLevel: ThinkingLevel.Inherit,
@@ -274,7 +274,7 @@ describe("Q10 synthetic profile facade", () => {
 			availableProfileIds: new Set([]),
 			activeProfile: "codex-eco",
 		});
-		expect(rows.map(row => `${row.provider}/${row.id}`)).toEqual(["test/plain", "gajae-code/codex-eco"]);
+		expect(rows.map(row => `${row.provider}/${row.id}`)).toEqual(["test/plain", "vib-rato/codex-eco"]);
 		expect(rows[1].current).toBe(true);
 	});
 	it("emits a bounded current fallback row when the active marker is absent from the profile map", () => {
@@ -289,7 +289,7 @@ describe("Q10 synthetic profile facade", () => {
 		const currentRows = rows.filter(row => row.current);
 		expect(currentRows).toHaveLength(1);
 		expect(currentRows[0]).toMatchObject({
-			provider: "gajae-code",
+			provider: "vib-rato",
 			id: "codex-eco",
 			name: "codex-eco",
 			reasoning: false,

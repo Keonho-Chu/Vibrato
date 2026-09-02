@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { getTrustedAgentFile } from "@gajae-code/utils";
+import { getTrustedAgentFile } from "@vib-rato/utils";
 
 export const TELEMETRY_SCHEMA_VERSION = 1 as const;
 export const TELEMETRY_INSTALL_ID_FILE = "telemetry-install-id" as const;

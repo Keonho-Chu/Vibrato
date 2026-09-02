@@ -54,25 +54,31 @@ describe("rankProvider", () => {
 
 	test("agrees with the comparator it backs", () => {
 		const left = provider("openai-codex", "none");
-		const right = provider("cursor", "none");
+		const right = provider("sglang", "none");
 		const leftRank = rankProvider(left);
 		const rightRank = rankProvider(right);
 		expect(leftRank.tier).toBe(rightRank.tier);
 		expect(leftRank.intraTierRank).toBeLessThan(rightRank.intraTierRank);
 		expect(compareRankedProviders(left, right)).toBeLessThan(0);
 	});
+
+	test("a provider outside the allowlist drops to the other tier behind every famous entry", () => {
+		// `cursor` used to be curated; the product allowlist removed it, so it must
+		// now rank below the famous tier rather than inside it.
+		const famous = provider("sglang", "none", "SGLang");
+		const hidden = provider("cursor", "none", "Cursor (Claude, GPT, etc.)");
+		expect(rankProvider(famous).tier).toBe(PROVIDER_RANK_TIER.famous);
+		expect(rankProvider(hidden)).toEqual({
+			tier: PROVIDER_RANK_TIER.other,
+			intraTierRank: Number.MAX_SAFE_INTEGER,
+		});
+		expect(compareRankedProviders(famous, hidden)).toBeLessThan(0);
+	});
 });
 
 describe("famous provider list", () => {
 	test("variants sit immediately behind their primary", () => {
-		const pairs: [string, string][] = [
-			["openai-codex", "openai-codex-device"],
-			["zai", "glm-zcode"],
-			["alibaba-token-plan", "qwen-portal"],
-			["kimi-code", "moonshot"],
-			["minimax-code", "minimax-code-cn"],
-			["xiaomi", "xiaomi-token-plan-sgp"],
-		];
+		const pairs: [string, string][] = [["openai-codex", "openai-codex-device"]];
 		for (const [primary, variant] of pairs) {
 			const primaryIndex = famousProviderIndex(primary);
 			const variantIndex = famousProviderIndex(variant);
@@ -81,9 +87,33 @@ describe("famous provider list", () => {
 		}
 	});
 
-	test("github copilot and cursor are on the famous list", () => {
-		expect(famousProviderIndex("github-copilot")).toBeDefined();
-		expect(famousProviderIndex("cursor")).toBeDefined();
+	test("providers outside the product allowlist are off the famous list", () => {
+		// The allowlist keeps these built-ins compiled in but unselectable, so they
+		// must not hold a curated position any more.
+		for (const hidden of [
+			"github-copilot",
+			"cursor",
+			"xai",
+			"opencode-go",
+			"zai",
+			"glm-zcode",
+			"minimax-code",
+			"minimax-code-cn",
+			"xiaomi",
+			"xiaomi-token-plan-sgp",
+			"opengateway",
+			"bizrouter",
+		]) {
+			expect(famousProviderIndex(hidden)).toBeUndefined();
+			expect(providerRankTier("none", hidden)).toBe(PROVIDER_RANK_TIER.other);
+		}
+	});
+
+	test("every selectable provider that can rank famous is on the list", () => {
+		for (const id of ["openai-codex", "openai-codex-device", "anthropic", "vllm", "sglang"]) {
+			expect(famousProviderIndex(id)).toBeDefined();
+			expect(providerRankTier("none", id)).toBe(PROVIDER_RANK_TIER.famous);
+		}
 	});
 
 	test("the list has no duplicates", () => {
@@ -93,33 +123,7 @@ describe("famous provider list", () => {
 	test("matches the agreed curated order exactly", () => {
 		// Written out independently of FAMOUS_PROVIDER_ORDER so an accidental
 		// reorder or removal of the constant cannot validate itself.
-		const agreedOrder = [
-			"openai-codex",
-			"openai-codex-device",
-			"anthropic",
-			"xai",
-			"opencode-go",
-			"zai",
-			"glm-zcode",
-			"cline-pass",
-			"commandcode-goat",
-			"alibaba-token-plan",
-			"qwen-portal",
-			"kimi-code",
-			"moonshot",
-			"minimax-code",
-			"minimax-code-cn",
-			"xiaomi",
-			"xiaomi-token-plan-sgp",
-			"xiaomi-token-plan-ams",
-			"xiaomi-token-plan-cn",
-			"opengateway",
-			"bizrouter",
-			"mara",
-			"github-copilot",
-			"jetbrains-junie",
-			"cursor",
-		];
+		const agreedOrder = ["openai-codex", "openai-codex-device", "anthropic", "vllm", "sglang"];
 		expect([...FAMOUS_PROVIDER_ORDER]).toEqual(agreedOrder);
 
 		// The same order must survive an actual sort of shuffled input.
@@ -143,22 +147,27 @@ describe("compareRankedProviders", () => {
 			provider("minimax-code-cn", "none", "MiniMax Coding Plan (China)"),
 			provider("xai", "checking", "xAI"),
 			provider("minimax-code", "none", "MiniMax Coding Plan (International)"),
+			provider("sglang", "none", "SGLang (Local OpenAI-compatible)"),
+			provider("vllm", "none", "vLLM (Local OpenAI-compatible)"),
 		];
 
 		expect(sortRankedProviders(fixture).map(entry => entry.id)).toEqual([
 			// tier 0: valid / checking / configured, famous order then label
 			"anthropic",
-			"xai",
 			"glm-proxy",
+			"xai",
 			// tier 1: problematic credentials
 			"kagi",
 			// tier 2: famous, curated order with variants behind their primary
 			"openai-codex",
-			"minimax-code",
-			"minimax-code-cn",
-			"cursor",
-			// tier 3: everything else, alphabetical by label
+			"vllm",
+			"sglang",
+			// tier 3: everything else (including providers the allowlist hides),
+			// alphabetical by label
 			"cerebras",
+			"cursor",
+			"minimax-code-cn",
+			"minimax-code",
 			"tavily",
 		]);
 	});
@@ -184,15 +193,18 @@ describe("compareRankedProviders", () => {
 		expect(after).toEqual(before);
 	});
 
-	test("unknown and custom providers land last", () => {
+	test("unknown, custom, and de-listed providers land last", () => {
 		const ranked = sortRankedProviders([
 			provider("my-custom-gateway", "none", "My Custom Gateway"),
+			provider("sglang", "none", "SGLang (Local OpenAI-compatible)"),
+			provider("vllm", "none", "vLLM (Local OpenAI-compatible)"),
+			provider("aaa-custom", "none", "AAA Custom"),
+			// Hidden built-ins sort with the customs, by label, not ahead of them.
 			provider("opengateway", "none", "OpenGateway by Sionic AI"),
 			provider("github-copilot", "none", "GitHub Copilot"),
-			provider("aaa-custom", "none", "AAA Custom"),
 		]).map(entry => entry.id);
-		expect(ranked.slice(0, 2)).toEqual(["opengateway", "github-copilot"]);
-		expect(ranked.slice(2)).toEqual(["aaa-custom", "my-custom-gateway"]);
+		expect(ranked.slice(0, 2)).toEqual(["vllm", "sglang"]);
+		expect(ranked.slice(2)).toEqual(["aaa-custom", "github-copilot", "my-custom-gateway", "opengateway"]);
 	});
 
 	test("the comparator is a stable total order with no ties", () => {

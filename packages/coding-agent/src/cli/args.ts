@@ -2,9 +2,9 @@
  * CLI argument parsing
  */
 import * as path from "node:path";
-import { type Effort, THINKING_EFFORTS } from "@gajae-code/ai/core";
-import { logger } from "@gajae-code/utils";
-import { CliParseError } from "@gajae-code/utils/cli";
+import { type Effort, THINKING_EFFORTS } from "@vib-rato/ai/core";
+import { logger } from "@vib-rato/utils";
+import { CliParseError } from "@vib-rato/utils/cli";
 import { parseEffort } from "../thinking";
 import { BUILTIN_TOOLS } from "../tools";
 import { type ConsumerLaunchFlagName, LAUNCH_PARSE_FLAGS, launchFlagIsOwnedBy } from "./root-flags";
@@ -189,7 +189,7 @@ export function parseArgs(args: string[], authority: ParseArgsAuthority = "local
 				const removed = mode === "rpc" || mode === "rpc-ui" || mode === "bridge";
 				throw new CliParseError(
 					removed
-						? `--mode ${mode} was removed; external control now uses the Gajae-Code SDK (docs/sdk.md)`
+						? `--mode ${mode} was removed; external control now uses the Vibrato SDK (docs/sdk.md)`
 						: `invalid --mode value: ${mode} (expected text, json, or acp)`,
 				);
 			}

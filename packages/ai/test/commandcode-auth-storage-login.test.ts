@@ -28,7 +28,7 @@ describe("Command Code GOAT AuthStorage login", () => {
 	});
 
 	it("persists a validated API key under the canonical provider id", async () => {
-		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-commandcode-login-"));
+		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-commandcode-login-"));
 		const dbStore = await SqliteAuthCredentialStore.open(path.join(tempDir, "agent.db"));
 		store = dbStore;
 		const authStorage = new AuthStorage(dbStore);
@@ -53,7 +53,7 @@ describe("Command Code GOAT AuthStorage login", () => {
 	});
 
 	it("keeps the existing credential when models validation fails", async () => {
-		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-commandcode-login-"));
+		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-commandcode-login-"));
 		const dbStore = await SqliteAuthCredentialStore.open(path.join(tempDir, "agent.db"));
 		store = dbStore;
 		const authStorage = new AuthStorage(dbStore);

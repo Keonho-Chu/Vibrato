@@ -6,7 +6,7 @@ import {
 	managedDirectoryRoot,
 } from "../../../src/session/internal/managed-session-storage";
 
-const root = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), "gjc-managed-descriptor-rss-")));
+const root = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), "vib-managed-descriptor-rss-")));
 const transcript = path.join(root, "session.jsonl");
 const chunk = Buffer.alloc(1024 * 1024, 0x78);
 let fd: number | undefined;

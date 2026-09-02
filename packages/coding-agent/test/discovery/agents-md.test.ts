@@ -2,8 +2,8 @@ import { describe, expect, test } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { LoadContext } from "@gajae-code/coding-agent/capability/types";
-import { type AgentsMdReader, loadAgentsMd } from "@gajae-code/coding-agent/discovery/agents-md";
+import type { LoadContext } from "@vib-rato/coding-agent/capability/types";
+import { type AgentsMdReader, loadAgentsMd } from "@vib-rato/coding-agent/discovery/agents-md";
 
 const MAX_FILE_BYTES = 64 * 1024;
 
@@ -103,7 +103,7 @@ describe("AGENTS.md discovery bounds", () => {
 		expect(result.warnings).toEqual(["Skipped one or more AGENTS.md files that exceed the 64 KiB limit."]);
 	});
 	test("reads only through the sentinel and still follows a regular-file symlink", async () => {
-		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-agents-md-"));
+		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-agents-md-"));
 		const target = path.join(tempDir, "target.md");
 		const agentPath = path.join(tempDir, "AGENTS.md");
 		try {
@@ -124,7 +124,7 @@ describe("AGENTS.md discovery bounds", () => {
 		}
 	});
 	test("ignores non-regular AGENTS.md candidates", async () => {
-		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-agents-md-"));
+		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-agents-md-"));
 		const agentPath = path.join(tempDir, "AGENTS.md");
 		try {
 			fs.mkdirSync(agentPath);
@@ -137,7 +137,7 @@ describe("AGENTS.md discovery bounds", () => {
 		}
 	});
 	test.skipIf(process.platform === "win32")("rejects a FIFO candidate without blocking discovery", async () => {
-		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-agents-md-"));
+		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-agents-md-"));
 		const agentPath = path.join(tempDir, "AGENTS.md");
 		const created = Bun.spawnSync(["mkfifo", agentPath]);
 		expect(created.exitCode).toBe(0);

@@ -1,30 +1,12 @@
 /**
  * Plugin CLI command handlers.
  *
- * Handles `gjc plugin <command>` subcommands for plugin lifecycle management.
+ * Handles `vib plugin <command>` subcommands for plugin lifecycle management.
  */
 
-import { APP_NAME, getProjectDir } from "@gajae-code/utils";
+import { APP_NAME, getProjectDir } from "@vib-rato/utils";
 import chalk from "chalk";
 import { resolveOrDefaultProjectRegistryPath } from "../discovery/helpers";
-import {
-	applyGjcBundleUpdate,
-	bundleIdentity,
-	type GjcBundleIdentity,
-	type GjcBundleSummary,
-	GjcPluginLoadError,
-	getGjcBundle,
-	getGjcPluginMigrationStatuses,
-	installGjcBundle,
-	isGjcPluginBundleSource,
-	isGjcPluginSourceShape,
-	listGjcBundles,
-	migrationDoctorCheckMessage,
-	previewGjcBundleUninstall,
-	previewGjcBundleUpdate,
-	runGjcPluginMigrationPreflight,
-	uninstallGjcBundle,
-} from "../extensibility/gjc-plugins";
 import { PluginManager, parseSettingValue, validateSetting } from "../extensibility/plugins";
 import {
 	getInstalledPluginsRegistryPath,
@@ -33,6 +15,24 @@ import {
 	getPluginsCacheDir,
 	MarketplaceManager,
 } from "../extensibility/plugins/marketplace/index.js";
+import {
+	applyVibBundleUpdate,
+	bundleIdentity,
+	getVibBundle,
+	getVibPluginMigrationStatuses,
+	installVibBundle,
+	isVibPluginBundleSource,
+	isVibPluginSourceShape,
+	listVibBundles,
+	migrationDoctorCheckMessage,
+	previewVibBundleUninstall,
+	previewVibBundleUpdate,
+	runVibPluginMigrationPreflight,
+	uninstallVibBundle,
+	type VibBundleIdentity,
+	type VibBundleSummary,
+	VibPluginLoadError,
+} from "../extensibility/vib-plugins";
 import { theme } from "../modes/theme/theme";
 
 // =============================================================================
@@ -334,14 +334,14 @@ async function handleDiscover(args: string[], _flags: PluginCommandArgs["flags"]
 }
 
 /**
- * Scope-qualified GJC bundle upgrade: re-resolve the stored source, review the
+ * Scope-qualified Vibrato bundle upgrade: re-resolve the stored source, review the
  * candidate, then apply it as a compare-and-swap. `--dry-run` stops after the
  * preview. Requires exactly one of `--user` / `--project` because (scope, name)
  * is the canonical target.
  */
-async function handleGjcUpgrade(name: string, flags: PluginCommandArgs["flags"]): Promise<void> {
+async function handleVibUpgrade(name: string, flags: PluginCommandArgs["flags"]): Promise<void> {
 	if (flags.user === flags.project) {
-		console.error(chalk.red(`GJC bundle upgrade requires exactly one of --user or --project for "${name}".`));
+		console.error(chalk.red(`Vibrato bundle upgrade requires exactly one of --user or --project for "${name}".`));
 		process.exit(1);
 	}
 	const scope: "user" | "project" = flags.user ? "user" : "project";
@@ -360,23 +360,23 @@ async function handleGjcUpgrade(name: string, flags: PluginCommandArgs["flags"])
 	// Source re-resolution can throw with a cause carrying the raw locator, so
 	// the whole flow reports a stable code instead of the underlying error.
 	try {
-		await runGjcUpgrade(ctx, identity, name, scope, flags, emitError);
+		await runVibUpgrade(ctx, identity, name, scope, flags, emitError);
 	} catch (err) {
-		const reason = err instanceof GjcPluginLoadError ? err.code : "upgrade_failed";
-		console.error(chalk.red(`${theme.status.error} Failed to upgrade GJC bundle ${name} (${reason})`));
+		const reason = err instanceof VibPluginLoadError ? err.code : "upgrade_failed";
+		console.error(chalk.red(`${theme.status.error} Failed to upgrade Vibrato bundle ${name} (${reason})`));
 		process.exit(1);
 	}
 }
 
-async function runGjcUpgrade(
+async function runVibUpgrade(
 	ctx: { cwd: string },
-	identity: GjcBundleIdentity,
+	identity: VibBundleIdentity,
 	name: string,
 	scope: "user" | "project",
 	flags: PluginCommandArgs["flags"],
 	emitError: (error: { code: string; message: string; recovery?: string }) => never,
 ): Promise<void> {
-	const preview = await previewGjcBundleUpdate(ctx, identity);
+	const preview = await previewVibBundleUpdate(ctx, identity);
 	if (!preview.ok) emitError(preview.error);
 	else if (flags.dryRun || !preview.value.changed) {
 		const { changed, candidateVersion, addedSurfaceIds, removedSurfaceIds } = preview.value;
@@ -396,7 +396,7 @@ async function runGjcUpgrade(
 				),
 			);
 		} else if (!changed) {
-			console.log(chalk.dim(`GJC bundle ${name} (${scope}) is up to date at ${preview.value.current.version}`));
+			console.log(chalk.dim(`Vibrato bundle ${name} (${scope}) is up to date at ${preview.value.current.version}`));
 		} else {
 			console.log(
 				chalk.cyan(`[dry-run] ${name} (${scope}): ${preview.value.current.version} -> ${candidateVersion}`),
@@ -405,7 +405,7 @@ async function runGjcUpgrade(
 			if (removedSurfaceIds.length > 0) console.log(chalk.dim(`  - ${removedSurfaceIds.join(", ")}`));
 		}
 	} else {
-		const applied = await applyGjcBundleUpdate(ctx, preview.value.token);
+		const applied = await applyVibBundleUpdate(ctx, preview.value.token);
 		if (!applied.ok) emitError(applied.error);
 		else if (flags.json) {
 			console.log(
@@ -422,7 +422,7 @@ async function runGjcUpgrade(
 		} else {
 			console.log(
 				chalk.green(
-					`${theme.status.success} ${applied.value.status} GJC bundle ${name}@${applied.value.summary.version} (${scope})`,
+					`${theme.status.success} ${applied.value.status} Vibrato bundle ${name}@${applied.value.summary.version} (${scope})`,
 				),
 			);
 			if (applied.value.remnantCount > 0) {
@@ -434,13 +434,13 @@ async function runGjcUpgrade(
 
 async function handleUpgrade(args: string[], flags: PluginCommandArgs["flags"]): Promise<void> {
 	const pluginId = args[0];
-	// Scope-qualified GJC bundles upgrade through the lifecycle service, never
+	// Scope-qualified Vibrato bundles upgrade through the lifecycle service, never
 	// through the marketplace manager.
 	if (pluginId && (flags.user || flags.project)) {
 		const scope: "user" | "project" = flags.user ? "user" : "project";
-		const existing = await getGjcBundle({ cwd: getProjectDir() }, bundleIdentity(scope, pluginId));
+		const existing = await getVibBundle({ cwd: getProjectDir() }, bundleIdentity(scope, pluginId));
 		if (existing.ok) {
-			await handleGjcUpgrade(pluginId, flags);
+			await handleVibUpgrade(pluginId, flags);
 			return;
 		}
 	}
@@ -460,7 +460,7 @@ async function handleUpgrade(args: string[], flags: PluginCommandArgs["flags"]):
 			if (flags.scope) {
 				console.error(
 					chalk.yellow(
-						`Warning: --scope is ignored when upgrading all plugins. Use 'gjc plugin upgrade <id> --scope ${flags.scope}' to target a specific plugin and scope.`,
+						`Warning: --scope is ignored when upgrading all plugins. Use 'vib plugin upgrade <id> --scope ${flags.scope}' to target a specific plugin and scope.`,
 					),
 				);
 			}
@@ -485,22 +485,22 @@ async function handleUpgrade(args: string[], flags: PluginCommandArgs["flags"]):
  * home path, so neither is ever printed.
  */
 function describeInstallFailure(error: unknown): string {
-	return error instanceof GjcPluginLoadError ? error.code : "install_failed";
+	return error instanceof VibPluginLoadError ? error.code : "install_failed";
 }
 
-function isGjcRegistryShapeFailure(error: unknown): boolean {
+function isVibRegistryShapeFailure(error: unknown): boolean {
 	return (
-		(error instanceof GjcPluginLoadError && error.code === "invalid_manifest") ||
+		(error instanceof VibPluginLoadError && error.code === "invalid_manifest") ||
 		(error instanceof TypeError &&
 			/(?:not iterable|localeCompare|reading ['"](?:scope|name|pluginRoot|plugins|map))/.test(error.message))
 	);
 }
 
 /**
- * Which scopes own `name` as a GJC bundle.
+ * Which scopes own `name` as a Vibrato bundle.
  *
  * Classification runs for every uninstall target, including npm and marketplace
- * names that never reach the GJC path, so the preview mode must be read-only:
+ * names that never reach the Vibrato path, so the preview mode must be read-only:
  * the migrating read used by the real path persists legacy-root discovery and
  * takes the scope lock, which would let `--dry-run` write a registry for a
  * target it does not even own.
@@ -511,41 +511,41 @@ function isGjcRegistryShapeFailure(error: unknown): boolean {
  * branch on an unreadable registry could preview — and the real command could
  * then remove — a same-named plugin the user did not target.
  */
-async function findGjcBundlesForUninstall(
+async function findVibBundlesForUninstall(
 	cwd: string,
 	name: string,
 	scope: "user" | "project" | undefined,
 	mode: { preview: boolean },
-): Promise<GjcBundleIdentity[]> {
+): Promise<VibBundleIdentity[]> {
 	const scopes = scope ? [scope] : (["user", "project"] as const);
-	const matches: GjcBundleIdentity[] = [];
+	const matches: VibBundleIdentity[] = [];
 	for (const candidateScope of scopes) {
 		const identity = bundleIdentity(candidateScope, name);
 		try {
 			if (mode.preview) {
-				const result = await previewGjcBundleUninstall({ cwd }, identity);
+				const result = await previewVibBundleUninstall({ cwd }, identity);
 				if (!result.ok && result.error.code === "registry_unreadable") {
 					// Ownership of this scope is unknown; guessing another owner (or
 					// reporting a false both-scopes ambiguity against the other scope's
 					// real match) could preview the wrong target. Fail closed on the
 					// typed refusal, surfaced with its own repair hint.
-					throw new GjcPluginLoadError("invalid_manifest", result.error.message);
+					throw new VibPluginLoadError("invalid_manifest", result.error.message);
 				}
-				// Any other refusal still identifies a GJC bundle this scope owns
+				// Any other refusal still identifies a Vibrato bundle this scope owns
 				// (e.g. invalid_target for non-uninstallable metadata); surface it so
 				// the preview refuses exactly what the real uninstall refuses.
 				if (result.ok || result.error.code !== "not_installed") matches.push(identity);
 			} else {
-				const result = await getGjcBundle({ cwd }, identity);
+				const result = await getVibBundle({ cwd }, identity);
 				if (result.ok) matches.push(result.value.identity);
 			}
 		} catch (error) {
-			if (!isGjcRegistryShapeFailure(error)) throw error;
+			if (!isVibRegistryShapeFailure(error)) throw error;
 			// Unreadable scope registry: ownership is unknown, so resolve nothing
 			// and let the caller fail closed instead of guessing another owner.
-			throw new GjcPluginLoadError(
+			throw new VibPluginLoadError(
 				"invalid_manifest",
-				`Could not read the GJC ${candidateScope} plugin registry while resolving "${name}"`,
+				`Could not read the Vibrato ${candidateScope} plugin registry while resolving "${name}"`,
 				{ cause: error },
 			);
 		}
@@ -567,7 +567,7 @@ async function handleInstall(
 	if (packages.length === 0) {
 		console.error(chalk.red(`Usage: ${APP_NAME} plugin install <package[@version]>[features] ...`));
 		console.error(chalk.dim("Examples:"));
-		console.error(chalk.dim(`  ${APP_NAME} plugin install @gajae-code/exa`));
+		console.error(chalk.dim(`  ${APP_NAME} plugin install @vib-rato/exa`));
 		console.error(chalk.dim(`  ${APP_NAME} plugin install name@marketplace`));
 		process.exit(1);
 	}
@@ -577,26 +577,26 @@ async function handleInstall(
 	const knownMarketplaces = new Set((await mktMgr.listMarketplaces()).map(m => m.name));
 
 	for (const spec of packages) {
-		// A GJC bundle is identified by the SHAPE of its source: a filesystem path,
+		// A Vibrato bundle is identified by the SHAPE of its source: a filesystem path,
 		// a git locator, or a tarball. npm and marketplace specs are never any of
 		// those, so shape alone separates the two worlds without resolving.
 		//
-		// Shape is checked BEFORE `isGjcPluginBundleSource`, which resolves the
-		// source: a deleted or unreachable GJC source fails that probe and would
+		// Shape is checked BEFORE `isVibPluginBundleSource`, which resolves the
+		// source: a deleted or unreachable Vibrato source fails that probe and would
 		// otherwise fall through to npm, losing the create-only refusal the
 		// lifecycle owes for an already-installed target.
-		if (isGjcPluginSourceShape(spec) || (await isGjcPluginBundleSource(spec))) {
+		if (isVibPluginSourceShape(spec) || (await isVibPluginBundleSource(spec))) {
 			if (flags.user === flags.project) {
 				console.error(
 					// The spec can carry credentials or an absolute home path, so name
 					// the missing flag instead of echoing it back.
-					chalk.red("GJC plugin bundle install requires exactly one of --user or --project."),
+					chalk.red("Vibrato plugin bundle install requires exactly one of --user or --project."),
 				);
 				process.exit(1);
 			}
 			const scope: "user" | "project" = flags.user ? "user" : "project";
 			try {
-				const res = await installGjcBundle({ cwd: getProjectDir() }, scope, spec);
+				const res = await installVibBundle({ cwd: getProjectDir() }, scope, spec);
 				if (!res.ok) {
 					const doc = {
 						error: { code: res.error.code, message: res.error.message, recovery: res.error.recovery },
@@ -614,15 +614,15 @@ async function handleInstall(
 				} else {
 					console.log(
 						chalk.green(
-							`${theme.status.success} installed GJC plugin ${summary.identity.name}@${summary.version} (${scope})`,
+							`${theme.status.success} installed Vibrato plugin ${summary.identity.name}@${summary.version} (${scope})`,
 						),
 					);
 				}
 			} catch (err) {
 				// Never echo the raw spec or the underlying cause: either can carry
 				// credentials, a query string, or an absolute home path.
-				const reason = err instanceof GjcPluginLoadError ? err.code : "install_failed";
-				console.error(chalk.red(`${theme.status.error} Failed to install GJC bundle (${reason})`));
+				const reason = err instanceof VibPluginLoadError ? err.code : "install_failed";
+				console.error(chalk.red(`${theme.status.error} Failed to install Vibrato bundle (${reason})`));
 				process.exit(1);
 			}
 			continue;
@@ -715,30 +715,32 @@ async function handleUninstall(
 		// Every branch below is split by mode rather than short-circuited inside the
 		// mutating call: under --dry-run this handler only ever reaches read-only
 		// APIs, so no path can write.
-		let gjcMatches: GjcBundleIdentity[];
+		let vibMatches: VibBundleIdentity[];
 		try {
-			gjcMatches = await findGjcBundlesForUninstall(cwd, name, scope, { preview: Boolean(flags.dryRun) });
+			vibMatches = await findVibBundlesForUninstall(cwd, name, scope, { preview: Boolean(flags.dryRun) });
 		} catch (error) {
 			// An unreadable scope registry means ownership of `name` is unknown; the
 			// classification above fails closed and this handler must too, rather than
 			// guessing a marketplace or npm owner for a destructive operation.
 			const refusal =
-				error instanceof Error && ("code" in error || error instanceof GjcPluginLoadError)
+				error instanceof Error && ("code" in error || error instanceof VibPluginLoadError)
 					? error.message
 					: `Could not classify "${name}" for uninstall`;
 			console.error(chalk.red(`${theme.status.error} ${refusal}`));
-			console.error(chalk.dim("  Repair the GJC plugin registry (gjc plugin doctor --fix), then retry"));
+			console.error(chalk.dim("  Repair the Vibrato plugin registry (vib plugin doctor --fix), then retry"));
 			process.exit(3);
 		}
-		if (gjcMatches.length > 0) {
-			if (gjcMatches.length > 1) {
-				console.error(chalk.red(`GJC bundle "${name}" is installed in both scopes; specify --user or --project.`));
+		if (vibMatches.length > 0) {
+			if (vibMatches.length > 1) {
+				console.error(
+					chalk.red(`Vibrato bundle "${name}" is installed in both scopes; specify --user or --project.`),
+				);
 				process.exit(1);
 			}
-			const identity = gjcMatches[0];
+			const identity = vibMatches[0];
 			const result = flags.dryRun
-				? await previewGjcBundleUninstall({ cwd }, identity)
-				: await uninstallGjcBundle({ cwd }, identity);
+				? await previewVibBundleUninstall({ cwd }, identity)
+				: await uninstallVibBundle({ cwd }, identity);
 			if (!result.ok) {
 				console.error(chalk.red(`${theme.status.error} ${result.error.message}`));
 				if (result.error.recovery) console.error(chalk.dim(`  Try: ${result.error.recovery}`));
@@ -795,14 +797,14 @@ async function handleList(manager: PluginManager, flags: { json?: boolean }): Pr
 	const mktMgr = await makeMarketplaceManager();
 	const mktPlugins = await mktMgr.listInstalledPlugins();
 	const cwd = getProjectDir();
-	const gjcBundles: GjcBundleSummary[] = await listGjcBundles({ cwd });
+	const vibBundles: VibBundleSummary[] = await listVibBundles({ cwd });
 
 	if (flags.json) {
-		console.log(JSON.stringify({ npm: npmPlugins, marketplace: mktPlugins, gjc: gjcBundles }, null, 2));
+		console.log(JSON.stringify({ npm: npmPlugins, marketplace: mktPlugins, vib: vibBundles }, null, 2));
 		return;
 	}
 
-	if (npmPlugins.length === 0 && mktPlugins.length === 0 && gjcBundles.length === 0) {
+	if (npmPlugins.length === 0 && mktPlugins.length === 0 && vibBundles.length === 0) {
 		console.log(chalk.dim("No plugins installed"));
 		console.log(chalk.dim(`\nInstall plugins with: ${APP_NAME} plugin install <package>`));
 		return;
@@ -845,10 +847,10 @@ async function handleList(manager: PluginManager, flags: { json?: boolean }): Pr
 		}
 	}
 
-	if (gjcBundles.length > 0) {
+	if (vibBundles.length > 0) {
 		if (npmPlugins.length > 0 || mktPlugins.length > 0) console.log();
-		console.log(chalk.bold("GJC Plugin Bundles:\n"));
-		for (const plugin of gjcBundles) {
+		console.log(chalk.bold("Vibrato Plugin Bundles:\n"));
+		for (const plugin of vibBundles) {
 			const status = plugin.enabled ? chalk.green(theme.status.enabled) : chalk.dim(theme.status.disabled);
 			const scopeLabel = chalk.dim(` (${plugin.identity.scope})`);
 			const disabledCount = plugin.surfaces.filter(s => !s.enabled).length;
@@ -893,20 +895,20 @@ async function handleDoctor(
 	const checks = await manager.doctor({ fix: flags.fix });
 	try {
 		const statuses = flags.migratePlugins
-			? await runGjcPluginMigrationPreflight(getProjectDir())
-			: await getGjcPluginMigrationStatuses(getProjectDir(), { migrate: false });
+			? await runVibPluginMigrationPreflight(getProjectDir())
+			: await getVibPluginMigrationStatuses(getProjectDir(), { migrate: false });
 		for (const status of statuses) {
 			checks.push({
-				name: `gjc-plugin:${status.scope}:${status.plugin}:migration`,
+				name: `vib-plugin:${status.scope}:${status.plugin}:migration`,
 				status: status.status === "migrated" ? "ok" : "error",
 				message: `${flags.migratePlugins ? "migration pre-flight: " : ""}${migrationDoctorCheckMessage(status)}`,
 			});
 		}
 	} catch (error) {
 		checks.push({
-			name: "gjc-plugin:migration",
+			name: "vib-plugin:migration",
 			status: "error",
-			message: `Unable to inspect GJC plugin migration status: ${error instanceof Error ? error.message : String(error)}`,
+			message: `Unable to inspect Vibrato plugin migration status: ${error instanceof Error ? error.message : String(error)}`,
 		});
 	}
 
@@ -1307,7 +1309,7 @@ ${chalk.bold("Options:")}
   -l, --local      Use project-local overrides
 
 ${chalk.bold("Examples:")}
-  ${APP_NAME} plugin install @gajae-code/exa[search]
+  ${APP_NAME} plugin install @vib-rato/exa[search]
   ${APP_NAME} plugin list --json
   ${APP_NAME} plugin features my-plugin --enable search,web
   ${APP_NAME} plugin config set my-plugin apiKey sk-xxx

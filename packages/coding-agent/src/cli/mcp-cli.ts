@@ -1,14 +1,14 @@
 /**
  * Direct MCP server registration CLI helpers.
  *
- * This surface only writes explicit user-provided server definitions to GJC's
- * own native MCP config (project `./.gjc/mcp.json` or user `~/.gjc/agent/mcp.json`)
+ * This surface only writes explicit user-provided server definitions to Vibrato's
+ * own native MCP config (project `./.vib/mcp.json` or user `~/.vib/agent/mcp.json`)
  * through the canonical scope-aware reader/writer. It never imports or inherits
  * live configs from other agents. Registrations written here are consumed by
  * ordinary standalone sessions at startup (conventional autoload) unless
  * disabled or opted out via `--no-mcp`.
  */
-import { getProjectDir } from "@gajae-code/utils";
+import { getProjectDir } from "@vib-rato/utils";
 import { redactMCPEndpoint } from "../runtime-mcp/redaction";
 import {
 	getScopeMCPServer,
@@ -92,7 +92,7 @@ export function computeAutoloadStatus(
 function autoloadStatusNote(status: AutoloadStatus): string {
 	switch (status) {
 		case "autoload":
-			return "Loaded by ordinary standalone gjc sessions at startup.";
+			return "Loaded by ordinary standalone vib sessions at startup.";
 		case "autoload-off":
 			return "Configured but not auto-loaded at startup (autoload: false); connect on demand via /mcp.";
 		case "disabled":
@@ -133,7 +133,7 @@ function buildServerConfig(args: MCPCommandArgs): MCPServerConfig {
 	if (type === "stdio") {
 		const command = args.flags.command ?? args.commandArgs?.[0];
 		if (!command) {
-			throw new MCPArgsError("`gjc mcp add` requires --command <cmd> or a positional command for stdio servers.");
+			throw new MCPArgsError("`vib mcp add` requires --command <cmd> or a positional command for stdio servers.");
 		}
 		const config: MCPServerConfig = {
 			...shared,
@@ -151,7 +151,7 @@ function buildServerConfig(args: MCPCommandArgs): MCPServerConfig {
 
 	const url = args.flags.url ?? args.commandArgs?.[0];
 	if (!url) {
-		throw new MCPArgsError(`\`gjc mcp add --type ${type}\` requires --url <url> or a positional URL.`);
+		throw new MCPArgsError(`\`vib mcp add --type ${type}\` requires --url <url> or a positional URL.`);
 	}
 	const headers = parsePairs(args.flags.header, "header");
 	if (type === "http") {
@@ -296,7 +296,7 @@ function renderDetails(entry: RedactedServerEntry): string {
 }
 
 async function runAdd(args: MCPCommandArgs, scoped: ScopedPath): Promise<void> {
-	if (!args.name) throw new MCPArgsError("`gjc mcp add` requires a server name.");
+	if (!args.name) throw new MCPArgsError("`vib mcp add` requires a server name.");
 	const config = buildServerConfig(args);
 	const { result, config: storedConfig } = await upsertScopeMCPServer(
 		scoped.scope,
@@ -362,7 +362,7 @@ async function runList(args: MCPCommandArgs, scoped: ScopedPath): Promise<void> 
 }
 
 async function runRemove(args: MCPCommandArgs, scoped: ScopedPath): Promise<void> {
-	if (!args.name) throw new MCPArgsError("`gjc mcp remove` requires a server name.");
+	if (!args.name) throw new MCPArgsError("`vib mcp remove` requires a server name.");
 	const existing = await getScopeMCPServer(scoped.scope, args.name, args.cwd);
 	if (!existing.config) {
 		throw new MCPArgsError(`MCP server "${args.name}" not found in ${scoped.scope} config.`);

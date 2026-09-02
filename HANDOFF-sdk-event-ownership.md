@@ -1,7 +1,7 @@
 # Handoff: SDK event ownership — notifications extension → SDK core
 
 - Branch: `refactor/sdk-event-ownership` (off `dev` @ `08c527fd8`)
-- Worktree: `../gajae-code.gajae-code-worktree/sdk-event-ownership`
+- Worktree: `../vib-rato.vib-rato-worktree/sdk-event-ownership`
 - Status: **Slice 1 landed** (unify duplicated durable terminal-retention writes,
   see `refactor(sdk): unify duplicated durable terminal-retention writes` +
   `fix(session): keep transitional reservations out of retention eviction`).
@@ -28,8 +28,8 @@ transport).
 File header literally says "Notifications extension", yet it owns:
 
 - **Endpoint hosting**: per-session loopback WS server (Rust core via N-API,
-  `NotificationServer` from `@gajae-code/natives`), enabled by notifications
-  Settings / `GJC_NOTIFICATIONS=1` / `GJC_NOTIFICATIONS_TOKEN` — contradicting
+  `NotificationServer` from `@vib-rato/natives`), enabled by notifications
+  Settings / `VIB_NOTIFICATIONS=1` / `VIB_NOTIFICATIONS_TOKEN` — contradicting
   `docs/sdk.md` "Hosted by default. SDK hosting is independent of notification
   configuration."
 - **Idle genesis**: `agent_end` → `action_needed { kind: "idle", id: "idle:<sess>#<seq>" }`
@@ -65,7 +65,7 @@ comments.
 
 ### 3. Supporting layout
 
-- Rust core `crates/gjc-sdk`: `actions.rs` already owns ask mechanics
+- Rust core `crates/vib-sdk`: `actions.rs` already owns ask mechanics
   (buffering, replay, first-valid-reply-wins, idempotency, non-repliable
   resolution). The TS extension only *bridges* into it.
 - `sdk/bus/` also contains the provider daemons (telegram-daemon.ts,
@@ -75,7 +75,7 @@ comments.
   (not replayed to late attachments) — deliberately a delivery-flavored event,
   not a durable session fact.
 - Related pre-existing branch (not this worktree): `fix/sdk-core-ask-idle`
-  checked out at `/Users/bellman/tmp/gajae-code-streamdeck-docs` — inspect
+  checked out at `/Users/bellman/tmp/vib-rato-streamdeck-docs` — inspect
   before starting to avoid duplicate/conflicting work.
 
 ## Design decision: split fact from presentation
@@ -119,7 +119,7 @@ comments.
    the settled-fact projection; `idleSeq`/dedup moves with the fact layer.
 5. **Slice 5 — hosting de-gated:** endpoint hosting independent of
    notifications config in code (matching the documented contract);
-   `GJC_SDK_DISABLE=1` remains the opt-out.
+   `VIB_SDK_DISABLE=1` remains the opt-out.
 
 ## Risks / invariants that must not regress
 
@@ -129,7 +129,7 @@ comments.
 - Terminal-abort P1/P2 review-thread invariants (owner-connection authority,
   bounded durable reservations, observed-not-assumed `agent_end` publication).
 - `action_needed.id ≠ gate_id` (SDK v3 contract).
-- Zero wire-protocol change: `crates/gjc-sdk` protocol and managed-adapter
+- Zero wire-protocol change: `crates/vib-sdk` protocol and managed-adapter
   frame surface stay byte-compatible.
 - Docs (`docs/sdk.md`, `docs/sdk-app-guide.md`) must be updated per slice if
   observable contracts move.
@@ -139,6 +139,6 @@ comments.
 - `bun --cwd=packages/coding-agent run check`
 - Targeted: `bun test packages/coding-agent/src/sdk/host/session-runtime.test.ts`
   plus the bus/daemon test files touched by the slice
-- `bun test packages/coding-agent/test/default-gjc-definitions.test.ts` only if
+- `bun test packages/coding-agent/test/default-vib-definitions.test.ts` only if
   default surfaces change (they should not)
 - Full `bun run check` + relevant Rust suites before each PR

@@ -1,11 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import { readdir, readFile } from "node:fs/promises";
 import * as path from "node:path";
-import { getBundledModels, getBundledProviders, PROVIDER_RUNTIME_DESCRIPTORS } from "@gajae-code/ai/core";
+import { getBundledModels, getBundledProviders, PROVIDER_RUNTIME_DESCRIPTORS } from "@vib-rato/ai/core";
 import { resolveModelFromString } from "./config/model-resolver";
 
 const SOURCE_ROOT = import.meta.dir;
-const BARE_AI_IMPORT = /\bfrom\s+["']@gajae-code\/ai["']|\bimport\(\s*["']@gajae-code\/ai["']/;
+const BARE_AI_IMPORT = /\bfrom\s+["']@vib-rato\/ai["']|\bimport\(\s*["']@vib-rato\/ai["']/;
 
 async function collectSourceFiles(directory: string): Promise<string[]> {
 	const entries = await readdir(directory, { withFileTypes: true });

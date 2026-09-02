@@ -1,5 +1,5 @@
 {
-	"$schema": "https://raw.githubusercontent.com/can1357/gajae-code/main/packages/coding-agent/theme-schema.json",
+	"$schema": "https://raw.githubusercontent.com/can1357/oh-my-pi/main/packages/coding-agent/theme-schema.json",
 	"name": "gruvbox-dark",
 	"vars": {
 		"bgHard": "#1d2021",

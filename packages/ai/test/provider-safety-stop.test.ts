@@ -246,7 +246,7 @@ describe("provider safety-stop provenance authority", () => {
 		// imports (#4777 review follow-up).
 		// Non-literal specifier so typecheck cannot resolve the blocked subpath;
 		// the point is runtime resolution failing closed.
-		const deepImport = "@gajae-code/ai/adapter-internals/provider-safety-stop";
+		const deepImport = "@vib-rato/ai/adapter-internals/provider-safety-stop";
 		await expect(import(deepImport)).rejects.toThrow();
 		const manifest = (await import("../package.json", { with: { type: "json" } })).default;
 		expect(manifest.exports["./adapter-internals/*"]).toBeNull();

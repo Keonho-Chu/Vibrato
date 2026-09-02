@@ -1,5 +1,5 @@
 /** Manage stored OAuth accounts without exposing credential payloads. */
-import { Args, Command, Flags, renderCommandHelp } from "@gajae-code/utils/cli";
+import { Args, Command, Flags, renderCommandHelp } from "@vib-rato/utils/cli";
 import {
 	ACCOUNTS_ACTIONS,
 	type AccountsAction,
@@ -36,21 +36,21 @@ export default class Accounts extends Command {
 	};
 
 	static examples = [
-		"gjc accounts list",
-		"gjc accounts list --json",
-		"gjc accounts check",
-		"gjc accounts check anthropic --json",
-		"gjc accounts pin anthropic me@example.com --persistent",
-		"gjc accounts pin anthropic id:42 --persistent",
-		"gjc accounts pin anthropic --clear --persistent",
-		"gjc accounts logout anthropic --account me@example.com",
-		"gjc accounts logout anthropic --all",
+		"vib accounts list",
+		"vib accounts list --json",
+		"vib accounts check",
+		"vib accounts check anthropic --json",
+		"vib accounts pin anthropic me@example.com --persistent",
+		"vib accounts pin anthropic id:42 --persistent",
+		"vib accounts pin anthropic --clear --persistent",
+		"vib accounts logout anthropic --account me@example.com",
+		"vib accounts logout anthropic --all",
 	];
 
 	async run(): Promise<void> {
 		const { args, flags } = await this.parse(Accounts);
 		if (!args.action) {
-			renderCommandHelp("gjc", "accounts", Accounts);
+			renderCommandHelp("vib", "accounts", Accounts);
 			return;
 		}
 		const action = args.action as AccountsAction;

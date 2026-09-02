@@ -2,11 +2,9 @@ import { describe, expect, it } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { activeStateDir, modeStatePath } from "../src/gjc-runtime/session-layout";
-import { removeActiveEntry, writeActiveEntry, writeGuardedJsonAtomic } from "../src/gjc-runtime/state-writer";
 import {
 	applyHandoffToActiveState,
-	CANONICAL_GJC_WORKFLOW_SKILLS,
+	CANONICAL_VIB_WORKFLOW_SKILLS,
 	getSkillActiveStatePaths,
 	invalidateVisibleSkillActiveStateCache,
 	listActiveSkills,
@@ -14,9 +12,11 @@ import {
 	readVisibleSkillActiveState,
 	syncSkillActiveState,
 } from "../src/skill-state/active-state";
+import { activeStateDir, modeStatePath } from "../src/vib-runtime/session-layout";
+import { removeActiveEntry, writeActiveEntry, writeGuardedJsonAtomic } from "../src/vib-runtime/state-writer";
 
 async function withTempCwd(fn: (cwd: string) => Promise<void>): Promise<void> {
-	const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-skill-active-"));
+	const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "vib-skill-active-"));
 	try {
 		await fn(cwd);
 	} finally {
@@ -24,7 +24,7 @@ async function withTempCwd(fn: (cwd: string) => Promise<void>): Promise<void> {
 	}
 }
 
-describe("GJC skill-active state", () => {
+describe("Vibrato skill-active state", () => {
 	it("normalizes legacy top-level active state into active skills", () => {
 		const state = normalizeSkillActiveState({ active: true, skill: "deep-interview", phase: "intent-first" });
 		expect(state?.active_skills).toEqual([
@@ -48,7 +48,7 @@ describe("GJC skill-active state", () => {
 		]);
 	});
 
-	it("writes session-scoped active state under .gjc/_session-*", async () => {
+	it("writes session-scoped active state under .vib/_session-*", async () => {
 		await withTempCwd(async cwd => {
 			await syncSkillActiveState({
 				cwd,
@@ -70,7 +70,7 @@ describe("GJC skill-active state", () => {
 		await withTempCwd(async cwd => {
 			const paths = getSkillActiveStatePaths(cwd, "../escape/session");
 			expect(paths.sessionPath).toBe(
-				path.join(cwd, ".gjc", "_session-%2E%2E%2Fescape%2Fsession", "state", "skill-active-state.json"),
+				path.join(cwd, ".vib", "_session-%2E%2E%2Fescape%2Fsession", "state", "skill-active-state.json"),
 			);
 		});
 	});
@@ -159,7 +159,7 @@ describe("GJC skill-active state", () => {
 
 	it("shows only the callee when a skill is seeded session-less then handed off under a session", async () => {
 		await withTempCwd(async cwd => {
-			// `gjc deep-interview` run without --session-id seeds a global row, then
+			// `vib deep-interview` run without --session-id seeds a global row, then
 			// the in-TUI skill chain hands off under a concrete session id. The
 			// demotion must supersede the global row so the HUD stops showing the
 			// already-handed-off skill.
@@ -291,7 +291,7 @@ describe("GJC skill-active state", () => {
 				phase: "handoff",
 				active: true,
 				sessionId: "sess1",
-				source: "gjc-deep-interview",
+				source: "vib-deep-interview",
 				nowIso: "2026-01-01T00:00:00.000Z",
 			});
 			await syncSkillActiveState({
@@ -300,7 +300,7 @@ describe("GJC skill-active state", () => {
 				phase: "planner",
 				active: true,
 				sessionId: "sess1",
-				source: "gjc-ralplan-native",
+				source: "vib-ralplan-native",
 				nowIso: "2026-01-01T00:05:00.000Z",
 			});
 
@@ -323,7 +323,7 @@ describe("GJC skill-active state", () => {
 				phase: "goal-planning",
 				active: true,
 				sessionId: "sess1",
-				source: "gjc-ultragoal",
+				source: "vib-ultragoal",
 				nowIso: "2026-01-01T00:15:00.000Z",
 			});
 
@@ -416,7 +416,7 @@ describe("GJC skill-active state", () => {
 
 	it("chooses the most advanced active pipeline stage as snapshot primary regardless of file order", async () => {
 		await withTempCwd(async cwd => {
-			const activeDir = path.join(cwd, ".gjc", "_session-sess1", "state", "active");
+			const activeDir = path.join(cwd, ".vib", "_session-sess1", "state", "active");
 			await fs.mkdir(activeDir, { recursive: true });
 			await fs.writeFile(
 				path.join(activeDir, "deep-interview.json"),
@@ -434,7 +434,7 @@ describe("GJC skill-active state", () => {
 			await syncSkillActiveState({ cwd, skill: "autoresearch", phase: "running", active: true, sessionId: "sess1" });
 
 			const snapshot = JSON.parse(
-				await fs.readFile(path.join(cwd, ".gjc", "_session-sess1", "state", "skill-active-state.json"), "utf-8"),
+				await fs.readFile(path.join(cwd, ".vib", "_session-sess1", "state", "skill-active-state.json"), "utf-8"),
 			);
 			expect(snapshot.skill).toBe("ultragoal");
 			expect(snapshot.phase).toBe("goal-planning");
@@ -561,7 +561,7 @@ describe("GJC skill-active state", () => {
 
 			const activePath = path.join(
 				cwd,
-				".gjc",
+				".vib",
 				"_session-sess-remove-rev",
 				"state",
 				"active",
@@ -615,7 +615,7 @@ describe("GJC skill-active state", () => {
 				sourceRevision: 11,
 			});
 
-			const activeDir = path.join(cwd, ".gjc", "_session-sess-exact", "state", "active");
+			const activeDir = path.join(cwd, ".vib", "_session-sess-exact", "state", "active");
 			await fs.writeFile(
 				path.join(activeDir, "ultragoal.json"),
 				JSON.stringify({
@@ -839,7 +839,7 @@ describe("GJC skill-active state", () => {
 		});
 	});
 
-	it("keeps the canonical GJC workflow skill set intentionally small", () => {
-		expect(CANONICAL_GJC_WORKFLOW_SKILLS).toEqual(["deep-interview", "ralplan", "ultragoal", "autoresearch"]);
+	it("keeps the canonical Vibrato workflow skill set intentionally small", () => {
+		expect(CANONICAL_VIB_WORKFLOW_SKILLS).toEqual(["deep-interview", "ralplan", "ultragoal", "autoresearch"]);
 	});
 });

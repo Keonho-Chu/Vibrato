@@ -52,7 +52,7 @@ class FakeStartupWorker {
 const initPayload = {
 	mode: "headless" as const,
 	browserWSEndpoint: "ws://127.0.0.1/devtools/browser/test",
-	safeDir: "/tmp/gjc-puppeteer",
+	safeDir: "/tmp/vib-puppeteer",
 	timeoutMs: 1_000,
 };
 

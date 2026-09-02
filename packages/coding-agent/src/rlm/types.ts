@@ -4,7 +4,7 @@
 import type { KernelDisplayOutput } from "../eval/py/kernel";
 
 export interface RlmArtifactPaths {
-	/** Absolute session directory: <cwd>/.gjc/rlm/<sessionId>/ */
+	/** Absolute session directory: <cwd>/.vib/rlm/<sessionId>/ */
 	dir: string;
 	/** Absolute path to the live notebook.ipynb */
 	notebookPath: string;
@@ -12,7 +12,7 @@ export interface RlmArtifactPaths {
 	reportPath: string;
 	/** Absolute path to the session metadata.json */
 	metadataPath: string;
-	/** Directory for the underlying GJC conversation session files. */
+	/** Directory for the underlying Vibrato conversation session files. */
 	agentSessionDir: string;
 }
 

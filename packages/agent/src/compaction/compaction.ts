@@ -14,8 +14,8 @@ import {
 	type Model,
 	type ProviderSessionState,
 	type Usage,
-} from "@gajae-code/ai";
-import { logger, prompt } from "@gajae-code/utils";
+} from "@vib-rato/ai";
+import { logger, prompt } from "@vib-rato/utils";
 import { type AgentTelemetry, instrumentedCompleteSimple } from "../telemetry";
 import type { AgentMessage, AgentTool } from "../types";
 import type { AdaptiveCompactionDecisionState, AdaptiveCompactionOptions } from "./adaptive";
@@ -898,7 +898,7 @@ export interface SummaryOptions {
  * history back into a single summary request; on strict backends (e.g.
  * OpenAI-code/Codex `context_length_exceeded`) that request itself overflows and
  * throws, so context-overflow recovery cannot produce a summary and the agent
- * fails to compact-and-continue — a non-interactive `gjc -p` run then terminates
+ * fails to compact-and-continue — a non-interactive `vib -p` run then terminates
  * on the very overflow the recovery was meant to absorb.
  *
  * The budget reserves the summary's own output tokens plus prompt/system/template

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { Container, Text, TUI } from "@gajae-code/tui";
+import { Container, Text, TUI } from "@vib-rato/tui";
 import { VirtualTerminal } from "./virtual-terminal";
 
 class AnchoredTranscript extends Container {

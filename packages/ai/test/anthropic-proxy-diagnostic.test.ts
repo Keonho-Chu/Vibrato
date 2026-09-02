@@ -3,10 +3,10 @@ import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 import type Anthropic from "@anthropic-ai/sdk";
-import { diagnoseAnthropicContextManagementInjection, streamAnthropic } from "@gajae-code/ai/providers/anthropic";
-import type { Context, Model } from "@gajae-code/ai/types";
-import type { RawHttpRequestDump } from "@gajae-code/ai/utils/http-inspector";
-import { getConfigRootDir, setAgentDir } from "@gajae-code/utils";
+import { diagnoseAnthropicContextManagementInjection, streamAnthropic } from "@vib-rato/ai/providers/anthropic";
+import type { Context, Model } from "@vib-rato/ai/types";
+import type { RawHttpRequestDump } from "@vib-rato/ai/utils/http-inspector";
+import { getConfigRootDir, setAgentDir } from "@vib-rato/utils";
 
 const REJECTION =
 	'400 {"type":"error","error":{"type":"invalid_request_error","message":"`clear_thinking_20251015` strategy requires `thinking` to be enabled or adaptive"}}';
@@ -47,29 +47,29 @@ function dump(baseUrl: string, body: Record<string, unknown>): RawHttpRequestDum
 
 let previousAgentDir: string | undefined;
 let previousPiConfigDir: string | undefined;
-let previousGjcConfigDir: string | undefined;
+let previousVibConfigDir: string | undefined;
 let tempConfigRoot: string | undefined;
 
 async function useTempAgentDir(): Promise<void> {
 	previousAgentDir = getConfigRootDir();
 	previousPiConfigDir = process.env.PI_CONFIG_DIR;
-	previousGjcConfigDir = process.env.GJC_CONFIG_DIR;
-	tempConfigRoot = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-anthropic-proxy-diagnostic-"));
+	previousVibConfigDir = process.env.VIB_CONFIG_DIR;
+	tempConfigRoot = await fs.mkdtemp(path.join(os.tmpdir(), "vib-anthropic-proxy-diagnostic-"));
 	process.env.PI_CONFIG_DIR = path.relative(os.homedir(), tempConfigRoot);
-	delete process.env.GJC_CONFIG_DIR;
+	delete process.env.VIB_CONFIG_DIR;
 	setAgentDir(path.join(tempConfigRoot, "agent"));
 }
 
 afterEach(async () => {
 	if (previousPiConfigDir === undefined) delete process.env.PI_CONFIG_DIR;
 	else process.env.PI_CONFIG_DIR = previousPiConfigDir;
-	if (previousGjcConfigDir === undefined) delete process.env.GJC_CONFIG_DIR;
-	else process.env.GJC_CONFIG_DIR = previousGjcConfigDir;
+	if (previousVibConfigDir === undefined) delete process.env.VIB_CONFIG_DIR;
+	else process.env.VIB_CONFIG_DIR = previousVibConfigDir;
 	if (previousAgentDir) setAgentDir(previousAgentDir);
 	if (tempConfigRoot) await fs.rm(tempConfigRoot, { recursive: true, force: true });
 	previousAgentDir = undefined;
 	previousPiConfigDir = undefined;
-	previousGjcConfigDir = undefined;
+	previousVibConfigDir = undefined;
 	tempConfigRoot = undefined;
 });
 

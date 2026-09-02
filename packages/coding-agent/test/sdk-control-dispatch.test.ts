@@ -272,15 +272,15 @@ test("dispatches session.close only for the exact Broker runtime capability", ()
 		const responses = [];
 		for (const [id, input] of [
 			["ordinary", {}],
-			["wrong", { __gjcBrokerCloseCapability: "wrong-capability" }],
-			["exact", { __gjcBrokerCloseCapability: ${JSON.stringify(capability)} }],
+			["wrong", { __vibBrokerCloseCapability: "wrong-capability" }],
+			["exact", { __vibBrokerCloseCapability: ${JSON.stringify(capability)} }],
 		] as const) {
 			responses.push(await dispatchControl(surface as never, row, { id, operation: "session.close", input }));
 		}
 		process.stdout.write(JSON.stringify({ calls, responses }));
 	`;
 	const child = Bun.spawnSync([process.execPath, "-e", script], {
-		env: { ...process.env, GJC_LIFECYCLE_REQUEST_ID: capability },
+		env: { ...process.env, VIB_LIFECYCLE_REQUEST_ID: capability },
 		stdout: "pipe",
 		stderr: "pipe",
 	});
@@ -589,24 +589,24 @@ test("replays matching idempotency requests, rejects conflicts, and evicts LRU e
 	});
 	expect(calls).toBe(258);
 });
-test("forwards synthetic gajae-code selections with an off thinking level and pins typed result values", async () => {
+test("forwards synthetic vib-rato selections with an off thinking level and pins typed result values", async () => {
 	const model = OPERATIONS.find(row => row.sdkId === "model.set")!;
 	const calls: unknown[][] = [];
 	const surface = {
 		setModel: (...args: unknown[]) => {
 			calls.push(args);
-			return { provider: "gajae-code", modelId: "codex-eco", thinkingLevel: "off" };
+			return { provider: "vib-rato", modelId: "codex-eco", thinkingLevel: "off" };
 		},
 	} as unknown as ControlSurface;
 
 	const response = await dispatchControl(surface, model, {
 		...request(model),
-		input: { id: "gajae-code/codex-eco", thinkingLevel: "off" },
+		input: { id: "vib-rato/codex-eco", thinkingLevel: "off" },
 	});
 
-	expect(calls).toEqual([["gajae-code/codex-eco", "off"]]);
+	expect(calls).toEqual([["vib-rato/codex-eco", "off"]]);
 	expect(response.ok).toBe(true);
-	expect(response.result).toEqual({ provider: "gajae-code", modelId: "codex-eco", thinkingLevel: "off" });
+	expect(response.result).toEqual({ provider: "vib-rato", modelId: "codex-eco", thinkingLevel: "off" });
 });
 
 test("forwards a synthetic selection without a thinking level as undefined", async () => {
@@ -621,10 +621,10 @@ test("forwards a synthetic selection without a thinking level as undefined", asy
 
 	const response = await dispatchControl(surface, model, {
 		...request(model),
-		input: { id: "gajae-code/codex-eco" },
+		input: { id: "vib-rato/codex-eco" },
 	});
 
-	expect(calls).toEqual([["gajae-code/codex-eco", undefined]]);
+	expect(calls).toEqual([["vib-rato/codex-eco", undefined]]);
 	expect(response.result).toEqual({ changed: true });
 });
 

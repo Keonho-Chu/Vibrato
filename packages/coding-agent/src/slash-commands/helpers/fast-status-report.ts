@@ -1,4 +1,4 @@
-import { type Model, modelSupportsServiceTier, modelsAreEqual } from "@gajae-code/ai/core";
+import { type Model, modelSupportsServiceTier, modelsAreEqual } from "@vib-rato/ai/core";
 
 /**
  * A single line in the `/fast status` report: a labelled model and whether fast

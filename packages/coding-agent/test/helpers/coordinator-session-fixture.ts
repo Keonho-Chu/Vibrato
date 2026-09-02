@@ -64,7 +64,7 @@ export type CoordinatorSessionFixtureOptions = {
 	sessionId: string;
 	/** Workspace root the session is bound to (realpath'd before persisting). */
 	cwd: string;
-	/** `GJC_COORDINATOR_MCP_*` env the owning server is built with. */
+	/** `VIB_COORDINATOR_MCP_*` env the owning server is built with. */
 	env: NodeJS.ProcessEnv;
 	/** Extra projection-row fields (e.g. `ephemeral: true`). */
 	overrides?: Record<string, unknown>;
@@ -225,7 +225,7 @@ export function fixtureBrokerRows(
 
 /** A temp root that `afterEach` cleanup can collect. */
 export async function coordinatorFixtureRoot(registry: string[]): Promise<string> {
-	const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-coordinator-fixture-"));
+	const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-coordinator-fixture-"));
 	registry.push(root);
 	return root;
 }

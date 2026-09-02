@@ -1,4 +1,4 @@
-import type { Keybinding } from "@gajae-code/tui";
+import type { Keybinding } from "@vib-rato/tui";
 import type { AppKeybinding, KeybindingsManager } from "../../config/keybindings";
 
 export interface HotkeysMarkdownBindings {

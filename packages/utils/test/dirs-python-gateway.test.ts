@@ -19,7 +19,7 @@ describe("python gateway directory", () => {
 	let tempRoot = "";
 	let originalAgentDir = "";
 	let originalConfigDir: string | undefined;
-	let originalGjcConfigDir: string | undefined;
+	let originalVibConfigDir: string | undefined;
 	let originalXdgDataHome: string | undefined;
 	let originalXdgStateHome: string | undefined;
 	let originalXdgCacheHome: string | undefined;
@@ -27,7 +27,7 @@ describe("python gateway directory", () => {
 	beforeEach(async () => {
 		originalAgentDir = getAgentDir();
 		originalConfigDir = process.env.PI_CONFIG_DIR;
-		originalGjcConfigDir = process.env.GJC_CONFIG_DIR;
+		originalVibConfigDir = process.env.VIB_CONFIG_DIR;
 		originalXdgStateHome = process.env.XDG_STATE_HOME;
 		originalXdgDataHome = process.env.XDG_DATA_HOME;
 		originalXdgCacheHome = process.env.XDG_CACHE_HOME;
@@ -41,10 +41,10 @@ describe("python gateway directory", () => {
 		} else {
 			process.env.PI_CONFIG_DIR = originalConfigDir;
 		}
-		if (originalGjcConfigDir === undefined) {
-			delete process.env.GJC_CONFIG_DIR;
+		if (originalVibConfigDir === undefined) {
+			delete process.env.VIB_CONFIG_DIR;
 		} else {
-			process.env.GJC_CONFIG_DIR = originalGjcConfigDir;
+			process.env.VIB_CONFIG_DIR = originalVibConfigDir;
 		}
 		if (originalXdgStateHome === undefined) {
 			delete process.env.XDG_STATE_HOME;
@@ -68,21 +68,21 @@ describe("python gateway directory", () => {
 	it("uses XDG state for the default agent profile", async () => {
 		if (process.platform === "win32") return;
 
-		process.env.PI_CONFIG_DIR = `.gjc-test-${Snowflake.next()}`;
+		process.env.PI_CONFIG_DIR = `.vib-test-${Snowflake.next()}`;
 		process.env.XDG_STATE_HOME = path.join(tempRoot, "state");
-		await fs.mkdir(path.join(process.env.XDG_STATE_HOME, "gjc"), { recursive: true });
+		await fs.mkdir(path.join(process.env.XDG_STATE_HOME, "vib"), { recursive: true });
 
 		const defaultAgentDir = path.join(os.homedir(), getConfigDirName(), "agent");
 		setAgentDir(defaultAgentDir);
 
-		expect(getPythonGatewayDir()).toBe(path.join(process.env.XDG_STATE_HOME, "gjc", "python-gateway"));
+		expect(getPythonGatewayDir()).toBe(path.join(process.env.XDG_STATE_HOME, "vib", "python-gateway"));
 	});
 
 	it("keeps custom agent profiles isolated from XDG shared state", async () => {
 		if (process.platform === "win32") return;
 
 		process.env.XDG_STATE_HOME = path.join(tempRoot, "state");
-		await fs.mkdir(path.join(process.env.XDG_STATE_HOME, "gjc"), { recursive: true });
+		await fs.mkdir(path.join(process.env.XDG_STATE_HOME, "vib"), { recursive: true });
 		const customAgentDir = path.join(tempRoot, "custom-agent");
 
 		setAgentDir(customAgentDir);
@@ -105,17 +105,17 @@ describe("python gateway directory", () => {
 		const stateHome = path.join(tempRoot, "state");
 		const cacheHome = path.join(tempRoot, "cache");
 		await Promise.all([
-			fs.mkdir(path.join(dataHome, "gjc"), { recursive: true }),
-			fs.mkdir(path.join(stateHome, "gjc"), { recursive: true }),
-			fs.mkdir(path.join(cacheHome, "gjc"), { recursive: true }),
+			fs.mkdir(path.join(dataHome, "vib"), { recursive: true }),
+			fs.mkdir(path.join(stateHome, "vib"), { recursive: true }),
+			fs.mkdir(path.join(cacheHome, "vib"), { recursive: true }),
 		]);
 		process.env.XDG_DATA_HOME = dataHome;
 		process.env.XDG_STATE_HOME = stateHome;
 		process.env.XDG_CACHE_HOME = cacheHome;
 		const before = getLogsDir();
-		process.env.PI_CONFIG_DIR = `.gjc-refresh-${Snowflake.next()}`;
+		process.env.PI_CONFIG_DIR = `.vib-refresh-${Snowflake.next()}`;
 		setAgentDir(path.join(os.homedir(), getConfigDirName(), "agent"));
-		const expected = (base: string, child: string) => path.join(base, "gjc", child);
+		const expected = (base: string, child: string) => path.join(base, "vib", child);
 
 		expect(getPluginsDir()).toBe(expected(dataHome, "plugins"));
 		expect(getLogsDir()).toBe(expected(stateHome, "logs"));

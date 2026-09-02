@@ -3,14 +3,14 @@
 ## Status
 
 - Branch: `refactor/sdk-owned-session-lifecycle`
-- Worktree: `../gajae-code.gajae-code-worktrees/refactor-sdk-owned-session-lifecycle`
+- Worktree: `../vib-rato.vib-rato-worktrees/refactor-sdk-owned-session-lifecycle`
 - Base: `origin/dev` at `31c00c2d5bb462464046208a94a4597c27260a4c`
 - Review target: `dev`
 - Verdict: sound direction, with a required ownership qualification
 
 ## Decision
 
-GJC SDK core must be the sole authority for coding-agent session lifecycle and external session attachments. Provider daemons must not create, resume, close, delete, signal, recover, or allocate identities for GJC sessions.
+Vibrato SDK core must be the sole authority for coding-agent session lifecycle and external session attachments. Provider daemons must not create, resume, close, delete, signal, recover, or allocate identities for Vibrato sessions.
 
 > SDK core owns session lifecycle and attachment authority. Provider supervisors own provider transport authority.
 
@@ -195,7 +195,7 @@ Attachment authority must bind session identity, endpoint generation/incarnation
 
 ### ChatDaemonSupervisor
 
-Owns only the provider-account process lease, poller/connection, cursor, API retry/backoff/rate limits, and independent provider restart/shutdown. It never creates, resumes, closes, or signals a GJC session.
+Owns only the provider-account process lease, poller/connection, cursor, API retry/backoff/rate limits, and independent provider restart/shutdown. It never creates, resumes, closes, or signals a Vibrato session.
 
 ### ProviderAdapter
 

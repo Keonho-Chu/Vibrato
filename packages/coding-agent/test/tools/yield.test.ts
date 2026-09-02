@@ -1,10 +1,10 @@
 import { describe, expect, it } from "bun:test";
-import type { Tool, ToolCall } from "@gajae-code/ai/types";
-import { enforceStrictSchema } from "@gajae-code/ai/utils/schema";
-import { validateToolArguments } from "@gajae-code/ai/utils/validation";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import type { ToolSession } from "@gajae-code/coding-agent/tools";
-import { YieldTool } from "@gajae-code/coding-agent/tools/yield";
+import type { Tool, ToolCall } from "@vib-rato/ai/types";
+import { enforceStrictSchema } from "@vib-rato/ai/utils/schema";
+import { validateToolArguments } from "@vib-rato/ai/utils/validation";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import type { ToolSession } from "@vib-rato/coding-agent/tools";
+import { YieldTool } from "@vib-rato/coding-agent/tools/yield";
 
 function createSession(overrides: Partial<ToolSession> = {}): ToolSession {
 	return {

@@ -2,7 +2,7 @@ import { expect, test, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 import { watchSessionHostClientAttachment } from "../src/commands/sdk";
 import {
 	BROKER_DEAD_REGISTRATION_SWEEP_LIMIT,
@@ -302,7 +302,7 @@ test("a reader that fails is no evidence, and never fakes attachment or work for
 });
 
 test("the broker drops registrations whose host process is gone, keeps live ones, and logs each reap", async () => {
-	const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-host-reap-"));
+	const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-host-reap-"));
 	// A pid beyond any platform's allocation range: process.kill must report ESRCH.
 	const deadPid = 4_194_304;
 	expect(() => process.kill(deadPid, 0)).toThrow();
@@ -363,7 +363,7 @@ test("the broker drops registrations whose host process is gone, keeps live ones
 });
 
 test("a dead-registration sweep stays bounded so another client can still take the index lock", async () => {
-	const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-host-reap-bound-"));
+	const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-host-reap-bound-"));
 	const deadPid = 4_194_304;
 	expect(() => process.kill(deadPid, 0)).toThrow();
 	const warn = vi.spyOn(logger, "warn").mockImplementation(() => {});

@@ -11,7 +11,7 @@ import { Database, type Statement } from "bun:sqlite";
 import * as crypto from "node:crypto";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { getAgentDbPath, logger } from "@gajae-code/utils";
+import { getAgentDbPath, logger } from "@vib-rato/utils";
 import { checkOpenCodexStatus } from "./providers/openai-opencodex-responses";
 import { getEnvApiKey } from "./stream";
 import type { Provider } from "./types";
@@ -707,7 +707,7 @@ export type AuthStorageOptions = {
 	 * so the TUI can show where a token came from (broker URL or local SQLite path).
 	 *
 	 * Examples:
-	 * - `"local ~/.gjc/agent/agent.db"`
+	 * - `"local ~/.vib/agent/agent.db"`
 	 * - `"broker http://can.internal:8765"`
 	 */
 	sourceLabel?: string;
@@ -5046,7 +5046,7 @@ export class AuthStorage {
 			refreshPromise = overrideRefresh(provider, credentialId, credential, signal);
 		} else {
 			// Stale-snapshot guard: before replaying our in-memory refresh token
-			// upstream, re-read the persisted row. With several gjc processes
+			// upstream, re-read the persisted row. With several vib processes
 			// sharing one store, a peer may have already rotated the token; the
 			// post-failure recovery (catch in #tryOAuthCredential) reloads AFTER
 			// the replay, but by then the damage is upstream — providers with
@@ -5423,7 +5423,7 @@ export class AuthStorage {
 			// healthy. This matters for providers whose invalid-grant response does
 			// not match the definitive regex below (e.g. Kimi's 400 "The provided
 			// authorization grant is invalid"): with short-lived access tokens and
-			// multiple gjc processes sharing the store, the stale-snapshot failure
+			// multiple vib processes sharing the store, the stale-snapshot failure
 			// would otherwise be misclassified as transient and the credential
 			// temp-blocked on every rotation race.
 			// Compare against the refresh token that was ACTUALLY sent upstream.

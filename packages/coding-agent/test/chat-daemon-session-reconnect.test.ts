@@ -2,7 +2,7 @@ import { expect, spyOn, test } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 import { processIncarnation } from "../src/sdk/broker/process-incarnation";
 import { SessionIndex } from "../src/sdk/broker/session-index";
 import { ChatDaemonRuntime } from "../src/sdk/bus/chat-daemon-runtime";
@@ -404,14 +404,14 @@ interface AttachedRuntimeHarness {
  * attached-session client itself.
  */
 async function withAttachedSessionRuntime(run: (harness: AttachedRuntimeHarness) => Promise<void>): Promise<void> {
-	const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-chat-reconnect-"));
+	const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-chat-reconnect-"));
 	let runtime: ChatDaemonRuntime | undefined;
 	const warnings: string[] = [];
 	const warnSpy = spyOn(logger, "warn").mockImplementation((message: string) => {
 		warnings.push(message);
 	});
 	try {
-		const stateRoot = path.join(agentDir, ".gjc", "state");
+		const stateRoot = path.join(agentDir, ".vib", "state");
 		const endpointFile = path.join(stateRoot, "sdk", `${SESSION_ID}.json`);
 		await fs.mkdir(path.dirname(endpointFile), { recursive: true });
 		await fs.writeFile(
@@ -531,10 +531,10 @@ async function withAttachedDiscordRuntime(
 		awaitFrameSettlement: (generation: number, seq: number, count?: number) => Promise<void>;
 	}) => Promise<void>,
 ): Promise<void> {
-	const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-chat-reconnect-discord-"));
+	const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-chat-reconnect-discord-"));
 	let runtime: ChatDaemonRuntime | undefined;
 	try {
-		const stateRoot = path.join(agentDir, ".gjc", "state");
+		const stateRoot = path.join(agentDir, ".vib", "state");
 		const endpointFile = path.join(stateRoot, "sdk", `${SESSION_ID}.json`);
 		await fs.mkdir(path.dirname(endpointFile), { recursive: true });
 		await fs.writeFile(
@@ -702,14 +702,14 @@ async function awaitReplayRequests(host: FakeSessionHost, count: number, clock?:
 }
 
 test("chat daemon startup isolates an unreachable indexed endpoint from a healthy attachment", async () => {
-	const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-chat-reconcile-"));
+	const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-chat-reconcile-"));
 	let runtime: ChatDaemonRuntime | undefined;
 	const warnings: string[] = [];
 	const warnSpy = spyOn(logger, "warn").mockImplementation((message: string) => {
 		warnings.push(message);
 	});
 	try {
-		const stateRoot = path.join(agentDir, ".gjc", "state");
+		const stateRoot = path.join(agentDir, ".vib", "state");
 		const endpointDir = path.join(stateRoot, "sdk");
 		await fs.mkdir(endpointDir, { recursive: true });
 		const sessions = [
@@ -841,8 +841,8 @@ test("an established chat attachment that loses its open socket resumes from its
 			// The frame the outage swallowed is delivered exactly once, and the frame that
 			// was already acknowledged before the drop is not delivered twice.
 			expect(provider.posts.map(post => post.text)).toEqual([
-				"GJC notice\nbefore the drop",
-				"GJC notice\nduring the outage",
+				"Vibrato notice\nbefore the drop",
+				"Vibrato notice\nduring the outage",
 			]);
 		});
 	});
@@ -877,8 +877,8 @@ test("a superseded endpoint generation disposes the old attachment instead of re
 				{ sinceGeneration: GENERATION + 1, sinceSeq: 0 },
 			]);
 			expect(provider.posts.map(post => post.text)).toEqual([
-				"GJC notice\nbefore the roll",
-				"GJC notice\nafter the roll",
+				"Vibrato notice\nbefore the roll",
+				"Vibrato notice\nafter the roll",
 			]);
 		});
 	});
@@ -913,9 +913,9 @@ test("a live frame delivered before the resume replay answers is published in se
 			// follows the sequence, not the arrival, and the frame both producers carried is
 			// published exactly once.
 			expect(provider.posts.map(post => post.text)).toEqual([
-				"GJC notice\none",
-				"GJC notice\ntwo",
-				"GJC notice\nthree",
+				"Vibrato notice\none",
+				"Vibrato notice\ntwo",
+				"Vibrato notice\nthree",
 			]);
 			expect(host.replayRequests).toEqual([
 				{ sinceGeneration: GENERATION, sinceSeq: 0 },
@@ -946,7 +946,7 @@ test("a replayed frame at or below the cursor is dropped instead of published a 
 			host.accept(await awaitSocket(2));
 			await awaitPosts(provider, 2);
 			await Bun.sleep(20);
-			expect(provider.posts.map(post => post.text)).toEqual(["GJC notice\none", "GJC notice\ntwo"]);
+			expect(provider.posts.map(post => post.text)).toEqual(["Vibrato notice\none", "Vibrato notice\ntwo"]);
 		});
 	});
 }, 20_000);
@@ -975,7 +975,7 @@ test("stopping the runtime while a replay is pending neither hangs nor publishes
 			// barrier is holding belong to an attachment that no longer exists.
 			await runtime.stop();
 			await Bun.sleep(20);
-			expect(provider.posts.map(post => post.text)).toEqual(["GJC notice\none"]);
+			expect(provider.posts.map(post => post.text)).toEqual(["Vibrato notice\none"]);
 			expect(FakeWebSocket.instances.every(socket => socket.readyState === FakeWebSocket.CLOSED)).toBe(true);
 		});
 	});
@@ -1013,7 +1013,10 @@ test("a supersession while a replay is pending discards it instead of replaying 
 			host.emit("after the roll");
 			await awaitPosts(provider, 2);
 			await Bun.sleep(20);
-			expect(provider.posts.map(post => post.text)).toEqual(["GJC notice\none", "GJC notice\nafter the roll"]);
+			expect(provider.posts.map(post => post.text)).toEqual([
+				"Vibrato notice\none",
+				"Vibrato notice\nafter the roll",
+			]);
 			expect(host.replayRequests).toEqual([
 				{ sinceGeneration: GENERATION, sinceSeq: 0 },
 				{ sinceGeneration: GENERATION, sinceSeq: 1 },
@@ -1051,9 +1054,9 @@ test("a replay refused on a live socket loses no event and leaves the cursor bel
 			await Bun.sleep(20);
 			// The refusal costs the stream nothing: every sequence, exactly once, in order.
 			expect(provider.posts.map(post => post.text)).toEqual([
-				"GJC notice\none",
-				"GJC notice\ntwo",
-				"GJC notice\nthree",
+				"Vibrato notice\none",
+				"Vibrato notice\ntwo",
+				"Vibrato notice\nthree",
 			]);
 			// The cursor never moved over the un-replayed gap: the retry asks from the same
 			// acknowledged sequence, and it rides the socket that is already open rather
@@ -1100,9 +1103,9 @@ test("a replay refused past its retry budget rebuilds the attachment from its cu
 			// The rebuild resumes the same stream instead of restarting it: nothing above the
 			// cursor is skipped, and nothing at or below it is published twice.
 			expect(provider.posts.map(post => post.text)).toEqual([
-				"GJC notice\none",
-				"GJC notice\ntwo",
-				"GJC notice\nthree",
+				"Vibrato notice\none",
+				"Vibrato notice\ntwo",
+				"Vibrato notice\nthree",
 			]);
 			// Every request after the initial attach asks from the last acknowledged
 			// sequence, including the one the rebuilt attachment issues.
@@ -1158,7 +1161,10 @@ test("a real 256-frame host ring loses only the sequences the host says it evict
 				// sequences 2-771 are gone, which costs "two" and "flood head" for good. No
 				// rebuild can re-fetch them, so the round concedes exactly that range and
 				// publishes everything the ring did keep behind it.
-				expect(provider.posts.map(post => post.text)).toEqual(["GJC notice\none", "GJC notice\nflood tail"]);
+				expect(provider.posts.map(post => post.text)).toEqual([
+					"Vibrato notice\none",
+					"Vibrato notice\nflood tail",
+				]);
 				expect(host.replayRequests).toEqual([
 					{ sinceGeneration: GENERATION, sinceSeq: 0 },
 					{ sinceGeneration: GENERATION, sinceSeq: 1 },
@@ -1178,9 +1184,9 @@ test("a real 256-frame host ring loses only the sequences the host says it evict
 				await awaitFrameSettlement(GENERATION, 1028);
 				expect(provider.posts).toHaveLength(3);
 				expect(provider.posts.map(post => post.text)).toEqual([
-					"GJC notice\none",
-					"GJC notice\nflood tail",
-					"GJC notice\nafter the gap",
+					"Vibrato notice\none",
+					"Vibrato notice\nflood tail",
+					"Vibrato notice\nafter the gap",
 				]);
 				expect(FakeWebSocket.instances).toHaveLength(3);
 				expect(host.replayRequests).toHaveLength(3);
@@ -1207,8 +1213,8 @@ test("a retention gap at the initial attach keeps delivering instead of rebuildi
 			// order, and live delivery continues on the attachment that just conceded it.
 			await awaitPosts(provider, 2);
 			expect(provider.posts.map(post => post.text)).toEqual([
-				"GJC notice\nretained two",
-				"GJC notice\nretained three",
+				"Vibrato notice\nretained two",
+				"Vibrato notice\nretained three",
 			]);
 			expect(warnings.filter(line => line.includes("conceded a retention gap"))).toEqual([
 				`chat daemon replay conceded a retention gap (sequences 1-1 are gone from the host); session ${SESSION_ID} generation ${GENERATION} resumes at seq 2.`,
@@ -1230,10 +1236,10 @@ test("a retention gap at the initial attach keeps delivering instead of rebuildi
 			host.emit("future five");
 			await awaitPosts(provider, 4);
 			expect(provider.posts.map(post => post.text)).toEqual([
-				"GJC notice\nretained two",
-				"GJC notice\nretained three",
-				"GJC notice\nfuture four",
-				"GJC notice\nfuture five",
+				"Vibrato notice\nretained two",
+				"Vibrato notice\nretained three",
+				"Vibrato notice\nfuture four",
+				"Vibrato notice\nfuture five",
 			]);
 		});
 	});
@@ -1262,7 +1268,7 @@ test("a replay answered from a rolled generation retires the attachment instead 
 			// A reset stream shares no sequence space with this cursor, so its events
 			// cannot be ordered against it: publishing them here would deliver the new
 			// generation's log once on the stale root and again on the rebuilt one.
-			expect(provider.posts.map(post => post.text)).toEqual(["GJC notice\none"]);
+			expect(provider.posts.map(post => post.text)).toEqual(["Vibrato notice\none"]);
 
 			await supersede();
 			reconcile();
@@ -1271,7 +1277,10 @@ test("a replay answered from a rolled generation retires the attachment instead 
 			await Bun.sleep(20);
 			// The rebuilt attachment owns the new generation, so the event it fenced off is
 			// published there, exactly once.
-			expect(provider.posts.map(post => post.text)).toEqual(["GJC notice\none", "GJC notice\nafter the roll"]);
+			expect(provider.posts.map(post => post.text)).toEqual([
+				"Vibrato notice\none",
+				"Vibrato notice\nafter the roll",
+			]);
 			expect(host.replayRequests).toEqual([
 				{ sinceGeneration: GENERATION, sinceSeq: 0 },
 				{ sinceGeneration: GENERATION, sinceSeq: 1 },
@@ -1302,7 +1311,7 @@ test("a replay whose gap never states its range fails the barrier instead of pub
 			host.accept(await awaitSocket(2));
 			await awaitReplayRequests(host, 2);
 			await Bun.sleep(50);
-			expect(provider.posts.map(post => post.text)).toEqual(["GJC notice\none"]);
+			expect(provider.posts.map(post => post.text)).toEqual(["Vibrato notice\none"]);
 
 			host.malformedGap = false;
 			reconcile();
@@ -1311,7 +1320,7 @@ test("a replay whose gap never states its range fails the barrier instead of pub
 			await Bun.sleep(20);
 			// The rebuild asks the same gap from the same cursor, and a readable answer
 			// closes it: the event the unreadable one fenced off is published, once.
-			expect(provider.posts.map(post => post.text)).toEqual(["GJC notice\none", "GJC notice\ntwo"]);
+			expect(provider.posts.map(post => post.text)).toEqual(["Vibrato notice\none", "Vibrato notice\ntwo"]);
 			expect(host.replayRequests).toEqual([
 				{ sinceGeneration: GENERATION, sinceSeq: 0 },
 				{ sinceGeneration: GENERATION, sinceSeq: 1 },
@@ -1353,8 +1362,8 @@ test("a gap that concedes sequences this cursor never asked about is refused, no
 			// The rebuild re-asks the same cursor, and a consistent answer closes it: the
 			// retained events the refused gap fenced off are published, in sequence, once.
 			expect(provider.posts.map(post => post.text)).toEqual([
-				"GJC notice\nretained one",
-				"GJC notice\nretained two",
+				"Vibrato notice\nretained one",
+				"Vibrato notice\nretained two",
 			]);
 			expect(host.replayRequests).toEqual([
 				{ sinceGeneration: GENERATION, sinceSeq: 0 },
@@ -1392,8 +1401,8 @@ test("a gap that concedes sequences the same answer returns is refused, not skip
 			await awaitPosts(provider, 2);
 			await Bun.sleep(20);
 			expect(provider.posts.map(post => post.text)).toEqual([
-				"GJC notice\nretained one",
-				"GJC notice\nretained two",
+				"Vibrato notice\nretained one",
+				"Vibrato notice\nretained two",
 			]);
 			expect(host.replayRequests).toEqual([
 				{ sinceGeneration: GENERATION, sinceSeq: 0 },
@@ -1441,7 +1450,7 @@ test("a conceded gap carries the cursor over the loss even when the retained suf
 				{ sinceGeneration: GENERATION, sinceSeq: 1 },
 			]);
 			expect(warnings.filter(line => line.includes("conceded a retention gap"))).toHaveLength(1);
-			expect(provider.posts.map(post => post.text)).toEqual(["GJC notice\nafter gap"]);
+			expect(provider.posts.map(post => post.text)).toEqual(["Vibrato notice\nafter gap"]);
 		});
 	});
 }, 20_000);
@@ -1499,7 +1508,7 @@ test("a conceded gap publishes the sequences live delivery already carried inste
 			// The pin holds: nothing has moved while the frames the answer reasons about are
 			// still in flight, so the concession below is decided against a complete picture
 			// of what live delivery carried rather than against a partially drained queue.
-			expect(provider.posts.map(post => post.text)).toEqual(["GJC notice\none"]);
+			expect(provider.posts.map(post => post.text)).toEqual(["Vibrato notice\none"]);
 
 			provider.failPosts = 1;
 			provider.releasePosts();
@@ -1515,9 +1524,9 @@ test("a conceded gap publishes the sequences live delivery already carried inste
 			// The host evicted the sequence, but live delivery kept it: the two producers
 			// fail independently, so the concession costs only what neither of them holds.
 			expect(provider.posts.map(post => post.text)).toEqual([
-				"GJC notice\none",
-				"GJC notice\nlive recoverable",
-				"GJC notice\ntail",
+				"Vibrato notice\none",
+				"Vibrato notice\nlive recoverable",
+				"Vibrato notice\ntail",
 			]);
 			expect(warnings.filter(line => line.includes("conceded a retention gap"))).toEqual([
 				`chat daemon replay conceded a retention gap (sequences 1-2 are gone from the host, 1 of them recovered from live delivery); session ${SESSION_ID} generation ${GENERATION} resumes at seq 3.`,
@@ -1529,10 +1538,10 @@ test("a conceded gap publishes the sequences live delivery already carried inste
 			await awaitPosts(provider, 4);
 			await Bun.sleep(20);
 			expect(provider.posts.map(post => post.text)).toEqual([
-				"GJC notice\none",
-				"GJC notice\nlive recoverable",
-				"GJC notice\ntail",
-				"GJC notice\nafter gap",
+				"Vibrato notice\none",
+				"Vibrato notice\nlive recoverable",
+				"Vibrato notice\ntail",
+				"Vibrato notice\nafter gap",
 			]);
 			expect(host.replayRequests).toEqual([
 				{ sinceGeneration: GENERATION, sinceSeq: 0 },
@@ -1575,7 +1584,7 @@ test("a frame the surface refused stays above the cursor and is re-served by the
 			// The refused frame is re-served and published, once, in sequence.
 			await awaitPosts(provider, 2);
 			await Bun.sleep(20);
-			expect(provider.posts.map(post => post.text)).toEqual(["GJC notice\none", "GJC notice\ntwo"]);
+			expect(provider.posts.map(post => post.text)).toEqual(["Vibrato notice\none", "Vibrato notice\ntwo"]);
 			expect(warnings.filter(line => line.includes("publication failed at seq 2"))).toHaveLength(1);
 		});
 	});
@@ -1599,8 +1608,8 @@ test("an ambiguously acknowledged Slack session-ready publication is not posted 
 			await awaitReplayRequests(host, 2);
 			await Bun.sleep(100);
 
-			expect(provider.posts.map(post => post.text)).toEqual(["GJC session ready."]);
-			const readyAttempts = provider.postAttempts.filter(post => post.text === "GJC session ready.");
+			expect(provider.posts.map(post => post.text)).toEqual(["Vibrato session ready."]);
+			const readyAttempts = provider.postAttempts.filter(post => post.text === "Vibrato session ready.");
 			expect(readyAttempts.length).toBeGreaterThanOrEqual(1);
 			expect(readyAttempts.length).toBeLessThanOrEqual(2);
 			expect(readyAttempts.every(post => post.clientMsgId === provider.posts[0]?.clientMsgId)).toBe(true);
@@ -1626,7 +1635,7 @@ test("an ambiguously acknowledged Discord session-ready publication is not poste
 			await awaitReplayRequests(host, 2);
 			await Bun.sleep(100);
 
-			expect(provider.posts.map(post => post.content)).toEqual(["GJC session ready."]);
+			expect(provider.posts.map(post => post.content)).toEqual(["Vibrato session ready."]);
 			expect(provider.posts[0]?.nonce).toBeDefined();
 		});
 	});
@@ -1652,11 +1661,11 @@ test("an ambiguously acknowledged publication is not posted twice when reconcili
 			reconcile();
 			host.accept(await awaitSocket(2));
 			await awaitReplayRequests(host, 2);
-			await awaitPostAttempts(provider, "GJC notice\ntwo", 2);
+			await awaitPostAttempts(provider, "Vibrato notice\ntwo", 2);
 
-			expect(provider.posts.map(post => post.text)).toEqual(["GJC notice\none", "GJC notice\ntwo"]);
+			expect(provider.posts.map(post => post.text)).toEqual(["Vibrato notice\none", "Vibrato notice\ntwo"]);
 			expect(
-				provider.postAttempts.filter(post => post.text === "GJC notice\ntwo").map(post => post.clientMsgId),
+				provider.postAttempts.filter(post => post.text === "Vibrato notice\ntwo").map(post => post.clientMsgId),
 			).toEqual([provider.posts[1]?.clientMsgId, provider.posts[1]?.clientMsgId]);
 		});
 	});
@@ -1701,7 +1710,7 @@ test("a surface that refuses a frame for good concedes it instead of wedging the
 			host.emit("three");
 			await awaitPosts(provider, 2);
 			await Bun.sleep(20);
-			expect(provider.posts.map(post => post.text)).toEqual(["GJC notice\none", "GJC notice\nthree"]);
+			expect(provider.posts.map(post => post.text)).toEqual(["Vibrato notice\none", "Vibrato notice\nthree"]);
 			expect(FakeWebSocket.instances).toHaveLength(3);
 		});
 	});
@@ -1749,7 +1758,7 @@ test("a rolled endpoint's first frame gets its own delivery budget, not the prev
 				host.accept(await awaitSocket(4));
 				await awaitPosts(provider, 1);
 				await Bun.sleep(20);
-				expect(provider.posts.map(post => post.text)).toEqual(["GJC notice\nnew one"]);
+				expect(provider.posts.map(post => post.text)).toEqual(["Vibrato notice\nnew one"]);
 				expect(host.replayRequests).toEqual([
 					{ sinceGeneration: GENERATION, sinceSeq: 0 },
 					{ sinceGeneration: GENERATION, sinceSeq: 0 },
@@ -1806,9 +1815,9 @@ test("a frame queued behind a failed publication cannot advance the cursor past 
 			await awaitPosts(provider, 3);
 			await Bun.sleep(20);
 			expect(provider.posts.map(post => post.text)).toEqual([
-				"GJC notice\none",
-				"GJC notice\ntwo",
-				"GJC notice\nthree",
+				"Vibrato notice\none",
+				"Vibrato notice\ntwo",
+				"Vibrato notice\nthree",
 			]);
 			expect(warnings.filter(line => line.includes("publication failed at seq 2"))).toHaveLength(1);
 		});

@@ -422,7 +422,7 @@ export function validateSessionReconcileUncertainTarget(value: unknown): value i
 		path.isAbsolute(target.cwd) &&
 		bounded(target.stateRoot, 4096) &&
 		path.isAbsolute(target.stateRoot) &&
-		path.resolve(target.stateRoot) === path.join(path.resolve(target.cwd), ".gjc", "state") &&
+		path.resolve(target.stateRoot) === path.join(path.resolve(target.cwd), ".vib", "state") &&
 		typeof target.endpointGeneration === "number" &&
 		Number.isSafeInteger(target.endpointGeneration) &&
 		target.endpointGeneration > 0 &&
@@ -699,7 +699,7 @@ export class SessionLifecycleService {
 						cwd: path.resolve((target as unknown as SessionReconcileUncertainTarget).cwd),
 						stateRoot: path.join(
 							path.resolve((target as unknown as SessionReconcileUncertainTarget).cwd),
-							".gjc",
+							".vib",
 							"state",
 						),
 					}

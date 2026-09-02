@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { findUnnecessaryUnicodeEscape } from "@gajae-code/ai/utils/json-parse";
+import { findUnnecessaryUnicodeEscape } from "@vib-rato/ai/utils/json-parse";
 
 // #4881: a Windows profile whose username is non-ASCII (C:\Users\최재필) puts
 // Hangul into the machine's shortest home path, so escaping fires on routine

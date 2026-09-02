@@ -2,9 +2,9 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { ModelsConfigFile } from "@gajae-code/coding-agent/config/model-registry";
-import { resetSettingsForTest } from "@gajae-code/coding-agent/config/settings";
-import { Snowflake } from "@gajae-code/utils";
+import { ModelsConfigFile } from "@vib-rato/coding-agent/config/model-registry";
+import { resetSettingsForTest } from "@vib-rato/coding-agent/config/settings";
+import { Snowflake } from "@vib-rato/utils";
 
 function loadModelsConfig(modelsPath: string, yaml: string) {
 	fs.writeFileSync(modelsPath, yaml);
@@ -17,7 +17,7 @@ describe("issue #3738 custom provider credential-source validation", () => {
 
 	beforeEach(() => {
 		resetSettingsForTest();
-		tempDir = path.join(os.tmpdir(), `gjc-test-issue-3738-${Snowflake.next()}`);
+		tempDir = path.join(os.tmpdir(), `vib-test-issue-3738-${Snowflake.next()}`);
 		fs.mkdirSync(tempDir, { recursive: true });
 		modelsPath = path.join(tempDir, "models.yml");
 	});

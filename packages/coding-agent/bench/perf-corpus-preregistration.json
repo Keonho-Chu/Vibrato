@@ -1,7 +1,7 @@
 {
-  "schema": "gjc.perf-corpus-preregistration/1",
-  "analysisSchema": "gjc.perf-corpus-rlm-analysis/1",
-  "reportSchema": "gjc.perf-corpus/3",
+  "schema": "vib.perf-corpus-preregistration/1",
+  "analysisSchema": "vib.perf-corpus-rlm-analysis/1",
+  "reportSchema": "vib.perf-corpus/3",
   "frozenBeforeOutcomes": true,
   "digestBinding": {
     "method": "external-sha256-receipts-after-freeze",
@@ -211,10 +211,10 @@
   },
   "sealedInputContract": {
     "attemptLedgerFilename": "perf-corpus-attempt-ledger.json",
-    "attemptLedgerSchema": "gjc.perf-corpus-attempt-ledger/1",
+    "attemptLedgerSchema": "vib.perf-corpus-attempt-ledger/1",
     "attemptLedgerVersion": 1,
     "rawManifestFilename": "perf-corpus-raw-manifest.json",
-    "rawManifestSchema": "gjc.perf-corpus-raw-manifest/1",
+    "rawManifestSchema": "vib.perf-corpus-raw-manifest/1",
     "rawManifestVersion": 1,
     "requiredExternalBindings": [
       "expectedGitSha",
@@ -375,7 +375,7 @@
     "dependencies": "python-standard-library-only",
     "inputDirectory": "externally enforced immutable read-only mount; flat, regular JSON files only; symlinks and every unexpected entry are rejected",
     "trustedBytes": "The external runner verifies the template digest before executing it. The verified template opens the driver and preregistration once with no-follow semantics, hashes those exact bytes against external receipts, and compiles/executes only the exact verified driver bytes without reopening either trusted-code path.",
-    "sandbox": "Execute the externally hash-verified template in GJC RLM with the corpus on an immutable read-only mount, a separate bounded writable output directory, no network, and no artifact or bundle path on Python import search paths."
+    "sandbox": "Execute the externally hash-verified template in Vibrato RLM with the corpus on an immutable read-only mount, a separate bounded writable output directory, no network, and no artifact or bundle path on Python import search paths."
   },
   "limitations": [
     "The workloads are synthetic lifecycle proxies, not production heap traces.",

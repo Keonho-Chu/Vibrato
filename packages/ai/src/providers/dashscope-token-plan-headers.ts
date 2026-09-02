@@ -5,7 +5,7 @@
  * defaultHeaders so the built-in `alibaba-token-plan` provider emits the same
  * client identity / cache / auth-type fingerprint upstream sends. DashScope is
  * compatibility-sensitive to this fingerprint; a non-identical set can cause
- * request instability and affect first-event latency (gajae-code #3557).
+ * request instability and affect first-event latency (vib-rato #3557).
  *
  * Upstream pin (reproduce EXACTLY here):
  *   Repository:    QwenLM/qwen-code
@@ -66,7 +66,7 @@ export function dashscopeTokenPlanDefaultHeaders(
  * map, reproducing upstream buildHeaders() precedence EXACTLY:
  *   `{ ...defaultHeaders, ...customHeaders }` — caller wins per header.
  *
- * This mirrors GJC's existing kimi-code injection order
+ * This mirrors Vibrato's existing kimi-code injection order
  * (`headers = { ...getKimiCommonHeaders(), ...headers }`): canonical identity as
  * the base, caller-supplied headers overriding individual keys. A caller that
  * pins `User-Agent` takes that key; the other canonicals still apply.

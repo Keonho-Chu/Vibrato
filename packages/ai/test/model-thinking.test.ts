@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { getBundledModel, THINKING_CONTROL_MODES } from "@gajae-code/ai";
+import { getBundledModel, THINKING_CONTROL_MODES } from "@vib-rato/ai";
 import {
 	applyGeneratedModelPolicies,
 	clampThinkingLevelForModel,
@@ -11,8 +11,8 @@ import {
 	mapEffortToGoogleThinkingLevel,
 	modelSupportsReasoningControl,
 	requireSupportedEffort,
-} from "@gajae-code/ai/model-thinking";
-import type { Api, Model, Provider, ThinkingControlMode } from "@gajae-code/ai/types";
+} from "@vib-rato/ai/model-thinking";
+import type { Api, Model, Provider, ThinkingControlMode } from "@vib-rato/ai/types";
 
 const TEST_PROVIDER_BASE_URLS: Partial<Record<Provider, string>> = {
 	"alibaba-token-plan": "https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1",

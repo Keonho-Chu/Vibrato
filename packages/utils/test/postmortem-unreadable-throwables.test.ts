@@ -283,7 +283,7 @@ const throwables: readonly Throwables[] = [
 ];
 
 const crashLogTarget = (): string =>
-	path.join(fs.mkdtempSync(path.join(os.tmpdir(), "gjc-unreadable-")), "gjc-crash.log");
+	path.join(fs.mkdtempSync(path.join(os.tmpdir(), "vib-unreadable-")), "vib-crash.log");
 
 /** The diagnostic the record actually carries: the header line minus timestamp, pid and label. */
 function diagnosticOf(contents: string): string {

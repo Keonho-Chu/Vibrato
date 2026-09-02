@@ -249,16 +249,16 @@ export function mapAgentSessionEventToAcpSessionUpdates(
 				toSessionNotification(sessionId, {
 					sessionUpdate: "session_info_update",
 					_meta: {
-						gjcModelFallbackSwitched: true,
-						gjcModelFallbackEventId: event.eventId,
-						gjcModelFallbackFrom: event.from,
-						gjcModelFallbackTo: event.to,
-						gjcModelFallbackReason: event.reason,
-						gjcModelFallbackRole: event.role,
-						gjcModelFallbackScope: event.scope,
-						gjcModelFallbackActiveIndex: event.activeIndex,
-						gjcModelFallbackChainLength: event.chainLength,
-						gjcModelFallbackAttemptsUsed: event.attemptsUsed,
+						vibModelFallbackSwitched: true,
+						vibModelFallbackEventId: event.eventId,
+						vibModelFallbackFrom: event.from,
+						vibModelFallbackTo: event.to,
+						vibModelFallbackReason: event.reason,
+						vibModelFallbackRole: event.role,
+						vibModelFallbackScope: event.scope,
+						vibModelFallbackActiveIndex: event.activeIndex,
+						vibModelFallbackChainLength: event.chainLength,
+						vibModelFallbackAttemptsUsed: event.attemptsUsed,
 					},
 				}),
 			];
@@ -274,17 +274,17 @@ export function mapAgentSessionEventToAcpSessionUpdates(
 				toSessionNotification(sessionId, {
 					sessionUpdate: "session_info_update",
 					_meta: {
-						gjcPhase: "error",
+						vibPhase: "error",
 						running: true,
-						gjcRunning: true,
-						gjcAgentFailed: true,
+						vibRunning: true,
+						vibAgentFailed: true,
 						// Bounded sanitized diagnostic so ACP consumers can identify
 						// the documented failure cause (exact-head review P2). The
 						// payload is the runtime's {code,message} classifier — never
 						// raw provider detail.
-						gjcAgentFailedCode: event.error.code,
-						gjcAgentFailedMessage: event.error.message,
-						gjcAgentFailedScope: event.scope,
+						vibAgentFailedCode: event.error.code,
+						vibAgentFailedMessage: event.error.message,
+						vibAgentFailedScope: event.scope,
 					},
 				}),
 			];
@@ -293,12 +293,12 @@ export function mapAgentSessionEventToAcpSessionUpdates(
 				toSessionNotification(sessionId, {
 					sessionUpdate: "session_info_update",
 					_meta: {
-						gjcPhase: "compacting",
-						gjcCompactionState: "start",
-						gjcCompactionTrigger: event.reason,
-						gjcCompactionAction: event.action,
+						vibPhase: "compacting",
+						vibCompactionState: "start",
+						vibCompactionTrigger: event.reason,
+						vibCompactionAction: event.action,
 						running: true,
-						gjcRunning: true,
+						vibRunning: true,
 					},
 				}),
 			];
@@ -306,22 +306,22 @@ export function mapAgentSessionEventToAcpSessionUpdates(
 			const phase = options.compactionEndPhase ?? "responding";
 			const running = phase !== "idle";
 			const meta: Record<string, unknown> = {
-				gjcPhase: phase,
-				gjcCompactionState: "end",
-				gjcCompactionAction: event.action,
-				gjcCompactionAborted: event.aborted,
-				gjcCompactionWillRetry: event.willRetry,
+				vibPhase: phase,
+				vibCompactionState: "end",
+				vibCompactionAction: event.action,
+				vibCompactionAborted: event.aborted,
+				vibCompactionWillRetry: event.willRetry,
 				running,
-				gjcRunning: running,
+				vibRunning: running,
 			};
 			if (event.skipped !== undefined) {
-				meta.gjcCompactionSkipped = event.skipped;
+				meta.vibCompactionSkipped = event.skipped;
 			}
 			if (event.errorMessage !== undefined) {
-				meta.gjcCompactionErrorMessage = event.errorMessage;
+				meta.vibCompactionErrorMessage = event.errorMessage;
 			}
 			if (event.continuationSkipReason !== undefined) {
-				meta.gjcCompactionContinuationSkipReason = event.continuationSkipReason;
+				meta.vibCompactionContinuationSkipReason = event.continuationSkipReason;
 			}
 			return [toSessionNotification(sessionId, { sessionUpdate: "session_info_update", _meta: meta })];
 		}
@@ -330,15 +330,15 @@ export function mapAgentSessionEventToAcpSessionUpdates(
 				toSessionNotification(sessionId, {
 					sessionUpdate: "session_info_update",
 					_meta: {
-						gjcPhase: "retrying",
-						gjcRetryState: "waiting",
-						gjcRetryAttempt: event.attempt,
-						gjcRetryMaxAttempts: event.maxAttempts,
-						gjcRetryDelayMs: event.delayMs,
-						gjcRetryErrorMessage: event.errorMessage,
-						gjcRetryUnbounded: event.unbounded ?? false,
+						vibPhase: "retrying",
+						vibRetryState: "waiting",
+						vibRetryAttempt: event.attempt,
+						vibRetryMaxAttempts: event.maxAttempts,
+						vibRetryDelayMs: event.delayMs,
+						vibRetryErrorMessage: event.errorMessage,
+						vibRetryUnbounded: event.unbounded ?? false,
 						running: true,
-						gjcRunning: true,
+						vibRunning: true,
 					},
 				}),
 			];
@@ -347,12 +347,12 @@ export function mapAgentSessionEventToAcpSessionUpdates(
 				toSessionNotification(sessionId, {
 					sessionUpdate: "session_info_update",
 					_meta: {
-						gjcPhase: event.success ? "responding" : "retry_failed",
-						gjcRetryState: event.success ? "succeeded" : "failed",
-						gjcRetryAttempt: event.attempt,
-						...(event.finalError ? { gjcRetryFinalError: event.finalError } : {}),
+						vibPhase: event.success ? "responding" : "retry_failed",
+						vibRetryState: event.success ? "succeeded" : "failed",
+						vibRetryAttempt: event.attempt,
+						...(event.finalError ? { vibRetryFinalError: event.finalError } : {}),
 						running: true,
-						gjcRunning: true,
+						vibRunning: true,
 					},
 				}),
 			];
@@ -361,8 +361,8 @@ export function mapAgentSessionEventToAcpSessionUpdates(
 				toSessionNotification(sessionId, {
 					sessionUpdate: "session_info_update",
 					_meta: {
-						gjcTtsrTriggered: true,
-						gjcTtsrRuleCount: event.rules.length,
+						vibTtsrTriggered: true,
+						vibTtsrRuleCount: event.rules.length,
 					},
 				}),
 			];
@@ -383,7 +383,7 @@ export function mapAgentSessionEventToAcpSessionUpdates(
 			return [
 				toSessionNotification(sessionId, {
 					sessionUpdate: "session_info_update",
-					_meta: { gjcThinkingLevel: event.thinkingLevel ?? "off" },
+					_meta: { vibThinkingLevel: event.thinkingLevel ?? "off" },
 				}),
 			];
 		case "goal_updated":
@@ -391,15 +391,15 @@ export function mapAgentSessionEventToAcpSessionUpdates(
 				toSessionNotification(sessionId, {
 					sessionUpdate: "session_info_update",
 					_meta: {
-						gjcGoalActive: event.goal !== null,
+						vibGoalActive: event.goal !== null,
 						...(event.goal
 							? {
-									gjcGoalId: event.goal.id,
-									gjcGoalStatus: event.goal.status,
-									gjcGoalObjective: event.goal.objective,
+									vibGoalId: event.goal.id,
+									vibGoalStatus: event.goal.status,
+									vibGoalObjective: event.goal.objective,
 								}
 							: {}),
-						...(event.state ? { gjcGoalModeState: event.state } : {}),
+						...(event.state ? { vibGoalModeState: event.state } : {}),
 					},
 				}),
 			];

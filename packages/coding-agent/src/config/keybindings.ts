@@ -9,8 +9,8 @@ import {
 	setKeybindings,
 	TUI_KEYBINDINGS,
 	KeybindingsManager as TuiKeybindingsManager,
-} from "@gajae-code/tui";
-import { getAgentDir, isEnoent, logger } from "@gajae-code/utils";
+} from "@vib-rato/tui";
+import { getAgentDir, isEnoent, logger } from "@vib-rato/utils";
 
 /**
  * Application-level keybindings (coding agent specific).
@@ -69,7 +69,7 @@ interface AppKeybindings {
 
 export type AppKeybinding = keyof AppKeybindings;
 
-declare module "@gajae-code/tui" {
+declare module "@vib-rato/tui" {
 	interface Keybindings extends AppKeybindings {}
 }
 

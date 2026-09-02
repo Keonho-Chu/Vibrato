@@ -2,12 +2,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { resetSettingsForTest, Settings } from "@gajae-code/coding-agent/config/settings";
-import { editToolRenderer } from "@gajae-code/coding-agent/edit/renderer";
-import { ToolExecutionComponent } from "@gajae-code/coding-agent/modes/components/tool-execution";
-import * as themeModule from "@gajae-code/coding-agent/modes/theme/theme";
-import { toolRenderers } from "@gajae-code/coding-agent/tools/renderers";
-import type { TUI } from "@gajae-code/tui";
+import { resetSettingsForTest, Settings } from "@vib-rato/coding-agent/config/settings";
+import { editToolRenderer } from "@vib-rato/coding-agent/edit/renderer";
+import { ToolExecutionComponent } from "@vib-rato/coding-agent/modes/components/tool-execution";
+import * as themeModule from "@vib-rato/coding-agent/modes/theme/theme";
+import { toolRenderers } from "@vib-rato/coding-agent/tools/renderers";
+import type { TUI } from "@vib-rato/tui";
 
 async function getUiTheme() {
 	await themeModule.initTheme(false, undefined, undefined, "red-claw", "blue-crab");
@@ -201,7 +201,7 @@ describe("apply_patch rendering", () => {
 					op: "update",
 					diff: [
 						" 10|}",
-						'+11|import { CODEX_INSTRUCTIONS } from "@gajae-code/ai/providers/openai-codex-responses";',
+						'+11|import { CODEX_INSTRUCTIONS } from "@vib-rato/ai/providers/openai-codex-responses";',
 						" 12|\t$env,",
 						" 228|\toutput_format: typeof OPENAI_IMAGE_OUTPUT_FORMAT;",
 						"+235|\tinstructions?: string;",

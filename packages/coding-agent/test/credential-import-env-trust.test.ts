@@ -5,10 +5,10 @@ import * as path from "node:path";
 
 /**
  * External credential discovery reads `CLAUDE_CONFIG_DIR` and `CODEX_HOME` so an
- * account switcher that relocates Claude Code / Codex CLI is the account gjc
+ * account switcher that relocates Claude Code / Codex CLI is the account vib
  * imports. `Bun.env === process.env` and the env module merges the caller's
  * `cwd/.env` into it, so without a trust boundary a repository could point
- * discovery at a credential file it ships and have gjc import it as the user's
+ * discovery at a credential file it ships and have vib import it as the user's
  * own account.
  *
  * `projectEnv` is parsed at module load from `process.cwd()`, so these drive a
@@ -31,7 +31,7 @@ interface Resolved {
 const tempDirs: string[] = [];
 
 function tempDir(): string {
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-cred-root-trust-"));
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-cred-root-trust-"));
 	tempDirs.push(dir);
 	return dir;
 }
@@ -92,11 +92,11 @@ async function discoverIn(cwd: string, homeDir: string, overrides: Record<string
 		if (value !== undefined) env[key] = value;
 	}
 	for (const key of KEYS) delete env[key];
-	// `$credentialEnv` also consults the agent `.env`, the GJC config `.env`,
+	// `$credentialEnv` also consults the agent `.env`, the Vibrato config `.env`,
 	// `~/.env` and the login shell rc files; keep all of them neutral.
 	env.HOME = tempDir();
-	env.GJC_CODING_AGENT_DIR = tempDir();
-	env.GJC_PROBE_HOME_DIR = homeDir;
+	env.VIB_CODING_AGENT_DIR = tempDir();
+	env.VIB_PROBE_HOME_DIR = homeDir;
 	Object.assign(env, overrides);
 
 	const proc = Bun.spawn([process.execPath, PROBE], { cwd, env, stdout: "pipe", stderr: "pipe" });

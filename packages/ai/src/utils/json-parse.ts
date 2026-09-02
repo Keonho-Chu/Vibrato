@@ -28,7 +28,7 @@ function isHexDigit(cp: number): boolean {
 
 const MAX_UNICODE_ESCAPE_POSITIONS = 32;
 const MAX_UNICODE_ESCAPE_DEPTH = 64;
-const UNICODE_ESCAPE_EVIDENCE_KEY_SLOT = Symbol.for("@gajae-code/ai.unicode-escape-evidence-key.v1");
+const UNICODE_ESCAPE_EVIDENCE_KEY_SLOT = Symbol.for("@vib-rato/ai.unicode-escape-evidence-key.v1");
 const unicodeEscapeEvidenceGlobal = globalThis as unknown as Record<PropertyKey, unknown>;
 const existingUnicodeEscapeEvidenceKey = unicodeEscapeEvidenceGlobal[UNICODE_ESCAPE_EVIDENCE_KEY_SLOT];
 const UNICODE_ESCAPE_EVIDENCE_KEY = Buffer.isBuffer(existingUnicodeEscapeEvidenceKey)

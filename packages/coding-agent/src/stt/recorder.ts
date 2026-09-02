@@ -1,7 +1,7 @@
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { $which, logger, Snowflake } from "@gajae-code/utils";
+import { $which, logger, Snowflake } from "@vib-rato/utils";
 import { $ } from "bun";
 
 export interface RecordingHandle {
@@ -178,14 +178,14 @@ function Mci([string]$cmd) {
     return $r
 }
 
-$r = Mci "open new type waveaudio alias gjc_rec"
+$r = Mci "open new type waveaudio alias vib_rec"
 if ($r -ne 0) { exit 1 }
 
-Mci "set gjc_rec channels 1 samplespersec 16000 bitspersample 16"
+Mci "set vib_rec channels 1 samplespersec 16000 bitspersample 16"
 
-$r = Mci "record gjc_rec"
+$r = Mci "record vib_rec"
 if ($r -ne 0) {
-    Mci "close gjc_rec"
+    Mci "close vib_rec"
     exit 1
 }
 
@@ -196,13 +196,13 @@ Write-Output "RECORDING"
 try { [Console]::In.ReadLine() | Out-Null } catch {}
 
 # Stop and save
-Mci "stop gjc_rec"
-$saveCmd = 'save gjc_rec "' + $outPath + '"'
+Mci "stop vib_rec"
+$saveCmd = 'save vib_rec "' + $outPath + '"'
 $r = Mci $saveCmd
 if ($r -ne 0) {
     [Console]::Error.WriteLine("Save failed for: $saveCmd")
 }
-Mci "close gjc_rec"
+Mci "close vib_rec"
 
 if (Test-Path $outPath) {
     Write-Output "SAVED"
@@ -214,7 +214,7 @@ if (Test-Path $outPath) {
 
 async function startPowerShellRecording(outputPath: string): Promise<RecordingHandle> {
 	// Write script to temp file — avoids quoting/escaping issues with -Command
-	const scriptPath = path.join(os.tmpdir(), `gjc-stt-record-${Snowflake.next()}.ps1`);
+	const scriptPath = path.join(os.tmpdir(), `vib-stt-record-${Snowflake.next()}.ps1`);
 	await Bun.write(scriptPath, PS_RECORD_SCRIPT);
 
 	const proc = Bun.spawn(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", scriptPath, outputPath], {

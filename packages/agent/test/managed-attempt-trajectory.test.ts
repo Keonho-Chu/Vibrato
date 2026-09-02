@@ -1,8 +1,8 @@
 import { describe, expect, it } from "bun:test";
-import { agentLoop } from "@gajae-code/agent-core/agent-loop";
-import type { AgentContext, AgentLoopConfig, AgentMessage, AgentTool } from "@gajae-code/agent-core/types";
-import type { AssistantMessage, Message } from "@gajae-code/ai";
-import { createMockModel } from "@gajae-code/ai/providers/mock";
+import { agentLoop } from "@vib-rato/agent-core/agent-loop";
+import type { AgentContext, AgentLoopConfig, AgentMessage, AgentTool } from "@vib-rato/agent-core/types";
+import type { AssistantMessage, Message } from "@vib-rato/ai";
+import { createMockModel } from "@vib-rato/ai/providers/mock";
 import * as z from "zod/v4";
 import { createUserMessage } from "./helpers";
 

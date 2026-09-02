@@ -1,9 +1,9 @@
-import type { AgentMessage } from "@gajae-code/agent-core";
-import type { AssistantMessage, ImageContent, Message } from "@gajae-code/ai/core";
-import { type Component, Loader, Spacer, Text, TruncatedText, type TUI, truncateToWidth } from "@gajae-code/tui";
+import type { AgentMessage } from "@vib-rato/agent-core";
+import type { AssistantMessage, ImageContent, Message } from "@vib-rato/ai/core";
+import { type Component, Loader, Spacer, Text, TruncatedText, type TUI, truncateToWidth } from "@vib-rato/tui";
 import { settings } from "../../config/settings";
-import { resolveSubskillActivationForSkillInvocation } from "../../extensibility/gjc-plugins";
 import { buildSkillPromptMessage, parseSkillInvocations } from "../../extensibility/skills";
+import { resolveSubskillActivationForSkillInvocation } from "../../extensibility/vib-plugins";
 import { AssistantMessageComponent } from "../../modes/components/assistant-message";
 import { BashExecutionComponent } from "../../modes/components/bash-execution";
 import { BranchSummaryMessageComponent } from "../../modes/components/branch-summary-message";
@@ -1014,7 +1014,7 @@ export class UiHelpers {
 				theme.bold(theme.fg("warning", "Update Available")) +
 					"\n" +
 					theme.fg("muted", `New version ${newVersion} is available. Run: `) +
-					theme.fg("accent", "gjc update"),
+					theme.fg("accent", "vib update"),
 				1,
 				0,
 			),

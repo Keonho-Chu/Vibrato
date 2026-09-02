@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 
-import { disposeAllKernelSessions, executePython } from "@gajae-code/coding-agent/eval/py/executor";
+import { disposeAllKernelSessions, executePython } from "@vib-rato/coding-agent/eval/py/executor";
 import type {
 	KernelExecuteOptions,
 	KernelExecuteResult,
 	KernelShutdownResult,
-} from "@gajae-code/coding-agent/eval/py/kernel";
-import { checkPythonKernelAvailability, PythonKernel } from "@gajae-code/coding-agent/eval/py/kernel";
-import { TempDir } from "@gajae-code/utils";
+} from "@vib-rato/coding-agent/eval/py/kernel";
+import { checkPythonKernelAvailability, PythonKernel } from "@vib-rato/coding-agent/eval/py/kernel";
+import { TempDir } from "@vib-rato/utils";
 
 const originalStart = PythonKernel.start;
 
@@ -93,7 +93,7 @@ describe("python eval lifecycle", () => {
 
 	it("coalesces concurrent first acquires for the same session into one kernel", async () => {
 		Bun.env.PI_PYTHON_SKIP_CHECK = "1";
-		using tempDir = TempDir.createSync("@gjc-python-lifecycle-");
+		using tempDir = TempDir.createSync("@vib-python-lifecycle-");
 		const startup = Promise.withResolvers<void>();
 		let startCalls = 0;
 		const kernel = new FakeKernel();
@@ -125,7 +125,7 @@ describe("python eval lifecycle", () => {
 
 	it("settles pending executions and releases abort listeners during shutdown", async () => {
 		Bun.env.PI_PYTHON_SKIP_CHECK = "1";
-		using tempDir = TempDir.createSync("@gjc-python-lifecycle-");
+		using tempDir = TempDir.createSync("@vib-python-lifecycle-");
 		const controller = new AbortController();
 		let abortListeners = 0;
 		const originalAdd = controller.signal.addEventListener.bind(controller.signal);
@@ -171,7 +171,7 @@ describe("python eval lifecycle", () => {
 
 	it("treats clean exit code 0 as confirmed shutdown and does not reinsert the session", async () => {
 		Bun.env.PI_PYTHON_SKIP_CHECK = "1";
-		using tempDir = TempDir.createSync("@gjc-python-lifecycle-");
+		using tempDir = TempDir.createSync("@vib-python-lifecycle-");
 		const firstKernel = new FakeKernel();
 		const secondKernel = new FakeKernel();
 		let startCalls = 0;
@@ -200,7 +200,7 @@ describe("python eval lifecycle", () => {
 	it("kills background descendants owned by a bash cell interrupt while an unrelated sibling survives", async () => {
 		if (process.platform === "win32") return;
 		Bun.env.PI_PYTHON_SKIP_CHECK = "1";
-		using tempDir = TempDir.createSync("@gjc-python-lifecycle-");
+		using tempDir = TempDir.createSync("@vib-python-lifecycle-");
 		const unrelated = Bun.spawn(["/bin/sh", "-c", "sleep 30"], { stdout: "ignore", stderr: "ignore" });
 		let childPid: number | undefined;
 		try {
@@ -227,15 +227,15 @@ describe("python eval lifecycle", () => {
 		}
 	});
 });
-describe("python kernel env-var dual-read (GJC_* preferred, PI_* fallback)", () => {
+describe("python kernel env-var dual-read (VIB_* preferred, PI_* fallback)", () => {
 	// `checkPythonKernelAvailability` short-circuits on `isBunTestRuntime()`
 	// (NODE_ENV/BUN_ENV === "test"), which would mask the skip-check branch.
 	// These tests neutralize the test-runtime guard inside a scoped window and
-	// restore it in finally so the real GJC/PI skip-check branch is exercised.
+	// restore it in finally so the real Vibrato/PI skip-check branch is exercised.
 	const envKeys = [
-		"GJC_PYTHON_SKIP_CHECK",
+		"VIB_PYTHON_SKIP_CHECK",
 		"PI_PYTHON_SKIP_CHECK",
-		"GJC_PYTHON_IPC_TRACE",
+		"VIB_PYTHON_IPC_TRACE",
 		"PI_PYTHON_IPC_TRACE",
 		"NODE_ENV",
 		"BUN_ENV",
@@ -273,11 +273,11 @@ describe("python kernel env-var dual-read (GJC_* preferred, PI_* fallback)", () 
 			restoreEnv(envKeys, suiteEnv);
 		}
 	});
-	it("honors GJC_PYTHON_SKIP_CHECK=1 and returns ok without spawning Python", async () => {
+	it("honors VIB_PYTHON_SKIP_CHECK=1 and returns ok without spawning Python", async () => {
 		clearSkipEnv();
 		neutralizeTestRuntime();
-		Bun.env.GJC_PYTHON_SKIP_CHECK = "1";
-		using tempDir = TempDir.createSync("@gjc-python-skipcheck-gjc-");
+		Bun.env.VIB_PYTHON_SKIP_CHECK = "1";
+		using tempDir = TempDir.createSync("@vib-python-skipcheck-vib-");
 		const availability = await checkPythonKernelAvailability(tempDir.path());
 		expect(availability.ok).toBe(true);
 	});
@@ -286,26 +286,26 @@ describe("python kernel env-var dual-read (GJC_* preferred, PI_* fallback)", () 
 		clearSkipEnv();
 		neutralizeTestRuntime();
 		Bun.env.PI_PYTHON_SKIP_CHECK = "1";
-		using tempDir = TempDir.createSync("@gjc-python-skipcheck-pi-");
+		using tempDir = TempDir.createSync("@vib-python-skipcheck-pi-");
 		const availability = await checkPythonKernelAvailability(tempDir.path());
 		expect(availability.ok).toBe(true);
 	});
 
-	it("OR semantics: GJC=0 with PI=1 still skips the check", async () => {
+	it("OR semantics: Vibrato=0 with PI=1 still skips the check", async () => {
 		clearSkipEnv();
 		neutralizeTestRuntime();
-		Bun.env.GJC_PYTHON_SKIP_CHECK = "0";
+		Bun.env.VIB_PYTHON_SKIP_CHECK = "0";
 		Bun.env.PI_PYTHON_SKIP_CHECK = "1";
-		using tempDir = TempDir.createSync("@gjc-python-skipcheck-or-");
+		using tempDir = TempDir.createSync("@vib-python-skipcheck-or-");
 		const availability = await checkPythonKernelAvailability(tempDir.path());
 		expect(availability.ok).toBe(true);
 	});
 
-	it("accepts truthy tokens true/yes for GJC_PYTHON_SKIP_CHECK (case-insensitive)", async () => {
+	it("accepts truthy tokens true/yes for VIB_PYTHON_SKIP_CHECK (case-insensitive)", async () => {
 		clearSkipEnv();
 		neutralizeTestRuntime();
-		Bun.env.GJC_PYTHON_SKIP_CHECK = "YES";
-		using tempDir = TempDir.createSync("@gjc-python-skipcheck-yes-");
+		Bun.env.VIB_PYTHON_SKIP_CHECK = "YES";
+		using tempDir = TempDir.createSync("@vib-python-skipcheck-yes-");
 		const availability = await checkPythonKernelAvailability(tempDir.path());
 		expect(availability.ok).toBe(true);
 	});

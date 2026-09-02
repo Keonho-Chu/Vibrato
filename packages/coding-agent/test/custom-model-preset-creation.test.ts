@@ -2,25 +2,25 @@ import { afterEach, beforeEach, describe, expect, it, spyOn } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { ThinkingLevel } from "@gajae-code/agent-core";
-import type { Model } from "@gajae-code/ai";
+import { ThinkingLevel } from "@vib-rato/agent-core";
+import type { Model } from "@vib-rato/ai";
 import {
 	materializeModelProfileForDeletion,
 	restoreMaterializedModelProfileForDeletion,
-} from "@gajae-code/coding-agent/config/model-profile-activation";
-import type { ModelProfileDefinition } from "@gajae-code/coding-agent/config/model-profiles";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import type { ModelProfileConfig } from "@gajae-code/coding-agent/config/models-config-schema";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { CustomModelPresetWizardComponent } from "@gajae-code/coding-agent/modes/components/custom-model-preset-wizard";
+} from "@vib-rato/coding-agent/config/model-profile-activation";
+import type { ModelProfileDefinition } from "@vib-rato/coding-agent/config/model-profiles";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import type { ModelProfileConfig } from "@vib-rato/coding-agent/config/models-config-schema";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { CustomModelPresetWizardComponent } from "@vib-rato/coding-agent/modes/components/custom-model-preset-wizard";
 import {
 	ModelSelectorComponent,
 	type ModelSelectorSelection,
-} from "@gajae-code/coding-agent/modes/components/model-selector";
-import { SelectorController } from "@gajae-code/coding-agent/modes/controllers/selector-controller";
-import { getThemeByName, setThemeInstance } from "@gajae-code/coding-agent/modes/theme/theme";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import type { TUI } from "@gajae-code/tui";
+} from "@vib-rato/coding-agent/modes/components/model-selector";
+import { SelectorController } from "@vib-rato/coding-agent/modes/controllers/selector-controller";
+import { getThemeByName, setThemeInstance } from "@vib-rato/coding-agent/modes/theme/theme";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import type { TUI } from "@vib-rato/tui";
 import { YAML } from "bun";
 
 let tempDir: string;
@@ -43,7 +43,7 @@ const placeholderProfile: ModelProfileDefinition = {
 };
 
 beforeEach(async () => {
-	tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-custom-preset-"));
+	tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-custom-preset-"));
 	authStorage = await AuthStorage.create(path.join(tempDir, "auth.db"));
 	setThemeInstance((await getThemeByName("red-claw"))!);
 });

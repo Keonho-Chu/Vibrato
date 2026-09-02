@@ -23,7 +23,7 @@
 | `env` | `Record<string, string>` | No | Extra environment variables. Keys must match `^[A-Za-z_][A-Za-z0-9_]*$` or the tool throws. Values also go through internal-URL expansion. |
 | `timeout` | `number` | No | Timeout in seconds. Default `300`; clamped to `1..3600` by `clampTimeout("bash", ...)`. |
 | `cwd` | `string` | No | Working directory, resolved against `session.cwd` via `resolveToCwd`. Must exist and be a directory. |
-| `pty` | `boolean` | No | Request PTY mode. Default `false`. PTY is used only when `pty: true`, `GJC_NO_PTY !== "1"`, and the tool context has a UI. |
+| `pty` | `boolean` | No | Request PTY mode. Default `false`. PTY is used only when `pty: true`, `VIB_NO_PTY !== "1"`, and the tool context has a UI. |
 | `async` | `boolean` | No | Background execution request. Present only when `async.enabled` is true for the session. Returns immediately with a job id instead of waiting. |
 
 ## Outputs
@@ -72,7 +72,7 @@ Stdout and stderr are merged before the model sees them. Non-zero exit codes are
    - Uses `executeBash()`.
    - Streams tail-only updates through `streamTailUpdates()` and `TailBuffer(DEFAULT_MAX_BYTES)`.
 2. Foreground PTY
-   - Requires `pty: true`, UI context, and `GJC_NO_PTY !== "1"`.
+   - Requires `pty: true`, UI context, and `VIB_NO_PTY !== "1"`.
    - Uses `runInteractiveBashPty()` and a `PtySession` overlay; observer disposal is non-owning, while Escape or `job cancel` kills the session.
    - Supports interactive input; `Esc` kills the session from the overlay.
 3. Explicit background job
@@ -95,7 +95,7 @@ Stdout and stderr are merged before the model sees them. Non-zero exit codes are
   - May allocate and write artifact files for full output (`bash`) and minimizer-preserved raw output (`bash-original`).
   - `expandInternalUrls(..., { ensureLocalParentDirs: true })` creates parent directories for `local://` paths before execution.
 - Subprocesses / native bindings
-  - Non-PTY uses native shell execution via `@gajae-code/natives` (`Shell.run()` or `executeShell()`).
+  - Non-PTY uses native shell execution via `@vib-rato/natives` (`Shell.run()` or `executeShell()`).
   - PTY uses native `PtySession.start()`.
 - Session state
   - Reads session settings for async, auto-background, interceptor, tool availability, and shell configuration.
@@ -146,7 +146,7 @@ Stdout and stderr are merged before the model sees them. Non-zero exit codes are
   - `find|fd|locate` with name/type/glob flags -> `find`
   - `sed -i`, `perl -i`, `awk -i inplace` -> `edit`
   - `echo|printf|cat <<` with redirection -> `write`
-- PTY mode is ignored in non-UI contexts and when `GJC_NO_PTY=1`; the tool silently falls back to non-PTY execution.
+- PTY mode is ignored in non-UI contexts and when `VIB_NO_PTY=1`; the tool silently falls back to non-PTY execution.
 - Non-PTY runs merge `NON_INTERACTIVE_ENV` with `env`; PTY runs also prepend `NON_INTERACTIVE_ENV` before custom env values.
 - When the shell minimizer rewrites output inside `executeBash()`, the visible output is replaced with minimized text and a `[raw output: artifact://<id>]` footer may be appended if `onMinimizedSave` persisted the original text.
 - The TUI renderer parses partial JSON to recover `env` assignments early in streaming previews; that behavior is display-only.

@@ -23,8 +23,8 @@ export type CodexWakeEventKind = (typeof CODEX_WAKE_EVENT_KINDS)[number];
 
 export type CodexHandoffEndpoint = { kind: "unix"; path: string } | { kind: "tcp"; host: string; port: number };
 export interface CodexHandoffOriginV1 {
-	gjc_session_id: string | null;
-	gjc_turn_id: string | null;
+	vib_session_id: string | null;
+	vib_turn_id: string | null;
 	codex_thread_id: string;
 	codex_turn_id: string | null;
 	codex_host_session_id: string | null;
@@ -89,7 +89,7 @@ export function codexWakeKey(workUnit: string, eventSeq: number): string {
 }
 
 export function codexClientUserMessageId(key: string): string {
-	return `gjc-wake-${key}`;
+	return `vib-wake-${key}`;
 }
 
 function assertWorkUnit(workUnit: string): string {
@@ -225,10 +225,10 @@ function assertCodexHandoffOrigin(value: unknown): asserts value is CodexHandoff
 	const origin = value as Record<string, unknown>;
 	if (
 		!(
-			origin.gjc_session_id === null ||
-			(typeof origin.gjc_session_id === "string" && SAFE_ID.test(origin.gjc_session_id))
+			origin.vib_session_id === null ||
+			(typeof origin.vib_session_id === "string" && SAFE_ID.test(origin.vib_session_id))
 		) ||
-		!(origin.gjc_turn_id === null || (typeof origin.gjc_turn_id === "string" && SAFE_ID.test(origin.gjc_turn_id))) ||
+		!(origin.vib_turn_id === null || (typeof origin.vib_turn_id === "string" && SAFE_ID.test(origin.vib_turn_id))) ||
 		!(typeof origin.codex_thread_id === "string" && SAFE_ID.test(origin.codex_thread_id)) ||
 		!(origin.codex_turn_id === null || isBoundString(origin.codex_turn_id)) ||
 		!(

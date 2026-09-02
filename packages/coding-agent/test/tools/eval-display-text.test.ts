@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import * as evalIndex from "@gajae-code/coding-agent/eval";
-import * as pyKernel from "@gajae-code/coding-agent/eval/py/kernel";
-import type { ToolSession } from "@gajae-code/coding-agent/tools";
-import { EvalTool } from "@gajae-code/coding-agent/tools/eval";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import * as evalIndex from "@vib-rato/coding-agent/eval";
+import * as pyKernel from "@vib-rato/coding-agent/eval/py/kernel";
+import type { ToolSession } from "@vib-rato/coding-agent/tools";
+import { EvalTool } from "@vib-rato/coding-agent/tools/eval";
 
 function makeSession(): ToolSession {
 	return {

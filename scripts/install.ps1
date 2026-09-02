@@ -1,12 +1,12 @@
-# GJC Coding Agent Installer for Windows (standalone binary, no Bun required)
-# Usage: irm https://raw.githubusercontent.com/Yeachan-Heo/gajae-code/main/scripts/install.ps1 | iex
+# Vibrato Coding Agent Installer for Windows (standalone binary, no Bun required)
+# Usage: irm https://raw.githubusercontent.com/Keonho-Chu/Vibrato/main/scripts/install.ps1 | iex
 #
 # Or with options:
-#   & ([scriptblock]::Create((irm https://raw.githubusercontent.com/Yeachan-Heo/gajae-code/main/scripts/install.ps1)))
-#   & ([scriptblock]::Create((irm https://raw.githubusercontent.com/Yeachan-Heo/gajae-code/main/scripts/install.ps1))) -Channel nightly
-#   & ([scriptblock]::Create((irm https://raw.githubusercontent.com/Yeachan-Heo/gajae-code/main/scripts/install.ps1))) -Ref v0.15.0
-#   & ([scriptblock]::Create((irm https://raw.githubusercontent.com/Yeachan-Heo/gajae-code/main/scripts/install.ps1))) -Source
-#   & ([scriptblock]::Create((irm https://raw.githubusercontent.com/Yeachan-Heo/gajae-code/main/scripts/install.ps1))) -Source -Ref main
+#   & ([scriptblock]::Create((irm https://raw.githubusercontent.com/Keonho-Chu/Vibrato/main/scripts/install.ps1)))
+#   & ([scriptblock]::Create((irm https://raw.githubusercontent.com/Keonho-Chu/Vibrato/main/scripts/install.ps1))) -Channel nightly
+#   & ([scriptblock]::Create((irm https://raw.githubusercontent.com/Keonho-Chu/Vibrato/main/scripts/install.ps1))) -Ref v0.15.0
+#   & ([scriptblock]::Create((irm https://raw.githubusercontent.com/Keonho-Chu/Vibrato/main/scripts/install.ps1))) -Source
+#   & ([scriptblock]::Create((irm https://raw.githubusercontent.com/Keonho-Chu/Vibrato/main/scripts/install.ps1))) -Source -Ref main
 
 param(
     [switch]$Source,
@@ -24,15 +24,15 @@ try {
     [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
 } catch {}
 
-$Repo = "Yeachan-Heo/gajae-code"
-$Package = "@gajae-code/coding-agent"
-$InstallDir = if ($env:GJC_INSTALL_DIR) { $env:GJC_INSTALL_DIR } else { "$env:LOCALAPPDATA\gjc" }
-$GithubApi = if ($env:GJC_GITHUB_API) { $env:GJC_GITHUB_API } else { "https://api.github.com" }
-$GithubReleases = if ($env:GJC_GITHUB_RELEASES) { $env:GJC_GITHUB_RELEASES } else { "https://github.com/$Repo/releases/download" }
+$Repo = "Keonho-Chu/Vibrato"
+$Package = "@vib-rato/coding-agent"
+$InstallDir = if ($env:VIB_INSTALL_DIR) { $env:VIB_INSTALL_DIR } else { "$env:LOCALAPPDATA\vib" }
+$GithubApi = if ($env:VIB_GITHUB_API) { $env:VIB_GITHUB_API } else { "https://api.github.com" }
+$GithubReleases = if ($env:VIB_GITHUB_RELEASES) { $env:VIB_GITHUB_RELEASES } else { "https://github.com/$Repo/releases/download" }
 $MinimumBunVersion = "1.3.14"
-$BinarySha256Asset = "gajae-release-binaries.sha256"
-$BinaryManifestAsset = "gajae-release-binaries-v1.json"
-$UserAgent = "gjc-install"
+$BinarySha256Asset = "vibrato-release-binaries.sha256"
+$BinaryManifestAsset = "vibrato-release-binaries-v1.json"
+$UserAgent = "vib-install"
 
 function Test-TrustedGithubUri {
     param([string]$Uri)
@@ -49,10 +49,10 @@ function Assert-OfficialGithubOrigins {
     $releases = $GithubReleases.TrimEnd("/")
     $expectedReleases = "https://github.com/$Repo/releases/download"
     if ($api -ne "https://api.github.com") {
-        throw "GJC_GITHUB_API must be https://api.github.com (got $GithubApi)."
+        throw "VIB_GITHUB_API must be https://api.github.com (got $GithubApi)."
     }
     if ($releases -ne $expectedReleases) {
-        throw "GJC_GITHUB_RELEASES must be $expectedReleases (got $GithubReleases)."
+        throw "VIB_GITHUB_RELEASES must be $expectedReleases (got $GithubReleases)."
     }
 }
 
@@ -105,7 +105,7 @@ function Get-WindowsBinaryName {
     if ($arch -and $arch -ne "AMD64") {
         throw "Unsupported architecture: $arch. Prebuilt Windows binaries are published for x64 only."
     }
-    return "gjc-windows-x64.exe"
+    return "vib-windows-x64.exe"
 }
 
 function Test-BunInstalled {
@@ -190,7 +190,7 @@ function Find-BashShell {
 
 function Configure-BashShell {
     try {
-        $settingsDir = Join-Path $env:USERPROFILE ".gjc\agent"
+        $settingsDir = Join-Path $env:USERPROFILE ".vib\agent"
         $settingsFile = Join-Path $settingsDir "settings.json"
 
         if (Test-Path $settingsFile) {
@@ -234,7 +234,7 @@ function Configure-BashShell {
         } else {
             Write-Host ""
             Write-Host "No bash shell found." -ForegroundColor Yellow
-            Write-Host "  GJC requires a bash shell on Windows. Options:" -ForegroundColor Yellow
+            Write-Host "  Vibrato requires a bash shell on Windows. Options:" -ForegroundColor Yellow
             Write-Host "    1. Install Git for Windows: https://git-scm.com/download/win" -ForegroundColor Yellow
             Write-Host "    2. Use WSL, Cygwin, or MSYS2" -ForegroundColor Yellow
             Write-Host ""
@@ -318,9 +318,9 @@ function Assert-Checksum {
     )
 
     $sumsUrl = "$GithubReleases/$Tag/$BinarySha256Asset"
-    $sumsTmp = Join-Path $InstallDir (".gjc.sha256." + [System.Guid]::NewGuid().ToString("N"))
+    $sumsTmp = Join-Path $InstallDir (".vib.sha256." + [System.Guid]::NewGuid().ToString("N"))
     $manifestUrl = "$GithubReleases/$Tag/$BinaryManifestAsset"
-    $manifestTmp = Join-Path $InstallDir (".gjc.manifest." + [System.Guid]::NewGuid().ToString("N"))
+    $manifestTmp = Join-Path $InstallDir (".vib.manifest." + [System.Guid]::NewGuid().ToString("N"))
     try {
         $sumsMissing = $false
         try {
@@ -384,8 +384,8 @@ function Assert-InstalledBinary {
     }
     $versionOutput = & $ExePath --version 2>$null
     $escaped = [regex]::Escape($ExpectedVersion)
-    if (-not $versionOutput -or ($versionOutput -notmatch "(?m)^gjc/$escaped(\s|$)")) {
-        throw "Installed binary --version mismatch (expected gjc/$ExpectedVersion, got: $versionOutput)"
+    if (-not $versionOutput -or ($versionOutput -notmatch "(?m)^vib/$escaped(\s|$)")) {
+        throw "Installed binary --version mismatch (expected vib/$ExpectedVersion, got: $versionOutput)"
     }
     & $ExePath --smoke-test | Out-Null
     if ($LASTEXITCODE -ne 0) {
@@ -400,7 +400,7 @@ function Install-ViaBun {
             throw "git is required for -Source -Ref"
         }
 
-        $tmpRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("gjc-install-" + [System.Guid]::NewGuid().ToString("N"))
+        $tmpRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("vib-install-" + [System.Guid]::NewGuid().ToString("N"))
         New-Item -ItemType Directory -Force -Path $tmpRoot | Out-Null
 
         try {
@@ -452,9 +452,9 @@ function Install-ViaBun {
     }
 
     Write-Host ""
-    Write-Host "Installed gjc via bun (development/source mode)" -ForegroundColor Green
+    Write-Host "Installed vib via bun (development/source mode)" -ForegroundColor Green
     Configure-BashShell
-    Write-Host "Run 'gjc' to get started!"
+    Write-Host "Run 'vib' to get started!"
 }
 
 function Install-Binary {
@@ -472,7 +472,7 @@ function Install-Binary {
     Write-Host "Using version: $Latest"
 
     New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
-    $lockFile = Join-Path $InstallDir ".gjc-install.lock"
+    $lockFile = Join-Path $InstallDir ".vib-install.lock"
     $lockNonce = [guid]::NewGuid().ToString("N")
     $lockLine = "$PID $lockNonce"
     $lockOwned = $false
@@ -483,12 +483,12 @@ function Install-Binary {
         $fs.Dispose()
         $lockOwned = $true
     } catch {
-        throw "Another GJC installer is already running in $InstallDir (lock: $lockFile). Remove a leftover lock file only after confirming no installer is running."
+        throw "Another Vibrato installer is already running in $InstallDir (lock: $lockFile). Remove a leftover lock file only after confirming no installer is running."
     }
 
-    $OutPath = Join-Path $InstallDir "gjc.exe"
-    $DownloadTmp = Join-Path $InstallDir (".gjc.download." + [System.Guid]::NewGuid().ToString("N"))
-    $BackupPath = Join-Path $InstallDir (".gjc.bak." + [System.Guid]::NewGuid().ToString("N"))
+    $OutPath = Join-Path $InstallDir "vib.exe"
+    $DownloadTmp = Join-Path $InstallDir (".vib.download." + [System.Guid]::NewGuid().ToString("N"))
+    $BackupPath = Join-Path $InstallDir (".vib.bak." + [System.Guid]::NewGuid().ToString("N"))
     $hadExisting = $false
     try {
         $existing = Get-Item -LiteralPath $OutPath -Force -ErrorAction SilentlyContinue
@@ -498,7 +498,7 @@ function Install-Binary {
             if (-not $isReparse -and $existing.LinkType) { $isReparse = $true }
         }
         if ($isReparse) {
-            throw "Refusing to replace symlink $OutPath with a regular binary. Remove the symlink or set GJC_INSTALL_DIR."
+            throw "Refusing to replace symlink $OutPath with a regular binary. Remove the symlink or set VIB_INSTALL_DIR."
         }
         $hadExisting = [bool]$existing
         $BinaryUrl = "$GithubReleases/$Latest/$BinaryName"
@@ -507,7 +507,7 @@ function Install-Binary {
             Invoke-WebRequest -UseBasicParsing -Uri $BinaryUrl -OutFile $DownloadTmp -Headers @{ "User-Agent" = $UserAgent }
         } catch {
             Remove-Item -Force $DownloadTmp -ErrorAction SilentlyContinue
-            throw "No prebuilt GJC binary was found for windows-x64 in $Latest.`nExpected asset URL: $BinaryUrl`nRe-run with -Source only if you are developing GJC and already have Bun."
+            throw "No prebuilt Vibrato binary was found for windows-x64 in $Latest.`nExpected asset URL: $BinaryUrl`nRe-run with -Source only if you are developing Vibrato and already have Bun."
         }
 
         if (-not (Test-Path $DownloadTmp) -or ((Get-Item $DownloadTmp).Length -le 0)) {
@@ -525,7 +525,7 @@ function Install-Binary {
         } catch {
             if (Test-Path $BackupPath) {
                 Copy-Item -Force -LiteralPath $BackupPath -Destination $OutPath
-                Write-Host "Restored previous gjc binary at $OutPath"
+                Write-Host "Restored previous vib binary at $OutPath"
             }
             throw "Failed to publish the downloaded binary. Existing install was preserved if one existed. $_"
         }
@@ -535,7 +535,7 @@ function Install-Binary {
         } catch {
             if (Test-Path $BackupPath) {
                 Copy-Item -Force -LiteralPath $BackupPath -Destination $OutPath
-                Write-Host "Restored previous gjc binary at $OutPath"
+                Write-Host "Restored previous vib binary at $OutPath"
             } elseif (-not $hadExisting) {
                 Remove-Item -Force $OutPath -ErrorAction SilentlyContinue
             }
@@ -545,7 +545,7 @@ function Install-Binary {
         Remove-Item -Force $BackupPath -ErrorAction SilentlyContinue
 
         Write-Host ""
-        Write-Host "Installed gjc $ExpectedVersion to $OutPath" -ForegroundColor Green
+        Write-Host "Installed vib $ExpectedVersion to $OutPath" -ForegroundColor Green
 
         $UserPath = [Environment]::GetEnvironmentVariable("Path", "User")
         if (-not $UserPath) { $UserPath = "" }
@@ -564,9 +564,9 @@ function Install-Binary {
         Configure-BashShell
 
         if ($needsRestart) {
-            Write-Host "Restart your terminal, then run 'gjc' to get started!"
+            Write-Host "Restart your terminal, then run 'vib' to get started!"
         } else {
-            Write-Host "Run 'gjc' to get started!"
+            Write-Host "Run 'vib' to get started!"
         }
     } finally {
         Remove-Item -Force $DownloadTmp -ErrorAction SilentlyContinue

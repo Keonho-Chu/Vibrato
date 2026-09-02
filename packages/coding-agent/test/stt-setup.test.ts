@@ -11,7 +11,7 @@ describe("STT setup guidance", () => {
 	it("explains the complete enable, record, and transcribe flow", () => {
 		const usage = formatSTTUsage("linux");
 
-		expect(usage).toContain("gjc config set stt.enabled true");
+		expect(usage).toContain("vib config set stt.enabled true");
 		expect(usage).toContain("/settings > Interaction > Speech-to-Text");
 		expect(usage).toContain("press Alt+H to start recording");
 		expect(usage).toContain("press Alt+H again to stop and transcribe");

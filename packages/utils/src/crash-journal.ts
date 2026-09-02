@@ -5,7 +5,7 @@
  * program is already broken, possibly out of disk, possibly re-entered by a
  * crash inside the crash handler. So the fatal path does exactly one thing
  * here — append a single bounded line with `O_APPEND` — and never parses,
- * locks, renames or reads. Aggregation into `gjc-crash-index.json` happens at
+ * locks, renames or reads. Aggregation into `vib-crash-index.json` happens at
  * the next startup, under a cross-process lock, far away from the fatal path.
  *
  * The journal, not the index, is the source of increments: a lost index can be
@@ -18,7 +18,7 @@ import { CRASH_FINGERPRINT_PATTERN } from "./crash-fingerprint";
 /** Hard cap for one journal line, including its newline. */
 export const CRASH_EVENT_MAX_BYTES = 512;
 /** Journal line format tag. */
-export const CRASH_EVENT_KIND = "gjc-crash-event.v1";
+export const CRASH_EVENT_KIND = "vib-crash-event.v1";
 /** Preview cap for the message class carried by an event. */
 export const CRASH_EVENT_MESSAGE_MAX_BYTES = 256;
 

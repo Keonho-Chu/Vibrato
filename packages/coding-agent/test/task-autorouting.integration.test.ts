@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
-import { toolWireSchema } from "@gajae-code/ai/utils/schema";
+import { toolWireSchema } from "@vib-rato/ai/utils/schema";
 import { AsyncJobManager } from "../src/async";
 import { Settings } from "../src/config/settings";
 import { TaskTool } from "../src/task";

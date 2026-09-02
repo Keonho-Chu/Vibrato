@@ -12,12 +12,12 @@ import {
 	resolveResidentImageDataSync,
 	resolveResidentImageDataUrlSync,
 	resolveTextBlobSync,
-} from "@gajae-code/coding-agent/session/blob-store";
+} from "@vib-rato/coding-agent/session/blob-store";
 import {
 	materializeResidentEntriesForPersistenceForTests,
 	residentBlobSentinelForTests,
 	SessionManager,
-} from "@gajae-code/coding-agent/session/session-manager";
+} from "@vib-rato/coding-agent/session/session-manager";
 import { measureSessionMemory } from "../bench/session-memory.bench";
 
 const tmpRoots: string[] = [];
@@ -29,7 +29,7 @@ function tmpRoot(prefix: string): string {
 }
 
 function makeStore(): EphemeralBlobStore {
-	return new EphemeralBlobStore(path.join(tmpRoot("gjc-resident-"), "resident"));
+	return new EphemeralBlobStore(path.join(tmpRoot("vib-resident-"), "resident"));
 }
 
 /** A well-formed blob ref whose blob was never stored. */
@@ -139,7 +139,7 @@ describe("EphemeralBlobStore bounded cache + reset", () => {
 
 describe("SessionManager retained-entry ownership and snapshot correctness", () => {
 	function newManager(): SessionManager {
-		const root = tmpRoot("gjc-session-resident-");
+		const root = tmpRoot("vib-session-resident-");
 		return SessionManager.create(root, path.join(root, "sessions"));
 	}
 

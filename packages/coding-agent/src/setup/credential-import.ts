@@ -1,7 +1,7 @@
 /**
  * Discover and import existing Claude Code / Codex CLI credentials.
  *
- * This is the testable core behind `gjc setup credentials` (CLI, primary entry)
+ * This is the testable core behind `vib setup credentials` (CLI, primary entry)
  * and the TUI provider-onboarding "import existing credentials" action. It never
  * prints or returns raw tokens: callers receive redacted summaries plus opaque
  * {@link AuthCredential} payloads that go straight into the store.
@@ -16,11 +16,11 @@
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { AuthCredential, OAuthCredential } from "@gajae-code/ai/core";
-import { $credentialEnv, isEnoent } from "@gajae-code/utils";
+import type { AuthCredential, OAuthCredential } from "@vib-rato/ai/core";
+import { $credentialEnv, isEnoent } from "@vib-rato/utils";
 import { redactSecret } from "./provider-onboarding";
 
-/** gjc provider ids that external credentials map onto. */
+/** vib provider ids that external credentials map onto. */
 export type ExternalProvider = "anthropic" | "openai-codex";
 
 /** Where a discovered credential came from. */
@@ -37,7 +37,7 @@ export const EXTERNAL_PROVIDER_LABELS: Record<ExternalProvider, string> = {
 	"openai-codex": "Codex (ChatGPT)",
 };
 
-/** A credential that can be safely imported into gjc's store. */
+/** A credential that can be safely imported into vib's store. */
 export interface ImportableCredential {
 	provider: ExternalProvider;
 	origin: CredentialOrigin;
@@ -401,7 +401,7 @@ function pushOutcome(result: CredentialDiscoveryResult, outcome: ImportableCrede
  * the same boundary provider authentication already uses.
  *
  * Relative values are rejected. Claude Code and Codex resolve them against the
- * process cwd, which for gjc is the user's project directory; honouring that
+ * process cwd, which for vib is the user's project directory; honouring that
  * would reintroduce the project-controlled redirect the trust boundary exists
  * to prevent. An explicit `options.env` (tests, embedders) is consulted verbatim
  * instead of the ambient environment.

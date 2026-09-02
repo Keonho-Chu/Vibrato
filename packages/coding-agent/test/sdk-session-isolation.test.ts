@@ -2,17 +2,17 @@ import { afterEach, describe, expect, it } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { type AssistantMessage, getBundledModel } from "@gajae-code/ai";
-import type { Rule } from "@gajae-code/coding-agent/capability/rule";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import type { ExtensionFactory } from "@gajae-code/coding-agent/extensibility/extensions";
-import { LocalProtocolHandler, resolveLocalRoot, resolveLocalUrlToPath } from "@gajae-code/coding-agent/internal-urls";
-import { AgentRegistry } from "@gajae-code/coding-agent/registry/agent-registry";
-import { createAgentSession } from "@gajae-code/coding-agent/sdk";
-import { createSecretObfuscator } from "@gajae-code/coding-agent/secrets";
-import type { AgentSession } from "@gajae-code/coding-agent/session/agent-session";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { getSessionsDir, Snowflake } from "@gajae-code/utils";
+import { type AssistantMessage, getBundledModel } from "@vib-rato/ai";
+import type { Rule } from "@vib-rato/coding-agent/capability/rule";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import type { ExtensionFactory } from "@vib-rato/coding-agent/extensibility/extensions";
+import { LocalProtocolHandler, resolveLocalRoot, resolveLocalUrlToPath } from "@vib-rato/coding-agent/internal-urls";
+import { AgentRegistry } from "@vib-rato/coding-agent/registry/agent-registry";
+import { createAgentSession } from "@vib-rato/coding-agent/sdk";
+import { createSecretObfuscator } from "@vib-rato/coding-agent/secrets";
+import type { AgentSession } from "@vib-rato/coding-agent/session/agent-session";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { getSessionsDir, Snowflake } from "@vib-rato/utils";
 import { discoverAuthStorage } from "../src/sdk/session";
 import { AgentStorage } from "../src/session/agent-storage";
 
@@ -106,7 +106,7 @@ describe("createAgentSession session storage isolation", () => {
 		}
 	});
 	it("records cleanup_pending when managed legacy-local retirement is durably retained", async () => {
-		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), `gjc-sdk-local-resume-${Snowflake.next()}-`));
+		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), `vib-sdk-local-resume-${Snowflake.next()}-`));
 		tempDirs.push(tempDir);
 		const cwd = path.join(tempDir, "project");
 		const agentDir = path.join(tempDir, "agent");
@@ -151,7 +151,7 @@ describe("createAgentSession session storage isolation", () => {
 			expect(resumedPath).toBe(path.join(resolveLocalRoot(localOptions), "resume.md"));
 			expect(fs.readFileSync(resumedPath, "utf8")).toBe("preserved");
 			expect(
-				fs.readFileSync(path.join(resolveLocalRoot(localOptions), ".gjc-local-legacy-migrated-v1"), "utf8"),
+				fs.readFileSync(path.join(resolveLocalRoot(localOptions), ".vib-local-legacy-migrated-v1"), "utf8"),
 			).toBe("cleanup_pending\n");
 		} finally {
 			await session.dispose();
@@ -159,7 +159,7 @@ describe("createAgentSession session storage isolation", () => {
 	}, 20_000);
 
 	it("migrates a switched managed session's legacy local:// root before resolution (#2925)", async () => {
-		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), `gjc-sdk-local-switch-${Snowflake.next()}-`));
+		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), `vib-sdk-local-switch-${Snowflake.next()}-`));
 		tempDirs.push(tempDir);
 		const cwd = path.join(tempDir, "project");
 		const agentDir = path.join(tempDir, "agent");
@@ -218,7 +218,7 @@ describe("createAgentSession session storage isolation", () => {
 			// Legacy source retired after verified migration (marker may be verified or cleanup_pending).
 			expect(fs.existsSync(path.join(legacyLocalRoot, "switched.md"))).toBe(false);
 			const marker = fs.readFileSync(
-				path.join(resolveLocalRoot(localOptions), ".gjc-local-legacy-migrated-v1"),
+				path.join(resolveLocalRoot(localOptions), ".vib-local-legacy-migrated-v1"),
 				"utf8",
 			);
 			expect(marker === "verified\n" || marker === "cleanup_pending\n").toBe(true);
@@ -227,7 +227,7 @@ describe("createAgentSession session storage isolation", () => {
 		}
 	}, 30_000);
 	it("initializes the successor local:// root after newSession before resolution (#2925 follow-up)", async () => {
-		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), `gjc-sdk-local-new-${Snowflake.next()}-`));
+		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), `vib-sdk-local-new-${Snowflake.next()}-`));
 		tempDirs.push(tempDir);
 		const cwd = path.join(tempDir, "project");
 		const agentDir = path.join(tempDir, "agent");
@@ -265,7 +265,7 @@ describe("createAgentSession session storage isolation", () => {
 			const resolved = resolveLocalUrlToPath("local://fresh.md", localOptions);
 			expect(resolved).toBe(path.join(resolveLocalRoot(localOptions), "fresh.md"));
 			const marker = fs.readFileSync(
-				path.join(resolveLocalRoot(localOptions), ".gjc-local-legacy-migrated-v1"),
+				path.join(resolveLocalRoot(localOptions), ".vib-local-legacy-migrated-v1"),
 				"utf8",
 			);
 			expect(marker === "verified\n" || marker === "absent\n" || marker === "cleanup_pending\n").toBe(true);
@@ -280,7 +280,7 @@ describe("createAgentSession session storage isolation", () => {
 	}, 30_000);
 
 	it("gates the successor local:// root before publishing the new session identity", async () => {
-		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), `gjc-sdk-local-order-${Snowflake.next()}-`));
+		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), `vib-sdk-local-order-${Snowflake.next()}-`));
 		tempDirs.push(tempDir);
 		const cwd = path.join(tempDir, "project");
 		const agentDir = path.join(tempDir, "agent");
@@ -330,7 +330,7 @@ describe("createAgentSession session storage isolation", () => {
 										isManagedDestination: () => manager.isManagedDestination(),
 										getSessionId: () => value,
 									}),
-									".gjc-local-legacy-migrated-v1",
+									".vib-local-legacy-migrated-v1",
 								),
 							),
 						});
@@ -350,7 +350,7 @@ describe("createAgentSession session storage isolation", () => {
 	}, 30_000);
 
 	it("initializes a default local root without shadowing an explicit owner", async () => {
-		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), `gjc-sdk-local-owner-${Snowflake.next()}-`));
+		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), `vib-sdk-local-owner-${Snowflake.next()}-`));
 		tempDirs.push(tempDir);
 		const cwd = path.join(tempDir, "project");
 		const agentDir = path.join(tempDir, "agent");
@@ -491,14 +491,14 @@ describe("createAgentSession session storage isolation", () => {
 			secondSession = undefined;
 			expect(LocalProtocolHandler.resolveOptions()).toBeUndefined();
 
-			// Managed-destination sessions retain their owner-only external gjc-local root.
+			// Managed-destination sessions retain their owner-only external vib-local root.
 			expect(
 				resolveLocalRoot({
 					getArtifactsDir: () => firstArtifactsDir,
 					isManagedDestination: () => true,
 					getSessionId: () => "managed-owner-session",
 				}),
-			).toBe(path.join(os.tmpdir(), "gjc-local", "managed-owner-session"));
+			).toBe(path.join(os.tmpdir(), "vib-local", "managed-owner-session"));
 		} finally {
 			await secondSession?.dispose();
 			await firstSession?.dispose();
@@ -633,7 +633,7 @@ describe("createAgentSession session storage isolation", () => {
 	});
 	it("shows redaction guidance only when secrets are actually loaded", async () => {
 		await withClearedSecretEnv(async () => {
-			const redactionGuidance = "redacted as versioned `#GJC1_…#` tokens";
+			const redactionGuidance = "redacted as versioned `#VIB1_…#` tokens";
 			const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), `pi-sdk-secrets-${Snowflake.next()}-`));
 			tempDirs.push(tempDir);
 			const cwd = path.join(tempDir, "project");
@@ -660,8 +660,8 @@ describe("createAgentSession session storage isolation", () => {
 				await withoutSecrets.session.dispose();
 			}
 
-			fs.mkdirSync(path.join(cwd, ".gjc"), { recursive: true });
-			fs.writeFileSync(path.join(cwd, ".gjc", "secrets.yml"), "- type: plain\n  content: sdk-secret-token-123456\n");
+			fs.mkdirSync(path.join(cwd, ".vib"), { recursive: true });
+			fs.writeFileSync(path.join(cwd, ".vib", "secrets.yml"), "- type: plain\n  content: sdk-secret-token-123456\n");
 
 			const withSecrets = await createAgentSession(commonOptions);
 			try {
@@ -678,8 +678,8 @@ describe("createAgentSession session storage isolation", () => {
 			tempDirs.push(tempDir);
 			const cwd = path.join(tempDir, "project");
 			const agentDir = path.join(tempDir, "agent");
-			fs.mkdirSync(path.join(cwd, ".gjc"), { recursive: true });
-			fs.writeFileSync(path.join(cwd, ".gjc", "secrets.yml"), "- type: plain\n  content: sdk-secret-token-123456\n");
+			fs.mkdirSync(path.join(cwd, ".vib"), { recursive: true });
+			fs.writeFileSync(path.join(cwd, ".vib", "secrets.yml"), "- type: plain\n  content: sdk-secret-token-123456\n");
 
 			const model = getBundledModel("anthropic", "claude-sonnet-4-5");
 			if (!model) throw new Error("Expected anthropic model");

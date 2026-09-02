@@ -361,7 +361,7 @@ describe("SDK query pagination", () => {
 	}, 30000);
 
 	it("writes owner-private chunked spills atomically with bounded buffering", async () => {
-		const stateRoot = await mkdtemp(join(tmpdir(), "gjc-sdk-query-test-"));
+		const stateRoot = await mkdtemp(join(tmpdir(), "vib-sdk-query-test-"));
 		const snapshotDir = join(stateRoot, "sdk", "snapshots", "s1");
 		const store = new RevisionStore("s1", Date.now, { storageDir: stateRoot });
 		const value = { body: "x".repeat(40 * 1024 * 1024) };
@@ -393,7 +393,7 @@ describe("SDK query pagination", () => {
 
 	it("settles in-progress spill writes before terminal cleanup", async () => {
 		for (let index = 0; index < 3; index++) {
-			const stateRoot = await mkdtemp(join(tmpdir(), "gjc-sdk-query-close-race-"));
+			const stateRoot = await mkdtemp(join(tmpdir(), "vib-sdk-query-close-race-"));
 			const store = new RevisionStore(`close-race-${index}`, Date.now, { storageDir: stateRoot });
 			const write = store.createRevision("large", "id", { body: "x".repeat(8 * 1024 * 1024) });
 			const close = store.close();
@@ -403,7 +403,7 @@ describe("SDK query pagination", () => {
 	});
 
 	it("splits large CJK and emoji snapshots at UTF-8 boundaries", async () => {
-		const stateRoot = await mkdtemp(join(tmpdir(), "gjc-sdk-query-test-"));
+		const stateRoot = await mkdtemp(join(tmpdir(), "vib-sdk-query-test-"));
 		const snapshotDir = join(stateRoot, "sdk", "snapshots", "s1");
 		const body = "漢🙂".repeat(3 * 1024 * 1024);
 		const store = new RevisionStore("s1", Date.now, { storageDir: stateRoot });
@@ -421,7 +421,7 @@ describe("SDK query pagination", () => {
 	});
 
 	it("reads a 40 MiB transcript body page from its indexed manifest range", async () => {
-		const stateRoot = await mkdtemp(join(tmpdir(), "gjc-sdk-query-test-"));
+		const stateRoot = await mkdtemp(join(tmpdir(), "vib-sdk-query-test-"));
 		const body = "t".repeat(40 * 1024 * 1024);
 		const store = new RevisionStore("s1", Date.now, { storageDir: stateRoot });
 		const cursors = new CursorRegistry("token", store);
@@ -628,7 +628,7 @@ it("keeps random-sized paginated responses below the one MiB ceiling", async () 
 }, 30_000);
 
 it("describes an arbitrarily large indexed item from manifest metadata before reading its body", async () => {
-	const stateRoot = await mkdtemp(join(tmpdir(), "gjc-sdk-query-test-"));
+	const stateRoot = await mkdtemp(join(tmpdir(), "vib-sdk-query-test-"));
 	const value = "x".repeat(40 * 1024 * 1024);
 	const store = new RevisionStore("s1", Date.now, { storageDir: stateRoot });
 	const cursors = new CursorRegistry("token", store);
@@ -680,7 +680,7 @@ it("streams an oversized root object as monotonic bounded canonical JSON ranges"
 });
 
 it("incrementally continues very large escaped emoji fields through bounded snapshot reads", async () => {
-	const stateRoot = await mkdtemp(join(tmpdir(), "gjc-sdk-query-test-"));
+	const stateRoot = await mkdtemp(join(tmpdir(), "vib-sdk-query-test-"));
 	const reads: { start: number; end: number }[] = [];
 	const unit = `"\\${String.fromCharCode(0x08, 0x0c, 0x0a, 0x0d, 0x09, 0x00)}🙂`;
 	const body = unit.repeat(750_000);
@@ -725,7 +725,7 @@ it("incrementally continues very large escaped emoji fields through bounded snap
 }, 30_000);
 
 it("reconstructs Q12 workflow gate state after a client restart without reviving the orphaned gate", async () => {
-	const stateRoot = await mkdtemp(join(tmpdir(), "gjc-sdk-q12-restart-"));
+	const stateRoot = await mkdtemp(join(tmpdir(), "vib-sdk-q12-restart-"));
 	const storePath = join(stateRoot, "workflow-gates.json");
 	const first = new BrokerWorkflowGateEmitter("q12-session", new FileGateStore(storePath));
 	void first.emitGate({ stage: "ralplan", kind: "approval", schema: { type: "string", enum: ["approve"] } });

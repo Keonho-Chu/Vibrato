@@ -9,10 +9,10 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { promises as fs } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { CustomizationDashboard } from "@gajae-code/coding-agent/modes/components/customization/customization-dashboard";
-import { ImportWizard } from "@gajae-code/coding-agent/modes/components/customization/import-wizard";
-import { getThemeByName, setThemeInstance } from "@gajae-code/coding-agent/modes/theme/theme";
-import { getAgentDir, setAgentDir } from "@gajae-code/utils";
+import { CustomizationDashboard } from "@vib-rato/coding-agent/modes/components/customization/customization-dashboard";
+import { ImportWizard } from "@vib-rato/coding-agent/modes/components/customization/import-wizard";
+import { getThemeByName, setThemeInstance } from "@vib-rato/coding-agent/modes/theme/theme";
+import { getAgentDir, setAgentDir } from "@vib-rato/utils";
 
 let tmpRoot: string;
 let projectDir: string;
@@ -20,7 +20,7 @@ let homeDir: string;
 let savedAgentDir: string;
 
 beforeEach(async () => {
-	tmpRoot = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-4291-ui-"));
+	tmpRoot = await fs.mkdtemp(path.join(os.tmpdir(), "vib-4291-ui-"));
 	projectDir = path.join(tmpRoot, "project");
 	homeDir = path.join(tmpRoot, "home");
 	await fs.mkdir(projectDir, { recursive: true });
@@ -29,7 +29,7 @@ beforeEach(async () => {
 	const themeInstance = await getThemeByName("red-claw");
 	if (!themeInstance) throw new Error("Failed to load theme for tests");
 	setThemeInstance(themeInstance);
-	setAgentDir(path.join(homeDir, ".gjc", "agent"));
+	setAgentDir(path.join(homeDir, ".vib", "agent"));
 });
 
 afterEach(async () => {
@@ -47,8 +47,8 @@ Do the thing.
 `;
 
 async function seedProjectSkill(): Promise<void> {
-	await fs.mkdir(path.join(projectDir, ".gjc", "skills", "fixture"), { recursive: true });
-	await fs.writeFile(path.join(projectDir, ".gjc", "skills", "fixture", "SKILL.md"), SKILL_MD);
+	await fs.mkdir(path.join(projectDir, ".vib", "skills", "fixture"), { recursive: true });
+	await fs.writeFile(path.join(projectDir, ".vib", "skills", "fixture", "SKILL.md"), SKILL_MD);
 }
 
 describe("CustomizationDashboard", () => {
@@ -109,8 +109,8 @@ describe("CustomizationDashboard", () => {
 	});
 
 	test("rendered rows strip terminal control sequences from hostile names", async () => {
-		await fs.mkdir(path.join(projectDir, ".gjc", "hooks", "pre"), { recursive: true });
-		await fs.writeFile(path.join(projectDir, ".gjc", "hooks", "pre", "evil\x1b[31m.ts"), "export {}\n");
+		await fs.mkdir(path.join(projectDir, ".vib", "hooks", "pre"), { recursive: true });
+		await fs.writeFile(path.join(projectDir, ".vib", "hooks", "pre", "evil\x1b[31m.ts"), "export {}\n");
 		const dashboard = await CustomizationDashboard.create(projectDir, undefined, homeDir);
 		dashboard.handleInput("\x1b[C"); // hooks section
 		const lines = dashboard.render(80);
@@ -164,7 +164,7 @@ describe("ImportWizard", () => {
 		};
 		wizard.handleInput("\x1b");
 		expect(closed).toEqual([false]);
-		await expect(fs.stat(path.join(projectDir, ".gjc", "mcp.json"))).rejects.toThrow();
+		await expect(fs.stat(path.join(projectDir, ".vib", "mcp.json"))).rejects.toThrow();
 	});
 
 	test("drives product → scope → surfaces → policy → preview, enter applies", async () => {
@@ -186,7 +186,7 @@ describe("ImportWizard", () => {
 		await Bun.sleep(80);
 		expect(wizard.step).toBe("result");
 		expect(wizard.result?.ok).toBe(true);
-		await fs.stat(path.join(projectDir, ".gjc", "skills", "wiz-skill", "SKILL.md"));
+		await fs.stat(path.join(projectDir, ".vib", "skills", "wiz-skill", "SKILL.md"));
 	});
 
 	test("a failed apply closes with applied=false, never a false success", async () => {

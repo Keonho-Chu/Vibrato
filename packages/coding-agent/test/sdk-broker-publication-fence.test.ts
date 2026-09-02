@@ -13,7 +13,7 @@ const brokers: Broker[] = [];
 const roots: string[] = [];
 
 async function startBroker(): Promise<Broker> {
-	const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-fence-"));
+	const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-fence-"));
 	roots.push(root);
 	const broker = new Broker({ agentDir: path.join(root, "agent"), heartbeatTtlMs: HEARTBEAT_TTL_MS });
 	brokers.push(broker);

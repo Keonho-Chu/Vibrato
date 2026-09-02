@@ -1,7 +1,7 @@
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { toolWireSchema } from "@gajae-code/ai/utils/schema";
+import { toolWireSchema } from "@vib-rato/ai/utils/schema";
 import { safeRm } from "../../../scripts/safe-cleanup";
 import { TaskTool } from "../src/task";
 import { TOOL_CATALOG } from "../src/tools/tool-catalog.generated";
@@ -322,21 +322,21 @@ async function fallbackForUnavailableTool(name: string): Promise<AuditedFallback
 export async function generateToolCatalogData(
 	options: ToolCatalogGenerationOptions = {},
 ): Promise<Record<string, GeneratedToolCatalogEntry>> {
-	const previousEditVariant = process.env.GJC_EDIT_VARIANT;
+	const previousEditVariant = process.env.VIB_EDIT_VARIANT;
 	const previousHome = process.env.HOME;
-	const previousGjcConfigDir = process.env.GJC_CONFIG_DIR;
+	const previousVibConfigDir = process.env.VIB_CONFIG_DIR;
 	const previousPiConfigDir = process.env.PI_CONFIG_DIR;
-	const previousGjcCodingAgentDir = process.env.GJC_CODING_AGENT_DIR;
+	const previousVibCodingAgentDir = process.env.VIB_CODING_AGENT_DIR;
 	const previousPiCodingAgentDir = process.env.PI_CODING_AGENT_DIR;
-	const isolatedRoot = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-tool-catalog-"));
+	const isolatedRoot = await fs.mkdtemp(path.join(os.tmpdir(), "vib-tool-catalog-"));
 	const gitInit = Bun.spawnSync(["git", "init", "--quiet", isolatedRoot]);
 	if (gitInit.exitCode !== 0)
 		throw new Error(`Failed to initialize isolated tool-catalog repository: ${gitInit.stderr}`);
-	process.env.GJC_EDIT_VARIANT = "replace";
+	process.env.VIB_EDIT_VARIANT = "replace";
 	process.env.HOME = path.join(isolatedRoot, "home");
-	process.env.GJC_CONFIG_DIR = ".gjc-catalog";
-	process.env.PI_CONFIG_DIR = ".gjc-catalog";
-	process.env.GJC_CODING_AGENT_DIR = path.join(isolatedRoot, "agent");
+	process.env.VIB_CONFIG_DIR = ".vib-catalog";
+	process.env.PI_CONFIG_DIR = ".vib-catalog";
+	process.env.VIB_CODING_AGENT_DIR = path.join(isolatedRoot, "agent");
 	process.env.PI_CODING_AGENT_DIR = path.join(isolatedRoot, "agent");
 	const platform = options.platform ?? process.platform;
 	const arch = options.arch ?? process.arch;
@@ -488,16 +488,16 @@ export async function generateToolCatalogData(
 		}
 		return output;
 	} finally {
-		if (previousEditVariant === undefined) delete process.env.GJC_EDIT_VARIANT;
-		else process.env.GJC_EDIT_VARIANT = previousEditVariant;
+		if (previousEditVariant === undefined) delete process.env.VIB_EDIT_VARIANT;
+		else process.env.VIB_EDIT_VARIANT = previousEditVariant;
 		if (previousHome === undefined) delete process.env.HOME;
 		else process.env.HOME = previousHome;
-		if (previousGjcConfigDir === undefined) delete process.env.GJC_CONFIG_DIR;
-		else process.env.GJC_CONFIG_DIR = previousGjcConfigDir;
+		if (previousVibConfigDir === undefined) delete process.env.VIB_CONFIG_DIR;
+		else process.env.VIB_CONFIG_DIR = previousVibConfigDir;
 		if (previousPiConfigDir === undefined) delete process.env.PI_CONFIG_DIR;
 		else process.env.PI_CONFIG_DIR = previousPiConfigDir;
-		if (previousGjcCodingAgentDir === undefined) delete process.env.GJC_CODING_AGENT_DIR;
-		else process.env.GJC_CODING_AGENT_DIR = previousGjcCodingAgentDir;
+		if (previousVibCodingAgentDir === undefined) delete process.env.VIB_CODING_AGENT_DIR;
+		else process.env.VIB_CODING_AGENT_DIR = previousVibCodingAgentDir;
 		if (previousPiCodingAgentDir === undefined) delete process.env.PI_CODING_AGENT_DIR;
 		else process.env.PI_CODING_AGENT_DIR = previousPiCodingAgentDir;
 		await safeRm(isolatedRoot, { recursive: true, force: true });

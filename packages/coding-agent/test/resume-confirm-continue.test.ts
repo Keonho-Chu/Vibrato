@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, spyOn, vi } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { TempDir } from "@gajae-code/utils";
+import { TempDir } from "@vib-rato/utils";
 import type { Args } from "../src/cli/args";
 import { parseArgs } from "../src/cli/args";
 import { resetSettingsForTest, Settings } from "../src/config/settings";
@@ -253,7 +253,7 @@ describe("bare resume startup gating", () => {
 	});
 
 	it("uses the scoped managed root for default inventory and strict-open authority", async () => {
-		const agentDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-resume-managed-root-"));
+		const agentDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-resume-managed-root-"));
 		let listedAgentDir: string | undefined;
 		let openedIdentity: ResumeSessionIdentity | undefined;
 		let openedDestination: SessionDestination | undefined;
@@ -360,7 +360,7 @@ describe("explicit resume destination authority", () => {
 	});
 
 	it("resolves direct resume ids through the active managed root", async () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-resume-managed-root-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-resume-managed-root-"));
 		const cwd = path.join(root, "workspace");
 		const agentDir = path.join(root, "custom-agent");
 		fs.mkdirSync(cwd, { recursive: true });
@@ -386,7 +386,7 @@ describe("explicit resume destination authority", () => {
 
 describe("direct fork destination authority", () => {
 	it("resolves direct fork ids through the active managed root", async () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-fork-managed-root-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-fork-managed-root-"));
 		const cwd = path.join(root, "workspace");
 		const agentDir = path.join(root, "custom-agent");
 		fs.mkdirSync(cwd, { recursive: true });
@@ -496,7 +496,7 @@ it("renders the same fixed guidance for normal startup typed failures", async ()
 		},
 		{ error: new SessionMigrationBusyError(), message: SESSION_MIGRATION_BUSY_MESSAGE },
 	]) {
-		using tempDir = TempDir.createSync("@gjc-session-startup-error-");
+		using tempDir = TempDir.createSync("@vib-session-startup-error-");
 		const authStorage = await AuthStorage.create(path.join(tempDir.path(), "auth.db"));
 		const stderr = await captureStderr(async () => {
 			await runRootCommand(

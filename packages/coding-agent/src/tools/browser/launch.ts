@@ -1,11 +1,11 @@
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { getPuppeteerDir } from "@gajae-code/utils/dirs";
-import { $credentialEnv } from "@gajae-code/utils/env";
-import * as logger from "@gajae-code/utils/logger";
-import { $which } from "@gajae-code/utils/which";
 import * as browsers from "@puppeteer/browsers";
+import { getPuppeteerDir } from "@vib-rato/utils/dirs";
+import { $credentialEnv } from "@vib-rato/utils/env";
+import * as logger from "@vib-rato/utils/logger";
+import { $which } from "@vib-rato/utils/which";
 import type { Browser, CDPSession, Page, default as Puppeteer, Target } from "puppeteer-core";
 import { PUPPETEER_REVISIONS } from "puppeteer-core/internal/revisions.js";
 import stealthTamperingScript from "../puppeteer/00_stealth_tampering.txt" with { type: "text" };
@@ -89,7 +89,7 @@ export async function loadPuppeteerInWorker(safeDir: string): Promise<typeof Pup
  * caller's `cwd/.env` into `process.env`, so reading them directly would let
  * repository content pick the executable, point every request at an attacker's
  * proxy, or disable certificate validation. Resolve them the same way provider
- * credentials are: launching shell plus GJC/user-owned `.env` files, never the
+ * credentials are: launching shell plus Vibrato/user-owned `.env` files, never the
  * project `.env`.
  */
 function trustedBrowserEnv(name: string): string | undefined {
@@ -126,7 +126,7 @@ export function resolveBrowserEnvOverridesForTest(): {
 /**
  * Lazily download Chromium on first browser launch via @puppeteer/browsers.
  * Skipped when a system Chromium (NixOS) or PUPPETEER_EXECUTABLE_PATH is set.
- * The browser is cached under ~/.gjc/puppeteer (getPuppeteerDir).
+ * The browser is cached under ~/.vib/puppeteer (getPuppeteerDir).
  */
 let chromiumExecutablePromise: Promise<string | undefined> | undefined;
 async function ensureChromiumExecutable(): Promise<string | undefined> {

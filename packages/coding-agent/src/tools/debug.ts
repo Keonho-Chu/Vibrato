@@ -5,9 +5,9 @@ import type {
 	AgentToolResult,
 	AgentToolUpdateCallback,
 	RenderResultOptions,
-} from "@gajae-code/agent-core";
-import { type Component, Text } from "@gajae-code/tui";
-import { isEnoent, prompt } from "@gajae-code/utils";
+} from "@vib-rato/agent-core";
+import { type Component, Text } from "@vib-rato/tui";
+import { isEnoent, prompt } from "@vib-rato/utils";
 import * as z from "zod/v4";
 import {
 	type DapBreakpointRecord,

@@ -2459,7 +2459,7 @@ function assertCreationRetirementProofMatches(
 		if (
 			session.session_id !== proof.session_id ||
 			path.resolve(session.cwd) !== path.resolve(proof.cwd) ||
-			path.resolve(session.cwd, ".gjc", "state") !== path.resolve(proof.state_root) ||
+			path.resolve(session.cwd, ".vib", "state") !== path.resolve(proof.state_root) ||
 			session.broker.endpoint_generation !== proof.endpoint_generation ||
 			intent.kind === "register" ||
 			intent.remote_create_key !== proof.remote_create_key

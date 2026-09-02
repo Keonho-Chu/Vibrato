@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { redactMemorySecretsForTesting as redact } from "@gajae-code/coding-agent/memories";
+import { redactMemorySecretsForTesting as redact } from "@vib-rato/coding-agent/memories";
 
 /**
  * `docs/memory.md`: "All output is scanned for secrets before being written to

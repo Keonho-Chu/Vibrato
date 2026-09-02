@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "bun:test";
-import { formatMissingApiKeyError, formatProviderCredentialHint, streamSimple } from "@gajae-code/ai/stream";
-import type { Context, Model } from "@gajae-code/ai/types";
+import { formatMissingApiKeyError, formatProviderCredentialHint, streamSimple } from "@vib-rato/ai/stream";
+import type { Context, Model } from "@vib-rato/ai/types";
 
 const originalOpenCodeApiKey = Bun.env.OPENCODE_API_KEY;
 
@@ -16,7 +16,7 @@ describe("formatProviderCredentialHint", () => {
 		expect(hint).toContain("https://opencode.ai/auth");
 		expect(hint).toContain("not a separate session/OAuth token");
 		expect(hint).toContain("OPENCODE_API_KEY");
-		expect(hint).toContain("~/.gjc/.env");
+		expect(hint).toContain("~/.vib/.env");
 		expect(hint).toContain("project .env is intentionally ignored");
 		expect(hint).toContain("once before headless/print mode to store the key interactively");
 		expect(hint).not.toContain("non-interactively");
@@ -25,7 +25,7 @@ describe("formatProviderCredentialHint", () => {
 	it("covers opencode-zen with the same shape", () => {
 		const hint = formatProviderCredentialHint("opencode-zen");
 		expect(hint).toContain("OPENCODE_API_KEY");
-		expect(hint).toContain("gjc auth-broker login opencode-zen");
+		expect(hint).toContain("vib auth-broker login opencode-zen");
 	});
 
 	it("names the env var for a plain env-key provider without an OpenCode note or invalid login command", () => {
@@ -34,7 +34,7 @@ describe("formatProviderCredentialHint", () => {
 		expect(hint).toContain("project .env is intentionally ignored");
 		expect(hint).not.toContain("OpenCode");
 		// groq is not an auth-broker OAuth provider, so we must not suggest a login that would fail.
-		expect(hint).not.toContain("gjc auth-broker login");
+		expect(hint).not.toContain("vib auth-broker login");
 	});
 
 	it("returns an empty hint for providers without a static env-var key", () => {

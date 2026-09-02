@@ -111,7 +111,7 @@ const STRUCTURED_REFUSAL_SIGNALS: ReadonlySet<string> = new Set([
 /**
  * Mint terminal authority only from a first-party adapter parse site. The
  * capability is branded by a module-private symbol and is not available from
- * the public `@gajae-code/ai` surface. Caller-controlled transport seams are
+ * the public `@vib-rato/ai` surface. Caller-controlled transport seams are
  * also not trusted adapter invocations: an injected fetch or SDK client can
  * fabricate a refusal without any provider contact, so adapter call sites
  * pass those seams explicitly and fail closed when one is present. An

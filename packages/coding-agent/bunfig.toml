@@ -4,7 +4,7 @@
 # that keeps `mkdtemp(os.tmpdir())` paths symlink-free for the native
 # owner-only primitive — silently never runs in package-cwd shards.
 #
-# The preload no longer pins GJC_SESSION_CONTEXT_BUDGET_BYTES; the two overflow
+# The preload no longer pins VIB_SESSION_CONTEXT_BUDGET_BYTES; the two overflow
 # test files pin the budget in-process via SessionManagerTestHooks instead, so
 # this preload does not leak any budget mutation into spawned subprocesses.
 [test]

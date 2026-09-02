@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { lifecyclePaths } from "@gajae-code/coding-agent/gjc-runtime/tmux-owner-isolation";
+import { lifecyclePaths } from "@vib-rato/coding-agent/vib-runtime/tmux-owner-isolation";
 import packageJson from "../package.json";
 import { interactiveBootstrapText, routeModelsAlias, routeRootArgv } from "../src/cli";
 import { parseArgs } from "../src/cli/args";
@@ -16,7 +16,7 @@ function extractRegisteredCommands(source: string): string[] {
 	return [...commandsBlock[1].matchAll(/\bname:\s*"([^"]+)"/g)].map(match => match[1]);
 }
 
-describe("GJC public CLI command surface", () => {
+describe("Vibrato public CLI command surface", () => {
 	it("routes legacy coordinator MCP invocations to native commands", () => {
 		expect(routeRootArgv(["coordinator-mcp"])).toEqual(["mcp-serve", "coordinator"]);
 		// The legacy `--team` launch shim is gone: it is an ordinary launch prompt now.
@@ -86,15 +86,15 @@ describe("GJC public CLI command surface", () => {
 	});
 	it("routes the internal managed-owner supervisor through its child admission barrier", async () => {
 		if (process.platform !== "linux") return;
-		const stateDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-cli-supervisor-"));
+		const stateDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-cli-supervisor-"));
 		const lifecycle = lifecyclePaths(stateDir, "session-cli-route", "generation-cli-route");
 		const managedOwnerEnv = {
 			...process.env,
-			GJC_TMUX_OWNER_STATE_DIR: stateDir,
-			GJC_COORDINATOR_SESSION_ID: "session-cli-route",
-			GJC_TMUX_OWNER_GENERATION: "generation-cli-route",
-			GJC_MANAGED_OWNER_RUN_ID: "run-cli-route",
-			GJC_MANAGED_OWNER_INCARNATION: "incarnation-cli-route",
+			VIB_TMUX_OWNER_STATE_DIR: stateDir,
+			VIB_COORDINATOR_SESSION_ID: "session-cli-route",
+			VIB_TMUX_OWNER_GENERATION: "generation-cli-route",
+			VIB_MANAGED_OWNER_RUN_ID: "run-cli-route",
+			VIB_MANAGED_OWNER_INCARNATION: "incarnation-cli-route",
 		};
 		try {
 			const admitted = Bun.spawnSync(["bun", cliEntry, "--internal-managed-owner-supervisor"], {
@@ -103,12 +103,12 @@ describe("GJC public CLI command surface", () => {
 				stderr: "pipe",
 				env: {
 					...managedOwnerEnv,
-					GJC_MANAGED_OWNER_COMMAND_JSON: JSON.stringify([process.execPath, cliEntry, "--version"]),
+					VIB_MANAGED_OWNER_COMMAND_JSON: JSON.stringify([process.execPath, cliEntry, "--version"]),
 				},
 			});
 			const admittedOutput = `${admitted.stdout.toString()}\n${admitted.stderr.toString()}`;
 			expect(admitted.exitCode, admittedOutput).toBe(0);
-			expect(admitted.stdout.toString()).toMatch(/^gjc\/\d+\.\d+\.\d+\n$/);
+			expect(admitted.stdout.toString()).toMatch(/^vib\/\d+\.\d+\.\d+\n$/);
 			const bindingFiles = (await fs.readdir(lifecycle.root)).filter(
 				file => file.startsWith("child-") && file.endsWith(".binding.json"),
 			);
@@ -116,9 +116,9 @@ describe("GJC public CLI command surface", () => {
 			await fs.rm(path.join(lifecycle.root, bindingFiles[0]!));
 
 			const unboundChild = `import { readdir, writeFile } from "node:fs/promises";
-const binding = (await readdir(process.env.GJC_MANAGED_OWNER_BINDING_DIR!)).find(file => file.startsWith("child-"));
+const binding = (await readdir(process.env.VIB_MANAGED_OWNER_BINDING_DIR!)).find(file => file.startsWith("child-"));
 if (!binding) throw new Error("binding_missing");
-await writeFile(\`\${process.env.GJC_MANAGED_OWNER_BINDING_DIR}/\${binding}\`, "{}\\n");
+await writeFile(\`\${process.env.VIB_MANAGED_OWNER_BINDING_DIR}/\${binding}\`, "{}\\n");
 const child = Bun.spawn([${JSON.stringify(process.execPath)}, ${JSON.stringify(cliEntry)}, "--version"], { stdout: "inherit", stderr: "inherit" });
 process.exitCode = await child.exited;`;
 			const blocked = Bun.spawnSync(["bun", cliEntry, "--internal-managed-owner-supervisor"], {
@@ -127,15 +127,15 @@ process.exitCode = await child.exited;`;
 				stderr: "pipe",
 				env: {
 					...managedOwnerEnv,
-					GJC_TMUX_OWNER_GENERATION: "generation-cli-blocked",
-					GJC_MANAGED_OWNER_COMMAND_JSON: JSON.stringify([process.execPath, "-e", unboundChild]),
-					GJC_MANAGED_OWNER_BINDING_DIR: lifecyclePaths(stateDir, "session-cli-route", "generation-cli-blocked")
+					VIB_TMUX_OWNER_GENERATION: "generation-cli-blocked",
+					VIB_MANAGED_OWNER_COMMAND_JSON: JSON.stringify([process.execPath, "-e", unboundChild]),
+					VIB_MANAGED_OWNER_BINDING_DIR: lifecyclePaths(stateDir, "session-cli-route", "generation-cli-blocked")
 						.root,
 				},
 			});
 			const blockedOutput = `${blocked.stdout.toString()}\n${blocked.stderr.toString()}`;
 			expect(blocked.exitCode, blockedOutput).toBe(75);
-			expect(blockedOutput).not.toContain("gjc/");
+			expect(blockedOutput).not.toContain("vib/");
 		} finally {
 			await fs.rm(stateDir, { recursive: true, force: true });
 		}
@@ -194,7 +194,7 @@ process.exitCode = await child.exited;`;
 	});
 
 	it("serves migration guidance for removed worktree subpaths from the packed package", async () => {
-		const stageDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-worktree-tombstone-"));
+		const stageDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-worktree-tombstone-"));
 		try {
 			const packageDir = path.join(repoRoot, "packages", "coding-agent");
 			const pack = Bun.spawnSync(["bun", "pm", "pack", "--destination", stageDir], {
@@ -208,16 +208,16 @@ process.exitCode = await child.exited;`;
 			const extract = Bun.spawnSync(["tar", "xzf", tarball], { cwd: stageDir, stdout: "pipe", stderr: "pipe" });
 			expect(extract.exitCode, extract.stderr.toString()).toBe(0);
 			const consumerDir = path.join(stageDir, "consumer");
-			await fs.mkdir(path.join(consumerDir, "node_modules", "@gajae-code"), { recursive: true });
+			await fs.mkdir(path.join(consumerDir, "node_modules", "@vib-rato"), { recursive: true });
 			await fs.symlink(
 				path.join(stageDir, "package"),
-				path.join(consumerDir, "node_modules", "@gajae-code", "coding-agent"),
+				path.join(consumerDir, "node_modules", "@vib-rato", "coding-agent"),
 			);
 			for (const subpath of [
-				"@gajae-code/coding-agent/cli/worktree-cli",
-				"@gajae-code/coding-agent/cli/worktree-cli.js",
-				"@gajae-code/coding-agent/commands/worktree",
-				"@gajae-code/coding-agent/commands/worktree.js",
+				"@vib-rato/coding-agent/cli/worktree-cli",
+				"@vib-rato/coding-agent/cli/worktree-cli.js",
+				"@vib-rato/coding-agent/commands/worktree",
+				"@vib-rato/coding-agent/commands/worktree.js",
 			]) {
 				const child = Bun.spawnSync([process.execPath, "-e", `await import(${JSON.stringify(subpath)})`], {
 					cwd: consumerDir,
@@ -227,7 +227,7 @@ process.exitCode = await child.exited;`;
 				const output = `${child.stdout.toString()}${child.stderr.toString()}`;
 				expect(child.exitCode, output).not.toBe(0);
 				expect(output).toContain("was deliberately removed");
-				expect(output).toContain("Inspect leftover managed worktrees under ~/.gjc/wt manually");
+				expect(output).toContain("Inspect leftover managed worktrees under ~/.vib/wt manually");
 				expect(output).toContain("`git worktree remove` or `git worktree prune` instead");
 			}
 		} finally {
@@ -272,17 +272,17 @@ process.exitCode = await child.exited;`;
 			const output = `${result.stdout.toString()}\n${result.stderr.toString()}`;
 
 			expect(result.exitCode, output).toBe(0);
-			expect(output).not.toContain("GJC_RUNTIME_BINARY");
+			expect(output).not.toContain("VIB_RUNTIME_BINARY");
 			expect(output).not.toContain("private runtime");
 		}
 	}, 30_000);
 
 	it("preserves root fast-path precedence", () => {
 		const cases = [
-			{ args: ["--tmux", "--version"], output: /^gjc\/\d+\.\d+\.\d+\n$/ },
-			{ args: ["--tmux", "-v"], output: /^gjc\/\d+\.\d+\.\d+\n$/ },
-			{ args: ["--resume", "--version"], output: /^gjc\/\d+\.\d+\.\d+\n$/ },
-			{ args: ["--resume", "-v"], output: /^gjc\/\d+\.\d+\.\d+\n$/ },
+			{ args: ["--tmux", "--version"], output: /^vib\/\d+\.\d+\.\d+\n$/ },
+			{ args: ["--tmux", "-v"], output: /^vib\/\d+\.\d+\.\d+\n$/ },
+			{ args: ["--resume", "--version"], output: /^vib\/\d+\.\d+\.\d+\n$/ },
+			{ args: ["--resume", "-v"], output: /^vib\/\d+\.\d+\.\d+\n$/ },
 			{ args: ["--help"], output: "USAGE" },
 			{ args: ["--tmux", "--help"], output: "USAGE" },
 			{ args: ["--resume", "--help"], output: "USAGE" },
@@ -316,7 +316,7 @@ process.exitCode = await child.exited;`;
 			const output = `${result.stdout.toString()}\n${result.stderr.toString()}`;
 
 			expect(result.exitCode, output).toBe(0);
-			expect(result.stdout.toString()).toContain("$ gjc launch");
+			expect(result.stdout.toString()).toContain("$ vib launch");
 		}
 
 		for (const args of [
@@ -348,7 +348,7 @@ process.exitCode = await child.exited;`;
 			stdout: "pipe",
 		});
 		expect(unrelated.exitCode, unrelated.stderr.toString()).toBe(0);
-		expect(unrelated.stdout.toString()).toMatch(/^gjc\/\d+\.\d+\.\d+\n$/);
+		expect(unrelated.stdout.toString()).toMatch(/^vib\/\d+\.\d+\.\d+\n$/);
 	}, 30_000);
 
 	it("does not capture absolute-path prompts as startup slash commands", () => {
@@ -405,11 +405,11 @@ process.exitCode = await child.exited;`;
 	});
 
 	it("routes bare setup as the default workflow-skill setup command", async () => {
-		const home = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-setup-command-home-"));
+		const home = await fs.mkdtemp(path.join(os.tmpdir(), "vib-setup-command-home-"));
 		try {
 			const result = Bun.spawnSync(["bun", cliEntry, "setup", "--json"], {
 				cwd: repoRoot,
-				env: { ...process.env, HOME: home, GJC_CODING_AGENT_DIR: path.join(home, ".gjc", "agent") },
+				env: { ...process.env, HOME: home, VIB_CODING_AGENT_DIR: path.join(home, ".vib", "agent") },
 				stderr: "pipe",
 				stdout: "pipe",
 			});
@@ -419,7 +419,7 @@ process.exitCode = await child.exited;`;
 			expect(result.exitCode, stderr).toBe(0);
 			const payload = JSON.parse(stdout) as { written?: number; targetRoot?: string };
 			expect(payload.written).toBe(10);
-			expect(payload.targetRoot).toContain(path.join(home, ".gjc", "agent"));
+			expect(payload.targetRoot).toContain(path.join(home, ".vib", "agent"));
 		} finally {
 			await fs.rm(home, { recursive: true, force: true });
 		}
@@ -442,9 +442,9 @@ process.exitCode = await child.exited;`;
 		});
 		const serveOutput = `${serve.stdout.toString()}\n${serve.stderr.toString()}`;
 		expect(serve.exitCode, serveOutput).toBe(2);
-		expect(serveOutput).toContain("gjc sdk serve: specify exactly one of");
+		expect(serveOutput).toContain("vib sdk serve: specify exactly one of");
 
-		const guideAgentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-sdk-guides-command-"));
+		const guideAgentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-sdk-guides-command-"));
 		try {
 			const guides = Bun.spawnSync(["bun", cliEntry, "sdk", "guides", "list", "--agent-dir", guideAgentDir], {
 				cwd: repoRoot,
@@ -500,7 +500,7 @@ process.exitCode = await child.exited;`;
 		expect(unknownVerb.exitCode, unknownOutput).toBe(2);
 		expect(unknownVerb.stderr.toString()).toContain("Expected verb to be one of");
 
-		// `gjc daemon session` is deleted without an alias (DR-13).
+		// `vib daemon session` is deleted without an alias (DR-13).
 		const daemonSession = Bun.spawnSync(["bun", cliEntry, "daemon", "session", "list"], {
 			cwd: repoRoot,
 			stderr: "pipe",

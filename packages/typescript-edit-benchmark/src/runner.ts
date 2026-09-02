@@ -7,10 +7,10 @@
 /// <reference types="./bun-imports.d.ts" />
 import * as fs from "node:fs";
 import * as path from "node:path";
-import type { AgentMessage, ResolvedThinkingLevel, ThinkingLevel } from "@gajae-code/agent-core";
-import type { Model } from "@gajae-code/ai";
-import { computeLineHash, formatSessionDumpText } from "@gajae-code/coding-agent";
-import { prompt } from "@gajae-code/utils";
+import type { AgentMessage, ResolvedThinkingLevel, ThinkingLevel } from "@vib-rato/agent-core";
+import type { Model } from "@vib-rato/ai";
+import { computeLineHash, formatSessionDumpText } from "@vib-rato/coding-agent";
+import { prompt } from "@vib-rato/utils";
 import { diffLines } from "diff";
 import { formatDirectory } from "./formatter";
 import { discoverSharedInfra, InProcessClient, type SharedInfra } from "./in-process-client";
@@ -41,7 +41,7 @@ type ConversationDumpSessionState = {
 /** Common interface for both RPC and in-process clients */
 interface BenchmarkClient {
 	start(): Promise<void>;
-	setThinkingLevel(level: import("@gajae-code/agent-core").ResolvedThinkingLevel): Promise<void>;
+	setThinkingLevel(level: import("@vib-rato/agent-core").ResolvedThinkingLevel): Promise<void>;
 	onEvent(listener: (event: { type: string; [key: string]: unknown }) => void): () => void;
 	prompt(text: string): Promise<void>;
 	followUp(text: string): Promise<void>;

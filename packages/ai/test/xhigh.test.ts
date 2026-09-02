@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
-import { getBundledModel } from "@gajae-code/ai/models";
-import { stream } from "@gajae-code/ai/stream";
-import type { Context, Model } from "@gajae-code/ai/types";
+import { getBundledModel } from "@vib-rato/ai/models";
+import { stream } from "@vib-rato/ai/stream";
+import type { Context, Model } from "@vib-rato/ai/types";
 import { e2eApiKey } from "./oauth";
 
 function makeContext(): Context {

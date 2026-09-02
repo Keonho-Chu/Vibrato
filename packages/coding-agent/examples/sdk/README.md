@@ -1,6 +1,6 @@
 # SDK Examples
 
-Programmatic usage of gjc-coding-agent via `createAgentSession()`.
+Programmatic usage of vib-coding-agent via `createAgentSession()`.
 
 ## Examples
 
@@ -29,7 +29,7 @@ npx tsx examples/sdk/01-minimal.ts
 ## Quick Reference
 
 ```typescript
-import { getModel } from "@gajae-code/ai";
+import { getModel } from "@vib-rato/ai";
 import {
 	AuthStorage,
 	createAgentSession,
@@ -47,8 +47,8 @@ import {
 	BUILTIN_TOOLS,
 	HIDDEN_TOOLS,
 	createTools,
-} from "@gajae-code/coding-agent";
-import { ResolveTool } from "@gajae-code/coding-agent/tools/implementations";
+} from "@vib-rato/coding-agent";
+import { ResolveTool } from "@vib-rato/coding-agent/tools/implementations";
 
 // Auth and models setup
 const authStorage = discoverAuthStorage();
@@ -133,7 +133,7 @@ await resolveTool.execute("call-1", {
 | `authStorage`               | `discoverAuthStorage()`       | Credential storage                |
 | `modelRegistry`             | `discoverModels(authStorage)` | Model registry                    |
 | `cwd`                       | `process.cwd()`               | Working directory                 |
-| `agentDir`                  | `~/.gjc/agent`                | Config directory                  |
+| `agentDir`                  | `~/.vib/agent`                | Config directory                  |
 | `model`                     | From settings/first available | Model to use                      |
 | `thinkingLevel`             | From settings/"off"           | off, low, medium, high            |
 | `systemPrompt`              | Discovered                    | String or `(default) => modified` |

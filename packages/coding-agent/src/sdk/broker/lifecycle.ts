@@ -3,17 +3,17 @@ import { createHash, randomUUID } from "node:crypto";
 import * as fsSync from "node:fs";
 import * as fs from "node:fs/promises";
 import path from "node:path";
-import type { NativeExactUnlinkResult } from "@gajae-code/natives";
+import type { NativeExactUnlinkResult } from "@vib-rato/natives";
 
-let nativeLifecycleBindings: typeof import("@gajae-code/natives") | undefined;
+let nativeLifecycleBindings: typeof import("@vib-rato/natives") | undefined;
 
-function nativeLifecycle(): typeof import("@gajae-code/natives") {
+function nativeLifecycle(): typeof import("@vib-rato/natives") {
 	if (!nativeLifecycleBindings)
-		nativeLifecycleBindings = require("@gajae-code/natives") as typeof import("@gajae-code/natives");
+		nativeLifecycleBindings = require("@vib-rato/natives") as typeof import("@vib-rato/natives");
 	return nativeLifecycleBindings;
 }
 
-import { $credentialEnv, logger, resolveEquivalentPath } from "@gajae-code/utils";
+import { $credentialEnv, logger, resolveEquivalentPath } from "@vib-rato/utils";
 import {
 	loadAcceptedModelPresetRegistry,
 	loadAcceptedModelPresetRegistryAsync,
@@ -25,21 +25,6 @@ import {
 } from "../../config/model-profile-contract";
 import { mergeModelProfiles } from "../../config/model-profiles";
 import { ModelsConfigFile } from "../../config/model-registry";
-import {
-	ensureLaunchWorktree,
-	ensureReusableNodeModules,
-	type GjcLaunchWorktreePlan,
-	planLaunchWorktree,
-} from "../../gjc-runtime/launch-worktree";
-import { probeLinuxProcPidSync } from "../../gjc-runtime/linux-proc";
-import {
-	GJC_COORDINATOR_SESSION_BRANCH_ENV,
-	GJC_COORDINATOR_SESSION_ID_ENV,
-	GJC_COORDINATOR_SESSION_STATE_FILE_ENV,
-	GJC_COORDINATOR_SIDECAR_KEY_ID_ENV,
-	GJC_COORDINATOR_SIDECAR_SIGNATURE_REQUIRED_ENV,
-	GJC_COORDINATOR_SIDECAR_SIGNING_KEY_ENV,
-} from "../../gjc-runtime/session-state-sidecar";
 import { validateManagedArtifactTree } from "../../session/internal/managed-session-storage";
 import {
 	FileSessionStorage,
@@ -49,6 +34,21 @@ import {
 	type VerifiedSessionDeleteResult,
 	type VerifiedSessionDeleteTarget,
 } from "../../session/session-storage";
+import {
+	ensureLaunchWorktree,
+	ensureReusableNodeModules,
+	planLaunchWorktree,
+	type VibLaunchWorktreePlan,
+} from "../../vib-runtime/launch-worktree";
+import { probeLinuxProcPidSync } from "../../vib-runtime/linux-proc";
+import {
+	VIB_COORDINATOR_SESSION_BRANCH_ENV,
+	VIB_COORDINATOR_SESSION_ID_ENV,
+	VIB_COORDINATOR_SESSION_STATE_FILE_ENV,
+	VIB_COORDINATOR_SIDECAR_KEY_ID_ENV,
+	VIB_COORDINATOR_SIDECAR_SIGNATURE_REQUIRED_ENV,
+	VIB_COORDINATOR_SIDECAR_SIGNING_KEY_ENV,
+} from "../../vib-runtime/session-state-sidecar";
 import type { SessionLifecycleMcpServer } from "../acp/mcp";
 import { SdkClient, SdkClientError } from "../client/client";
 import { BROKER_RUNTIME_CLOSE_CAPABILITY_FIELD } from "../host/control/runtime-gate";
@@ -280,7 +280,7 @@ type Input = Record<string, unknown>;
 // receives the caller's original input after startup admission has expanded it.
 type LifecycleEffectIntentWithDeadline = LifecycleEffectIntent & { lifecycleCleanupDeadlineAt?: number };
 export const isCanonicalSessionId = (value: string): boolean => /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(value);
-const defaultStateRoot = (cwd: string) => path.join(path.resolve(cwd), ".gjc", "state");
+const defaultStateRoot = (cwd: string) => path.join(path.resolve(cwd), ".vib", "state");
 const hasDefaultStateRoot = (cwd: string, root: string) => path.resolve(root) === defaultStateRoot(cwd);
 
 export interface SessionLifecycleWorktreeTarget {
@@ -329,7 +329,7 @@ export interface SessionLifecycleLaunchRequestBase {
 	/** Broker-issued effect marker which the child echoes only after host readiness. */
 	effectMarker?: string;
 	/**
-	 * Explicit `provider/model` pin with `gjc --model` grammar (#4707). The
+	 * Explicit `provider/model` pin with `vib --model` grammar (#4707). The
 	 * coordinator resolves it before the broker; the session host applies it
 	 * exactly like a CLI `--model` selection, so it wins over `modelPreset`
 	 * (mirroring CLI precedence where an explicit `--model` overrides
@@ -490,7 +490,7 @@ export function readSessionLifecycleLaunchRequest(
 	value: string | undefined,
 	now = Date.now(),
 ): SessionLifecycleLaunchRequest {
-	if (!value) throw new Error("GJC_SDK_LIFECYCLE_REQUEST is required.");
+	if (!value) throw new Error("VIB_SDK_LIFECYCLE_REQUEST is required.");
 	const request = JSON.parse(value) as Partial<SessionLifecycleLaunchRequest>;
 	if (
 		(request.operation !== "session.create" &&
@@ -544,7 +544,7 @@ export function readSessionLifecycleLaunchRequest(
 		(request.coordinatorSessionBranch !== undefined &&
 			(typeof request.coordinatorSessionBranch !== "string" || request.coordinatorSessionBranch.length > 512))
 	)
-		throw new Error("GJC_SDK_LIFECYCLE_REQUEST is invalid.");
+		throw new Error("VIB_SDK_LIFECYCLE_REQUEST is invalid.");
 	return request as SessionLifecycleLaunchRequest;
 }
 
@@ -559,7 +559,7 @@ type SessionLaunch = {
 	sessionPath?: string;
 	sessionIdentity?: SessionLifecycleTranscriptIdentity;
 	/**
-	 * Explicit `provider/model` pin with `gjc --model` grammar (#4707). Applied
+	 * Explicit `provider/model` pin with `vib --model` grammar (#4707). Applied
 	 * by the session host exactly like a CLI `--model` selection, so it wins
 	 * over `modelPreset` (mirroring CLI precedence where an explicit `--model`
 	 * overrides activated profiles).
@@ -575,7 +575,7 @@ type SessionLaunch = {
 	coordinatorSidecarKeyId?: string;
 	worktree?: SessionLifecycleWorktreeTarget;
 	readiness?: SessionLifecycleReadiness;
-	worktreePlan?: GjcLaunchWorktreePlan;
+	worktreePlan?: VibLaunchWorktreePlan;
 };
 
 type CleanupEvidence = BrokerCleanupEvidence;
@@ -713,7 +713,7 @@ function stateRoot(input: Input, cwd: string | undefined): string | undefined {
 	const target = input.target as Record<string, unknown> | undefined;
 	const root = text(input.stateRoot) ?? text(target?.stateRoot);
 	if (root) return path.resolve(root);
-	return cwd ? path.join(cwd, ".gjc", "state") : undefined;
+	return cwd ? path.join(cwd, ".vib", "state") : undefined;
 }
 
 function isLifecycleWorktreeTarget(value: unknown): value is SessionLifecycleWorktreeTarget {
@@ -861,7 +861,7 @@ async function validateLiveResumeScope(
 	if (!requestedCwd) return fail("invalid_input", "A target path is required.");
 	const suppliedRoot = stateRoot(input, requestedCwd);
 	if (!suppliedRoot || !hasDefaultStateRoot(requestedCwd, suppliedRoot))
-		return fail("invalid_input", "stateRoot must be the default .gjc/state for cwd.");
+		return fail("invalid_input", "stateRoot must be the default .vib/state for cwd.");
 	try {
 		if (!(await fs.stat(requestedCwd)).isDirectory())
 			return fail("invalid_input", "Lifecycle worktree must be a directory.");
@@ -944,10 +944,10 @@ async function reconcileReadyScope(broker: Broker, id: string, scope: string | u
  * the broker runs. `$env` merges the caller's `cwd/.env` into `process.env`, so
  * reading it there would let repository content replace the session host;
  * resolve it the same way provider credentials are (launching shell plus
- * GJC/user-owned `.env` files, never the project `.env`).
+ * Vibrato/user-owned `.env` files, never the project `.env`).
  */
 function sdkSessionCommandOverride(): { file: string; args: string[] } | undefined {
-	const configured = $credentialEnv("GJC_SDK_SESSION_COMMAND");
+	const configured = $credentialEnv("VIB_SDK_SESSION_COMMAND");
 	if (!configured) return undefined;
 	const [file, ...args] = configured.trim().split(/\s+/);
 	return file ? { file, args } : undefined;
@@ -1217,7 +1217,7 @@ export async function reapDeadLifecycleMarkers(
 					...ready.identity,
 					parentDev: directoryIdentity.dev,
 					parentIno: directoryIdentity.ino,
-					quarantineName: `.gjc-reap-${randomUUID()}-${path.basename(readyPath)}`,
+					quarantineName: `.vib-reap-${randomUUID()}-${path.basename(readyPath)}`,
 				}).ok
 			)
 				continue;
@@ -1226,7 +1226,7 @@ export async function reapDeadLifecycleMarkers(
 					...primary.identity,
 					parentDev: directoryIdentity.dev,
 					parentIno: directoryIdentity.ino,
-					quarantineName: `.gjc-reap-${randomUUID()}-${name}`,
+					quarantineName: `.vib-reap-${randomUUID()}-${name}`,
 				}).ok
 			)
 				continue;
@@ -1602,7 +1602,7 @@ function lifecycleCleanupPlan(
 				path: file,
 				identity: serializeCleanupIdentity({ ...identity, size: Number(identity.size) }),
 				attempt,
-				plannedPath: path.join(directory, `.gjc-delete-${suffix}-${path.basename(file)}`),
+				plannedPath: path.join(directory, `.vib-delete-${suffix}-${path.basename(file)}`),
 			},
 		];
 	});
@@ -1898,13 +1898,13 @@ function retirementCleanupPlan(
 			path: markerPath,
 			identity: serializeCleanupIdentity({ ...marker.identity, size: Number(marker.identity.size) }),
 			attempt: 1,
-			plannedPath: path.join(directory, `.gjc-delete-${randomUUID()}-${path.basename(markerPath)}`),
+			plannedPath: path.join(directory, `.vib-delete-${randomUUID()}-${path.basename(markerPath)}`),
 		},
 		{
 			path: readyPath,
 			identity: serializeCleanupIdentity({ ...ready.identity, size: Number(ready.identity.size) }),
 			attempt: 1,
-			plannedPath: path.join(directory, `.gjc-delete-${randomUUID()}-${path.basename(readyPath)}`),
+			plannedPath: path.join(directory, `.vib-delete-${randomUUID()}-${path.basename(readyPath)}`),
 		},
 	];
 	return {
@@ -2295,7 +2295,7 @@ function validateLifecycleCleanupFile(root: string, id: string, file: LifecycleC
 	if (
 		!isCanonicalLifecycleCleanupOriginal(root, id, original) ||
 		path.dirname(planned) !== directory ||
-		!path.basename(planned).startsWith(".gjc-delete-") ||
+		!path.basename(planned).startsWith(".vib-delete-") ||
 		(file.detachedPath !== undefined && path.dirname(path.resolve(file.detachedPath)) !== directory)
 	)
 		return false;
@@ -2475,7 +2475,7 @@ function legacyMetadataCleanupPlan(cleanup: CleanupEvidence): CleanupEvidence | 
 	if (
 		metadataPath !== markerPath ||
 		path.dirname(plannedPath) !== directory ||
-		!path.basename(plannedPath).startsWith(".gjc-delete-") ||
+		!path.basename(plannedPath).startsWith(".vib-delete-") ||
 		(detachedPath !== undefined && path.dirname(detachedPath) !== directory) ||
 		(cleanup.metadataAttempt !== undefined &&
 			(!Number.isSafeInteger(cleanup.metadataAttempt) || cleanup.metadataAttempt < 1))
@@ -2571,7 +2571,7 @@ function legacyMetadataCleanupPlan(cleanup: CleanupEvidence): CleanupEvidence | 
 								size: Number(ready.capture.identity.size),
 							}),
 							attempt: 1,
-							plannedPath: path.join(directory, `.gjc-delete-${randomUUID()}-${path.basename(readyPath)}`),
+							plannedPath: path.join(directory, `.vib-delete-${randomUUID()}-${path.basename(readyPath)}`),
 						},
 					]
 				: []),
@@ -2613,7 +2613,7 @@ function lifecycleDeleteMetadataCleanupPlan(
 			attempt: 1,
 			plannedPath: path.join(
 				path.dirname(metadataPath),
-				`.gjc-delete-${randomUUID()}-${path.basename(metadataPath)}`,
+				`.vib-delete-${randomUUID()}-${path.basename(metadataPath)}`,
 			),
 		})),
 	};
@@ -2790,7 +2790,7 @@ async function reconcileLifecycleCleanup(
 				...file,
 				detachedPath: activePath,
 				attempt: (file.attempt ?? 1) + 1,
-				plannedPath: path.join(path.dirname(file.path), `.gjc-delete-${randomUUID()}-${path.basename(file.path)}`),
+				plannedPath: path.join(path.dirname(file.path), `.vib-delete-${randomUUID()}-${path.basename(file.path)}`),
 			};
 			const lifecycleFiles = activeCleanup.lifecycleFiles!.map((candidate, candidateIndex) =>
 				candidateIndex === index ? nextFile : candidate,
@@ -3202,15 +3202,15 @@ async function removeOwnedLifecycleArtifacts(
 	const endpointPath = path.join(root, "sdk", `${id}.json`);
 	const plannedEndpointPath = path.join(
 		path.dirname(endpointPath),
-		`.gjc-delete-endpoint-${expected.effectMarker}-${path.basename(endpointPath)}`,
+		`.vib-delete-endpoint-${expected.effectMarker}-${path.basename(endpointPath)}`,
 	);
 	const retryEndpointPath = path.join(
 		path.dirname(endpointPath),
-		`.gjc-delete-endpoint-retry-${expected.effectMarker}-${path.basename(endpointPath)}`,
+		`.vib-delete-endpoint-retry-${expected.effectMarker}-${path.basename(endpointPath)}`,
 	);
 	const finalEndpointPath = path.join(
 		path.dirname(endpointPath),
-		`.gjc-delete-endpoint-final-${expected.effectMarker}-${path.basename(endpointPath)}`,
+		`.vib-delete-endpoint-final-${expected.effectMarker}-${path.basename(endpointPath)}`,
 	);
 	const endpointSource = [endpointPath, plannedEndpointPath, retryEndpointPath, finalEndpointPath].find(candidate => {
 		try {
@@ -3285,7 +3285,7 @@ async function removeOwnedLifecycleArtifacts(
 						endpoint.identity,
 						path.join(
 							path.dirname(detachedPath),
-							`.gjc-delete-endpoint-detached-${expected.effectMarker}-${path.basename(endpointPath)}`,
+							`.vib-delete-endpoint-detached-${expected.effectMarker}-${path.basename(endpointPath)}`,
 						),
 						{ dev: BigInt(endpointParent.dev), ino: BigInt(endpointParent.ino) },
 					);
@@ -3617,15 +3617,15 @@ async function removeExactDeadSessionEndpoint(
 		return false;
 	const endpointPath = path.join(record.locator.stateRoot, "sdk", `${id}.json`);
 	const suffix = `${id}-${record.endpointGeneration}-${record.pid}-${String(record.endpointMtimeMs).replaceAll(".", "_")}.json`;
-	const plannedEndpointPath = path.join(path.dirname(endpointPath), `.gjc-dead-endpoint-${suffix}`);
-	const retryEndpointPath = path.join(path.dirname(endpointPath), `.gjc-dead-endpoint-retry-${suffix}`);
-	const finalEndpointPath = path.join(path.dirname(endpointPath), `.gjc-dead-endpoint-final-${suffix}`);
+	const plannedEndpointPath = path.join(path.dirname(endpointPath), `.vib-dead-endpoint-${suffix}`);
+	const retryEndpointPath = path.join(path.dirname(endpointPath), `.vib-dead-endpoint-retry-${suffix}`);
+	const finalEndpointPath = path.join(path.dirname(endpointPath), `.vib-dead-endpoint-final-${suffix}`);
 	const ownedEndpointPaths = record.lifecycleRequestId
 		? [
-				`.gjc-delete-endpoint-detached-${record.lifecycleRequestId}-${path.basename(endpointPath)}`,
-				`.gjc-delete-endpoint-final-${record.lifecycleRequestId}-${path.basename(endpointPath)}`,
-				`.gjc-delete-endpoint-retry-${record.lifecycleRequestId}-${path.basename(endpointPath)}`,
-				`.gjc-delete-endpoint-${record.lifecycleRequestId}-${path.basename(endpointPath)}`,
+				`.vib-delete-endpoint-detached-${record.lifecycleRequestId}-${path.basename(endpointPath)}`,
+				`.vib-delete-endpoint-final-${record.lifecycleRequestId}-${path.basename(endpointPath)}`,
+				`.vib-delete-endpoint-retry-${record.lifecycleRequestId}-${path.basename(endpointPath)}`,
+				`.vib-delete-endpoint-${record.lifecycleRequestId}-${path.basename(endpointPath)}`,
 			].map(name => path.join(path.dirname(endpointPath), name))
 		: [];
 	const ownedPayloadPaths: string[] = [];
@@ -3747,7 +3747,7 @@ async function hasOwnedEndpointPayload(
 		return (error as NodeJS.ErrnoException).code !== "ENOENT";
 	}
 	for (const name of names) {
-		if (!name.startsWith(".gjc-delete-endpoint-") || !name.includes(effectMarker) || !name.includes(endpointName))
+		if (!name.startsWith(".vib-delete-endpoint-") || !name.includes(effectMarker) || !name.includes(endpointName))
 			continue;
 		try {
 			const candidate = path.join(directory, name);
@@ -4011,7 +4011,7 @@ async function waitForReady(
 	return { kind: "timeout" };
 }
 
-function worktreeIntent(plan: GjcLaunchWorktreePlan | undefined): LifecycleWorktreeIntent | undefined {
+function worktreeIntent(plan: VibLaunchWorktreePlan | undefined): LifecycleWorktreeIntent | undefined {
 	if (!plan) return undefined;
 	return {
 		repoRoot: path.resolve(plan.repoRoot),
@@ -4022,7 +4022,7 @@ function worktreeIntent(plan: GjcLaunchWorktreePlan | undefined): LifecycleWorkt
 	};
 }
 
-function preparePlannedWorktree(plan: GjcLaunchWorktreePlan): SessionLifecycleWorktreeReceipt {
+function preparePlannedWorktree(plan: VibLaunchWorktreePlan): SessionLifecycleWorktreeReceipt {
 	const prepared = ensureLaunchWorktree(plan);
 	if (!prepared.enabled || path.resolve(prepared.worktreePath) !== path.resolve(plan.worktreePath))
 		throw new Error("Lifecycle worktree preparation did not preserve the durable worktree identity.");
@@ -4044,7 +4044,7 @@ async function launchInput(
 	const sourceCwd = requestedCwd;
 	const suppliedRoot = stateRoot(input, requestedCwd);
 	if (!suppliedRoot || !hasDefaultStateRoot(requestedCwd, suppliedRoot))
-		return fail("invalid_input", "stateRoot must be the default .gjc/state for cwd.");
+		return fail("invalid_input", "stateRoot must be the default .vib/state for cwd.");
 
 	try {
 		if (!(await fs.stat(sourceCwd)).isDirectory())
@@ -4064,7 +4064,7 @@ async function launchInput(
 	// the broker; the broker only guards shape here. It deliberately does NOT
 	// shadow modelPreset: both are threaded to the child, whose startup applies
 	// the profile first and then overrides it with the explicit model exactly
-	// like `gjc --mpreset p --model m` behaves on the CLI.
+	// like `vib --mpreset p --model m` behaves on the CLI.
 	const modelId = text(input.modelId)?.trim();
 	if (input.modelId !== undefined && !modelId)
 		return fail("invalid_input", "modelId must be a non-empty explicit provider/model selector.");
@@ -4072,7 +4072,7 @@ async function launchInput(
 	if (worktree === null || (worktree !== undefined && requestedCwd === undefined))
 		return fail("invalid_input", "Lifecycle worktree target is invalid.");
 	let cwd = sourceCwd;
-	let worktreePlan: GjcLaunchWorktreePlan | undefined;
+	let worktreePlan: VibLaunchWorktreePlan | undefined;
 	if (worktree) {
 		try {
 			const planned = planLaunchWorktree(
@@ -4328,13 +4328,13 @@ function replayDeleteTarget(cleanup: CleanupEvidence): ValidatedDelete | BrokerR
 	if (
 		(plannedArtifactsPath &&
 			(path.dirname(plannedArtifactsPath) !== path.dirname(cleanup.transcriptPath) ||
-				!path.basename(plannedArtifactsPath).startsWith(".gjc-delete-"))) ||
+				!path.basename(plannedArtifactsPath).startsWith(".vib-delete-"))) ||
 		(plannedTranscriptPath &&
 			(path.dirname(plannedTranscriptPath) !== path.dirname(cleanup.transcriptPath) ||
-				!path.basename(plannedTranscriptPath).startsWith(".gjc-delete-"))) ||
+				!path.basename(plannedTranscriptPath).startsWith(".vib-delete-"))) ||
 		(cleanup.artifactTree &&
 			(path.dirname(cleanup.artifactTree.plannedPath) !== path.dirname(cleanup.transcriptPath) ||
-				!path.basename(cleanup.artifactTree.plannedPath).startsWith(".gjc-delete-") ||
+				!path.basename(cleanup.artifactTree.plannedPath).startsWith(".vib-delete-") ||
 				(cleanup.artifactTree.detachedPath !== undefined &&
 					path.dirname(cleanup.artifactTree.detachedPath) !== path.dirname(cleanup.transcriptPath)))) ||
 		retainedArtifactSidePaths.some(
@@ -4462,7 +4462,7 @@ async function validateDeletePath(
 		return fail("invalid_input", "session.delete requires sessionPath and its configured cwd.");
 	const requestedRoot = stateRoot(input, lexicalCwd);
 	if (!requestedRoot || !hasDefaultStateRoot(lexicalCwd, requestedRoot))
-		return fail("invalid_input", "stateRoot must be the default .gjc/state for cwd.");
+		return fail("invalid_input", "stateRoot must be the default .vib/state for cwd.");
 	const cwd = canonicalExistingPath(lexicalCwd);
 	const canonicalRequestedRoot = canonicalExistingPath(requestedRoot);
 	if (
@@ -4934,12 +4934,12 @@ async function executeLifecycleResponse(
 					stdio: "ignore",
 					env: {
 						...("kind" in cmd ? cmd.env : process.env),
-						GJC_AGENT_DIR: broker.settings.agentDir,
-						GJC_CODING_AGENT_DIR: broker.settings.agentDir,
-						GJC_SESSION_ID: launch.id,
-						GJC_STATE_ROOT: launch.root,
-						GJC_LIFECYCLE_REQUEST_ID: effectMarker,
-						GJC_SDK_LIFECYCLE_REQUEST: JSON.stringify(request),
+						VIB_AGENT_DIR: broker.settings.agentDir,
+						VIB_CODING_AGENT_DIR: broker.settings.agentDir,
+						VIB_SESSION_ID: launch.id,
+						VIB_STATE_ROOT: launch.root,
+						VIB_LIFECYCLE_REQUEST_ID: effectMarker,
+						VIB_SDK_LIFECYCLE_REQUEST: JSON.stringify(request),
 						// Coordinator-correlation env scoped to this designated launch only (#2549).
 						// The runtime sidecar reads these to write terminal state to the
 						// coordinator-shared file instead of an unread session-local fallback.
@@ -4947,7 +4947,7 @@ async function executeLifecycleResponse(
 						// because the session ID is generated at spawn time.
 						...(launch.coordinatorStateDir
 							? {
-									[GJC_COORDINATOR_SESSION_STATE_FILE_ENV]: path.join(
+									[VIB_COORDINATOR_SESSION_STATE_FILE_ENV]: path.join(
 										launch.coordinatorStateDir,
 										"session-states",
 										`${launch.id}.json`,
@@ -4955,16 +4955,16 @@ async function executeLifecycleResponse(
 								}
 							: {}),
 						...(launch.coordinatorSessionId
-							? { [GJC_COORDINATOR_SESSION_ID_ENV]: launch.coordinatorSessionId }
+							? { [VIB_COORDINATOR_SESSION_ID_ENV]: launch.coordinatorSessionId }
 							: {}),
 						...(launch.coordinatorSessionBranch
-							? { [GJC_COORDINATOR_SESSION_BRANCH_ENV]: launch.coordinatorSessionBranch }
+							? { [VIB_COORDINATOR_SESSION_BRANCH_ENV]: launch.coordinatorSessionBranch }
 							: {}),
 						...(launch.coordinatorSidecarSigningKey
 							? {
-									[GJC_COORDINATOR_SIDECAR_SIGNATURE_REQUIRED_ENV]: "true",
-									[GJC_COORDINATOR_SIDECAR_SIGNING_KEY_ENV]: launch.coordinatorSidecarSigningKey,
-									[GJC_COORDINATOR_SIDECAR_KEY_ID_ENV]: launch.coordinatorSidecarKeyId,
+									[VIB_COORDINATOR_SIDECAR_SIGNATURE_REQUIRED_ENV]: "true",
+									[VIB_COORDINATOR_SIDECAR_SIGNING_KEY_ENV]: launch.coordinatorSidecarSigningKey,
+									[VIB_COORDINATOR_SIDECAR_KEY_ID_ENV]: launch.coordinatorSidecarKeyId,
 								}
 							: {}),
 					},
@@ -5358,7 +5358,7 @@ async function executeLifecycleResponse(
 				: {
 						plannedArtifactsPath: path.join(
 							path.dirname(validated.target.transcriptPath),
-							`.gjc-delete-${randomUUID()}-artifacts`,
+							`.vib-delete-${randomUUID()}-artifacts`,
 						),
 					}),
 			...(validated.target.plannedTranscriptPath &&
@@ -5367,7 +5367,7 @@ async function executeLifecycleResponse(
 				: {
 						plannedTranscriptPath: path.join(
 							path.dirname(validated.target.transcriptPath),
-							`.gjc-delete-${randomUUID()}-transcript`,
+							`.vib-delete-${randomUUID()}-transcript`,
 						),
 					}),
 		};
@@ -6402,7 +6402,7 @@ export function sessionHostWorkInFlight(): boolean {
  * This sweep can never disturb healthy work: a registration is dropped only when
  * `observeProcess` proves its exact published process identity exited. A live
  * replacement at the same pid retires the stale registration without being
- * signaled. One minute keeps `gjc_sessions`/`session.get_endpoint` from
+ * signaled. One minute keeps `vib_sessions`/`session.get_endpoint` from
  * advertising a corpse for longer than a single poll while costing one index
  * refresh per minute on an otherwise idle broker.
  */
@@ -6411,7 +6411,7 @@ export const BROKER_DEAD_REGISTRATION_SWEEP_MS = 60_000;
 /**
  * Registrations reaped per sweep. Every reap is its own locked index transaction,
  * so an uncapped sweep over a long-lived index turns one broker into a continuous
- * holder of the shared session-index lock and starves unrelated `gjc` launches out
+ * holder of the shared session-index lock and starves unrelated `vib` launches out
  * of their bounded retry budget. Surplus dead rows are reaped by later sweeps.
  */
 export const BROKER_DEAD_REGISTRATION_SWEEP_LIMIT = 64;

@@ -1,12 +1,5 @@
 import { beforeEach, describe, expect, it } from "bun:test";
-import type {
-	Api,
-	AssistantMessageEvent,
-	Model,
-	ToolChoice,
-	ToolChoiceCompat,
-	ToolChoiceSupport,
-} from "@gajae-code/ai";
+import type { Api, AssistantMessageEvent, Model, ToolChoice, ToolChoiceCompat, ToolChoiceSupport } from "@vib-rato/ai";
 import {
 	clearToolChoiceIncapabilityRegistryForTests,
 	deriveToolChoiceSupport,
@@ -15,7 +8,7 @@ import {
 	markToolChoiceIncapability,
 	resolveToolChoice,
 	toolChoiceRegistryKey,
-} from "@gajae-code/ai";
+} from "@vib-rato/ai";
 
 const supportRank: Record<ToolChoiceSupport, number> = {
 	none: 0,

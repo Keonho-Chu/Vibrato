@@ -2,7 +2,7 @@
  * Claude Code project/global skill layout adapter (import source).
  *
  * The `.claude/skills` layout is an explicit import source into the canonical
- * `.gjc` skill locations — it is never loaded as an ordinary runtime authority.
+ * `.vib` skill locations — it is never loaded as an ordinary runtime authority.
  * These helpers enumerate the layout for import/inspection consumers (#4291
  * import UI, #4288 provenance diagnostics) and are deliberately NOT registered
  * as capability providers: activating Claude's other surfaces (MCP servers,
@@ -12,7 +12,7 @@
  * only; it is never loaded into sessions without an explicit import action.
  */
 import * as path from "node:path";
-import { hasFsCode, tryParseJson } from "@gajae-code/utils";
+import { hasFsCode, tryParseJson } from "@vib-rato/utils";
 import type { ExtensionModule } from "../capability/extension-module";
 import { readFile } from "../capability/fs";
 import type { Hook } from "../capability/hook";
@@ -76,7 +76,7 @@ export async function scanClaudeProjectSkills(ctx: LoadContext): Promise<LoadRes
 
 /**
  * Enumerate the user-global `~/.claude/skills` layout. This is an explicit
- * import candidate only; GJC never loads it without an explicit import action.
+ * import candidate only; Vibrato never loads it without an explicit import action.
  */
 export async function scanClaudeUserSkills(ctx: LoadContext): Promise<LoadResult<Skill>> {
 	return await scanSkillsFromDir(ctx, {
@@ -95,7 +95,7 @@ export function claudeSkillSourceMeta(filePath: string, level: "user" | "project
 // Provenance inspection (#4288)
 //
 // The scans below enumerate the remaining `.claude/` project surfaces (MCP
-// servers, hooks, tools, extensions, commands) for the `gjc customize doctor`
+// servers, hooks, tools, extensions, commands) for the `vib customize doctor`
 // provenance report. They reuse the shared discovery helpers but are
 // deliberately NOT registered as capability providers: none of these surfaces
 // are part of the session load path, and inspection must not change runtime

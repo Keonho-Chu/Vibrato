@@ -2,20 +2,20 @@
  * Agent discovery from filesystem.
  *
  * Discovers agent definitions from:
- *   - ~/.gjc/agent/agents/*.md (user-level, primary)
- *   - .gjc/agents/*.md (project-level, primary)
- *   - installed GJC plugin roots
+ *   - ~/.vib/agent/agents/*.md (user-level, primary)
+ *   - .vib/agents/*.md (project-level, primary)
+ *   - installed Vibrato plugin roots
  *
  * Agent files use markdown with YAML frontmatter.
  */
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { getTrustedHomeDir, logger } from "@gajae-code/utils";
+import { getTrustedHomeDir, logger } from "@vib-rato/utils";
 import { isProviderEnabled } from "../capability";
 import { findAllNearestProjectConfigDirs, getConfigDirs } from "../config";
 import type { Settings } from "../config/settings";
 import { listClaudePluginRoots } from "../discovery/helpers";
-import { rootContainsGjcManifest } from "../extensibility/gjc-plugins/paths";
+import { rootContainsVibManifest } from "../extensibility/vib-plugins/paths";
 import { loadBundledAgents, parseAgent } from "./agents";
 import type { AgentDefinition, AgentSource } from "./types";
 
@@ -54,7 +54,7 @@ async function loadAgentsFromDir(dir: string, source: AgentSource): Promise<Agen
 /**
  * Discover agents from filesystem and merge with bundled agents.
  *
- * Precedence (highest wins): .gjc project, .gjc user, GJC plugins, then bundled
+ * Precedence (highest wins): .vib project, .vib user, Vibrato plugins, then bundled
  *
  * @param cwd - Current working directory for project agent discovery
  * @param activeSettings - Settings used to resolve enabled providers.
@@ -67,7 +67,7 @@ export async function discoverAgents(
 	const resolvedCwd = path.resolve(cwd);
 	const agentSources = Array.from(new Set(getConfigDirs("", { project: false }).map(entry => entry.source)));
 
-	// Get user directories (priority order: .gjc, ...)
+	// Get user directories (priority order: .vib, ...)
 	const userDirs = getConfigDirs("agents", { project: false })
 		.filter(entry => agentSources.includes(entry.source))
 		.map(entry => ({
@@ -95,16 +95,16 @@ export async function discoverAgents(
 		if (user) orderedDirs.push({ dir: user.path, source: "user" });
 	}
 
-	// Load agents from GJC marketplace plugins.
+	// Load agents from Vibrato marketplace plugins.
 	const { roots: pluginRoots } = isProviderEnabled("claude-plugins", activeSettings)
 		? await listClaudePluginRoots(home, resolvedCwd)
 		: { roots: [] };
-	const nonGjcPluginRoots = [];
+	const nonVibPluginRoots = [];
 	for (const plugin of pluginRoots) {
-		if (await rootContainsGjcManifest(plugin.path)) continue;
-		nonGjcPluginRoots.push(plugin);
+		if (await rootContainsVibManifest(plugin.path)) continue;
+		nonVibPluginRoots.push(plugin);
 	}
-	const sortedPluginRoots = nonGjcPluginRoots.sort((a, b) => {
+	const sortedPluginRoots = nonVibPluginRoots.sort((a, b) => {
 		if (a.scope === b.scope) return 0;
 		return a.scope === "project" ? -1 : 1;
 	});

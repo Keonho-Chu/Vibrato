@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
-import { Agent, type AgentTool } from "@gajae-code/agent-core";
-import { z } from "@gajae-code/ai";
-import { createMockModel, type MockModel } from "@gajae-code/ai/providers/mock";
+import { Agent, type AgentTool } from "@vib-rato/agent-core";
+import { z } from "@vib-rato/ai";
+import { createMockModel, type MockModel } from "@vib-rato/ai/providers/mock";
 
 function userMessage(text: string) {
 	return { role: "user" as const, content: text, timestamp: Date.now() };

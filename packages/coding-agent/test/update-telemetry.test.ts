@@ -4,11 +4,11 @@ import { runUpdateCommand } from "../src/cli/update-cli";
 const release = {
 	tag: "v999.0.0",
 	version: "999.0.0",
-	registry: "https://github.com/Yeachan-Heo/gajae-code",
+	registry: "https://github.com/Keonho-Chu/Vibrato",
 	warnings: [],
 };
 
-const target = { method: "binary" as const, path: "/tmp/gjc" };
+const target = { method: "binary" as const, path: "/tmp/vib" };
 
 describe("update telemetry lifecycle", () => {
 	it("flushes asynchronous check-failure telemetry before exiting", async () => {
@@ -90,7 +90,7 @@ describe("update telemetry lifecycle", () => {
 			{
 				resolveUpdateTarget: async () => target,
 				getLatestRelease: async () => ({ ...release, version: "999.0.1" }),
-				performUpdate: async () => ({ ok: true, path: "/tmp/gjc" }),
+				performUpdate: async () => ({ ok: true, path: "/tmp/vib" }),
 				runPostUpdateRecovery: async () => undefined,
 				refreshInstalledDefaultSkills: async () => undefined,
 				recordTelemetryEvent: (event, details) => events.push(`${event}:${details.result ?? ""}`),

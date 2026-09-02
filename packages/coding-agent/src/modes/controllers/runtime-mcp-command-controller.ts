@@ -4,9 +4,9 @@
  * Handles /mcp subcommands for managing MCP servers.
  */
 import * as path from "node:path";
-import { resolveMCPOAuthResourceOrigin, resolveMCPOAuthTokenEndpoint } from "@gajae-code/ai/core";
-import { matchesKey, type OverlayHandle, Spacer, Text } from "@gajae-code/tui";
-import { getMCPConfigPath, getProjectDir } from "@gajae-code/utils";
+import { resolveMCPOAuthResourceOrigin, resolveMCPOAuthTokenEndpoint } from "@vib-rato/ai/core";
+import { matchesKey, type OverlayHandle, Spacer, Text } from "@vib-rato/tui";
+import { getMCPConfigPath, getProjectDir } from "@vib-rato/utils";
 import type { SourceMeta } from "../../capability/types";
 import { analyzeAuthError, discoverOAuthEndpoints, MCPManager } from "../../runtime-mcp";
 import { listTools } from "../../runtime-mcp/client";
@@ -1613,7 +1613,7 @@ export class MCPCommandController {
 		// Disconnect all existing servers
 		await this.ctx.mcpManager.disconnectAll();
 
-		// Rediscover and connect (native `.gjc` scopes only: Claude Code/Codex
+		// Rediscover and connect (native `.vib` scopes only: Claude Code/Codex
 		// MCP files are explicit import sources, not runtime authorities).
 		const result = await this.ctx.mcpManager.discoverAndConnect({ nativeOnly: true });
 		await this.ctx.session.refreshMCPTools(this.ctx.mcpManager.getTools());

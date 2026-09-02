@@ -2,8 +2,8 @@ import { createHash } from "node:crypto";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { logger } from "@gajae-code/utils";
-import { Args, CliParseError, Command, Flags, renderCommandHelp } from "@gajae-code/utils/cli";
+import { logger } from "@vib-rato/utils";
+import { Args, CliParseError, Command, Flags, renderCommandHelp } from "@vib-rato/utils/cli";
 import type { Args as ParsedArgs } from "../cli/args";
 import { parseModelString } from "../config/model-resolver";
 import { Settings } from "../config/settings";
@@ -57,7 +57,7 @@ export async function lifecycleArgs(
 		messages: [],
 		fileArgs: [],
 		unknownFlags: new Map(),
-		...(process.env.GJC_SDK_TEST_IN_MEMORY_SESSION === "1" ? { noSession: true } : {}),
+		...(process.env.VIB_SDK_TEST_IN_MEMORY_SESSION === "1" ? { noSession: true } : {}),
 		...(request.operation === "session.resume" ? { resume: request.sessionPath } : {}),
 		...(request.modelPreset ? { mpreset: request.modelPreset } : {}),
 		// Explicit model pin (#4707): coordinator-resolved `provider/model`
@@ -65,7 +65,7 @@ export async function lifecycleArgs(
 		// resolves it through the same staged selector resolver, and startup
 		// model-profile application then overrides the activated profile with
 		// this explicit selection (main.ts applyStartupModelProfilesWithPolicy),
-		// matching `gjc --mpreset p --model m` precedence.
+		// matching `vib --mpreset p --model m` precedence.
 		...(request.modelId ? { model: request.modelId } : {}),
 		...(request.operation === "session.fork"
 			? {
@@ -409,18 +409,18 @@ export async function runSessionHost(
 	const now = timing.now ?? Date.now;
 	const sleep = timing.sleep ?? (async ms => await Bun.sleep(ms));
 	const readIncarnation = timing.processIncarnation ?? processIncarnation;
-	const request = readSessionLifecycleLaunchRequest(process.env.GJC_SDK_LIFECYCLE_REQUEST, now());
-	const agentDir = process.env.GJC_AGENT_DIR;
-	if (!agentDir) throw new Error("GJC_AGENT_DIR is required for sdk session-host-internal.");
+	const request = readSessionLifecycleLaunchRequest(process.env.VIB_SDK_LIFECYCLE_REQUEST, now());
+	const agentDir = process.env.VIB_AGENT_DIR;
+	if (!agentDir) throw new Error("VIB_AGENT_DIR is required for sdk session-host-internal.");
 	const cwd = timing.cwd ?? process.cwd();
 	if ((await fs.realpath(request.cwd)) !== (await fs.realpath(cwd)))
 		throw new Error(`Lifecycle worktree mismatch: expected ${request.cwd}, got ${cwd}.`);
 	if (
-		process.env.GJC_STATE_ROOT !== undefined &&
-		path.resolve(process.env.GJC_STATE_ROOT) !== path.resolve(request.stateRoot)
+		process.env.VIB_STATE_ROOT !== undefined &&
+		path.resolve(process.env.VIB_STATE_ROOT) !== path.resolve(request.stateRoot)
 	)
 		throw new Error("Lifecycle state root does not match the broker-issued request.");
-	if (request.effectMarker && process.env.GJC_LIFECYCLE_REQUEST_ID !== request.effectMarker)
+	if (request.effectMarker && process.env.VIB_LIFECYCLE_REQUEST_ID !== request.effectMarker)
 		throw new Error("Lifecycle effect marker does not match the broker-issued request.");
 	if (!request.effectMarker) throw new Error("Lifecycle effect marker is required.");
 	const effectMarker = request.effectMarker;
@@ -506,7 +506,7 @@ export async function runSessionHost(
 		try {
 			opened = await openLifecycleSessionManager(request, cwd, agentDir);
 			if (request.mcpServers && request.mcpServers.length > 0) {
-				mcpConfigDirectory = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), "gjc-acp-mcp-")));
+				mcpConfigDirectory = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), "vib-acp-mcp-")));
 				mcpConfigPath = path.join(mcpConfigDirectory, "mcp.json");
 				await Bun.write(
 					mcpConfigPath,
@@ -704,7 +704,7 @@ export async function runSessionHost(
 	try {
 		const startupThinkingLevel = request.modelId ? parseModelString(request.modelId)?.thinkingLevel : undefined;
 		const modelProfileStartup =
-			process.env.GJC_SDK_TEST_HANG_MODEL_PROFILE === cwd
+			process.env.VIB_SDK_TEST_HANG_MODEL_PROFILE === cwd
 				? new Promise<void>(() => {})
 				: applyStartupModelProfiles({
 						session,
@@ -730,7 +730,7 @@ export async function runSessionHost(
 		const startup = await beforeCutoff(capability.promise);
 		if (startup.status !== "started") throw startup.failure;
 		throwIfCutoff();
-		if (process.env.GJC_SDK_TEST_FAIL_AFTER_REGISTRATION === cwd)
+		if (process.env.VIB_SDK_TEST_FAIL_AFTER_REGISTRATION === cwd)
 			throw new Error("Lifecycle test failure after SDK host registration.");
 
 		await session.sessionManager.ensureOnDisk();
@@ -750,16 +750,16 @@ export async function runSessionHost(
 	// Readiness is published; the session is live. Memory startup issues one LLM
 	// request per queued rollout, so it must run outside the readiness window and
 	// its failure must never take the session down.
-	if (process.env.GJC_SDK_TEST_EXIT_AFTER_READY === cwd) {
-		process.stderr.write("GJC_SDK_TEST_EXIT_AFTER_READY\n");
+	if (process.env.VIB_SDK_TEST_EXIT_AFTER_READY === cwd) {
+		process.stderr.write("VIB_SDK_TEST_EXIT_AFTER_READY\n");
 		process.exit(7);
 	}
-	if (process.env.GJC_SDK_TEST_REJECT_AFTER_READY === cwd) {
+	if (process.env.VIB_SDK_TEST_REJECT_AFTER_READY === cwd) {
 		// Simulates the post-readiness liveness watcher rejecting. With the
 		// post-ready startup receipt removed, this unhandled rejection kills the
 		// host without writing any startup receipt; the broker must classify the
 		// death from published ready authority plus proven exit.
-		void Promise.reject(new Error("GJC_SDK_TEST_REJECT_AFTER_READY"));
+		void Promise.reject(new Error("VIB_SDK_TEST_REJECT_AFTER_READY"));
 		await Bun.sleep(5_000);
 	}
 	startMemoryBackendAfterReadiness(startDeferredMemoryBackend);
@@ -804,7 +804,7 @@ function parsePositiveTimeout(raw: string | undefined, flagName: string): number
 }
 
 class SdkServeHelp extends Command {
-	static description = "gjc sdk serve --stdio | --socket <path> [--session <id>] [--pending-ceiling <bytes>]";
+	static description = "vib sdk serve --stdio | --socket <path> [--session <id>] [--pending-ceiling <bytes>]";
 	static flags = {
 		stdio: Flags.boolean({ description: "Serve SDK frames over standard input and output" }),
 		socket: Flags.string({ description: "Serve SDK frames over a Unix socket path" }),
@@ -816,7 +816,7 @@ class SdkServeHelp extends Command {
 
 class SdkSessionHelp extends Command {
 	static description =
-		"Manage SDK sessions: `gjc sdk session list|inspect|send|status|tail|retire`, or the explicit raw hatch `gjc sdk session raw control|query|global`. The session CLI is broker-bound and credential-free.";
+		"Manage SDK sessions: `vib sdk session list|inspect|send|status|tail|retire`, or the explicit raw hatch `vib sdk session raw control|query|global`. The session CLI is broker-bound and credential-free.";
 	static args = {
 		verb: Args.string({
 			description: "Session verb",
@@ -936,7 +936,7 @@ class SdkGuidesCommand extends Command {
 
 export default class Sdk extends Command {
 	static description =
-		"gjc sdk serve --stdio | --socket <path> [--session <id>]; gjc sdk session list|inspect|send|status|tail; gjc sdk guides refresh|list|show|status|trust";
+		"vib sdk serve --stdio | --socket <path> [--session <id>]; vib sdk session list|inspect|send|status|tail; vib sdk guides refresh|list|show|status|trust";
 	static hidden = false;
 	static delegateHelp = true;
 	static args = { action: Args.string({ required: false, options: ["serve", "session", "guides"] }) };
@@ -960,7 +960,7 @@ export default class Sdk extends Command {
 						: action === "guides"
 							? SdkGuidesCommand
 							: Sdk;
-			renderCommandHelp("gjc", helpAction, helpCommand);
+			renderCommandHelp("vib", helpAction, helpCommand);
 			return;
 		}
 		if (action === "session") {

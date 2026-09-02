@@ -20,7 +20,7 @@ const tempDirs: string[] = [];
 const WEBSOCKET_GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 
 async function tempRoot(): Promise<string> {
-	const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-codex-publisher-"));
+	const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-codex-publisher-"));
 	tempDirs.push(root);
 	return root;
 }
@@ -50,7 +50,7 @@ function event(): CodexWakeEventV1 {
 		summary: "Delegate work completed.",
 		status: "pending",
 		attempts: 0,
-		client_user_message_id: "gjc-wake-session-1:7",
+		client_user_message_id: "vib-wake-session-1:7",
 		created_at: "2026-01-01T00:00:00.000Z",
 		updated_at: "2026-01-01T00:00:00.000Z",
 		last_error: null,
@@ -472,7 +472,7 @@ describe("Codex wake publisher", () => {
 				await expect(
 					transport.request("turn/start", {
 						threadId: "thread-1",
-						clientUserMessageId: "gjc-wake-session-1:7",
+						clientUserMessageId: "vib-wake-session-1:7",
 						input: [{ type: "text", text: "ok", text_elements: [] }],
 					}),
 				).resolves.toBeDefined();

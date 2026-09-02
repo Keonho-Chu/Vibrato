@@ -1,9 +1,9 @@
 import { describe, expect, it } from "bun:test";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { getThemeByName } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { ToolSession } from "@gajae-code/coding-agent/tools";
-import { ResolveTool, resolveToolRenderer } from "@gajae-code/coding-agent/tools/resolve";
-import { sanitizeText } from "@gajae-code/utils";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { getThemeByName } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { ToolSession } from "@vib-rato/coding-agent/tools";
+import { ResolveTool, resolveToolRenderer } from "@vib-rato/coding-agent/tools/resolve";
+import { sanitizeText } from "@vib-rato/utils";
 import * as z from "zod/v4";
 
 function createSession(handler?: (input: unknown) => Promise<unknown>): ToolSession {

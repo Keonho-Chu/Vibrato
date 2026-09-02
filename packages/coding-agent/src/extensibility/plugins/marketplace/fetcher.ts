@@ -10,7 +10,7 @@ import * as https from "node:https";
 import * as net from "node:net";
 import * as os from "node:os";
 import * as path from "node:path";
-import { isEnoent, logger } from "@gajae-code/utils";
+import { isEnoent, logger } from "@vib-rato/utils";
 import * as git from "../../../utils/git";
 import { isPrivateOrSpecialAddress, validatePublicHttpUrl } from "../../../web/insane/url-guard";
 

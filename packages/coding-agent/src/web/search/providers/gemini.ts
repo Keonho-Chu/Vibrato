@@ -8,13 +8,13 @@
  * sibling SQLite store and never POSTs the broker sentinel to a Google token
  * endpoint.
  */
-import type { AuthStorage } from "@gajae-code/ai/core";
+import type { AuthStorage } from "@vib-rato/ai/core";
 import {
 	ANTIGRAVITY_SYSTEM_INSTRUCTION,
 	getAntigravityUserAgent,
 	getGeminiCliHeaders,
-} from "@gajae-code/ai/providers/google-gemini-headers";
-import { fetchWithRetry } from "@gajae-code/utils";
+} from "@vib-rato/ai/providers/google-gemini-headers";
+import { fetchWithRetry } from "@vib-rato/utils";
 
 import type {
 	ActiveSearchModelContext,
@@ -228,7 +228,7 @@ async function callGeminiSearch(
 				requestId: `agent-${crypto.randomUUID()}`,
 			}
 		: {
-				userAgent: "gajae-code",
+				userAgent: "vib-rato",
 				requestId: `pi-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
 			};
 
@@ -443,7 +443,7 @@ export async function searchGemini(params: GeminiSearchParams): Promise<SearchRe
 	const auth = await findGeminiAuth(params.authStorage, params.sessionId, params.signal);
 	if (!auth) {
 		throw new Error(
-			"No Gemini OAuth credentials found. Login with 'gjc /login google-gemini-cli' or 'gjc /login google-antigravity' to enable Gemini web search.",
+			"No Gemini OAuth credentials found. Login with 'vib /login google-gemini-cli' or 'vib /login google-antigravity' to enable Gemini web search.",
 		);
 	}
 

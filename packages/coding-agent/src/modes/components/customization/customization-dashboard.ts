@@ -13,13 +13,13 @@
  *
  * Layout (narrow-terminal safe):
  *   title: /extensions — Configure skills, hooks, and MCPs.
- *   scope badge (Project .gjc / Global .gjc) — `s` switches
+ *   scope badge (Project .vib / Global .vib) — `s` switches
  *   section tabs: Skills | Hooks | MCPs — left/right switch
  *   inventory rows for the active section + scope with status + provenance
  *   footer key hints
  */
-import { Container, matchesKey, type SelectItem, SelectList, Text } from "@gajae-code/tui";
-import { sanitizeText } from "@gajae-code/utils";
+import { Container, matchesKey, type SelectItem, SelectList, Text } from "@vib-rato/tui";
+import { sanitizeText } from "@vib-rato/utils";
 import { type CustomizationInventory, loadCustomizationInventory } from "../../../customization/inventory";
 import {
 	removeHookFile,
@@ -31,11 +31,11 @@ import {
 import {
 	CUSTOMIZATION_SURFACES,
 	type CustomizationSurface,
-	type GjcScope,
 	type InventoryRow,
 	resolveScopePaths,
 	scopeLabel,
 	surfaceLabel,
+	type VibScope,
 } from "../../../customization/types";
 import type { SkillManagementPolicy } from "../../../extensibility/skill-management";
 import { replaceTabs, truncateToWidth } from "../../../tools/render-utils";
@@ -85,7 +85,7 @@ export class CustomizationDashboard extends Container {
 
 	#cwd: string;
 	#settings: CustomizationSettingsSlice | undefined;
-	#scope: GjcScope = "project";
+	#scope: VibScope = "project";
 	#section: CustomizationSurface = "skills";
 	#inventory: CustomizationInventory = { rows: [], warnings: [] };
 	#lists = new Map<CustomizationSurface, SelectList>();
@@ -116,7 +116,7 @@ export class CustomizationDashboard extends Container {
 		return dashboard;
 	}
 
-	get scope(): GjcScope {
+	get scope(): VibScope {
 		return this.#scope;
 	}
 
@@ -210,7 +210,7 @@ export class CustomizationDashboard extends Container {
 		title.setText(
 			theme.bold(theme.fg("accent", "/extensions")) + theme.fg("muted", " — Configure skills, hooks, and MCPs."),
 		);
-		const other: GjcScope = this.#scope === "project" ? "global" : "project";
+		const other: VibScope = this.#scope === "project" ? "global" : "project";
 		scopeLine.setText(
 			`${theme.fg("muted", "scope:")} ${theme.bold(scopeLabel(this.#scope))}  ${theme.fg("muted", `(s: switch to ${scopeLabel(other)} — lists and actions follow the scope)`)}`,
 		);

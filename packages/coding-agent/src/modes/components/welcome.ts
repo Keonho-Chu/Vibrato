@@ -1,8 +1,8 @@
-import { type Component, padding, TERMINAL, truncateToWidth, visibleWidth } from "@gajae-code/tui";
-import { APP_NAME } from "@gajae-code/utils";
+import { type Component, padding, TERMINAL, truncateToWidth, visibleWidth } from "@vib-rato/tui";
+import { APP_NAME } from "@vib-rato/utils";
 import { formatBuildLabel } from "../../build-metadata";
 import { formatKeyHint, type KeyDisplayContext } from "../../config/keybindings";
-import { type ThemeColor, theme } from "../../modes/theme/theme";
+import { getCurrentThemeName, isLightTheme, type ThemeColor, theme } from "../../modes/theme/theme";
 
 export interface RecentSession {
 	name: string;
@@ -49,8 +49,8 @@ function flowKeyItems(context: KeyDisplayContext): ReadonlyArray<{ key: string; 
 }
 
 /**
- * GJC-native launch surface with compact command affordances, project
- * signals, and a claw/talon mark without copying another agent shell.
+ * Vibrato-native launch surface with compact command affordances, project
+ * signals, and a `vib` block-letter mark swept in the LIG CI palette.
  */
 export class WelcomeComponent implements Component {
 	#animStart: number | null = null;
@@ -131,7 +131,7 @@ export class WelcomeComponent implements Component {
 		}
 		const targetContentRows = targetRows === undefined ? undefined : Math.max(0, targetRows - 2);
 		const dualContentWidth = boxWidth - 3; // 3 = │ + │ + │
-		const minLeftCol = 20; // logo mark plus GJC identity labels
+		const minLeftCol = 20; // logo mark plus Vibrato identity labels
 		const minRightCol = 24;
 		const modelPill = this.#pill(theme.icon.model || "model", this.modelName, "statusLineModel");
 		const providerPill = this.#pill(theme.icon.package || "provider", this.providerName, "statusLinePath");
@@ -140,7 +140,7 @@ export class WelcomeComponent implements Component {
 		const leftMinContentWidth = Math.max(
 			minLeftCol,
 			logoMinWidth,
-			visibleWidth("GJC Forge"),
+			visibleWidth("Vibrato Forge"),
 			visibleWidth("shape · act · prove"),
 			visibleWidth(modelPill),
 			visibleWidth(providerPill),
@@ -161,7 +161,7 @@ export class WelcomeComponent implements Component {
 
 		const leftLines = [
 			"",
-			this.#centerText(theme.bold(theme.fg("accent", "GJC Forge")), leftCol),
+			this.#centerText(theme.bold(theme.fg("accent", "Vibrato Forge")), leftCol),
 			this.#centerText(theme.fg("dim", "shape · act · prove"), leftCol),
 			"",
 			...logoColored.map(l => this.#centerText(l, leftCol)),
@@ -243,7 +243,7 @@ export class WelcomeComponent implements Component {
 
 		const lines: string[] = [];
 		const buildLabel = this.options.buildLabel ?? formatBuildLabel();
-		const title = ` ${APP_NAME} v${this.version} · ${buildLabel} · GJC Forge `;
+		const title = ` ${APP_NAME} v${this.version} · ${buildLabel} · Vibrato Forge `;
 		const titlePrefixRaw = hChar.repeat(3);
 		const titleStyled = theme.fg("dim", titlePrefixRaw) + theme.fg("muted", title);
 		const titleVisLen = visibleWidth(titlePrefixRaw) + visibleWidth(title);
@@ -271,7 +271,7 @@ export class WelcomeComponent implements Component {
 			const compactLeftLines =
 				bodyRows < 14
 					? [
-							this.#centerText(theme.bold(theme.fg("accent", "GJC Forge")), leftCol),
+							this.#centerText(theme.bold(theme.fg("accent", "Vibrato Forge")), leftCol),
 							this.#centerText(this.#loadingLine(), leftCol),
 							this.#centerText(modelPill, leftCol),
 						]
@@ -544,9 +544,9 @@ export class WelcomeComponent implements Component {
 
 	/** Pick the logo frame for the current intro phase, or the resting frame. */
 	#currentLogoFrame(logoLines: readonly string[]): readonly string[] {
-		if (this.#animStart == null) return REST_FRAMES[this.logoMode];
+		if (this.#animStart == null) return restFrame(this.logoMode);
 		const elapsed = performance.now() - this.#animStart;
-		if (elapsed >= INTRO_MS) return REST_FRAMES[this.logoMode];
+		if (elapsed >= INTRO_MS) return restFrame(this.logoMode);
 		// Ease-out cubic so the spin decelerates into the resting state.
 		const progress = elapsed / INTRO_MS;
 		const eased = 1 - (1 - progress) ** 3;
@@ -562,53 +562,91 @@ export class WelcomeComponent implements Component {
 	}
 
 	#logoLines(): readonly string[] {
-		if (this.logoMode === "ascii") return ASCII_CLAW_LOGO;
-		if (this.logoMode === "square") return SQUARE_CLAW_LOGO;
-		return RED_CLAW_LOGO;
+		if (this.logoMode === "ascii") return ASCII_VIB_LOGO;
+		if (this.logoMode === "square") return SQUARE_VIB_LOGO;
+		return VIB_LOGO;
 	}
 }
 
+// The launch mark spells the `vib` command in outlined block letters. It is
+// deliberately not a rendering of the LIG wordmark: the CI guide forbids
+// redrawing the wordmark in any other form, so the corporate identity is
+// carried by the gradient palette and the theme, never by ASCII art.
 // biome-ignore format: preserve ASCII art layout
-const RED_CLAW_LOGO = [
-	"╭────────────────╮        ╭────────╮",
-	"╰──────╮      ╭──╯     ╭──╯  ╭─────╯",
-	"       ╰──────╯    ╭───╯  ╭──╯      ",
-	"       ╭──────╮    ╰───╮  ╰──╮      ",
-	"╭──────╯      ╰──╮     ╰──╮  ╰─────╮",
-	"╰────────────────╯        ╰────────╯",
-];
-
-// biome-ignore format: preserve ASCII art layout
-const SQUARE_CLAW_LOGO = [
-	"┌────────────────┐        ┌────────┐",
-	"└──────┐      ┌──┘     ┌──┘  ┌─────┘",
-	"       └──────┘    ┌───┘  ┌──┘      ",
-	"       ┌──────┐    └───┐  └──┐      ",
-	"┌──────┘      └──┐     └──┐  └─────┐",
-	"└────────────────┘        └────────┘",
+const VIB_LOGO = [
+	"╭──╮        ╭──╮  ╭────╮  ╭───────╮ ",
+	"╰╮ ╰╮      ╭╯ ╭╯  ╰╮  ╭╯  │ ╭────╮╰╮",
+	" ╰╮ ╰╮    ╭╯ ╭╯    │  │   │ ╰────╯╭╯",
+	"  ╰╮ ╰╮  ╭╯ ╭╯     │  │   │ ╭────╮╰╮",
+	"   ╰╮ ╰──╯ ╭╯     ╭╯  ╰╮  │ ╰────╯╭╯",
+	"    ╰──────╯      ╰────╯  ╰───────╯ ",
 ];
 
 // biome-ignore format: preserve ASCII art layout
-const ASCII_CLAW_LOGO = [
-	"+----------------+        +--------+",
-	"+------+      +--+     +--+  +-----+",
-	"       +------+    +---+  +--+      ",
-	"       +------+    +---+  +--+      ",
-	"+------+      +--+     +--+  +-----+",
-	"+----------------+        +--------+",
+const SQUARE_VIB_LOGO = [
+	"┌──┐        ┌──┐  ┌────┐  ┌───────┐ ",
+	"└┐ └┐      ┌┘ ┌┘  └┐  ┌┘  │ ┌────┐└┐",
+	" └┐ └┐    ┌┘ ┌┘    │  │   │ └────┘┌┘",
+	"  └┐ └┐  ┌┘ ┌┘     │  │   │ ┌────┐└┐",
+	"   └┐ └──┘ ┌┘     ┌┘  └┐  │ └────┘┌┘",
+	"    └──────┘      └────┘  └───────┘ ",
 ];
 
-/** Multi-stop palette for the red-claw diagonal gradient. */
-const GRADIENT_STOPS: ReadonlyArray<readonly [number, number, number]> = [
-	[127, 29, 29], // deep shell red
-	[220, 38, 38], // claw red
-	[249, 115, 22], // orange coral
-	[255, 138, 101], // bright coral
-	[255, 215, 168], // shell highlight
+// biome-ignore format: preserve ASCII art layout
+const ASCII_VIB_LOGO = [
+	"+--+        +--+  +----+  +-------+ ",
+	" \\  \\      /  /    |  |   | +----+\\ ",
+	"  \\  \\    /  /     |  |   | +----+/ ",
+	"   \\  \\  /  /      |  |   | +----+\\ ",
+	"    \\  \\/  /       |  |   | +----+/ ",
+	"     +----+       +----+  +-------+ ",
 ];
 
-/** 256-color ramp fallback when truecolor isn't available. */
-const GRADIENT_RAMP_256 = [52, 88, 124, 160, 202, 209, 215];
+type GradientStop = readonly [number, number, number];
+
+interface GradientPalette {
+	/** Truecolor stops, swept bottom-left → top-right. */
+	stops: ReadonlyArray<GradientStop>;
+	/** 256-color ramp fallback when truecolor isn't available. */
+	ramp256: readonly number[];
+}
+
+/**
+ * LIG CI palette for dark terminals. The guide only permits the wordmark and
+ * brand accents on dark or LIG-blue grounds in white or LIG Futuristic Gray
+ * (#BCBEC0), so the mark sweeps between those two neutrals and the shine band
+ * pushes it to pure white.
+ */
+const DARK_TERMINAL_PALETTE: GradientPalette = {
+	stops: [
+		[188, 190, 192], // LIG Futuristic Gray
+		[214, 216, 220],
+		[255, 255, 255], // white
+		[214, 216, 220],
+		[188, 190, 192],
+	],
+	ramp256: [250, 252, 254, 231, 254, 252, 250],
+};
+
+/**
+ * LIG CI palette for light terminals: LIG Innovative Blue (#002F6D) bracketed
+ * by the two ends of the guide's graphic-motif gradient (derived from its CMYK
+ * spec, C100 M80 Y30 K35 → C100 M86 Y20).
+ */
+const LIGHT_TERMINAL_PALETTE: GradientPalette = {
+	stops: [
+		[0, 45, 92], // motif dark end
+		[0, 47, 109], // LIG Innovative Blue
+		[0, 61, 150], // motif light end
+		[0, 47, 109],
+		[0, 45, 92],
+	],
+	ramp256: [17, 18, 24, 25, 24, 18, 17],
+};
+
+function currentGradientPalette(): GradientPalette {
+	return isLightTheme(getCurrentThemeName()) ? LIGHT_TERMINAL_PALETTE : DARK_TERMINAL_PALETTE;
+}
 
 /** Half-width of the shine highlight band, expressed in gradient-t units. */
 const SHINE_HALF_WIDTH = 0.18;
@@ -625,7 +663,12 @@ interface ShineConfig {
  * gradient along the diagonal, wrapping at 1. When `shine` is provided, a soft
  * white highlight is composited on top, centered at `shine.pos`.
  */
-function gradientLogo(lines: readonly string[], phase = 0, shine?: ShineConfig): string[] {
+function gradientLogo(
+	lines: readonly string[],
+	phase = 0,
+	shine?: ShineConfig,
+	palette: GradientPalette = currentGradientPalette(),
+): string[] {
 	const reset = "\x1b[0m";
 	const rows = lines.length;
 	const cols = Math.max(...lines.map(l => l.length));
@@ -636,9 +679,9 @@ function gradientLogo(lines: readonly string[], phase = 0, shine?: ShineConfig):
 	const shinePos = shine ? shine.pos : 0;
 	const colorAt = TERMINAL.trueColor
 		? (t: number): string => {
-				// 5-stop palette widens the visible color range and avoids the
-				// deep-blue valley a naive HSL lerp falls into.
-				const stops = GRADIENT_STOPS;
+				// 5-stop palette keeps the sweep inside the CI colours instead of
+				// drifting through unrelated hues the way a naive HSL lerp would.
+				const stops = palette.stops;
 				const seg = t * (stops.length - 1);
 				const i = Math.min(stops.length - 2, Math.floor(seg));
 				const f = seg - i;
@@ -659,7 +702,7 @@ function gradientLogo(lines: readonly string[], phase = 0, shine?: ShineConfig):
 				return `\x1b[38;2;${Math.round(r)};${Math.round(g)};${Math.round(bl)}m`;
 			}
 		: (t: number): string => {
-				const ramp = GRADIENT_RAMP_256;
+				const ramp = palette.ramp256;
 				let idx = Math.min(ramp.length - 1, Math.max(0, Math.floor(t * (ramp.length - 1) + 0.5)));
 				if (shineStrength > 0) {
 					const dist = Math.abs(t - shinePos);
@@ -703,9 +746,17 @@ const INTRO_SWEEPS = 2.5;
 /** Number of times the shine highlight crosses the diagonal across the intro. */
 const INTRO_SHINE_TRAVERSALS = 3;
 
-/** Resting gradient frames, cached for re-renders outside of the intro. */
-const REST_FRAMES: Record<WelcomeLogoMode, readonly string[]> = {
-	unicode: gradientLogo(RED_CLAW_LOGO, 0),
-	square: gradientLogo(SQUARE_CLAW_LOGO, 0),
-	ascii: gradientLogo(ASCII_CLAW_LOGO, 0),
-};
+/** Resting gradient frames, cached per logo mode and palette for re-renders outside of the intro. */
+const REST_FRAME_CACHE = new Map<string, readonly string[]>();
+
+function restFrame(mode: WelcomeLogoMode): readonly string[] {
+	const palette = currentGradientPalette();
+	const key = `${mode}:${palette === LIGHT_TERMINAL_PALETTE ? "light" : "dark"}`;
+	let frame = REST_FRAME_CACHE.get(key);
+	if (!frame) {
+		const lines = mode === "ascii" ? ASCII_VIB_LOGO : mode === "square" ? SQUARE_VIB_LOGO : VIB_LOGO;
+		frame = gradientLogo(lines, 0, undefined, palette);
+		REST_FRAME_CACHE.set(key, frame);
+	}
+	return frame;
+}

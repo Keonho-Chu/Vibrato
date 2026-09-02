@@ -17,8 +17,8 @@ describe("SessionManager symlinked storage root", () => {
 	let linkRoot: string;
 
 	beforeEach(async () => {
-		realRoot = await fsp.realpath(await fsp.mkdtemp(path.join(os.tmpdir(), "gjc-symlink-real-")));
-		linkRoot = path.join(path.dirname(realRoot), `gjc-symlink-link-${path.basename(realRoot)}`);
+		realRoot = await fsp.realpath(await fsp.mkdtemp(path.join(os.tmpdir(), "vib-symlink-real-")));
+		linkRoot = path.join(path.dirname(realRoot), `vib-symlink-link-${path.basename(realRoot)}`);
 		await fsp.symlink(realRoot, linkRoot, "dir");
 	});
 

@@ -22,9 +22,9 @@ export function distTagForChannel(channel: UpdateChannel): string {
 
 /**
  * Resolve the machine-local update channel: read the user/global layer only (a
- * project `.gjc/config.yml` `startup.updateChannel` override must never pick
+ * project `.vib/config.yml` `startup.updateChannel` override must never pick
  * the global release channel) and fall back to the stable schema default when
- * the global value is unset or invalid. Used by both the `gjc update` command
+ * the global value is unset or invalid. Used by both the `vib update` command
  * and the startup update check so a nightly notification can always be
  * satisfied by the same default invocation.
  */

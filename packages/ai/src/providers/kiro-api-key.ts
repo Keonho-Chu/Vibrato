@@ -3,9 +3,9 @@
  *
  * Headless Kiro Pro keys authenticate against the Kiro service root with
  * `tokentype: API_KEY` and `origin: AI_EDITOR`. This is distinct from the
- * AWS SSO OIDC / CodeWhisperer streaming path used by `gjc auth-broker login kiro`.
+ * AWS SSO OIDC / CodeWhisperer streaming path used by `vib auth-broker login kiro`.
  */
-import { $env } from "@gajae-code/utils";
+import { $env } from "@vib-rato/utils";
 import { Effort } from "../model-thinking";
 import type {
 	Api,
@@ -70,7 +70,7 @@ export function toKiroModelId(modelId: string): string {
 	return modelId.replace(/(\d)-(\d)/g, "$1.$2");
 }
 
-function toGjcModelId(kiroId: string): string {
+function toVibModelId(kiroId: string): string {
 	return kiroId.replace(/(\d)\.(\d)/g, "$1-$2");
 }
 
@@ -268,7 +268,7 @@ export function kiroApiStaticModels(): Model<"kiro-codewhisperer-stream">[] {
 			baseUrl,
 		);
 		models.push(model);
-		const dashed = toGjcModelId(item.modelId);
+		const dashed = toVibModelId(item.modelId);
 		if (dashed !== item.modelId) models.push({ ...model, id: dashed });
 	}
 	return models;
@@ -299,7 +299,7 @@ export async function fetchKiroApiModels(
 		if (!item.modelId) continue;
 		const model = toModel(item, baseUrl);
 		models.push(model);
-		const dashed = toGjcModelId(item.modelId);
+		const dashed = toVibModelId(item.modelId);
 		if (dashed !== item.modelId) {
 			models.push({ ...model, id: dashed });
 		}

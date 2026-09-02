@@ -3,8 +3,8 @@ import {
 	BUILTIN_MODEL_PROFILES,
 	mergeModelProfiles,
 	resolveProfileBindings,
-} from "@gajae-code/coding-agent/config/model-profiles";
-import { ModelsConfigSchema, ProfileModelSelectorSchema } from "@gajae-code/coding-agent/config/models-config-schema";
+} from "@vib-rato/coding-agent/config/model-profiles";
+import { ModelsConfigSchema, ProfileModelSelectorSchema } from "@vib-rato/coding-agent/config/models-config-schema";
 import { normalizeModelSelectorValue } from "../src/config/model-selector-value";
 
 function issuePaths(error: { issues: Array<{ path: PropertyKey[] }> }): string[] {

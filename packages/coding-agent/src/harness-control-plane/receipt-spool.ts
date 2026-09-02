@@ -4,7 +4,7 @@ import * as path from "node:path";
 import { withFileLock } from "../config/file-lock";
 import type { ReceiptEnvelope } from "./receipts";
 
-export const RECEIPT_SPOOL_DIR_ENV = "GJC_RECEIPT_SPOOL_DIR";
+export const RECEIPT_SPOOL_DIR_ENV = "VIB_RECEIPT_SPOOL_DIR";
 export const RECEIPT_SPOOL_FILENAME = "spool.jsonl";
 export const RECEIPT_SPOOL_CURSOR_WIDTH = 12;
 

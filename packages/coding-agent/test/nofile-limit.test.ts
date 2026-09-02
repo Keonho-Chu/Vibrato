@@ -27,7 +27,7 @@ describe("macOS nofile limit preflight", () => {
 	it("does not warn on non-macOS, skipped, or adequate limits", () => {
 		for (const deps of [
 			{ platform: "linux" as const, env: {}, execFileSync: (() => "256\n") as never },
-			{ platform: "darwin" as const, env: { GJC_SKIP_NOFILE_CHECK: "1" }, execFileSync: (() => "256\n") as never },
+			{ platform: "darwin" as const, env: { VIB_SKIP_NOFILE_CHECK: "1" }, execFileSync: (() => "256\n") as never },
 			{ platform: "darwin" as const, env: {}, execFileSync: (() => "4096\n") as never },
 		]) {
 			const chunks: string[] = [];
@@ -37,6 +37,6 @@ describe("macOS nofile limit preflight", () => {
 	});
 
 	it("keeps the standalone message actionable", () => {
-		expect(buildMacOSNoFileLimitWarning(256)).toContain("Set GJC_SKIP_NOFILE_CHECK=1");
+		expect(buildMacOSNoFileLimitWarning(256)).toContain("Set VIB_SKIP_NOFILE_CHECK=1");
 	});
 });

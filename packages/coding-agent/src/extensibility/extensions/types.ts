@@ -15,9 +15,9 @@ import type {
 	AgentToolUpdateCallback,
 	RunSettlementProof,
 	ThinkingLevel,
-} from "@gajae-code/agent-core";
-import type { AttemptScope } from "@gajae-code/agent-core/attempt-scope";
-import type { CompactionResult } from "@gajae-code/agent-core/compaction";
+} from "@vib-rato/agent-core";
+import type { AttemptScope } from "@vib-rato/agent-core/attempt-scope";
+import type { CompactionResult } from "@vib-rato/agent-core/compaction";
 import type {
 	Api,
 	AssistantMessageEvent,
@@ -32,10 +32,10 @@ import type {
 	Tool,
 	TSchema,
 	UsageReport,
-} from "@gajae-code/ai/core";
-import type { OAuthCredentials, OAuthLoginCallbacks } from "@gajae-code/ai/utils/oauth/types";
-import type * as piCodingAgent from "@gajae-code/coding-agent";
-import type { AutocompleteItem, Component, EditorTheme, KeyId, TUI } from "@gajae-code/tui";
+} from "@vib-rato/ai/core";
+import type { OAuthCredentials, OAuthLoginCallbacks } from "@vib-rato/ai/utils/oauth/types";
+import type * as piCodingAgent from "@vib-rato/coding-agent";
+import type { AutocompleteItem, Component, EditorTheme, KeyId, TUI } from "@vib-rato/tui";
 import type { KeybindingsManager } from "../../config/keybindings";
 import type { ModelRegistry } from "../../config/model-registry";
 import type { ModelSelectorValue } from "../../config/model-selector-value";
@@ -1160,7 +1160,7 @@ export interface ExtensionAPI {
 	// =========================================================================
 
 	/** File logger for error/warning/debug messages */
-	logger: typeof import("@gajae-code/utils").logger;
+	logger: typeof import("@vib-rato/utils").logger;
 
 	/** Injected zod-backed typebox shim for legacy `Type.Object(...)` parameter authoring. */
 	typebox: typeof import("../typebox");
@@ -1168,7 +1168,7 @@ export interface ExtensionAPI {
 	/** Injected zod module for Zod-authored extension tools (canonical going forward). */
 	zod: typeof import("zod/v4");
 
-	/** Injected gajae-code exports for accessing SDK utilities */
+	/** Injected vib-rato exports for accessing SDK utilities */
 	pi: typeof piCodingAgent;
 
 	// =========================================================================

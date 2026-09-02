@@ -3,7 +3,7 @@
  *
  * One rate-limited status line saying unreported crash signatures exist.
  * **Nothing is ever transmitted by this piece** — it reads local state only and
- * points at `gjc crash report`, which has its own consent flow.
+ * points at `vib crash report`, which has its own consent flow.
  *
  * Honest default statement: this is on by default and it *does* change startup
  * output by design (one bounded line, at most once per 24h per agent dir).
@@ -41,7 +41,7 @@ export interface CrashNudgeDecision {
  *
  * Fires when an unreported, unacknowledged signature gained records since
  * `lastNudgedAt`, at most once per 24h. Acknowledgement is explicit (the
- * dismiss action in `gjc crash report`); an ignored line never counts as one.
+ * dismiss action in `vib crash report`); an ignored line never counts as one.
  */
 export function decideCrashNudge(index: CrashIndex, now: number): CrashNudgeDecision {
 	if (now - index.lastNudgedAt < CRASH_NUDGE_INTERVAL_MS) return { show: false };
@@ -57,7 +57,7 @@ export function decideCrashNudge(index: CrashIndex, now: number): CrashNudgeDeci
 	const message =
 		`${pending.length} unreported crash signature${pending.length === 1 ? "" : "s"}: ` +
 		`${newest.errorName} ×${newest.lifetimeCount}${others}. ` +
-		"Run `gjc crash report` to review — nothing is sent without your confirmation.";
+		"Run `vib crash report` to review — nothing is sent without your confirmation.";
 	return { show: true, message };
 }
 

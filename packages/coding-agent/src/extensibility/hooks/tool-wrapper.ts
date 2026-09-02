@@ -1,8 +1,8 @@
 /**
  * Tool wrapper - wraps tools with hook callbacks for interception.
  */
-import type { AgentTool, AgentToolContext, AgentToolUpdateCallback } from "@gajae-code/agent-core";
-import type { Static, TSchema } from "@gajae-code/ai/core";
+import type { AgentTool, AgentToolContext, AgentToolUpdateCallback } from "@vib-rato/agent-core";
+import type { Static, TSchema } from "@vib-rato/ai/core";
 import { applyToolProxy } from "../tool-proxy";
 import type { HookRunner } from "./runner";
 import type { ToolCallEventResult, ToolResultEventResult } from "./types";

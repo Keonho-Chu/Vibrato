@@ -2,7 +2,7 @@ import { describe, expect, test, vi } from "bun:test";
 import { mkdtemp, realpath, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 import * as configValue from "../../src/config/resolve-config-value";
 import { loadMCPJsonFile } from "../../src/discovery/mcp-json";
 import * as mcpClient from "../../src/runtime-mcp/client";
@@ -159,7 +159,7 @@ setInterval(() => {}, 1000);
 	});
 
 	test("honors default and configured connection timeouts for an explicit tools-only config", async () => {
-		const cwd = await mkdtempExact("gjc-mcp-explicit-timeout-");
+		const cwd = await mkdtempExact("vib-mcp-explicit-timeout-");
 		const configPath = join(cwd, "mcp.json");
 		const delayedServer = `
 const readline = require('node:readline');
@@ -284,7 +284,7 @@ setInterval(() => {}, 1000);
 				return Response.json({ jsonrpc: "2.0", id, result: {} });
 			},
 		});
-		const cwd = await mkdtempExact("gjc-mcp-factory-exact-");
+		const cwd = await mkdtempExact("vib-mcp-factory-exact-");
 		const configPath = join(cwd, "exact.json");
 		let manager: MCPManager | undefined;
 		try {
@@ -321,7 +321,7 @@ setInterval(() => {}, 1000);
 				return new Response(`${rawFailure}:${refreshToken}`, { status: 400 });
 			},
 		});
-		const cwd = await mkdtempExact("gjc-mcp-oauth-redaction-");
+		const cwd = await mkdtempExact("vib-mcp-oauth-redaction-");
 		const configPath = join(cwd, "exact.json");
 		const tokenUrl = `${server.url.href}?access_token=${refreshToken}`;
 		const debugSpy = vi.spyOn(logger, "debug").mockImplementation(() => {});
@@ -532,7 +532,7 @@ setInterval(() => {}, 1000);
 		}
 	});
 	test("propagates unexpected tools-only OAuth resolution failures", async () => {
-		const cwd = await mkdtempExact("gjc-mcp-oauth-unexpected-");
+		const cwd = await mkdtempExact("vib-mcp-oauth-unexpected-");
 		const configPath = join(cwd, "exact.json");
 		const manager = new MCPManager(cwd, null, { toolsOnly: true });
 		const failure = new Error("unexpected credential storage failure");
@@ -581,7 +581,7 @@ setInterval(() => {}, 1000);
 		}
 	});
 	test("fails tools-only servers before connecting when config resolution fails or is missing", async () => {
-		const cwd = await mkdtempExact("gjc-mcp-config-resolution-");
+		const cwd = await mkdtempExact("vib-mcp-config-resolution-");
 		const configPath = join(cwd, "exact.json");
 		const manager = new MCPManager(cwd, null, { toolsOnly: true });
 		const resolutionFailure = Object.assign(new Error("config path unavailable"), { code: "ENOENT" });
@@ -659,7 +659,7 @@ setInterval(() => {}, 1000);
 				return new Response(null, { status: 202 });
 			},
 		});
-		const cwd = await mkdtempExact("gjc-mcp-auth-callback-");
+		const cwd = await mkdtempExact("vib-mcp-auth-callback-");
 		const configPath = join(cwd, "exact.json");
 		const manager = new MCPManager(cwd, null, { toolsOnly: true });
 		const failure = new Error("SECRET_REFRESH_FAILURE");
@@ -734,7 +734,7 @@ setInterval(() => {}, 1000);
 				return new Response(null, { status: 202 });
 			},
 		});
-		const cwd = await mkdtempExact("gjc-mcp-remote-auth-retry-");
+		const cwd = await mkdtempExact("vib-mcp-remote-auth-retry-");
 		const configPath = join(cwd, "exact.json");
 		const manager = new MCPManager(cwd, null, { toolsOnly: true });
 		const binding = { resourceOrigin: server.url.origin, tokenEndpoint: "https://auth.example/token" };
@@ -797,7 +797,7 @@ setInterval(() => {}, 1000);
 				});
 			},
 		});
-		const cwd = await mkdtempExact("gjc-mcp-malformed-results-");
+		const cwd = await mkdtempExact("vib-mcp-malformed-results-");
 		const configPath = join(cwd, "exact.json");
 		const manager = new MCPManager(cwd, null, { toolsOnly: true });
 		try {
@@ -830,7 +830,7 @@ setInterval(() => {}, 1000);
 		}
 	});
 	test("keeps typed malformed and missing response failures generic in tools-only startup", async () => {
-		const cwd = await mkdtempExact("gjc-mcp-typed-startup-failures-");
+		const cwd = await mkdtempExact("vib-mcp-typed-startup-failures-");
 		const configPath = join(cwd, "exact.json");
 		const manager = new MCPManager(cwd, null, { toolsOnly: true });
 		const failures = new Map<string, MCPExpectedFailure>([
@@ -919,7 +919,7 @@ setInterval(() => {}, 1000);
 		}
 	});
 	test("awaits a pending sibling transport before propagating an unexpected tools-only failure", async () => {
-		const cwd = await mkdtempExact("gjc-mcp-pending-sibling-");
+		const cwd = await mkdtempExact("vib-mcp-pending-sibling-");
 		const configPath = join(cwd, "exact.json");
 		const manager = new MCPManager(cwd, null, { toolsOnly: true });
 		const primaryFailure = new Error("untyped tools/list failure");
@@ -986,7 +986,7 @@ setInterval(() => {}, 1000);
 		}
 	});
 	test("propagates untyped expected-looking tools/list failures after awaited cleanup", async () => {
-		const cwd = await mkdtempExact("gjc-mcp-list-unexpected-");
+		const cwd = await mkdtempExact("vib-mcp-list-unexpected-");
 		const configPath = join(cwd, "exact.json");
 		const manager = new MCPManager(cwd, null, { toolsOnly: true });
 		const primaryFailure = Object.assign(new Error("MCP error -32000: expected-looking tools/list failure"), {
@@ -1060,7 +1060,7 @@ setInterval(() => {}, 1000);
 		}
 	});
 	test("rolls back a published normalized sibling tool before propagating an unexpected tools-only failure", async () => {
-		const cwd = await mkdtempExact("gjc-mcp-normalized-rollback-");
+		const cwd = await mkdtempExact("vib-mcp-normalized-rollback-");
 		const configPath = join(cwd, "exact.json");
 		const manager = new MCPManager(cwd, null, { toolsOnly: true });
 		const successfulServer = "Mixed-Case";
@@ -1133,7 +1133,7 @@ setInterval(() => {}, 1000);
 		}
 	});
 	test("fails closed when tools-only tool names collide", async () => {
-		const cwd = await mkdtempExact("gjc-mcp-tool-collision-");
+		const cwd = await mkdtempExact("vib-mcp-tool-collision-");
 		const configPath = join(cwd, "exact.json");
 		const manager = new MCPManager(cwd, null, { toolsOnly: true });
 		let closeCalls = 0;
@@ -1170,7 +1170,7 @@ setInterval(() => {}, 1000);
 		}
 	});
 	test("forces tools-only stdio servers to avoid inherited environment", async () => {
-		const cwd = await mkdtempExact("gjc-mcp-stdio-isolation-");
+		const cwd = await mkdtempExact("vib-mcp-stdio-isolation-");
 		const configPath = join(cwd, "exact.json");
 		const manager = new MCPManager(cwd, null, { toolsOnly: true });
 		let capturedConfig: MCPServerConfig | undefined;
@@ -1213,7 +1213,7 @@ setInterval(() => {}, 1000);
 	});
 
 	test("factory creates a normal manager without an exact config", async () => {
-		const cwd = await mkdtemp(join(tmpdir(), "gjc-mcp-factory-normal-"));
+		const cwd = await mkdtemp(join(tmpdir(), "vib-mcp-factory-normal-"));
 		let manager: MCPManager | undefined;
 		try {
 			const created = await createMCPManager(cwd);
@@ -1292,7 +1292,7 @@ setInterval(() => {}, 1000);
 				return new Response(null, { status: 503 });
 			},
 		});
-		const cwd = await mkdtempExact("gjc-mcp-exact-");
+		const cwd = await mkdtempExact("vib-mcp-exact-");
 		const configPath = join(cwd, "exact.json");
 		const secondConfigPath = join(cwd, "second.json");
 		const manager = new MCPManager(cwd, null, { toolsOnly: true });
@@ -1406,7 +1406,7 @@ setInterval(() => {}, 1000);
 		}
 	});
 	test("validates exact quiet config shapes before connecting", async () => {
-		const cwd = await mkdtempExact("gjc-mcp-malformed-exact-");
+		const cwd = await mkdtempExact("vib-mcp-malformed-exact-");
 		const configPath = join(cwd, "exact.json");
 		const validServer = { type: "http", url: "http://127.0.0.1:1" };
 		const malformedCases = [
@@ -1537,7 +1537,7 @@ setInterval(() => {}, 1000);
 				return Response.json({ jsonrpc: "2.0", id, result: {} });
 			},
 		});
-		const cwd = await mkdtempExact("gjc-mcp-config-diagnostics-");
+		const cwd = await mkdtempExact("vib-mcp-config-diagnostics-");
 		const configPath = join(cwd, "exact.json");
 		const managers: MCPManager[] = [];
 		const discoverExact = async () => {
@@ -1892,7 +1892,7 @@ setInterval(() => {}, 1000);
 	});
 
 	test("stdio reconnect waits for old process tree to die before spawning replacement", async () => {
-		const pidFile = `/tmp/gjc-mcp-manager-reconnect-${Date.now()}-${Math.random().toString(36).slice(2)}.pid`;
+		const pidFile = `/tmp/vib-mcp-manager-reconnect-${Date.now()}-${Math.random().toString(36).slice(2)}.pid`;
 		const childPidFile = `${pidFile}.child`;
 		const startupOldAliveFile = `${pidFile}.old-alive`;
 		const serverScript = `

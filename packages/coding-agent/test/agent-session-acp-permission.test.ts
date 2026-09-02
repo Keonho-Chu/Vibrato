@@ -6,22 +6,22 @@
  * behavior they have in the TUI.
  */
 import { afterEach, beforeEach, expect, it, spyOn } from "bun:test";
-import { Agent, type AgentTool } from "@gajae-code/agent-core";
-import { getBundledModel } from "@gajae-code/ai";
-import { createMockModel, type MockModelOptions } from "@gajae-code/ai/providers/mock";
-import { AssistantMessageEventStream } from "@gajae-code/ai/utils/event-stream";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { EditTool } from "@gajae-code/coding-agent/edit";
-import { AgentSession } from "@gajae-code/coding-agent/session/agent-session";
+import { Agent, type AgentTool } from "@vib-rato/agent-core";
+import { getBundledModel } from "@vib-rato/ai";
+import { createMockModel, type MockModelOptions } from "@vib-rato/ai/providers/mock";
+import { AssistantMessageEventStream } from "@vib-rato/ai/utils/event-stream";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { EditTool } from "@vib-rato/coding-agent/edit";
+import { AgentSession } from "@vib-rato/coding-agent/session/agent-session";
 import type {
 	ClientBridge,
 	ClientBridgePermissionOutcome,
 	ClientBridgePermissionToolCall,
-} from "@gajae-code/coding-agent/session/client-bridge";
-import { convertToLlm } from "@gajae-code/coding-agent/session/messages";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import type { ToolSession } from "@gajae-code/coding-agent/tools";
-import { TempDir } from "@gajae-code/utils";
+} from "@vib-rato/coding-agent/session/client-bridge";
+import { convertToLlm } from "@vib-rato/coding-agent/session/messages";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import type { ToolSession } from "@vib-rato/coding-agent/tools";
+import { TempDir } from "@vib-rato/utils";
 import * as z from "zod/v4";
 import { callSessionTool } from "../src/eval/js/tool-bridge";
 

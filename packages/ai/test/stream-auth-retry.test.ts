@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it } from "bun:test";
-import { beginAttempt, registerCustomApi, unregisterCustomApis } from "@gajae-code/ai";
-import { streamSimple } from "@gajae-code/ai/stream";
-import type { Api, AssistantMessage, Context, Model, SimpleStreamOptions, Usage } from "@gajae-code/ai/types";
-import { AssistantMessageEventStream } from "@gajae-code/ai/utils/event-stream";
+import { beginAttempt, registerCustomApi, unregisterCustomApis } from "@vib-rato/ai";
+import { streamSimple } from "@vib-rato/ai/stream";
+import type { Api, AssistantMessage, Context, Model, SimpleStreamOptions, Usage } from "@vib-rato/ai/types";
+import { AssistantMessageEventStream } from "@vib-rato/ai/utils/event-stream";
 
 const SOURCE_ID = "stream-auth-retry-test";
 const API = "stream-auth-retry-test" as Api;

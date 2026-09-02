@@ -7,10 +7,10 @@ use std::{
 use napi_derive::napi;
 
 static INIT: Once = Once::new();
-const ENABLE_ENV: &str = "GJC_NATIVE_CRASH_DIAGNOSTICS";
-const DIR_ENV: &str = "GJC_CRASH_DIAGNOSTICS_DIR";
+const ENABLE_ENV: &str = "VIB_NATIVE_CRASH_DIAGNOSTICS";
+const DIR_ENV: &str = "VIB_CRASH_DIAGNOSTICS_DIR";
 
-/// Installs a Rust panic hook only when `GJC_NATIVE_CRASH_DIAGNOSTICS` is set.
+/// Installs a Rust panic hook only when `VIB_NATIVE_CRASH_DIAGNOSTICS` is set.
 ///
 /// This is an opt-in structured panic report, not a minidump/signal handler.
 /// It intentionally avoids always-on work and does not attempt to recover from
@@ -38,7 +38,7 @@ fn enabled() -> bool {
 
 fn write_panic_report(info: &std::panic::PanicHookInfo<'_>) {
 	let dir = std::env::var_os(DIR_ENV)
-		.map_or_else(|| std::env::temp_dir().join("gjc-crash-diagnostics"), PathBuf::from);
+		.map_or_else(|| std::env::temp_dir().join("vib-crash-diagnostics"), PathBuf::from);
 	if std::fs::create_dir_all(&dir).is_err() {
 		return;
 	}

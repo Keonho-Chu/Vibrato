@@ -1,13 +1,13 @@
 /**
  * Config CLI command handlers.
  *
- * Handles `gjc config <command>` subcommands for managing settings.
+ * Handles `vib config <command>` subcommands for managing settings.
  * Uses the settings schema as the source of truth for available settings.
  */
 
 import * as fs from "node:fs/promises";
 import type * as path from "node:path";
-import { APP_NAME, getAgentDir } from "@gajae-code/utils";
+import { APP_NAME, getAgentDir } from "@vib-rato/utils";
 import { YAML } from "bun";
 import chalk from "chalk";
 import { AtomicYamlReplaceError, AtomicYamlRetargetError } from "../config/atomic-yaml-patch";

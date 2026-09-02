@@ -1,12 +1,12 @@
 import { afterAll, beforeEach, describe, expect, it, vi } from "bun:test";
-import type { AssistantMessage } from "@gajae-code/ai";
-import { Container, Spacer, Text } from "@gajae-code/tui";
+import type { AssistantMessage } from "@vib-rato/ai";
+import { Container, Spacer, Text } from "@vib-rato/tui";
 import {
 	__markdownPerfCounters,
 	__setMarkdownNowForTest,
 	clearRenderCache,
 	Markdown,
-} from "@gajae-code/tui/components/markdown";
+} from "@vib-rato/tui/components/markdown";
 import { resetSettingsForTest, Settings, settings } from "../../../src/config/settings.js";
 import { AssistantMessageComponent } from "../../../src/modes/components/assistant-message.js";
 import { initTheme } from "../../../src/modes/theme/theme.js";
@@ -195,7 +195,7 @@ describe("AssistantMessageComponent streaming markdown", () => {
 		);
 		const rendered = component.renderWithViewportAnchors(14);
 		const anchors = rendered.anchors.flatMap(anchor => (anchor === null ? [] : [anchor]));
-		expect(rendered.lines.join("")).not.toContain("GJC_ANCHOR");
+		expect(rendered.lines.join("")).not.toContain("VIB_ANCHOR");
 		expect(anchors.length).toBeGreaterThan(1);
 		expect(new Set(anchors.map(anchor => anchor.id)).size).toBe(1);
 		expect(anchors[0]?.graphemeStart).toBe(0);

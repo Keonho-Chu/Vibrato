@@ -1,15 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { RenderResultOptions } from "@gajae-code/agent-core";
-import { KeybindingsManager } from "@gajae-code/coding-agent/config/keybindings";
-import { type IrcSidebarTheme, IrcSplitViewComponent } from "@gajae-code/coding-agent/modes/components/irc-sidebar";
-import { IrcObservationLedger } from "@gajae-code/coding-agent/modes/irc-observation-ledger";
-import { getThemeByName, setThemeInstance } from "@gajae-code/coding-agent/modes/theme/theme";
-import { bashToolRenderer } from "@gajae-code/coding-agent/tools/bash";
-import { getOutputBlockContentWidth } from "@gajae-code/coding-agent/tui/output-block";
-import { getKeybindings, ImageProtocol, setKeybindings, TERMINAL, visibleWidth } from "@gajae-code/tui";
-import { sanitizeText } from "@gajae-code/utils";
+import type { RenderResultOptions } from "@vib-rato/agent-core";
+import { KeybindingsManager } from "@vib-rato/coding-agent/config/keybindings";
+import { type IrcSidebarTheme, IrcSplitViewComponent } from "@vib-rato/coding-agent/modes/components/irc-sidebar";
+import { IrcObservationLedger } from "@vib-rato/coding-agent/modes/irc-observation-ledger";
+import { getThemeByName, setThemeInstance } from "@vib-rato/coding-agent/modes/theme/theme";
+import { bashToolRenderer } from "@vib-rato/coding-agent/tools/bash";
+import { getOutputBlockContentWidth } from "@vib-rato/coding-agent/tui/output-block";
+import { getKeybindings, ImageProtocol, setKeybindings, TERMINAL, visibleWidth } from "@vib-rato/tui";
+import { sanitizeText } from "@vib-rato/utils";
 
 type MutableTerminalInfo = {
 	imageProtocol: ImageProtocol | null;

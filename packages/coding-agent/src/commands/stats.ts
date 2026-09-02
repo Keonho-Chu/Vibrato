@@ -1,7 +1,7 @@
 /**
  * View usage statistics dashboard.
  */
-import { Command, Flags } from "@gajae-code/utils/cli";
+import { Command, Flags } from "@vib-rato/utils/cli";
 import type { StatsCommandArgs } from "../cli/stats-cli";
 
 export default class Stats extends Command {

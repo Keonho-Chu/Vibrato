@@ -1,17 +1,17 @@
 /**
- * Import MCP servers and skills from other coding agents into GJC.
+ * Import MCP servers and skills from other coding agents into Vibrato.
  */
-import { Command, Flags } from "@gajae-code/utils/cli";
+import { Command, Flags } from "@vib-rato/utils/cli";
 import { type MigrateCommandArgs, runMigrateCommand } from "../cli/migrate-cli";
 
 export default class Migrate extends Command {
 	static description = "Import MCP servers and skills from Claude Code, Codex, or OpenCode";
 
 	static examples = [
-		"gjc migrate --from claude-code",
-		"gjc migrate --from codex --from opencode",
-		"gjc migrate --from all --dry-run --json",
-		"gjc migrate --from claude-code --project --force",
+		"vib migrate --from claude-code",
+		"vib migrate --from codex --from opencode",
+		"vib migrate --from all --dry-run --json",
+		"vib migrate --from claude-code --project --force",
 	];
 
 	static flags = {
@@ -21,7 +21,7 @@ export default class Migrate extends Command {
 			required: true,
 		}),
 		project: Flags.boolean({
-			description: "Write to the project scope (./.gjc) instead of the user scope (~/.gjc)",
+			description: "Write to the project scope (./.vib) instead of the user scope (~/.vib)",
 			default: false,
 		}),
 		force: Flags.boolean({

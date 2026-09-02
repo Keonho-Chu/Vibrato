@@ -6,7 +6,7 @@
  * settles a pending request from an inbound frame and still forwards the very
  * same frame to every `onFrame` observer. A runtime that projects unknown frame
  * types into a generic notification therefore renders protocol answers — most
- * visibly `GJC event replay result` — as chat content, and a chat transport
+ * visibly `Vibrato event replay result` — as chat content, and a chat transport
  * with no mapping for that session publishes it as a brand-new root.
  *
  * Membership is exact, typed, and closed. It is never inferred from a `_result`
@@ -26,7 +26,7 @@
  * - `query_response` — the host's answer to the matching `query_request`, and
  *   the same endpoint-stale refusal path.
  * - `hello` — `ServerMessage::Hello` from the native session server
- *   (`crates/gjc-sdk/src/protocol.rs`), sent to every connection at accept time
+ *   (`crates/vib-sdk/src/protocol.rs`), sent to every connection at accept time
  *   and re-observed by frame handlers whenever the client reconnects and
  *   adopts a new connection id.
  *

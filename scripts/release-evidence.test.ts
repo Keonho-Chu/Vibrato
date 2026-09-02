@@ -112,7 +112,7 @@ function expectedRecord(definition: (typeof PUBLIC_PACKAGE_DEFINITIONS)[number],
 
 function expectedFixture(): { records: PackageEvidenceRecord[]; expected: ExpectedReleaseEvidence } {
 	const records = PUBLIC_PACKAGE_DEFINITIONS.map((definition, index) =>
-		expectedRecord(definition, index === 3 ? { "@gajae-code/ai": "1.2.3" } : {}),
+		expectedRecord(definition, index === 3 ? { "@vib-rato/ai": "1.2.3" } : {}),
 	);
 	return {
 		records,
@@ -136,7 +136,7 @@ function observation(record: PackageEvidenceRecord): RegistryPackageObservation 
 
 describe("release package evidence", () => {
 	test("hashes the raw package/package.json bytes without parsing or normalizing them", () => {
-		const rawManifest = "{\r\n  \"name\": \"@gajae-code/ai\",\r\n  \"version\": \"1.2.3\"\r\n}\r\n";
+		const rawManifest = "{\r\n  \"name\": \"@vib-rato/ai\",\r\n  \"version\": \"1.2.3\"\r\n}\r\n";
 		const tarball = canonicalizePackageTarball(fixtureTarball(rawManifest));
 		const inspection = inspectPackageTarball(tarball);
 		const record = packageEvidenceFromTarball(PUBLIC_PACKAGE_DEFINITIONS[1]!, tarball);
@@ -147,17 +147,17 @@ describe("release package evidence", () => {
 		validateExpectedTarball(record, tarball);
 	});
 	test("accepts exact nightly versions and exact same-version internal dependencies", () => {
-		const definition = PUBLIC_PACKAGE_DEFINITIONS.find(candidate => candidate.name === "@gajae-code/natives")!;
+		const definition = PUBLIC_PACKAGE_DEFINITIONS.find(candidate => candidate.name === "@vib-rato/natives")!;
 		const version = "1.2.4-nightly.20260805032109.123456.gabcdef012345";
 		const manifest = JSON.stringify({
 			name: definition.name,
 			version,
-			optionalDependencies: { "@gajae-code/natives-linux-x64": version },
+			optionalDependencies: { "@vib-rato/natives-linux-x64": version },
 		});
 
 		const record = packageEvidenceFromTarball(definition, fixtureTarball(manifest));
 		expect(record.version).toBe(version);
-		expect(record.internal_dependencies).toEqual({ "@gajae-code/natives-linux-x64": version });
+		expect(record.internal_dependencies).toEqual({ "@vib-rato/natives-linux-x64": version });
 		const nightlyRecords = expectedFixture().records.map(candidate => ({
 			...candidate,
 			version,
@@ -171,8 +171,8 @@ describe("release package evidence", () => {
 	});
 
 	test("rejects workspace, file, ranged, and stale internal dependency forms in every packed field", () => {
-		const definition = PUBLIC_PACKAGE_DEFINITIONS.find(candidate => candidate.name === "@gajae-code/natives")!;
-		const dependencyName = "@gajae-code/natives-linux-x64";
+		const definition = PUBLIC_PACKAGE_DEFINITIONS.find(candidate => candidate.name === "@vib-rato/natives")!;
+		const dependencyName = "@vib-rato/natives-linux-x64";
 		const cases = [
 			["dependencies", "workspace:*"],
 			["devDependencies", "file:../natives-linux-x64"],
@@ -183,16 +183,16 @@ describe("release package evidence", () => {
 			const manifest = JSON.stringify({ name: definition.name, version: "1.2.3", [field]: { [dependencyName]: spec } });
 			expect(() => packageEvidenceFromTarball(definition, fixtureTarball(manifest))).toThrow("exact release version");
 		}
-		const wrapper = PUBLIC_PACKAGE_DEFINITIONS.find(candidate => candidate.name === "gajae-code")!;
+		const wrapper = PUBLIC_PACKAGE_DEFINITIONS.find(candidate => candidate.name === "vib-rato")!;
 		expect(() => packageEvidenceFromTarball(wrapper, fixtureTarball(JSON.stringify({
 			name: wrapper.name,
 			version: "1.2.3",
-			dependencies: { "@gajae-code/coding-agent": "catalog:" },
+			dependencies: { "@vib-rato/coding-agent": "catalog:" },
 		})))).toThrow("exact release version");
 	});
 	test("rejects unknown owned internal names before registry or publish callbacks", async () => {
-		const definition = PUBLIC_PACKAGE_DEFINITIONS.find(candidate => candidate.name === "@gajae-code/natives")!;
-		for (const dependencyName of ["@gajae-code/unknown-owned", "@gajae-code-sync-sandbox/unknown-owned"]) {
+		const definition = PUBLIC_PACKAGE_DEFINITIONS.find(candidate => candidate.name === "@vib-rato/natives")!;
+		for (const dependencyName of ["@vib-rato/unknown-owned", "@vib-rato-sync-sandbox/unknown-owned"]) {
 			const manifest = JSON.stringify({
 				name: definition.name,
 				version: "1.2.3",
@@ -206,7 +206,7 @@ describe("release package evidence", () => {
 		const unknownOwnedTarball = canonicalizePackageTarball(fixtureTarball(JSON.stringify({
 			name: record.name,
 			version: record.version,
-			devDependencies: { "@gajae-code/unknown-owned": record.version },
+			devDependencies: { "@vib-rato/unknown-owned": record.version },
 		})));
 		let callbacks = 0;
 		await expect(publishRetainedPackage(record, "retained.tgz", {
@@ -225,7 +225,7 @@ describe("release package evidence", () => {
 
 
 	test("bounds compressed, unpacked, per-entry, and file-count tarball resources", () => {
-		const manifest = Buffer.from('{"name":"@gajae-code/ai","version":"1.2.3"}\n');
+		const manifest = Buffer.from('{"name":"@vib-rato/ai","version":"1.2.3"}\n');
 		const normal = fixtureTarballEntries([
 			{ path: "package/index.js", data: Buffer.from("export {};\n") },
 			{ path: "package/package.json", data: manifest },
@@ -253,10 +253,10 @@ describe("release package evidence", () => {
 	});
 
 	test("streams capped official-registry tarballs and authenticates compressed bytes before inspection", async () => {
-		const tarball = fixtureTarball('{"name":"@gajae-code/ai","version":"1.2.3"}\n');
+		const tarball = fixtureTarball('{"name":"@vib-rato/ai","version":"1.2.3"}\n');
 		const fetchTarball = (async () => new Response(tarball)) as unknown as typeof fetch;
 		await expect(downloadNpmRegistryTarball(
-			"https://registry.npmjs.org/@gajae-code%2fai/-/ai-1.2.3.tgz",
+			"https://registry.npmjs.org/@vib-rato%2fai/-/ai-1.2.3.tgz",
 			sha512Sri(tarball),
 			{ fetcher: fetchTarball, maxCompressedBytes: tarball.length },
 		)).resolves.toEqual(tarball);
@@ -264,14 +264,14 @@ describe("release package evidence", () => {
 		const malformedCompressed = Buffer.from("not a gzip tarball");
 		const fetchMalformed = (async () => new Response(malformedCompressed)) as unknown as typeof fetch;
 		await expect(downloadNpmRegistryTarball(
-			"https://registry.npmjs.org/@gajae-code%2fai/-/ai-1.2.3.tgz",
+			"https://registry.npmjs.org/@vib-rato%2fai/-/ai-1.2.3.tgz",
 			sha512Sri(Buffer.from("different compressed bytes")),
 			{ fetcher: fetchMalformed, maxCompressedBytes: 1_024 },
 		)).rejects.toThrow("compressed bytes");
 
 		const fetchOversized = (async () => new Response(Buffer.alloc(64))) as unknown as typeof fetch;
 		await expect(downloadNpmRegistryTarball(
-			"https://registry.npmjs.org/@gajae-code%2fai/-/ai-1.2.3.tgz",
+			"https://registry.npmjs.org/@vib-rato%2fai/-/ai-1.2.3.tgz",
 			sha512Sri(Buffer.alloc(64)),
 			{ fetcher: fetchOversized, maxCompressedBytes: 16 },
 		)).rejects.toThrow("compressed size");
@@ -281,15 +281,15 @@ describe("release package evidence", () => {
 			headers: { location: "https://registry.npmjs.evil.invalid/ai.tgz" },
 		})) as unknown as typeof fetch;
 		await expect(downloadNpmRegistryTarball(
-			"https://registry.npmjs.org/@gajae-code%2fai/-/ai-1.2.3.tgz",
+			"https://registry.npmjs.org/@vib-rato%2fai/-/ai-1.2.3.tgz",
 			sha512Sri(tarball),
 			{ fetcher: fetchRedirect },
 		)).rejects.toThrow("redirect destination");
 		expect(() => validateNpmRegistryTarballUrl("https://evil.invalid/ai.tgz", "test tarball")).toThrow("must remain");
 	});
 	test("retries transient registry tarball reads within the bounded window and fails closed otherwise", async () => {
-		const tarball = fixtureTarball('{"name":"@gajae-code/ai","version":"1.2.3"}\n');
-		const url = "https://registry.npmjs.org/@gajae-code%2fai/-/ai-1.2.3.tgz";
+		const tarball = fixtureTarball('{"name":"@vib-rato/ai","version":"1.2.3"}\n');
+		const url = "https://registry.npmjs.org/@vib-rato%2fai/-/ai-1.2.3.tgz";
 
 		// Propagation 404s resolve once the CDN catches up.
 		let laggedCalls = 0;
@@ -341,7 +341,7 @@ describe("release package evidence", () => {
 		expect(classifyRegistryObservation(record, undefined)).toBe("publish");
 		expect(classifyRegistryObservation(record, exact)).toBe("skip");
 		expect(classifyRegistryObservation(record, { ...exact, registry_sri: "sha512-invalid" })).toBe("conflict");
-		expect(classifyRegistryObservation(record, { ...exact, registry_internal_dependencies: { "@gajae-code/ai": "9.9.9" } })).toBe("conflict");
+		expect(classifyRegistryObservation(record, { ...exact, registry_internal_dependencies: { "@vib-rato/ai": "9.9.9" } })).toBe("conflict");
 
 	});
 	test("rejects stale latest observations and re-observes the complete set before final evidence", async () => {
@@ -420,7 +420,7 @@ describe("release package evidence", () => {
 
 	test("rejects malformed tarballs and malformed expected evidence before publication", async () => {
 		const { expected } = expectedFixture();
-		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "gajae-code-release-evidence-malformed-"));
+		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "vib-rato-release-evidence-malformed-"));
 		try {
 			expect(() => canonicalizePackageTarball(gzipSync(Buffer.alloc(512)))).toThrow("two zero-block terminator");
 			const malformedEvidence = path.join(directory, "expected.json");
@@ -438,7 +438,7 @@ describe("release package evidence", () => {
 		}
 	});
 	test("fails closed when an expired retained tarball cannot be reproduced before resume", async () => {
-		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "gajae-code-release-evidence-expired-"));
+		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "vib-rato-release-evidence-expired-"));
 		try {
 			const { records } = expectedFixture();
 			await expect(readRetainedTarball(records[0]!, path.join(directory, "missing.tgz"))).rejects.toThrow("missing or expired");
@@ -447,7 +447,7 @@ describe("release package evidence", () => {
 		}
 	});
 	test("rejects an oversized retained tarball from on-disk metadata before allocation", async () => {
-		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "gajae-code-release-evidence-oversized-"));
+		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "vib-rato-release-evidence-oversized-"));
 		try {
 			const { records } = expectedFixture();
 			const oversizedPath = path.join(directory, "oversized.tgz");
@@ -521,7 +521,7 @@ describe("release package evidence", () => {
 	});
 
 	test("creates expected and final evidence exclusively under concurrent exact and conflicting writers", async () => {
-		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "gajae-code-release-evidence-"));
+		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "vib-rato-release-evidence-"));
 		try {
 			const { expected } = expectedFixture();
 			const expectedPath = path.join(directory, "expected.json");
@@ -592,7 +592,7 @@ describe("release package evidence", () => {
 		const unchanged = before.map(record => ({ ...record }));
 		const advanced = before.map(record => ({ ...record, version: "1.2.4" }));
 
-		expect(RELEASE_CHANNEL_EVIDENCE_FILE).toBe("gajae-release-channel-v1.json");
+		expect(RELEASE_CHANNEL_EVIDENCE_FILE).toBe("vibrato-release-channel-v1.json");
 		expect(() => assertReleaseSourceBinding(nightlyVersion, "nightly", source, source)).not.toThrow();
 		expect(() => assertReleaseSourceBinding(nightlyVersion, "nightly", source, "b".repeat(40))).toThrow("does not match checked-out source");
 		expect(createReleaseChannelEvidence({
@@ -628,8 +628,8 @@ describe("release package evidence", () => {
 		expect(golden.final_evidence_sha256).toBe(sha256(finalBytes));
 		expect(goldenReleaseEvidenceSha256()).toBe(sha256(bytes));
 		expect(golden.expected_evidence.packages).toHaveLength(PUBLIC_PACKAGE_DEFINITIONS.length);
-		expect(golden.expected_evidence.packages.find(record => record.name === "@gajae-code/coding-agent")!.internal_dependencies)
-			.toEqual({ "@gajae-code/ai": "1.2.3" });
+		expect(golden.expected_evidence.packages.find(record => record.name === "@vib-rato/coding-agent")!.internal_dependencies)
+			.toEqual({ "@vib-rato/ai": "1.2.3" });
 		expect(golden.final_evidence.packages.every(record => record.registry_sri === record.expected_sri)).toBe(true);
 		verifyFinalEvidence(golden.expected_evidence, golden.final_evidence, golden.expected_evidence_sha256);
 		expect(parseReleaseEvidenceCli(["--emit-golden-evidence"])).toEqual({ mode: "emit-golden-evidence" });

@@ -1,8 +1,8 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from "bun:test";
 
-import { HookInputComponent } from "@gajae-code/coding-agent/modes/components/hook-input";
-import { getThemeByName, setThemeInstance } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { TUI } from "@gajae-code/tui";
+import { HookInputComponent } from "@vib-rato/coding-agent/modes/components/hook-input";
+import { getThemeByName, setThemeInstance } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { TUI } from "@vib-rato/tui";
 
 beforeAll(async () => {
 	const theme = await getThemeByName("red-claw");

@@ -31,7 +31,7 @@ interface AllocationMetricOutput {
 
 interface BenchOutput {
 	schemaVersion: 1;
-	package: "@gajae-code/agent";
+	package: "@vib-rato/agent";
 	bench: "compaction-estimate";
 	fixture: string;
 	fixtureDimensions: { entries: number; openAiItems: number };
@@ -61,7 +61,7 @@ function mulberry32(seed: number): () => number {
 }
 
 function text(rng: () => number, words: number): string {
-	const vocab = ["alpha", "bravo", "charlie", "delta", "echo", "foxtrot", "gajae", "token", "context", "prune"];
+	const vocab = ["alpha", "bravo", "charlie", "delta", "echo", "foxtrot", "vibrato", "token", "context", "prune"];
 	let out = "";
 	for (let i = 0; i < words; i++) out += `${vocab[Math.floor(rng() * vocab.length)]} `;
 	return out;
@@ -235,7 +235,7 @@ for (let i = 0; i < ALLOCATION_SAMPLES; i++) {
 
 const output: BenchOutput = {
 	schemaVersion: 1,
-	package: "@gajae-code/agent",
+	package: "@vib-rato/agent",
 	bench: "compaction-estimate",
 	fixture: "deterministic-10k-session-5k-openai-items",
 	fixtureDimensions: { entries: entries.length, openAiItems: openAiItems.length },

@@ -4,15 +4,15 @@ import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 
-import type { NativeDirectoryTreeSnapshot } from "@gajae-code/natives";
-import { isEnoent } from "@gajae-code/utils";
+import type { NativeDirectoryTreeSnapshot } from "@vib-rato/natives";
+import { isEnoent } from "@vib-rato/utils";
 import { AgentRegistry } from "../registry/agent-registry";
 import { parseInternalUrl } from "./parse";
 import { validateRelativePath } from "./skill-protocol";
 import type { InternalResource, InternalUrl, ProtocolHandler } from "./types";
 
 type NativeLocalBindings = Pick<
-	typeof import("@gajae-code/natives"),
+	typeof import("@vib-rato/natives"),
 	"exactRemoveDirectoryTree" | "snapshotDirectoryTree"
 >;
 
@@ -20,7 +20,7 @@ let nativeLocalBindings: NativeLocalBindings | undefined;
 
 function nativeLocal(): NativeLocalBindings {
 	if (!nativeLocalBindings) {
-		nativeLocalBindings = require("@gajae-code/natives") as NativeLocalBindings;
+		nativeLocalBindings = require("@vib-rato/natives") as NativeLocalBindings;
 	}
 	return nativeLocalBindings;
 }
@@ -179,7 +179,7 @@ async function assertDirectoryNotSymlink(directoryPath: string): Promise<void> {
 	}
 }
 
-const LEGACY_MIGRATION_MARKER = ".gjc-local-legacy-migrated-v1";
+const LEGACY_MIGRATION_MARKER = ".vib-local-legacy-migrated-v1";
 const MAX_LEGACY_LOCAL_BYTES = 64 * 1024 * 1024;
 
 type LegacyMigrationState = "complete" | "cleanup_pending";
@@ -382,7 +382,7 @@ async function migrateManagedLegacyLocal(
 				throw new Error("Legacy local:// migration exceeds the safe size limit");
 		}
 	}
-	const staging = path.join(scratchParent, `.gjc-local-migration-${randomUUID()}`);
+	const staging = path.join(scratchParent, `.vib-local-migration-${randomUUID()}`);
 	const installed: Array<{ readonly path: string; readonly dev: bigint; readonly ino: bigint }> = [];
 	let sourceRetired = false;
 	try {
@@ -476,7 +476,7 @@ async function migrateLegacyLocal(
 		}
 		throw error;
 	}
-	const staging = path.join(scratchParent, `.gjc-local-migration-${randomUUID()}`);
+	const staging = path.join(scratchParent, `.vib-local-migration-${randomUUID()}`);
 	try {
 		await copyLegacyManifest(legacySource.root, staging, manifest);
 		const verifiedManifest = await captureLegacyManifest(legacySource.root, legacySource.identity);
@@ -633,7 +633,7 @@ function initializeLocalRootSyncWhenLegacyAbsent(options: LocalProtocolOptions, 
 }
 
 export function resolveLocalRoot(options: LocalProtocolOptions): string {
-	return explicitLocalRoot(options) ?? path.join(os.tmpdir(), "gjc-local", safeSessionId(options));
+	return explicitLocalRoot(options) ?? path.join(os.tmpdir(), "vib-local", safeSessionId(options));
 }
 
 export function resolveLocalUrlToPath(input: string | InternalUrl, options: LocalProtocolOptions): string {

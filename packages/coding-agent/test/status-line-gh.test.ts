@@ -24,7 +24,7 @@ describe("status-line GitHub PR lookup", () => {
 		const spawnSpy = vi.spyOn(Bun, "spawn").mockImplementation(
 			() =>
 				({
-					stdout: textStream('{"number":3354,"url":"https://github.com/Yeachan-Heo/gajae-code/pull/3354"}'),
+					stdout: textStream('{"number":3354,"url":"https://github.com/Keonho-Chu/Vibrato/pull/3354"}'),
 					stderr: textStream(""),
 					exited: Promise.resolve(0),
 					kill: () => {},
@@ -33,7 +33,7 @@ describe("status-line GitHub PR lookup", () => {
 
 		await expect(lookupCurrentPr()).resolves.toEqual({
 			number: 3354,
-			url: "https://github.com/Yeachan-Heo/gajae-code/pull/3354",
+			url: "https://github.com/Keonho-Chu/Vibrato/pull/3354",
 		});
 		expect(spawnSpy).toHaveBeenCalledWith([ghPath, "pr", "view", "--json", "number,url"], {
 			stdout: "pipe",
@@ -100,7 +100,7 @@ describe("status-line GitHub PR lookup", () => {
 	it("keeps repository and branch keys isolated", async () => {
 		const runGh: RunGh = async () => ({
 			exitCode: 0,
-			stdout: JSON.stringify({ number: 3354, url: "https://github.com/Yeachan-Heo/gajae-code/pull/3354" }),
+			stdout: JSON.stringify({ number: 3354, url: "https://github.com/Keonho-Chu/Vibrato/pull/3354" }),
 			stderr: "",
 			timedOut: false,
 		});
@@ -108,7 +108,7 @@ describe("status-line GitHub PR lookup", () => {
 
 		await expect(lookupCurrentPrCached("/repoA/.git/HEAD\0feature", runGh, () => 1_000)).resolves.toEqual({
 			number: 3354,
-			url: "https://github.com/Yeachan-Heo/gajae-code/pull/3354",
+			url: "https://github.com/Keonho-Chu/Vibrato/pull/3354",
 		});
 		// A second repository on the same branch name must not observe repoA's entry.
 		await expect(lookupCurrentPrCached("/repoB/.git/HEAD\0feature", noPr, () => 1_000)).resolves.toBeNull();
@@ -193,7 +193,7 @@ describe("status-line GitHub PR lookup", () => {
 		for (const number of [0, -1, 1.5, Number.MAX_SAFE_INTEGER + 1, "3354"]) {
 			const runGh: RunGh = async () => ({
 				exitCode: 0,
-				stdout: JSON.stringify({ number, url: "https://github.com/Yeachan-Heo/gajae-code/pull/3354" }),
+				stdout: JSON.stringify({ number, url: "https://github.com/Keonho-Chu/Vibrato/pull/3354" }),
 				stderr: "",
 				timedOut: false,
 			});
@@ -204,15 +204,15 @@ describe("status-line GitHub PR lookup", () => {
 
 	it("rejects URLs that do not bind the returned PR identity", async () => {
 		const malformed = [
-			"ftp://github.com/Yeachan-Heo/gajae-code/pull/3354",
-			"https://github.com/Yeachan-Heo/gajae-code/pull/9999",
-			"https://github.com/Yeachan-Heo/gajae-code/security/advisories",
-			"https://github.com@attacker.example/Yeachan-Heo/gajae-code/pull/3354",
-			"https://github.com/Yeachan-Heo/gajae-code/pull/3354?redirect=1",
-			"https://github.com/Yeachan-Heo/gajae-code/pull/3354#files",
-			"https://github.com/Yeachan-Heo/gajae-code/pull/3354/",
+			"ftp://github.com/Keonho-Chu/Vibrato/pull/3354",
+			"https://github.com/Keonho-Chu/Vibrato/pull/9999",
+			"https://github.com/Keonho-Chu/Vibrato/security/advisories",
+			"https://github.com@attacker.example/Keonho-Chu/Vibrato/pull/3354",
+			"https://github.com/Keonho-Chu/Vibrato/pull/3354?redirect=1",
+			"https://github.com/Keonho-Chu/Vibrato/pull/3354#files",
+			"https://github.com/Keonho-Chu/Vibrato/pull/3354/",
 			"https://github.com/pull/3354",
-			"https://github.com/Yeachan-Heo/gajae-code/extra/pull/3354",
+			"https://github.com/Keonho-Chu/Vibrato/extra/pull/3354",
 			"https://github.com/security/advisories/foo/pull/3354",
 		];
 
@@ -239,7 +239,7 @@ describe("status-line GitHub PR lookup", () => {
 				exitCode: 0,
 				stdout: JSON.stringify({
 					number: 3354,
-					url: `https://github.com/Yeachan-Heo/gajae-code/pull/3354${String.fromCodePoint(codePoint)}`,
+					url: `https://github.com/Keonho-Chu/Vibrato/pull/3354${String.fromCodePoint(codePoint)}`,
 				}),
 				stderr: "",
 				timedOut: false,

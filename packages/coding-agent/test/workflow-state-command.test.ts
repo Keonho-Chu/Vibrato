@@ -7,7 +7,7 @@ const repoRoot = path.resolve(import.meta.dir, "..", "..", "..");
 const cliEntry = path.join(repoRoot, "packages", "coding-agent", "src", "cli.ts");
 const workflowSkills = ["deep-interview", "ralplan", "ultragoal", "autoresearch"] as const;
 function sessionStateDir(cwd: string, sessionId: string): string {
-	return path.join(cwd, ".gjc", `_session-${encodeURIComponent(sessionId).replaceAll(".", "%2E")}`, "state");
+	return path.join(cwd, ".vib", `_session-${encodeURIComponent(sessionId).replaceAll(".", "%2E")}`, "state");
 }
 const initialPhases: Record<(typeof workflowSkills)[number], string> = {
 	"deep-interview": "interviewing",
@@ -17,7 +17,7 @@ const initialPhases: Record<(typeof workflowSkills)[number], string> = {
 };
 
 async function withTempCwd<T>(fn: (cwd: string) => Promise<T>): Promise<T> {
-	const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-state-command-"));
+	const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "vib-state-command-"));
 	try {
 		return await fn(cwd);
 	} finally {
@@ -34,7 +34,7 @@ function runState(cwd: string, args: string[]) {
 	});
 }
 
-describe("gjc state workflow command", () => {
+describe("vib state workflow command", () => {
 	it("writes readable canonical state and receipt for workflow skills through documented invocation", async () => {
 		await withTempCwd(async cwd => {
 			for (const skill of workflowSkills) {
@@ -70,7 +70,7 @@ describe("gjc state workflow command", () => {
 					current_phase: initialPhases[skill],
 				});
 				expect(modeState.blocked_reason ?? modeState.state?.blocked_reason).toBe("execution approval missing");
-				expect(modeState.receipt.command).toBe(`gjc state ${skill} write`);
+				expect(modeState.receipt.command).toBe(`vib state ${skill} write`);
 
 				const activeState = await Bun.file(
 					path.join(sessionStateDir(cwd, `session-${skill}`), "skill-active-state.json"),
@@ -78,7 +78,7 @@ describe("gjc state workflow command", () => {
 				expect(activeState.active_skills[0]).toMatchObject({
 					skill,
 					phase: initialPhases[skill],
-					receipt: { owner: "gjc-state-cli" },
+					receipt: { owner: "vib-state-cli" },
 				});
 			}
 		});

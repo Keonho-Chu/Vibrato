@@ -9,7 +9,7 @@ import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 import { createInterface } from "node:readline/promises";
-import type { ImageContent } from "@gajae-code/ai/core";
+import type { ImageContent } from "@vib-rato/ai/core";
 import {
 	$pickenv,
 	getAgentDir,
@@ -19,7 +19,7 @@ import {
 	postmortem,
 	setProjectDir,
 	VERSION,
-} from "@gajae-code/utils";
+} from "@vib-rato/utils";
 import chalk from "chalk";
 import type { Args } from "./cli/args";
 import { processFileArguments } from "./cli/file-processor";
@@ -35,11 +35,10 @@ import { resolveCliModel, resolveModelRoleValue, resolveModelScope, type ScopedM
 import { selectorHead } from "./config/model-selector-value";
 import { getDefault, type SettingPath, Settings, settings } from "./config/settings";
 import { resolveMachineLocalUpdateChannel, type UpdateChannel } from "./config/update-channel";
-import { BUNDLED_GROK_BUILD_EXTENSION_ID, getBundledGrokBuildExtensionFactory } from "./defaults/gjc-grok-cli";
+import { BUNDLED_GROK_BUILD_EXTENSION_ID, getBundledGrokBuildExtensionFactory } from "./defaults/vib-grok-cli";
 import { initializeWithSettings } from "./discovery";
 import { exportFromFile } from "./export/html";
 import type { ExtensionUIContext } from "./extensibility/extensions/types";
-import { persistCoordinatorRuntimeInputReady } from "./gjc-runtime/session-state-sidecar";
 import type { AcpStartupOptions } from "./modes/acp/startup-options";
 import type { SessionSelectionResult } from "./modes/components/session-selector";
 import type { InteractiveMode } from "./modes/interactive-mode";
@@ -85,9 +84,10 @@ import type { LspStartupServerInfo } from "./tools";
 import { getDisplayChangelogEntries, getInstalledVersionChangelogEntry, getNewEntries } from "./utils/changelog";
 import type { EventBus } from "./utils/event-bus";
 import { installHerdrReporter } from "./utils/herdr-pane";
+import { persistCoordinatorRuntimeInputReady } from "./vib-runtime/session-state-sidecar";
 
 const MANAGED_OWNER_SUPERVISOR_ARG = "--internal-managed-owner-supervisor";
-const MANAGED_OWNER_CHILD_TOKEN_ENV = "GJC_MANAGED_OWNER_CHILD_TOKEN";
+const MANAGED_OWNER_CHILD_TOKEN_ENV = "VIB_MANAGED_OWNER_CHILD_TOKEN";
 const TMUX_OWNER_ISOLATION_ARG = "--internal-tmux-owner-isolation";
 
 async function checkForNewVersion(
@@ -763,6 +763,9 @@ export async function runInteractiveMode(
 			const onboardingState = await readOnboardingState(agentDir);
 			if (shouldOfferOnboarding(onboardingState)) await mode.showFrictionlessOnboarding();
 		}
+		// Nothing usable yet (no credentials, no discovered endpoint): open the
+		// provider onboarding menu, whose first entry is the vLLM endpoint setup.
+		if (session.modelRegistry.getAvailable().length === 0) mode.showProviderOnboarding();
 	}
 	mode.renderInitialMessages(undefined, { preserveExistingChat: true });
 
@@ -1039,13 +1042,13 @@ export async function createSessionManager(
 		return SessionManager.create(cwd, SessionManager.explicitDestination(parsed.sessionDir));
 	}
 	// A lifecycle `/session_create` child must start a FRESH session that adopts
-	// the pre-allocated id (GJC_SESSION_ID), never auto-resume existing history in
+	// the pre-allocated id (VIB_SESSION_ID), never auto-resume existing history in
 	// the target cwd — otherwise the daemon/tmux id and the session header id
 	// diverge and close/resume-by-create-id break. Resume children are launched
-	// with `--resume <id>` (handled above) and carry no GJC_LIFECYCLE_REQUEST_ID.
+	// with `--resume <id>` (handled above) and carry no VIB_LIFECYCLE_REQUEST_ID.
 	if (
-		process.env.GJC_LIFECYCLE_REQUEST_ID &&
-		/^[A-Za-z0-9._-]{1,128}$/.test(process.env.GJC_SESSION_ID?.trim() ?? "")
+		process.env.VIB_LIFECYCLE_REQUEST_ID &&
+		/^[A-Za-z0-9._-]{1,128}$/.test(process.env.VIB_SESSION_ID?.trim() ?? "")
 	) {
 		return undefined;
 	}
@@ -1321,8 +1324,8 @@ export interface ModelRoleOverrides {
 /**
  * Resolve the ephemeral `smol`/`slow`/`plan` model-role overrides.
  *
- * Precedence per role is CLI flag > documented `GJC_*_MODEL` > legacy
- * `PI_*_MODEL`, matching the repo-wide GJC-first/PI-fallback convention.
+ * Precedence per role is CLI flag > documented `VIB_*_MODEL` > legacy
+ * `PI_*_MODEL`, matching the repo-wide Vibrato-first/PI-fallback convention.
  * Resolution reads the process environment via `$pickenv`, which trims values
  * and treats empty/whitespace as unset; it is deliberately kept separate from
  * credential env resolution (`$credentialEnv`/`$pickCredentialEnv`). The
@@ -1331,9 +1334,9 @@ export interface ModelRoleOverrides {
  */
 export function resolveModelRoleOverrides(parsed: Pick<Args, "smol" | "slow" | "plan">): ModelRoleOverrides {
 	const overrides: ModelRoleOverrides = {};
-	const smol = parsed.smol ?? $pickenv("GJC_SMOL_MODEL", "PI_SMOL_MODEL");
-	const slow = parsed.slow ?? $pickenv("GJC_SLOW_MODEL", "PI_SLOW_MODEL");
-	const plan = parsed.plan ?? $pickenv("GJC_PLAN_MODEL", "PI_PLAN_MODEL");
+	const smol = parsed.smol ?? $pickenv("VIB_SMOL_MODEL", "PI_SMOL_MODEL");
+	const slow = parsed.slow ?? $pickenv("VIB_SLOW_MODEL", "PI_SLOW_MODEL");
+	const plan = parsed.plan ?? $pickenv("VIB_PLAN_MODEL", "PI_PLAN_MODEL");
 	if (smol) overrides.smol = smol;
 	if (slow) overrides.slow = slow;
 	if (plan) overrides.plan = plan;
@@ -1343,8 +1346,8 @@ export function resolveModelRoleOverrides(parsed: Pick<Args, "smol" | "slow" | "
 /**
  * Apply the `--no-pty` / `--no-title` terminal-control flags to the environment.
  *
- * Sets the canonical `GJC_*` name (so an explicit flag wins over a user-set
- * `GJC_*` value under the GJC-first resolver — CLI authority) and the legacy
+ * Sets the canonical `VIB_*` name (so an explicit flag wins over a user-set
+ * `VIB_*` value under the Vibrato-first resolver — CLI authority) and the legacy
  * `PI_*` name for backward compatibility. `--acp` mode implies `--no-title`.
  */
 export function applyTerminalControlFlagsToEnv(
@@ -1352,11 +1355,11 @@ export function applyTerminalControlFlagsToEnv(
 	env: NodeJS.ProcessEnv = Bun.env,
 ): void {
 	if (parsed.noPty) {
-		env.GJC_NO_PTY = "1";
+		env.VIB_NO_PTY = "1";
 		env.PI_NO_PTY = "1";
 	}
 	if (parsed.noTitle || parsed.mode === "acp") {
-		env.GJC_NO_TITLE = "1";
+		env.VIB_NO_TITLE = "1";
 		env.PI_NO_TITLE = "1";
 	}
 }
@@ -1572,7 +1575,7 @@ export async function runRootCommand(
 	logger.time("initializeWithSettings", initializeWithSettings, settingsInstance);
 
 	// Apply model role overrides from CLI args or env vars (ephemeral, not persisted).
-	// Precedence per role: CLI flag > documented GJC_*_MODEL > legacy PI_*_MODEL.
+	// Precedence per role: CLI flag > documented VIB_*_MODEL > legacy PI_*_MODEL.
 	const roleOverrides = resolveModelRoleOverrides(parsedArgs);
 	if (roleOverrides.smol || roleOverrides.slow || roleOverrides.plan) {
 		settingsInstance.overrideModelRoles({
@@ -1746,7 +1749,7 @@ export async function runRootCommand(
 		sessionOptions.deferMcpConfigStartup = true;
 	}
 	const hasRootStartupProfile = Boolean(settingsInstance.get("modelProfile.default") || parsedArgs.mpreset);
-	// ACP is not carved out: `gjc acp` is broker-backed and never builds a local
+	// ACP is not carved out: `vib acp` is broker-backed and never builds a local
 	// session here, and the broker-launched lifecycle child defers memory startup
 	// unconditionally (createLifecycleAgentSession) so readiness never waits on
 	// the memory pipeline's LLM work.
@@ -1823,7 +1826,7 @@ export async function runRootCommand(
 	}
 	// Register a resumed direct session before constructing the agent: GC holds the
 	// same index lock while deleting artifacts, so startup and deletion are fenced.
-	const directSessionId = process.env.GJC_LIFECYCLE_REQUEST_ID ? undefined : sessionManager?.getSessionId();
+	const directSessionId = process.env.VIB_LIFECYCLE_REQUEST_ID ? undefined : sessionManager?.getSessionId();
 	if (directSessionId) {
 		const sessionIndex = new SessionIndex(settingsInstance.getAgentDir());
 		const locator = { repo: sessionManager?.getCwd() ?? cwd, stateRoot: settingsInstance.getAgentDir() };
@@ -1885,7 +1888,7 @@ export async function runRootCommand(
 			eventBus,
 		} = await createSession(sessionOptions, { skipPostCreateModelRefresh: hasRootStartupProfile });
 		applyCliRuntimeApiKeyOverride(authStorage, parsedArgs.apiKey, session.model);
-		// Herdr integration: report gjc lifecycle state when running in a Herdr pane.
+		// Herdr integration: report vib lifecycle state when running in a Herdr pane.
 		installHerdrReporter(listener => session.subscribe(listener));
 
 		let startDeferredModelProfiles: DeferredModelProfileStartup | undefined;
@@ -1981,9 +1984,9 @@ export async function runRootCommand(
 					process.stdout.write(`${chalk.dim(`Model scope: ${modelList} ${chalk.gray("(Alt+N to cycle)")}`)}\n`);
 				}
 
-				if ($pickenv("GJC_TIMING", "PI_TIMING")) {
+				if ($pickenv("VIB_TIMING", "PI_TIMING")) {
 					logger.printTimings();
-					exitForTiming = $pickenv("GJC_TIMING", "PI_TIMING") === "x";
+					exitForTiming = $pickenv("VIB_TIMING", "PI_TIMING") === "x";
 				}
 
 				if (!exitForTiming) {
@@ -2033,7 +2036,7 @@ export async function runRootCommand(
 					initialImages,
 					suppressProcessExit: deps.suppressProcessExit,
 				});
-				if ($pickenv("GJC_TIMING", "PI_TIMING")) {
+				if ($pickenv("VIB_TIMING", "PI_TIMING")) {
 					logger.printTimings();
 				}
 			} finally {
@@ -2050,18 +2053,18 @@ export async function runRootCommand(
 
 export async function main(args: string[]): Promise<void> {
 	if (args.length === 1 && args[0] === TMUX_OWNER_ISOLATION_ARG) {
-		const { runTmuxOwnerIsolationCliFromStdin } = await import("./gjc-runtime/tmux-owner-isolation-cli");
+		const { runTmuxOwnerIsolationCliFromStdin } = await import("./vib-runtime/tmux-owner-isolation-cli");
 		await runTmuxOwnerIsolationCliFromStdin();
 		return;
 	}
 	if (args.length === 1 && args[0] === MANAGED_OWNER_SUPERVISOR_ARG) {
-		const { runManagedOwnerSupervisor } = await import("./gjc-runtime/managed-owner-supervisor");
+		const { runManagedOwnerSupervisor } = await import("./vib-runtime/managed-owner-supervisor");
 		await runManagedOwnerSupervisor();
 		return;
 	}
 	if (process.env[MANAGED_OWNER_CHILD_TOKEN_ENV] !== undefined) {
 		const { admitManagedOwnerBeforeCli, completeManagedOwnerRecovery } = await import(
-			"./gjc-runtime/managed-owner-admission"
+			"./vib-runtime/managed-owner-admission"
 		);
 		const admission = await admitManagedOwnerBeforeCli();
 		if (admission.kind === "blocked") return;

@@ -6,7 +6,7 @@ import {
 	collectSessionScopeUsage,
 	type GcSessionScopeUsage,
 	shouldReportSessionScope,
-} from "../src/gjc-runtime/gc-session-scope";
+} from "../src/vib-runtime/gc-session-scope";
 
 const temporaryDirectories: string[] = [];
 
@@ -17,7 +17,7 @@ afterEach(() => {
 });
 
 function scopeWith(files: { name: string; bytes: number }[]): string {
-	const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-gc-scope-"));
+	const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-gc-scope-"));
 	temporaryDirectories.push(root);
 	for (const file of files) {
 		const full = path.join(root, file.name);
@@ -65,7 +65,7 @@ describe("gc session scope usage", () => {
 	});
 
 	it("reports a missing scope as unavailable instead of throwing", async () => {
-		const usage = await collectSessionScopeUsage(path.join(os.tmpdir(), "gjc-gc-scope-does-not-exist"), 1000);
+		const usage = await collectSessionScopeUsage(path.join(os.tmpdir(), "vib-gc-scope-does-not-exist"), 1000);
 
 		expect(usage.status).toBe("unavailable");
 		expect(usage.reason).toBe("scope_not_found");

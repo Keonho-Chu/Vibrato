@@ -13,7 +13,7 @@ export const resolveRepositoryPath = (repositoryRelativePath: string): string =>
 	path.join(REPOSITORY_ROOT, repositoryRelativePath);
 
 const COMMAND =
-	"bun packages/coding-agent/scripts/capture-sticky-viewport-showcase.ts --out .gjc/qa/sticky-viewport-<run>";
+	"bun packages/coding-agent/scripts/capture-sticky-viewport-showcase.ts --out .vib/qa/sticky-viewport-<run>";
 const REVISION = "sticky-viewport-showcase-v2";
 const TIMESTAMP = "1970-01-01T00:00:00.000Z";
 const PAYLOADS = ["terminal.txt", "terminal-ansi.txt", "terminal.html", "metadata.json"] as const;
@@ -273,7 +273,7 @@ export async function captureProvenance(): Promise<CaptureProvenance> {
 	);
 	return {
 		git_head: gitHead,
-		oracle_commit: process.env.GJC_STICKY_VIEWPORT_ORACLE_COMMIT?.trim() ?? gitHead,
+		oracle_commit: process.env.VIB_STICKY_VIEWPORT_ORACLE_COMMIT?.trim() ?? gitHead,
 		git_diff_scope: PROVENANCE_DIFF_SCOPE,
 		git_diff_binary_sha256: hash(await git(["diff", "--binary", "HEAD", "--", ...PROVENANCE_DIFF_SCOPE])),
 		source_sha256: sourceSha256,

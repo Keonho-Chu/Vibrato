@@ -1,8 +1,8 @@
 import { afterEach, beforeAll, describe, expect, test, vi } from "bun:test";
-import { initTheme } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { InteractiveModeContext } from "@gajae-code/coding-agent/modes/types";
-import { addChatChild, CollapsedChatHistoryComponent } from "@gajae-code/coding-agent/modes/utils/ui-helpers";
-import { type Component, Container } from "@gajae-code/tui";
+import { initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { InteractiveModeContext } from "@vib-rato/coding-agent/modes/types";
+import { addChatChild, CollapsedChatHistoryComponent } from "@vib-rato/coding-agent/modes/utils/ui-helpers";
+import { type Component, Container } from "@vib-rato/tui";
 
 beforeAll(async () => {
 	await initTheme();

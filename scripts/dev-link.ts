@@ -1,23 +1,23 @@
 #!/usr/bin/env bun
 
 /**
- * Canonical dev linker for the `gjc` CLI.
+ * Canonical dev linker for the `vib` CLI.
  *
- * Makes the global `gjc` command run THIS checkout's TypeScript source
+ * Makes the global `vib` command run THIS checkout's TypeScript source
  * (`packages/coding-agent/src/cli.ts`) instead of a compiled binary or a
  * published npm install. Running from source is the only mode that can
- * dynamically load `@gajae-code/natives` for skills — a `bun build --compile`
+ * dynamically load `@vib-rato/natives` for skills — a `bun build --compile`
  * standalone binary cannot. If you don't need that, `--binary` links this
- * checkout's compiled `dist/gjc` instead (build it first with
+ * checkout's compiled `dist/vib` instead (build it first with
  * `bun run --cwd=packages/coding-agent build`).
  *
  * Usage:
- *   bun scripts/dev-link.ts            # link `gjc` -> src/cli.ts on PATH
- *   bun scripts/dev-link.ts --binary   # link `gjc` -> dist/gjc compiled binary
- *   bun scripts/dev-link.ts --check    # doctor: fail if `gjc` has drifted
+ *   bun scripts/dev-link.ts            # link `vib` -> src/cli.ts on PATH
+ *   bun scripts/dev-link.ts --binary   # link `vib` -> dist/vib compiled binary
+ *   bun scripts/dev-link.ts --check    # doctor: fail if `vib` has drifted
  *
  * Env:
- *   GJC_DEV_LINK_DIR   override the target bin dir (default ~/.local/bin)
+ *   VIB_DEV_LINK_DIR   override the target bin dir (default ~/.local/bin)
  */
 
 import * as fs from "node:fs";
@@ -27,13 +27,13 @@ import * as path from "node:path";
 const repoRoot = path.join(import.meta.dir, "..");
 const cliSource = path.join(repoRoot, "packages", "coding-agent", "src", "cli.ts");
 const cliSourceReal = realpath(cliSource) ?? cliSource;
-const binarySource = path.join(repoRoot, "packages", "coding-agent", "dist", "gjc");
+const binarySource = path.join(repoRoot, "packages", "coding-agent", "dist", "vib");
 const HOME = os.homedir();
-const targetDir = process.env.GJC_DEV_LINK_DIR ?? path.join(HOME, ".local", "bin");
+const targetDir = process.env.VIB_DEV_LINK_DIR ?? path.join(HOME, ".local", "bin");
 const BUN_SHIM_VERSION = 5478;
 const MAX_BUN_SHIM_METADATA_BYTES = 64 * 1024;
 const MAX_BUN_SHIM_EXECUTABLE_BYTES = 1024 * 1024;
-const EXPECTED_WORKSPACE_WRAPPER = '#!/usr/bin/env bun\nimport { runCli } from "@gajae-code/coding-agent/cli";\n\nawait runCli(process.argv.slice(2));\n';
+const EXPECTED_WORKSPACE_WRAPPER = '#!/usr/bin/env bun\nimport { runCli } from "@vib-rato/coding-agent/cli";\n\nawait runCli(process.argv.slice(2));\n';
 
 function realpath(p: string): string | null {
 	try {
@@ -79,23 +79,23 @@ function isOnPath(dir: string): boolean {
 	return pathDirs().some(entry => (realpath(entry) ?? entry) === want);
 }
 
-export interface GjcHit {
+export interface VibHit {
 	dir: string;
 	file: string;
 	real: string | null;
 }
 
-/** All `gjc` entries on PATH, in shell resolution order (first wins). */
-export function findGjcOnPath(
+/** All `vib` entries on PATH, in shell resolution order (first wins). */
+export function findVibOnPath(
 	envPath = process.env.PATH ?? "",
 	platform = process.platform,
 	pathext = process.env.PATHEXT,
-): GjcHit[] {
-	const hits: GjcHit[] = [];
+): VibHit[] {
+	const hits: VibHit[] = [];
 	const seen = new Set<string>();
 	for (const dir of pathDirs(envPath, platform)) {
 		for (const extension of commandExtensions(platform, pathext)) {
-			const file = path.join(dir, `gjc${extension}`);
+			const file = path.join(dir, `vib${extension}`);
 			const key = platform === "win32" ? file.toLowerCase() : file;
 			if (seen.has(key) || !lexists(file)) continue;
 			seen.add(key);
@@ -222,7 +222,7 @@ function isBunEmbeddedWindowsShim(file: string, bunExecutable: string): boolean 
  * below, never merely a successful command invocation.
  */
 export function isLocalWindowsBunShim(file: string, root = repoRoot, bunExecutable = process.execPath): boolean {
-	const expectedShim = path.join(root, "node_modules", ".bin", "gjc.exe");
+	const expectedShim = path.join(root, "node_modules", ".bin", "vib.exe");
 	if (!sameWindowsPath(file, expectedShim)) return false;
 	if (!isBunEmbeddedWindowsShim(expectedShim, bunExecutable)) return false;
 	const metadata = readBoundedFile(`${expectedShim.slice(0, -4)}.bunx`, MAX_BUN_SHIM_METADATA_BYTES);
@@ -231,7 +231,7 @@ export function isLocalWindowsBunShim(file: string, root = repoRoot, bunExecutab
 
 	const packageRoot = path.join(root, "packages", "coding-agent");
 	const packageManifest = path.join(packageRoot, "package.json");
-	const wrapper = path.join(packageRoot, "bin", "gjc.js");
+	const wrapper = path.join(packageRoot, "bin", "vib.js");
 	let resolvedCli: string;
 	let encodedTarget: string;
 	try {
@@ -242,12 +242,12 @@ export function isLocalWindowsBunShim(file: string, root = repoRoot, bunExecutab
 			!("bin" in manifest) ||
 			typeof manifest.bin !== "object" ||
 			manifest.bin === null ||
-			!("gjc" in manifest.bin) ||
-			manifest.bin.gjc !== "bin/gjc.js"
+			!("vib" in manifest.bin) ||
+			manifest.bin.vib !== "bin/vib.js"
 		) {
 			return false;
 		}
-		resolvedCli = Bun.resolveSync("@gajae-code/coding-agent/cli", root);
+		resolvedCli = Bun.resolveSync("@vib-rato/coding-agent/cli", root);
 		encodedTarget = path.join(root, "node_modules", ...decoded.target.split(/[\\/]+/));
 	} catch {
 		return false;
@@ -262,15 +262,15 @@ export function isLocalWindowsBunShim(file: string, root = repoRoot, bunExecutab
 function describe(real: string | null): string {
 	if (!real) return "broken symlink / unresolved";
 	if (real === cliSourceReal) return "workspace source (cli.ts) — OK";
-	if (real === realpath(binarySource)) return "workspace compiled binary (dist/gjc) — OK";
+	if (real === realpath(binarySource)) return "workspace compiled binary (dist/vib) — OK";
 	if (/[/\\]dist[/\\]/.test(real)) return `compiled binary: ${real}`;
 	if (real.includes("$bunfs")) return `compiled binary (bunfs): ${real}`;
-	if (real.includes(`${path.sep}node_modules${path.sep}gajae-code${path.sep}`)) return `published wrapper: ${real}`;
+	if (real.includes(`${path.sep}node_modules${path.sep}vib-rato${path.sep}`)) return `published wrapper: ${real}`;
 	return real;
 }
 
-export function smokeTest(gjcPath: string): { ok: boolean; output: string } {
-	const res = Bun.spawnSync([gjcPath, "--smoke-test"], { stdout: "pipe", stderr: "pipe" });
+export function smokeTest(vibPath: string): { ok: boolean; output: string } {
+	const res = Bun.spawnSync([vibPath, "--smoke-test"], { stdout: "pipe", stderr: "pipe" });
 	const output = `${res.stdout.toString()}${res.stderr.toString()}`.trim();
 	return { ok: res.exitCode === 0 && output.includes("smoke-test: ok"), output };
 }
@@ -283,7 +283,7 @@ export function isApprovedWorkspaceSource(
 	bunExecutable = process.execPath,
 ): boolean {
 	const source = path.join(root, "packages", "coding-agent", "src", "cli.ts");
-	const binary = realpath(path.join(root, "packages", "coding-agent", "dist", "gjc"));
+	const binary = realpath(path.join(root, "packages", "coding-agent", "dist", "vib"));
 	return (
 		real === (realpath(source) ?? source) ||
 		(real !== null && real === binary) ||
@@ -291,34 +291,34 @@ export function isApprovedWorkspaceSource(
 	);
 }
 
-export function isRemovableWorkspaceShadow(hit: GjcHit, root = repoRoot): boolean {
-	const repoBinShadow = path.join(root, "node_modules", ".bin", "gjc");
+export function isRemovableWorkspaceShadow(hit: VibHit, root = repoRoot): boolean {
+	const repoBinShadow = path.join(root, "node_modules", ".bin", "vib");
 	if (hit.file === repoBinShadow) return true;
 	if (!hit.real) return false;
 	const repoBinShadowReal = realpath(repoBinShadow);
-	const workspaceWrapperReal = realpath(path.join(root, "packages", "coding-agent", "bin", "gjc.js"));
+	const workspaceWrapperReal = realpath(path.join(root, "packages", "coding-agent", "bin", "vib.js"));
 	return hit.real === repoBinShadowReal || hit.real === workspaceWrapperReal;
 }
 
-function isApprovedSource(winner: GjcHit): boolean {
+function isApprovedSource(winner: VibHit): boolean {
 	return isApprovedWorkspaceSource(winner.file, winner.real);
 }
 
-function assertResolvedGjcMatchesTarget(winner: GjcHit | undefined, expectedReal: string): void {
+function assertResolvedVibMatchesTarget(winner: VibHit | undefined, expectedReal: string): void {
 	if (!winner || winner.real === expectedReal) return;
 	console.error("");
-	console.error("✗ Linked, but `gjc` still resolves to a different command earlier on PATH.");
+	console.error("✗ Linked, but `vib` still resolves to a different command earlier on PATH.");
 	console.error(`  Resolved: ${winner.file}`);
 	console.error(`       -> ${describe(winner.real)}`);
 	console.error(`  Expected target: ${expectedReal}`);
-	console.error(`  The managed link was created at: ${path.join(targetDir, "gjc")}`);
+	console.error(`  The managed link was created at: ${path.join(targetDir, "vib")}`);
 	console.error("  Move the managed link directory earlier on PATH or remove the shadowing command.");
 	process.exit(1);
 }
 
 function assertWorkspaceLinksLocal(): void {
 	const repoRootReal = realpath(repoRoot) ?? repoRoot;
-	const scopeDir = path.join(repoRoot, "node_modules", "@gajae-code");
+	const scopeDir = path.join(repoRoot, "node_modules", "@vib-rato");
 	let entries: string[];
 	try {
 		entries = fs.readdirSync(scopeDir);
@@ -342,32 +342,32 @@ function assertWorkspaceLinksLocal(): void {
 		console.error(`    ${link}`);
 		console.error(`      -> ${real}`);
 	}
-	console.error("  Fix: rm -rf node_modules/@gajae-code && bun install");
+	console.error("  Fix: rm -rf node_modules/@vib-rato && bun install");
 	process.exit(1);
 }
 
 function assertSourceExists(): void {
 	if (fs.existsSync(cliSource)) return;
 	console.error(`✗ Cannot find CLI source at ${cliSource}`);
-	console.error("  Run this from the gajae-code checkout.");
+	console.error("  Run this from the vib-rato checkout.");
 	process.exit(1);
 }
 
 function check(): never {
 	assertSourceExists();
 	assertWorkspaceLinksLocal();
-	const hits = findGjcOnPath();
+	const hits = findVibOnPath();
 	if (hits.length === 0) {
-		console.error("✗ `gjc` is not on PATH.");
+		console.error("✗ `vib` is not on PATH.");
 		console.error("  Fix: bun run dev:link");
 		process.exit(1);
 	}
 	const winner = hits[0];
-	console.log(`gjc resolves to: ${winner.file}`);
+	console.log(`vib resolves to: ${winner.file}`);
 	console.log(`            -> ${describe(winner.real)}`);
 	if (!isApprovedSource(winner)) {
 		console.error("");
-		console.error("✗ `gjc` is NOT this checkout's source or dist binary — it has drifted.");
+		console.error("✗ `vib` is NOT this checkout's source or dist binary — it has drifted.");
 		console.error(`  Expected: ${cliSourceReal}`);
 		console.error("  Fix: bun run dev:link");
 		process.exit(1);
@@ -375,12 +375,12 @@ function check(): never {
 	const smoke = smokeTest(winner.file);
 	if (!smoke.ok) {
 		console.error("");
-		console.error("✗ `gjc --smoke-test` failed (natives/worker did not load):");
+		console.error("✗ `vib --smoke-test` failed (natives/worker did not load):");
 		console.error(smoke.output.replace(/^/gm, "  "));
 		console.error("  Fix: bun run dev:link  (and rebuild natives if needed: bun run build:native)");
 		process.exit(1);
 	}
-	console.log("✓ gjc runs this checkout and natives load (smoke-test: ok).");
+	console.log("✓ vib runs this checkout and natives load (smoke-test: ok).");
 	process.exit(0);
 }
 
@@ -401,19 +401,15 @@ function link(binary: boolean): never {
 	const linkSource = binary ? binarySource : cliSource;
 	const linkSourceReal = realpath(linkSource) ?? linkSource;
 	fs.mkdirSync(targetDir, { recursive: true });
-	const target = path.join(targetDir, "gjc");
+	const target = path.join(targetDir, "vib");
 	if (lexists(target)) fs.rmSync(target, { force: true });
 	fs.symlinkSync(linkSource, target);
 	console.log(`✓ Linked ${target} -> ${linkSource}`);
-	const aliasTarget = path.join(targetDir, "가재씨");
-	if (lexists(aliasTarget)) fs.rmSync(aliasTarget, { force: true });
-	fs.symlinkSync(linkSource, aliasTarget);
-	console.log(`✓ Linked ${aliasTarget} -> ${linkSource}`);
 	if (!isOnPath(targetDir)) {
-		console.warn(`! ${targetDir} is not on your PATH — add it so \`gjc\` resolves:`);
+		console.warn(`! ${targetDir} is not on your PATH — add it so \`vib\` resolves:`);
 		console.warn(`    export PATH="${targetDir}:$PATH"`);
 	}
-	for (const hit of findGjcOnPath()) {
+	for (const hit of findVibOnPath()) {
 		if (hit.file === target) break;
 		if (hit.real === linkSourceReal) continue;
 		if (isRemovableWorkspaceShadow(hit)) {
@@ -422,22 +418,22 @@ function link(binary: boolean): never {
 			continue;
 		}
 		console.warn("");
-		console.warn(`! A different \`gjc\` shadows the dev link (earlier on PATH): ${hit.file}`);
+		console.warn(`! A different \`vib\` shadows the dev link (earlier on PATH): ${hit.file}`);
 		console.warn(`    -> ${describe(hit.real)}`);
 		console.warn(`    Remove it: rm "${hit.file}"`);
 	}
-	const winner = findGjcOnPath()[0];
-	assertResolvedGjcMatchesTarget(winner, linkSourceReal);
+	const winner = findVibOnPath()[0];
+	assertResolvedVibMatchesTarget(winner, linkSourceReal);
 	const smoke = smokeTest(winner?.file ?? target);
 	if (!smoke.ok) {
 		console.error("");
-		console.error("✗ Linked, but `gjc --smoke-test` failed (natives/worker did not load):");
+		console.error("✗ Linked, but `vib --smoke-test` failed (natives/worker did not load):");
 		console.error(smoke.output.replace(/^/gm, "  "));
 		console.error("  Try rebuilding natives: bun run build:native");
 		process.exit(1);
 	}
 	console.log(
-		`✓ smoke-test: ok — \`gjc\` runs this checkout's ${binary ? "compiled binary" : "source"} with natives loaded.`,
+		`✓ smoke-test: ok — \`vib\` runs this checkout's ${binary ? "compiled binary" : "source"} with natives loaded.`,
 	);
 	process.exit(0);
 }

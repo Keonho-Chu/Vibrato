@@ -1,6 +1,6 @@
 import * as nodeWorkerThreads from "node:worker_threads";
-import type { NativeExactFileIdentity, NativeExactUnlinkResult, NativeNoReplaceResult } from "@gajae-code/natives";
-import { exactReplacePath, linkNoReplacePath, renameNoReplacePath } from "@gajae-code/natives";
+import type { NativeExactFileIdentity, NativeExactUnlinkResult, NativeNoReplaceResult } from "@vib-rato/natives";
+import { exactReplacePath, linkNoReplacePath, renameNoReplacePath } from "@vib-rato/natives";
 
 export type AtomicYamlNativeWorkerRequest =
 	| {

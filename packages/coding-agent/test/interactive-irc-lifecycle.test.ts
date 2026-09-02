@@ -1,18 +1,18 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from "bun:test";
 
-import { IrcSplitViewComponent } from "@gajae-code/coding-agent/modes/components/irc-sidebar";
-import { CommandController } from "@gajae-code/coding-agent/modes/controllers/command-controller";
-import { EventController } from "@gajae-code/coding-agent/modes/controllers/event-controller";
-import { getWelcomeTranscriptReservedRows } from "@gajae-code/coding-agent/modes/interactive-mode";
+import { IrcSplitViewComponent } from "@vib-rato/coding-agent/modes/components/irc-sidebar";
+import { CommandController } from "@vib-rato/coding-agent/modes/controllers/command-controller";
+import { EventController } from "@vib-rato/coding-agent/modes/controllers/event-controller";
+import { getWelcomeTranscriptReservedRows } from "@vib-rato/coding-agent/modes/interactive-mode";
 import {
 	IRC_OBSERVATION_LEDGER_MAX_RECORDS,
 	IRC_OBSERVATION_LEDGER_MAX_SEEN_IDENTITIES,
 	IrcObservationLedger,
-} from "@gajae-code/coding-agent/modes/irc-observation-ledger";
-import { getThemeByName, setThemeInstance, theme } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { InteractiveModeContext } from "@gajae-code/coding-agent/modes/types";
-import { UiHelpers } from "@gajae-code/coding-agent/modes/utils/ui-helpers";
-import { Container, Text } from "@gajae-code/tui";
+} from "@vib-rato/coding-agent/modes/irc-observation-ledger";
+import { getThemeByName, setThemeInstance, theme } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { InteractiveModeContext } from "@vib-rato/coding-agent/modes/types";
+import { UiHelpers } from "@vib-rato/coding-agent/modes/utils/ui-helpers";
+import { Container, Text } from "@vib-rato/tui";
 
 function createForkContext(fork: () => Promise<boolean>) {
 	const chatContainer = new Container();

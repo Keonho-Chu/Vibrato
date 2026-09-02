@@ -1,7 +1,7 @@
 /**
- * Explicit MCP server config storage for standalone GJC.
+ * Explicit MCP server config storage for standalone Vibrato.
  */
-import { Args, Command, Flags } from "@gajae-code/utils/cli";
+import { Args, Command, Flags } from "@vib-rato/utils/cli";
 import { type MCPAction, type MCPCommandArgs, runMCPCommand } from "../cli/mcp-cli";
 
 const ACTIONS: MCPAction[] = ["add", "list", "remove"];
@@ -11,10 +11,10 @@ export default class MCP extends Command {
 	static delegateHelp = true;
 
 	static examples = [
-		"gjc mcp add context7 npx -y @upstash/context7-mcp",
-		"gjc mcp add docs --type http --url https://example.test/mcp --header Authorization=Bearer_TOKEN",
-		"gjc mcp list --json",
-		"gjc mcp remove context7",
+		"vib mcp add context7 npx -y @upstash/context7-mcp",
+		"vib mcp add docs --type http --url https://example.test/mcp --header Authorization=Bearer_TOKEN",
+		"vib mcp list --json",
+		"vib mcp remove context7",
 	];
 
 	static args = {
@@ -28,7 +28,7 @@ export default class MCP extends Command {
 	};
 
 	static flags = {
-		project: Flags.boolean({ description: "Write/read project scope (./.gjc/mcp.json) instead of user scope" }),
+		project: Flags.boolean({ description: "Write/read project scope (./.vib/mcp.json) instead of user scope" }),
 		force: Flags.boolean({ description: "Overwrite an existing server during add", default: false }),
 		json: Flags.boolean({
 			char: "j",
@@ -90,7 +90,7 @@ export default class MCP extends Command {
 		process.stdout.write(`Register MCP servers that ordinary standalone sessions load at startup
 
 USAGE
-  $ gjc mcp [add|list|remove] [NAME] [COMMAND_OR_URL] [ARGS...] [FLAGS]
+  $ vib mcp [add|list|remove] [NAME] [COMMAND_OR_URL] [ARGS...] [FLAGS]
 
 COMMANDS
   add     Register an explicit user-provided MCP server definition
@@ -98,7 +98,7 @@ COMMANDS
   remove  Remove a registered server and print the removed definition redacted
 
 FLAGS
-      --project          Use project scope (./.gjc/mcp.json) instead of user scope
+      --project          Use project scope (./.vib/mcp.json) instead of user scope
       --force            Overwrite an existing server during add
   -j, --json             Emit machine-readable JSON with sensitive values redacted
       --type=<value>     stdio | http | sse (default: stdio, or http when --url is set)
@@ -112,13 +112,13 @@ FLAGS
       --sharing=<value>  per-session | shared (default: per-session)
 
 EXAMPLES
-  $ gjc mcp add context7 npx -y @upstash/context7-mcp
-  $ gjc mcp add docs --type http --url https://example.test/mcp --header Authorization=Bearer_TOKEN
-  $ gjc mcp list --json
-  $ gjc mcp remove context7
+  $ vib mcp add context7 npx -y @upstash/context7-mcp
+  $ vib mcp add docs --type http --url https://example.test/mcp --header Authorization=Bearer_TOKEN
+  $ vib mcp list --json
+  $ vib mcp remove context7
 
 RUNTIME
-  Registrations are consumed by ordinary standalone gjc sessions at startup
+  Registrations are consumed by ordinary standalone vib sessions at startup
   (conventional autoload) unless disabled (enabled: false or the disabledServers
   list), marked autoload: false, or the session opts out with --no-mcp. This
   command stores only the definition supplied on this invocation; it does not

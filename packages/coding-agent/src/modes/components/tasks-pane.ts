@@ -1,4 +1,4 @@
-import { Container, type SelectItem, SelectList } from "@gajae-code/tui";
+import { Container, type SelectItem, SelectList } from "@vib-rato/tui";
 import type { TaskRow, TasksAggregator } from "../tasks-aggregator";
 import { getSelectListTheme } from "../theme/theme";
 import { DynamicBorder } from "./dynamic-border";

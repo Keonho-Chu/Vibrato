@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { BUILTIN_TOOLS, type ToolSession } from "@gajae-code/coding-agent/tools";
+import { BUILTIN_TOOLS, type ToolSession } from "@vib-rato/coding-agent/tools";
 import {
 	type BisectMarkResult,
 	BisectTool,
@@ -10,7 +10,7 @@ import {
 	classifyExit,
 	parseFirstBadCommit,
 	runBisectController,
-} from "@gajae-code/coding-agent/tools/implementations";
+} from "@vib-rato/coding-agent/tools/implementations";
 
 const FORTY_HEX = "a1b2c3d4e5f60718293a4b5c6d7e8f9012345678";
 
@@ -37,7 +37,7 @@ async function gitRun(cwd: string, args: string[]): Promise<string> {
 }
 
 async function makeRepo(): Promise<string> {
-	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-bisect-"));
+	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-bisect-"));
 	await gitRun(dir, ["init", "-q"]);
 	await gitRun(dir, ["config", "user.email", "test@example.com"]);
 	await gitRun(dir, ["config", "user.name", "Bisect Test"]);
@@ -348,7 +348,7 @@ describe("BisectTool.execute", () => {
 	});
 
 	it("rejects outside a git repository", async () => {
-		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-bisect-nogit-"));
+		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-bisect-nogit-"));
 		try {
 			await expect(
 				new BisectTool(session(dir)).execute("call", {

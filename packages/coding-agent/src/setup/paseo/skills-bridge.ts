@@ -228,7 +228,7 @@ export async function scanSkillsBridgeDrift(deps: PaseoSetupDependencies): Promi
 		reasons.push({
 			code: "unlinked-skill",
 			subject: path.join(deps.paths.agentsSkillsDir, entry.name),
-			detail: "Paseo skill is outside GJC's locked bridge allowlist",
+			detail: "Paseo skill is outside Vibrato's locked bridge allowlist",
 		});
 	}
 	return reasons;

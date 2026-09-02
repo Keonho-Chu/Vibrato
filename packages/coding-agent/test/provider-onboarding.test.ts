@@ -2,13 +2,11 @@ import { afterEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { clampThinkingLevelForModel, Effort, getSupportedEfforts } from "@gajae-code/ai";
-import { getAgentDbPath, getAgentDir, setAgentDir } from "@gajae-code/utils";
+import { clampThinkingLevelForModel, Effort, getSupportedEfforts } from "@vib-rato/ai";
+import { getAgentDbPath, getAgentDir, setAgentDir } from "@vib-rato/utils";
 import { YAML } from "bun";
 import { parseSetupArgs } from "../src/cli/setup-cli";
-import { prepareModelProfileActivation } from "../src/config/model-profile-activation";
 import { ModelRegistry } from "../src/config/model-registry";
-import { Settings } from "../src/config/settings";
 import { AuthStorage, SqliteAuthCredentialStore } from "../src/session/auth-storage";
 import {
 	addApiCompatibleProvider,
@@ -25,9 +23,9 @@ let tempRoot: string | undefined;
 const originalAgentDir = getAgentDir();
 
 async function tempModelsPath(): Promise<string> {
-	tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-provider-onboarding-"));
+	tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "vib-provider-onboarding-"));
 	// Literal `apiKey` values route through AuthStorage at getAgentDbPath(); without
-	// this the tests write real credential rows into the developer's ~/.gjc/agent/agent.db.
+	// this the tests write real credential rows into the developer's ~/.vib/agent/agent.db.
 	setAgentDir(path.join(tempRoot, "agent"));
 	return path.join(tempRoot, "models.yml");
 }
@@ -68,8 +66,8 @@ describe("provider onboarding setup core", () => {
 	});
 
 	it("creates the models.yml parent directory on first provider add", async () => {
-		tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-provider-onboarding-"));
-		const modelsPath = path.join(tempRoot, "Users", "example", ".gjc", "agent", "models.yml");
+		tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "vib-provider-onboarding-"));
+		const modelsPath = path.join(tempRoot, "Users", "example", ".vib", "agent", "models.yml");
 
 		await addApiCompatibleProvider({
 			compatibility: "anthropic",
@@ -122,202 +120,112 @@ describe("provider onboarding setup core", () => {
 		expect(result.providerId).toBe("glm-proxy");
 	});
 
-	it("adds MiniMax through the provider preset with OpenAI-compatible config", async () => {
+	it("adds a vLLM endpoint through the provider preset with discovery instead of pinned models", async () => {
 		const modelsPath = await tempModelsPath();
 		const result = await addApiCompatibleProvider({
-			preset: "minimax",
+			preset: "vllm",
+			baseUrl: "http://127.0.0.1:8000/v1",
 			modelsPath,
 		});
 
-		expect(result.providerId).toBe("minimax-code");
+		expect(result.providerId).toBe("vllm");
 		expect(result.api).toBe("openai-completions");
-		expect(result.preset).toBe("minimax");
-		expect(result.modelIds).toEqual(["MiniMax-M3"]);
-		expect(formatProviderSetupResult(result)).toContain("MiniMax Coding Plan");
+		expect(result.preset).toBe("vllm");
+		expect(result.presetName).toBe("vLLM endpoint");
+		expect(result.compatibility).toBe("openai");
+		expect(result.credentialSource).toBe("env");
+		expect(result.modelIds).toEqual([]);
+		expect(formatProviderSetupResult(result)).toContain("Models: discovered automatically");
 
 		const parsed = YAML.parse(await Bun.file(modelsPath).text()) as {
-			providers: Record<
+			providers?: Record<
 				string,
 				{
-					api: string;
-					baseUrl: string;
+					api?: string;
+					baseUrl?: string;
+					auth?: string;
 					apiKeyEnv?: string;
-					compat?: { supportsStore?: boolean; supportsDeveloperRole?: boolean; reasoningContentField?: string };
-					models: Array<{ id: string }>;
+					discovery?: unknown;
+					models?: Array<{ id: string }>;
 				}
 			>;
 		};
-		expect(parsed.providers["minimax-code"]?.api).toBe("openai-completions");
-		expect(parsed.providers["minimax-code"]?.baseUrl).toBe("https://api.minimax.io/v1");
-		expect(parsed.providers["minimax-code"]?.apiKeyEnv).toBe("MINIMAX_CODE_API_KEY");
-		expect(parsed.providers["minimax-code"]?.compat?.supportsStore).toBe(false);
-		expect(parsed.providers["minimax-code"]?.compat?.supportsDeveloperRole).toBe(false);
-		expect(parsed.providers["minimax-code"]?.compat?.reasoningContentField).toBe("reasoning_content");
-		expect(parsed.providers["minimax-code"]?.models.map(model => model.id)).toEqual(["MiniMax-M3"]);
-	});
-
-	it("adds Alibaba Token Plan through the provider preset with per-model API routing", async () => {
-		const modelsPath = await tempModelsPath();
-		const result = await addApiCompatibleProvider({ preset: "alibaba-token-plan", modelsPath });
-
-		expect(result.providerId).toBe("alibaba-token-plan");
-		expect(result.api).toBe("openai-completions");
-		expect(result.compatibility).toBe("openai");
-		expect(result.preset).toBe("alibaba-token-plan");
-		expect(result.presetName).toBe("Alibaba Token Plan");
-		expect(result.modelIds).toEqual(["qwen3.8-max-preview", "qwen3.8-max", "glm-5.2", "deepseek-v4-pro"]);
-		expect(result.credentialSource).toBe("env");
-
-		const parsed = YAML.parse(await Bun.file(modelsPath).text()) as { providers?: Record<string, unknown> };
-		expect(parsed.providers?.["alibaba-token-plan"]).toEqual({
-			baseUrl: "https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1",
+		expect(parsed.providers?.vllm).toEqual({
+			baseUrl: "http://127.0.0.1:8000/v1",
 			api: "openai-completions",
 			auth: "apiKey",
-			apiKeyEnv: "ALIBABA_TOKEN_PLAN_API_KEY",
-			compat: { supportsDeveloperRole: false },
-			models: [
-				{ id: "qwen3.8-max-preview", api: "openai-responses" },
-				{ id: "qwen3.8-max", api: "openai-responses" },
-				{ id: "glm-5.2", api: "openai-completions" },
-				{ id: "deepseek-v4-pro", api: "openai-completions" },
-			],
+			apiKeyEnv: "VLLM_API_KEY",
+			discovery: { type: "vllm" },
 		});
-		expect(findProviderPreset("alibaba")?.id).toBe("alibaba-token-plan");
-		expect(findProviderPreset("token-plan")?.id).toBe("alibaba-token-plan");
-		expect(formatProviderPresetList()).toContain("alibaba-token-plan");
-		expect(JSON.stringify(findProviderPreset("alibaba-token-plan"))).not.toContain("apps/anthropic");
-		expect(Object.keys(parsed.providers ?? {})).toEqual(["alibaba-token-plan"]);
-		await expect(
-			addApiCompatibleProvider({ preset: "alibaba-token-plan", models: ["custom"], modelsPath }),
-		).rejects.toThrow("uses fixed model ids");
+		expect(parsed.providers?.vllm?.models).toBeUndefined();
+		expect(Object.keys(parsed.providers ?? {})).toEqual(["vllm"]);
 	});
 
-	it("adds ClinePass with automatic models.dev catalog discovery", async () => {
+	it("adds an SGLang endpoint through the preset alias with a user-supplied https base URL", async () => {
 		const modelsPath = await tempModelsPath();
-		const result = await addApiCompatibleProvider({ preset: "clinepass", modelsPath });
+		const result = await addApiCompatibleProvider({
+			preset: "sglang-endpoint",
+			baseUrl: "https://gpu.example.com/v1",
+			modelsPath,
+		});
+
+		expect(result.providerId).toBe("sglang");
+		expect(result.preset).toBe("sglang");
+		expect(result.presetName).toBe("SGLang endpoint");
+		expect(result.baseUrl).toBe("https://gpu.example.com/v1");
 		const parsed = YAML.parse(await Bun.file(modelsPath).text()) as {
-			providers?: Record<
-				string,
-				{ baseUrl?: string; api?: string; apiKeyEnv?: string; discovery?: unknown; models?: Array<{ id: string }> }
-			>;
+			providers?: Record<string, { baseUrl?: string; apiKeyEnv?: string; discovery?: { type?: string } }>;
 		};
-
-		expect(result.providerId).toBe("cline-pass");
-		expect(result.presetName).toBe("ClinePass");
-		expect(result.modelIds).toEqual([]);
-		expect(formatProviderSetupResult(result)).toContain("Models: discovered automatically");
-		expect(parsed.providers?.["cline-pass"]).toMatchObject({
-			baseUrl: "https://api.cline.bot/api/v1",
-			api: "openai-completions",
-			apiKeyEnv: "CLINE_API_KEY",
-			discovery: { type: "models-dev", modelsDevProvider: "cline-pass" },
-		});
-		expect(parsed.providers?.["cline-pass"]?.models).toBeUndefined();
-		expect(findProviderPreset("cline")?.id).toBe("cline-pass");
-		await expect(addApiCompatibleProvider({ preset: "cline-pass", models: ["custom"], modelsPath })).rejects.toThrow(
-			"discovers models automatically",
-		);
+		expect(parsed.providers?.sglang?.baseUrl).toBe("https://gpu.example.com/v1");
+		expect(parsed.providers?.sglang?.apiKeyEnv).toBe("SGLANG_API_KEY");
+		expect(parsed.providers?.sglang?.discovery?.type).toBe("sglang");
+		expect(findProviderPreset("sglang-endpoint")?.id).toBe("sglang");
+		expect(formatProviderPresetList()).toContain("sglang");
 	});
 
-	it("adds Command Code GOAT with automatic discovery and Claude prefix routing", async () => {
+	it("rejects presets whose provider the allowlist hides and names the remaining ones", async () => {
 		const modelsPath = await tempModelsPath();
-		const result = await addApiCompatibleProvider({ preset: "goat", modelsPath });
-		const parsed = YAML.parse(await Bun.file(modelsPath).text()) as {
-			providers?: Record<
-				string,
-				{ baseUrl?: string; apiKeyEnv?: string; discovery?: unknown; models?: Array<{ id: string; api?: string }> }
-			>;
-		};
-		const provider = parsed.providers?.["commandcode-goat"];
-
-		expect(result.presetName).toBe("Command Code GOAT");
-		expect(provider).toMatchObject({
-			baseUrl: "https://api.commandcode.ai/provider/v1",
-			apiKeyEnv: "CMD_API_KEY",
-			discovery: { type: "openai-models-list" },
-		});
-		expect(result.modelIds).toEqual([]);
-		expect(formatProviderSetupResult(result)).toContain("Models: discovered automatically");
-		expect(provider?.models).toBeUndefined();
-		expect(findProviderPreset("command-code")?.id).toBe("commandcode-goat");
+		for (const removed of ["minimax", "zai", "glm", "alibaba-token-plan", "clinepass", "goat", "litellm"]) {
+			expect(findProviderPreset(removed)).toBeUndefined();
+			await expect(addApiCompatibleProvider({ preset: removed, modelsPath })).rejects.toThrow(
+				`Unknown provider preset '${removed}'`,
+			);
+		}
+		// The failure message points at the presets that survive the allowlist.
+		await expect(addApiCompatibleProvider({ preset: "minimax", modelsPath })).rejects.toThrow("vllm");
+		expect(await Bun.file(modelsPath).exists()).toBe(false);
 	});
 
-	it("loads the generated Alibaba Token Plan config into ModelRegistry with per-model routing and exact profile efforts", async () => {
+	it("loads a generated vLLM provider config into ModelRegistry and keeps it available", async () => {
 		const modelsPath = await tempModelsPath();
-		await addApiCompatibleProvider({ preset: "alibaba-token-plan", modelsPath });
+		await addApiCompatibleProvider({
+			compatibility: "openai",
+			providerId: "vllm",
+			baseUrl: "http://10.0.0.5:8000/v1",
+			apiKeyEnv: "VLLM_API_KEY",
+			models: ["qwen3-a", "qwen3-b"],
+			modelsPath,
+		});
 		const authStorage = await AuthStorage.create(path.join(tempRoot!, "auth.db"));
-		authStorage.setRuntimeApiKey("alibaba-token-plan", "test-key");
+		authStorage.setRuntimeApiKey("vllm", "test-key");
 		try {
 			const registry = new ModelRegistry(authStorage, modelsPath);
-			const qwen = registry.find("alibaba-token-plan", "qwen3.8-max-preview");
-			const glm = registry.find("alibaba-token-plan", "glm-5.2");
-			const deepseek = registry.find("alibaba-token-plan", "deepseek-v4-pro");
-			if (!qwen || !glm || !deepseek) throw new Error("Expected Alibaba Token Plan models to load");
+			const first = registry.find("vllm", "qwen3-a");
+			const second = registry.find("vllm", "qwen3-b");
+			if (!first || !second) throw new Error("Expected the generated vLLM models to load");
 
-			expect(qwen.api).toBe("openai-responses");
-			expect(glm.api).toBe("openai-completions");
-			expect(deepseek.api).toBe("openai-completions");
-			for (const model of [qwen, glm, deepseek]) {
-				expect(model.reasoning).toBe(true);
-				expect(getSupportedEfforts(model)).toEqual([
-					Effort.Minimal,
-					Effort.Low,
-					Effort.Medium,
-					Effort.High,
-					Effort.XHigh,
-				]);
-				const compat = model.compat;
-				expect(compat && "supportsDeveloperRole" in compat ? compat.supportsDeveloperRole : undefined).toBe(false);
+			for (const model of [first, second]) {
+				// `vllm` is a built-in descriptor, so its OpenAI-compatible transport
+				// wins over the api the generic setup path writes into models.yml.
+				expect(model.api).toBe("openai-completions");
+				expect(model.baseUrl).toBe("http://10.0.0.5:8000/v1");
+				expect(clampThinkingLevelForModel(model, Effort.Medium)).toBe(getSupportedEfforts(model)[0]);
 			}
-			expect(clampThinkingLevelForModel(qwen, Effort.XHigh)).toBe(Effort.XHigh);
-			expect(clampThinkingLevelForModel(qwen, Effort.Medium)).toBe(Effort.Medium);
-			expect(clampThinkingLevelForModel(qwen, Effort.Low)).toBe(Effort.Low);
-			expect(clampThinkingLevelForModel(glm, Effort.High)).toBe(Effort.High);
-			expect(clampThinkingLevelForModel(deepseek, Effort.XHigh)).toBe(Effort.XHigh);
-
-			const sessionStub = {
-				model: undefined,
-				thinkingLevel: undefined,
-				sessionId: "alibaba-token-plan-test",
-				configuredModelChains: new Map<string, readonly string[]>(),
-				getConfiguredModelChain(role: string) {
-					return this.configuredModelChains.get(role);
-				},
-				setConfiguredModelChain(role: string, entries: readonly string[]) {
-					this.configuredModelChains.set(role, [...entries]);
-				},
-			};
-			for (const [profileName, agentModelOverrides] of [
-				[
-					"alibaba-token-plan-balanced",
-					{
-						executor: "alibaba-token-plan/deepseek-v4-pro:xhigh",
-						planner: "alibaba-token-plan/glm-5.2:high",
-						architect: "alibaba-token-plan/qwen3.8-max-preview:xhigh",
-						critic: "alibaba-token-plan/glm-5.2:high",
-					},
-				],
-				[
-					"alibaba-token-plan-qwenmaxxing",
-					{
-						executor: "alibaba-token-plan/qwen3.8-max-preview:low",
-						planner: "alibaba-token-plan/qwen3.8-max-preview:medium",
-						architect: "alibaba-token-plan/qwen3.8-max-preview:xhigh",
-						critic: "alibaba-token-plan/qwen3.8-max-preview:xhigh",
-					},
-				],
-			] as const) {
-				const prepared = await prepareModelProfileActivation({
-					session: sessionStub,
-					modelRegistry: registry,
-					settings: Settings.isolated(),
-					profileName,
-				});
-				expect(
-					`${prepared.defaultModel?.provider}/${prepared.defaultModel?.id}:${prepared.defaultThinkingLevel}`,
-				).toBe("alibaba-token-plan/qwen3.8-max-preview:medium");
-				expect(prepared.agentModelOverrides).toEqual(agentModelOverrides);
-			}
+			// The generated rows are the whole catalog: nothing else is configured.
+			expect(registry.getAvailable().map(model => `${model.provider}/${model.id}`)).toEqual([
+				"vllm/qwen3-a",
+				"vllm/qwen3-b",
+			]);
 		} finally {
 			authStorage.close();
 		}
@@ -337,36 +245,33 @@ describe("provider onboarding setup core", () => {
 		);
 	});
 
-	it("adds GLM/zAI through preset aliases with OpenAI-compatible config", async () => {
+	it("stores a pasted key in preference to the preset's env-var name", async () => {
 		const modelsPath = await tempModelsPath();
 		const result = await addApiCompatibleProvider({
-			preset: "zai",
+			preset: "vllm",
+			baseUrl: "http://127.0.0.1:8000/v1",
+			apiKey: "sk-pasted-vllm-key",
 			modelsPath,
 		});
 
-		expect(result.providerId).toBe("glm-proxy");
-		expect(result.api).toBe("openai-completions");
-		expect(result.preset).toBe("glm");
-		expect(result.modelIds).toEqual(["glm-4.6"]);
+		expect(result.credentialSource).toBe("literal");
+		expect(formatProviderSetupResult(result)).not.toContain("VLLM_API_KEY");
 		const parsed = YAML.parse(await Bun.file(modelsPath).text()) as {
-			providers: Record<
-				string,
-				{
-					api: string;
-					baseUrl: string;
-					apiKeyEnv?: string;
-					compat?: { supportsDeveloperRole?: boolean; supportsReasoningEffort?: boolean; thinkingFormat?: string };
-					models: Array<{ id: string }>;
-				}
-			>;
+			providers?: Record<string, { apiKeyEnv?: string }>;
 		};
-		expect(parsed.providers["glm-proxy"]?.api).toBe("openai-completions");
-		expect(parsed.providers["glm-proxy"]?.baseUrl).toBe("https://api.z.ai/api/paas/v4");
-		expect(parsed.providers["glm-proxy"]?.apiKeyEnv).toBe("ZAI_API_KEY");
-		expect(parsed.providers["glm-proxy"]?.compat?.supportsDeveloperRole).toBe(false);
-		expect(parsed.providers["glm-proxy"]?.compat?.supportsReasoningEffort).toBe(false);
-		expect(parsed.providers["glm-proxy"]?.compat?.thinkingFormat).toBe("zai");
-		expect(parsed.providers["glm-proxy"]?.models.map(model => model.id)).toEqual(["glm-4.6"]);
+		// The literal key goes to AuthStorage, so models.yml keeps neither it nor
+		// the preset's env-var fallback.
+		expect(parsed.providers?.vllm?.apiKeyEnv).toBeUndefined();
+		expect(await Bun.file(modelsPath).text()).not.toContain("sk-pasted-vllm-key");
+		const store = await SqliteAuthCredentialStore.open(getAgentDbPath());
+		try {
+			expect(store.listAuthCredentials("vllm")[0]?.credential).toEqual({
+				type: "api_key",
+				key: "sk-pasted-vllm-key",
+			});
+		} finally {
+			store.close();
+		}
 	});
 
 	it("adds an Anthropic-compatible provider without deleting unrelated providers", async () => {
@@ -426,7 +331,7 @@ describe("provider onboarding setup core", () => {
 	});
 
 	it("stores literal keys in the canonical agent database with a custom models path", async () => {
-		tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-provider-onboarding-"));
+		tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "vib-provider-onboarding-"));
 		setAgentDir(path.join(tempRoot, "agent"));
 		const modelsPath = path.join(tempRoot, "custom", "models.yml");
 		await addApiCompatibleProvider({
@@ -501,101 +406,37 @@ describe("provider onboarding setup core", () => {
 	it("rejects conflicting compatibility when a provider preset is used", async () => {
 		await expect(
 			addApiCompatibleProvider({
-				preset: "minimax",
+				preset: "vllm",
 				compatibility: "anthropic",
+				baseUrl: "http://127.0.0.1:8000/v1",
 				modelsPath: await tempModelsPath(),
 			}),
-		).rejects.toThrow("minimax' is openai-compatible");
+		).rejects.toThrow("vllm' is openai-compatible");
 	});
 
-	it("rejects provider preset attempts to override fixed base URL, model, or API key env", async () => {
-		const modelsPath = await tempModelsPath();
-
-		await expect(
-			addApiCompatibleProvider({
-				preset: "minimax",
-				baseUrl: "https://example.invalid/v1",
-				modelsPath,
-			}),
-		).rejects.toThrow("fixed base URL");
-		await expect(
-			addApiCompatibleProvider({
-				preset: "minimax",
-				models: ["custom-model"],
-				modelsPath,
-			}),
-		).rejects.toThrow("fixed model ids");
-		await expect(
-			addApiCompatibleProvider({
-				preset: "minimax",
-				apiKeyEnv: "CUSTOM_KEY",
-				modelsPath,
-			}),
-		).rejects.toThrow("MINIMAX_CODE_API_KEY");
-
-		expect(await Bun.file(modelsPath).exists()).toBe(false);
-	});
-	it("requires --base-url for parameterized proxy presets", async () => {
+	it("requires --base-url for parameterized endpoint presets", async () => {
 		const modelsPath = await tempModelsPath();
 		await expect(
 			addApiCompatibleProvider({
-				preset: "litellm",
+				preset: "vllm",
 				modelsPath,
 			}),
 		).rejects.toThrow("requires --base-url");
 		await expect(
 			addApiCompatibleProvider({
-				preset: "openai-compatible-proxy",
+				preset: "sglang",
 				modelsPath,
 			}),
 		).rejects.toThrow("requires --base-url");
 		expect(await Bun.file(modelsPath).exists()).toBe(false);
 	});
 
-	it("adds a LiteLLM proxy preset with a user-supplied base URL and live discovery", async () => {
-		const modelsPath = await tempModelsPath();
-		const result = await addApiCompatibleProvider({
-			preset: "litellm",
-			baseUrl: "http://127.0.0.1:4000",
-			apiKeyEnv: "LITELLM_API_KEY",
-			modelsPath,
-		});
-
-		expect(result.providerId).toBe("litellm");
-		expect(result.preset).toBe("litellm");
-		expect(result.baseUrl).toBe("http://127.0.0.1:4000");
-		const parsed = YAML.parse(await Bun.file(modelsPath).text()) as {
-			providers: Record<string, { baseUrl: string; apiKeyEnv: string; discovery?: { type: string } }>;
-		};
-		expect(parsed.providers.litellm?.baseUrl).toBe("http://127.0.0.1:4000");
-		expect(parsed.providers.litellm?.apiKeyEnv).toBe("LITELLM_API_KEY");
-		expect(parsed.providers.litellm?.discovery?.type).toBe("openai-models-list");
-	});
-
-	it("adds a generic OpenAI-compatible proxy preset with a user-supplied base URL", async () => {
-		const modelsPath = await tempModelsPath();
-		const result = await addApiCompatibleProvider({
-			preset: "openai-proxy",
-			baseUrl: "https://gateway.example.com/v1",
-			apiKeyEnv: "GATEWAY_KEY",
-			modelsPath,
-		});
-
-		expect(result.providerId).toBe("openai-compatible-proxy");
-		expect(result.preset).toBe("openai-compatible-proxy");
-		const parsed = YAML.parse(await Bun.file(modelsPath).text()) as {
-			providers: Record<string, { baseUrl: string; apiKeyEnv: string }>;
-		};
-		expect(parsed.providers["openai-compatible-proxy"]?.baseUrl).toBe("https://gateway.example.com/v1");
-		expect(parsed.providers["openai-compatible-proxy"]?.apiKeyEnv).toBe("GATEWAY_KEY");
-	});
-
-	it("rejects provider preset attempts to pin models on parameterized proxy presets", async () => {
+	it("rejects provider preset attempts to pin models on parameterized endpoint presets", async () => {
 		const modelsPath = await tempModelsPath();
 		await expect(
 			addApiCompatibleProvider({
-				preset: "litellm",
-				baseUrl: "http://127.0.0.1:4000",
+				preset: "vllm",
+				baseUrl: "http://127.0.0.1:8000/v1",
 				models: ["gpt-example"],
 				modelsPath,
 			}),
@@ -603,12 +444,12 @@ describe("provider onboarding setup core", () => {
 		expect(await Bun.file(modelsPath).exists()).toBe(false);
 	});
 
-	it("allows overriding the API key env on parameterized proxy presets", async () => {
+	it("allows overriding the API key env on parameterized endpoint presets", async () => {
 		const modelsPath = await tempModelsPath();
 		const result = await addApiCompatibleProvider({
-			preset: "litellm",
-			baseUrl: "http://127.0.0.1:4000",
-			apiKeyEnv: "MY_PROXY_KEY",
+			preset: "vllm",
+			baseUrl: "http://127.0.0.1:8000/v1",
+			apiKeyEnv: "MY_GPU_BOX_KEY",
 			modelsPath,
 		});
 
@@ -616,14 +457,14 @@ describe("provider onboarding setup core", () => {
 		const parsed = YAML.parse(await Bun.file(modelsPath).text()) as {
 			providers: Record<string, { apiKeyEnv: string }>;
 		};
-		expect(parsed.providers.litellm?.apiKeyEnv).toBe("MY_PROXY_KEY");
+		expect(parsed.providers.vllm?.apiKeyEnv).toBe("MY_GPU_BOX_KEY");
 	});
 
-	it("resolves parameterized proxy preset aliases", () => {
-		expect(findProviderPreset("litellm-proxy")?.id).toBe("litellm");
-		expect(findProviderPreset("openai-proxy")?.id).toBe("openai-compatible-proxy");
-		expect(formatProviderPresetList()).toContain("litellm");
-		expect(formatProviderPresetList()).toContain("openai-compatible-proxy");
+	it("resolves parameterized endpoint preset aliases", () => {
+		expect(findProviderPreset("vllm-endpoint")?.id).toBe("vllm");
+		expect(findProviderPreset("sglang-endpoint")?.id).toBe("sglang");
+		expect(formatProviderPresetList()).toContain("vllm");
+		expect(formatProviderPresetList()).toContain("sglang");
 	});
 
 	it("keeps generic OpenAI-compatible custom provider setup available for custom values", async () => {
@@ -651,20 +492,20 @@ describe("provider onboarding setup core", () => {
 	it("validates compatibility, models, urls, and redacts short secrets", () => {
 		expect(parseProviderCompatibility("oai")).toBe("openai");
 		expect(parseProviderCompatibility("claude")).toBe("anthropic");
-		expect(findProviderPreset("minimax-code")?.id).toBe("minimax");
-		expect(findProviderPreset("zai")?.id).toBe("glm");
-		expect(formatProviderPresetList()).toContain("minimax");
-		expect(formatProviderPresetList()).toContain("glm");
+		expect(findProviderPreset("vllm-endpoint")?.id).toBe("vllm");
+		expect(findProviderPreset("sglang")?.id).toBe("sglang");
+		expect(formatProviderPresetList()).toContain("vllm");
+		expect(formatProviderPresetList()).toContain("sglang");
 		expect(parseModelList(["a,b", "a", " c "])).toEqual(["a", "b", "c"]);
 		expect(redactSecret("short")).toBe("***");
 		expect(redactSecret("sk-1234567890")).toBe("sk-1…7890");
 	});
 
 	it("parses setup command provider preset option", () => {
-		const parsed = parseSetupArgs(["setup", "provider", "--preset", "glm"]);
+		const parsed = parseSetupArgs(["setup", "provider", "--preset", "vllm"]);
 
 		expect(parsed?.component).toBe("provider");
-		expect(parsed?.flags.preset).toBe("glm");
+		expect(parsed?.flags.preset).toBe("vllm");
 	});
 
 	it("parses explicit setup command provider options", () => {
@@ -678,7 +519,7 @@ describe("provider onboarding setup core", () => {
 			"--base-url",
 			"https://api.example.test/v1",
 			"--api-key-env",
-			"GJC_TEST_PROVIDER_KEY",
+			"VIB_TEST_PROVIDER_KEY",
 			"--model",
 			"gpt-one",
 			"--models",
@@ -688,7 +529,7 @@ describe("provider onboarding setup core", () => {
 		expect(parsed?.component).toBe("provider");
 		expect(parsed?.flags.compat).toBe("openai");
 		expect(parsed?.flags.provider).toBe("local-openai");
-		expect(parsed?.flags.apiKeyEnv).toBe("GJC_TEST_PROVIDER_KEY");
+		expect(parsed?.flags.apiKeyEnv).toBe("VIB_TEST_PROVIDER_KEY");
 		expect(parsed?.flags.model).toEqual(["gpt-one", "gpt-two,gpt-three"]);
 	});
 

@@ -4,15 +4,15 @@ import * as z from "zod/v4";
 import { ConfigFile, type LoadResult } from "../../config/config-file";
 
 /**
- * Env marker set by GJC's own programmatic separate-process child spawn sites
+ * Env marker set by Vibrato's own programmatic separate-process child spawn sites
  * (team workers, harness RPC owners) and carrying the spawning session id.
  *
- * Presence — not the value — marks a session as GJC-spawned. It is consumed
+ * Presence — not the value — marks a session as Vibrato-spawned. It is consumed
  * (read once, then deleted from the child's own env) at startup so it is
  * per-spawn rather than dynastic: a grandchild is marked only if its own spawn
  * site marks it, never by inheriting a marked ancestor's environment.
  */
-export const SPAWN_PROVENANCE_ENV = "GJC_SPAWNED_BY_SESSION";
+export const SPAWN_PROVENANCE_ENV = "VIB_SPAWNED_BY_SESSION";
 /**
  * Telegram session eligibility: whether a session may own a forum topic and be
  * admitted by the notification daemon.
@@ -135,7 +135,7 @@ export interface NotificationSettingsReader {
 }
 
 function notificationConfigurationError(): Error {
-	return new Error("gjc_notify_daemon_invalid_configuration");
+	return new Error("vib_notify_daemon_invalid_configuration");
 }
 
 type NotificationObject = Record<string, unknown>;
@@ -685,17 +685,17 @@ export interface GenericNotificationSessionEligibilityInput {
 	cfg: NotificationConfig;
 	env: NodeJS.ProcessEnv;
 	sessionDisabled: boolean;
-	spawnedByGjc?: boolean;
+	spawnedByVib?: boolean;
 }
 
 export function resolveGenericNotificationSessionEligibility(
 	input: GenericNotificationSessionEligibilityInput,
 ): GenericNotificationSessionEligibility {
-	if (input.env.GJC_NOTIFICATIONS === "0") return { enabled: false, source: "hard_opt_out" };
+	if (input.env.VIB_NOTIFICATIONS === "0") return { enabled: false, source: "hard_opt_out" };
 	if (input.sessionDisabled) return { enabled: false, source: "session_local_off" };
-	if (input.env.GJC_NOTIFICATIONS === "1") return { enabled: true, source: "explicit_env" };
-	if (input.env.GJC_NOTIFICATIONS_TOKEN) return { enabled: true, source: "token_env" };
-	if (input.spawnedByGjc && input.cfg.sessionScope === "primary") {
+	if (input.env.VIB_NOTIFICATIONS === "1") return { enabled: true, source: "explicit_env" };
+	if (input.env.VIB_NOTIFICATIONS_TOKEN) return { enabled: true, source: "token_env" };
+	if (input.spawnedByVib && input.cfg.sessionScope === "primary") {
 		return { enabled: false, source: "session_scope" };
 	}
 	if (hasAnyEffectivelyEnabledProvider(input.cfg)) return { enabled: true, source: "configured_provider" };
@@ -708,7 +708,7 @@ export function resolveGenericNotificationStreamPolicy(input: {
 	genericSessionEnabled: boolean;
 }): GenericNotificationStreamPolicy {
 	if (!input.genericSessionEnabled) return { enabled: false, source: "session_not_admitted" };
-	const override = input.env.GJC_NOTIFICATIONS_STREAM?.trim().toLowerCase();
+	const override = input.env.VIB_NOTIFICATIONS_STREAM?.trim().toLowerCase();
 	if (override === "1") return { enabled: true, source: "env_on" };
 	if (override === "0" || override === "off" || override === "false") return { enabled: false, source: "env_off" };
 	const durableEnabled =
@@ -719,7 +719,7 @@ export function resolveGenericNotificationStreamPolicy(input: {
 }
 
 export function completionNotifyDisabledByEnv(env: NodeJS.ProcessEnv): boolean {
-	const value = env.GJC_NOTIFY?.trim().toLowerCase();
+	const value = env.VIB_NOTIFY?.trim().toLowerCase();
 	return value === "off" || value === "0" || value === "false";
 }
 
@@ -730,7 +730,7 @@ export interface NotificationHostEligibilityInput {
 	parentTaskPrefix?: string;
 	currentAgentType?: string;
 	sessionScope?: NotificationConfig["sessionScope"];
-	spawnedByGjc?: boolean;
+	spawnedByVib?: boolean;
 }
 
 /** Generic host eligibility for the dormant automatic notification surface. */
@@ -738,9 +738,9 @@ export function isGenericNotificationHostEligible(input: NotificationHostEligibi
 	if (completionNotifyDisabledByEnv(input.env)) return false;
 	if (input.hostModeSupported === false) return false;
 	if ((input.taskDepth ?? 0) > 0 || input.parentTaskPrefix || input.currentAgentType) return false;
-	if (input.env.GJC_NOTIFICATIONS === "0") return false;
-	if (input.env.GJC_NOTIFICATIONS === "1" || input.env.GJC_NOTIFICATIONS_TOKEN) return true;
-	if (input.spawnedByGjc && input.sessionScope === "primary") return false;
+	if (input.env.VIB_NOTIFICATIONS === "0") return false;
+	if (input.env.VIB_NOTIFICATIONS === "1" || input.env.VIB_NOTIFICATIONS_TOKEN) return true;
+	if (input.spawnedByVib && input.sessionScope === "primary") return false;
 	return true;
 }
 
@@ -750,7 +750,7 @@ export interface GenericNotificationRegistrationInput {
 	taskDepth?: number;
 	parentTaskPrefix?: string;
 	currentAgentType?: string;
-	spawnedByGjc?: boolean;
+	spawnedByVib?: boolean;
 }
 
 /** Generic registration admission; direct provider actions do not call this helper. */
@@ -762,12 +762,12 @@ export function shouldRegisterGenericNotificationsExtension(input: GenericNotifi
 			parentTaskPrefix: input.parentTaskPrefix,
 			currentAgentType: input.currentAgentType,
 			sessionScope: input.cfg?.sessionScope,
-			spawnedByGjc: input.spawnedByGjc,
+			spawnedByVib: input.spawnedByVib,
 		})
 	) {
 		return false;
 	}
-	if (input.env.GJC_NOTIFICATIONS === "1" || input.env.GJC_NOTIFICATIONS_TOKEN) return true;
+	if (input.env.VIB_NOTIFICATIONS === "1" || input.env.VIB_NOTIFICATIONS_TOKEN) return true;
 	return input.cfg !== undefined && hasAnyEffectivelyEnabledProvider(input.cfg);
 }
 

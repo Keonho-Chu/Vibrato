@@ -1,7 +1,7 @@
 /**
  * Regression tests for #3859:
- * - Native discovery loads alwaysApply rules from project `.gjc/rules/` and
- *   user `~/.gjc/agent/rules/`.
+ * - Native discovery loads alwaysApply rules from project `.vib/rules/` and
+ *   user `~/.vib/agent/rules/`.
  * - Sticky top-level RULES.md still forces alwaysApply.
  * - Discovered alwaysApply rules survive the same bucketing createAgentSession
  *   uses (non-TTSR alwaysApply → alwaysApplyRules) and inject into the default
@@ -14,13 +14,13 @@ import { afterEach, beforeEach, expect, test } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { getCapability } from "@gajae-code/coding-agent/capability";
-import { clearCache } from "@gajae-code/coding-agent/capability/fs";
-import { type Rule, ruleCapability } from "@gajae-code/coding-agent/capability/rule";
-import type { LoadContext } from "@gajae-code/coding-agent/capability/types";
-import { buildSystemPrompt } from "@gajae-code/coding-agent/system-prompt";
+import { getCapability } from "@vib-rato/coding-agent/capability";
+import { clearCache } from "@vib-rato/coding-agent/capability/fs";
+import { type Rule, ruleCapability } from "@vib-rato/coding-agent/capability/rule";
+import type { LoadContext } from "@vib-rato/coding-agent/capability/types";
+import { buildSystemPrompt } from "@vib-rato/coding-agent/system-prompt";
 // Register all discovery providers as a side effect.
-import "@gajae-code/coding-agent/discovery";
+import "@vib-rato/coding-agent/discovery";
 
 let tempDir: string;
 let home: string;
@@ -60,7 +60,7 @@ function bucketRules(rules: Rule[]): { rulebookRules: Rule[]; alwaysApplyRules: 
 
 beforeEach(() => {
 	clearCache();
-	tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-always-apply-"));
+	tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-always-apply-"));
 	home = path.join(tempDir, "home");
 	project = path.join(tempDir, "project");
 	fs.mkdirSync(home, { recursive: true });
@@ -73,9 +73,9 @@ afterEach(() => {
 	fs.rmSync(tempDir, { recursive: true, force: true });
 });
 
-test("project .gjc/rules/*.md with alwaysApply: true is discovered", async () => {
+test("project .vib/rules/*.md with alwaysApply: true is discovered", async () => {
 	writeFile(
-		path.join(project, ".gjc", "rules", "probe.md"),
+		path.join(project, ".vib", "rules", "probe.md"),
 		`---
 alwaysApply: true
 description: probe rule
@@ -94,9 +94,9 @@ MAGICPROBE7F3A is the passphrase.
 	expect(probe?._source.level).toBe("project");
 });
 
-test("user ~/.gjc/agent/rules/*.md with alwaysApply: true is discovered", async () => {
+test("user ~/.vib/agent/rules/*.md with alwaysApply: true is discovered", async () => {
 	writeFile(
-		path.join(home, ".gjc", "agent", "rules", "user-probe.md"),
+		path.join(home, ".vib", "agent", "rules", "user-probe.md"),
 		`---
 alwaysApply: true
 description: user probe
@@ -126,7 +126,7 @@ PROFILE_ROUTE_7K2 must be visible.
 `,
 	);
 	writeFile(
-		path.join(home, ".gjc", "agent", "rules", "wrong-profile.md"),
+		path.join(home, ".vib", "agent", "rules", "wrong-profile.md"),
 		`---
 alwaysApply: true
 ---
@@ -143,9 +143,9 @@ WRONG_PROFILE must stay hidden.
 });
 
 test("project RULES.md sticky alwaysApply is discovered alongside rules dir", async () => {
-	writeFile(path.join(project, ".gjc", "RULES.md"), "STICKYRULE body.\n");
+	writeFile(path.join(project, ".vib", "RULES.md"), "STICKYRULE body.\n");
 	writeFile(
-		path.join(project, ".gjc", "rules", "other.md"),
+		path.join(project, ".vib", "rules", "other.md"),
 		`---
 alwaysApply: true
 ---
@@ -165,7 +165,7 @@ Other rule body.
 
 test("alwaysApply rules inject into the default system prompt after discovery+bucketing", async () => {
 	writeFile(
-		path.join(project, ".gjc", "rules", "probe.md"),
+		path.join(project, ".vib", "rules", "probe.md"),
 		`---
 alwaysApply: true
 description: probe rule
@@ -174,7 +174,7 @@ MAGICPROBE7F3A is the passphrase.
 `,
 	);
 	writeFile(
-		path.join(project, ".gjc", "rules", "on-demand.md"),
+		path.join(project, ".vib", "rules", "on-demand.md"),
 		`---
 description: only listed in rulebook
 ---
@@ -219,7 +219,7 @@ On-demand body stays out of always-apply injection.
 
 test("bare alwaysApply: false does not become always-apply", async () => {
 	writeFile(
-		path.join(project, ".gjc", "rules", "optional.md"),
+		path.join(project, ".vib", "rules", "optional.md"),
 		`---
 alwaysApply: false
 description: optional rulebook entry

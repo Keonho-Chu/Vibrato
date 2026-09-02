@@ -8,7 +8,7 @@ import {
 	parseKey,
 	parseKeyId,
 	setKittyProtocolActive,
-} from "@gajae-code/tui/keys";
+} from "@vib-rato/tui/keys";
 
 describe("matchesKey", () => {
 	it("matches ctrl+letter sequences", () => {

@@ -1,5 +1,5 @@
 /**
- * `gjc crash report` — user-driven, preview-first, fail-closed crash reporting.
+ * `vib crash report` — user-driven, preview-first, fail-closed crash reporting.
  *
  * The ordering in `runCrashReportFlow` **is** the consent boundary: nothing
  * touches the network, authentication, the repository or even the `gh` binary
@@ -10,7 +10,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { CRASH_ISSUE_MARKER_PREFIX, normalizeCrashFrames, VERSION } from "@gajae-code/utils";
+import { CRASH_ISSUE_MARKER_PREFIX, normalizeCrashFrames, VERSION } from "@vib-rato/utils";
 import type { RunGh } from "../utils/gh";
 import {
 	type CrashSignatureView,
@@ -23,14 +23,14 @@ import { findLatestRecord, type LoadedCrashRecord } from "./record-loader";
 import { CRASH_BODY_MAX_BYTES, fenceCrashText, type SanitizeVerdict, sanitizeExternalCrashV1 } from "./sanitize";
 
 /** The one repository this command may ever target. */
-export const CRASH_REPORT_REPO = "Yeachan-Heo/gajae-code";
+export const CRASH_REPORT_REPO = "Keonho-Chu/Vibrato";
 export const CRASH_REPORT_ISSUE_PREFIX = `https://github.com/${CRASH_REPORT_REPO}/issues/`;
 const GH_TIMEOUT_MS = 15_000;
 const NOT_CAPTURED = "_not captured — please fill in_";
 
 export interface CrashReportEnvironment {
 	platform: string;
-	gjcVersion: string;
+	vibVersion: string;
 	bunVersion: string;
 }
 
@@ -51,7 +51,7 @@ export function defaultCrashReportEnvironment(): CrashReportEnvironment {
 				: process.env.WSL_DISTRO_NAME
 					? "Windows (WSL)"
 					: "Linux";
-	return { platform, gjcVersion: VERSION, bunVersion: Bun.version };
+	return { platform, vibVersion: VERSION, bunVersion: Bun.version };
 }
 
 function coarseDate(epochMs: number): string {
@@ -116,7 +116,7 @@ export function buildCrashReportBody(input: BuildCrashReportBodyInput): Sanitize
 	if (!additional.ok) return additional;
 
 	const description =
-		`Automatic crash report assembled by \`gjc crash report\` from a local crash record. ` +
+		`Automatic crash report assembled by \`vib crash report\` from a local crash record. ` +
 		`Crash-derived text below is sanitized (paths, URLs, credentials and control characters removed) ` +
 		`and carries no pid or exact timestamps.\n\n` +
 		`- Signature: \`${CRASH_ISSUE_MARKER_PREFIX}${signature.fingerprint}\` (algorithm v${signature.fpv})\n` +
@@ -131,7 +131,7 @@ export function buildCrashReportBody(input: BuildCrashReportBodyInput): Sanitize
 		`\n${field("Expected Behavior", expected.value)}` +
 		`\n${field("Error Output", `\`\`\`\n${fenceCrashText(headline.value)}\n${fenceCrashText(stack.value)}\n\`\`\``)}` +
 		`\n${field("Platform", environment.platform)}` +
-		`\n${field("gjc version", environment.gjcVersion)}` +
+		`\n${field("vib version", environment.vibVersion)}` +
 		`\n${field("Bun version", environment.bunVersion)}` +
 		`\n${field("Provider", provider.value)}` +
 		`\n${field("Area", area.value)}` +
@@ -198,7 +198,7 @@ export function buildPrefillUrl(title: string, fingerprint: string, version: str
 	const params = new URLSearchParams({
 		template: "bug_report.yml",
 		title,
-		description: `Crash signature ${CRASH_ISSUE_MARKER_PREFIX}${fingerprint} (gjc ${version}). Full sanitized report is in the local snapshot file printed by \`gjc crash report\`.`,
+		description: `Crash signature ${CRASH_ISSUE_MARKER_PREFIX}${fingerprint} (vib ${version}). Full sanitized report is in the local snapshot file printed by \`vib crash report\`.`,
 		version,
 	});
 	url.search = params.toString();
@@ -453,7 +453,7 @@ export async function runCrashReportFlow(deps: CrashReportDeps): Promise<CrashRe
 
 	const identity = await deps.runGh(["api", "user", "--jq", ".login"], { timeoutMs: GH_TIMEOUT_MS });
 	if (identity.exitCode !== 0) {
-		const prefillUrl = buildPrefillUrl(snapshot.title, signature.fingerprint, environment.gjcVersion);
+		const prefillUrl = buildPrefillUrl(snapshot.title, signature.fingerprint, environment.vibVersion);
 		deps.io.print(
 			`GitHub CLI is unavailable or unauthenticated (${identity.stderr.trim() || "no gh"}).\n` +
 				`Nothing was transmitted. Submit manually with the snapshot at ${snapshot.path}.\n` +
@@ -505,7 +505,7 @@ export async function runCrashReportFlow(deps: CrashReportDeps): Promise<CrashRe
 				"--repo",
 				CRASH_REPORT_REPO,
 				"--body",
-				`Also hit here: \`${CRASH_ISSUE_MARKER_PREFIX}${signature.fingerprint}\` (gjc ${environment.gjcVersion}, ${environment.platform}).`,
+				`Also hit here: \`${CRASH_ISSUE_MARKER_PREFIX}${signature.fingerprint}\` (vib ${environment.vibVersion}, ${environment.platform}).`,
 			],
 			{ timeoutMs: GH_TIMEOUT_MS },
 		);

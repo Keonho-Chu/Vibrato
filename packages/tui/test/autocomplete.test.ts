@@ -9,9 +9,9 @@ import {
 	type AutocompleteSuggestionKind,
 	CombinedAutocompleteProvider,
 	extractSlashCommandTokenPrefix,
-} from "@gajae-code/tui/autocomplete";
-import { Editor } from "@gajae-code/tui/components/editor";
-import { visibleWidth } from "@gajae-code/tui/utils";
+} from "@vib-rato/tui/autocomplete";
+import { Editor } from "@vib-rato/tui/components/editor";
+import { visibleWidth } from "@vib-rato/tui/utils";
 import { defaultEditorTheme } from "./test-themes";
 
 describe("CombinedAutocompleteProvider", () => {

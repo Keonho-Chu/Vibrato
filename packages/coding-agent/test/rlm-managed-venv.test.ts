@@ -1,8 +1,8 @@
 /**
  * G004: managed per-workspace venv resolution.
  *
- * Verifies BYO (VIRTUAL_ENV / .venv) precedence and, absent a BYO env, that gjc
- * auto-creates and uses a per-workspace venv under <cwd>/.gjc/python-env, with a
+ * Verifies BYO (VIRTUAL_ENV / .venv) precedence and, absent a BYO env, that vib
+ * auto-creates and uses a per-workspace venv under <cwd>/.vib/python-env, with a
  * sys.executable assertion proving the kernel interpreter is the managed one.
  * Uses no network: the managed env is created with `python -m venv` and seeded
  * with an empty package set.
@@ -11,7 +11,7 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { ensurePythonRuntime } from "@gajae-code/coding-agent/eval/py/runtime";
+import { ensurePythonRuntime } from "@vib-rato/coding-agent/eval/py/runtime";
 
 const PYTHON = Bun.which("python3") ?? Bun.which("python");
 const NO_AMBIENT_VENV = !process.env.VIRTUAL_ENV && !process.env.CONDA_PREFIX;
@@ -36,9 +36,9 @@ async function createVenv(target: string): Promise<void> {
 }
 
 describe.skipIf(!RUN)("RLM managed per-workspace venv", () => {
-	test("auto-creates <cwd>/.gjc/python-env and the kernel interpreter is that venv", async () => {
+	test("auto-creates <cwd>/.vib/python-env and the kernel interpreter is that venv", async () => {
 		const runtime = await ensurePythonRuntime(cwd, baseEnv(), { managedWorkspaceVenv: true, seedPackages: [] });
-		const managedDir = path.join(cwd, ".gjc", "python-env");
+		const managedDir = path.join(cwd, ".vib", "python-env");
 
 		expect(runtime.venvPath).toBe(managedDir);
 		expect(runtime.pythonPath.startsWith(managedDir)).toBe(true);
@@ -61,6 +61,6 @@ describe.skipIf(!RUN)("RLM managed per-workspace venv", () => {
 		expect(runtime.venvPath).toBe(byo);
 		expect(runtime.pythonPath.startsWith(byo)).toBe(true);
 		// The managed env was never provisioned because a BYO venv took precedence.
-		expect(await Bun.file(path.join(cwd, ".gjc", "python-env")).exists()).toBe(false);
+		expect(await Bun.file(path.join(cwd, ".vib", "python-env")).exists()).toBe(false);
 	}, 120_000);
 });

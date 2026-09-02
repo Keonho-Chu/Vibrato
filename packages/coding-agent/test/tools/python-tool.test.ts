@@ -2,11 +2,11 @@ import { afterEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { AgentTool, AgentToolResult } from "@gajae-code/agent-core";
+import type { AgentTool, AgentToolResult } from "@vib-rato/agent-core";
 import { Settings } from "../../src/config/settings";
 import * as pyExecutor from "../../src/eval/py/executor";
-import { sessionIpykernelsDir } from "../../src/gjc-runtime/session-layout";
 import { createSessionPythonTool, pythonKernelOwnerId } from "../../src/tools/python";
+import { sessionIpykernelsDir } from "../../src/vib-runtime/session-layout";
 
 const KERNEL_TEST_TIMEOUT_MS = 35_000;
 const PYTHON = Bun.which("python3") ?? Bun.which("python");
@@ -20,7 +20,7 @@ function textOf(result: AgentToolResult): string {
 }
 
 async function tempDir(): Promise<string> {
-	const directory = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-python-tool-"));
+	const directory = await fs.mkdtemp(path.join(os.tmpdir(), "vib-python-tool-"));
 	tempRoots.push(directory);
 	return await fs.realpath(directory);
 }

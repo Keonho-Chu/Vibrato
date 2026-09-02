@@ -10,8 +10,8 @@
 - Model-facing prompt: `packages/coding-agent/src/prompts/tools/python.md`
 - Registration: `packages/coding-agent/src/tools/descriptors.ts` (`loadMode: "discoverable"`)
 - Key collaborators:
-  - `packages/coding-agent/src/gjc-runtime/python-transcript.ts` — runtime-owned append-only JSONL transcript recording
-  - `packages/coding-agent/src/gjc-runtime/session-layout.ts` — session-rooted transcript and artifact paths
+  - `packages/coding-agent/src/vib-runtime/python-transcript.ts` — runtime-owned append-only JSONL transcript recording
+  - `packages/coding-agent/src/vib-runtime/session-layout.ts` — session-rooted transcript and artifact paths
   - `packages/coding-agent/src/eval/py/executor.ts` — kernel session retention and `disposeKernelSessionsByOwner`
   - `docs/python-repl.md` — Python kernel/gateway internals
 
@@ -32,7 +32,7 @@ There is deliberately **no** separate teardown tool. Clearing the kernel is an a
 
 ## Session resolution
 
-Every call resolves the current GJC session id. `execute` and `clear` return an actionable error when no session id is available, because the kernel owner and session-rooted paths cannot be derived. No active `autoresearch` mission is required.
+Every call resolves the current Vibrato session id. `execute` and `clear` return an actionable error when no session id is available, because the kernel owner and session-rooted paths cannot be derived. No active `autoresearch` mission is required.
 
 The REPL runs in the session cwd and retains variables, imports, and loaded data across `execute` calls for that session.
 
@@ -46,13 +46,13 @@ The session's kernel is disposed on:
 - session cleanup, including a session identity transition,
 - signal exit (Ctrl-C).
 
-`gjc autoresearch clear` clears autoresearch state only; it does not dispose a Python kernel.
+`vib autoresearch clear` clears autoresearch state only; it does not dispose a Python kernel.
 
 ## Transcript recording
 
-The runtime records one JSONL entry per `execute` at `.gjc/_session-{sessionid}/ipykernels/{datetime}-{kernelid}/transcript.jsonl`, containing `timestamp`, `code`, `output`, `exitCode`, `cancelled`, and `truncated`. `{kernelid}` is the executor identity captured when the kernel is acquired, so a real kernel replacement uses a new transcript directory. `clear` records no entry.
+The runtime records one JSONL entry per `execute` at `.vib/_session-{sessionid}/ipykernels/{datetime}-{kernelid}/transcript.jsonl`, containing `timestamp`, `code`, `output`, `exitCode`, `cancelled`, and `truncated`. `{kernelid}` is the executor identity captured when the kernel is acquired, so a real kernel replacement uses a new transcript directory. `clear` records no entry.
 
-Display artifacts use the stable session-rooted directory `.gjc/_session-{sessionid}/ipykernels/artifacts`, rather than a per-kernel transcript directory.
+Display artifacts use the stable session-rooted directory `.vib/_session-{sessionid}/ipykernels/artifacts`, rather than a per-kernel transcript directory.
 
 ## Related
 

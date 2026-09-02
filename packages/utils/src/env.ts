@@ -194,7 +194,7 @@ for (const file of [projectEnv, agentEnv, piEnv, homeEnv, homeShellEnv]) {
 /**
  * Intentional re-export of Bun.env.
  *
- * All users should import this env module (import { $env } from "@gajae-code/utils")
+ * All users should import this env module (import { $env } from "@vib-rato/utils")
  * before using environment variables. This ensures that .env files have been loaded and
  * overrides (project, home) have been applied, so $env always reflects the correct values.
  *
@@ -221,8 +221,8 @@ export function $pickenv(...keys: string[]): string | undefined {
 /**
  * Resolve credential-bearing environment variables without consulting the caller's project .env.
  *
- * GJC loads cwd/.env into $env for project-aware tools, but model-provider authentication should
- * only use values explicitly inherited from the launching shell or GJC/user-owned config files.
+ * Vibrato loads cwd/.env into $env for project-aware tools, but model-provider authentication should
+ * only use values explicitly inherited from the launching shell or Vibrato/user-owned config files.
  */
 export function $credentialEnv(name: string): string | undefined {
 	return (
@@ -313,7 +313,7 @@ export function $flag(name: string, def: boolean = false): boolean {
 	return TRUTHY[value.toUpperCase()] === true;
 }
 
-/** Resolve the first flag among keys that has a set value (GJC-first, PI fallback). Matches $flag semantics per key. */
+/** Resolve the first flag among keys that has a set value (Vibrato-first, PI fallback). Matches $flag semantics per key. */
 export function $pickflag(...keys: string[]): boolean {
 	for (const key of keys) {
 		const value = $env[key]?.trim();
@@ -322,7 +322,7 @@ export function $pickflag(...keys: string[]): boolean {
 	return false;
 }
 
-/** Resolve the first positive integer among keys, else defaultValue (GJC-first). Set-but-invalid keys are skipped. */
+/** Resolve the first positive integer among keys, else defaultValue (Vibrato-first). Set-but-invalid keys are skipped. */
 export function $pickenvpos(keys: string[], defaultValue: number): number {
 	for (const key of keys) {
 		const parsed = parsePositiveInteger($env[key]);

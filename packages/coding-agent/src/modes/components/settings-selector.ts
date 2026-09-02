@@ -1,5 +1,5 @@
-import { ThinkingLevel, type ThinkingLevel as ThinkingLevelValue } from "@gajae-code/agent-core";
-import type { Effort } from "@gajae-code/ai/core";
+import { ThinkingLevel, type ThinkingLevel as ThinkingLevelValue } from "@vib-rato/agent-core";
+import type { Effort } from "@vib-rato/ai/core";
 import {
 	type Component,
 	Container,
@@ -14,7 +14,7 @@ import {
 	type Tab,
 	TabBar,
 	Text,
-} from "@gajae-code/tui";
+} from "@vib-rato/tui";
 import { type SettingPath, settings } from "../../config/settings";
 import type {
 	SettingTab,
@@ -23,14 +23,13 @@ import type {
 	StatusLineSeparatorStyle,
 } from "../../config/settings-schema";
 import { SETTING_TABS, TAB_METADATA } from "../../config/settings-schema";
-import type { GjcRuntimeSnapshotProvider } from "../../extensibility/gjc-plugins/runtime-quarantine";
+import type { VibRuntimeSnapshotProvider } from "../../extensibility/vib-plugins/runtime-quarantine";
 import { getCurrentThemeName, getSelectListTheme, getSettingsListTheme, theme } from "../../modes/theme/theme";
 import { matchesAppInterrupt } from "../../modes/utils/keybinding-matchers";
 import { getTabBarTheme } from "../shared";
 import { resolveUiLanguage, type UiLanguage, uiString } from "../ui-language";
 import { DynamicBorder } from "./dynamic-border";
 import { DynamicThemeText } from "./dynamic-theme-text";
-import { GjcBundleSettingsComponent } from "./gjc-bundle-settings";
 import {
 	type NotificationsEditorOperations,
 	NotificationsSettingsEditorComponent,
@@ -42,6 +41,7 @@ import { getSettingsForTab, type SettingDef } from "./settings-defs";
 import { getPreset } from "./status-line/presets";
 import { ALL_SEGMENT_IDS } from "./status-line/segments";
 import type { StatusLineSegmentOptions } from "./tool-status-header";
+import { VibBundleSettingsComponent } from "./vib-bundle-settings";
 
 /**
  * A submenu component for selecting from a list of options.
@@ -663,7 +663,7 @@ function getSettingsTabs(language: UiLanguage): Tab[] {
 			return { id, label: `${icon} ${uiString(language, `settings.tab.${id}`)}` };
 		}),
 		{ id: "plugins", label: `${theme.icon.package} ${uiString(language, "settings.tab.plugins")}` },
-		{ id: "gjc-bundles", label: `${theme.icon.package} ${uiString(language, "settings.tab.gjcBundles")}` },
+		{ id: "vib-bundles", label: `${theme.icon.package} ${uiString(language, "settings.tab.vibBundles")}` },
 	];
 }
 
@@ -688,12 +688,12 @@ export interface SettingsRuntimeContext {
 	terminalEnv?: NodeJS.ProcessEnv;
 	/**
 	 * Runtime evidence published by the session for the current activation
-	 * generation. Omitted when no session published one, in which case the GJC
+	 * generation. Omitted when no session published one, in which case the Vibrato
 	 * Bundles tab honestly reports runtime status as unavailable.
 	 */
-	gjcRuntimeSnapshot?: GjcRuntimeSnapshotProvider;
+	vibRuntimeSnapshot?: VibRuntimeSnapshotProvider;
 	/** Activation generation the published snapshot must match to be merged. */
-	gjcActivationGeneration?: number;
+	vibActivationGeneration?: number;
 }
 
 /** Status line settings subset for preview */
@@ -720,7 +720,7 @@ export interface SettingsCallbacks {
 	 * candidate could not be loaded, leaving the submenu open.
 	 */
 	onThemeCommit?: (path: "theme.dark" | "theme.light", theme: string, previousTheme: string) => Promise<boolean>;
-	/** Called to live-preview the gajae pet skin while browsing the pet setting. */
+	/** Called to live-preview the vibrato pet skin while browsing the pet setting. */
 	onPetPreview?: (mode: string) => void;
 	/**
 	 * Commit a pet mode through the shared result-returning policy. The policy
@@ -771,11 +771,11 @@ export class SettingsSelectorComponent extends Container {
 	#tabBar: TabBar;
 	#currentList: SettingsList | null = null;
 	#pluginComponent: PluginSettingsComponent | null = null;
-	#gjcBundleComponent: GjcBundleSettingsComponent | null = null;
+	#vibBundleComponent: VibBundleSettingsComponent | null = null;
 	#notificationsEditor: NotificationsSettingsEditorComponent | null = null;
 	#statusPreviewContainer: Container | null = null;
 	#statusPreviewText: Text | null = null;
-	#currentTabId: SettingTab | "plugins" | "gjc-bundles" = "appearance";
+	#currentTabId: SettingTab | "plugins" | "vib-bundles" = "appearance";
 	#textInputActive = false;
 	#activeProviderOrderEditor: Container | null = null;
 
@@ -818,7 +818,7 @@ export class SettingsSelectorComponent extends Container {
 			uiString(language, "settings.navigationHint"),
 		);
 		tabBar.onTabChange = () => {
-			this.#switchToTab(tabBar.getActiveTab().id as SettingTab | "plugins" | "gjc-bundles");
+			this.#switchToTab(tabBar.getActiveTab().id as SettingTab | "plugins" | "vib-bundles");
 		};
 		return tabBar;
 	}
@@ -829,7 +829,7 @@ export class SettingsSelectorComponent extends Container {
 		this.replaceChildren(this.children.map(child => (child === previous ? this.#tabBar : child)));
 	}
 
-	#switchToTab(tabId: SettingTab | "plugins" | "gjc-bundles"): void {
+	#switchToTab(tabId: SettingTab | "plugins" | "vib-bundles"): void {
 		if (this.#currentTabId === "notifications" && tabId !== "notifications" && !this.#disposeNotificationsEditor()) {
 			return;
 		}
@@ -849,10 +849,10 @@ export class SettingsSelectorComponent extends Container {
 			this.removeChild(this.#pluginComponent);
 			this.#pluginComponent = null;
 		}
-		if (this.#gjcBundleComponent) {
-			this.removeChild(this.#gjcBundleComponent);
-			this.#gjcBundleComponent.dispose();
-			this.#gjcBundleComponent = null;
+		if (this.#vibBundleComponent) {
+			this.removeChild(this.#vibBundleComponent);
+			this.#vibBundleComponent.dispose();
+			this.#vibBundleComponent = null;
 		}
 		if (this.#statusPreviewContainer) {
 			this.removeChild(this.#statusPreviewContainer);
@@ -866,8 +866,8 @@ export class SettingsSelectorComponent extends Container {
 
 		if (tabId === "plugins") {
 			this.#showPluginsTab();
-		} else if (tabId === "gjc-bundles") {
-			this.#showGjcBundlesTab();
+		} else if (tabId === "vib-bundles") {
+			this.#showVibBundlesTab();
 		} else if (tabId === "notifications") {
 			this.#showNotificationsTab();
 		} else {
@@ -1370,7 +1370,7 @@ export class SettingsSelectorComponent extends Container {
 
 	/** Re-evaluate condition gates against the current settings and refresh the active list. */
 	#refreshCurrentTabItems(defs?: SettingDef[]): void {
-		if (this.#currentTabId === "plugins" || this.#currentTabId === "gjc-bundles" || !this.#currentList) return;
+		if (this.#currentTabId === "plugins" || this.#currentTabId === "vib-bundles" || !this.#currentList) return;
 		this.#currentList.setItems(
 			this.#buildItemsForTab(defs ?? getSettingsForTab(this.#currentTabId), this.#currentTabId),
 		);
@@ -1420,8 +1420,8 @@ export class SettingsSelectorComponent extends Container {
 		});
 		this.addChild(this.#pluginComponent);
 	}
-	#showGjcBundlesTab(): void {
-		this.#gjcBundleComponent = new GjcBundleSettingsComponent(
+	#showVibBundlesTab(): void {
+		this.#vibBundleComponent = new VibBundleSettingsComponent(
 			this.context.cwd,
 			{
 				onClose: () => this.callbacks.onCancel(),
@@ -1429,15 +1429,15 @@ export class SettingsSelectorComponent extends Container {
 				onRenderRequested: () => this.callbacks.onRenderRequested?.(),
 			},
 			{
-				runtimeSnapshotProvider: this.context.gjcRuntimeSnapshot,
-				activationGeneration: this.context.gjcActivationGeneration,
+				runtimeSnapshotProvider: this.context.vibRuntimeSnapshot,
+				activationGeneration: this.context.vibActivationGeneration,
 			},
 		);
-		this.addChild(this.#gjcBundleComponent);
+		this.addChild(this.#vibBundleComponent);
 	}
 
 	getFocusComponent(): Component {
-		return (this.#currentList || this.#pluginComponent || this.#gjcBundleComponent || this.#notificationsEditor)!;
+		return (this.#currentList || this.#pluginComponent || this.#vibBundleComponent || this.#notificationsEditor)!;
 	}
 
 	override dispose(): void {
@@ -1448,8 +1448,8 @@ export class SettingsSelectorComponent extends Container {
 		this.#activeProviderOrderEditor = null;
 		this.#notificationsEditor?.dispose();
 		this.#notificationsEditor = null;
-		this.#gjcBundleComponent?.dispose();
-		this.#gjcBundleComponent = null;
+		this.#vibBundleComponent?.dispose();
+		this.#vibBundleComponent = null;
 		super.dispose();
 	}
 
@@ -1471,16 +1471,16 @@ export class SettingsSelectorComponent extends Container {
 			this.#notificationsEditor.handleInput(data);
 			return;
 		}
-		if (this.#gjcBundleComponent && this.#currentTabId === "gjc-bundles") {
+		if (this.#vibBundleComponent && this.#currentTabId === "vib-bundles") {
 			if (tabNavigation) {
-				if (this.#gjcBundleComponent.navigationLocked) {
-					this.#gjcBundleComponent.handleInput(data);
+				if (this.#vibBundleComponent.navigationLocked) {
+					this.#vibBundleComponent.handleInput(data);
 					return;
 				}
 				this.#tabBar.handleInput(data);
 				return;
 			}
-			this.#gjcBundleComponent.handleInput(data);
+			this.#vibBundleComponent.handleInput(data);
 			return;
 		}
 
@@ -1501,8 +1501,8 @@ export class SettingsSelectorComponent extends Container {
 			this.#pluginComponent.handleInput(data);
 			return;
 		}
-		if (this.#gjcBundleComponent) {
-			this.#gjcBundleComponent.handleInput(data);
+		if (this.#vibBundleComponent) {
+			this.#vibBundleComponent.handleInput(data);
 			return;
 		}
 

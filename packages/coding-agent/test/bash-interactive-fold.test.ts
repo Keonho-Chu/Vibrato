@@ -7,13 +7,13 @@ import { describe, expect, it } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { AgentToolContext } from "@gajae-code/agent-core";
-import { resetSettingsForTest, Settings } from "@gajae-code/coding-agent/config/settings";
+import type { AgentToolContext } from "@vib-rato/agent-core";
+import { resetSettingsForTest, Settings } from "@vib-rato/coding-agent/config/settings";
 import {
 	type BashInteractiveResult,
 	type InteractivePtyControls,
 	runInteractiveBashPty,
-} from "@gajae-code/coding-agent/tools/bash-interactive";
+} from "@vib-rato/coding-agent/tools/bash-interactive";
 
 interface CapturedComponent {
 	dispose?: () => void;

@@ -1,11 +1,11 @@
 import { afterEach, beforeAll, describe, expect, it, type Mock, vi } from "bun:test";
-import { SessionSelectorComponent } from "@gajae-code/coding-agent/modes/components/session-selector";
-import { SelectorController } from "@gajae-code/coding-agent/modes/controllers/selector-controller";
-import { initTheme } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { InteractiveModeContext } from "@gajae-code/coding-agent/modes/types";
-import type { SessionInfo } from "@gajae-code/coding-agent/session/session-manager";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { FileSessionStorage } from "@gajae-code/coding-agent/session/session-storage";
+import { SessionSelectorComponent } from "@vib-rato/coding-agent/modes/components/session-selector";
+import { SelectorController } from "@vib-rato/coding-agent/modes/controllers/selector-controller";
+import { initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { InteractiveModeContext } from "@vib-rato/coding-agent/modes/types";
+import type { SessionInfo } from "@vib-rato/coding-agent/session/session-manager";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { FileSessionStorage } from "@vib-rato/coding-agent/session/session-storage";
 
 type TestContext = InteractiveModeContext & {
 	editorContainer: {

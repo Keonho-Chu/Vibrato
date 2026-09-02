@@ -1,11 +1,11 @@
 /**
  * MCP Configuration File Writer
  *
- * Utilities for reading/writing .gjc/mcp.json files at user or project level.
+ * Utilities for reading/writing .vib/mcp.json files at user or project level.
  */
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { isEnoent } from "@gajae-code/utils";
+import { isEnoent } from "@vib-rato/utils";
 import { invalidate as invalidateFsCache } from "../capability/fs";
 
 import { validateServerConfig } from "./config";
@@ -164,7 +164,7 @@ export type UpsertMCPServerResult =
  * Add an MCP server, or overwrite an existing one only when `force` is set.
  *
  * Collision-aware wrapper over {@link addMCPServer} / {@link updateMCPServer} used by
- * `gjc migrate`. Never connects to the server. Reuses the underlying writers so the
+ * `vib migrate`. Never connects to the server. Reuses the underlying writers so the
  * rest of the config file (including `disabledServers`) is preserved on update.
  *
  * @throws Error if the server name or config is invalid (validated before any write).

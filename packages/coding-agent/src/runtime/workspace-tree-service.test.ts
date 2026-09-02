@@ -10,7 +10,7 @@ import { createWorkspaceTreeService } from "./workspace-tree-service";
 const tempDirs: string[] = [];
 
 async function makeWorkspace(): Promise<string> {
-	const cwd = await mkdtemp(path.join(os.tmpdir(), "gjc-workspace-tree-service-"));
+	const cwd = await mkdtemp(path.join(os.tmpdir(), "vib-workspace-tree-service-"));
 	tempDirs.push(cwd);
 	await mkdir(path.join(cwd, "src"));
 	await Bun.write(path.join(cwd, "README.md"), "workspace");

@@ -29,7 +29,7 @@ async function expectSettles<T>(promise: Promise<T>, label: string): Promise<T> 
 
 describe("JS worker VM lifecycle", () => {
 	afterEach(async () => {
-		delete process.env.GAJAE_CODE_JS_EVAL_INLINE_WORKER;
+		delete process.env.VIBRATO_JS_EVAL_INLINE_WORKER;
 		await disposeAllVmContexts();
 	});
 

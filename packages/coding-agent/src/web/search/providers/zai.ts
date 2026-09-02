@@ -4,7 +4,7 @@
  * Calls Z.AI's remote MCP server (`webSearchPrime`) and adapts results into
  * the unified SearchResponse shape used by the web search tool.
  */
-import { type AuthStorage, getEnvApiKey } from "@gajae-code/ai/core";
+import { type AuthStorage, getEnvApiKey } from "@vib-rato/ai/core";
 import { asRecord, asString } from "../../../web/scrapers/utils";
 import type { SearchResponse, SearchSource } from "../../../web/search/types";
 import { SearchProviderError } from "../../../web/search/types";
@@ -280,7 +280,7 @@ function toSources(results: ZaiSearchResult[]): SearchSource[] {
 export async function searchZai(params: ZaiSearchParams): Promise<SearchResponse> {
 	const apiKey = await findApiKey(params.authStorage, params.sessionId, params.signal);
 	if (!apiKey) {
-		throw new Error("Z.AI credentials not found. Set ZAI_API_KEY or login with 'gjc /login zai'.");
+		throw new Error("Z.AI credentials not found. Set ZAI_API_KEY or login with 'vib /login zai'.");
 	}
 
 	const rawResult = await callZaiSearch(apiKey, params);

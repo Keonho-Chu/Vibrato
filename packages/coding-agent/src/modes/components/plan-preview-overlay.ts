@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { Container, Input, type KeyId, type MouseEvent, matchesKey, truncateToWidth } from "@gajae-code/tui";
+import { Container, Input, type KeyId, type MouseEvent, matchesKey, truncateToWidth } from "@vib-rato/tui";
 
 import { theme } from "../theme/theme";
 import { DynamicBorder } from "./dynamic-border";

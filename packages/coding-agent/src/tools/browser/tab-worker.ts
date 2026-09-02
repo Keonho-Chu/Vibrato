@@ -2,8 +2,8 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 
-import { untilAborted } from "@gajae-code/utils/abortable";
-import { Snowflake } from "@gajae-code/utils/snowflake";
+import { untilAborted } from "@vib-rato/utils/abortable";
+import { Snowflake } from "@vib-rato/utils/snowflake";
 import type { HTMLElement } from "linkedom";
 import type {
 	Browser,
@@ -857,7 +857,7 @@ export class WorkerCore {
 						session.browserScreenshotDir,
 						`screenshot-${new Date().toISOString().replace(/[:.]/g, "-").slice(0, -1)}.png`,
 					)
-				: path.join(os.tmpdir(), `gjc-sshots-${Snowflake.next()}.png`));
+				: path.join(os.tmpdir(), `vib-sshots-${Snowflake.next()}.png`));
 		await fs.promises.mkdir(path.dirname(dest), { recursive: true });
 		const saveFullRes = !!(explicitPath || session.browserScreenshotDir);
 		const savedBuffer = saveFullRes ? buffer : resized.buffer;

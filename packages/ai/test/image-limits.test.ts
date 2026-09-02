@@ -71,10 +71,10 @@ import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { execSync } from "node:child_process";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { getBundledModel } from "@gajae-code/ai/models";
-import { complete } from "@gajae-code/ai/stream";
-import type { Api, Context, ImageContent, Model, OptionsForApi, UserMessage } from "@gajae-code/ai/types";
-import { $which } from "@gajae-code/utils";
+import { getBundledModel } from "@vib-rato/ai/models";
+import { complete } from "@vib-rato/ai/stream";
+import type { Api, Context, ImageContent, Model, OptionsForApi, UserMessage } from "@vib-rato/ai/types";
+import { $which } from "@vib-rato/utils";
 import { e2eApiKey } from "./oauth";
 
 const TEMP_DIR = path.join(import.meta.dir, ".temp-images");

@@ -2,8 +2,8 @@ import { afterEach, describe, expect, test } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { runGjcGcCommand } from "@gajae-code/coding-agent/gjc-runtime/gc-runtime";
-import { harnessLeasesGcAdapter } from "@gajae-code/coding-agent/harness-control-plane/gc-adapter";
+import { harnessLeasesGcAdapter } from "@vib-rato/coding-agent/harness-control-plane/gc-adapter";
+import { runVibGcCommand } from "@vib-rato/coding-agent/vib-runtime/gc-runtime";
 import { SessionIndex } from "../src/sdk/broker/session-index";
 
 const tempDirs: string[] = [];
@@ -55,15 +55,15 @@ async function seedDeadLease(base: string, registryDir: string, deadPid: number)
 	return leaseFile;
 }
 
-describe("gjc gc end-to-end (harness lease adapter)", () => {
+describe("vib gc end-to-end (harness lease adapter)", () => {
 	test("dry-run reports a dead lease as would_remove and deletes nothing", async () => {
 		const base = await makeTemp();
 		const registryDir = path.join(base, "reg");
 		const deadPid = await reapedPid();
 		const leaseFile = await seedDeadLease(base, registryDir, deadPid);
-		const env = { ...process.env, GJC_CODING_AGENT_DIR: base, GJC_HARNESS_ROOT_REGISTRY_DIR: registryDir };
+		const env = { ...process.env, VIB_CODING_AGENT_DIR: base, VIB_HARNESS_ROOT_REGISTRY_DIR: registryDir };
 
-		const result = await runGjcGcCommand(["--json"], base, env, [harnessLeasesGcAdapter]);
+		const result = await runVibGcCommand(["--json"], base, env, [harnessLeasesGcAdapter]);
 		const report = JSON.parse(result.stdout);
 		expect(report.dry_run).toBe(true);
 		const rec = report.stores.harness_leases.find((r: { id: string }) => r.id === "h-e2e");
@@ -79,9 +79,9 @@ describe("gjc gc end-to-end (harness lease adapter)", () => {
 		const registryDir = path.join(base, "reg");
 		const deadPid = await reapedPid();
 		const leaseFile = await seedDeadLease(base, registryDir, deadPid);
-		const env = { ...process.env, GJC_CODING_AGENT_DIR: base, GJC_HARNESS_ROOT_REGISTRY_DIR: registryDir };
+		const env = { ...process.env, VIB_CODING_AGENT_DIR: base, VIB_HARNESS_ROOT_REGISTRY_DIR: registryDir };
 
-		const result = await runGjcGcCommand(["--prune", "--json"], base, env, [harnessLeasesGcAdapter]);
+		const result = await runVibGcCommand(["--prune", "--json"], base, env, [harnessLeasesGcAdapter]);
 		const report = JSON.parse(result.stdout);
 		expect(report.dry_run).toBe(false);
 		const rec = report.stores.harness_leases.find((r: { id: string }) => r.id === "h-e2e");
@@ -94,10 +94,10 @@ describe("gjc gc end-to-end (harness lease adapter)", () => {
 		const base = await makeTemp();
 		const env = {
 			...process.env,
-			GJC_CODING_AGENT_DIR: base,
-			GJC_HARNESS_ROOT_REGISTRY_DIR: path.join(base, "reg-empty"),
+			VIB_CODING_AGENT_DIR: base,
+			VIB_HARNESS_ROOT_REGISTRY_DIR: path.join(base, "reg-empty"),
 		};
-		const result = await runGjcGcCommand([], base, env, [harnessLeasesGcAdapter]);
+		const result = await runVibGcCommand([], base, env, [harnessLeasesGcAdapter]);
 		expect(result.stdout).toContain("dry run");
 		expect(result.stdout).toContain("Harness owner leases");
 		expect(result.status).toBe(0);
@@ -118,8 +118,8 @@ describe("gjc gc end-to-end (harness lease adapter)", () => {
 		const log = path.join(agentDir, "sdk", "sessions", "index.jsonl");
 		await fs.appendFile(log, "broken\n");
 
-		const repairEnv = { ...process.env, GJC_CODING_AGENT_DIR: agentDir };
-		const repaired = await runGjcGcCommand(["--repair-session-index", "--json"], base, repairEnv, [
+		const repairEnv = { ...process.env, VIB_CODING_AGENT_DIR: agentDir };
+		const repaired = await runVibGcCommand(["--repair-session-index", "--json"], base, repairEnv, [
 			harnessLeasesGcAdapter,
 		]);
 		const repairReport = JSON.parse(repaired.stdout);
@@ -128,7 +128,7 @@ describe("gjc gc end-to-end (harness lease adapter)", () => {
 		expect(await fs.exists(repairReport.session_index.quarantine_path)).toBe(true);
 		expect(repaired.status).toBe(0);
 
-		const retry = await runGjcGcCommand(["--repair-session-index", "--json"], base, repairEnv, [
+		const retry = await runVibGcCommand(["--repair-session-index", "--json"], base, repairEnv, [
 			harnessLeasesGcAdapter,
 		]);
 		expect(JSON.parse(retry.stdout).session_index).toMatchObject({ status: "healthy", valid_prefix_seq: 1 });

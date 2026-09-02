@@ -1,11 +1,11 @@
-import { Command } from "@gajae-code/utils/cli";
-import { runGjcNativeSkillHookCli } from "../hooks/native-skill-hook";
+import { Command } from "@vib-rato/utils/cli";
+import { runVibNativeSkillHookCli } from "../hooks/native-skill-hook";
 
 export default class CodexNativeHook extends Command {
-	static description = "Run GJC native UserPromptSubmit/Stop skill-state hook";
+	static description = "Run Vibrato native UserPromptSubmit/Stop skill-state hook";
 	static strict = false;
 
 	async run(): Promise<void> {
-		await runGjcNativeSkillHookCli();
+		await runVibNativeSkillHookCli();
 	}
 }

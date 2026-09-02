@@ -10,7 +10,7 @@
 import { randomUUID } from "node:crypto";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 import { daemonPaths } from "./daemon-paths";
 import type { SessionCreateTarget } from "./index";
 

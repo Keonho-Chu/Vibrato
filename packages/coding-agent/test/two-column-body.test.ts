@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it, vi } from "bun:test";
-import { type Component, visibleWidth } from "@gajae-code/tui";
+import { type Component, visibleWidth } from "@vib-rato/tui";
 import { TwoColumnBody } from "../src/modes/components/two-column-body";
 import { getThemeByName, setThemeInstance } from "../src/modes/theme/theme";
 

@@ -1,9 +1,9 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import type { ThinkingLevel } from "@gajae-code/agent-core";
-import type { Effort } from "@gajae-code/ai/core";
-import type { EditorTheme, MarkdownTheme, SelectListTheme, SymbolTheme } from "@gajae-code/tui";
-import { adjustHsv, getCustomThemesDir, isEnoent, logger } from "@gajae-code/utils";
+import type { ThinkingLevel } from "@vib-rato/agent-core";
+import type { Effort } from "@vib-rato/ai/core";
+import type { EditorTheme, MarkdownTheme, SelectListTheme, SymbolTheme } from "@vib-rato/tui";
+import { adjustHsv, getCustomThemesDir, isEnoent, logger } from "@vib-rato/utils";
 import chalk from "chalk";
 import * as z from "zod/v4";
 // Embed theme JSON files at build time
@@ -38,7 +38,7 @@ let nativeThemeBindingsUnavailable = false;
 function loadNativeThemeBindings(): NativeThemeBindings | undefined {
 	if (nativeThemeBindings || nativeThemeBindingsUnavailable) return nativeThemeBindings;
 	try {
-		nativeThemeBindings = require("@gajae-code/natives") as unknown as NativeThemeBindings;
+		nativeThemeBindings = require("@vib-rato/natives") as unknown as NativeThemeBindings;
 	} catch (error) {
 		nativeThemeBindingsUnavailable = true;
 		logger.warn("Native theme bindings unavailable", { error: String(error) });
@@ -293,7 +293,7 @@ const UNICODE_SYMBOLS: SymbolMap = {
 	"icon.context": "◫",
 	"icon.cost": "💲",
 	"icon.time": "⏱",
-	"icon.pi": "🦞",
+	"icon.pi": "◆",
 	"icon.agents": "👥",
 	"icon.cache": "💾",
 	"icon.input": "⤵",
@@ -715,7 +715,7 @@ const ASCII_SYMBOLS: SymbolMap = {
 	"icon.context": "ctx:",
 	"icon.cost": "$",
 	"icon.time": "t:",
-	"icon.pi": "GJC",
+	"icon.pi": "Vibrato",
 	"icon.agents": "AG",
 	"icon.cache": "cache",
 	"icon.input": "in:",
@@ -1809,8 +1809,8 @@ var themeWatcher: fs.FSWatcher | undefined;
 var themeReloadTimer: NodeJS.Timeout | undefined;
 var sigwinchHandler: (() => void) | undefined;
 var autoDetectedTheme: boolean = false;
-var autoDarkTheme: string = "red-claw";
-var autoLightTheme: string = "blue-crab";
+var autoDarkTheme: string = "lig-blue";
+var autoLightTheme: string = "lig-white";
 var syntaxHighlightingEnabledState = true;
 var onThemeChangeCallback: (() => void) | undefined;
 var themeLoadRequestId: number = 0;
@@ -1832,8 +1832,8 @@ export async function initTheme(
 	syntaxHighlightingEnabled: boolean = true,
 ): Promise<void> {
 	autoDetectedTheme = true;
-	autoDarkTheme = darkTheme ?? "red-claw";
-	autoLightTheme = lightTheme ?? "blue-crab";
+	autoDarkTheme = darkTheme ?? "lig-blue";
+	autoLightTheme = lightTheme ?? "lig-white";
 	if (enableWatcher && shouldUseMacOSAppearanceFallback()) {
 		const bindings = loadNativeThemeBindings();
 		if (bindings) macOSReportedAppearance = bindings.detectMacOSAppearance() ?? undefined;
@@ -1852,8 +1852,8 @@ export async function initTheme(
 		}
 	} catch (err) {
 		logger.debug("Theme loading failed, falling back to red-claw theme", { error: String(err) });
-		currentThemeName = "red-claw";
-		theme = await loadTheme("red-claw", getCurrentThemeOptions());
+		currentThemeName = "lig-blue";
+		theme = await loadTheme("lig-blue", getCurrentThemeOptions());
 		// Don't start watcher for fallback theme
 	}
 }
@@ -1885,9 +1885,9 @@ export async function setTheme(
 		if (requestId !== themeLoadRequestId) {
 			return { success: false, error: "Theme change superseded by a newer request" };
 		}
-		const fallbackTheme = await loadTheme("red-claw", getCurrentThemeOptions());
+		const fallbackTheme = await loadTheme("lig-blue", getCurrentThemeOptions());
 		if (!shouldApply()) return { success: false, error: "Theme change cancelled" };
-		currentThemeName = "red-claw";
+		currentThemeName = "lig-blue";
 		theme = fallbackTheme;
 		return {
 			success: false,
@@ -1996,7 +1996,7 @@ export async function setSymbolPreset(preset: SymbolPreset): Promise<void> {
 			theme = await loadTheme(currentThemeName, getCurrentThemeOptions());
 		} catch {
 			// Fall back to red-claw theme with new preset
-			theme = await loadTheme("red-claw", getCurrentThemeOptions());
+			theme = await loadTheme("lig-blue", getCurrentThemeOptions());
 		}
 		if (onThemeChangeCallback) {
 			onThemeChangeCallback();
@@ -2022,7 +2022,7 @@ export async function setColorBlindMode(enabled: boolean): Promise<void> {
 			theme = await loadTheme(currentThemeName, getCurrentThemeOptions());
 		} catch {
 			// Fall back to red-claw theme
-			theme = await loadTheme("red-claw", getCurrentThemeOptions());
+			theme = await loadTheme("lig-blue", getCurrentThemeOptions());
 		}
 		if (onThemeChangeCallback) {
 			onThemeChangeCallback();
@@ -2312,7 +2312,7 @@ function isThemeJsonLight(themeJson: ThemeJson): boolean {
 }
 
 export function isLightTheme(themeName?: string, agentDir?: string): boolean {
-	const name = themeName ?? "red-claw";
+	const name = themeName ?? "lig-blue";
 	const builtinThemes = getBuiltinThemes();
 	let themeJson: ThemeJson | undefined;
 	if (name in builtinThemes) {
@@ -2486,7 +2486,7 @@ export function getEditorTheme(): EditorTheme {
 	};
 }
 
-export function getSettingsListTheme(): import("@gajae-code/tui").SettingsListTheme {
+export function getSettingsListTheme(): import("@vib-rato/tui").SettingsListTheme {
 	return {
 		label: (text: string, selected: boolean) => (selected ? theme.fg("accent", text) : text),
 		value: (text: string, selected: boolean) => (selected ? theme.fg("accent", text) : theme.fg("muted", text)),

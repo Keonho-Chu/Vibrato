@@ -1,5 +1,5 @@
 /**
- * Top-level orchestration for `gjc setup paseo`.
+ * Top-level orchestration for `vib setup paseo`.
  *
  * Dispatches to diagnosis, install, or removal, and owns the flag combinations
  * that must be rejected before any target is touched.
@@ -16,7 +16,7 @@ import {
 	hasProviderConflict,
 	providerEntryHash,
 	providerKeyFor,
-	resolveGjcCommand,
+	resolveVibCommand,
 } from "./provider-config";
 import { removePaseoSetup } from "./remove";
 import type { PaseoInstallResult, PaseoRemoveResult, SetupCheckResult } from "./result-types";
@@ -111,10 +111,10 @@ async function installPaseoSetup(flags: PaseoSetupFlags, deps: PaseoSetupDepende
 		};
 	}
 
-	const resolution = resolveGjcCommand();
+	const resolution = resolveVibCommand();
 	if (!resolution.ok) {
 		throw new PaseoSetupUsageError(
-			`Cannot register GJC with Paseo: ${resolution.detail}. Paseo needs an absolute command path, so GJC will not write a bare 'gjc' string.`,
+			`Cannot register Vibrato with Paseo: ${resolution.detail}. Paseo needs an absolute command path, so Vibrato will not write a bare 'vib' string.`,
 		);
 	}
 
@@ -212,7 +212,7 @@ async function installPaseoSetup(flags: PaseoSetupFlags, deps: PaseoSetupDepende
 			});
 		}
 
-		// Step 4: register the bridge with GJC skill discovery.
+		// Step 4: register the bridge with Vibrato skill discovery.
 		const settings = await Settings.init();
 		const receipt = await registerSkillsBridgeDirectory(settings, deps.paths.bridgeDir);
 		completed.push(receiptStep("config.yml skills.customDirectories", receipt));

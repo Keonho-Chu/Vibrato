@@ -14,7 +14,7 @@ afterEach(async () => {
 });
 
 it("typechecks the generated retained-publish diagnostics as a strict declaration consumer", async () => {
-	const directory = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-native-diagnostic-types-"));
+	const directory = await fs.mkdtemp(path.join(os.tmpdir(), "vib-native-diagnostic-types-"));
 	temporaryDirectories.push(directory);
 	const config = path.join(directory, "tsconfig.json");
 	const consumer = path.join(directory, "consumer.ts");

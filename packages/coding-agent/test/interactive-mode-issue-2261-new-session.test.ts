@@ -1,10 +1,10 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as path from "node:path";
-import { Agent } from "@gajae-code/agent-core";
-import { resetSettingsForTest, Settings } from "@gajae-code/coding-agent/config/settings";
-import { resolveLocalUrlToPath } from "@gajae-code/coding-agent/internal-urls";
-import { initTheme } from "@gajae-code/coding-agent/modes/theme/theme";
-import { TempDir } from "@gajae-code/utils";
+import { Agent } from "@vib-rato/agent-core";
+import { resetSettingsForTest, Settings } from "@vib-rato/coding-agent/config/settings";
+import { resolveLocalUrlToPath } from "@vib-rato/coding-agent/internal-urls";
+import { initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
+import { TempDir } from "@vib-rato/utils";
 import { ModelRegistry } from "../src/config/model-registry";
 import type { ExtensionCommandContextActions } from "../src/extensibility/extensions";
 import { planSnapshotHash } from "../src/modes/components/plan-preview-overlay";

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import { getDefaultGjcDefinitions } from "@gajae-code/coding-agent/defaults/gjc-defaults";
-import { getBundledAgent } from "@gajae-code/coding-agent/task/agents";
+import { getDefaultVibDefinitions } from "@vib-rato/coding-agent/defaults/vib-defaults";
+import { getBundledAgent } from "@vib-rato/coding-agent/task/agents";
 
 const rolePromptSectionContracts = [
 	{
@@ -124,15 +124,15 @@ const ralplanReReviewContractPatterns = [
 	/the prior same-lane review artifact path \(`stage-NN-architect\.md` \/ `stage-NN-critic\.md`\) with its receipt fields/u,
 	/the consolidated prior blockers and the revision's claimed resolutions, as orchestrator-collected pointers into those artifacts \(never pasted bodies\)/u,
 	/Critic pass-2\+ only: the current-pass Architect receipt\/path, awaited first per the sequential cadence, so the rule-5 counter-review is evaluable\./u,
-	/gjc\.ralplan\.maxReviewPassesPerLane/u,
+	/vib\.ralplan\.maxReviewPassesPerLane/u,
 	/Default: \*\*1\*\* Architect pass and \*\*1\*\* Critic pass per opener iteration\./u,
-	/Override via `gjc\.ralplan\.maxReviewPassesPerLane` \(integer \*\*1\.\.10\*\*, registered in the public settings schema\) using the workflow-settings precedence above; project overrides user\./u,
+	/Override via `vib\.ralplan\.maxReviewPassesPerLane` \(integer \*\*1\.\.10\*\*, registered in the public settings schema\) using the workflow-settings precedence above; project overrides user\./u,
 	/On overflow: exit code \*\*3\*\* with the \*\*`PLANNING-STUCK`\*\* marker and lane-specific JSON\/stderr detail\./u,
 	/`post-interview`, `adr`, and `final` are always allowed\./u,
 	/including after a crash between artifact write and ledger append: the identical retry repairs the missing ledger row and returns the dedupe receipt\./u,
 	/A new `--run-id` starts a fresh budget\./u,
 	/A rule-2-justified blocker routes through a Planner `revision` opener \(new iteration, fresh lane budget\), never a second same-iteration review pass\./u,
-	/gjc:\n\s+ralplan:\n\s+maxIterations: 3\n\s+maxReviewPassesPerLane: 2/u,
+	/vib:\n\s+ralplan:\n\s+maxIterations: 3\n\s+maxReviewPassesPerLane: 2/u,
 	/--lane-verdict <token>/u,
 	/Architect passes its Architectural Status token \(`CLEAR`\/`WATCH`\/`BLOCK`\), and Critic passes its verdict token \(`OKAY`\/`ITERATE`\/`REJECT`\)/u,
 ] as const;
@@ -157,7 +157,7 @@ describe("ralplan decision artifacts", () => {
 			}
 		}
 
-		const ralplan = getDefaultGjcDefinitions().find(
+		const ralplan = getDefaultVibDefinitions().find(
 			definition => definition.kind === "skill" && definition.name === "ralplan",
 		);
 		expect(ralplan).toBeDefined();
@@ -204,7 +204,7 @@ describe("ralplan decision artifacts", () => {
 			expect(architect.systemPrompt).not.toMatch(pattern);
 		}
 
-		const ralplan = getDefaultGjcDefinitions().find(
+		const ralplan = getDefaultVibDefinitions().find(
 			definition => definition.kind === "skill" && definition.name === "ralplan",
 		);
 		expect(ralplan).toBeDefined();

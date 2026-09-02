@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, type Mock, vi } from "bun:test";
-import { Agent, type AgentMessage } from "@gajae-code/agent-core";
+import { Agent, type AgentMessage } from "@vib-rato/agent-core";
 import {
 	type AssistantMessage,
 	type Context,
@@ -9,14 +9,14 @@ import {
 	type SimpleStreamOptions,
 	type UserMessage,
 	unregisterCustomApis,
-} from "@gajae-code/ai";
-import { createMockModel, type MockModel, registerMockApi } from "@gajae-code/ai/providers/mock";
-import { AssistantMessageEventStream } from "@gajae-code/ai/utils/event-stream";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { AgentSession } from "@gajae-code/coding-agent/session/agent-session";
-import { BTW_STREAM_IDLE_TIMEOUT_MS } from "@gajae-code/coding-agent/session/btw-contract";
-import { convertToLlm } from "@gajae-code/coding-agent/session/messages";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
+} from "@vib-rato/ai";
+import { createMockModel, type MockModel, registerMockApi } from "@vib-rato/ai/providers/mock";
+import { AssistantMessageEventStream } from "@vib-rato/ai/utils/event-stream";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { AgentSession } from "@vib-rato/coding-agent/session/agent-session";
+import { BTW_STREAM_IDLE_TIMEOUT_MS } from "@vib-rato/coding-agent/session/btw-contract";
+import { convertToLlm } from "@vib-rato/coding-agent/session/messages";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
 
 registerMockApi();
 const CONTROLLED_BTW_API = "controlled-btw-test";

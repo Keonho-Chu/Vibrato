@@ -1,10 +1,10 @@
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 import { type ExecResult, execCommand } from "../../exec/exec";
 import type { ExtensionContext, InputEvent, InputEventResult } from "./types";
 
-export const OOO_BRIDGE_RECURSION_ENV = "_OUROBOROS_GJC_BRIDGE_DEPTH";
+export const OOO_BRIDGE_RECURSION_ENV = "_OUROBOROS_VIB_BRIDGE_DEPTH";
 export const OOO_BRIDGE_CONTINUE_EXIT_CODE = 78;
-export const OOO_BRIDGE_TIMEOUT_ENV = "OUROBOROS_GJC_BRIDGE_TIMEOUT_MS";
+export const OOO_BRIDGE_TIMEOUT_ENV = "OUROBOROS_VIB_BRIDGE_TIMEOUT_MS";
 
 export interface ExactPrefixCommandBridgeOptions {
 	/** Bare command prefix to intercept, without trailing whitespace. */

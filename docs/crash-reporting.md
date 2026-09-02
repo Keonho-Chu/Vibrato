@@ -1,10 +1,10 @@
-# Crash fingerprinting and `gjc crash report`
+# Crash fingerprinting and `vib crash report`
 
-GJC writes a durable, rotation-immune crash log (`~/.gjc/agent/gjc-crash.log`) for every
+Vibrato writes a durable, rotation-immune crash log (`~/.vib/agent/vib-crash.log`) for every
 fatal exception. This page documents how those records get a stable identity, how the
 counts are aggregated, and the privacy contract of the assisted reporting flow.
 
-**The `gjc crash report` GitHub issue flow never transmits anything without an explicit,
+**The `vib crash report` GitHub issue flow never transmits anything without an explicit,
 per-invocation, digest-confirmed confirmation. Fully automatic issue creation is an
 explicit non-goal. The separate Sentry upstream is default-off and config-gated; it
 transmits only fields approved by `sanitizeExternalCrashV1`.**
@@ -14,14 +14,14 @@ transmits only fields approved by `sanitizeExternalCrashV1`.**
 Every new fatal record gains one machine-readable identity line:
 
 ```
-gjc-crash-record.v1 fp:<32 hex> fpv:1 id:<random>
+vib-crash-record.v1 fp:<32 hex> fpv:1 id:<random>
 ```
 
 The fingerprint is computed at `recordFatalCrash` time from the already-captured
 diagnostic text (error name, message, stack) — the throwable is never read again.
 
 - **Canonical serialization** is length-prefixed UTF-8 (`<byteLength>:<bytes>`) over
-  `"gjc-crash-fp.v1"`, `errorName`, `normalizedMessageClass`, and up to three normalized
+  `"vib-crash-fp.v1"`, `errorName`, `normalizedMessageClass`, and up to three normalized
   in-app frames. The digest is sha256 truncated to 128 bits, published as 32 lowercase
   hex characters. The algorithm version is recorded as `fpv` beside every value.
 - **Message normalization is typed, not "strip all digits".** Absolute POSIX/Windows/UNC
@@ -54,8 +54,8 @@ attempted and pre-feature records are not reportable through this flow.
 
 | File | Role |
 | --- | --- |
-| `~/.gjc/agent/gjc-crash-events.jsonl` | Append-only journal. **Source of increments.** |
-| `~/.gjc/agent/gjc-crash-index.json` | Compacted, advisory signature index. |
+| `~/.vib/agent/vib-crash-events.jsonl` | Append-only journal. **Source of increments.** |
+| `~/.vib/agent/vib-crash-index.json` | Compacted, advisory signature index. |
 
 - The **fatal path** writes exactly one bounded line (≤ 512 B) with `O_APPEND` and nothing
   else: no parse, no lock, no rename, no read. A failure is swallowed, and a latch makes a
@@ -73,19 +73,19 @@ attempted and pre-feature records are not reportable through this flow.
 - **Bounds:** message preview ≤ 512 B per entry, entry ≤ 1 KiB, index ≤ 256 KiB, 128
   signatures. **Unreported signatures are never evicted.** Overflow evicts only reported
   or dismissed entries; when nothing is evictable the compactor stops adding new entries
-  and records an overflow marker that `gjc crash report` surfaces.
+  and records an overflow marker that `vib crash report` surfaces.
 - `lifetimeCount` (from the journal, monotonic) and `retainedCount` (recomputed from the
   identity markers still present in the capped crash log) are tracked separately, so the
   512 KiB crash-log cap reset cannot silently deflate a signature's history.
 - Multi-account installs that symlink one agent dir **share this state deliberately**:
   the scope is the agent dir, exactly like the crash log itself.
 
-## 3. `gjc crash report`
+## 3. `vib crash report`
 
 ```sh
-gjc crash list            # local signatures, no network, no gh
-gjc crash list --json
-gjc crash report          # interactive review-and-submit flow
+vib crash list            # local signatures, no network, no gh
+vib crash list --json
+vib crash report          # interactive review-and-submit flow
 ```
 
 The ordering **is** the consent boundary — no network, auth, repo or `gh` probe happens
@@ -104,7 +104,7 @@ before step 5:
    refuses the submission** rather than warning and continuing.
 4. Crash-derived text lives only inside fenced blocks with backticks neutralized and `@`
    de-fanged. The title is generic (`crash: <errorName> in <top-frame-path>`, from
-   normalized inputs only) and the marker `gjc-crash-fp.v1:<32hex>` is emitted outside
+   normalized inputs only) and the marker `vib-crash-fp.v1:<32hex>` is emitted outside
    crash-derived blocks so a forged in-text marker cannot impersonate one.
 5. **Immutable snapshot + consent.** The exact final bytes are written to a securely
    created 0600 file (exclusive create, no symlink follow), shown verbatim with their
@@ -137,7 +137,7 @@ state only — **this piece never transmits anything**.
 
 - Suppressed for print mode, SDK/ACP hosts, workers, daemons, `--version`/`--help` and
   `startup.quiet`; it is routed through the centralized status surface, never `console.*`.
-- Dismissal is explicit (the dismiss action in `gjc crash report`), never inferred from an
+- Dismissal is explicit (the dismiss action in `vib crash report`), never inferred from an
   ignored line.
 - `crashReport.nudge: false` disables it. Honest default statement: the default-on nudge
   **does** change startup output by design (one line, bounded, rate-limited); transmission
@@ -145,18 +145,18 @@ state only — **this piece never transmits anything**.
 
 ## 5. Upstream relay (opt-in)
 
-This is a separate channel from `gjc crash report`, with separate rules. It is disabled by
+This is a separate channel from `vib crash report`, with separate rules. It is disabled by
 default: `crashReport.upstream` defaults to `off`, and `crashReport.upstreamDsn` supplies
 the Sentry DSN only when the upstream is enabled. With no DSN, network behavior does not
 change. No DSN is compiled into the binary, so there is no default destination.
 
 Both keys are read from the **user/global settings layer only**, never the merged view.
-Project `.gjc` configuration cannot enable the relay and cannot choose its destination, so
+Project `.vib` configuration cannot enable the relay and cannot choose its destination, so
 opening an untrusted repository cannot turn on transmission or redirect crash signatures
 that were recorded before that repository existed on the machine. Values are re-validated
 on read: anything other than the literal `sentry` is treated as `off`, and a non-string DSN
 is treated as absent, so a hand-edited global config fails closed. The
-`GJC_CRASH_SENTRY_DSN` environment variable is only consulted once that trusted global
+`VIB_CRASH_SENTRY_DSN` environment variable is only consulted once that trusted global
 opt-in is already on; it cannot enable the relay by itself.
 
 The automatic relay always reads fatal and handled stores from the trusted agent
@@ -165,7 +165,7 @@ input. Ordinary crash state operations may still use trusted inherited XDG state
 checkout-controlled XDG paths are never uploaded.
 
 The relay never runs on the fatal path. It runs at the next **interactive** startup during index
-compaction; other modes can explicitly invoke `gjc crash relay`, preserving the crashing
+compaction; other modes can explicitly invoke `vib crash relay`, preserving the crashing
 process's exactly-one-`O_APPEND` write. It is bounded
 to 8 signatures per run across both fatal and handled stores, with fatal first, and a 10s per-request timeout. The exact
 payload keys that leave the machine are `event_id`, `timestamp`, `platform`, `level`,
@@ -176,9 +176,9 @@ payload keys that leave the machine are `event_id`, `timestamp`, `platform`, `le
 
 `sanitizeExternalCrashV1` is the egress contract. Any refusal drops that signature's
 send; the relay never falls back to a less-sanitized payload. Consequently no prompt
-text, source code, file contents, or credentials are included. The gjc fingerprint is
+text, source code, file contents, or credentials are included. The vib fingerprint is
 sent as Sentry's `fingerprint` array, making grouping ours rather than Sentry's heuristics:
-one upstream issue per gjc signature.
+one upstream issue per vib signature.
 
 Timestamps follow the same coarsening rule as the issue flow: the event `timestamp` is
 truncated to UTC midnight of the crash date, so an exact crash time -- which is a
@@ -197,7 +197,7 @@ retry after upstream acceptance but before local durability uses the same upstre
 identity. A failed journal append after a 2xx POST is a failed send: no durable
 watermark is written.
 
-`gjc crash relay` exits non-zero when any signature was refused by the sanitizer or failed
+`vib crash relay` exits non-zero when any signature was refused by the sanitizer or failed
 in transport, so a partially delivered batch is never reported to automation as a success.
 
 ### State provenance and legacy stores
@@ -217,10 +217,10 @@ the filesystem-root sentinel, user state is marked unavailable, and every user-s
 accessor refuses — credential resolution stays fail-closed and never reads a
 checkout-controlled home.
 
-Project discovery uses the nearest existing `.gjc` directory, then the checkout's `.git` root as a
-fallback anchor. With an explicit project scope and neither anchor, the resolver uses `<cwd>/.gjc`
+Project discovery uses the nearest existing `.vib` directory, then the checkout's `.git` root as a
+fallback anchor. With an explicit project scope and neither anchor, the resolver uses `<cwd>/.vib`
 instead of falling back to the user's home. The historical `~/.gemini` store remains a read-only
-compatibility source after trusted `.gjc/agent`; it is not a crash relay store and cannot override
+compatibility source after trusted `.vib/agent`; it is not a crash relay store and cannot override
 trusted state.
 
 The fingerprint remains a public, pseudonymous correlation token, not a confidentiality
@@ -231,7 +231,7 @@ installs inside the upstream project.
 
 Sections 1-5 describe *fatal* crashes: `uncaughtException` and `unhandledRejection`. A tool
 that throws and is caught never reaches that path, so those failures were previously
-invisible to both `gjc crash list` and the relay.
+invisible to both `vib crash list` and the relay.
 
 Handled tool errors are captured at `finishExecuteToolSpan`, which already holds the live
 `Error` with an intact stack. Capture is deliberately narrow: only `status === "error"`
@@ -243,10 +243,10 @@ The same reasoning rules out hooking `logger.error`: of its call sites, nearly a
 `String(error)` or `error.message`, so the stack is already gone by the time the logger
 sees it.
 
-Handled errors get their own files -- `gjc-error.log`, `gjc-error-events.jsonl`,
-`gjc-error-index.json` -- rather than sharing the fatal store. They are high-volume and
+Handled errors get their own files -- `vib-error.log`, `vib-error-events.jsonl`,
+`vib-error-index.json` -- rather than sharing the fatal store. They are high-volume and
 fatal crashes are rare and precious; under a shared cap the noisy class would evict the
-signal and break `gjc crash report`. Everything else is reused verbatim: the same record
+signal and break `vib crash report`. Everything else is reused verbatim: the same record
 format, the same `redactCrashSecrets` scrubbing, the same v1 fingerprint, the same
 `sanitizeExternalCrashV1` egress contract.
 

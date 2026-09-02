@@ -6,9 +6,9 @@
  * normalized to NFC elsewhere; this test covers the compatibility-jamo path.
  */
 import { describe, expect, it } from "bun:test";
-import { CURSOR_MARKER } from "@gajae-code/tui";
-import { Input } from "@gajae-code/tui/components/input";
-import { visibleWidth } from "@gajae-code/tui/utils";
+import { CURSOR_MARKER } from "@vib-rato/tui";
+import { Input } from "@vib-rato/tui/components/input";
+import { visibleWidth } from "@vib-rato/tui/utils";
 
 /**
  * Drive `text` through `Input.handleInput()` one Unicode code point at a

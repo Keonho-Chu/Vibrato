@@ -17,12 +17,12 @@
  */
 
 import { beforeAll, describe, expect, it, type Mock, vi } from "bun:test";
-import { initTheme } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { InteractiveModeContext } from "@gajae-code/coding-agent/modes/types";
-import { UiHelpers } from "@gajae-code/coding-agent/modes/utils/ui-helpers";
-import type { SessionContext } from "@gajae-code/coding-agent/session/session-manager";
-import { SessionContextTooLargeError, SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { Container } from "@gajae-code/tui";
+import { initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { InteractiveModeContext } from "@vib-rato/coding-agent/modes/types";
+import { UiHelpers } from "@vib-rato/coding-agent/modes/utils/ui-helpers";
+import type { SessionContext } from "@vib-rato/coding-agent/session/session-manager";
+import { SessionContextTooLargeError, SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { Container } from "@vib-rato/tui";
 
 beforeAll(() => {
 	initTheme();

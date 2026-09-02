@@ -9,9 +9,9 @@ import {
 	type ViewportAnchorRender,
 	type ViewportAnchorSource,
 	type ViewportAnchorSourceRenderer,
-} from "@gajae-code/tui";
-import { isLegacyDeepInterviewPlaceholder, isWorkflowPlaceholderText } from "../gjc-runtime/workflow-placeholder";
+} from "@vib-rato/tui";
 import { getMarkdownTheme, type Theme } from "../modes/theme/theme";
+import { isLegacyDeepInterviewPlaceholder, isWorkflowPlaceholderText } from "../vib-runtime/workflow-placeholder";
 
 interface RoundQuestionModel {
 	kind: "round-question";

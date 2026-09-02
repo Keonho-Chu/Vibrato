@@ -21,17 +21,17 @@
  * their mid-flight chaining is exactly what the approval-gate guard blocks.
  */
 
-import type { AgentTool, AgentToolResult } from "@gajae-code/agent-core";
-import { prompt, untilAborted } from "@gajae-code/utils";
+import type { AgentTool, AgentToolResult } from "@vib-rato/agent-core";
+import { prompt, untilAborted } from "@vib-rato/utils";
 import * as z from "zod/v4";
-import { resolveSubskillActivationForSkillInvocation } from "../extensibility/gjc-plugins";
 import { findRuntimeSkillByName } from "../extensibility/runtime-skill-discovery";
 import { buildSkillPromptMessage } from "../extensibility/skills";
-import { runNativeStateCommand } from "../gjc-runtime/state-runtime";
-import { getSkillManifest } from "../gjc-runtime/workflow-manifest";
+import { resolveSubskillActivationForSkillInvocation } from "../extensibility/vib-plugins";
 import skillDescription from "../prompts/tools/skill.md" with { type: "text" };
 import { SKILL_PROMPT_MESSAGE_TYPE } from "../session/messages";
-import { isCanonicalGjcWorkflowSkill } from "../skill-state/active-state";
+import { isCanonicalVibWorkflowSkill } from "../skill-state/active-state";
+import { runNativeStateCommand } from "../vib-runtime/state-runtime";
+import { getSkillManifest } from "../vib-runtime/workflow-manifest";
 import type { ToolSession } from ".";
 import { ToolError } from "./tool-errors";
 
@@ -49,7 +49,7 @@ const TERMINAL_PHASES = new Set(["complete", "completed", "handoff", "failed", "
  */
 function phasePermitsChain(skill: string, phase: string): boolean {
 	if (TERMINAL_PHASES.has(phase)) return true;
-	if (!isCanonicalGjcWorkflowSkill(skill)) return false;
+	if (!isCanonicalVibWorkflowSkill(skill)) return false;
 	const manifest = getSkillManifest(skill);
 	if (manifest.terminalStates.includes(phase)) return true;
 	if (skill !== "autoresearch") return false;
@@ -164,12 +164,12 @@ export class SkillTool implements AgentTool<typeof skillSchema, SkillToolDetails
 
 			// Phase guard + atomic native handoff only apply to canonical workflow
 			// skills. Runtime project/user skills do not have a native mode-state,
-			// so there is no `gjc state <skill>` command to run for them.
-			if (activeSkill && isCanonicalGjcWorkflowSkill(activeSkill)) {
+			// so there is no `vib state <skill>` command to run for them.
+			if (activeSkill && isCanonicalVibWorkflowSkill(activeSkill)) {
 				const phase = (this.#session.getActiveSkillPhase?.() ?? "running").trim().toLowerCase();
 				if (!phasePermitsChain(activeSkill, phase)) {
 					throw new ToolError(
-						`skill tool: refusing to chain from "${activeSkill}" (phase=${phase}) into "${requestedName}". Run gjc state ${activeSkill} handoff --to ${requestedName} --json directly, or finalize the current skill first (gjc state ${activeSkill} write --input '{"current_phase":"handoff"}' --json) before chaining.`,
+						`skill tool: refusing to chain from "${activeSkill}" (phase=${phase}) into "${requestedName}". Run vib state ${activeSkill} handoff --to ${requestedName} --json directly, or finalize the current skill first (vib state ${activeSkill} write --input '{"current_phase":"handoff"}' --json) before chaining.`,
 					);
 				}
 				const cwd = this.#session.cwd;

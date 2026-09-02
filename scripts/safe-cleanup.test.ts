@@ -247,7 +247,7 @@ describe("safe-cleanup verdict: win32 normalization", () => {
 	const fake: FakeFs = {
 		exists: new Set([
 			"C:\\Users\\Op",
-			"C:\\Users\\Op\\AppData\\Local\\Temp\\gjc-home\\agent",
+			"C:\\Users\\Op\\AppData\\Local\\Temp\\vib-home\\agent",
 			"D:\\repo\\sub",
 			"D:\\other",
 		]),
@@ -274,7 +274,7 @@ describe("safe-cleanup verdict: win32 normalization", () => {
 	});
 
 	test("approves owned temp paths case-insensitively", () => {
-		expect(approvalFor("c:\\users\\op\\appdata\\local\\temp\\GJC-HOME\\agent", world).containedRoot).toBe(
+		expect(approvalFor("c:\\users\\op\\appdata\\local\\temp\\Vibrato-HOME\\agent", world).containedRoot).toBe(
 			"C:\\Users\\Op\\AppData\\Local\\Temp",
 		);
 	});
@@ -374,7 +374,7 @@ describe("safe-cleanup: darwin case authority (PR #4821 P1 regression)", () => {
 			// The old code folded case in registerOwnedDeletionRoot/grantedRootFor
 			// on darwin regardless of volume evidence and approved the victim
 			// (containedRoot = the never-created `home/Tmp` grant).
-			const homeBase = fs.mkdtempSync(path.join("/var/tmp", "gjc-case-home-"));
+			const homeBase = fs.mkdtempSync(path.join("/var/tmp", "vib-case-home-"));
 			const home = path.join(homeBase, "op");
 			const victim = path.join(home, "tmp");
 			fs.mkdirSync(path.join(victim, "keep"), { recursive: true });
@@ -385,7 +385,7 @@ describe("safe-cleanup: darwin case authority (PR #4821 P1 regression)", () => {
 			const world: SafeCleanupWorld = {
 				...getDefaultSafeCleanupWorld(),
 				homeAliases: [home],
-				allowedRoots: ["/tmp", "/var/tmp/gjc-case-allowed"],
+				allowedRoots: ["/tmp", "/var/tmp/vib-case-allowed"],
 				caseInsensitive: false,
 			};
 			const forget = withPlatform("darwin", () => registerOwnedDeletionRoot(missingSibling));
@@ -405,7 +405,7 @@ describe("safe-cleanup: darwin case authority (PR #4821 P1 regression)", () => {
 	test.skipIf(process.platform === "win32")(
 		"the granted directory itself is still deletable (grant positives: existing and missing targets)",
 		() => {
-			const parent = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-case-grant-ok-"));
+			const parent = fs.mkdtempSync(path.join(os.tmpdir(), "vib-case-grant-ok-"));
 			const granted = path.join(parent, "Fixture");
 			const forget = registerOwnedDeletionRoot(granted);
 			try {
@@ -427,7 +427,7 @@ describe("safe-cleanup: darwin case authority (PR #4821 P1 regression)", () => {
 	test.skipIf(process.platform === "win32")(
 		"a granted target resolves through realpath and is deletable (symlink positive)",
 		() => {
-			const parent = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-case-grant-link-"));
+			const parent = fs.mkdtempSync(path.join(os.tmpdir(), "vib-case-grant-link-"));
 			const granted = path.join(parent, "Target");
 			const forget = registerOwnedDeletionRoot(granted);
 			fs.mkdirSync(path.join(granted, "data"), { recursive: true });
@@ -450,7 +450,7 @@ describe("safe-cleanup: darwin case authority (PR #4821 P1 regression)", () => {
 			// Positive containment keeps working for genuinely owned paths even
 			// when a case-only sibling exists: the verdict compares the exact
 			// canonical value, which is what the process owns.
-			const parent = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-case-owned-"));
+			const parent = fs.mkdtempSync(path.join(os.tmpdir(), "vib-case-owned-"));
 			const lower = path.join(parent, "victim");
 			const upper = path.join(parent, "Victim");
 			fs.mkdirSync(path.join(lower, "data"), { recursive: true });
@@ -470,7 +470,7 @@ describe("safe-cleanup against the live filesystem", () => {
 	test.skipIf(process.platform === "win32")(
 		"safeRmSync removes an owned temp tree and its nested children",
 		async () => {
-			const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-safe-cleanup-pos-"));
+			const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-safe-cleanup-pos-"));
 			fs.mkdirSync(path.join(root, "a", "b"), { recursive: true });
 			fs.writeFileSync(path.join(root, "a", "b", "file.txt"), "x");
 			safeRmSync(path.join(root, "a"), { recursive: true, force: true });
@@ -488,7 +488,7 @@ describe("safe-cleanup against the live filesystem", () => {
 	});
 
 	test.skipIf(process.platform === "win32")("safeRm refuses a symlink that resolves to the real home", () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-safe-cleanup-link-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-safe-cleanup-link-"));
 		const link = path.join(root, "home-link");
 		fs.symlinkSync(os.homedir(), link, "dir");
 		try {
@@ -509,7 +509,7 @@ describe("safe-cleanup against the live filesystem", () => {
 		"safeRm refuses a symlink that escapes the allowed roots",
 		() => {
 			const escapeTarget = os.homedir();
-			const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-safe-cleanup-wrap-"));
+			const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "vib-safe-cleanup-wrap-"));
 			const link = path.join(tmpRoot, "escape-link");
 			fs.symlinkSync(escapeTarget, link, "dir");
 			try {
@@ -534,7 +534,7 @@ describe("safe-cleanup against the live filesystem", () => {
 
 describe("registerOwnedDeletionRoot grants", () => {
 	test.skipIf(process.platform === "win32")("permits exactly the granted process-created directory", () => {
-		const dir = path.join(os.homedir(), `.gjc-grant-test-${process.pid}-${Date.now()}`);
+		const dir = path.join(os.homedir(), `.vib-grant-test-${process.pid}-${Date.now()}`);
 		const forget = registerOwnedDeletionRoot(dir);
 		fs.mkdirSync(path.join(dir, "agent"), { recursive: true });
 		try {
@@ -555,7 +555,7 @@ describe("registerOwnedDeletionRoot grants", () => {
 	});
 
 	test.skipIf(process.platform === "win32")("refuses an existing directory (grant-before-create only)", () => {
-		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-grant-existing-"));
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-grant-existing-"));
 		try {
 			expect(() => registerOwnedDeletionRoot(dir)).toThrow("already exists");
 		} finally {
@@ -564,11 +564,11 @@ describe("registerOwnedDeletionRoot grants", () => {
 	});
 
 	test.skipIf(process.platform === "win32")("sibling and parent paths stay refused while a grant is active", () => {
-		const granted = path.join(os.homedir(), `.gjc-grant-scope-${process.pid}-${Date.now()}`);
+		const granted = path.join(os.homedir(), `.vib-grant-scope-${process.pid}-${Date.now()}`);
 		const forget = registerOwnedDeletionRoot(granted);
 		try {
 			expect(refusalFor(path.dirname(granted), getDefaultSafeCleanupWorld())).toBe("real-home");
-			const sibling = path.join(path.dirname(granted), ".gjc-sibling-never-granted");
+			const sibling = path.join(path.dirname(granted), ".vib-sibling-never-granted");
 			expect(refusalFor(sibling, getDefaultSafeCleanupWorld())).toBe("outside-allowed-roots");
 		} finally {
 			forget();
@@ -576,7 +576,7 @@ describe("registerOwnedDeletionRoot grants", () => {
 	});
 
 	test.skipIf(process.platform === "win32")("the grant is forgotten after disposal", () => {
-		const granted = path.join(os.homedir(), `.gjc-grant-dispose-${process.pid}-${Date.now()}`);
+		const granted = path.join(os.homedir(), `.vib-grant-dispose-${process.pid}-${Date.now()}`);
 		const forget = registerOwnedDeletionRoot(granted);
 		forget();
 		expect(refusalFor(granted, getDefaultSafeCleanupWorld())).toBe("outside-allowed-roots");
@@ -600,7 +600,7 @@ function isWritable(dir: string): boolean {
 function supportsDistinctCaseOnlySiblings(parent: string): boolean {
 	let probe: string | undefined;
 	try {
-		probe = fs.mkdtempSync(path.join(parent, "gjc-case-probe-"));
+		probe = fs.mkdtempSync(path.join(parent, "vib-case-probe-"));
 		const lower = path.join(probe, "case");
 		fs.mkdirSync(lower);
 		return !fs.existsSync(path.join(probe, "CASE"));

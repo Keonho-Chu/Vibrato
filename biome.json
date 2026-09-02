@@ -42,7 +42,7 @@
 							"level": "error",
 							"options": {
 								"paths": {
-									"@gajae-code/ai": "Import from @gajae-code/ai/core instead."
+									"@vib-rato/ai": "Import from @vib-rato/ai/core instead."
 								}
 							}
 						}
@@ -78,7 +78,7 @@
 			"!packages/*/src/**/*.d.ts",
 			"!packages/natives/native/index.d.ts",
 			"!**/vendor/**/*",
-			"!packages/coding-agent/src/defaults/gjc/extensions/grok-cli-vendor/**/*",
+			"!packages/coding-agent/src/defaults/vib/extensions/grok-cli-vendor/**/*",
 			"!**/node_modules/**/*",
 			"!**/test-sessions.ts",
 			"!**/template.generated.ts",
@@ -86,7 +86,7 @@
 			"!**/gen/agent_pb.ts",
 			"!.worktrees/**/*",
 			"!.wt/**/*",
-			"!.gjc/**/*"
+			"!.vib/**/*"
 		]
 	},
 	"assist": {

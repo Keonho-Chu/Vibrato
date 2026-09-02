@@ -9,8 +9,8 @@
  * - Rules from .windsurf/rules/*.md and ~/.codeium/windsurf/memories/global_rules.md
  * - Legacy .windsurfrules file
  *
- * MCP servers are intentionally NOT inherited live from Windsurf config: GJC
- * owns MCP runtime execution. Copy definitions into GJC's own mcp.json instead.
+ * MCP servers are intentionally NOT inherited live from Windsurf config: Vibrato
+ * owns MCP runtime execution. Copy definitions into Vibrato's own mcp.json instead.
  */
 
 import { registerProvider } from "../capability";

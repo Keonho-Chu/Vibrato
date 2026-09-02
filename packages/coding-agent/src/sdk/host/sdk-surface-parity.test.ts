@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { NotificationServer } from "@gajae-code/natives";
+import { NotificationServer } from "@vib-rato/natives";
 import { createNotificationsExtension } from "../bus";
 import { SessionSdkSessionRuntime, type SessionSdkTransport } from "./session-runtime";
 import { createSdkCapabilities, createSdkSurfacePolicy } from "./surface-policy";
@@ -22,7 +22,7 @@ function memoryTransport(): SessionSdkTransport & {
 	const broadcasts: SdkFrame[] = [];
 	return {
 		sessionId: "parity-session",
-		stateRoot: "/tmp/gjc-sdk-parity",
+		stateRoot: "/tmp/vib-sdk-parity",
 		token: "parity-token",
 		sent,
 		broadcasts,
@@ -197,7 +197,7 @@ describe("SDK surface parity", () => {
 		await Promise.all([nativeRuntime.stop(), loopbackRuntime.stop()]);
 	});
 	test("native adapter malformed-frame errors match loopback protocol-error shape", async () => {
-		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-sdk-native-parity-"));
+		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "vib-sdk-native-parity-"));
 		const sessionId = `native-parity-${randomUUID()}`;
 		const handlers = new Map<string, (event: unknown, ctx: any) => Promise<void> | void>();
 		const callbacks = new WeakMap<
@@ -219,8 +219,8 @@ describe("SDK surface parity", () => {
 			registerCommand() {},
 		} as any;
 		const ctx = nativeParityContext(sessionId, cwd);
-		const previousDisable = process.env.GJC_SDK_DISABLE;
-		delete process.env.GJC_SDK_DISABLE;
+		const previousDisable = process.env.VIB_SDK_DISABLE;
+		delete process.env.VIB_SDK_DISABLE;
 		const messages: string[] = [];
 		let socket: WebSocket | undefined;
 		try {
@@ -229,7 +229,7 @@ describe("SDK surface parity", () => {
 			expect(servers.size).toBe(1);
 			const server = [...servers][0];
 			expect(server).toBeDefined();
-			const endpointPath = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+			const endpointPath = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 			const endpoint = JSON.parse(await fs.readFile(endpointPath, "utf8")) as { url: string; token: string };
 			socket = new WebSocket(`${endpoint.url}?token=${endpoint.token}`);
 			socket.addEventListener("message", event => messages.push(String(event.data)));
@@ -306,8 +306,8 @@ describe("SDK surface parity", () => {
 				await handlers.get("session_shutdown")?.({}, ctx);
 			} finally {
 				nativePrototype.onSdkFrame = originalOnSdkFrame;
-				if (previousDisable === undefined) delete process.env.GJC_SDK_DISABLE;
-				else process.env.GJC_SDK_DISABLE = previousDisable;
+				if (previousDisable === undefined) delete process.env.VIB_SDK_DISABLE;
+				else process.env.VIB_SDK_DISABLE = previousDisable;
 				await fs.rm(cwd, { recursive: true, force: true });
 			}
 		}

@@ -100,7 +100,7 @@ export interface MemoryObservedExtremum {
 
 export type MemoryObservedExtrema = Record<MemoryExtremumDomain, MemoryObservedExtremum>;
 
-export const MEMORY_CAPTURE_SEMANTICS_ID = "gjc.memory-baseline.capture/3" as const;
+export const MEMORY_CAPTURE_SEMANTICS_ID = "vib.memory-baseline.capture/3" as const;
 
 export interface MemorySamplingMetadata {
 	periodicCadenceTargetMs: number;
@@ -181,7 +181,7 @@ export interface ThresholdLedgerReference {
 }
 
 export interface PerfCorpusReport {
-	schema: "gjc.perf-corpus/3";
+	schema: "vib.perf-corpus/3";
 	generatedAt: string;
 	gitSha: string;
 	gitDirty: boolean;
@@ -215,7 +215,7 @@ export interface PerfCorpusReport {
 	thresholdLedger?: ThresholdLedgerReference[];
 }
 
-export const PERF_CORPUS_SCHEMA = "gjc.perf-corpus/3" as const;
+export const PERF_CORPUS_SCHEMA = "vib.perf-corpus/3" as const;
 
 export const REQUIRED_FIXTURE_CLASSES: readonly FixtureClass[] = ["startup-session-load", "streaming-ttft", "large-transcript"];
 export const REQUIRED_MEMORY_SURFACES: readonly MemorySurface[] = [
@@ -529,7 +529,7 @@ export function validatePerfCorpusReport(report: PerfCorpusReport): { ok: boolea
 	rejectUnexpectedKeys(report, REPORT_FIELDS, "report", errors);
 	rejectUnexpectedKeys(report.runner, RUNNER_FIELDS, "runner", errors);
 	const schema = (report as { schema?: unknown }).schema;
-	if (schema === "gjc.perf-corpus/2") {
+	if (schema === "vib.perf-corpus/2") {
 		errors.push(`schema "${schema}" is incompatible with the v3 validator; expected "${PERF_CORPUS_SCHEMA}"`);
 	} else if (schema !== PERF_CORPUS_SCHEMA) {
 		errors.push(`invalid schema "${String(schema)}", expected "${PERF_CORPUS_SCHEMA}"`);
@@ -593,10 +593,10 @@ export function validatePerfCorpusReport(report: PerfCorpusReport): { ok: boolea
 		errors.push("runner.environment invalid");
 	}
 	const expectedEnvironmentKeys = [
-		"GJC_MEMORY_ITERATIONS",
-		"GJC_MEMORY_PROFILE",
-		"GJC_MEMORY_SURFACE_ORDER",
-		...(report.runner.profile === "soak" ? ["GJC_MEMORY_DURATION_MS"] : []),
+		"VIB_MEMORY_ITERATIONS",
+		"VIB_MEMORY_PROFILE",
+		"VIB_MEMORY_SURFACE_ORDER",
+		...(report.runner.profile === "soak" ? ["VIB_MEMORY_DURATION_MS"] : []),
 	].sort();
 	if (
 		isRecord(report.runner.environment) &&
@@ -650,13 +650,13 @@ export function validatePerfCorpusReport(report: PerfCorpusReport): { ok: boolea
 	if (
 		typeof report.runner.environment !== "object" ||
 		report.runner.environment === null ||
-		report.runner.environment.GJC_MEMORY_PROFILE !== report.runner.profile ||
-		report.runner.environment.GJC_MEMORY_ITERATIONS !== String(report.runner.iterationsTarget) ||
+		report.runner.environment.VIB_MEMORY_PROFILE !== report.runner.profile ||
+		report.runner.environment.VIB_MEMORY_ITERATIONS !== String(report.runner.iterationsTarget) ||
 		(report.runner.profile === "soak"
-			? report.runner.environment.GJC_MEMORY_DURATION_MS !== String(report.runner.durationTargetMs)
-			: report.runner.environment.GJC_MEMORY_DURATION_MS !== undefined) ||
+			? report.runner.environment.VIB_MEMORY_DURATION_MS !== String(report.runner.durationTargetMs)
+			: report.runner.environment.VIB_MEMORY_DURATION_MS !== undefined) ||
 		(memorySurfaceOrderValid &&
-			report.runner.environment.GJC_MEMORY_SURFACE_ORDER !== report.runner.memorySurfaceOrder.join(","))
+			report.runner.environment.VIB_MEMORY_SURFACE_ORDER !== report.runner.memorySurfaceOrder.join(","))
 	) {
 		errors.push("runner.environment does not match memory controls");
 	}

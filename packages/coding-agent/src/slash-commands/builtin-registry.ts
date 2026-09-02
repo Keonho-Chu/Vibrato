@@ -1,20 +1,18 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { ThinkingLevel } from "@gajae-code/agent-core";
-import { type Model, modelsAreEqual } from "@gajae-code/ai/core";
-import { getOAuthProviders } from "@gajae-code/ai/utils/oauth";
-import { PET_SKIN_IDS, PET_SKINS, type PetMode, Spacer, Text } from "@gajae-code/tui";
-import { setProjectDir } from "@gajae-code/utils";
+import { ThinkingLevel } from "@vib-rato/agent-core";
+import { type Model, modelsAreEqual } from "@vib-rato/ai/core";
+import { PET_SKIN_IDS, PET_SKINS, type PetMode, Spacer, Text } from "@vib-rato/tui";
+import { setProjectDir } from "@vib-rato/utils";
 import { jobElapsedMs } from "../async";
 import { activateModelProfile, materializeActiveModelProfileAssignments } from "../config/model-profile-activation";
 import { formatModelProfileDisplayLabel } from "../config/model-profiles";
 import {
-	GJC_MODEL_ASSIGNMENT_TARGET_IDS,
-	GJC_MODEL_ASSIGNMENT_TARGETS,
-	type GjcModelAssignmentTargetId,
 	requiresExplicitThinkingChoice,
+	VIB_MODEL_ASSIGNMENT_TARGET_IDS,
+	VIB_MODEL_ASSIGNMENT_TARGETS,
+	type VibModelAssignmentTargetId,
 } from "../config/model-registry";
-
 import {
 	extractExplicitThinkingSelector,
 	formatModelSelectorValue,
@@ -22,6 +20,7 @@ import {
 	parseModelString,
 	splitSelectorThinkingSuffix,
 } from "../config/model-resolver";
+import { getSelectableOAuthProviders } from "../config/provider-allowlist";
 import { clearPluginRootsAndCaches, resolveActiveProjectRegistryPath } from "../discovery/helpers.js";
 import { DynamicBorder } from "../modes/components/dynamic-border";
 import { getAvailableThemes, getDetectedThemeSettingsPath, setTheme, theme } from "../modes/theme/theme";
@@ -93,23 +92,23 @@ const PET_COMMAND_DEPRECATED_INPUTS: Readonly<Record<string, PetMode>> = {
 	blue: "blue",
 };
 
-type GjcModelBatchAssignmentTargetId = "all-role-agents" | "all-targets";
+type VibModelBatchAssignmentTargetId = "all-role-agents" | "all-targets";
 type ParsedModelCommandArgs =
 	| { kind: "summary" }
 	| {
 			kind: "assign";
-			targetId: GjcModelAssignmentTargetId | GjcModelBatchAssignmentTargetId;
+			targetId: VibModelAssignmentTargetId | VibModelBatchAssignmentTargetId;
 			selector: string;
 			hasExplicitTarget: boolean;
 	  };
 
-const GJC_MODEL_ROLE_AGENT_TARGET_IDS: GjcModelAssignmentTargetId[] = ["executor", "architect", "planner", "critic"];
+const VIB_MODEL_ROLE_AGENT_TARGET_IDS: VibModelAssignmentTargetId[] = ["executor", "architect", "planner", "critic"];
 
-function fastStatusRoleTargets(): Array<{ id: GjcModelAssignmentTargetId; label: string; isSubagentRole: boolean }> {
-	return GJC_MODEL_ASSIGNMENT_TARGET_IDS.map(id => ({
+function fastStatusRoleTargets(): Array<{ id: VibModelAssignmentTargetId; label: string; isSubagentRole: boolean }> {
+	return VIB_MODEL_ASSIGNMENT_TARGET_IDS.map(id => ({
 		id,
-		label: GJC_MODEL_ASSIGNMENT_TARGETS[id].tag ?? id.toUpperCase(),
-		isSubagentRole: GJC_MODEL_ASSIGNMENT_TARGETS[id].settingsPath === "task.agentModelOverrides",
+		label: VIB_MODEL_ASSIGNMENT_TARGETS[id].tag ?? id.toUpperCase(),
+		isSubagentRole: VIB_MODEL_ASSIGNMENT_TARGETS[id].settingsPath === "task.agentModelOverrides",
 	}));
 }
 
@@ -217,8 +216,8 @@ function providerSetupUsage(): string {
 function formatModelAssignmentSummary(runtime: SlashCommandRuntime): string {
 	const agentModelOverrides = runtime.settings.get("task.agentModelOverrides");
 	const lines = ["Model assignments:"];
-	for (const targetId of GJC_MODEL_ASSIGNMENT_TARGET_IDS) {
-		const target = GJC_MODEL_ASSIGNMENT_TARGETS[targetId];
+	for (const targetId of VIB_MODEL_ASSIGNMENT_TARGET_IDS) {
+		const target = VIB_MODEL_ASSIGNMENT_TARGETS[targetId];
 		const modelSelector =
 			target.settingsPath === "modelRoles" ? runtime.settings.getModelRole(targetId) : agentModelOverrides[targetId];
 		lines.push(`  ${target.tag ?? target.id.toUpperCase()} (${target.name}): ${modelSelector ?? "(unset)"}`);
@@ -233,10 +232,10 @@ function parseModelCommandArgs(args: string): ParsedModelCommandArgs {
 
 	const parseTarget = (
 		token: string | undefined,
-	): GjcModelAssignmentTargetId | GjcModelBatchAssignmentTargetId | undefined => {
+	): VibModelAssignmentTargetId | VibModelBatchAssignmentTargetId | undefined => {
 		const normalized = token?.toLowerCase();
-		if (GJC_MODEL_ASSIGNMENT_TARGET_IDS.includes(normalized as GjcModelAssignmentTargetId)) {
-			return normalized as GjcModelAssignmentTargetId;
+		if (VIB_MODEL_ASSIGNMENT_TARGET_IDS.includes(normalized as VibModelAssignmentTargetId)) {
+			return normalized as VibModelAssignmentTargetId;
 		}
 		if (normalized === "all-role-agents" || normalized === "all-targets") return normalized;
 		return undefined;
@@ -260,16 +259,16 @@ function parseModelCommandArgs(args: string): ParsedModelCommandArgs {
 }
 /**
  * Optional namespace prefix accepted on `/model <preset>` selectors so users
- * can disambiguate preset names from model ids with `gajae-code/<preset>`.
+ * can disambiguate preset names from model ids with `vib-rato/<preset>`.
  * The bare preset name remains the canonical form.
  */
-const MODEL_PRESET_NAMESPACE_PREFIX = "gajae-code/";
+const MODEL_PRESET_NAMESPACE_PREFIX = "vib-rato/";
 
 /**
  * Resolve a `/model <selector>` argument against the merged model-profile
  * registry. Returns the canonical profile name when `selector` is either a
  * bare preset name (`codex-medium`) or a namespaced one
- * (`gajae-code/codex-medium`); returns `undefined` otherwise so the caller
+ * (`vib-rato/codex-medium`); returns `undefined` otherwise so the caller
  * falls through to ordinary model resolution.
  *
  * Only selectors that do NOT look like `provider/model` references are
@@ -284,7 +283,7 @@ export function resolvePresetSelector(
 
 	// Reject `provider/model` references outright: even if a preset happened to
 	// be named `anthropic/claude`, the slash form is a model selector, not a
-	// preset shortcut. The only accepted slash form is the `gajae-code/`
+	// preset shortcut. The only accepted slash form is the `vib-rato/`
 	// namespace prefix.
 	if (trimmed.includes("/")) {
 		if (!trimmed.toLowerCase().startsWith(MODEL_PRESET_NAMESPACE_PREFIX)) return undefined;
@@ -439,15 +438,15 @@ async function resolveModelCommandSelection(
 }
 
 function getModelAssignmentTargetIds(
-	targetId: GjcModelAssignmentTargetId | GjcModelBatchAssignmentTargetId,
-): GjcModelAssignmentTargetId[] {
-	if (targetId === "all-role-agents") return [...GJC_MODEL_ROLE_AGENT_TARGET_IDS];
-	if (targetId === "all-targets") return [...GJC_MODEL_ASSIGNMENT_TARGET_IDS];
+	targetId: VibModelAssignmentTargetId | VibModelBatchAssignmentTargetId,
+): VibModelAssignmentTargetId[] {
+	if (targetId === "all-role-agents") return [...VIB_MODEL_ROLE_AGENT_TARGET_IDS];
+	if (targetId === "all-targets") return [...VIB_MODEL_ASSIGNMENT_TARGET_IDS];
 	return [targetId];
 }
 
 function formatModelAssignmentSuccess(
-	targetId: GjcModelAssignmentTargetId | GjcModelBatchAssignmentTargetId,
+	targetId: VibModelAssignmentTargetId | VibModelBatchAssignmentTargetId,
 	selector: string,
 ): string {
 	if (targetId === "all-role-agents") {
@@ -465,7 +464,7 @@ function modelSelectionUsage(runtime: SlashCommandRuntime, currentModelLine?: st
 		currentModelLine,
 		formatModelAssignmentSummary(runtime),
 		"Use /model <model> for DEFAULT, or /model <target> <model[:effort]> for EXECUTOR, ARCHITECT, PLANNER, or CRITIC.",
-		"Use /model <preset> or /model gajae-code/<preset> to activate a known model profile.",
+		"Use /model <preset> or /model vib-rato/<preset> to activate a known model profile.",
 		formatModelOnboardingGuidance(),
 	]
 		.filter((line): line is string => Boolean(line))
@@ -631,7 +630,7 @@ const BUILTIN_SLASH_COMMAND_REGISTRY: ReadonlyArray<SlashCommandSpec> = [
 	{
 		name: "import-session",
 		priority: 29,
-		description: "Import a Codex or Claude transcript into native GJC history",
+		description: "Import a Codex or Claude transcript into native Vibrato history",
 		inlineHint: "<transcript-file> [--provider codex|claude]",
 		allowArgs: true,
 		acp: false,
@@ -674,7 +673,7 @@ const BUILTIN_SLASH_COMMAND_REGISTRY: ReadonlyArray<SlashCommandSpec> = [
 			// Session-local notification controls are extension-owned. Always pass them
 			// through so this builtin cannot shadow the live per-session command.
 			if (action === "on" || action === "off") return { prompt: command.text };
-			const stateRoot = path.join(runtime.cwd, ".gjc", "state");
+			const stateRoot = path.join(runtime.cwd, ".vib", "state");
 			switch (action) {
 				case "status": {
 					const { buildNotificationStatusReport, formatNotificationStatusReport } = await import(
@@ -743,7 +742,7 @@ const BUILTIN_SLASH_COMMAND_REGISTRY: ReadonlyArray<SlashCommandSpec> = [
 				}
 				case "setup":
 					return usage(
-						"Run `gjc notify setup` in a terminal to pair a Telegram bot token with a private chat (interactive; requires a TTY).",
+						"Run `vib notify setup` in a terminal to pair a Telegram bot token with a private chat (interactive; requires a TTY).",
 						runtime,
 					);
 				default:
@@ -853,7 +852,7 @@ const BUILTIN_SLASH_COMMAND_REGISTRY: ReadonlyArray<SlashCommandSpec> = [
 	},
 	{
 		name: "pet",
-		description: "Gajae pet living beside the composer",
+		description: "Vibrato pet living beside the composer",
 		subcommands: PET_COMMAND_OPTIONS.map(option => ({ name: option.name, description: option.description })),
 		inlineHint: PET_COMMAND_HINT,
 		allowArgs: true,
@@ -872,7 +871,7 @@ const BUILTIN_SLASH_COMMAND_REGISTRY: ReadonlyArray<SlashCommandSpec> = [
 				// The shared commit policy rechecks capability, persists only on
 				// acceptance, and surfaces the actionable warning on rejection.
 				if (ctx.setPetMode(arg)) {
-					const name = arg === "off" ? "Gajae pet hidden" : `${PET_SKINS[arg].label} is here`;
+					const name = arg === "off" ? "Vibrato pet hidden" : `${PET_SKINS[arg].label} is here`;
 					ctx.showStatus(name);
 				}
 			} else {
@@ -934,7 +933,7 @@ const BUILTIN_SLASH_COMMAND_REGISTRY: ReadonlyArray<SlashCommandSpec> = [
 					);
 				}
 				// Preset shortcut: when the selector names a known model profile
-				// (optionally `gajae-code/`-prefixed) and the target is implicit,
+				// (optionally `vib-rato/`-prefixed) and the target is implicit,
 				// activate the profile immediately instead of treating the preset name
 				// as a model id and failing with "Unknown model". Explicit targets,
 				// including `/model default <preset>`, remain ordinary assignments.
@@ -994,7 +993,7 @@ const BUILTIN_SLASH_COMMAND_REGISTRY: ReadonlyArray<SlashCommandSpec> = [
 					}
 
 					const overrides = runtime.settings.get("task.agentModelOverrides");
-					const assignments = new Map<GjcModelAssignmentTargetId, string>();
+					const assignments = new Map<VibModelAssignmentTargetId, string>();
 					const existingDefaultThinkingLevel =
 						selection.thinkingLevel !== undefined
 							? selection.thinkingLevel
@@ -1030,7 +1029,7 @@ const BUILTIN_SLASH_COMMAND_REGISTRY: ReadonlyArray<SlashCommandSpec> = [
 					});
 					if (!materializedProfile) {
 						for (const [targetId, selector] of assignments) {
-							const target = GJC_MODEL_ASSIGNMENT_TARGETS[targetId];
+							const target = VIB_MODEL_ASSIGNMENT_TARGETS[targetId];
 							if (target.settingsPath === "modelRoles") {
 								runtime.settings.setModelRole(targetId, selector);
 							} else {
@@ -1750,7 +1749,7 @@ const BUILTIN_SLASH_COMMAND_REGISTRY: ReadonlyArray<SlashCommandSpec> = [
 					const rest = tokens.filter(token => token !== MANUAL_LOGIN_FLAG);
 					const requestedProvider = rest.length === 1 ? rest[0] : undefined;
 					const manualProvider = requestedProvider
-						? getOAuthProviders().find(provider => provider.id === requestedProvider)
+						? getSelectableOAuthProviders().find(provider => provider.id === requestedProvider)
 						: undefined;
 					if (!manualProvider) {
 						runtime.ctx.showWarning(`Usage: /login <provider> ${MANUAL_LOGIN_FLAG}`);
@@ -1766,7 +1765,7 @@ const BUILTIN_SLASH_COMMAND_REGISTRY: ReadonlyArray<SlashCommandSpec> = [
 					runtime.ctx.editor.setText("");
 					return;
 				}
-				const matchedProvider = getOAuthProviders().find(provider => provider.id === args);
+				const matchedProvider = getSelectableOAuthProviders().find(provider => provider.id === args);
 				if (matchedProvider) {
 					if (manualInput.hasPending()) {
 						runtime.ctx.showWarning(pendingLoginMessage());

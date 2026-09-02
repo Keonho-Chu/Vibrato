@@ -2,7 +2,7 @@
  * Shared utilities for Google Generative AI and Google Cloud Code Assist providers.
  */
 
-import { extractHttpStatusFromError, readJsonl, readSseJson } from "@gajae-code/utils";
+import { extractHttpStatusFromError, readJsonl, readSseJson } from "@vib-rato/utils";
 import type { ProviderSafetyStopAdapterInvocation } from "../adapter-internals/provider-safety-stop";
 import {
 	isProviderSafetyStopAdapterInvocation,

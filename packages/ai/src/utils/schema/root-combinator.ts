@@ -11,7 +11,7 @@
  * exactly such a combinator root, so this normalization is provider-agnostic and
  * runs inside the shared wire pipeline (`toolWireSchema`).
  */
-import { isRecord } from "@gajae-code/utils";
+import { isRecord } from "@vib-rato/utils";
 import { COMBINATOR_KEYS } from "./fields";
 import { spillToDescription } from "./spill";
 

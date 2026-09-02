@@ -15,7 +15,7 @@ import {
 const tempDirs: string[] = [];
 
 async function tempDir(): Promise<string> {
-	const dir = await mkdtemp(join(tmpdir(), "gjc-live-runner-"));
+	const dir = await mkdtemp(join(tmpdir(), "vib-live-runner-"));
 	tempDirs.push(dir);
 	return dir;
 }
@@ -59,7 +59,7 @@ console.log(${JSON.stringify(stdout)});
 	await Bun.$`chmod +x ${path}`;
 	return path;
 }
-async function writeFixtureModeShim(dir: string, report: LiveRunReport, name = "gjc-fixture-shim"): Promise<string> {
+async function writeFixtureModeShim(dir: string, report: LiveRunReport, name = "vib-fixture-shim"): Promise<string> {
 	const path = join(dir, name);
 	await Bun.write(
 		path,
@@ -80,8 +80,8 @@ describe("live runner", () => {
 	it("live-runner.fake-old-new.delta", async () => {
 		const dir = await tempDir();
 		const fixtureId = "fixed-fixture";
-		const before = await writeFakeBinary(dir, "gjc-old", JSON.stringify(fakeReport("old", fixtureId, 120)));
-		const after = await writeFakeBinary(dir, "gjc-new", JSON.stringify(fakeReport("new", fixtureId, 90)));
+		const before = await writeFakeBinary(dir, "vib-old", JSON.stringify(fakeReport("old", fixtureId, 120)));
+		const after = await writeFakeBinary(dir, "vib-new", JSON.stringify(fakeReport("new", fixtureId, 90)));
 		const outputDir = join(dir, "out");
 
 		const report = await runLiveComparison({ beforeBinary: before, afterBinary: after, fixtureId, outputDir });
@@ -102,8 +102,8 @@ describe("live runner", () => {
 			candidate => candidate.candidate === "tools.readArtifactSpillThreshold.default.0-to-candidate",
 		);
 		expect(pair).toBeDefined();
-		const before = await writeFixtureModeShim(dir, fakeReport("old", pair!.beforeFixtureId, 98_500), "gjc-before");
-		const after = await writeFixtureModeShim(dir, fakeReport("new", pair!.afterFixtureId, 20_100), "gjc-after");
+		const before = await writeFixtureModeShim(dir, fakeReport("old", pair!.beforeFixtureId, 98_500), "vib-before");
+		const after = await writeFixtureModeShim(dir, fakeReport("new", pair!.afterFixtureId, 20_100), "vib-after");
 		const outputDir = join(dir, "out-pair");
 
 		const report = await runLiveComparison({
@@ -137,14 +137,14 @@ describe("live runner", () => {
 
 	it("live-runner.missing-binary", async () => {
 		const dir = await tempDir();
-		await expect(runOneBinary(join(dir, "missing-gjc"), "fixed-fixture")).rejects.toMatchObject({
+		await expect(runOneBinary(join(dir, "missing-vib"), "fixed-fixture")).rejects.toMatchObject({
 			code: "missing_binary",
 		});
 	});
 
 	it("live-runner.malformed-report", async () => {
 		const dir = await tempDir();
-		const binary = await writeFakeBinary(dir, "gjc-malformed", "{not-json");
+		const binary = await writeFakeBinary(dir, "vib-malformed", "{not-json");
 
 		await expect(runOneBinary(binary, "fixed-fixture")).rejects.toMatchObject({
 			code: "malformed_report",
@@ -154,7 +154,7 @@ describe("live runner", () => {
 	it("live-runner.schema-mismatch", async () => {
 		const dir = await tempDir();
 		const report = { ...fakeReport("wrong-schema", "fixed-fixture", 100), schemaVersion: 999 };
-		const binary = await writeFakeBinary(dir, "gjc-wrong-schema", JSON.stringify(report));
+		const binary = await writeFakeBinary(dir, "vib-wrong-schema", JSON.stringify(report));
 
 		await expect(runOneBinary(binary, "fixed-fixture")).rejects.toMatchObject({
 			code: "schema_version_mismatch",
@@ -164,8 +164,8 @@ describe("live runner", () => {
 	it("live-runner.markdown-advisory", () => {
 		const before = fakeReport("old", "fixed-fixture", 120);
 		const after = fakeReport("new", "fixed-fixture", 90);
-		before.binaryPath = "/tmp/gjc-old";
-		after.binaryPath = "/tmp/gjc-new";
+		before.binaryPath = "/tmp/vib-old";
+		after.binaryPath = "/tmp/vib-new";
 
 		const markdown = renderMarkdownReport({
 			schemaVersion: LIVE_RUNNER_SCHEMA_VERSION,
@@ -196,7 +196,7 @@ describe("live runner", () => {
 		const fixtureId = "fixed-fixture";
 		const binary = await writeFakeBinary(
 			dir,
-			"gjc-local-only",
+			"vib-local-only",
 			JSON.stringify(fakeReport("local-only", fixtureId, 100)),
 		);
 
@@ -226,7 +226,7 @@ describe("live runner", () => {
 	it("keeps bounded errors as LiveRunnerError", async () => {
 		const dir = await tempDir();
 		try {
-			await runOneBinary(join(dir, "missing-gjc"), "fixed-fixture");
+			await runOneBinary(join(dir, "missing-vib"), "fixed-fixture");
 		} catch (error) {
 			expect(error).toBeInstanceOf(LiveRunnerError);
 		}

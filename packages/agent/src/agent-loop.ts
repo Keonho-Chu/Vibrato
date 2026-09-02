@@ -23,27 +23,27 @@ import {
 	type UserMessage,
 	validateToolArguments,
 	zodToWireSchema,
-} from "@gajae-code/ai";
+} from "@vib-rato/ai";
 import {
 	COMPOSER_BASH_POLICY_RECOVERY_PROMPT,
 	isCurrentComposerBashPolicyBlockedError,
-} from "@gajae-code/ai/providers/composer-discipline";
+} from "@vib-rato/ai/providers/composer-discipline";
 import {
 	isInvalidPromptError,
 	isReasoningContentReplayError,
 	neutralizeReservedControlTokens,
 	stripUnusableReasoningItems,
-} from "@gajae-code/ai/utils";
-import { isCursorExecResolved } from "@gajae-code/ai/utils/block-symbols";
+} from "@vib-rato/ai/utils";
+import { isCursorExecResolved } from "@vib-rato/ai/utils/block-symbols";
 import {
 	attachUnicodeEscapeEvidence,
 	type UnicodeEscapeEvidence,
 	unicodeEscapePathTag,
 	unicodeEscapeScalarTag,
 	verifyUnicodeEscapeEvidence,
-} from "@gajae-code/ai/utils/json-parse";
-import { $credentialEnv, sanitizeText } from "@gajae-code/utils";
-import * as logger from "@gajae-code/utils/logger";
+} from "@vib-rato/ai/utils/json-parse";
+import { $credentialEnv, sanitizeText } from "@vib-rato/utils";
+import * as logger from "@vib-rato/utils/logger";
 import { revokeProviderSafetyStop } from "../../ai/src/adapter-internals/provider-safety-stop";
 import type { AttemptScope } from "./attempt-scope";
 import {
@@ -146,7 +146,7 @@ export const MANAGED_ATTEMPT_STAGED_BYTES_CEILING = Math.floor(
 const clampedCapWarnings = new Set<string>();
 
 function warnClampedStagedCap(
-	name: "GJC_FALLBACK_MAX_STAGED_EVENTS" | "GJC_FALLBACK_MAX_STAGED_BYTES",
+	name: "VIB_FALLBACK_MAX_STAGED_EVENTS" | "VIB_FALLBACK_MAX_STAGED_BYTES",
 	requested: number | string,
 	ceiling: number,
 ): void {
@@ -165,7 +165,7 @@ function warnClampedStagedCap(
 }
 
 function clampedStagedCap(
-	name: "GJC_FALLBACK_MAX_STAGED_EVENTS" | "GJC_FALLBACK_MAX_STAGED_BYTES",
+	name: "VIB_FALLBACK_MAX_STAGED_EVENTS" | "VIB_FALLBACK_MAX_STAGED_BYTES",
 	fallback: number,
 	ceiling: number,
 ): number {
@@ -219,7 +219,7 @@ function decimalAtLeast(raw: string, threshold: number): boolean {
 
 /**
  * Max events staged by a provisional managed-attempt transaction before it is
- * rejected. Configurable via `GJC_FALLBACK_MAX_STAGED_EVENTS` (default
+ * rejected. Configurable via `VIB_FALLBACK_MAX_STAGED_EVENTS` (default
  * `MANAGED_ATTEMPT_MAX_STAGED_EVENTS`, ceiling
  * `MANAGED_ATTEMPT_STAGED_EVENTS_CEILING`). Read once per transaction so
  * operators can raise the cap without a rebuild and tests can exercise the
@@ -232,7 +232,7 @@ function decimalAtLeast(raw: string, threshold: number): boolean {
  */
 export function managedAttemptMaxStagedEvents(): number {
 	return clampedStagedCap(
-		"GJC_FALLBACK_MAX_STAGED_EVENTS",
+		"VIB_FALLBACK_MAX_STAGED_EVENTS",
 		MANAGED_ATTEMPT_MAX_STAGED_EVENTS,
 		MANAGED_ATTEMPT_STAGED_EVENTS_CEILING,
 	);
@@ -240,7 +240,7 @@ export function managedAttemptMaxStagedEvents(): number {
 
 /**
  * Max bytes staged by a provisional managed-attempt transaction before it is
- * rejected. Configurable via `GJC_FALLBACK_MAX_STAGED_BYTES` (default
+ * rejected. Configurable via `VIB_FALLBACK_MAX_STAGED_BYTES` (default
  * `MANAGED_ATTEMPT_MAX_STAGED_BYTES`, ceiling
  * `MANAGED_ATTEMPT_STAGED_BYTES_CEILING`). Read once per transaction; values
  * must be positive integers after the trusted resolver ignores surrounding
@@ -251,7 +251,7 @@ export function managedAttemptMaxStagedEvents(): number {
  */
 export function managedAttemptMaxStagedBytes(): number {
 	return clampedStagedCap(
-		"GJC_FALLBACK_MAX_STAGED_BYTES",
+		"VIB_FALLBACK_MAX_STAGED_BYTES",
 		MANAGED_ATTEMPT_MAX_STAGED_BYTES,
 		MANAGED_ATTEMPT_STAGED_BYTES_CEILING,
 	);
@@ -1535,7 +1535,7 @@ export function sanitizedDetachedClone<T>(value: T, maxNodes: number = MANAGED_S
  * the only way to terminate a traversal, and the walk-based oracles below
  * rely on the same mechanism to stop before doing unbounded work.
  */
-const MANAGED_SIZE_SENTINEL = Symbol("gjc.managed-staging-size-exceeded");
+const MANAGED_SIZE_SENTINEL = Symbol("vib.managed-staging-size-exceeded");
 
 /**
  * Walk `value`'s JSON surface — exactly the surface `JSON.stringify` sees,

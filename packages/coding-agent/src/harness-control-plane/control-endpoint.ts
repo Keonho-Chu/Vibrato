@@ -1,6 +1,6 @@
 /**
  * Per-session control endpoint — a Unix domain socket served by the RuntimeOwner so
- * stateless `gjc harness` CLI calls can route owner-routed primitives (submit, observe,
+ * stateless `vib harness` CLI calls can route owner-routed primitives (submit, observe,
  * recover, retire) to the live owner. One JSON request line in, one JSON response line out.
  *
  * The owner is the only listener; clients connect per call. When no socket is reachable

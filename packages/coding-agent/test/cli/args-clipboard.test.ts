@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { CliParseError } from "@gajae-code/utils/cli";
+import { CliParseError } from "@vib-rato/utils/cli";
 import { parseArgs } from "../../src/cli/args";
 
 describe("--clipboard-transport", () => {

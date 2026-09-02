@@ -5,16 +5,16 @@ import {
 	type AgentLoopConfig,
 	type AgentMessage,
 	type AgentTool,
-} from "@gajae-code/agent-core";
-import { agentLoopContinue } from "@gajae-code/agent-core/agent-loop";
-import { AppendOnlyContextManager } from "@gajae-code/agent-core/append-only-context";
-import type { Context, Message, Model, SimpleStreamOptions, ToolResultMessage } from "@gajae-code/ai";
+} from "@vib-rato/agent-core";
+import { agentLoopContinue } from "@vib-rato/agent-core/agent-loop";
+import { AppendOnlyContextManager } from "@vib-rato/agent-core/append-only-context";
+import type { Context, Message, Model, SimpleStreamOptions, ToolResultMessage } from "@vib-rato/ai";
 import {
 	COMPOSER_BASH_POLICY_RECOVERY_PROMPT,
 	CURSOR_COMPOSER_BASH_POLICY_RECOVERY_PROMPT,
 	formatComposerBashPolicyError,
-} from "@gajae-code/ai/providers/composer-discipline";
-import { createMockModel } from "@gajae-code/ai/providers/mock";
+} from "@vib-rato/ai/providers/composer-discipline";
+import { createMockModel } from "@vib-rato/ai/providers/mock";
 import * as z from "zod/v4";
 import { createUserMessage } from "./helpers";
 

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { resolveProfileBindings } from "@gajae-code/coding-agent/config/model-profiles";
-import { ModelsConfigSchema } from "@gajae-code/coding-agent/config/models-config-schema";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
+import { resolveProfileBindings } from "@vib-rato/coding-agent/config/model-profiles";
+import { ModelsConfigSchema } from "@vib-rato/coding-agent/config/models-config-schema";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
 
 function issuePaths(error: { issues: Array<{ path: PropertyKey[] }> }): string[] {
 	return error.issues.map(issue => issue.path.join("."));
@@ -29,7 +29,7 @@ describe("model profile schema", () => {
 		expect(result.success).toBe(true);
 	});
 
-	// Runtime defaulting treats any non-"long" GJC_CACHE_RETENTION value as short;
+	// Runtime defaulting treats any non-"long" VIB_CACHE_RETENTION value as short;
 	// config is stricter so typos fail before dispatch.
 	test("invalid cacheRetention config values are rejected", () => {
 		const result = ModelsConfigSchema.safeParse({

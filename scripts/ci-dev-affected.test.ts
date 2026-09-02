@@ -14,9 +14,9 @@ setDefaultTimeout(30_000);
 
 const packages: WorkspacePackage[] = [
 	{
-		name: "@gajae-code/example",
+		name: "@vib-rato/example",
 		dir: "packages/example",
-		manifest: { name: "@gajae-code/example", scripts: { check: "true", test: "true" } },
+		manifest: { name: "@vib-rato/example", scripts: { check: "true", test: "true" } },
 	},
 ];
 
@@ -56,8 +56,8 @@ describe("planTasks command shape (issue #622)", () => {
 
 	test("package check/test tasks run `bun run <script>` in the package cwd", () => {
 		const tasks = planForPaths(["packages/example/src/index.ts"]);
-		const check = tasks.find(task => task.key === "check:@gajae-code/example");
-		const runTest = tasks.find(task => task.key === "test:@gajae-code/example");
+		const check = tasks.find(task => task.key === "check:@vib-rato/example");
+		const runTest = tasks.find(task => task.key === "test:@vib-rato/example");
 		expect(check).toBeDefined();
 		expect(runTest).toBeDefined();
 		expect(check?.command).toEqual(["bun", "run", "check"]);
@@ -116,7 +116,7 @@ describe("dev-ci canonical-plan workflow contract", () => {
 		// can be the first validation event for that head/base pair, so the guards
 		// must key on a body-only payload rather than on the action alone.
 		expect(workflow).not.toContain("github.event.action != 'edited'");
-		for (const root of ["affected-plan", "affected-evidence-producer", "affected", "gjc-state-gates", "gjc-state-gates-matrix"]) {
+		for (const root of ["affected-plan", "affected-evidence-producer", "affected", "vib-state-gates", "vib-state-gates-matrix"]) {
 			const start = workflow.indexOf(`\n  ${root}:\n`);
 			expect(start).toBeGreaterThan(0);
 			const guard = workflow.slice(start, workflow.indexOf("\n    runs-on:", start));
@@ -138,7 +138,7 @@ describe("dev-ci canonical-plan workflow contract", () => {
 		// Roots need an explicit guard; the rest inherit it by depending on a
 		// skipped `affected-plan` (their conditions read its outputs) or on a
 		// skipped `affected` result.
-		for (const root of ["affected-plan", "affected-evidence-producer", "affected", "gjc-state-gates", "gjc-state-gates-matrix"]) {
+		for (const root of ["affected-plan", "affected-evidence-producer", "affected", "vib-state-gates", "vib-state-gates-matrix"]) {
 			const start = workflow.indexOf(`\n  ${root}:\n`);
 			expect(start).toBeGreaterThan(0);
 			const guard = workflow.slice(start, workflow.indexOf("\n    runs-on:", start));
@@ -186,7 +186,7 @@ describe("dev-ci canonical-plan workflow contract", () => {
 		expect(workflow).toContain("artifact_digest");
 		expect(workflow).toContain("remains a required producer audit binding");
 		expect(workflow).not.toContain("continue-on-error");
-		const protectedJob = workflow.slice(workflow.indexOf("  affected:\n"), workflow.indexOf("\n  gjc-state-gates-matrix:"));
+		const protectedJob = workflow.slice(workflow.indexOf("  affected:\n"), workflow.indexOf("\n  vib-state-gates-matrix:"));
 		expect(protectedJob).toContain(
 			"if: ${{ always() && !(github.event_name == 'workflow_dispatch' && inputs.head_sha != '') && !(github.event_name == 'pull_request' && github.event.action == 'edited' && github.event.changes.body != null && github.event.changes.title == null && github.event.changes.base == null) }}",
 		);
@@ -527,10 +527,10 @@ describe("dev-ci canonical-plan workflow contract", () => {
 	describe("deep-interview selector narrowing", () => {
 		test("deep-interview-only changes avoid full workspace validation but still provide native artifacts", () => {
 			const tasks = planForPaths([
-				"packages/coding-agent/src/defaults/gjc/skills/deep-interview/SKILL.md",
-				"packages/coding-agent/src/gjc-runtime/deep-interview-runtime.ts",
-				"packages/coding-agent/test/default-gjc-definitions.test.ts",
-				"packages/coding-agent/test/gjc-runtime/deep-interview-runtime.test.ts",
+				"packages/coding-agent/src/defaults/vib/skills/deep-interview/SKILL.md",
+				"packages/coding-agent/src/vib-runtime/deep-interview-runtime.ts",
+				"packages/coding-agent/test/default-vib-definitions.test.ts",
+				"packages/coding-agent/test/vib-runtime/deep-interview-runtime.test.ts",
 			]);
 			expect(tasks.map(task => task.key)).toEqual([
 				"native-linux-x64",
@@ -609,8 +609,8 @@ describe("describeTasks matrix emission", () => {
 	test("package test task needs native, native build task is flagged, check does not", () => {
 		const entries = describeTasks(planForPaths(["packages/example/src/index.ts"]));
 		const nativeBuild = entries.find(entry => entry.key === "native-linux-x64");
-		const pkgTest = entries.find(entry => entry.key === "test:@gajae-code/example");
-		const pkgCheck = entries.find(entry => entry.key === "check:@gajae-code/example");
+		const pkgTest = entries.find(entry => entry.key === "test:@vib-rato/example");
+		const pkgCheck = entries.find(entry => entry.key === "check:@vib-rato/example");
 
 		expect(nativeBuild?.nativeBuild).toBe(true);
 		expect(nativeBuild?.native).toBe(false);
@@ -683,7 +683,7 @@ describe("describeTasks matrix emission", () => {
 
 	test("cwd is emitted repo-relative for package-scoped tasks", () => {
 		const entries = describeTasks(planForPaths(["packages/example/src/index.ts"]));
-		const pkgCheck = entries.find(entry => entry.key === "check:@gajae-code/example");
+		const pkgCheck = entries.find(entry => entry.key === "check:@vib-rato/example");
 		expect(pkgCheck?.cwd).toBe("packages/example");
 	});
 });
@@ -866,12 +866,12 @@ describe("--matrix-json and --task CLI fan-out", () => {
 		expect(await Bun.file(path.join(repoRoot, ".ci-dev-affected-plan.json")).exists()).toBe(true);
 	});
 	test("Cargo selection includes transitive dependents and never emits vendored shards", async () => {
-		const sdk = await runScript(["--matrix-json"], "crates/gjc-sdk/src/lib.rs");
+		const sdk = await runScript(["--matrix-json"], "crates/vib-sdk/src/lib.rs");
 		expect(sdk.exitCode).toBe(0);
 		const sdkKeys = (JSON.parse(sdk.stdout.trim()) as Array<{ key: string }>).map(entry => entry.key);
 		expect(sdkKeys.filter(key => key.startsWith("cargo-build:"))).toEqual([
-			"cargo-build:cargo:Z2pjLXNkaw:Y3JhdGVzL2dqYy1zZGsvQ2FyZ28udG9tbA",
 			"cargo-build:cargo:cGktbmF0aXZlcw:Y3JhdGVzL3BpLW5hdGl2ZXMvQ2FyZ28udG9tbA",
+			"cargo-build:cargo:dmliLXNkaw:Y3JhdGVzL3ZpYi1zZGsvQ2FyZ28udG9tbA",
 		]);
 		expect(sdkKeys.filter(key => key === "native-linux-x64")).toHaveLength(1);
 
@@ -916,7 +916,7 @@ describe("--matrix-json and --task CLI fan-out", () => {
 		const pr = await runScript(["--matrix-json"], "packages/natives/src/index.ts", { CI_DEV_PLAN_MODE: "pr" });
 		expect(pr.exitCode).toBe(0);
 		expect((JSON.parse(pr.stdout.trim()) as Array<{ key: string }>).map(entry => entry.key)).toEqual([
-			"check:@gajae-code/natives",
+			"check:@vib-rato/natives",
 			"install-methods",
 			"native-linux-x64",
 			"ts-build:ts:Y29kaW5nLWFnZW50:cGFja2FnZXMvY29kaW5nLWFnZW50",
@@ -926,16 +926,16 @@ describe("--matrix-json and --task CLI fan-out", () => {
 		const push = await runScript(["--matrix-json"], "packages/natives/src/index.ts", { CI_DEV_PLAN_MODE: "push" });
 		expect(push.exitCode).toBe(0);
 		expect((JSON.parse(push.stdout.trim()) as Array<{ key: string }>).map(entry => entry.key)).toEqual([
-			"check:@gajae-code/agent-core", "test:@gajae-code/agent-core",
-			"check:@gajae-code/ai", "test:@gajae-code/ai",
-			"check:@gajae-code/coding-agent",
-			...Array.from({ length: 8 }, (_, index) => `test:@gajae-code/coding-agent:shard-${index + 1}-of-8`),
-			"test:@gajae-code/coding-agent:sdk-production-host-isolated",
-			"check:@gajae-code/natives", "test:@gajae-code/natives",
-			"check:@gajae-code/stats", "test:@gajae-code/stats",
-			"check:@gajae-code/tui", "test:@gajae-code/tui",
-			"check:@gajae-code/typescript-edit-benchmark", "test:@gajae-code/typescript-edit-benchmark",
-			"check:@gajae-code/utils", "test:@gajae-code/utils",
+			"check:@vib-rato/agent-core", "test:@vib-rato/agent-core",
+			"check:@vib-rato/ai", "test:@vib-rato/ai",
+			"check:@vib-rato/coding-agent",
+			...Array.from({ length: 8 }, (_, index) => `test:@vib-rato/coding-agent:shard-${index + 1}-of-8`),
+			"test:@vib-rato/coding-agent:sdk-production-host-isolated",
+			"check:@vib-rato/natives", "test:@vib-rato/natives",
+			"check:@vib-rato/stats", "test:@vib-rato/stats",
+			"check:@vib-rato/tui", "test:@vib-rato/tui",
+			"check:@vib-rato/typescript-edit-benchmark", "test:@vib-rato/typescript-edit-benchmark",
+			"check:@vib-rato/utils", "test:@vib-rato/utils",
 			"install-methods",
 			"native-linux-x64",
 			"ts-build:ts:Y29kaW5nLWFnZW50:cGFja2FnZXMvY29kaW5nLWFnZW50",
@@ -1091,14 +1091,14 @@ describe("--matrix-json and --task CLI fan-out", () => {
 
 describe("planTargetedTasks PR-mode targeting", () => {
 	const codingAgent: WorkspacePackage = {
-		name: "@gajae-code/coding-agent",
+		name: "@vib-rato/coding-agent",
 		dir: "packages/coding-agent",
-		manifest: { name: "@gajae-code/coding-agent", scripts: { check: "biome check .", test: "bun test" } },
+		manifest: { name: "@vib-rato/coding-agent", scripts: { check: "biome check .", test: "bun test" } },
 	};
 	const agentCore: WorkspacePackage = {
-		name: "@gajae-code/agent-core",
+		name: "@vib-rato/agent-core",
 		dir: "packages/agent",
-		manifest: { name: "@gajae-code/agent-core", scripts: { check: "biome check .", test: "bun test" } },
+		manifest: { name: "@vib-rato/agent-core", scripts: { check: "biome check .", test: "bun test" } },
 	};
 	const targetingPackages: WorkspacePackage[] = [agentCore, codingAgent];
 	const testFiles = [
@@ -1123,8 +1123,8 @@ describe("planTargetedTasks PR-mode targeting", () => {
 		const tasks = targeted(["packages/agent/src/agent-loop.ts"]);
 		const keys = tasks.map(task => task.key);
 		expect(keys.filter(key => key === "test:packages/coding-agent/test/provider-safety-stop-hint.e2e.test.ts")).toHaveLength(1);
-		expect(keys.filter(key => key.startsWith("test:@gajae-code/coding-agent:shard-"))).toEqual([]);
-		expect(keys).toContain("check:@gajae-code/agent-core");
+		expect(keys.filter(key => key.startsWith("test:@vib-rato/coding-agent:shard-"))).toEqual([]);
+		expect(keys).toContain("check:@vib-rato/agent-core");
 	});
 
 	test("push routing keeps the regression inside the normal eight-shard suite", () => {
@@ -1132,13 +1132,13 @@ describe("planTargetedTasks PR-mode targeting", () => {
 			...codingAgent,
 			manifest: {
 				...codingAgent.manifest,
-				dependencies: { "@gajae-code/agent-core": "workspace:*" },
+				dependencies: { "@vib-rato/agent-core": "workspace:*" },
 			},
 		};
 		const tasks = planTasks(["packages/agent/src/agent-loop.ts"], [agentCore, pushCodingAgent]);
 		const shardKeys = tasks
 			.map(task => task.key)
-			.filter(key => key.startsWith("test:@gajae-code/coding-agent:shard-"));
+			.filter(key => key.startsWith("test:@vib-rato/coding-agent:shard-"));
 		expect(shardKeys).toHaveLength(8);
 		expect(tasks.filter(task => task.key === "test:packages/coding-agent/test/provider-safety-stop-hint.e2e.test.ts")).toHaveLength(0);
 	});
@@ -1148,15 +1148,15 @@ describe("planTargetedTasks PR-mode targeting", () => {
 		const keys = tasks.map(task => task.key);
 		expect(keys).toContain("test:packages/coding-agent/test/edit/foo.test.ts");
 		// No broad package-wide test, and no other coding-agent test file.
-		expect(keys).not.toContain("test:@gajae-code/coding-agent");
+		expect(keys).not.toContain("test:@vib-rato/coding-agent");
 		expect(keys).not.toContain("test:packages/coding-agent/test/edit/bar.test.ts");
 		const testTask = tasks.find(task => task.key === "test:packages/coding-agent/test/edit/foo.test.ts");
 		expect(testTask?.command).toEqual(["bun", "test", "packages/coding-agent/test/edit/foo.test.ts"]);
 	});
 
 	test("SDK host and coordinator prompt-control changes include shard 1 and the isolated production host", () => {
-		const shardOne = "test:@gajae-code/coding-agent:shard-1-of-8";
-		const isolated = "test:@gajae-code/coding-agent:sdk-production-host-isolated";
+		const shardOne = "test:@vib-rato/coding-agent:shard-1-of-8";
+		const isolated = "test:@vib-rato/coding-agent:sdk-production-host-isolated";
 		for (const changedPath of [
 			"packages/coding-agent/src/sdk/bus/index.ts",
 			"packages/coding-agent/src/sdk/host/reverse-leases.ts",
@@ -1176,7 +1176,7 @@ describe("planTargetedTasks PR-mode targeting", () => {
 			"--file-timeout=900000",
 			"--concurrency=1",
 		]);
-			expect(keys.filter(key => key.startsWith("test:@gajae-code/coding-agent:shard-"))).toEqual([shardOne]);
+			expect(keys.filter(key => key.startsWith("test:@vib-rato/coding-agent:shard-"))).toEqual([shardOne]);
 			expect(keys).toContain(isolated);
 			expect(tasks.find(task => task.key === isolated)?.command).toEqual([
 				"bun",
@@ -1189,7 +1189,7 @@ describe("planTargetedTasks PR-mode targeting", () => {
 		const testFile = "packages/coding-agent/test/sdk-prompt-terminal-diagnostics.test.ts";
 		const tasks = targeted([testFile]);
 		expect(tasks.find(task => task.key === `test:${testFile}`)?.command).toEqual(["bun", "test", testFile]);
-		expect(tasks.find(task => task.key === "test:@gajae-code/coding-agent:shard-1-of-8")?.command).toEqual([
+		expect(tasks.find(task => task.key === "test:@vib-rato/coding-agent:shard-1-of-8")?.command).toEqual([
 			"bun",
 			"scripts/run-bun-test-files.ts",
 			"--root=packages/coding-agent",
@@ -1198,7 +1198,7 @@ describe("planTargetedTasks PR-mode targeting", () => {
 			"--file-timeout=900000",
 			"--concurrency=1",
 		]);
-		expect(tasks.find(task => task.key === "test:@gajae-code/coding-agent:sdk-production-host-isolated")?.command).toEqual([
+		expect(tasks.find(task => task.key === "test:@vib-rato/coding-agent:sdk-production-host-isolated")?.command).toEqual([
 			"bun",
 			"../../scripts/run-sdk-production-host-isolated.ts",
 		]);
@@ -1207,12 +1207,12 @@ describe("planTargetedTasks PR-mode targeting", () => {
 	test("basename collisions fall back to package checks instead of arbitrary tests", () => {
 		const tasks = targeted(["packages/coding-agent/src/sdk/bus/index.ts"]);
 		const keys = tasks.map(task => task.key);
-		expect(keys).toContain("check:@gajae-code/coding-agent");
-		expect(keys).toContain("test:@gajae-code/coding-agent:shard-1-of-8");
-		expect(keys).toContain("test:@gajae-code/coding-agent:sdk-production-host-isolated");
+		expect(keys).toContain("check:@vib-rato/coding-agent");
+		expect(keys).toContain("test:@vib-rato/coding-agent:shard-1-of-8");
+		expect(keys).toContain("test:@vib-rato/coding-agent:sdk-production-host-isolated");
 		expect(keys).not.toContain("test:packages/coding-agent/test/sdk/index.test.ts");
 		expect(keys).not.toContain("test:packages/coding-agent/test/other/index.test.ts");
-		expect(describeTasks(tasks).find(entry => entry.key === "check:@gajae-code/coding-agent")).toMatchObject({
+		expect(describeTasks(tasks).find(entry => entry.key === "check:@vib-rato/coding-agent")).toMatchObject({
 			native: true,
 			nativeBuild: false,
 		});
@@ -1274,9 +1274,9 @@ test("tab-worker graph changes always include install-methods and are Darwin rel
 			// Session-state lock / empty-delete receipt GC bind the native identity
 			// primitives whose win32 semantics (handle-bound delete, no quarantine)
 			// an Ubuntu shard cannot exercise.
-			"packages/coding-agent/src/gjc-runtime/session-state-lock.ts",
-			"packages/coding-agent/src/gjc-runtime/empty-delete-gc.ts",
-			"packages/coding-agent/src/gjc-runtime/gc-runtime.ts",
+			"packages/coding-agent/src/vib-runtime/session-state-lock.ts",
+			"packages/coding-agent/src/vib-runtime/empty-delete-gc.ts",
+			"packages/coding-agent/src/vib-runtime/gc-runtime.ts",
 			"packages/coding-agent/test/empty-delete-receipt-latch.test.ts",
 			"packages/coding-agent/test/helpers/exact-identity-natives.ts",
 			// canonicalEnvKey() folds project-dotenv provenance keys on win32 only,
@@ -1319,8 +1319,8 @@ test("tab-worker graph changes always include install-methods and are Darwin rel
 		const tasks = targeted(["packages/coding-agent/test/edit/deleted.test.ts"]);
 		const keys = tasks.map(task => task.key);
 		expect(keys).not.toContain("test:packages/coding-agent/test/edit/deleted.test.ts");
-		expect(keys).not.toContain("test:@gajae-code/coding-agent");
-		expect(keys).toContain("check:@gajae-code/coding-agent");
+		expect(keys).not.toContain("test:@vib-rato/coding-agent");
+		expect(keys).toContain("check:@vib-rato/coding-agent");
 		expect(keys).toContain("cli-smoke");
 		expect(keys.filter(key => key === "native-linux-x64" || key === "native-build")).toEqual(["native-linux-x64"]);
 	});
@@ -1330,8 +1330,8 @@ test("tab-worker graph changes always include install-methods and are Darwin rel
 		const keys = tasks.map(task => task.key);
 		expect(keys).toContain("test:packages/coding-agent/test/rlm-live-model-e2e.test.ts");
 		expect(keys.filter(key => key === "native-linux-x64" || key === "native-build")).toEqual(["native-linux-x64"]);
-		expect(keys).not.toContain("test:@gajae-code/coding-agent");
-		expect(keys).not.toContain("check:@gajae-code/coding-agent");
+		expect(keys).not.toContain("test:@vib-rato/coding-agent");
+		expect(keys).not.toContain("check:@vib-rato/coding-agent");
 
 		const entries = describeTasks(tasks);
 		const liveShard = entries.find(entry => entry.key === "test:packages/coding-agent/test/rlm-live-model-e2e.test.ts");
@@ -1360,7 +1360,7 @@ test("tab-worker graph changes always include install-methods and are Darwin rel
 	test("a source file with no mapped test runs the owning package check, not its test suite", () => {
 		const tasks = targeted(["packages/coding-agent/src/edit/unmapped.ts"]);
 		const keys = tasks.map(task => task.key);
-		expect(keys).toContain("check:@gajae-code/coding-agent");
+		expect(keys).toContain("check:@vib-rato/coding-agent");
 		expect(keys).toContain("cli-smoke"); // coding-agent runtime smoke
 		expect(keys.some(key => key.startsWith("test:"))).toBe(false);
 	});
@@ -1370,7 +1370,7 @@ test("tab-worker graph changes always include install-methods and are Darwin rel
 		const keys = tasks.map(task => task.key);
 		expect(keys).toEqual([
 			"test:packages/coding-agent/test/startup-update-contract.test.ts",
-			"check:@gajae-code/coding-agent",
+			"check:@vib-rato/coding-agent",
 			"cli-smoke",
 			"native-linux-x64",
 		]);
@@ -1427,8 +1427,8 @@ test("tab-worker graph changes always include install-methods and are Darwin rel
 			"packages/coding-agent/src/sdk/host/session-runtime.ts",
 			"scripts/ci-dev-affected.ts",
 		]);
-		const codingAgentShards = tasks.map(task => task.key).filter(key => key.startsWith("test:@gajae-code/coding-agent:shard-"));
-		expect(codingAgentShards).toEqual(["test:@gajae-code/coding-agent:shard-1-of-8"]);
+		const codingAgentShards = tasks.map(task => task.key).filter(key => key.startsWith("test:@vib-rato/coding-agent:shard-"));
+		expect(codingAgentShards).toEqual(["test:@vib-rato/coding-agent:shard-1-of-8"]);
 		expect(tasks.map(task => task.key)).toContain("test:packages/coding-agent/test/agent-session-concurrent.test.ts");
 		expect(tasks.map(task => task.key)).toContain(
 			"test:packages/coding-agent/test/agent-session-promotion-identity.test.ts",
@@ -1531,7 +1531,7 @@ test("tab-worker graph changes always include install-methods and are Darwin rel
 	test("internal SDK client changes retain package validation and packed-surface coverage", () => {
 		const tasks = targeted(["packages/coding-agent/src/sdk/client/client.ts"]);
 		const keys = tasks.map(task => task.key);
-		expect(keys.filter(key => key === "check:@gajae-code/coding-agent")).toHaveLength(1);
+		expect(keys.filter(key => key === "check:@vib-rato/coding-agent")).toHaveLength(1);
 		expect(keys.filter(key => key === "sdk-package-smoke")).toHaveLength(1);
 		expect(tasks.find(task => task.key === "sdk-package-smoke")?.command).toEqual([
 			"bun",
@@ -1551,7 +1551,7 @@ test("tab-worker graph changes always include install-methods and are Darwin rel
 	});
 
 	test("unscoped wrapper package changes keep wrapper-version smoke with release validation", () => {
-		const tasks = targeted(["packages/gajae-code/bin/gjc.js"]);
+		const tasks = targeted(["packages/vib-rato/bin/vib.js"]);
 		const keys = tasks.map(task => task.key);
 		expect(keys).toContain("release-publish-contract");
 		expect(keys).toContain("release-publish-dry-run");
@@ -1620,7 +1620,7 @@ test("tab-worker graph changes always include install-methods and are Darwin rel
 			["CHANGELOG.md"],
 			["packages/coding-agent/README.md"],
 			["README.md"],
-			[".gjc/skills/example/SKILL.md"],
+			[".vib/skills/example/SKILL.md"],
 			["packages/example/src/index.ts"],
 		]) {
 			for (const tasks of [targeted(changed), planTasks(changed, packages)]) {
@@ -1646,25 +1646,25 @@ test("tab-worker graph changes always include install-methods and are Darwin rel
 
 describe("push-mode broad planning still runs the fuller suite", () => {
 	const codingAgent: WorkspacePackage = {
-		name: "@gajae-code/coding-agent",
+		name: "@vib-rato/coding-agent",
 		dir: "packages/coding-agent",
-		manifest: { name: "@gajae-code/coding-agent", scripts: { check: "biome check .", test: "bun test" } },
+		manifest: { name: "@vib-rato/coding-agent", scripts: { check: "biome check .", test: "bun test" } },
 	};
 
 	test("push mode splits the package-wide coding-agent test across bounded shards", () => {
 		const tasks = planTasks(["packages/coding-agent/src/edit/foo.ts"], [codingAgent]);
 		const keys = tasks.map(task => task.key);
-		const testShards = tasks.filter(task => task.key.startsWith("test:@gajae-code/coding-agent:shard-"));
+		const testShards = tasks.filter(task => task.key.startsWith("test:@vib-rato/coding-agent:shard-"));
 		// Broad planner keeps the post-merge fuller suite, but not as one 30m shard.
 		expect(testShards.map(task => task.key)).toEqual([
-			"test:@gajae-code/coding-agent:shard-1-of-8",
-			"test:@gajae-code/coding-agent:shard-2-of-8",
-			"test:@gajae-code/coding-agent:shard-3-of-8",
-			"test:@gajae-code/coding-agent:shard-4-of-8",
-			"test:@gajae-code/coding-agent:shard-5-of-8",
-			"test:@gajae-code/coding-agent:shard-6-of-8",
-			"test:@gajae-code/coding-agent:shard-7-of-8",
-			"test:@gajae-code/coding-agent:shard-8-of-8",
+			"test:@vib-rato/coding-agent:shard-1-of-8",
+			"test:@vib-rato/coding-agent:shard-2-of-8",
+			"test:@vib-rato/coding-agent:shard-3-of-8",
+			"test:@vib-rato/coding-agent:shard-4-of-8",
+			"test:@vib-rato/coding-agent:shard-5-of-8",
+			"test:@vib-rato/coding-agent:shard-6-of-8",
+			"test:@vib-rato/coding-agent:shard-7-of-8",
+			"test:@vib-rato/coding-agent:shard-8-of-8",
 		]);
 		expect(testShards[0]?.command).toEqual([
 			"bun",
@@ -1676,20 +1676,20 @@ describe("push-mode broad planning still runs the fuller suite", () => {
 			"--concurrency=1",
 		]);
 		expect(testShards[0]?.cwd).toBeUndefined();
-		expect(keys).not.toContain("test:@gajae-code/coding-agent");
-		expect(keys).toContain("check:@gajae-code/coding-agent");
+		expect(keys).not.toContain("test:@vib-rato/coding-agent");
+		expect(keys).toContain("check:@vib-rato/coding-agent");
 
 		const entries = describeTasks(tasks);
-		expect(entries.find(entry => entry.key === "test:@gajae-code/coding-agent:shard-1-of-8")?.native).toBe(true);
+		expect(entries.find(entry => entry.key === "test:@vib-rato/coding-agent:shard-1-of-8")?.native).toBe(true);
 	});
 
 	test("push mode runs the AI suite with the same fresh-process boundary", () => {
 		const ai: WorkspacePackage = {
-			name: "@gajae-code/ai",
+			name: "@vib-rato/ai",
 			dir: "packages/ai",
-			manifest: { name: "@gajae-code/ai", scripts: { check: "biome check .", test: "bun test" } },
+			manifest: { name: "@vib-rato/ai", scripts: { check: "biome check .", test: "bun test" } },
 		};
-		const task = planTasks(["packages/ai/src/index.ts"], [ai]).find(candidate => candidate.key === "test:@gajae-code/ai");
+		const task = planTasks(["packages/ai/src/index.ts"], [ai]).find(candidate => candidate.key === "test:@vib-rato/ai");
 		expect(task?.command).toEqual([
 			"bun",
 			"scripts/run-bun-test-files.ts",
@@ -1739,15 +1739,15 @@ describe("push-mode broad planning still runs the fuller suite", () => {
 		expect(keys).toContain("root-check");
 		expect(keys).toContain("root-test:release");
 		expect(keys).not.toContain("root-test");
-		expect(tasks.filter(task => task.key.startsWith("test:@gajae-code/coding-agent:shard-")).map(task => task.key)).toEqual([
-			"test:@gajae-code/coding-agent:shard-1-of-8",
-			"test:@gajae-code/coding-agent:shard-2-of-8",
-			"test:@gajae-code/coding-agent:shard-3-of-8",
-			"test:@gajae-code/coding-agent:shard-4-of-8",
-			"test:@gajae-code/coding-agent:shard-5-of-8",
-			"test:@gajae-code/coding-agent:shard-6-of-8",
-			"test:@gajae-code/coding-agent:shard-7-of-8",
-			"test:@gajae-code/coding-agent:shard-8-of-8",
+		expect(tasks.filter(task => task.key.startsWith("test:@vib-rato/coding-agent:shard-")).map(task => task.key)).toEqual([
+			"test:@vib-rato/coding-agent:shard-1-of-8",
+			"test:@vib-rato/coding-agent:shard-2-of-8",
+			"test:@vib-rato/coding-agent:shard-3-of-8",
+			"test:@vib-rato/coding-agent:shard-4-of-8",
+			"test:@vib-rato/coding-agent:shard-5-of-8",
+			"test:@vib-rato/coding-agent:shard-6-of-8",
+			"test:@vib-rato/coding-agent:shard-7-of-8",
+			"test:@vib-rato/coding-agent:shard-8-of-8",
 		]);
 	});
 });
@@ -1816,14 +1816,14 @@ describe("Cargo workspace ambiguity", () => {
 describe("planFullTasks — Main CI full mode (issue: shard main CI)", () => {
 	const fullModePackages: WorkspacePackage[] = [
 		{
-			name: "@gajae-code/coding-agent",
+			name: "@vib-rato/coding-agent",
 			dir: "packages/coding-agent",
-			manifest: { name: "@gajae-code/coding-agent", scripts: { test: "true" } },
+			manifest: { name: "@vib-rato/coding-agent", scripts: { test: "true" } },
 		},
 		{
-			name: "@gajae-code/example",
+			name: "@vib-rato/example",
 			dir: "packages/example",
-			manifest: { name: "@gajae-code/example", scripts: { check: "true", test: "true" } },
+			manifest: { name: "@vib-rato/example", scripts: { check: "true", test: "true" } },
 		},
 	];
 
@@ -1856,11 +1856,11 @@ describe("planFullTasks — Main CI full mode (issue: shard main CI)", () => {
 		expect(keys).toContain("rust-check");
 		expect(keys).toContain("cli-smoke");
 		expect(keys).toContain("runtime-check");
-		expect(keys).toContain("test:@gajae-code/example");
+		expect(keys).toContain("test:@vib-rato/example");
 		// Default coding-agent shard count stays 8 (dev parity).
-		expect(keys.filter(key => key.startsWith("test:@gajae-code/coding-agent:shard-")).length).toBe(8);
-		expect(keys).toContain("test:@gajae-code/coding-agent:shard-1-of-8");
-		expect(keys).toContain("test:@gajae-code/coding-agent:sdk-production-host-isolated");
+		expect(keys.filter(key => key.startsWith("test:@vib-rato/coding-agent:shard-")).length).toBe(8);
+		expect(keys).toContain("test:@vib-rato/coding-agent:shard-1-of-8");
+		expect(keys).toContain("test:@vib-rato/coding-agent:sdk-production-host-isolated");
 		// Default rust-test stays a single unpartitioned task.
 		expect(keys).toContain("rust-test");
 		expect(keys.some(key => key.startsWith("rust-test:partition-"))).toBe(false);
@@ -1877,7 +1877,7 @@ describe("planFullTasks — Main CI full mode (issue: shard main CI)", () => {
 		expect(runtimeCheck?.command).toEqual(["bun", "run", "check:runtime"]);
 		expect(runtimeCheck?.cwd).toBe(resolvePackageCwd("packages/coding-agent"));
 		const isolatedSdkHost = tasks.find(
-			task => task.key === "test:@gajae-code/coding-agent:sdk-production-host-isolated",
+			task => task.key === "test:@vib-rato/coding-agent:sdk-production-host-isolated",
 		);
 		expect(isolatedSdkHost?.command).toEqual(["bun", "../../scripts/run-sdk-production-host-isolated.ts"]);
 		expect(isolatedSdkHost?.cwd).toBe(resolvePackageCwd("packages/coding-agent"));
@@ -1887,10 +1887,10 @@ describe("planFullTasks — Main CI full mode (issue: shard main CI)", () => {
 		const keys = withEnv({ CI_CODING_AGENT_TEST_SHARDS: "16" }, () =>
 			planFullTasks(fullModePackages).map(task => task.key),
 		);
-		const shards = keys.filter(key => key.startsWith("test:@gajae-code/coding-agent:shard-"));
+		const shards = keys.filter(key => key.startsWith("test:@vib-rato/coding-agent:shard-"));
 		expect(shards.length).toBe(16);
-		expect(shards).toContain("test:@gajae-code/coding-agent:shard-1-of-16");
-		expect(shards).toContain("test:@gajae-code/coding-agent:shard-16-of-16");
+		expect(shards).toContain("test:@vib-rato/coding-agent:shard-1-of-16");
+		expect(shards).toContain("test:@vib-rato/coding-agent:shard-16-of-16");
 	});
 
 	test("CI_RUST_TEST_PARTITIONS splits rust-test into nextest partitions", () => {
@@ -1913,7 +1913,7 @@ describe("planFullTasks — Main CI full mode (issue: shard main CI)", () => {
 			{ CI_CODING_AGENT_TEST_SHARDS: "0", CI_RUST_TEST_PARTITIONS: "abc" },
 			() => planFullTasks(fullModePackages).map(task => task.key),
 		);
-		expect(keys.filter(key => key.startsWith("test:@gajae-code/coding-agent:shard-")).length).toBe(8);
+		expect(keys.filter(key => key.startsWith("test:@vib-rato/coding-agent:shard-")).length).toBe(8);
 		expect(keys).toContain("rust-test");
 		expect(keys.some(key => key.startsWith("rust-test:partition-"))).toBe(false);
 	});
@@ -1925,6 +1925,6 @@ describe("planFullTasks — Main CI full mode (issue: shard main CI)", () => {
 		expect(entries.filter(entry => entry.nativeBuild).map(entry => entry.key)).toEqual(["native-linux-x64"]);
 		expect(entries.find(entry => entry.key === "cli-smoke")?.native).toBe(true);
 		expect(entries.find(entry => entry.key === "runtime-check")?.native).toBe(true);
-		expect(entries.find(entry => entry.key === "test:@gajae-code/coding-agent:shard-1-of-16")?.native).toBe(true);
+		expect(entries.find(entry => entry.key === "test:@vib-rato/coding-agent:shard-1-of-16")?.native).toBe(true);
 	});
 });

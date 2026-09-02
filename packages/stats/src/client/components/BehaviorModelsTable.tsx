@@ -123,7 +123,7 @@ export function BehaviorModelsTable({ models, behaviorSeries }: BehaviorModelsTa
 				{sortedModels.map((model, index) => {
 					const key = `${model.model}::${model.provider}`;
 					const trend = trendByKey.get(key)?.data ?? [];
-					const trendColor = MODEL_COLORS[index % MODEL_COLORS.length];
+					const trendColor = MODEL_COLORS[theme][index % MODEL_COLORS[theme].length];
 					const isExpanded = expandedKey === key;
 					const totalFrustration = model.totalNegation + model.totalRepetition + model.totalBlame;
 					const totalHits = model.totalYelling + model.totalProfanity + model.totalAnguish + totalFrustration;

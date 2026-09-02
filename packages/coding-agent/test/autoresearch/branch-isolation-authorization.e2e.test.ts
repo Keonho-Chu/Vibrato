@@ -16,10 +16,10 @@ import * as nodeFs from "node:fs";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { AgentTool } from "@gajae-code/agent-core";
+import type { AgentTool } from "@vib-rato/agent-core";
 import { ensureAutoresearchBranch, getCurrentAutoresearchBranch } from "../../src/autoresearch/git";
-import { activeSnapshotPath, modeStatePath, sessionStateDir } from "../../src/gjc-runtime/session-layout";
 import { getWorkflowMutationDecision } from "../../src/skill-state/workflow-mutation-guard";
+import { activeSnapshotPath, modeStatePath, sessionStateDir } from "../../src/vib-runtime/session-layout";
 
 const TEST_SESSION_ID = "session-branch-isolation";
 const tempRoots: string[] = [];
@@ -37,19 +37,19 @@ function runGit(cwd: string, ...args: string[]): string {
 
 /**
  * A real git repository with one baseline commit and a product file to target.
- * `.gjc/` is gitignored exactly as a real GJC repo does, so mission state files
+ * `.vib/` is gitignored exactly as a real Vibrato repo does, so mission state files
  * never dirty the worktree (untracked-dirty trees force the documented degraded
  * branch path).
  */
 function initRepo(): string {
-	const dir = nodeFs.mkdtempSync(path.join(os.tmpdir(), "gjc-autoresearch-branch-auth-"));
+	const dir = nodeFs.mkdtempSync(path.join(os.tmpdir(), "vib-autoresearch-branch-auth-"));
 	tempRoots.push(dir);
 	runGit(dir, "init", "-b", "main");
 	runGit(dir, "config", "user.email", "test@example.com");
 	runGit(dir, "config", "user.name", "Autoresearch Branch Auth Test");
 	nodeFs.mkdirSync(path.join(dir, "src"), { recursive: true });
 	nodeFs.writeFileSync(path.join(dir, "src", "product.ts"), "export const x = 1;\n", "utf8");
-	nodeFs.writeFileSync(path.join(dir, ".gitignore"), ".gjc/\n", "utf8");
+	nodeFs.writeFileSync(path.join(dir, ".gitignore"), ".vib/\n", "utf8");
 	runGit(dir, "add", ".");
 	runGit(dir, "commit", "-m", "baseline");
 	return dir;

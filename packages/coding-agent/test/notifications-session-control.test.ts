@@ -704,7 +704,7 @@ describe("NotificationSessionController", () => {
 		for (const input of [
 			{ config: discordConfig(), env: {} },
 			{ config: slackConfig(), env: {} },
-			{ config: BASE_CONFIG, env: { GJC_NOTIFICATIONS_TOKEN: "legacy-token" } },
+			{ config: BASE_CONFIG, env: { VIB_NOTIFICATIONS_TOKEN: "legacy-token" } },
 		]) {
 			const calls: Call[] = [];
 			const controller = new NotificationSessionController({
@@ -723,7 +723,7 @@ describe("NotificationSessionController", () => {
 	test("a dormant unconfigured or hard-disabled controller has no endpoint or daemon side effects", async () => {
 		for (const input of [
 			{ eligible: true, config: BASE_CONFIG, env: {} },
-			{ eligible: false, config: telegramConfig(), env: { GJC_NOTIFICATIONS: "0" } },
+			{ eligible: false, config: telegramConfig(), env: { VIB_NOTIFICATIONS: "0" } },
 		]) {
 			const calls: Call[] = [];
 			const controller = new NotificationSessionController({
@@ -754,12 +754,12 @@ describe("NotificationSessionController", () => {
 		]);
 	});
 
-	test("suppresses automatic admission with GJC_NOTIFICATIONS=0 while allowing explicit session opt-in", async () => {
+	test("suppresses automatic admission with VIB_NOTIFICATIONS=0 while allowing explicit session opt-in", async () => {
 		const offCalls: Call[] = [];
 		const offController = new NotificationSessionController({
 			eligible: true,
 			getConfig: telegramConfig,
-			env: { GJC_NOTIFICATIONS: "0" },
+			env: { VIB_NOTIFICATIONS: "0" },
 		});
 		offController.attachRuntime(createRuntime(offCalls));
 		const offHost = createContext();
@@ -772,7 +772,7 @@ describe("NotificationSessionController", () => {
 		const explicitController = new NotificationSessionController({
 			eligible: true,
 			getConfig: () => BASE_CONFIG,
-			env: { GJC_NOTIFICATIONS: "1" },
+			env: { VIB_NOTIFICATIONS: "1" },
 		});
 		explicitController.attachRuntime(createRuntime(explicitCalls));
 		const host = createContext();

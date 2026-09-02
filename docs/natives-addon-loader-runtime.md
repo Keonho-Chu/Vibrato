@@ -1,6 +1,6 @@
 # Natives Addon Loader Runtime
 
-This document covers the runtime loader shipped by `@gajae-code/natives`: how `native/index.js` decides which `.node` file to require, how compiled-binary embedded payloads are extracted, and what startup failures report.
+This document covers the runtime loader shipped by `@vib-rato/natives`: how `native/index.js` decides which `.node` file to require, how compiled-binary embedded payloads are extracted, and what startup failures report.
 
 ## Implementation files
 
@@ -32,16 +32,16 @@ At module initialization, `native/index.js` computes:
   - `execDir`: directory containing `process.execPath`.
   - `versionedDir`: `<getNativesDir()>/<packageVersion>`.
   - `userDataDir` fallback:
-    - Windows: `%LOCALAPPDATA%/gjc` or `%USERPROFILE%/AppData/Local/gjc`.
+    - Windows: `%LOCALAPPDATA%/vib` or `%USERPROFILE%/AppData/Local/vib`.
     - Non-Windows: `~/.local/bin`.
 - **Natives cache root** (`getNativesDir()`):
-  - if `$XDG_DATA_HOME/gjc` exists, `$XDG_DATA_HOME/gjc/natives`;
-  - otherwise `~/.gjc/natives`.
+  - if `$XDG_DATA_HOME/vib` exists, `$XDG_DATA_HOME/vib/natives`;
+  - otherwise `~/.vib/natives`.
 - **Compiled-binary mode** (`detectCompiledBinary`): true if any of:
   - embedded-addon manifest is non-null,
-  - `GJC_COMPILED` env var is set,
+  - `VIB_COMPILED` env var is set,
   - `import.meta.url` contains Bun embedded markers (`$bunfs`, `~BUN`, `%7EBUN`).
-- **Variant override**: `GJC_NATIVE_VARIANT` (`modern`/`baseline` only; invalid values ignored).
+- **Variant override**: `VIB_NATIVE_VARIANT` (`modern`/`baseline` only; invalid values ignored).
 - **Selected variant**: explicit override, otherwise runtime AVX2 detection on x64 (`modern` if AVX2, else `baseline`).
 
 ## Platform support and tag resolution
@@ -59,7 +59,7 @@ Unsupported platforms are not rejected before probing. The loader first tries th
 
 ### x64 behavior
 
-1. `GJC_NATIVE_VARIANT=modern|baseline` wins when valid.
+1. `VIB_NATIVE_VARIANT=modern|baseline` wins when valid.
 2. Otherwise AVX2 support is detected:
    - Linux: scan `/proc/cpuinfo` for `avx2`.
    - macOS: `sysctl -n machdep.cpu.leaf7_features`, then `machdep.cpu.features`.
@@ -186,6 +186,6 @@ Compiled mode diagnostics include:
 
 Normal package/runtime diagnostics include:
 
-- reinstall hint (`bun install @gajae-code/natives`),
+- reinstall hint (`bun install @vib-rato/natives`),
 - local rebuild command (`bun --cwd=packages/natives run build`),
 - optional x64 variant build hint (`TARGET_VARIANT=baseline|modern bun --cwd=packages/natives run build`).

@@ -214,9 +214,9 @@ export async function createVirtualMergeWorktree(
 	if (add.exitCode !== 0) throw virtualIntegrationError("merge materialization failed");
 	const merge = await gitIn(targetDir, [
 		"-c",
-		"user.email=ci@gajae.dev",
+		"user.email=ci@vibrato.dev",
 		"-c",
-		"user.name=gajae-ci",
+		"user.name=vibrato-ci",
 		"merge",
 		"--no-ff",
 		"--no-edit",

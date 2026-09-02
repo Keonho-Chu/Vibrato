@@ -1,4 +1,4 @@
-import { type AgentTool, isToolFailureEnvelope } from "@gajae-code/agent-core";
+import { type AgentTool, isToolFailureEnvelope } from "@vib-rato/agent-core";
 import {
 	type AnimationRegistration,
 	Box,
@@ -14,8 +14,8 @@ import {
 	TERMINAL,
 	Text,
 	type TUI,
-} from "@gajae-code/tui";
-import { getProjectDir, logger, sanitizeText } from "@gajae-code/utils";
+} from "@vib-rato/tui";
+import { getProjectDir, logger, sanitizeText } from "@vib-rato/utils";
 import { EDIT_MODE_STRATEGIES, type EditMode, type PerFileDiffPreview } from "../../edit";
 import { type EditRenderContext, getPerFileEditRenderArgs, getPerFileEditRenderContext } from "../../edit/renderer";
 import { getEditRequestTargetInventory, orderedDistinctPaths } from "../../edit/streaming";

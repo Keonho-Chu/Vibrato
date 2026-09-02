@@ -1,11 +1,11 @@
 import { beforeAll, describe, expect, test, vi } from "bun:test";
-import { ThinkingLevel } from "@gajae-code/agent-core";
-import type { Model } from "@gajae-code/ai";
-import type { ModelProfileDefinition } from "@gajae-code/coding-agent/config/model-profiles";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { SelectorController } from "@gajae-code/coding-agent/modes/controllers/selector-controller";
-import { getThemeByName, setThemeInstance } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { InteractiveModeContext } from "@gajae-code/coding-agent/modes/types";
+import { ThinkingLevel } from "@vib-rato/agent-core";
+import type { Model } from "@vib-rato/ai";
+import type { ModelProfileDefinition } from "@vib-rato/coding-agent/config/model-profiles";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { SelectorController } from "@vib-rato/coding-agent/modes/controllers/selector-controller";
+import { getThemeByName, setThemeInstance } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { InteractiveModeContext } from "@vib-rato/coding-agent/modes/types";
 
 const model = (provider: string, id: string): Model =>
 	({
@@ -19,6 +19,7 @@ const model = (provider: string, id: string): Model =>
 	}) as Model;
 
 const codexModel = model("openai-codex", "gpt-5.5");
+const anthropicModel = model("anthropic", "claude-opus-5");
 const minimaxModel = model("minimax-code", "MiniMax-M3");
 
 const profile = (name: string, provider: string, selector: string): ModelProfileDefinition => ({
@@ -29,6 +30,7 @@ const profile = (name: string, provider: string, selector: string): ModelProfile
 });
 
 const codexProfile = profile("codex-medium", "openai-codex", "openai-codex/gpt-5.5:medium");
+const claudeProfile = profile("claude-opus", "anthropic", "anthropic/claude-opus-5:medium");
 const minimaxProfile = profile("minimax-medium", "minimax-code", "minimax-code/MiniMax-M3:medium");
 const plainMinimaxProfile = profile("minimax", "minimax-code", "minimax-code/MiniMax-M3:medium");
 let testTheme = await getThemeByName("red-claw");
@@ -58,7 +60,9 @@ function createControllerContext(
 	}) as typeof settings.set;
 	settings.flush = vi.fn(async () => {}) as typeof settings.flush;
 
-	const profiles = new Map((options.profiles ?? [codexProfile, minimaxProfile]).map(entry => [entry.name, entry]));
+	const profiles = new Map(
+		(options.profiles ?? [codexProfile, claudeProfile, minimaxProfile]).map(entry => [entry.name, entry]),
+	);
 	let activeProfile = options.activeProfile;
 	let configuredDefaultChain: readonly string[] | undefined;
 	const session = {
@@ -91,7 +95,7 @@ function createControllerContext(
 			getModelProfile: (name: string) => profiles.get(name),
 			getAvailableModelProfileNames: () => [...profiles.keys()],
 			getApiKeyForProvider: vi.fn(async () => "key"),
-			getAll: () => [codexModel, minimaxModel],
+			getAll: () => [codexModel, anthropicModel, minimaxModel],
 			resolveCanonicalModel: () => undefined,
 			getCanonicalVariants: () => [],
 			getCanonicalId: () => undefined,
@@ -169,23 +173,38 @@ describe("login preset recommendation", () => {
 		expect(session.setModelTemporaryCalls).toEqual([]);
 	});
 
-	test("minimax-code login recommends minimax-medium", async () => {
+	test("anthropic login recommends claude-opus", async () => {
 		const { ctx, session } = createControllerContext({ confirm: true });
 
+		await login(ctx, "anthropic");
+
+		expect(ctx.showHookConfirm).toHaveBeenCalledWith("Apply claude-opus now?", "");
+		expect(session.setModelTemporaryCalls).toEqual([{ model: anthropicModel, thinkingLevel: ThinkingLevel.Medium }]);
+		expect(session.setActiveModelProfile).toHaveBeenCalledWith("claude-opus");
+	});
+
+	test("a login for a provider the allowlist hides is rejected before any recommendation", async () => {
+		const { ctx, session } = createControllerContext({ confirm: true });
+
+		// minimax-code still has a profile recommendation, but /login no longer
+		// offers the provider at all.
 		await login(ctx, "minimax-code");
 
-		expect(ctx.showHookConfirm).toHaveBeenCalledWith("Apply minimax-medium now?", "");
-		expect(session.setModelTemporaryCalls).toEqual([{ model: minimaxModel, thinkingLevel: ThinkingLevel.Medium }]);
-		expect(session.setActiveModelProfile).toHaveBeenCalledWith("minimax-medium");
+		expect(ctx.showError).toHaveBeenCalledWith("Unknown OAuth provider: minimax-code");
+		expect(ctx.showHookConfirm).not.toHaveBeenCalled();
+		expect(session.setModelTemporaryCalls).toEqual([]);
+		expect(session.setActiveModelProfile).not.toHaveBeenCalled();
 	});
 
 	test("provider with no recommendation mapping does nothing", async () => {
 		const { ctx, session } = createControllerContext();
 
-		await login(ctx, "ollama");
+		// vllm is selectable but has no profile recommendation.
+		await login(ctx, "vllm");
 
+		expect(ctx.showError).not.toHaveBeenCalled();
 		expect(ctx.showHookConfirm).not.toHaveBeenCalled();
-		expect(ctx.showStatus).toHaveBeenCalledWith("Logging in to ollama…");
+		expect(ctx.showStatus).toHaveBeenCalledWith("Logging in to vllm…");
 		expect(session.setModelTemporaryCalls).toEqual([]);
 	});
 

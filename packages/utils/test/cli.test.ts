@@ -1,10 +1,10 @@
 import { describe, expect, it } from "bun:test";
 import { Args, type CliConfig, CliParseError, Command, type CommandEntry, Flags, run } from "../src/cli";
 
-const CFG: CliConfig = { bin: "gjc", version: "1.0.0", commands: new Map() };
+const CFG: CliConfig = { bin: "vib", version: "1.0.0", commands: new Map() };
 
 // A command with a constrained positional action and a constrained flag, mirroring
-// the real `plugin` command that surfaced the crash (`gjc plugin help`).
+// the real `plugin` command that surfaced the crash (`vib plugin help`).
 class Demo extends Command {
 	static description = "demo command";
 	static args = {
@@ -28,7 +28,7 @@ class Boom extends Command {
 	}
 }
 
-// Mirrors `gjc harness`: a single required positional "verb" and no required
+// Mirrors `vib harness`: a single required positional "verb" and no required
 // flags — the exact shape that crashed with an uncaught "Missing required
 // argument" stack trace before run() learned to catch CliParseError.
 class Verbed extends Command {
@@ -82,7 +82,7 @@ async function runCapturing(
 	};
 	try {
 		process.exitCode = 0; // clean baseline so "left unset by run()" reads back as 0
-		await run({ bin: "gjc", version: "1.0.0", argv, commands });
+		await run({ bin: "vib", version: "1.0.0", argv, commands });
 		return { out, err, exitCode: process.exitCode };
 	} finally {
 		process.stdout.write = origOut;
@@ -93,7 +93,7 @@ async function runCapturing(
 
 describe("cli parse — CliParseError for invalid input", () => {
 	it("throws CliParseError for a positional action outside its options", async () => {
-		const cmd = new Demo(["help"], CFG); // e.g. `gjc plugin help`
+		const cmd = new Demo(["help"], CFG); // e.g. `vib plugin help`
 		await expect(cmd.parse(Demo)).rejects.toBeInstanceOf(CliParseError);
 		await expect(cmd.parse(Demo)).rejects.toThrow(/Expected action to be one of: build, clean; got "help"/);
 	});
@@ -169,7 +169,7 @@ describe("cli parse — CliParseError for invalid input", () => {
 		await expect(cmd.parse(Strict)).rejects.toBeInstanceOf(CliParseError);
 	});
 
-	it("throws CliParseError when a required positional argument is missing (the `gjc harness` no-verb case)", async () => {
+	it("throws CliParseError when a required positional argument is missing (the `vib harness` no-verb case)", async () => {
 		const cmd = new Verbed([], CFG);
 		await expect(cmd.parse(Verbed)).rejects.toBeInstanceOf(CliParseError);
 		await expect(cmd.parse(Verbed)).rejects.toThrow(/Missing required argument: verb/);
@@ -215,7 +215,7 @@ describe("cli run — usage instead of uncaught crash", () => {
 		expect(exitCode).toBe(0);
 	});
 
-	it("renders usage + exits 2 (no throw) when a required argument is missing (mirrors `gjc harness`)", async () => {
+	it("renders usage + exits 2 (no throw) when a required argument is missing (mirrors `vib harness`)", async () => {
 		sideEffect.ran = false;
 		const { err, out, exitCode } = await runCapturing(["verbed"]);
 		expect(err).toContain("Missing required argument: verb");

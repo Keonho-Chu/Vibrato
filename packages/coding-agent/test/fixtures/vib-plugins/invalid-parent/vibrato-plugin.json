@@ -1,0 +1,7 @@
+{
+  "kind": "vib-rato-plugin",
+  "name": "invalid-parent",
+  "version": "1.0.0",
+  "subskills": ["subskills/reviewer/SKILL.md"],
+  "tools": []
+}

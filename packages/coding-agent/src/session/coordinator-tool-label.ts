@@ -1,5 +1,5 @@
-import { UNPROVEN_TOOL_LABEL } from "../gjc-runtime/session-state-sidecar";
 import { TOOL_DESCRIPTORS } from "../tools/descriptors";
+import { UNPROVEN_TOOL_LABEL } from "../vib-runtime/session-state-sidecar";
 
 /**
  * Proves whether the tool OBJECT that actually ran is one this session constructed from a

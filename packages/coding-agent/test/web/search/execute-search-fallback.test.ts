@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
-import { hookFetch } from "@gajae-code/utils";
+import { hookFetch } from "@vib-rato/utils";
 import type { AuthStorage } from "../../../src/session/auth-storage";
 import { ToolAbortError } from "../../../src/tools/tool-errors";
 import { runSearchQuery } from "../../../src/web/search";

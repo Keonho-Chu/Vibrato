@@ -8,9 +8,9 @@
  * the first N lines when not expanded; extension messages render in full.
  */
 
-import type { TextContent } from "@gajae-code/ai/core";
-import type { Box, Component } from "@gajae-code/tui";
-import { Markdown, Spacer, Text } from "@gajae-code/tui";
+import type { TextContent } from "@vib-rato/ai/core";
+import type { Box, Component } from "@vib-rato/tui";
+import { Markdown, Spacer, Text } from "@vib-rato/tui";
 import { getMarkdownTheme, type Theme, theme } from "../../modes/theme/theme";
 
 /** Message shape consumed by the shared frame. */

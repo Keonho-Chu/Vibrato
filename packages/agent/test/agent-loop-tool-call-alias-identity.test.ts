@@ -1,8 +1,8 @@
 import { describe, expect, it } from "bun:test";
-import { agentLoop } from "@gajae-code/agent-core/agent-loop";
-import type { AgentContext, AgentLoopConfig, AgentMessage, AgentTool } from "@gajae-code/agent-core/types";
-import type { Message } from "@gajae-code/ai";
-import { createMockModel } from "@gajae-code/ai/providers/mock";
+import { agentLoop } from "@vib-rato/agent-core/agent-loop";
+import type { AgentContext, AgentLoopConfig, AgentMessage, AgentTool } from "@vib-rato/agent-core/types";
+import type { Message } from "@vib-rato/ai";
+import { createMockModel } from "@vib-rato/ai/providers/mock";
 import * as z from "zod/v4";
 import { createUserMessage } from "./helpers";
 
@@ -29,7 +29,7 @@ function makeTool(name: string, options: { customWireName?: string; onExecute?: 
 	};
 }
 
-/** Mirrors gjc's real `search`: a required `pattern`, no `query`. */
+/** Mirrors vib's real `search`: a required `pattern`, no `query`. */
 function makePatternTool(name: string): PatternTool {
 	return {
 		name,

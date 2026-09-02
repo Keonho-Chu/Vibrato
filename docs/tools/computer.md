@@ -7,7 +7,7 @@
 - Entry: `packages/coding-agent/src/tools/computer.ts`
 - Model-facing prompt: `packages/coding-agent/src/prompts/tools/computer.md`
 - Renderer: `packages/coding-agent/src/tools/computer/render.ts`
-- Native controller: `@gajae-code/natives` `ComputerController`
+- Native controller: `@vib-rato/natives` `ComputerController`
 
 ## Availability
 
@@ -77,9 +77,9 @@ Stable computer error codes include:
 TS handles settings/platform exposure, UX mapping, screenshot persistence, and audit output. Native execution remains the side-effect authority for supervisor state, permissions, display freshness, coordinate validation, cancellation, release-all behavior, and the serialized cursor capture/restore transaction. Whole batches cross the native boundary once; TypeScript does not perform cursor cleanup.
 
 macOS TCC checks apply to the executable that is currently running the tool.
-For source-linked GJC this is normally Bun; for a compiled launch it is the
-compiled `gjc` binary. Grant the permission to that launcher and fully quit
-and relaunch GJC after changing the grant. GJC's macOS development and
+For source-linked Vibrato this is normally Bun; for a compiled launch it is the
+compiled `vib` binary. Grant the permission to that launcher and fully quit
+and relaunch Vibrato after changing the grant. Vibrato's macOS development and
 single-host release builds use a stable ad-hoc designated requirement so a
 rebuild does not silently become a new TCC identity.
 

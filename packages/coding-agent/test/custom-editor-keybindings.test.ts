@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
-import { type AutocompleteProvider, parseKey, setKittyProtocolActive } from "@gajae-code/tui";
+import { type AutocompleteProvider, parseKey, setKittyProtocolActive } from "@vib-rato/tui";
 import { defaultEditorTheme } from "../../tui/test/test-themes";
 import {
 	defaultClipboardPasteImageKeysForPlatform,

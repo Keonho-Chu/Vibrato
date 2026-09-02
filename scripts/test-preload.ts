@@ -7,7 +7,7 @@ import * as path from "node:path";
 // macOS `os.tmpdir()` resolves through the `/var -> /private/var` symlink, and the
 // native owner-only primitive plus the session-storage reparse guard intentionally
 // reject any symlinked path component. Production session roots live under a real
-// home (`~/.gjc`) and never hit this, but tests create sessions under
+// home (`~/.vib`) and never hit this, but tests create sessions under
 // `mkdtemp(os.tmpdir())`, so every such path would trip the strict guards.
 //
 // Canonicalize the temp root once per test process so `os.tmpdir()` (and every
@@ -35,7 +35,7 @@ if (!e2eEnabled) stripAmbientProviderEnvironment(process.env);
 
 // Isolate the agent directory for every test process. `getAgentDir()` (and
 // therefore `Settings.isolated()` and every daemon-path helper) resolves the
-// REAL `~/.gjc/agent` unless GJC_CODING_AGENT_DIR overrides it, so any test
+// REAL `~/.vib/agent` unless VIB_CODING_AGENT_DIR overrides it, so any test
 // with filesystem side effects — notification daemon diagnostics, transition
 // markers, unlink placeholders, the SDK session index — writes into the live
 // operator state of the machine running `bun test`. On dev machines this
@@ -52,9 +52,9 @@ if (!e2eEnabled) stripAmbientProviderEnvironment(process.env);
 const isolation = decideAgentDirIsolation({
 	home: os.homedir(),
 	env: {
-		GJC_CODING_AGENT_DIR: process.env.GJC_CODING_AGENT_DIR,
+		VIB_CODING_AGENT_DIR: process.env.VIB_CODING_AGENT_DIR,
 		PI_CODING_AGENT_DIR: process.env.PI_CODING_AGENT_DIR,
-		GJC_CONFIG_DIR: process.env.GJC_CONFIG_DIR,
+		VIB_CONFIG_DIR: process.env.VIB_CONFIG_DIR,
 		PI_CONFIG_DIR: process.env.PI_CONFIG_DIR,
 	},
 	projectEnv: readProjectEnvFile(process.cwd()),
@@ -62,13 +62,13 @@ const isolation = decideAgentDirIsolation({
 if (isolation.action === "isolate") {
 	let agentDir: string;
 	try {
-		agentDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-test-agent-"));
+		agentDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-test-agent-"));
 	} catch (error) {
 		throw new Error(
 			`Test agent-directory isolation failed (${isolation.reason}); refusing to run tests against the live agent dir: ${String(error)}`,
 		);
 	}
-	process.env.GJC_CODING_AGENT_DIR = agentDir;
+	process.env.VIB_CODING_AGENT_DIR = agentDir;
 	process.env.PI_CODING_AGENT_DIR = agentDir;
 }
 //

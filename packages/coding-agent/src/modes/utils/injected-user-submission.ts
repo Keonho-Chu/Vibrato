@@ -1,4 +1,4 @@
-import type { ImageContent, TextContent } from "@gajae-code/ai/core";
+import type { ImageContent, TextContent } from "@vib-rato/ai/core";
 import type { InteractiveModeContext } from "../types";
 
 /**

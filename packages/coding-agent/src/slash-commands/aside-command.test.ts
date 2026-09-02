@@ -85,7 +85,7 @@ describe("posixQuote", () => {
 	test("selects PowerShell quoting for native Windows MCP commands", () => {
 		const cliPath = "C:\\Users\\demo\\Aside CLI\\aside.exe";
 		expect(formatAsideMcpRegistration(cliPath, "win32")).toContain(
-			`gjc mcp add aside ${windowsPowerShellQuote(cliPath)} mcp --project`,
+			`vib mcp add aside ${windowsPowerShellQuote(cliPath)} mcp --project`,
 		);
 	});
 });
@@ -250,7 +250,7 @@ describe("/aside slash command", () => {
 		const cliPath = "/Users/demo/.aside/cli/Aside CLI.app/Contents/MacOS/aside";
 		expect(await handle({ name: "aside", args: "mcp", text: "/aside mcp" }, runtime)).toEqual({ consumed: true });
 		expect(output).toEqual([formatAsideMcpRegistration(cliPath)]);
-		expect(output[0]).toContain(`gjc mcp add aside ${posixQuote(cliPath)} mcp --project`);
+		expect(output[0]).toContain(`vib mcp add aside ${posixQuote(cliPath)} mcp --project`);
 		expect(output[0]).not.toContain("aside mcp\n");
 	});
 
@@ -270,7 +270,7 @@ describe("/aside slash command", () => {
 		expect(output).toEqual(["Usage: /aside mcp"]);
 	});
 
-	test("repl refuses to run inside GJC", async () => {
+	test("repl refuses to run inside Vibrato", async () => {
 		const handle = createAsideHandler({
 			homedir: () => "/Users/demo",
 			isExecutable: filePath => filePath === "/Users/demo/.local/bin/aside",

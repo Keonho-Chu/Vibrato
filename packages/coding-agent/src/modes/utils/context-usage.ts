@@ -1,12 +1,12 @@
-import type { AgentMessage } from "@gajae-code/agent-core";
-import type { CompactionSettings } from "@gajae-code/agent-core/compaction";
+import type { AgentMessage } from "@vib-rato/agent-core";
+import type { CompactionSettings } from "@vib-rato/agent-core/compaction";
 import {
 	effectiveReserveTokens,
 	estimateMessageTokensHeuristic,
 	resolveThresholdTokens,
-} from "@gajae-code/agent-core/compaction";
-import type { Model } from "@gajae-code/ai/core";
-import { formatNumber } from "@gajae-code/utils";
+} from "@vib-rato/agent-core/compaction";
+import type { Model } from "@vib-rato/ai/core";
+import { formatNumber } from "@vib-rato/utils";
 import type { AgentSession } from "../../session/agent-session";
 import { computeNonMessageBreakdown } from "../../session/context-estimation";
 import type { theme as Theme } from "../theme/theme";

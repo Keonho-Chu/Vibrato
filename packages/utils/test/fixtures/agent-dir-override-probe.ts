@@ -4,10 +4,10 @@
 // (`setAgentDir` installs an override resolver and cannot install a default one,
 // so an in-process "restore" would latch an override on later tests).
 //
-// `GJC_CODING_AGENT_DIR` decides which lane is under test: set means an explicit
+// `VIB_CODING_AGENT_DIR` decides which lane is under test: set means an explicit
 // operator selection that must stay pinned across a home change, absent means the
 // default agent dir that must follow the resolved home. The second home is
-// supplied by `GJC_PROBE_SECOND_HOME` and installed by mocking `os.homedir()`,
+// supplied by `VIB_PROBE_SECOND_HOME` and installed by mocking `os.homedir()`,
 // which is how a home becomes visible only after module load.
 import { vi } from "bun:test";
 import * as os from "node:os";
@@ -22,13 +22,13 @@ const before = {
 	agentDb: getAgentDbPath(),
 };
 
-const secondHome = process.env.GJC_PROBE_SECOND_HOME;
-if (!secondHome) throw new Error("GJC_PROBE_SECOND_HOME is required");
+const secondHome = process.env.VIB_PROBE_SECOND_HOME;
+if (!secondHome) throw new Error("VIB_PROBE_SECOND_HOME is required");
 vi.spyOn(os, "homedir").mockReturnValue(secondHome);
 
 console.log(
 	JSON.stringify({
-		overrideDeclared: process.env.GJC_CODING_AGENT_DIR ?? null,
+		overrideDeclared: process.env.VIB_CODING_AGENT_DIR ?? null,
 		before,
 		after: {
 			trustedHome: getTrustedHomeDir(),

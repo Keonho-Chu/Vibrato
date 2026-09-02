@@ -2,7 +2,7 @@ import { afterEach, expect, setDefaultTimeout, test, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { closeModelCache, Effort } from "@gajae-code/ai";
+import { closeModelCache, Effort } from "@vib-rato/ai";
 import { YAML } from "bun";
 import { ModelRegistry } from "../src/config/model-registry";
 import { resetSettingsForTest, Settings } from "../src/config/settings";
@@ -29,7 +29,7 @@ const SDK_REQUEST_TIMEOUT_MS = 10_000;
 setDefaultTimeout(30_000);
 
 afterEach(async () => {
-	delete process.env.GJC_NOTIFICATIONS;
+	delete process.env.VIB_NOTIFICATIONS;
 	resetSettingsForTest();
 	vi.restoreAllMocks();
 	if (fixtureCleanup) await cleanupFixtureRoot(fixtureCleanup);
@@ -39,7 +39,7 @@ afterEach(async () => {
 });
 
 test("model.set executes every Q10-advertised selection and persists the public current readback", async () => {
-	tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-sdk-default-model-"));
+	tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-sdk-default-model-"));
 	const agentDir = path.join(tempDir, "agent");
 	const fixtureEnv = createFixtureBrokerEnvironment(tempDir, agentDir);
 	const started = await withFixtureBrokerEnvironment(() =>
@@ -137,7 +137,7 @@ test("model.set executes every Q10-advertised selection and persists the public 
 		maxReasoningModel,
 	]);
 
-	process.env.GJC_NOTIFICATIONS = "1";
+	process.env.VIB_NOTIFICATIONS = "1";
 	const { session } = await createAgentSession({
 		cwd: tempDir,
 		agentDir,
@@ -164,7 +164,7 @@ test("model.set executes every Q10-advertised selection and persists the public 
 	});
 	await initializeExtensions(session, { reportSendError: () => {}, reportRuntimeError: () => {} });
 
-	const endpointFile = path.join(tempDir, ".gjc", "state", "sdk", `${session.sessionId}.json`);
+	const endpointFile = path.join(tempDir, ".vib", "state", "sdk", `${session.sessionId}.json`);
 	const deadline = Date.now() + 4_000;
 	while (!(await Bun.file(endpointFile).exists())) {
 		if (Date.now() > deadline) throw new Error("Timed out starting SDK host");
@@ -257,7 +257,7 @@ test("model.set executes every Q10-advertised selection and persists the public 
 	expect(freshSession.thinkingLevel).toBe(persistedSelection.thinkingLevel);
 }, 30000);
 test("session-only profile restores the starting model without a durable default", async () => {
-	tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-sdk-session-profile-successor-"));
+	tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-sdk-session-profile-successor-"));
 	const agentDir = path.join(tempDir, "agent");
 	const fixtureEnv = createFixtureBrokerEnvironment(tempDir, agentDir);
 	const started = await withFixtureBrokerEnvironment(() =>
@@ -358,8 +358,8 @@ test("session-only profile restores the starting model without a durable default
 	expect(session.model?.id).toBe("initial-model");
 	expect(settings.getGlobal("modelRoles")).toBeUndefined();
 }, 30000);
-test("selecting a synthetic gajae-code profile remains session-scoped across concrete selection and restart", async () => {
-	tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-sdk-synthetic-profile-"));
+test("selecting a synthetic vib-rato profile remains session-scoped across concrete selection and restart", async () => {
+	tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-sdk-synthetic-profile-"));
 	const agentDir = path.join(tempDir, "agent");
 	const fixtureEnv = createFixtureBrokerEnvironment(tempDir, agentDir);
 	const started = await withFixtureBrokerEnvironment(() =>
@@ -531,7 +531,7 @@ test("selecting a synthetic gajae-code profile remains session-scoped across con
 	});
 	await initializeExtensions(session, { reportSendError: () => {}, reportRuntimeError: () => {} });
 
-	const endpointFile = path.join(tempDir, ".gjc", "state", "sdk", `${session.sessionId}.json`);
+	const endpointFile = path.join(tempDir, ".vib", "state", "sdk", `${session.sessionId}.json`);
 	const deadline = Date.now() + 4_000;
 	while (!(await Bun.file(endpointFile).exists())) {
 		if (Date.now() > deadline) throw new Error("Timed out starting SDK host");
@@ -545,20 +545,20 @@ test("selecting a synthetic gajae-code profile remains session-scoped across con
 
 	try {
 		const catalog = (await client.query("Q10")) as { page?: { items: Q10Model[] } };
-		const syntheticRow = catalog.page?.items.find(row => row.provider === "gajae-code" && row.id === "custom-eco");
+		const syntheticRow = catalog.page?.items.find(row => row.provider === "vib-rato" && row.id === "custom-eco");
 		expect(syntheticRow).toMatchObject({
-			provider: "gajae-code",
+			provider: "vib-rato",
 			id: "custom-eco",
 			name: "Custom Eco",
 			reasoning: false,
 			thinking: { validLevels: ["off"] },
 			current: false,
 		});
-		expect(catalog.page?.items.some(row => row.provider === "gajae-code" && row.id === "missing-bare-role")).toBe(
+		expect(catalog.page?.items.some(row => row.provider === "vib-rato" && row.id === "missing-bare-role")).toBe(
 			false,
 		);
 
-		const selection = await client.control("model.set", { id: "gajae-code/custom-eco" });
+		const selection = await client.control("model.set", { id: "vib-rato/custom-eco" });
 		// Q27 remains the full profile catalog and agrees with the Q10
 		// availability facade on the shared authenticated-provider derivation.
 		const profiles = (await client.query("Q27")) as {
@@ -575,8 +575,8 @@ test("selecting a synthetic gajae-code profile remains session-scoped across con
 		// queue (FIFO); a racing config.patch remains durable because session-scoped
 		// activation never rewrites persisted profile-owned settings.
 		const concurrent = await Promise.all([
-			client.control("model.set", { id: "gajae-code/custom-eco" }),
-			client.control("model.set", { id: "gajae-code/custom-eco" }),
+			client.control("model.set", { id: "vib-rato/custom-eco" }),
+			client.control("model.set", { id: "vib-rato/custom-eco" }),
 		]);
 		expect(concurrent.every(result => (result as { ok?: boolean }).ok === true)).toBe(true);
 		const racyPatch = await Promise.all([
@@ -586,7 +586,7 @@ test("selecting a synthetic gajae-code profile remains session-scoped across con
 					cycleOrder: ["default", "executor"],
 				},
 			}),
-			client.control("model.set", { id: "gajae-code/custom-eco" }),
+			client.control("model.set", { id: "vib-rato/custom-eco" }),
 		]);
 		expect((racyPatch[0] as { ok?: boolean }).ok).toBe(true);
 		expect((racyPatch[1] as { ok?: boolean }).ok).toBe(true);
@@ -620,7 +620,7 @@ test("selecting a synthetic gajae-code profile remains session-scoped across con
 		const currentRows = afterCatalog.page?.items.filter(row => row.current);
 		expect(currentRows).toHaveLength(1);
 		expect(currentRows?.[0]).toMatchObject({
-			provider: "gajae-code",
+			provider: "vib-rato",
 			id: "custom-eco",
 			current: true,
 			currentThinkingLevel: "inherit",
@@ -645,18 +645,18 @@ test("selecting a synthetic gajae-code profile remains session-scoped across con
 		await modelRegistry.refresh("offline");
 		expect(modelRegistry.getError?.()).toBeDefined();
 		const errorCatalog = (await client.query("Q10")) as { page?: { items: Q10Model[] } };
-		expect(errorCatalog.page?.items.some(row => row.provider === "gajae-code")).toBe(false);
+		expect(errorCatalog.page?.items.some(row => row.provider === "vib-rato")).toBe(false);
 		expect(errorCatalog.page?.items.some(row => row.provider === "runtime-provider")).toBe(true);
 
 		// Restore a valid configuration so the fresh-launch reapply below works.
 		await fs.writeFile(path.join(agentDir, "models.yml"), modelsYml);
 		await modelRegistry.refresh("offline");
 		expect(modelRegistry.getError?.()).toBeUndefined();
-		await client.control("model.set", { id: "gajae-code/custom-eco" });
+		await client.control("model.set", { id: "vib-rato/custom-eco" });
 		expect(session.getActiveModelProfile()).toBe("custom-eco");
 
-		// Reserved-namespace collision: a real provider named `gajae-code` makes
-		// `gajae-code/*` ids ambiguous, so Q10 must not advertise ANY row from
+		// Reserved-namespace collision: a real provider named `vib-rato` makes
+		// `vib-rato/*` ids ambiguous, so Q10 must not advertise ANY row from
 		// that namespace — neither the colliding provider's concrete models nor
 		// synthetic profiles — while other providers stay queryable.
 		await fs.writeFile(
@@ -679,7 +679,7 @@ test("selecting a synthetic gajae-code profile remains session-scoped across con
 							},
 						],
 					},
-					"gajae-code": {
+					"vib-rato": {
 						baseUrl: "http://127.0.0.1:9/v1",
 						apiKey: "RUNTIME_KEY",
 						api: "openai-completions",
@@ -717,14 +717,14 @@ test("selecting a synthetic gajae-code profile remains session-scoped across con
 		vi.spyOn(modelRegistry, "getAll").mockReturnValue([
 			initialModel,
 			modelRegistry.find("runtime-provider", "reasoning-model")!,
-			modelRegistry.find("gajae-code", "shadow-model")!,
+			modelRegistry.find("vib-rato", "shadow-model")!,
 		]);
 		const collisionCatalog = (await client.query("Q10")) as { page?: { items: Q10Model[] } };
-		expect(collisionCatalog.page?.items.some(row => row.provider === "gajae-code")).toBe(false);
+		expect(collisionCatalog.page?.items.some(row => row.provider === "vib-rato")).toBe(false);
 		expect(collisionCatalog.page?.items.some(row => row.provider === "runtime-provider")).toBe(true);
-		expect(
-			collisionCatalog.page?.items.some(row => row.provider === "gajae-code" && row.id === "broken-default"),
-		).toBe(false);
+		expect(collisionCatalog.page?.items.some(row => row.provider === "vib-rato" && row.id === "broken-default")).toBe(
+			false,
+		);
 		// An already-active synthetic profile must not reinstate a collided
 		// synthetic value through Q13/ACP current-value fallback.
 		const collisionConfig = (await client.query("Q13")) as { page?: { items: unknown[] } };
@@ -752,7 +752,7 @@ test("selecting a synthetic gajae-code profile remains session-scoped across con
 			modelRegistry.find("runtime-provider", "architect-model")!,
 		]);
 		expect(modelRegistry.getError?.()).toBeUndefined();
-		await client.control("model.set", { id: "gajae-code/custom-eco" });
+		await client.control("model.set", { id: "vib-rato/custom-eco" });
 		expect(session.getActiveModelProfile()).toBe("custom-eco");
 		expect(settings.get("task.agentModelOverrides")).toEqual({
 			executor: "runtime-provider/executor-model",
@@ -776,7 +776,7 @@ test("selecting a synthetic gajae-code profile remains session-scoped across con
 		// successor session reports its own concrete model as current. Verify
 		// directly on the session because the SDK endpoint closes on the
 		// identity rotation.
-		await client.control("model.set", { id: "gajae-code/custom-eco" });
+		await client.control("model.set", { id: "vib-rato/custom-eco" });
 		expect(session.getActiveModelProfile()).toBe("custom-eco");
 		expect(settings.get("task.agentModelOverrides")).toEqual({
 			executor: "runtime-provider/executor-model",
@@ -843,7 +843,7 @@ test("selecting a synthetic gajae-code profile remains session-scoped across con
 	// A fresh launch must not inherit a profile selected through ACP. The fresh
 	// session does not need an SDK endpoint, so disable hosting to avoid an
 	// async discovery-file write racing fixture-root removal during cleanup.
-	process.env.GJC_SDK_DISABLE = "1";
+	process.env.VIB_SDK_DISABLE = "1";
 	const { session: freshSession } = await createAgentSession({
 		cwd: tempDir,
 		agentDir,

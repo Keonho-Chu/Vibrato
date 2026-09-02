@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { prompt } from "@gajae-code/utils";
+import { prompt } from "@vib-rato/utils";
 import { AgentProtocolHandler } from "../../src/internal-urls/agent-protocol";
 import taskSummaryTemplate from "../../src/prompts/tools/task-summary.md" with { type: "text" };
 import {
@@ -435,7 +435,7 @@ describe("task result receipts", () => {
 		// exactly as it trusts setupFailure summaries.
 		const summary = createLocalErrorSummary(
 			"local_snapshot_failure",
-			"boom Authorization: Bearer sk-ant-abcdefghijklmnopqrst1234 at /Users/veritas/.gjc/secrets.env",
+			"boom Authorization: Bearer sk-ant-abcdefghijklmnopqrst1234 at /Users/veritas/.vib/secrets.env",
 		);
 		expect(summary.kind).toBe("local_snapshot_failure");
 		expect(summary.summary).not.toContain("sk-ant-abcdefghijklmnopqrst1234");

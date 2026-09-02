@@ -1,9 +1,9 @@
 {
-  "Name": "Gajae Code + cmux Control",
+  "Name": "Vibrato + cmux Control",
   "Version": "1.0.0",
-  "Author": "Gajae Code",
-  "Description": "Navigate cmux windows, tabs, panes, and surfaces; control the focused Gajae Code SDK session.",
-  "Category": "Gajae Code",
+  "Author": "Vibrato",
+  "Description": "Navigate cmux windows, tabs, panes, and surfaces; control the focused Vibrato SDK session.",
+  "Category": "Vibrato",
   "CategoryIcon": "images/category",
   "CodePathMac": "bin/plugin",
   "Icon": "images/category",
@@ -19,10 +19,10 @@
   ],
   "Actions": [
     {
-      "Name": "Live GJC Session",
-      "UUID": "dev.gajae.streamdeck.session",
+      "Name": "Live Vibrato Session",
+      "UUID": "dev.vibrato.streamdeck.session",
       "Icon": "images/live",
-      "Tooltip": "Focus a live GJC SDK session in cmux or Ghostty.",
+      "Tooltip": "Focus a live Vibrato SDK session in cmux or Ghostty.",
       "Controllers": [
         "Keypad"
       ],
@@ -36,9 +36,9 @@
     },
     {
       "Name": "Refresh Sessions",
-      "UUID": "dev.gajae.streamdeck.refresh",
+      "UUID": "dev.vibrato.streamdeck.refresh",
       "Icon": "images/refresh",
-      "Tooltip": "Refresh live GJC SDK session discovery.",
+      "Tooltip": "Refresh live Vibrato SDK session discovery.",
       "Controllers": [
         "Keypad"
       ],
@@ -52,9 +52,9 @@
     },
     {
       "Name": "Steer from Clipboard",
-      "UUID": "dev.gajae.streamdeck.steer",
+      "UUID": "dev.vibrato.streamdeck.steer",
       "Icon": "images/steer",
-      "Tooltip": "Send clipboard text to turn.steer on the selected GJC SDK session.",
+      "Tooltip": "Send clipboard text to turn.steer on the selected Vibrato SDK session.",
       "Controllers": [
         "Keypad"
       ],
@@ -68,9 +68,9 @@
     },
     {
       "Name": "Follow Up from Clipboard",
-      "UUID": "dev.gajae.streamdeck.follow",
+      "UUID": "dev.vibrato.streamdeck.follow",
       "Icon": "images/follow",
-      "Tooltip": "Queue clipboard text through turn.follow_up on the selected GJC SDK session.",
+      "Tooltip": "Queue clipboard text through turn.follow_up on the selected Vibrato SDK session.",
       "Controllers": [
         "Keypad"
       ],
@@ -84,9 +84,9 @@
     },
     {
       "Name": "Escape Twice",
-      "UUID": "dev.gajae.streamdeck.abort",
+      "UUID": "dev.vibrato.streamdeck.abort",
       "Icon": "images/abort-esc2",
-      "Tooltip": "Send Escape twice with a 100ms gap to the focused GJC cmux tab.",
+      "Tooltip": "Send Escape twice with a 100ms gap to the focused Vibrato cmux tab.",
       "Controllers": [
         "Keypad"
       ],
@@ -100,7 +100,7 @@
     },
     {
       "Name": "cmux Navigation",
-      "UUID": "dev.gajae.streamdeck.cmux-nav",
+      "UUID": "dev.vibrato.streamdeck.cmux-nav",
       "Icon": "images/cmux-statusWindow",
       "Tooltip": "Navigate cmux windows, workspaces, panes, and surfaces.",
       "Controllers": [
@@ -115,10 +115,10 @@
       ]
     },
     {
-      "Name": "Focused GJC Skill",
-      "UUID": "dev.gajae.streamdeck.skill",
+      "Name": "Focused Vibrato Skill",
+      "UUID": "dev.vibrato.streamdeck.skill",
       "Icon": "images/skill-ralplan",
-      "Tooltip": "Run a skill through the GJC SDK session focused in cmux.",
+      "Tooltip": "Run a skill through the Vibrato SDK session focused in cmux.",
       "Controllers": [
         "Keypad"
       ],
@@ -131,10 +131,10 @@
       ]
     },
     {
-      "Name": "Launch GJC Preset",
-      "UUID": "dev.gajae.streamdeck.launch-preset",
+      "Name": "Launch Vibrato Preset",
+      "UUID": "dev.vibrato.streamdeck.launch-preset",
       "Icon": "images/preset-frontier-heavy",
-      "Tooltip": "Launch GJC with a model preset in a new tab of the focused cmux pane.",
+      "Tooltip": "Launch Vibrato with a model preset in a new tab of the focused cmux pane.",
       "Controllers": [
         "Keypad"
       ],
@@ -147,10 +147,10 @@
       ]
     },
     {
-      "Name": "Focused GJC Status",
-      "UUID": "dev.gajae.streamdeck.focused-status",
+      "Name": "Focused Vibrato Status",
+      "UUID": "dev.vibrato.streamdeck.focused-status",
       "Icon": "images/focused-text",
-      "Tooltip": "Shows whether the focused cmux tab is a GJC session.",
+      "Tooltip": "Shows whether the focused cmux tab is a Vibrato session.",
       "Controllers": [
         "Keypad"
       ],
@@ -163,10 +163,10 @@
       ]
     },
     {
-      "Name": "Detailed GJC Control",
-      "UUID": "dev.gajae.streamdeck.control",
+      "Name": "Detailed Vibrato Control",
+      "UUID": "dev.vibrato.streamdeck.control",
       "Icon": "images/control-model",
-      "Tooltip": "Send a common keybinding or slash command to the focused GJC cmux tab.",
+      "Tooltip": "Send a common keybinding or slash command to the focused Vibrato cmux tab.",
       "Controllers": [
         "Keypad"
       ],

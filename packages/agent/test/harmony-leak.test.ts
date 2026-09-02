@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import type { AssistantMessage, Model, ToolCall } from "@gajae-code/ai";
-import { getBundledModel } from "@gajae-code/ai";
+import type { AssistantMessage, Model, ToolCall } from "@vib-rato/ai";
+import { getBundledModel } from "@vib-rato/ai";
 import {
 	createHarmonyAuditEvent,
 	detectHarmonyLeak,

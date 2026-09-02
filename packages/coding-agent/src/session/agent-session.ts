@@ -48,9 +48,9 @@ import {
 	resolveTelemetry,
 	type StablePrefixSnapshot,
 	ThinkingLevel,
-} from "@gajae-code/agent-core";
-import { ESCAPED_NONASCII_RECOVERY_PROMPT, normalizeMessagesForProvider } from "@gajae-code/agent-core/agent-loop";
-import type { AttemptRunHandle, AttemptScope, AttemptScopeAuthority } from "@gajae-code/agent-core/attempt-scope";
+} from "@vib-rato/agent-core";
+import { ESCAPED_NONASCII_RECOVERY_PROMPT, normalizeMessagesForProvider } from "@vib-rato/agent-core/agent-loop";
+import type { AttemptRunHandle, AttemptScope, AttemptScopeAuthority } from "@vib-rato/agent-core/attempt-scope";
 import {
 	AUTO_HANDOFF_THRESHOLD_FOCUS,
 	CompactionCancelledError,
@@ -72,7 +72,7 @@ import {
 	type RemoteCompactionFallbackHealthHooks,
 	type SummaryOptions,
 	shouldCompact,
-} from "@gajae-code/agent-core/compaction";
+} from "@vib-rato/agent-core/compaction";
 import {
 	commitToolOutputPrune,
 	createPrunedNotice,
@@ -83,7 +83,7 @@ import {
 	pruneAssistantToolArguments,
 	shouldRunMaintenancePrune,
 	type ToolOutputPruneEvictionHandle,
-} from "@gajae-code/agent-core/compaction/pruning";
+} from "@vib-rato/agent-core/compaction/pruning";
 import type {
 	AssistantMessage,
 	AttemptScopeRef,
@@ -106,7 +106,7 @@ import type {
 	Usage,
 	UsageReport,
 	UserMessage,
-} from "@gajae-code/ai/core";
+} from "@vib-rato/ai/core";
 import {
 	classifyContextOverflow,
 	getSupportedEfforts,
@@ -116,8 +116,8 @@ import {
 	modelSupportsServiceTier,
 	modelsAreEqual,
 	streamSimple,
-} from "@gajae-code/ai/core";
-import { normalizeAnthropicBaseUrl } from "@gajae-code/ai/providers/anthropic";
+} from "@vib-rato/ai/core";
+import { normalizeAnthropicBaseUrl } from "@vib-rato/ai/providers/anthropic";
 import {
 	type AuthDisposition,
 	beginAttempt,
@@ -127,7 +127,7 @@ import {
 	type FallbackTriggerClass,
 	SERVER_OVERLOADED_PROVIDER_CODE,
 	STREAM_FIRST_EVENT_TIMEOUT_PROVIDER_CODE,
-} from "@gajae-code/ai/utils/fallback-transport";
+} from "@vib-rato/ai/utils/fallback-transport";
 import { AttemptRecordStore } from "./attempt-record-store";
 import {
 	BTW_MAX_ANSWER_UTF8_BYTES,
@@ -181,9 +181,9 @@ export interface ForkContextSeedOptions {
 	signal?: AbortSignal;
 }
 
-import type { AuthCredentialSelector } from "@gajae-code/ai/core";
-import { isFoundryEnabled } from "@gajae-code/ai/utils/foundry";
-import type { MacOSPowerAssertion } from "@gajae-code/natives";
+import type { AuthCredentialSelector } from "@vib-rato/ai/core";
+import { isFoundryEnabled } from "@vib-rato/ai/utils/foundry";
+import type { MacOSPowerAssertion } from "@vib-rato/natives";
 import {
 	$pickCredentialEnv,
 	extractRetryHint,
@@ -194,7 +194,7 @@ import {
 	logger,
 	prompt,
 	Snowflake,
-} from "@gajae-code/utils";
+} from "@vib-rato/utils";
 import { createAppendOnlyContextManager, resolveAppendOnlyMode } from "../append-only-mode";
 import {
 	type AsyncJob,
@@ -215,11 +215,11 @@ import {
 } from "../config/model-profile-contract";
 import { resolveProfileBindings } from "../config/model-profiles";
 import {
-	GJC_MODEL_ASSIGNMENT_TARGETS,
 	isAuthenticated,
 	kNoAuth,
 	MODEL_ROLE_IDS,
 	type ModelRegistry,
+	VIB_MODEL_ASSIGNMENT_TARGETS,
 } from "../config/model-registry";
 import {
 	extractExplicitThinkingSelector,
@@ -283,14 +283,6 @@ import {
 	type ExtensionTranscriptEntry,
 } from "../extensibility/extensions/types";
 import { ExtensionToolWrapper } from "../extensibility/extensions/wrapper";
-import {
-	type LoadedSubskillActivation,
-	resolveSubskillActivationForSkillInvocation,
-} from "../extensibility/gjc-plugins";
-import { resolveCurrentPhaseForParent } from "../extensibility/gjc-plugins/injection";
-import type { GjcRuntimeSnapshotProvider } from "../extensibility/gjc-plugins/runtime-quarantine";
-import { readActiveSubskillsForParent, toActiveSubskillEntry } from "../extensibility/gjc-plugins/state";
-import { loadActiveSubskillTools } from "../extensibility/gjc-plugins/tools";
 import type { HookCommandContext } from "../extensibility/hooks/types";
 import type { SessionSwitchEvent } from "../extensibility/shared-events";
 import {
@@ -301,34 +293,14 @@ import {
 	type SkillWarning,
 } from "../extensibility/skills";
 import { expandSlashCommand, type FileSlashCommand } from "../extensibility/slash-commands";
-import { assertDeepInterviewIntentManifest } from "../gjc-runtime/deep-interview-state";
-import { buildGjcRuntimeSessionEnv, consumePendingGoalModeRequest } from "../gjc-runtime/goal-mode-request";
 import {
-	isMemoryGuardClaimsLease,
-	isMemoryGuardClaimsLeaseForStateDir,
-	type MemoryGuardClaimsLease,
-} from "../gjc-runtime/memory-guard-owner-claims";
-import {
-	assertNonEmptyGjcSessionId,
-	modeStatePath as sessionModeStatePath,
-	sessionStateDir,
-} from "../gjc-runtime/session-layout";
-import {
-	type CoordinatorToolObservation,
-	ownerTerminalContextFromEnvironment,
-	persistCoordinatorRuntimeStateFromEvent,
-	persistCoordinatorWorkerIntegrationOutcome,
-	registerCoordinatorRuntimeStateFinalizer,
-	UNPROVEN_TOOL_LABEL,
-} from "../gjc-runtime/session-state-sidecar";
-import {
-	isWorkflowRecoveryStalled,
-	projectLatestRalplanRun,
-	projectUltragoalRun,
-	trackWorkflowRecoveryZeroProgress,
-	type WorkflowRecoveryProjection,
-	type WorkflowRecoveryZeroProgressMemory,
-} from "../gjc-runtime/workflow-recovery-projection";
+	type LoadedSubskillActivation,
+	resolveSubskillActivationForSkillInvocation,
+} from "../extensibility/vib-plugins";
+import { resolveCurrentPhaseForParent } from "../extensibility/vib-plugins/injection";
+import type { VibRuntimeSnapshotProvider } from "../extensibility/vib-plugins/runtime-quarantine";
+import { readActiveSubskillsForParent, toActiveSubskillEntry } from "../extensibility/vib-plugins/state";
+import { loadActiveSubskillTools } from "../extensibility/vib-plugins/tools";
 import { GoalRuntime } from "../goals/runtime";
 import type { Goal, GoalModeState } from "../goals/state";
 import type { HindsightSessionState } from "../hindsight/state";
@@ -373,7 +345,7 @@ import { sanitizePromptFailure } from "../sdk/prompt-failure";
 import type { SecretObfuscator } from "../secrets/obfuscator";
 import { formatNoCredentialOnboardingError, formatNoModelOnboardingError } from "../setup/model-onboarding-guidance";
 import {
-	isCanonicalGjcWorkflowSkill,
+	isCanonicalVibWorkflowSkill,
 	isWorkflowContinuationInert,
 	readVisibleSkillActiveState,
 	syncSkillActiveState,
@@ -414,6 +386,34 @@ import { type EditMode, resolveEditMode } from "../utils/edit-mode";
 import { resolveFileDisplayMode } from "../utils/file-display-mode";
 import { extractFileMentions, generateFileMentionMessages } from "../utils/file-mentions";
 import { buildNamedToolChoice, buildNamedToolChoiceResult } from "../utils/tool-choice";
+import { assertDeepInterviewIntentManifest } from "../vib-runtime/deep-interview-state";
+import { buildVibRuntimeSessionEnv, consumePendingGoalModeRequest } from "../vib-runtime/goal-mode-request";
+import {
+	isMemoryGuardClaimsLease,
+	isMemoryGuardClaimsLeaseForStateDir,
+	type MemoryGuardClaimsLease,
+} from "../vib-runtime/memory-guard-owner-claims";
+import {
+	assertNonEmptyVibSessionId,
+	modeStatePath as sessionModeStatePath,
+	sessionStateDir,
+} from "../vib-runtime/session-layout";
+import {
+	type CoordinatorToolObservation,
+	ownerTerminalContextFromEnvironment,
+	persistCoordinatorRuntimeStateFromEvent,
+	persistCoordinatorWorkerIntegrationOutcome,
+	registerCoordinatorRuntimeStateFinalizer,
+	UNPROVEN_TOOL_LABEL,
+} from "../vib-runtime/session-state-sidecar";
+import {
+	isWorkflowRecoveryStalled,
+	projectLatestRalplanRun,
+	projectUltragoalRun,
+	trackWorkflowRecoveryZeroProgress,
+	type WorkflowRecoveryProjection,
+	type WorkflowRecoveryZeroProgressMemory,
+} from "../vib-runtime/workflow-recovery-projection";
 import { buildWorkflowIntentDiff, WORKFLOW_INTENT_DIFF_CUSTOM_TYPE } from "../workflow/workflow-intent-diff";
 import { buildWorkspaceTree, type WorkspaceTree } from "../workspace-tree";
 import type { AuthStorage } from "./auth-storage";
@@ -683,7 +683,7 @@ function buildWorkflowRecoveryContinuationPrompt(
 		"</workflow-recovery>",
 		"",
 		"Rules:",
-		"- Reload this contract before acting; the durable workflow state (.gjc session state, plans, goals, ledger receipts) is authoritative over any summary prose.",
+		"- Reload this contract before acting; the durable workflow state (.vib session state, plans, goals, ledger receipts) is authoritative over any summary prose.",
 		"- Resume the stated next action class unless the user's latest message supersedes it; user intent always wins.",
 		"- Do not expand accepted scope. Work beyond the accepted scope/non-goals must be classified as new scope and explicitly recorded (durable blocker or steering), never silently accepted.",
 		"- Do not repeat already-verified review generations when the recorded source hash and evidence basis are unchanged; continue from recorded progress instead.",
@@ -1718,7 +1718,7 @@ function buildSessionMetadata(
 			// is derived solely from the OAuth UUID the user already consented to
 			// share with Anthropic. Omitted when no OAuth credential is available
 			// (API-key callers) to avoid sending a hash of an empty string.
-			userId.device_id = crypto.createHash("sha256").update(`gjc-device-id-v1:${accountUuid}`).digest("hex");
+			userId.device_id = crypto.createHash("sha256").update(`vib-device-id-v1:${accountUuid}`).digest("hex");
 		}
 	}
 	return { user_id: JSON.stringify(userId) };
@@ -2954,8 +2954,8 @@ export class AgentSession {
 	#selectedDiscoveredToolNames = new Set<string>();
 	#baselineDiscoveredBuiltinToolNames = new Set<string>();
 	#discoverableToolAllowedNames: ReadonlySet<string> | undefined;
-	#gjcSubskillToolNames = new Set<string>();
-	#gjcSubskillToolSignature: string | undefined;
+	#vibSubskillToolNames = new Set<string>();
+	#vibSubskillToolSignature: string | undefined;
 	#defaultSelectedMCPServerNames = new Set<string>();
 	#defaultSelectedMCPToolNames = new Set<string>();
 	#mandatoryMCPToolNames = new Set<string>();
@@ -3132,14 +3132,14 @@ export class AgentSession {
 		let cancelledByGeneration = false;
 		this.#powerAssertionLoad = Promise.resolve()
 			.then(() => {
-				const { MacOSPowerAssertion } = require("@gajae-code/natives") as Pick<
-					typeof import("@gajae-code/natives"),
+				const { MacOSPowerAssertion } = require("@vib-rato/natives") as Pick<
+					typeof import("@vib-rato/natives"),
 					"MacOSPowerAssertion"
 				>;
 				cancelledByGeneration = generation !== this.#powerAssertionGeneration;
 				if (this.#powerAssertion || cancelledByGeneration || this.#livePromptsInFlight() === 0) return;
 				this.#powerAssertion = MacOSPowerAssertion.start({
-					reason: "Gajae Code agent session",
+					reason: "Vibrato agent session",
 					idle,
 					system,
 					user,
@@ -4578,13 +4578,13 @@ export class AgentSession {
 		if (
 			inMemory &&
 			(!inMemory.sessionId || inMemory.sessionId === currentSessionId) &&
-			isCanonicalGjcWorkflowSkill(inMemory.skill)
+			isCanonicalVibWorkflowSkill(inMemory.skill)
 		) {
 			return { skill: inMemory.skill, sessionId: inMemory.sessionId ?? currentSessionId };
 		}
 		if (
 			this.#restoredWorkflowSkillState?.sessionId === currentSessionId &&
-			isCanonicalGjcWorkflowSkill(this.#restoredWorkflowSkillState.skill)
+			isCanonicalVibWorkflowSkill(this.#restoredWorkflowSkillState.skill)
 		) {
 			return this.#restoredWorkflowSkillState;
 		}
@@ -4632,12 +4632,12 @@ export class AgentSession {
 	getActiveSkillPhase(): string | undefined {
 		const active = this.#activeSkillState;
 		if (!active) return undefined;
-		if (!isCanonicalGjcWorkflowSkill(active.skill)) return undefined;
+		if (!isCanonicalVibWorkflowSkill(active.skill)) return undefined;
 		const sessionId = active.sessionId ?? this.sessionManager.getSessionId();
 		try {
-			assertNonEmptyGjcSessionId(sessionId, "AgentSession.getActiveSkillPhase");
+			assertNonEmptyVibSessionId(sessionId, "AgentSession.getActiveSkillPhase");
 			// Keep the session-state-dir construction explicit here so the chain guard
-			// refuses to fall back to a legacy root `.gjc/state` read.
+			// refuses to fall back to a legacy root `.vib/state` read.
 			const stateDir = sessionStateDir(this.sessionManager.getCwd(), sessionId);
 			const filePath = path.join(
 				stateDir,
@@ -4656,7 +4656,7 @@ export class AgentSession {
 		const active = this.getEffectiveActiveWorkflowSkillState();
 		if (active?.skill !== "deep-interview") return undefined;
 		try {
-			assertNonEmptyGjcSessionId(currentSessionId, "AgentSession.getDeepInterviewAskStage");
+			assertNonEmptyVibSessionId(currentSessionId, "AgentSession.getDeepInterviewAskStage");
 			const stateDir = sessionStateDir(this.sessionManager.getCwd(), currentSessionId);
 			const filePath = path.join(
 				stateDir,
@@ -5082,7 +5082,7 @@ export class AgentSession {
 	 *  Does NOT push to the agent's steering/followUp queue — that happens
 	 *  separately inside `sendCustomMessage`. */
 	enqueueCustomMessageDisplay(text: string, mode: "steer" | "followUp"): string {
-		const tag = `gjc-cmd-${Date.now()}-${++this.#customDisplayTagCounter}`;
+		const tag = `vib-cmd-${Date.now()}-${++this.#customDisplayTagCounter}`;
 		const displayText = text.trim();
 		if (!displayText) return tag;
 		const entry = this.#createQueuedDisplayEntry(displayText, tag);
@@ -5966,7 +5966,7 @@ export class AgentSession {
 									text: [
 										"Session transcript reached the managed per-file limit; this result could not be recorded durably.",
 										committed,
-										"Continue by compacting the session (`/compact`) or exporting to a fresh session (`gjc export <session-file>`); re-verify the edited file before relying on it.",
+										"Continue by compacting the session (`/compact`) or exporting to a fresh session (`vib export <session-file>`); re-verify the edited file before relying on it.",
 									].join("\n"),
 								},
 							];
@@ -6128,7 +6128,7 @@ export class AgentSession {
 				await this.#goalRuntime.onToolCompleted(event.toolName);
 			}
 			if (event.toolName === "bash" && !event.isError) {
-				await this.#activatePendingGjcGoalModeRequest();
+				await this.#activatePendingVibGoalModeRequest();
 			}
 		}
 		if (event.type === "turn_end" && this.#pendingRewindReport) {
@@ -9695,7 +9695,7 @@ export class AgentSession {
 		});
 	}
 
-	async #hasActiveGjcSubskillTools(parent: string, sessionId: string | undefined): Promise<boolean> {
+	async #hasActiveVibSubskillTools(parent: string, sessionId: string | undefined): Promise<boolean> {
 		if (!parent.trim()) return false;
 		const cwd = this.sessionManager.getCwd();
 		const phase = await resolveCurrentPhaseForParent({ cwd, sessionId, parent });
@@ -9718,7 +9718,7 @@ export class AgentSession {
 		};
 	}
 
-	#computeGjcSubskillToolSignature(tools: CustomTool[]): string {
+	#computeVibSubskillToolSignature(tools: CustomTool[]): string {
 		return tools
 			.map(tool => `${tool.name}\u0000${tool.description}\u0000${JSON.stringify(tool.parameters)}`)
 			.sort()
@@ -9728,7 +9728,7 @@ export class AgentSession {
 	/**
 	 * Refresh plugin sub-skill tools after workflow/sub-skill activation or phase changes.
 	 */
-	async refreshGjcSubskillTools(): Promise<void> {
+	async refreshVibSubskillTools(): Promise<void> {
 		const activeState = await readVisibleSkillActiveState(
 			this.sessionManager.getCwd(),
 			this.sessionManager.getSessionId(),
@@ -9739,16 +9739,16 @@ export class AgentSession {
 			activeState?.active_skills?.find(entry => entry.active !== false)?.skill;
 		const parent = activeSkill?.trim();
 		if (!parent) {
-			if (this.#gjcSubskillToolNames.size === 0) return;
-			const previousGjcSubskillToolNames = new Set(this.#gjcSubskillToolNames);
+			if (this.#vibSubskillToolNames.size === 0) return;
+			const previousVibSubskillToolNames = new Set(this.#vibSubskillToolNames);
 			const previousActiveToolNames = this.getActiveToolNames();
-			for (const name of previousGjcSubskillToolNames) {
+			for (const name of previousVibSubskillToolNames) {
 				this.#toolRegistry.delete(name);
 			}
-			this.#gjcSubskillToolNames.clear();
+			this.#vibSubskillToolNames.clear();
 			this.#invalidateDiscoveryCaches();
 			await this.#applyActiveToolsByName(
-				previousActiveToolNames.filter(name => !previousGjcSubskillToolNames.has(name)),
+				previousActiveToolNames.filter(name => !previousVibSubskillToolNames.has(name)),
 			);
 			return;
 		}
@@ -9756,31 +9756,31 @@ export class AgentSession {
 		const cwd = this.sessionManager.getCwd();
 		const sessionId =
 			this.#activeSkillState?.sessionId ?? activeState?.session_id ?? this.sessionManager.getSessionId();
-		if (this.#gjcSubskillToolNames.size === 0 && !(await this.#hasActiveGjcSubskillTools(parent, sessionId))) return;
+		if (this.#vibSubskillToolNames.size === 0 && !(await this.#hasActiveVibSubskillTools(parent, sessionId))) return;
 
 		const phase = await resolveCurrentPhaseForParent({ cwd, sessionId, parent });
 		const reservedToolNames = Array.from(this.#toolRegistry.keys()).filter(
-			name => !this.#gjcSubskillToolNames.has(name),
+			name => !this.#vibSubskillToolNames.has(name),
 		);
 		const customTools = await loadActiveSubskillTools({ cwd, sessionId, parent, phase, reservedToolNames });
 		const nextToolNames = customTools.map(tool => tool.name);
 		const uniqueToolNames = new Set(nextToolNames);
 		if (uniqueToolNames.size !== nextToolNames.length) {
-			throw new Error("GJC sub-skill tool names must be unique");
+			throw new Error("Vibrato sub-skill tool names must be unique");
 		}
 
-		const previousGjcSubskillToolNames = new Set(this.#gjcSubskillToolNames);
-		const nextSignature = this.#computeGjcSubskillToolSignature(customTools);
-		if (this.#gjcSubskillToolSignature === nextSignature) {
+		const previousVibSubskillToolNames = new Set(this.#vibSubskillToolNames);
+		const nextSignature = this.#computeVibSubskillToolSignature(customTools);
+		if (this.#vibSubskillToolSignature === nextSignature) {
 			return;
 		}
 
 		const previousActiveToolNames = this.getActiveToolNames();
-		for (const name of previousGjcSubskillToolNames) {
+		for (const name of previousVibSubskillToolNames) {
 			this.#toolRegistry.delete(name);
 		}
-		this.#gjcSubskillToolNames.clear();
-		this.#gjcSubskillToolSignature = undefined;
+		this.#vibSubskillToolNames.clear();
+		this.#vibSubskillToolSignature = undefined;
 
 		const getCustomToolContext = () => this.#getCustomToolContext();
 		for (const customTool of customTools) {
@@ -9789,26 +9789,26 @@ export class AgentSession {
 				this.#extensionRunner ? new ExtensionToolWrapper(wrapped, this.#extensionRunner) : wrapped
 			) as AgentTool;
 			this.#toolRegistry.set(finalTool.name, finalTool);
-			this.#gjcSubskillToolNames.add(finalTool.name);
+			this.#vibSubskillToolNames.add(finalTool.name);
 		}
-		this.#gjcSubskillToolSignature = nextSignature;
+		this.#vibSubskillToolSignature = nextSignature;
 
 		this.#invalidateDiscoveryCaches();
-		const activeNonGjcSubskillToolNames = previousActiveToolNames.filter(
-			name => !previousGjcSubskillToolNames.has(name),
+		const activeNonVibSubskillToolNames = previousActiveToolNames.filter(
+			name => !previousVibSubskillToolNames.has(name),
 		);
-		const preservedGjcSubskillToolNames = previousActiveToolNames.filter(
-			name => previousGjcSubskillToolNames.has(name) && this.#gjcSubskillToolNames.has(name),
+		const preservedVibSubskillToolNames = previousActiveToolNames.filter(
+			name => previousVibSubskillToolNames.has(name) && this.#vibSubskillToolNames.has(name),
 		);
-		const autoActivatedGjcSubskillToolNames = customTools
-			.filter(tool => !tool.hidden && !previousGjcSubskillToolNames.has(tool.name))
+		const autoActivatedVibSubskillToolNames = customTools
+			.filter(tool => !tool.hidden && !previousVibSubskillToolNames.has(tool.name))
 			.map(tool => tool.name);
 		await this.#applyActiveToolsByName(
 			Array.from(
 				new Set([
-					...activeNonGjcSubskillToolNames,
-					...preservedGjcSubskillToolNames,
-					...autoActivatedGjcSubskillToolNames,
+					...activeNonVibSubskillToolNames,
+					...preservedVibSubskillToolNames,
+					...autoActivatedVibSubskillToolNames,
 				]),
 			),
 		);
@@ -10378,7 +10378,7 @@ export class AgentSession {
 	}
 
 	#constructWorkflowGateEmitter(sessionId = this.sessionManager.getSessionId()): WorkflowGateEmitter {
-		assertNonEmptyGjcSessionId(sessionId, "AgentSession workflow-gate session");
+		assertNonEmptyVibSessionId(sessionId, "AgentSession workflow-gate session");
 		const gateStore =
 			this.#workflowGatePublication === "endpoint" && this.sessionManager.isPersisted()
 				? new FileGateStore(
@@ -10505,7 +10505,7 @@ export class AgentSession {
 			// a predecessor session's workflow state to the current identity.
 			if (this.#isDisposed || this.sessionManager.getSessionId() !== sessionId) return;
 		}
-		if (activeSkill && isCanonicalGjcWorkflowSkill(activeSkill.trim())) {
+		if (activeSkill && isCanonicalVibWorkflowSkill(activeSkill.trim())) {
 			if (!inMemoryActiveSkill) this.#restoredWorkflowSkillState = { skill: activeSkill.trim(), sessionId };
 			this.#attachAskTool();
 		} else if (this.#restoredWorkflowSkillState?.sessionId === sessionId) {
@@ -10596,7 +10596,7 @@ export class AgentSession {
 		);
 	}
 
-	async #activatePendingGjcGoalModeRequest(): Promise<boolean> {
+	async #activatePendingVibGoalModeRequest(): Promise<boolean> {
 		if (this.#explicitEmptyToolSelection) return false;
 		if (!this.settings.get("goal.enabled")) return false;
 		const pendingGoal = await consumePendingGoalModeRequest(
@@ -11072,7 +11072,7 @@ export class AgentSession {
 					: { role: "user" as const, content: userContent, attribution: promptAttribution, timestamp: Date.now() };
 				if (deepInterviewUserIntentEpoch !== undefined)
 					this.#deepInterviewGenuineUserMessageEpochs.set(message, deepInterviewUserIntentEpoch);
-				await this.refreshGjcSubskillTools();
+				await this.refreshVibSubskillTools();
 
 				if (eagerTodoPrelude?.toolChoice) {
 					this.#toolChoiceQueue.pushOnce(eagerTodoPrelude.toolChoice, {
@@ -11115,14 +11115,14 @@ export class AgentSession {
 		// observational state-sync below (whose failures are swallowed by
 		// #syncSkillPromptActiveStateSafely): attach ask first so canonical
 		// workflow skills can always call it.
-		if (active && isCanonicalGjcWorkflowSkill(skill)) this.#attachAskTool();
+		if (active && isCanonicalVibWorkflowSkill(skill)) this.#attachAskTool();
 		const sessionId = this.sessionManager.getSessionId();
-		// Canonical GJC workflow skills (deep-interview, ralplan, ultragoal, autoresearch)
-		// own their `.gjc/state/skill-active-state.json` row through the
-		// `gjc state handoff` and `gjc state clear` runtime verbs. The prompt
+		// Canonical Vibrato workflow skills (deep-interview, ralplan, ultragoal, autoresearch)
+		// own their `.vib/state/skill-active-state.json` row through the
+		// `vib state handoff` and `vib state clear` runtime verbs. The prompt
 		// observer must not overwrite an existing row (that clobbered handoff
 		// lineage `handoff_from`/`handoff_at` and desynced the HUD). But a fresh
-		// `/skill:<name>` invocation has no row yet, so seed `.gjc/state`
+		// `/skill:<name>` invocation has no row yet, so seed `.vib/state`
 		// idempotently here: `ensureWorkflowSkillActivationState` writes the
 		// initial mode-state + active row only when the skill is not already
 		// active, so the mutation guard and Stop hook engage immediately instead
@@ -11159,7 +11159,7 @@ export class AgentSession {
 		this.#restoredWorkflowSkillState = undefined;
 		this.#activeSkillState = active ? { skill, sessionId } : undefined;
 		if (active) {
-			await this.refreshGjcSubskillTools();
+			await this.refreshVibSubskillTools();
 		}
 	}
 
@@ -13007,7 +13007,7 @@ export class AgentSession {
 		return this.#skillsSettings;
 	}
 
-	/** Skills loaded by SDK (always includes bundled GJC workflow defaults unless explicitly overridden by SDK callers) */
+	/** Skills loaded by SDK (always includes bundled Vibrato workflow defaults unless explicitly overridden by SDK callers) */
 	get skills(): readonly Skill[] {
 		return this.#skills;
 	}
@@ -14037,7 +14037,7 @@ export class AgentSession {
 							: message.role === "user"
 								? this.#getUserMessageText(message)
 								: text;
-					await this.refreshGjcSubskillTools();
+					await this.refreshVibSubskillTools();
 					if (message.role === "custom") await this.#syncSkillPromptActiveStateSafely(message, true);
 					if (selected) {
 						const displayTag = message.role === "custom" ? readPendingDisplayTag(message.details) : undefined;
@@ -15946,7 +15946,7 @@ export class AgentSession {
 	 */
 	#rearmFastMode(): void {
 		const { clearAnthropicFastModeFallback } =
-			require("@gajae-code/ai/providers/anthropic") as typeof import("@gajae-code/ai/providers/anthropic");
+			require("@vib-rato/ai/providers/anthropic") as typeof import("@vib-rato/ai/providers/anthropic");
 		clearAnthropicFastModeFallback(this.#providerSessionState);
 		this.#fastModeAutoDisabledProviderKeys.clear();
 	}
@@ -16007,14 +16007,14 @@ export class AgentSession {
 	}
 
 	/**
-	 * Runtime evidence published for the current GJC bundle activation
+	 * Runtime evidence published for the current Vibrato bundle activation
 	 * generation, set once by `createAgentSession` after every producer has run.
 	 * Undefined until that publication happens, so consumers report runtime
 	 * status as unavailable rather than falsely clear.
 	 */
-	gjcRuntimeSnapshot?: GjcRuntimeSnapshotProvider;
+	vibRuntimeSnapshot?: VibRuntimeSnapshotProvider;
 	/** Activation generation a published snapshot must match to be merged. */
-	gjcActivationGeneration?: number;
+	vibActivationGeneration?: number;
 
 	// =========================================================================
 	// Message Queue Mode Management
@@ -17715,8 +17715,8 @@ export class AgentSession {
 		}
 		const stopReason = typeof output?.stopReason === "string" ? output.stopReason : "";
 		if (output?.decision !== "block") return "not_applicable";
-		if (stopReason !== "gjc_skill_deep_interview_interviewing") {
-			if (!stopReason.startsWith("gjc_skill_deep_interview_")) return "not_applicable";
+		if (stopReason !== "vib_skill_deep_interview_interviewing") {
+			if (!stopReason.startsWith("vib_skill_deep_interview_")) return "not_applicable";
 			this.#handledDeepInterviewAssistantIds.add(identity);
 			return "already_handled";
 		}
@@ -17741,7 +17741,7 @@ export class AgentSession {
 			committed = true;
 			const reminder = [
 				"<system-reminder>",
-				`You stopped while the GJC deep-interview workflow is still active (stop gate: ${stopReason}).`,
+				`You stopped while the Vibrato deep-interview workflow is still active (stop gate: ${stopReason}).`,
 				"Continue the active round immediately: score and persist the answered round, report progress, then use the ask tool for the next question.",
 				"Only stop after crystallizing the spec, recording a handoff, or explicitly cancelling the workflow.",
 				`(Continuation ${budget.committed}/2 for this prompt)`,
@@ -18293,7 +18293,7 @@ export class AgentSession {
 		availableModels: Model[],
 		currentModel: Model | undefined,
 	): ResolvedModelRoleValue {
-		const target = GJC_MODEL_ASSIGNMENT_TARGETS[role as keyof typeof GJC_MODEL_ASSIGNMENT_TARGETS];
+		const target = VIB_MODEL_ASSIGNMENT_TARGETS[role as keyof typeof VIB_MODEL_ASSIGNMENT_TARGETS];
 		const roleModelStr =
 			target?.settingsPath === "task.agentModelOverrides"
 				? this.settings.get("task.agentModelOverrides")[role]
@@ -20886,7 +20886,7 @@ export class AgentSession {
 			if (hookResult?.result) {
 				this.recordBashResult(command, hookResult.result, options);
 				if (hookResult.result.exitCode === 0 && !hookResult.result.cancelled) {
-					await this.#activatePendingGjcGoalModeRequest();
+					await this.#activatePendingVibGoalModeRequest();
 				}
 				return hookResult.result;
 			}
@@ -20903,7 +20903,7 @@ export class AgentSession {
 				sessionKey: this.sessionId,
 				cwd,
 				timeout: clampTimeout("bash") * 1000,
-				env: buildGjcRuntimeSessionEnv({
+				env: buildVibRuntimeSessionEnv({
 					sessionFile: null,
 					sessionId: this.sessionId,
 					cwd,
@@ -20913,7 +20913,7 @@ export class AgentSession {
 
 			this.recordBashResult(command, result, options);
 			if (result.exitCode === 0 && !result.cancelled) {
-				await this.#activatePendingGjcGoalModeRequest();
+				await this.#activatePendingVibGoalModeRequest();
 			}
 			return result;
 		} finally {

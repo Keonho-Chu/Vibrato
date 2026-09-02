@@ -1,17 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as path from "node:path";
-import { Agent, type AgentMessage } from "@gajae-code/agent-core";
-import { getBundledModel, type Message } from "@gajae-code/ai";
-import { inferCopilotInitiator } from "@gajae-code/ai/providers/github-copilot-headers";
-import { createMockModel } from "@gajae-code/ai/providers/mock";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import type { ExtensionRunner } from "@gajae-code/coding-agent/extensibility/extensions";
-import { AgentSession } from "@gajae-code/coding-agent/session/agent-session";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { convertToLlm } from "@gajae-code/coding-agent/session/messages";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { TempDir } from "@gajae-code/utils";
+import { Agent, type AgentMessage } from "@vib-rato/agent-core";
+import { getBundledModel, type Message } from "@vib-rato/ai";
+import { inferCopilotInitiator } from "@vib-rato/ai/providers/github-copilot-headers";
+import { createMockModel } from "@vib-rato/ai/providers/mock";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import type { ExtensionRunner } from "@vib-rato/coding-agent/extensibility/extensions";
+import { AgentSession } from "@vib-rato/coding-agent/session/agent-session";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { convertToLlm } from "@vib-rato/coding-agent/session/messages";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { TempDir } from "@vib-rato/utils";
 
 describe("AgentSession before_agent_start attribution fallback", () => {
 	let tempDir: TempDir;

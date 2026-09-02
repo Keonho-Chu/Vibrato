@@ -120,7 +120,7 @@ async function withDaemon(
 	}) => Promise<void>,
 	createStore?: (agentDir: string) => ConversationStore<SlackConversation>,
 ): Promise<void> {
-	const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-slack-bind-"));
+	const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-slack-bind-"));
 	let daemon: SlackNotificationDaemon | undefined;
 	try {
 		const fake = new FakeSlack();
@@ -361,7 +361,7 @@ function recordingHandler(): ChatDaemonCommandHandler & { calls: Array<{ session
 }
 
 async function withCommandDir(run: (agentDir: string) => Promise<void>): Promise<void> {
-	const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-slack-command-"));
+	const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-slack-command-"));
 	try {
 		await run(agentDir);
 	} finally {

@@ -1,5 +1,5 @@
 /**
- * Build the human-readable and `--json` reports for `gjc migrate`.
+ * Build the human-readable and `--json` reports for `vib migrate`.
  *
  * Secret values are never read upstream, so the report only ever contains field
  * names in warnings — but rendering still treats action/warning text as opaque.
@@ -73,7 +73,7 @@ function summarizeCounts(counts: StatusCounts): string {
 export function renderHuman(report: MigrateReport): string {
 	const lines: string[] = [];
 	const mode = report.dryRun ? " (dry-run)" : "";
-	lines.push(`gjc migrate${mode}: ${report.ok ? "ok" : "completed with failures"}`);
+	lines.push(`vib migrate${mode}: ${report.ok ? "ok" : "completed with failures"}`);
 	lines.push(`Sources: ${report.sources.join(", ") || "none"}`);
 	lines.push(`Destination: mcp=${report.destinations.mcpConfigPath} skills=${report.destinations.skillsDir}`);
 	lines.push("");

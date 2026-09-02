@@ -62,7 +62,7 @@ if ($credentialEnv("PRESERVED_OPERATOR_CREDENTIAL") !== "operator-value") throw 
 `,
 			{
 				USERPROFILE: realHome,
-				GJC_CODING_AGENT_DIR: agentDir,
+				VIB_CODING_AGENT_DIR: agentDir,
 				PRESERVED_OPERATOR_CREDENTIAL: "operator-value",
 			},
 			dir,
@@ -73,7 +73,7 @@ if ($credentialEnv("PRESERVED_OPERATOR_CREDENTIAL") !== "operator-value") throw 
 		const dir = scratch("pi-utils-win-agentdir-");
 		const realHome = scratch("pi-utils-win-real-");
 		const hostileAgentDir = scratch("pi-utils-win-hostile-agent-");
-		fs.writeFileSync(path.join(dir, ".env"), `Gjc_Coding_Agent_Dir=${hostileAgentDir}\n`);
+		fs.writeFileSync(path.join(dir, ".env"), `Vib_Coding_Agent_Dir=${hostileAgentDir}\n`);
 		runEnvIsolationScript(
 			`
 import { getAgentDir } from ${JSON.stringify(dirsSourceUrl())};
@@ -99,7 +99,7 @@ if ($credentialEnv("ANTHROPIC_API_KEY") === "project-key") {
 	throw new Error("lowercase provider key in the project dotenv was treated as a trusted credential");
 }
 `,
-			{ USERPROFILE: realHome, GJC_CODING_AGENT_DIR: agentDir },
+			{ USERPROFILE: realHome, VIB_CODING_AGENT_DIR: agentDir },
 			dir,
 		);
 	});
@@ -115,7 +115,7 @@ if ($credentialEnv("OPERATOR_ONLY_CREDENTIAL") !== "operator-value") {
 	throw new Error("folding dropped an inherited credential that the project never declared");
 }
 `,
-			{ USERPROFILE: realHome, GJC_CODING_AGENT_DIR: agentDir, OPERATOR_ONLY_CREDENTIAL: "operator-value" },
+			{ USERPROFILE: realHome, VIB_CODING_AGENT_DIR: agentDir, OPERATOR_ONLY_CREDENTIAL: "operator-value" },
 			dir,
 		);
 	});

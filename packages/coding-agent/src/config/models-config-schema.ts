@@ -57,8 +57,8 @@ export const ModelCompatSchema = z.object({
 // Backward-compatible export for callers that imported the original schema name.
 export const OpenAICompatSchema = ModelCompatSchema;
 
-export const GJC_MODEL_EFFORT_IDS = ["minimal", "low", "medium", "high", "xhigh", "max"] as const;
-export const GJC_MODEL_ASSIGNMENT_TARGET_IDS = [
+export const VIB_MODEL_EFFORT_IDS = ["minimal", "low", "medium", "high", "xhigh", "max"] as const;
+export const VIB_MODEL_ASSIGNMENT_TARGET_IDS = [
 	"default",
 	"executor",
 	"architect",
@@ -66,7 +66,7 @@ export const GJC_MODEL_ASSIGNMENT_TARGET_IDS = [
 	"critic",
 	"image",
 ] as const;
-export const EffortSchema = z.enum(GJC_MODEL_EFFORT_IDS);
+export const EffortSchema = z.enum(VIB_MODEL_EFFORT_IDS);
 const CacheRetentionSchema = z.enum(["none", "short", "long"]);
 
 const ThinkingControlModeSchema = z.enum([
@@ -101,7 +101,7 @@ export const ModelBindingsSchema = z.object({
 	agentModelOverrides: z.record(z.string(), stringOrNonEmptyArray(PermissiveModelSelectorSchema)).optional(),
 });
 
-export const ProfileRoleSchema = z.enum(GJC_MODEL_ASSIGNMENT_TARGET_IDS);
+export const ProfileRoleSchema = z.enum(VIB_MODEL_ASSIGNMENT_TARGET_IDS);
 export const ProfileModelSelectorPattern = "^(?:[^,/]+/[^,]*[^,:]|[^/,]*[^/,:])$";
 
 export const ProfileModelSelectorSchema = z
@@ -247,10 +247,10 @@ const ProviderConfigSchema = z
 		modelOverrides: z.record(z.string(), ModelOverrideSchema).optional(),
 		disableStrictTools: z.boolean().optional(),
 		/**
-		 * Streaming transport override. When set to `"pi-native"`, gjc dispatches
+		 * Streaming transport override. When set to `"pi-native"`, vib dispatches
 		 * every model under this provider via the auth-gateway's
 		 * `POST /v1/pi/stream` endpoint instead of the per-provider SDK. The
-		 * provider's `baseUrl` must point at a compatible `gjc auth-gateway`
+		 * provider's `baseUrl` must point at a compatible `vib auth-gateway`
 		 * and `apiKey` must carry the gateway bearer.
 		 */
 		transport: z.literal("pi-native").optional(),

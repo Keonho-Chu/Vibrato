@@ -68,8 +68,8 @@ function runProbe(cwd: string, envHome: string | undefined): ProbeResult {
 	for (const [key, value] of Object.entries(process.env)) {
 		if (value !== undefined) env[key] = value;
 	}
-	delete env.GJC_CODING_AGENT_DIR;
-	delete env.GJC_CONFIG_DIR;
+	delete env.VIB_CODING_AGENT_DIR;
+	delete env.VIB_CONFIG_DIR;
 	delete env.PI_CONFIG_DIR;
 	// Both platform home variables start cleared so the opposite-platform
 	// variable (or a dotenv value overlaid into it) cannot redirect the
@@ -183,8 +183,8 @@ function runProbeWithoutPasswdEntry(cwd: string, envHome: string | undefined): P
 	for (const [key, value] of Object.entries(process.env)) {
 		if (value !== undefined) env[key] = value;
 	}
-	delete env.GJC_CODING_AGENT_DIR;
-	delete env.GJC_CONFIG_DIR;
+	delete env.VIB_CODING_AGENT_DIR;
+	delete env.VIB_CONFIG_DIR;
 	delete env.PI_CONFIG_DIR;
 	delete env.USERPROFILE;
 	if (envHome === undefined) delete env.HOME;

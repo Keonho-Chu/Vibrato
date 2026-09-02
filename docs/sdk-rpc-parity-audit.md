@@ -19,7 +19,7 @@ and
 `6e147d58~1:packages/coding-agent/src/modes/shared/agent-wire/session-registry.ts:1-53`.
 `SDK equivalent` means a current operation or documented SDK protocol covers the
 control/query intent, not that its transport or event semantics are identical.
-`transport-gap — retired` means the direct `gjc sdk serve` relay and standalone transport clients were removed when `SessionRouter` became the sole external attachment authority.
+`transport-gap — retired` means the direct `vib sdk serve` relay and standalone transport clients were removed when `SessionRouter` became the sole external attachment authority.
 `phase-2-gap` means no equivalent has been implemented by this audit.
 
 Operation names and their stated roles are from
@@ -103,7 +103,7 @@ workflow operations (`operation-registry.ts:66-166`), and control dispatch
 implements the control path (`dispatch.ts:138-253`). That does **not** erase the
 user-perceived reduction. It is **REAL** across five dimensions:
 
-1. **stdio JSONL and Unix-socket transports.** The interim `gjc sdk serve` relay was retired; external attachment now requires Router-owned opaque capabilities and never forwards endpoint credentials.
+1. **stdio JSONL and Unix-socket transports.** The interim `vib sdk serve` relay was retired; external attachment now requires Router-owned opaque capabilities and never forwards endpoint credentials.
 2. **Typed Python client.** The interim public Python transport client was retired with the direct relay; cross-process integrations require Router-owned capabilities.
 3. **`negotiate_unattended`.** No fail-closed unattended negotiation with the
    retired declaration, budget, scope, and allowlist exists: this remains Phase 2.

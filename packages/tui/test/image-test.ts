@@ -1,9 +1,9 @@
-import { getImageDimensions, TERMINAL } from "@gajae-code/tui";
-import { Image } from "@gajae-code/tui/components/image";
-import { Spacer } from "@gajae-code/tui/components/spacer";
-import { Text } from "@gajae-code/tui/components/text";
-import { ProcessTerminal } from "@gajae-code/tui/terminal";
-import { TUI } from "@gajae-code/tui/tui";
+import { getImageDimensions, TERMINAL } from "@vib-rato/tui";
+import { Image } from "@vib-rato/tui/components/image";
+import { Spacer } from "@vib-rato/tui/components/spacer";
+import { Text } from "@vib-rato/tui/components/text";
+import { ProcessTerminal } from "@vib-rato/tui/terminal";
+import { TUI } from "@vib-rato/tui/tui";
 
 const testImagePath = Bun.argv[2] || "/tmp/test-image.png";
 

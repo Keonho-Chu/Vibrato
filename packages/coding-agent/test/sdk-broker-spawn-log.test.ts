@@ -5,7 +5,7 @@ import path from "node:path";
 import { BROKER_SPAWN_LOG_TAIL_BYTES, openBrokerSpawnLog, readBrokerSpawnLogTail } from "../src/sdk/broker/ensure";
 
 test("concurrent broker spawn logs retain only their own diagnostics", async () => {
-	const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-spawnlog-"));
+	const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-spawnlog-"));
 	let firstPath: string | undefined;
 	let secondPath: string | undefined;
 	try {

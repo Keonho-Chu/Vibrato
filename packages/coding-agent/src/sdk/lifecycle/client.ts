@@ -119,7 +119,7 @@ export class AgentDirSessionLifecycleService extends SessionLifecycleService {
 		const cwd = path.resolve(requestedCwd);
 		const target = {
 			cwd,
-			stateRoot: path.join(cwd, ".gjc", "state"),
+			stateRoot: path.join(cwd, ".vib", "state"),
 			...(targetInput.kind === "worktree" ? { worktree: { enabled: true as const, name: targetInput.branch } } : {}),
 			...(modelPreset === undefined ? {} : { modelPreset }),
 			...(readinessTimeoutMs === undefined ? {} : { readinessTimeoutMs }),
@@ -213,7 +213,7 @@ export class AgentDirSessionLifecycleService extends SessionLifecycleService {
 		const target = {
 			sessionId: selected.sessionId,
 			cwd: selectedCwd,
-			stateRoot: path.join(selectedCwd, ".gjc", "state"),
+			stateRoot: path.join(selectedCwd, ".vib", "state"),
 			sessionPath: selected.sessionStateFile,
 			...(request.modelPreset === undefined ? {} : { modelPreset: request.modelPreset }),
 			...(readinessTimeoutMs === undefined ? {} : { readinessTimeoutMs }),

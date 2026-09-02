@@ -11,7 +11,7 @@ import {
 	type UsageStatus,
 	type UsageUnit,
 	type UsageWindow,
-} from "@gajae-code/ai/core";
+} from "@vib-rato/ai/core";
 import type { RawSettings, Settings, SettingsAtomicPatch } from "../config/settings";
 import { parsePersistedCredentialSelector } from "./startup-auth-config";
 

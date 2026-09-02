@@ -3,7 +3,7 @@
  * Uses the same format as the official Gemini CLI (v0.35+):
  * GeminiCLI/VERSION/MODEL (PLATFORM; ARCH; SURFACE)
  */
-export const GEMINI_CLI_VERSION_ENV = "GJC_AI_GEMINI_CLI_VERSION";
+export const GEMINI_CLI_VERSION_ENV = "VIB_AI_GEMINI_CLI_VERSION";
 export const LEGACY_GEMINI_CLI_VERSION_ENV = "PI_AI_GEMINI_CLI_VERSION";
 export const DEFAULT_GEMINI_CLI_VERSION = "0.52.0";
 

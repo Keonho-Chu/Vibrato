@@ -13,23 +13,25 @@ import {
 	readModelCache,
 	type ThinkingConfig,
 	writeModelCache,
-} from "@gajae-code/ai";
-import { streamOpenAICompletions } from "@gajae-code/ai/providers/openai-completions";
-import { kNoAuth, MODEL_ROLE_IDS, ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
+} from "@vib-rato/ai";
+import { streamOpenAICompletions } from "@vib-rato/ai/providers/openai-completions";
+import { kNoAuth, MODEL_ROLE_IDS, ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
 import {
 	type ModelLookupRegistry,
 	resolveModelFromString,
 	resolveModelOverride,
 	resolveModelOverrideWithAuthFallback,
-} from "@gajae-code/coding-agent/config/model-resolver";
+} from "@vib-rato/coding-agent/config/model-resolver";
+import { isProviderSelectable } from "@vib-rato/coding-agent/config/provider-allowlist";
 import {
 	buildProviderSelectionCatalog,
 	createProviderSelectionPolicy,
-} from "@gajae-code/coding-agent/config/provider-selection-policy";
-import { resetSettingsForTest, Settings, settings } from "@gajae-code/coding-agent/config/settings";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { addApiCompatibleProvider } from "@gajae-code/coding-agent/setup/provider-onboarding";
-import { $credentialEnv, hookFetch, Snowflake } from "@gajae-code/utils";
+} from "@vib-rato/coding-agent/config/provider-selection-policy";
+import { resetSettingsForTest, Settings, settings } from "@vib-rato/coding-agent/config/settings";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { addApiCompatibleProvider } from "@vib-rato/coding-agent/setup/provider-onboarding";
+import { $credentialEnv, hookFetch, Snowflake } from "@vib-rato/utils";
+import { YAML } from "bun";
 
 describe("model roles", () => {
 	test("default is the only built-in model role", () => {
@@ -87,8 +89,8 @@ describe("ModelRegistry", () => {
 
 	beforeEach(async () => {
 		resetSettingsForTest();
-		previousPresetRegistryDisabled = Bun.env.GJC_MODEL_PRESET_REGISTRY_DISABLED;
-		Bun.env.GJC_MODEL_PRESET_REGISTRY_DISABLED = "true";
+		previousPresetRegistryDisabled = Bun.env.VIB_MODEL_PRESET_REGISTRY_DISABLED;
+		Bun.env.VIB_MODEL_PRESET_REGISTRY_DISABLED = "true";
 		tempDir = path.join(os.tmpdir(), `pi-test-model-registry-${Snowflake.next()}`);
 		fs.mkdirSync(tempDir, { recursive: true });
 		modelsJsonPath = path.join(tempDir, "models.json");
@@ -99,8 +101,8 @@ describe("ModelRegistry", () => {
 	afterEach(() => {
 		resetSettingsForTest();
 		authStorage.close();
-		if (previousPresetRegistryDisabled === undefined) delete Bun.env.GJC_MODEL_PRESET_REGISTRY_DISABLED;
-		else Bun.env.GJC_MODEL_PRESET_REGISTRY_DISABLED = previousPresetRegistryDisabled;
+		if (previousPresetRegistryDisabled === undefined) delete Bun.env.VIB_MODEL_PRESET_REGISTRY_DISABLED;
+		else Bun.env.VIB_MODEL_PRESET_REGISTRY_DISABLED = previousPresetRegistryDisabled;
 		if (tempDir && fs.existsSync(tempDir)) {
 			fs.rmSync(tempDir, { recursive: true });
 		}
@@ -1272,7 +1274,7 @@ describe("ModelRegistry", () => {
 			}
 		});
 		test("refresh reloads custom apiKeyEnv presence changes without a models file change", async () => {
-			const keyEnv = `GJC_TEST_REFRESH_PROVIDER_KEY_${Snowflake.next()}`;
+			const keyEnv = `VIB_TEST_REFRESH_PROVIDER_KEY_${Snowflake.next()}`;
 			const restoreKey = unsetEnvForTest(keyEnv);
 			try {
 				writeRawModelsJson({
@@ -1300,7 +1302,7 @@ describe("ModelRegistry", () => {
 			}
 		});
 		test("resolves a rotated custom apiKeyEnv on the next credential request", async () => {
-			const keyEnv = `GJC_TEST_ROTATING_PROVIDER_KEY_${Snowflake.next()}`;
+			const keyEnv = `VIB_TEST_ROTATING_PROVIDER_KEY_${Snowflake.next()}`;
 			const restoreKey = setEnvForTest(keyEnv, "initial-env-key");
 			try {
 				writeRawModelsJson({
@@ -1323,8 +1325,8 @@ describe("ModelRegistry", () => {
 			}
 		});
 		test("refreshes openaiCompat apiKeyEnv and preserves a literal apiKey", async () => {
-			const compatKeyEnv = `GJC_TEST_ROTATING_COMPAT_KEY_${Snowflake.next()}`;
-			const literalKeyEnv = `GJC_TEST_LITERAL_API_KEY_ENV_${Snowflake.next()}`;
+			const compatKeyEnv = `VIB_TEST_ROTATING_COMPAT_KEY_${Snowflake.next()}`;
+			const literalKeyEnv = `VIB_TEST_LITERAL_API_KEY_ENV_${Snowflake.next()}`;
 			const restoreCompatKey = setEnvForTest(compatKeyEnv, "compat-initial-key");
 			const restoreLiteralKey = setEnvForTest(literalKeyEnv, "env-shadow-key");
 			try {
@@ -1362,7 +1364,7 @@ describe("ModelRegistry", () => {
 			}
 		});
 		test("refresh reloads custom apiKey environment-name values without a models file change", async () => {
-			const keyEnv = `GJC_TEST_REFRESH_PROVIDER_API_KEY_${Snowflake.next()}`;
+			const keyEnv = `VIB_TEST_REFRESH_PROVIDER_API_KEY_${Snowflake.next()}`;
 			const restoreKey = setEnvForTest(keyEnv, "initial-env-key");
 			try {
 				writeRawModelsJson({
@@ -1773,7 +1775,7 @@ describe("ModelRegistry", () => {
 				demo: {
 					baseUrl: "https://demo.example.com/v1",
 					api: "anthropic-messages",
-					apiKeyEnv: "GJC_TEST_MISSING_ALIAS_AUTH_KEY",
+					apiKeyEnv: "VIB_TEST_MISSING_ALIAS_AUTH_KEY",
 					models: [{ id: "anthropic/claude-sonnet-4.5" }],
 				},
 			});
@@ -1807,7 +1809,7 @@ describe("ModelRegistry", () => {
 				beta: {
 					baseUrl: "https://beta.example.com/v1",
 					api: "anthropic-messages",
-					apiKeyEnv: "GJC_TEST_MISSING_ALIAS_BETA_KEY",
+					apiKeyEnv: "VIB_TEST_MISSING_ALIAS_BETA_KEY",
 					models: [{ id: "anthropic/claude-sonnet-4.5" }],
 				},
 			});
@@ -1840,7 +1842,7 @@ describe("ModelRegistry", () => {
 				beta: {
 					baseUrl: "https://beta.example.com/v1",
 					api: "anthropic-messages",
-					apiKeyEnv: "GJC_TEST_MISSING_ALIAS_BETA_KEY",
+					apiKeyEnv: "VIB_TEST_MISSING_ALIAS_BETA_KEY",
 					models: [{ id: "anthropic/claude-sonnet-4.5" }],
 				},
 				alpha: providerConfig("https://alpha.example.com/v1", [{ id: "anthropic/claude-sonnet-4.5" }]),
@@ -1923,7 +1925,7 @@ describe("ModelRegistry", () => {
 				beta: {
 					baseUrl: "https://beta.example.com/v1",
 					api: "anthropic-messages",
-					apiKeyEnv: "GJC_TEST_MISSING_ALIAS_BETA_KEY",
+					apiKeyEnv: "VIB_TEST_MISSING_ALIAS_BETA_KEY",
 					models: [{ id: "team/conflict-model" }],
 				},
 			});
@@ -1959,7 +1961,7 @@ describe("ModelRegistry", () => {
 				beta: {
 					baseUrl: "https://beta.example.com/v1",
 					api: "anthropic-messages",
-					apiKeyEnv: "GJC_TEST_MISSING_ALIAS_BETA_KEY",
+					apiKeyEnv: "VIB_TEST_MISSING_ALIAS_BETA_KEY",
 					models: [{ id: "team/conflict-model" }],
 				},
 			});
@@ -2102,7 +2104,7 @@ describe("ModelRegistry", () => {
 				oauthOnly: {
 					baseUrl: "https://oauth.example.com/v1",
 					api: "anthropic-messages",
-					apiKeyEnv: "GJC_TEST_MISSING_ALIAS_OAUTH_KEY",
+					apiKeyEnv: "VIB_TEST_MISSING_ALIAS_OAUTH_KEY",
 					models: [{ id: "other/conflict-model" }],
 				},
 			});
@@ -2164,13 +2166,13 @@ describe("ModelRegistry", () => {
 				zhipu: {
 					baseUrl: "https://zhipu.example.com/v1",
 					api: "anthropic-messages",
-					apiKeyEnv: "GJC_TEST_MISSING_GLM_ZCODE_KEY",
+					apiKeyEnv: "VIB_TEST_MISSING_GLM_ZCODE_KEY",
 					models: [{ id: "zai/glm-zcode" }],
 				},
 				moonshot: {
 					baseUrl: "https://moonshot.example.com/v1",
 					api: "anthropic-messages",
-					apiKeyEnv: "GJC_TEST_MISSING_KIMI_CODE_KEY",
+					apiKeyEnv: "VIB_TEST_MISSING_KIMI_CODE_KEY",
 					models: [{ id: "moonshot/kimi-code" }],
 				},
 			});
@@ -2215,14 +2217,18 @@ describe("ModelRegistry", () => {
 				}),
 			).toBe(zhipuGlm);
 
-			// kimi-code likewise resolves from the OAuth-backed provider over the
-			// manual-key provider.
+			// kimi-code inverts that: `moonshot` is a built-in provider the product
+			// allowlist hides, and the selection catalog skips hidden providers, so
+			// its OAuth credential cannot win the alias. The manual-key provider is a
+			// user-authored id and stays selectable.
+			expect(isProviderSelectable("zhipu")).toBe(true);
+			expect(isProviderSelectable("moonshot")).toBe(false);
 			expect(
 				registry.resolveModelByLookupAlias("kimi-code", {
 					availableOnly: true,
 					candidates: [manualKimi, moonshotKimi],
 				}),
-			).toBe(moonshotKimi);
+			).toBe(manualKimi);
 		});
 
 		test("resolves exact-id alias targets before slash-prefixed ids on ties", () => {
@@ -2582,8 +2588,8 @@ describe("ModelRegistry", () => {
 		});
 
 		test("authHeader uses the already-resolved apiKeyEnv token exactly once", () => {
-			const keyEnv = `GJC_TEST_AUTH_HEADER_KEY_${Snowflake.next()}`;
-			const tokenEnv = `GJC_TEST_AUTH_HEADER_TOKEN_${Snowflake.next()}`;
+			const keyEnv = `VIB_TEST_AUTH_HEADER_KEY_${Snowflake.next()}`;
+			const tokenEnv = `VIB_TEST_AUTH_HEADER_TOKEN_${Snowflake.next()}`;
 			const restoreKey = setEnvForTest(keyEnv, tokenEnv);
 			const restoreToken = setEnvForTest(tokenEnv, "resolved-token");
 			try {
@@ -2609,7 +2615,7 @@ describe("ModelRegistry", () => {
 		});
 
 		test("refreshes auth headers when an apiKeyEnv credential rotates", async () => {
-			const keyEnv = `GJC_TEST_ROTATING_AUTH_HEADER_KEY_${Snowflake.next()}`;
+			const keyEnv = `VIB_TEST_ROTATING_AUTH_HEADER_KEY_${Snowflake.next()}`;
 			const restoreKey = setEnvForTest(keyEnv, "initial-rotating-key");
 			try {
 				writeRawModelsJson({
@@ -3343,38 +3349,41 @@ describe("ModelRegistry", () => {
 			expect(discovered?.headers?.["X-Model"]).toBeUndefined();
 		});
 
-		test("provider presets discover ClinePass and Command Code catalogs without hardcoded model rows", async () => {
+		test("provider presets discover vLLM and SGLang catalogs without hardcoded model rows", async () => {
 			const presetModelsPath = path.join(tempDir, "preset-models.yml");
-			await addApiCompatibleProvider({ preset: "minimax", modelsPath: presetModelsPath });
-			await addApiCompatibleProvider({ preset: "zai", modelsPath: presetModelsPath });
-			await addApiCompatibleProvider({ preset: "cline-pass", modelsPath: presetModelsPath });
-			await addApiCompatibleProvider({ preset: "commandcode-goat", modelsPath: presetModelsPath });
-			authStorage.setRuntimeApiKey("commandcode-goat", "test-key");
+			await addApiCompatibleProvider({
+				preset: "vllm",
+				baseUrl: "http://10.0.0.5:8000/v1",
+				modelsPath: presetModelsPath,
+			});
+			await addApiCompatibleProvider({
+				preset: "sglang",
+				baseUrl: "http://10.0.0.6:30000/v1",
+				modelsPath: presetModelsPath,
+			});
+			authStorage.setRuntimeApiKey("vllm", "test-key");
+			authStorage.setRuntimeApiKey("sglang", "test-key");
+
+			// Neither preset writes model rows: the endpoint's own /v1/models is the
+			// only source of the catalog.
+			const written = YAML.parse(await Bun.file(presetModelsPath).text()) as {
+				providers?: Record<string, { models?: unknown; discovery?: { type?: string } }>;
+			};
+			expect(written.providers?.vllm?.models).toBeUndefined();
+			expect(written.providers?.sglang?.models).toBeUndefined();
+			expect(written.providers?.vllm?.discovery?.type).toBe("vllm");
+			expect(written.providers?.sglang?.discovery?.type).toBe("sglang");
 
 			using _hook = hookFetch(input => {
 				const url = String(input);
-				if (url === "https://models.dev/api.json") {
-					return new Response(
-						JSON.stringify({
-							"cline-pass": {
-								models: {
-									"cline-pass/live-coder": {
-										id: "cline-pass/live-coder",
-										name: "Live Coder",
-										tool_call: true,
-										reasoning: true,
-										modalities: { input: ["text", "image"], output: ["text"] },
-										limit: { context: 1_000_000, output: 64_000 },
-										cost: { input: 0.4, output: 1.6, cache_read: 0.04, cache_write: 0.5 },
-									},
-								},
-							},
-						}),
-						{ status: 200, headers: { "Content-Type": "application/json" } },
-					);
+				if (url === "http://10.0.0.5:8000/v1/models") {
+					return new Response(JSON.stringify({ data: [{ id: "Qwen/Qwen3.8-Max" }, { id: "gpt-oss-120b" }] }), {
+						status: 200,
+						headers: { "Content-Type": "application/json" },
+					});
 				}
-				if (url === "https://api.commandcode.ai/provider/v1/models") {
-					return new Response(JSON.stringify({ data: [{ id: "claude-opus-5.5" }, { id: "Qwen/Qwen3.8-Max" }] }), {
+				if (url === "http://10.0.0.6:30000/v1/models") {
+					return new Response(JSON.stringify({ data: [{ id: "deepseek-v4-pro" }] }), {
 						status: 200,
 						headers: { "Content-Type": "application/json" },
 					});
@@ -3383,43 +3392,26 @@ describe("ModelRegistry", () => {
 			});
 
 			const registry = new ModelRegistry(authStorage, presetModelsPath);
-			expect(registry.find("cline-pass", "cline-pass/live-coder")).toBeUndefined();
-			expect(registry.find("commandcode-goat", "claude-opus-5.5")).toBeUndefined();
+			expect(registry.find("vllm", "Qwen/Qwen3.8-Max")).toBeUndefined();
+			expect(registry.find("sglang", "deepseek-v4-pro")).toBeUndefined();
 
-			await registry.refreshProvider("cline-pass", "online");
-			await registry.refreshProvider("commandcode-goat", "online");
+			await registry.refreshProvider("vllm", "online");
+			await registry.refreshProvider("sglang", "online");
 
-			const minimax = registry.find("minimax-code", "MiniMax-M3");
-			const glm = registry.find("glm-proxy", "glm-4.6");
-			const clinePass = registry.find("cline-pass", "cline-pass/live-coder");
-
-			expect(minimax?.api).toBe("openai-completions");
-			// #614: preset-onboarded models inherit the bundled canonical display
-			// name (MiniMax-M3) while preserving the requested machine id.
-			expect(minimax?.id).toBe("MiniMax-M3");
-			expect(minimax?.name).toBe("MiniMax-M3");
-			expect(minimax?.baseUrl).toBe("https://api.minimax.io/v1");
-			expect(getOpenAICompat(minimax)?.supportsStore).toBe(false);
-			expect(getOpenAICompat(minimax)?.reasoningContentField).toBe("reasoning_content");
-			expect(glm?.api).toBe("openai-completions");
-			expect(glm?.baseUrl).toBe("https://api.z.ai/api/paas/v4");
-			expect(getOpenAICompat(glm)?.thinkingFormat).toBe("zai");
-			expect(getOpenAICompat(glm)?.supportsReasoningEffort).toBe(false);
-			expect(clinePass).toMatchObject({
-				name: "Live Coder",
+			expect(registry.find("vllm", "Qwen/Qwen3.8-Max")).toMatchObject({
 				api: "openai-completions",
-				baseUrl: "https://api.cline.bot/api/v1",
-				reasoning: true,
-				input: ["text", "image"],
-				contextWindow: 1_000_000,
-				maxTokens: 64_000,
+				baseUrl: "http://10.0.0.5:8000/v1",
 			});
-			expect(registry.find("commandcode-goat", "claude-opus-5.5")).toMatchObject({
-				api: "anthropic-messages",
-				baseUrl: "https://api.commandcode.ai/provider/v1",
+			expect(registry.find("vllm", "gpt-oss-120b")?.baseUrl).toBe("http://10.0.0.5:8000/v1");
+			expect(registry.find("vllm", "Qwen/Qwen3.8-Max")?.headers?.Authorization).toBeUndefined();
+			expect(registry.find("sglang", "deepseek-v4-pro")).toMatchObject({
+				api: "openai-completions",
+				baseUrl: "http://10.0.0.6:30000/v1",
 			});
-			expect(registry.find("commandcode-goat", "claude-opus-5.5")?.headers?.Authorization).toBeUndefined();
-			expect(registry.find("commandcode-goat", "Qwen/Qwen3.8-Max")?.api).toBe("openai-completions");
+			// Discovery is per-provider: the vLLM endpoint's models never leak into
+			// the SGLang provider and vice versa.
+			expect(registry.find("sglang", "gpt-oss-120b")).toBeUndefined();
+			expect(registry.find("vllm", "deepseek-v4-pro")).toBeUndefined();
 		}, 120_000);
 
 		test("#614: custom provider referencing a bundled model id inherits canonical display name", () => {
@@ -6189,7 +6181,7 @@ describe("ModelRegistry", () => {
 	});
 
 	test("restores resolved runtime provider keys ahead of stored OAuth after a static reload", async () => {
-		const envName = "GJC_TEST_RUNTIME_PROVIDER_RELOAD_KEY";
+		const envName = "VIB_TEST_RUNTIME_PROVIDER_RELOAD_KEY";
 		const restoreKey = setEnvForTest(envName, "resolved-runtime-provider-key");
 		try {
 			await authStorage.set("runtime-proxy", [
@@ -6240,7 +6232,7 @@ describe("ModelRegistry", () => {
 	});
 
 	test("materializes a resolved runtime apiKey in auth headers", async () => {
-		const envName = "GJC_TEST_RUNTIME_AUTH_HEADER_KEY";
+		const envName = "VIB_TEST_RUNTIME_AUTH_HEADER_KEY";
 		const restoreKey = setEnvForTest(envName, "resolved-runtime-auth-key");
 		try {
 			const registry = new ModelRegistry(authStorage, modelsJsonPath);
@@ -6669,7 +6661,7 @@ describe("ModelRegistry", () => {
 				"tracked-provider": {
 					baseUrl: "https://tracked.example.com/v1",
 					api: "openai-responses",
-					apiKeyEnv: "GJC_TEST_MISSING_TRACKED_PROVIDER_KEY",
+					apiKeyEnv: "VIB_TEST_MISSING_TRACKED_PROVIDER_KEY",
 					models: [{ id: "tracked-model" }],
 				},
 			});
@@ -6915,7 +6907,7 @@ describe("ModelRegistry", () => {
 				);
 				const cached = readModelCache<Api>("lm-studio", 24 * 60 * 60 * 1000, Date.now, cacheDbPath);
 				expect(cached?.models[0]?.baseUrl).toBe("https://lm-studio.example/v1");
-				expect(cached?.dynamicModelProvenance).toStartWith("gajae:non-cacheable-configured:");
+				expect(cached?.dynamicModelProvenance).toStartWith("vibrato:non-cacheable-configured:");
 				expect(JSON.stringify(cached)).not.toContain("lm-studio-secret");
 			} finally {
 				restoreApiKey();
@@ -7153,7 +7145,7 @@ describe("ModelRegistry", () => {
 				const candidateDigests = ["pin-0000", "pin-0001", "pin-0002"].map(value =>
 					crypto
 						.createHash("sha256")
-						.update("gajae:model-discovery-provenance\0")
+						.update("vibrato:model-discovery-provenance\0")
 						.update(
 							JSON.stringify({
 								authEvidence,
@@ -7168,7 +7160,7 @@ describe("ModelRegistry", () => {
 						.digest("hex"),
 				);
 				expect(candidateDigests).not.toContain(row?.dynamicModelProvenance);
-				expect(row?.dynamicModelProvenance).toStartWith("gajae:non-cacheable-configured:");
+				expect(row?.dynamicModelProvenance).toStartWith("vibrato:non-cacheable-configured:");
 				expect(JSON.stringify(row?.models)).not.toContain("pin-0001");
 				expect(row?.models.every(model => model.headers === undefined)).toBe(true);
 
@@ -7314,7 +7306,7 @@ describe("ModelRegistry", () => {
 			const requestsAfterFirstFetch = requests;
 			expect(
 				readModelCache("discovery-provider", 24 * 60 * 60 * 1000, Date.now, cacheDbPath)?.dynamicModelProvenance,
-			).toStartWith("gajae:non-cacheable-configured:");
+			).toStartWith("vibrato:non-cacheable-configured:");
 
 			const sameContextRegistry = new ModelRegistry(authStorage, modelsJsonPath);
 			await sameContextRegistry.refreshProvider("discovery-provider", "online-if-uncached");
@@ -7555,7 +7547,7 @@ describe("ModelRegistry", () => {
 			expect(registry.getProviderDiscoveryState("first-discovery-provider")).toBeUndefined();
 		});
 		test("invalidates a completed discovery state after an aggregate environment credential change", async () => {
-			const restoreFirstKey = setEnvForTest("GJC_TEST_FIRST_DISCOVERY_KEY", "credential-a");
+			const restoreFirstKey = setEnvForTest("VIB_TEST_FIRST_DISCOVERY_KEY", "credential-a");
 			try {
 				writeRawModelsJson({
 					"first-discovery-provider": {
@@ -7570,7 +7562,7 @@ describe("ModelRegistry", () => {
 					},
 				});
 				await authStorage.set("first-discovery-provider", [
-					{ type: "api_key", key: "GJC_TEST_FIRST_DISCOVERY_KEY" },
+					{ type: "api_key", key: "VIB_TEST_FIRST_DISCOVERY_KEY" },
 				]);
 				authStorage.setRuntimeApiKey("second-discovery-provider", "credential-b");
 				const { promise: secondResponse, resolve: resolveSecondResponse } = Promise.withResolvers<Response>();
@@ -7591,7 +7583,7 @@ describe("ModelRegistry", () => {
 
 				const refresh = registry.refresh();
 				await Bun.sleep(0);
-				process.env.GJC_TEST_FIRST_DISCOVERY_KEY = "credential-a-rotated";
+				process.env.VIB_TEST_FIRST_DISCOVERY_KEY = "credential-a-rotated";
 				resolveSecondResponse(
 					new Response(JSON.stringify({ data: [{ id: "second-model" }] }), {
 						status: 200,
@@ -7852,7 +7844,7 @@ describe("ModelRegistry", () => {
 			const cached = readModelCache<Api>("discovery-provider", 24 * 60 * 60 * 1000, Date.now, cacheDbPath);
 			expect(cached?.models).toHaveLength(1);
 			expect(cached?.models[0]?.baseUrl).toBe("https://runtime.example.com/v1");
-			expect(cached?.dynamicModelProvenance).toStartWith("gajae:non-cacheable-configured:");
+			expect(cached?.dynamicModelProvenance).toStartWith("vibrato:non-cacheable-configured:");
 			expect(JSON.stringify(cached)).not.toContain("runtime-secret");
 			expect(JSON.stringify(cached)).not.toContain("DISCOVERY_KEY");
 			expect(activeRowsFor(registry, ["discovery-provider"])).toEqual([
@@ -8155,7 +8147,7 @@ describe("ModelRegistry", () => {
 				);
 				const cached = readModelCache<Api>("vllm", 24 * 60 * 60 * 1000, Date.now, cacheDbPath);
 				expect(cached?.models[0]?.baseUrl).toBe("https://vllm.example.com/v1");
-				expect(cached?.dynamicModelProvenance).toStartWith("gajae:non-cacheable-endpoint:");
+				expect(cached?.dynamicModelProvenance).toStartWith("vibrato:non-cacheable-endpoint:");
 				expect(JSON.stringify(cached)).not.toContain("descriptor-secret");
 			} finally {
 				restoreBaseUrl();
@@ -8177,7 +8169,7 @@ describe("ModelRegistry", () => {
 				await first.refreshProvider("vllm", "online");
 				expect(
 					readModelCache("vllm", 24 * 60 * 60 * 1000, Date.now, cacheDbPath)?.dynamicModelProvenance,
-				).toStartWith("gajae:non-cacheable-endpoint:");
+				).toStartWith("vibrato:non-cacheable-endpoint:");
 				const requestsAfterFirstFetch = requests;
 				const second = new ModelRegistry(authStorage, modelsJsonPath);
 				await second.refreshProvider("vllm", "online-if-uncached");
@@ -8647,7 +8639,7 @@ describe("ModelRegistry", () => {
 				"unauthenticated-provider": {
 					baseUrl: "https://unauthenticated.example.com/v1",
 					api: "openai-responses",
-					apiKeyEnv: "GJC_TEST_MISSING_ACTIVE_PROVIDER_KEY",
+					apiKeyEnv: "VIB_TEST_MISSING_ACTIVE_PROVIDER_KEY",
 					discovery: { type: "openai-models-list" },
 				},
 			});

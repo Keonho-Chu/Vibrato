@@ -2,7 +2,7 @@ import { afterEach, expect, test, vi } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { postmortem } from "@gajae-code/utils";
+import { postmortem } from "@vib-rato/utils";
 import { createNotificationsExtension } from "../src/sdk/bus/index";
 import {
 	cleanupFixtureRoots,
@@ -55,7 +55,7 @@ async function createHarness(prefix: string) {
 		sendUserMessage: () => {},
 	} as never;
 	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
-	const agentDir = path.join(cwd, ".gjc", "agent");
+	const agentDir = path.join(cwd, ".vib", "agent");
 	const cleanup = await createNotificationFixtureRoot(cwd, agentDir);
 	cleanupRoots.push(cleanup);
 	createNotificationsExtension(api, { settings: isolatedNotificationSettings(agentDir) });
@@ -72,7 +72,7 @@ async function createHarness(prefix: string) {
 		},
 	} as never;
 
-	const endpoint = path.join(cwd, ".gjc", "state", "sdk", `${sid}.json`);
+	const endpoint = path.join(cwd, ".vib", "state", "sdk", `${sid}.json`);
 	return { handlers, ctx, sid, endpoint, cleanup };
 }
 
@@ -91,13 +91,13 @@ async function connectFrames(endpoint: string): Promise<Frame[]> {
 }
 
 async function withNotifications<T>(fn: () => Promise<T>): Promise<T> {
-	const prevEnv = process.env.GJC_NOTIFICATIONS;
-	process.env.GJC_NOTIFICATIONS = "1";
+	const prevEnv = process.env.VIB_NOTIFICATIONS;
+	process.env.VIB_NOTIFICATIONS = "1";
 	try {
 		return await fn();
 	} finally {
-		if (prevEnv === undefined) delete process.env.GJC_NOTIFICATIONS;
-		else process.env.GJC_NOTIFICATIONS = prevEnv;
+		if (prevEnv === undefined) delete process.env.VIB_NOTIFICATIONS;
+		else process.env.VIB_NOTIFICATIONS = prevEnv;
 	}
 }
 
@@ -111,7 +111,7 @@ test("postmortem teardown emits session_closed to connected clients", async () =
 			};
 		});
 
-		const harness = await createHarness("gjc-notif-pm-");
+		const harness = await createHarness("vib-notif-pm-");
 		registerNotificationRuntime(harness.cleanup, {
 			key: `notification-session:${harness.sid}`,
 			shutdown: async () => {
@@ -149,7 +149,7 @@ test("graceful session_shutdown cancels the postmortem registration", async () =
 			};
 		});
 
-		const harness = await createHarness("gjc-notif-pm-cancel-");
+		const harness = await createHarness("vib-notif-pm-cancel-");
 		registerNotificationRuntime(harness.cleanup, {
 			key: `notification-session:${harness.sid}`,
 			shutdown: async () => {

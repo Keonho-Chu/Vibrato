@@ -5,7 +5,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 
 const packageDir = path.resolve(import.meta.dir, "..");
-const packageName = "@gajae-code/coding-agent";
+const packageName = "@vib-rato/coding-agent";
 const agentPackageDir = path.resolve(packageDir, "../agent");
 const aiPackageDir = path.resolve(packageDir, "../ai");
 const tuiPackageDir = path.resolve(packageDir, "../tui");
@@ -34,7 +34,7 @@ function assertExport(module: Record<string, unknown>, name: string, subpath: st
 }
 
 async function runSmoke(): Promise<Surface> {
-	const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-sdk-package-smoke-"));
+	const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-sdk-package-smoke-"));
 	try {
 		const stagedLinuxX64Dir = path.join(tempDir, "natives-linux-x64");
 		await fs.cp(linuxX64PackageDir, stagedLinuxX64Dir, { recursive: true });
@@ -72,21 +72,21 @@ async function runSmoke(): Promise<Surface> {
 					name: "sdk-smoke",
 					private: true,
 					dependencies: {
-						"@gajae-code/agent-core": `file:${agentTarballPath}`,
-						"@gajae-code/ai": `file:${aiTarballPath}`,
+						"@vib-rato/agent-core": `file:${agentTarballPath}`,
+						"@vib-rato/ai": `file:${aiTarballPath}`,
 						[packageName]: `file:${codingAgentTarballPath}`,
-						"@gajae-code/tui": `file:${tuiTarballPath}`,
-						"@gajae-code/natives": `file:${nativesTarballPath}`,
-						"@gajae-code/natives-linux-x64": `file:${linuxX64TarballPath}`,
-						"@gajae-code/utils": `file:${utilsTarballPath}`,
+						"@vib-rato/tui": `file:${tuiTarballPath}`,
+						"@vib-rato/natives": `file:${nativesTarballPath}`,
+						"@vib-rato/natives-linux-x64": `file:${linuxX64TarballPath}`,
+						"@vib-rato/utils": `file:${utilsTarballPath}`,
 					},
 					overrides: {
-						"@gajae-code/agent-core": `file:${agentTarballPath}`,
-						"@gajae-code/ai": `file:${aiTarballPath}`,
-						"@gajae-code/tui": `file:${tuiTarballPath}`,
-						"@gajae-code/natives": `file:${nativesTarballPath}`,
-						"@gajae-code/natives-linux-x64": `file:${linuxX64TarballPath}`,
-						"@gajae-code/utils": `file:${utilsTarballPath}`,
+						"@vib-rato/agent-core": `file:${agentTarballPath}`,
+						"@vib-rato/ai": `file:${aiTarballPath}`,
+						"@vib-rato/tui": `file:${tuiTarballPath}`,
+						"@vib-rato/natives": `file:${nativesTarballPath}`,
+						"@vib-rato/natives-linux-x64": `file:${linuxX64TarballPath}`,
+						"@vib-rato/utils": `file:${utilsTarballPath}`,
 					},
 				},
 				null,
@@ -100,7 +100,7 @@ async function runSmoke(): Promise<Surface> {
 		const installedPackage = JSON.parse(await fs.readFile(stagedPackageJsonPath, "utf8")) as {
 			exports?: Record<string, unknown>;
 		};
-		const installedAgentPackagePath = path.join(tempDir, "node_modules", "@gajae-code", "agent-core");
+		const installedAgentPackagePath = path.join(tempDir, "node_modules", "@vib-rato", "agent-core");
 		const installedAgentPackageJsonPath = path.join(installedAgentPackagePath, "package.json");
 		const installedAgentPackage = JSON.parse(await fs.readFile(installedAgentPackageJsonPath, "utf8")) as {
 			name?: string;
@@ -143,7 +143,7 @@ async function runSmoke(): Promise<Surface> {
 		) {
 			throw new Error("packed smoke installed a mismatched agent-core package");
 		}
-		if (installedAgentPackage.name !== "@gajae-code/agent-core") {
+		if (installedAgentPackage.name !== "@vib-rato/agent-core") {
 			throw new Error("packed smoke agent-core package identity is invalid");
 		}
 		if (installedPackage.exports?.["./session/internal/*"] !== null) {
@@ -152,7 +152,7 @@ async function runSmoke(): Promise<Surface> {
 		const probePath = path.join(tempDir, "probe.ts");
 		await fs.writeFile(
 			probePath,
-			`import * as fs from "node:fs/promises";\nimport * as path from "node:path";\nimport * as root from ${JSON.stringify(packageName)};\nimport * as sdk from ${JSON.stringify(`${packageName}/sdk`)};\nimport * as bus from ${JSON.stringify(`${packageName}/sdk/bus`)};\nconst required = [[root, "createAgentSession", "root"], [root, "SESSION_DIRECTORY_API_VERSION", "root"], [root, "resolveManagedSessionScope", "root"], [root, "listManagedSessionCandidates", "root"], [sdk, "createAgentSession", "sdk"], [bus, "createNotificationsExtension", "sdk/bus"], [sdk, "SESSION_DIRECTORY_API_VERSION", "sdk"], [sdk, "resolveManagedSessionScope", "sdk"], [sdk, "listManagedSessionCandidates", "sdk"]] as const;\nfor (const [module, name, subpath] of required) if (!(name in module)) throw new Error(subpath + " missing " + name);\nconst sandbox = path.join(process.cwd(), "managed-listing-smoke");\nconst cwd = path.join(sandbox, "workspace", "a-b", "c");\nconst agentDir = path.join(sandbox, "agent");\nconst sessionsRoot = path.join(agentDir, "sessions");\nawait fs.mkdir(cwd, { recursive: true });\nconst resolved = await sdk.resolveManagedSessionScope({ cwd, agentDir, sessionsRoot });\nif (resolved.kind !== "resolved") throw new Error("packed resolver failed: " + resolved.message);\nawait fs.mkdir(resolved.scope.directoryPath, { recursive: true, mode: 0o700 });\nawait fs.chmod(sessionsRoot, 0o700);\nawait fs.chmod(resolved.scope.directoryPath, 0o700);\nawait fs.writeFile(path.join(resolved.scope.directoryPath, ".gjc-managed-session-scope.v2.json"), JSON.stringify({ schemaVersion: 1, layoutVersion: 2, identityVersion: 1, platform: process.platform === "win32" ? "win32" : "posix", canonicalPath: resolved.scope.canonicalCwd, identityDigest: resolved.scope.directoryName.slice(3) }) + "\\n", { mode: 0o600 });\nconst transcriptPath = path.join(resolved.scope.directoryPath, "packed-session.jsonl");\nawait fs.writeFile(transcriptPath, JSON.stringify({ type: "session", id: "packed-session", cwd }) + "\\n", { mode: 0o600 });\nconst snapshot = async () => Promise.all((await fs.readdir(sandbox, { recursive: true })).sort().map(async name => { const pathname = path.join(sandbox, name); const stat = await fs.lstat(pathname); return [name, stat.mode, stat.size, stat.mtimeMs, stat.isFile() ? await fs.readFile(pathname, "utf8") : null]; }));\nconst before = JSON.stringify(await snapshot());\nconst listing = await sdk.listManagedSessionCandidates({ scope: resolved.scope });\nif (listing.kind !== "complete" || listing.owned.length !== 1 || listing.owned[0]?.sessionId !== "packed-session") throw new Error("packed readonly listing failed: " + JSON.stringify(listing));\nconst after = JSON.stringify(await snapshot());\nif (after !== before) throw new Error("packed readonly listing mutated the filesystem");\nconst privateSubpath = ${JSON.stringify(`${packageName}/session/internal/managed-session-scope`)};\ntry { await import(privateSubpath); throw new Error("private managed-session scope subpath resolved"); } catch (error) {\n\tif (error instanceof Error && error.message === "private managed-session scope subpath resolved") throw error;\n\tconst message = String(error);\n\tconst exportsRejected = /Package subpath .* is not defined by "exports"/.test(message);\n\tconst bunRejected = (message.startsWith("ResolveMessage: Cannot find module '" + privateSubpath + "' from '") && message.endsWith("/probe.ts'")) || (message.startsWith("ResolveMessage: Cannot find package '" + ${JSON.stringify(packageName)} + "' imported from ") && message.endsWith("/probe.ts"));\n\tif (!exportsRejected && !bunRejected) throw new Error("private managed-session scope failed for an unexpected reason: " + message);\n}\nprocess.stdout.write(JSON.stringify({ root: Object.keys(root).sort(), sdk: Object.keys(sdk).sort() }));\n`,
+			`import * as fs from "node:fs/promises";\nimport * as path from "node:path";\nimport * as root from ${JSON.stringify(packageName)};\nimport * as sdk from ${JSON.stringify(`${packageName}/sdk`)};\nimport * as bus from ${JSON.stringify(`${packageName}/sdk/bus`)};\nconst required = [[root, "createAgentSession", "root"], [root, "SESSION_DIRECTORY_API_VERSION", "root"], [root, "resolveManagedSessionScope", "root"], [root, "listManagedSessionCandidates", "root"], [sdk, "createAgentSession", "sdk"], [bus, "createNotificationsExtension", "sdk/bus"], [sdk, "SESSION_DIRECTORY_API_VERSION", "sdk"], [sdk, "resolveManagedSessionScope", "sdk"], [sdk, "listManagedSessionCandidates", "sdk"]] as const;\nfor (const [module, name, subpath] of required) if (!(name in module)) throw new Error(subpath + " missing " + name);\nconst sandbox = path.join(process.cwd(), "managed-listing-smoke");\nconst cwd = path.join(sandbox, "workspace", "a-b", "c");\nconst agentDir = path.join(sandbox, "agent");\nconst sessionsRoot = path.join(agentDir, "sessions");\nawait fs.mkdir(cwd, { recursive: true });\nconst resolved = await sdk.resolveManagedSessionScope({ cwd, agentDir, sessionsRoot });\nif (resolved.kind !== "resolved") throw new Error("packed resolver failed: " + resolved.message);\nawait fs.mkdir(resolved.scope.directoryPath, { recursive: true, mode: 0o700 });\nawait fs.chmod(sessionsRoot, 0o700);\nawait fs.chmod(resolved.scope.directoryPath, 0o700);\nawait fs.writeFile(path.join(resolved.scope.directoryPath, ".vib-managed-session-scope.v2.json"), JSON.stringify({ schemaVersion: 1, layoutVersion: 2, identityVersion: 1, platform: process.platform === "win32" ? "win32" : "posix", canonicalPath: resolved.scope.canonicalCwd, identityDigest: resolved.scope.directoryName.slice(3) }) + "\\n", { mode: 0o600 });\nconst transcriptPath = path.join(resolved.scope.directoryPath, "packed-session.jsonl");\nawait fs.writeFile(transcriptPath, JSON.stringify({ type: "session", id: "packed-session", cwd }) + "\\n", { mode: 0o600 });\nconst snapshot = async () => Promise.all((await fs.readdir(sandbox, { recursive: true })).sort().map(async name => { const pathname = path.join(sandbox, name); const stat = await fs.lstat(pathname); return [name, stat.mode, stat.size, stat.mtimeMs, stat.isFile() ? await fs.readFile(pathname, "utf8") : null]; }));\nconst before = JSON.stringify(await snapshot());\nconst listing = await sdk.listManagedSessionCandidates({ scope: resolved.scope });\nif (listing.kind !== "complete" || listing.owned.length !== 1 || listing.owned[0]?.sessionId !== "packed-session") throw new Error("packed readonly listing failed: " + JSON.stringify(listing));\nconst after = JSON.stringify(await snapshot());\nif (after !== before) throw new Error("packed readonly listing mutated the filesystem");\nconst privateSubpath = ${JSON.stringify(`${packageName}/session/internal/managed-session-scope`)};\ntry { await import(privateSubpath); throw new Error("private managed-session scope subpath resolved"); } catch (error) {\n\tif (error instanceof Error && error.message === "private managed-session scope subpath resolved") throw error;\n\tconst message = String(error);\n\tconst exportsRejected = /Package subpath .* is not defined by "exports"/.test(message);\n\tconst bunRejected = (message.startsWith("ResolveMessage: Cannot find module '" + privateSubpath + "' from '") && message.endsWith("/probe.ts'")) || (message.startsWith("ResolveMessage: Cannot find package '" + ${JSON.stringify(packageName)} + "' imported from ") && message.endsWith("/probe.ts"));\n\tif (!exportsRejected && !bunRejected) throw new Error("private managed-session scope failed for an unexpected reason: " + message);\n}\nprocess.stdout.write(JSON.stringify({ root: Object.keys(root).sort(), sdk: Object.keys(sdk).sort() }));\n`,
 		);
 		await fs.appendFile(
 			probePath,

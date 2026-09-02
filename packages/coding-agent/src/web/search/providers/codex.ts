@@ -7,9 +7,9 @@
  * SQLite store, never POSTs the broker sentinel to an OpenAI token endpoint.
  */
 import * as os from "node:os";
-import { type AuthStorage, getBundledModels } from "@gajae-code/ai/core";
-import { decodeJwt } from "@gajae-code/ai/utils/oauth/openai-codex";
-import { $env, readSseJson, sanitizeHeaderComponent } from "@gajae-code/utils";
+import { type AuthStorage, getBundledModels } from "@vib-rato/ai/core";
+import { decodeJwt } from "@vib-rato/ai/utils/oauth/openai-codex";
+import { $env, readSseJson, sanitizeHeaderComponent } from "@vib-rato/utils";
 import packageJson from "../../../../package.json" with { type: "json" };
 import type { SearchResponse, SearchSource } from "../../../web/search/types";
 import { SearchProviderError } from "../../../web/search/types";
@@ -36,7 +36,7 @@ const DEFAULT_INSTRUCTIONS =
 	"You are a helpful assistant with web search capabilities. Search the web to answer the user's question accurately and cite your sources.";
 
 function getConfiguredModel(): string | undefined {
-	const configuredModel = ($env.GJC_OPENAI_CODE_WEB_SEARCH_MODEL ?? $env.PI_CODEX_WEB_SEARCH_MODEL)?.trim();
+	const configuredModel = ($env.VIB_OPENAI_CODE_WEB_SEARCH_MODEL ?? $env.PI_CODEX_WEB_SEARCH_MODEL)?.trim();
 	return configuredModel ? configuredModel : undefined;
 }
 
@@ -347,7 +347,7 @@ export async function searchCodex(params: SearchParams): Promise<SearchResponse>
 	const auth = await findCodexAuth(params.authStorage, params.sessionId, params.signal);
 	if (!auth) {
 		throw new Error(
-			"No Codex OAuth credentials found. Login with 'gjc /login openai-codex' to enable Codex web search.",
+			"No Codex OAuth credentials found. Login with 'vib /login openai-codex' to enable Codex web search.",
 		);
 	}
 

@@ -4,7 +4,7 @@
  * resolveActiveProjectRegistryPath: walk-up, .git fallback, null return, canonical path.
  * listAnthropic modelPluginRoots: project entries shadow user entries for same plugin ID.
  *
- * Note: helpers.ts imports @gajae-code/natives (Rust addon via glob).
+ * Note: helpers.ts imports @vib-rato/natives (Rust addon via glob).
  * This file imports from helpers.ts directly — the native addon IS present in the
  * test environment (verified: `bun run import-helpers.ts` succeeds).
  */
@@ -13,13 +13,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { InstalledPluginEntry } from "@gajae-code/coding-agent/extensibility/plugins/marketplace";
+import type { InstalledPluginEntry } from "@vib-rato/coding-agent/extensibility/plugins/marketplace";
 import {
 	addInstalledPlugin,
 	buildPluginId,
 	readInstalledPluginsRegistry,
 	writeInstalledPluginsRegistry,
-} from "@gajae-code/coding-agent/extensibility/plugins/marketplace";
+} from "@vib-rato/coding-agent/extensibility/plugins/marketplace";
 import { safeRmSync } from "../../../../scripts/safe-cleanup";
 import {
 	clearClaudePluginRootsCache,
@@ -45,60 +45,60 @@ describe("resolveActiveProjectRegistryPath", () => {
 	let tmpDir: string;
 
 	beforeEach(() => {
-		tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-proj-scope-"));
+		tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-proj-scope-"));
 	});
 
 	afterEach(() => {
 		safeRmSync(tmpDir, { recursive: true, force: true });
 	});
 
-	it("walk-up finds nearest .gjc/ directory", async () => {
-		// Layout: tmpDir/.gjc/   +   tmpDir/sub/nested/  (cwd)
-		// Resolver must climb from cwd → sub → tmpDir and find .gjc/ there.
-		fs.mkdirSync(path.join(tmpDir, ".gjc"), { recursive: true });
+	it("walk-up finds nearest .vib/ directory", async () => {
+		// Layout: tmpDir/.vib/   +   tmpDir/sub/nested/  (cwd)
+		// Resolver must climb from cwd → sub → tmpDir and find .vib/ there.
+		fs.mkdirSync(path.join(tmpDir, ".vib"), { recursive: true });
 		const cwd = path.join(tmpDir, "sub", "nested");
 		fs.mkdirSync(cwd, { recursive: true });
 
 		const result = await resolveActiveProjectRegistryPath(cwd);
 
-		expect(result).toBe(path.join(tmpDir, ".gjc", "plugins", "installed_plugins.json"));
+		expect(result).toBe(path.join(tmpDir, ".vib", "plugins", "installed_plugins.json"));
 	});
 
-	it("walk-up stops at the nearest .gjc/ — does not skip to a more distant one", async () => {
-		// Layout: tmpDir/.gjc/   +   tmpDir/sub/.gjc/   +   tmpDir/sub/nested/  (cwd)
-		// Resolver must stop at tmpDir/sub/.gjc/, not climb further to tmpDir/.gjc/.
-		fs.mkdirSync(path.join(tmpDir, ".gjc"), { recursive: true });
-		fs.mkdirSync(path.join(tmpDir, "sub", ".gjc"), { recursive: true });
+	it("walk-up stops at the nearest .vib/ — does not skip to a more distant one", async () => {
+		// Layout: tmpDir/.vib/   +   tmpDir/sub/.vib/   +   tmpDir/sub/nested/  (cwd)
+		// Resolver must stop at tmpDir/sub/.vib/, not climb further to tmpDir/.vib/.
+		fs.mkdirSync(path.join(tmpDir, ".vib"), { recursive: true });
+		fs.mkdirSync(path.join(tmpDir, "sub", ".vib"), { recursive: true });
 		const cwd = path.join(tmpDir, "sub", "nested");
 		fs.mkdirSync(cwd, { recursive: true });
 
 		const result = await resolveActiveProjectRegistryPath(cwd);
 
-		expect(result).toBe(path.join(tmpDir, "sub", ".gjc", "plugins", "installed_plugins.json"));
+		expect(result).toBe(path.join(tmpDir, "sub", ".vib", "plugins", "installed_plugins.json"));
 	});
 
-	it("falls back to .git root when no .gjc/ exists", async () => {
+	it("falls back to .git root when no .vib/ exists", async () => {
 		// Layout: tmpDir/.git/   +   tmpDir/sub/  (cwd)
-		// No .gjc/ anywhere → second pass finds .git/ at tmpDir.
+		// No .vib/ anywhere → second pass finds .git/ at tmpDir.
 		// Returned path is relative to the .git root, not .git itself.
 		fs.mkdirSync(path.join(tmpDir, ".git"), { recursive: true });
 		const cwd = path.join(tmpDir, "sub");
 		fs.mkdirSync(cwd, { recursive: true });
 
-		// Bound the walk-up at os.tmpdir() so a `.gjc/` polluting a shared ancestor
-		// (e.g. a /tmp/.gjc left by other processes on CI runners) cannot shadow the
+		// Bound the walk-up at os.tmpdir() so a `.vib/` polluting a shared ancestor
+		// (e.g. a /tmp/.vib left by other processes on CI runners) cannot shadow the
 		// intended .git fallback. resolveActiveProjectRegistryPath stops before homedir.
 		const homeSpy = vi.spyOn(os, "homedir").mockReturnValue(os.tmpdir());
 		try {
 			const result = await resolveActiveProjectRegistryPath(cwd);
-			expect(result).toBe(path.join(tmpDir, ".gjc", "plugins", "installed_plugins.json"));
+			expect(result).toBe(path.join(tmpDir, ".vib", "plugins", "installed_plugins.json"));
 		} finally {
 			homeSpy.mockRestore();
 		}
 	});
 
-	it("returns null when neither .gjc/ nor .git/ found anywhere in the tree", async () => {
-		// Start at the filesystem root — guaranteed to have no .gjc/ or .git/ ancestors.
+	it("returns null when neither .vib/ nor .git/ found anywhere in the tree", async () => {
+		// Start at the filesystem root — guaranteed to have no .vib/ or .git/ ancestors.
 		const result = await resolveActiveProjectRegistryPath(path.sep);
 
 		expect(result).toBeNull();
@@ -106,23 +106,23 @@ describe("resolveActiveProjectRegistryPath", () => {
 
 	it("does not treat ~/.git as a project root (pass-2 home-dir guard)", async () => {
 		// Simulate a dotfiles repo managed with a bare-git technique: ~/.git exists.
-		// resolveActiveProjectRegistryPath must NOT return ~/.gjc/.../installed_plugins.json.
+		// resolveActiveProjectRegistryPath must NOT return ~/.vib/.../installed_plugins.json.
 		//
 		// Issue #4794: the fake home is a MOCKED temp home, not the operator's
 		// real home — the previous version created and recursively deleted
 		// ~/.git in the real home, which the safe-cleanup boundary refuses
 		// (correctly), failing the test on machines without a pre-existing ~/.git.
-		const fakeHomeRoot = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-bare-git-home-"));
+		const fakeHomeRoot = fs.mkdtempSync(path.join(os.tmpdir(), "vib-bare-git-home-"));
 		const homeDir = path.join(fakeHomeRoot, "home");
 		const fakeHomeGit = path.join(homeDir, ".git");
 		const homeSpy = vi.spyOn(os, "homedir").mockReturnValue(homeDir);
 		fs.mkdirSync(fakeHomeGit, { recursive: true });
 		try {
-			// Start from a tmpDir that has no .gjc/ or .git/ of its own.
+			// Start from a tmpDir that has no .vib/ or .git/ of its own.
 			const result = await resolveActiveProjectRegistryPath(tmpDir);
-			// Must not resolve to the home-dir GJC registry.
-			const homeGjcPath = path.join(homeDir, ".gjc", "plugins", "installed_plugins.json");
-			expect(result).not.toBe(homeGjcPath);
+			// Must not resolve to the home-dir Vibrato registry.
+			const homeVibPath = path.join(homeDir, ".vib", "plugins", "installed_plugins.json");
+			expect(result).not.toBe(homeVibPath);
 		} finally {
 			homeSpy.mockRestore();
 			safeRmSync(fakeHomeRoot, { recursive: true, force: true });
@@ -131,7 +131,7 @@ describe("resolveActiveProjectRegistryPath", () => {
 
 	it("canonical path — /repo and /repo/src resolve to the same registry file", async () => {
 		// Both sub-directories of the same project must produce identical paths.
-		fs.mkdirSync(path.join(tmpDir, ".gjc"), { recursive: true });
+		fs.mkdirSync(path.join(tmpDir, ".vib"), { recursive: true });
 		const src = path.join(tmpDir, "src");
 		fs.mkdirSync(src, { recursive: true });
 
@@ -148,22 +148,22 @@ describe("resolveActiveProjectRegistryPath", () => {
 describe("listClaudePluginRoots — project shadows user", () => {
 	let tmpHome: string;
 	let tmpProject: string;
-	/** Path where listAnthropic modelPluginRoots reads the user GJC registry. */
+	/** Path where listAnthropic modelPluginRoots reads the user Vibrato registry. */
 	let userRegPath: string;
 	/** Path where listAnthropic modelPluginRoots reads the project registry (resolved from tmpProject). */
 	let projectRegPath: string;
 
 	beforeEach(() => {
-		tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-shadow-home-"));
-		tmpProject = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-shadow-proj-"));
+		tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), "vib-shadow-home-"));
+		tmpProject = fs.mkdtempSync(path.join(os.tmpdir(), "vib-shadow-proj-"));
 
-		// Create .gjc/ in project so resolveActiveProjectRegistryPath finds it.
-		fs.mkdirSync(path.join(tmpProject, ".gjc", "plugins"), { recursive: true });
+		// Create .vib/ in project so resolveActiveProjectRegistryPath finds it.
+		fs.mkdirSync(path.join(tmpProject, ".vib", "plugins"), { recursive: true });
 
-		userRegPath = path.join(tmpHome, ".gjc", "plugins", "installed_plugins.json");
+		userRegPath = path.join(tmpHome, ".vib", "plugins", "installed_plugins.json");
 		fs.mkdirSync(path.dirname(userRegPath), { recursive: true });
 
-		projectRegPath = path.join(tmpProject, ".gjc", "plugins", "installed_plugins.json");
+		projectRegPath = path.join(tmpProject, ".vib", "plugins", "installed_plugins.json");
 	});
 
 	afterEach(() => {

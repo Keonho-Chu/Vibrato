@@ -3,20 +3,20 @@ import * as fsSync from "node:fs";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { NativeExactUnlinkResult } from "@gajae-code/natives";
+import type { NativeExactUnlinkResult } from "@vib-rato/natives";
 import { processStartTime, removeFileLockDirForGc } from "../src/config/file-lock";
-import * as sessionStateLock from "../src/gjc-runtime/session-state-lock";
+import * as sessionStateLock from "../src/vib-runtime/session-state-lock";
 import {
 	reclaimStaleSessionStateLock,
 	SessionStateLockTestHooks,
 	SessionStateLockUnavailableError,
 	setSessionStateLockNativeBindings,
 	withSessionStateFileLock,
-} from "../src/gjc-runtime/session-state-lock";
+} from "../src/vib-runtime/session-state-lock";
 import {
-	GJC_COORDINATOR_SESSION_STATE_FILE_ENV,
 	persistCoordinatorRuntimeStateFromEvent,
-} from "../src/gjc-runtime/session-state-sidecar";
+	VIB_COORDINATOR_SESSION_STATE_FILE_ENV,
+} from "../src/vib-runtime/session-state-sidecar";
 import { exactIdentityNativeBindings, installExactIdentityNatives } from "./helpers/exact-identity-natives";
 
 /**
@@ -27,7 +27,7 @@ import { exactIdentityNativeBindings, installExactIdentityNatives } from "./help
  */
 
 const SESSION_ID = "lock-session";
-const ORIGINAL_STATE_FILE = process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV];
+const ORIGINAL_STATE_FILE = process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV];
 const tempDirs: string[] = [];
 
 installExactIdentityNatives();
@@ -61,13 +61,13 @@ afterEach(async () => {
 	SessionStateLockTestHooks.afterAcquireContention = undefined;
 	installExactIdentityNatives();
 	setSystemTime();
-	if (ORIGINAL_STATE_FILE === undefined) delete process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV];
-	else process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = ORIGINAL_STATE_FILE;
+	if (ORIGINAL_STATE_FILE === undefined) delete process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV];
+	else process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = ORIGINAL_STATE_FILE;
 	await Promise.all(tempDirs.splice(0).map(dir => fs.rm(dir, { recursive: true, force: true })));
 });
 
 async function tempRoot(): Promise<string> {
-	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-state-lock-"));
+	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-state-lock-"));
 	tempDirs.push(dir);
 	return dir;
 }
@@ -79,7 +79,7 @@ async function readJson(file: string): Promise<Record<string, unknown>> {
 async function seededRunningSession(name: string): Promise<{ root: string; stateFile: string }> {
 	const root = await tempRoot();
 	const stateFile = path.join(root, `${name}.json`);
-	process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+	process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
 	setSystemTime(new Date("2026-03-01T00:00:00.000Z"));
 	await persistCoordinatorRuntimeStateFromEvent(
 		{ type: "turn_start" },
@@ -1203,7 +1203,7 @@ describe("coordinator session state lock", () => {
 		const readyFile = path.join(root, "holder-ready");
 		const releaseFile = path.join(root, "holder-release");
 		const enteredFile = path.join(root, "contender-entered");
-		const lockModule = path.resolve("packages/coding-agent/src/gjc-runtime/session-state-lock.ts");
+		const lockModule = path.resolve("packages/coding-agent/src/vib-runtime/session-state-lock.ts");
 		const holderScript = `
 			import { withSessionStateFileLock } from ${JSON.stringify(lockModule)};
 			const [stateFile, readyFile, releaseFile] = Bun.argv.slice(-3);
@@ -1670,7 +1670,7 @@ describe("coordinator session state lock", () => {
 		await fs.symlink(realParent, aliasParent, "dir");
 		const realStateFile = path.join(realParent, "state.json");
 		const aliasStateFile = path.join(aliasParent, "state.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = aliasStateFile;
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = aliasStateFile;
 		setSystemTime(new Date("2026-03-01T00:00:00.000Z"));
 		await persistCoordinatorRuntimeStateFromEvent(
 			{ type: "turn_start" },
@@ -1994,7 +1994,7 @@ describe("coordinator session state lock", () => {
 	it("keeps the namespace mutation lock directory-style", async () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "session-states", "namespace-session.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
 		setSystemTime(new Date("2026-03-01T00:00:00.000Z"));
 		await persistCoordinatorRuntimeStateFromEvent(
 			{ type: "turn_start" },

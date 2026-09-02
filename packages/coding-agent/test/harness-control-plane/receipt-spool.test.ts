@@ -233,8 +233,8 @@ describe("harness receipt JSONL spool exporter", () => {
 
 	it("smokes the installed package import path with a configured receipt spool", async () => {
 		const script = `
-import { runFinalize } from "@gajae-code/coding-agent/harness-control-plane/finalize";
-process.env.GJC_RECEIPT_SPOOL_DIR = ${JSON.stringify(spoolDir)};
+import { runFinalize } from "@vib-rato/coding-agent/harness-control-plane/finalize";
+process.env.VIB_RECEIPT_SPOOL_DIR = ${JSON.stringify(spoolDir)};
 const checks = {
 	async runValidation(spec) {
 		return { exactCommand: spec.command, cwd: "/ws", exitStatus: 0, pass: true };

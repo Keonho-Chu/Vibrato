@@ -40,14 +40,14 @@ describe("generated JSON Schemas", () => {
 	});
 
 	it("registers the ralplan per-lane review budget without loosening the object", () => {
-		const setting = SETTINGS_SCHEMA["gjc.ralplan.maxReviewPassesPerLane"];
+		const setting = SETTINGS_SCHEMA["vib.ralplan.maxReviewPassesPerLane"];
 		expect(setting.default).toBe(1);
 		expect(setting.validate?.(0)).toBe(false);
 		expect(setting.validate?.(11)).toBe(false);
 		expect(setting.validate?.(1.5)).toBe(false);
 
 		const schema = configSchema() as any;
-		const ralplan = schema.properties.gjc.properties.ralplan;
+		const ralplan = schema.properties.vib.properties.ralplan;
 		expect(ralplan.properties.maxReviewPassesPerLane).toMatchObject({ type: "integer", default: 1, minimum: 1, maximum: 10 });
 		expect(ralplan.additionalProperties).toBe(false);
 	});

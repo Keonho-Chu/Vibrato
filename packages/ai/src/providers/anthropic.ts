@@ -19,7 +19,7 @@ import {
 	isUnexpectedSocketCloseMessage,
 	logger,
 	readSseEvents,
-} from "@gajae-code/utils";
+} from "@vib-rato/utils";
 import {
 	isProviderSafetyStopAdapterInvocation,
 	mintProviderSafetyStop,
@@ -225,7 +225,7 @@ function normalizeOsCategory(platform: NodeJS.Platform): string {
 /**
  * Replicates ZCode's `buildZCodeSourceHeaders()` + GLM `X-ZCode-Agent` tag
  * (host bundle `Bl` / `buildConnectivitySourceHeaders` for GLM providers), so
- * api.z.ai sees gjc's glm-zcode requests as the ZCode client. Dynamic values
+ * api.z.ai sees vib's glm-zcode requests as the ZCode client. Dynamic values
  * (platform/arch, locale, timezone, OS version) are resolved at runtime exactly
  * as ZCode does; printable-ASCII-only and conditionally omitted when empty.
  */
@@ -572,15 +572,15 @@ function describeAnthropicOutgoingPath(error: unknown, params: MessageCreatePara
 	const latestThinking = countNativeThinkingBlocks(latest?.content);
 	const latestDescription =
 		latest === undefined
-			? "GJC's outgoing request has no assistant message"
-			: `GJC's latest outgoing assistant message is messages[${latestAssistantIndex}] with ${latestThinking} native thinking block(s)`;
+			? "Vibrato's outgoing request has no assistant message"
+			: `Vibrato's latest outgoing assistant message is messages[${latestAssistantIndex}] with ${latestThinking} native thinking block(s)`;
 	if (!cited) return `${latestDescription}; the rejection did not contain a messages.N.content.M path`;
 	const outgoing = messages[cited.messageIndex];
 	if (!outgoing) {
-		return `Anthropic cited messages.${cited.messageIndex}.content.${cited.contentIndex}, but GJC's outgoing request has only ${messages.length} messages; ${latestDescription}`;
+		return `Anthropic cited messages.${cited.messageIndex}.content.${cited.contentIndex}, but Vibrato's outgoing request has only ${messages.length} messages; ${latestDescription}`;
 	}
 	const contentBlocks = Array.isArray(outgoing.content) ? outgoing.content.length : 1;
-	return `Anthropic cited messages.${cited.messageIndex}.content.${cited.contentIndex}, but GJC's outgoing messages[${cited.messageIndex}] has role=${outgoing.role} and ${contentBlocks} content block(s); ${latestDescription}`;
+	return `Anthropic cited messages.${cited.messageIndex}.content.${cited.contentIndex}, but Vibrato's outgoing messages[${cited.messageIndex}] has role=${outgoing.role} and ${contentBlocks} content block(s); ${latestDescription}`;
 }
 
 function createAnthropicThinkingRepairNoopError(
@@ -591,7 +591,7 @@ function createAnthropicThinkingRepairNoopError(
 ): Error {
 	const diagnostic = describeAnthropicOutgoingPath(error, params);
 	const terminal = new Error(
-		`Anthropic thinking-replay repair was not sent because both latest-assistant and all-assistant transforms produced the same ${fingerprint.bytes}-byte payload (sha256=${fingerprint.sha256}). ${diagnostic}. GJC did not resend the rejected body and did not change thinking mode.${capturedDiagnostic ? `\n${capturedDiagnostic}` : ""}`,
+		`Anthropic thinking-replay repair was not sent because both latest-assistant and all-assistant transforms produced the same ${fingerprint.bytes}-byte payload (sha256=${fingerprint.sha256}). ${diagnostic}. Vibrato did not resend the rejected body and did not change thinking mode.${capturedDiagnostic ? `\n${capturedDiagnostic}` : ""}`,
 	);
 	const status = extractHttpStatusFromError(error);
 	if (status !== undefined) (terminal as Error & { status?: number }).status = status;
@@ -642,7 +642,7 @@ function formatAnthropicDiagnosticBaseUrl(requestUrl: unknown): string {
 
 /**
  * Diagnose a context-management strategy named by an Anthropic 400 but absent
- * from the body GJC sent. This mismatch is evidence of intermediary mutation,
+ * from the body Vibrato sent. This mismatch is evidence of intermediary mutation,
  * not permission to silently enable thinking or retry the request.
  */
 export function diagnoseAnthropicContextManagementInjection(
@@ -664,11 +664,11 @@ export function diagnoseAnthropicContextManagementInjection(
 	return {
 		strategy,
 		message: [
-			`GJC did not send \`thinking\` or \`context_management\`, but the Anthropic 400 names the \`${strategy}\` context-management strategy.`,
+			`Vibrato did not send \`thinking\` or \`context_management\`, but the Anthropic 400 names the \`${strategy}\` context-management strategy.`,
 			`An intermediary at ${baseUrl} likely injected that strategy into the outgoing request.`,
-			"Enable thinking explicitly for this model, or fix/replace the intermediary so it does not add clear-thinking edits to requests without thinking. GJC did not auto-enable thinking or retry because that would change request cost and semantics.",
+			"Enable thinking explicitly for this model, or fix/replace the intermediary so it does not add clear-thinking edits to requests without thinking. Vibrato did not auto-enable thinking or retry because that would change request cost and semantics.",
 		].join("\n"),
-		captureNote: `The HTTP 400 references context-management strategy ${strategy}, but this captured outgoing body contains neither thinking nor context_management; an intermediary may have added it after GJC sent the request.`,
+		captureNote: `The HTTP 400 references context-management strategy ${strategy}, but this captured outgoing body contains neither thinking nor context_management; an intermediary may have added it after Vibrato sent the request.`,
 	};
 }
 
@@ -3714,7 +3714,7 @@ function buildParams(
  * Anthropic's standard tool_result schema only carries `tool_use_id`. Detect
  * that endpoint so we can emit the non-standard alias for it without
  * polluting requests to api.anthropic.com or other compatible proxies.
- * See: https://github.com/can1357/gajae-code/issues/814
+ * See: https://github.com/can1357/oh-my-pi/issues/814
  */
 function isZaiAnthropicEndpoint(model: Model<"anthropic-messages">): boolean {
 	if (model.provider === "zai" || model.provider === "glm-zcode") return true;

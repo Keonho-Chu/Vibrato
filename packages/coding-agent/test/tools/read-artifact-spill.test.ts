@@ -2,13 +2,13 @@ import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { AgentToolContext } from "@gajae-code/agent-core";
-import { getDefault, Settings } from "@gajae-code/coding-agent/config/settings";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import type { ToolSession } from "@gajae-code/coding-agent/tools";
-import { wrapToolWithMetaNotice } from "@gajae-code/coding-agent/tools/output-meta";
-import { ReadTool } from "@gajae-code/coding-agent/tools/read";
-import { Snowflake } from "@gajae-code/utils";
+import type { AgentToolContext } from "@vib-rato/agent-core";
+import { getDefault, Settings } from "@vib-rato/coding-agent/config/settings";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import type { ToolSession } from "@vib-rato/coding-agent/tools";
+import { wrapToolWithMetaNotice } from "@vib-rato/coding-agent/tools/output-meta";
+import { ReadTool } from "@vib-rato/coding-agent/tools/read";
+import { Snowflake } from "@vib-rato/utils";
 
 let artifactCounter = 0;
 

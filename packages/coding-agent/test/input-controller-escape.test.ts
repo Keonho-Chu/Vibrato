@@ -1,22 +1,22 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it, type Mock, vi } from "bun:test";
-import type { AgentMessage } from "@gajae-code/agent-core";
-import { AsyncJobManager } from "@gajae-code/coding-agent/async";
-import { KEYBINDINGS } from "@gajae-code/coding-agent/config/keybindings";
-import { resetSettingsForTest, Settings, settings } from "@gajae-code/coding-agent/config/settings";
+import type { AgentMessage } from "@vib-rato/agent-core";
+import { AsyncJobManager } from "@vib-rato/coding-agent/async";
+import { KEYBINDINGS } from "@vib-rato/coding-agent/config/keybindings";
+import { resetSettingsForTest, Settings, settings } from "@vib-rato/coding-agent/config/settings";
 import {
 	AVAILABILITY_GATED_NAV_PALETTE_ACTIONS,
 	InputController,
-} from "@gajae-code/coding-agent/modes/controllers/input-controller";
-import { initTheme } from "@gajae-code/coding-agent/modes/theme/theme";
+} from "@vib-rato/coding-agent/modes/controllers/input-controller";
+import { initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
 import type {
 	ComposerSubmissionOptions,
 	InteractiveModeContext,
 	SubmittedUserInput,
-} from "@gajae-code/coding-agent/modes/types";
-import { associateSessionMessageViewportAnchorId } from "@gajae-code/coding-agent/session/session-manager";
-import type { ToolSession } from "@gajae-code/coding-agent/tools";
-import { SubagentTool } from "@gajae-code/coding-agent/tools/implementations";
-import type { SlashCommand } from "@gajae-code/tui";
+} from "@vib-rato/coding-agent/modes/types";
+import { associateSessionMessageViewportAnchorId } from "@vib-rato/coding-agent/session/session-manager";
+import type { ToolSession } from "@vib-rato/coding-agent/tools";
+import { SubagentTool } from "@vib-rato/coding-agent/tools/implementations";
+import type { SlashCommand } from "@vib-rato/tui";
 
 beforeAll(async () => {
 	resetSettingsForTest();

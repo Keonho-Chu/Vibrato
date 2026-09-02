@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { transformMessages } from "@gajae-code/ai/providers/transform-messages";
+import { transformMessages } from "@vib-rato/ai/providers/transform-messages";
 import type {
 	Api,
 	AssistantMessage,
@@ -9,7 +9,7 @@ import type {
 	ToolCall,
 	ToolResultMessage,
 	UserMessage,
-} from "@gajae-code/ai/types";
+} from "@vib-rato/ai/types";
 
 /**
  * Regression test for: "each tool_use must have a single result. Found multiple tool_result blocks with id"
@@ -323,7 +323,7 @@ describe("Duplicate Tool Results Regression", () => {
  * `tool_result` blocks ... Each `tool_result` block must have a corresponding
  * `tool_use` block in the previous message."
  *
- * Reproduces the shape captured in `~/.gjc/logs/http-400-requests/*.json` after
+ * Reproduces the shape captured in `~/.vib/logs/http-400-requests/*.json` after
  * handoff/compaction folds an assistant `tool_use` into the handoff summary string
  * while leaving the matching user-side `tool_result` message untouched. The orphan
  * `tool_result` then sits next to the handoff-context user message, gets merged by

@@ -1,7 +1,7 @@
-import { type Agent, type AgentMessage, ThinkingLevel } from "@gajae-code/agent-core";
-import type { CompactionOutcome } from "@gajae-code/agent-core/compaction";
-import type { AssistantMessage, ImageContent, Message, UsageReport } from "@gajae-code/ai/core";
-import type { Component, EditorTheme, SlashCommand } from "@gajae-code/tui";
+import { type Agent, type AgentMessage, ThinkingLevel } from "@vib-rato/agent-core";
+import type { CompactionOutcome } from "@vib-rato/agent-core/compaction";
+import type { AssistantMessage, ImageContent, Message, UsageReport } from "@vib-rato/ai/core";
+import type { Component, EditorTheme, SlashCommand } from "@vib-rato/tui";
 import {
 	Container,
 	clearRenderCache,
@@ -12,8 +12,8 @@ import {
 	Spacer,
 	Text,
 	TUI,
-} from "@gajae-code/tui";
-import { APP_NAME, adjustHsv, getProjectDir, logger, postmortem, sanitizeText } from "@gajae-code/utils";
+} from "@vib-rato/tui";
+import { APP_NAME, adjustHsv, getProjectDir, logger, postmortem, sanitizeText } from "@vib-rato/utils";
 import chalk from "chalk";
 import { AsyncJobManager } from "../async";
 import {
@@ -28,7 +28,7 @@ import { isSettingsInitialized, type Settings, settings } from "../config/settin
 import { compactCrashIndex, resolveCrashStatePaths } from "../crash/index-store";
 import { crashNudgeGate, maybeShowCrashNudge } from "../crash/nudge";
 import { readTrustedRelayConfig, relayAllSignatures } from "../crash/upstream/relay";
-import { DEFAULT_GJC_DEFINITION_NAMES } from "../defaults/gjc-defaults";
+import { DEFAULT_VIB_DEFINITION_NAMES } from "../defaults/vib-defaults";
 import type {
 	ExtensionUIContext,
 	ExtensionUIDialogOptions,
@@ -60,7 +60,6 @@ import type { BashExecutionComponent } from "./components/bash-execution";
 import type { CommandPaletteAction } from "./components/command-palette";
 import { CustomEditor } from "./components/custom-editor";
 import type { EvalExecutionComponent } from "./components/eval-execution";
-import { GajaePetWidget, type PetMode } from "./components/gajae-pet-widget";
 import type { HookEditorComponent } from "./components/hook-editor";
 import type { HookInputComponent } from "./components/hook-input";
 import type { HookSelectorComponent } from "./components/hook-selector";
@@ -83,6 +82,7 @@ import {
 import type { ToolExecutionHandle } from "./components/tool-execution";
 import { StatusLineComponent } from "./components/tool-status-header";
 import { composeToolText } from "./components/tool-transcript-format";
+import { type PetMode, VibratoPetWidget } from "./components/vibrato-pet-widget";
 import {
 	type RecentSession,
 	WelcomeComponent,
@@ -382,7 +382,7 @@ export class InteractiveMode implements InteractiveModeContext {
 	hookWidgetContainerAbove: Container;
 	hookWidgetContainerBelow: Container;
 	petFloorContainer: Container = new Container();
-	petWidget: GajaePetWidget | undefined;
+	petWidget: VibratoPetWidget | undefined;
 	statusLine: StatusLineComponent;
 
 	isInitialized = false;
@@ -1171,12 +1171,12 @@ export class InteractiveMode implements InteractiveModeContext {
 		for (const command of resolvedCommands) {
 			this.skillCommands.set(command.name, command.skill);
 		}
-		const defaultGjcNames = new Set<string>(DEFAULT_GJC_DEFINITION_NAMES);
+		const defaultVibNames = new Set<string>(DEFAULT_VIB_DEFINITION_NAMES);
 		return resolvedCommands.map(command => ({
 			name: command.name,
 			description: command.description,
-			// Pin the bundled GJC workflow skills above generic commands in autocomplete.
-			...(defaultGjcNames.has(command.skill.name) ? { priority: 100 } : {}),
+			// Pin the bundled Vibrato workflow skills above generic commands in autocomplete.
+			...(defaultVibNames.has(command.skill.name) ? { priority: 100 } : {}),
 		}));
 	}
 
@@ -1476,8 +1476,8 @@ export class InteractiveMode implements InteractiveModeContext {
 		this.ui.requestRender();
 	}
 
-	#createPetWidget(editor: CustomEditor): GajaePetWidget {
-		return new GajaePetWidget({
+	#createPetWidget(editor: CustomEditor): VibratoPetWidget {
+		return new VibratoPetWidget({
 			ui: this.ui,
 			editor,
 			editorContainer: this.editorContainer,

@@ -1,15 +1,15 @@
 /**
- * Centralized path helpers for gajae-code config directories.
+ * Centralized path helpers for vib-rato config directories.
  *
- * Uses GJC_CONFIG_DIR (legacy alias PI_CONFIG_DIR, default ".gjc") for the
- * config root and GJC_CODING_AGENT_DIR (legacy alias PI_CODING_AGENT_DIR) to
+ * Uses VIB_CONFIG_DIR (legacy alias PI_CONFIG_DIR, default ".vib") for the
+ * config root and VIB_CODING_AGENT_DIR (legacy alias PI_CODING_AGENT_DIR) to
  * override the agent directory.
  *
  * On Linux, if XDG_DATA_HOME / XDG_STATE_HOME / XDG_CACHE_HOME environment
  * variables are set, paths are redirected to XDG-compliant locations under
- * $XDG_*_HOME/gjc/. This requires running `gjc config migrate` first to
+ * $XDG_*_HOME/vib/. This requires running `vib config migrate` first to
  * move data to the new locations. No filesystem existence checks are performed
- * — if the env var is set, gjc trusts that the migration has been done.
+ * — if the env var is set, vib trusts that the migration has been done.
  */
 
 import * as fs from "node:fs";
@@ -18,11 +18,11 @@ import * as path from "node:path";
 import { engines, version } from "../package.json" with { type: "json" };
 import { parseEnvFile } from "./env-file";
 
-/** App name (e.g. "gjc") */
-export const APP_NAME: string = "gjc";
+/** App name (e.g. "vib") */
+export const APP_NAME: string = "vib";
 
-/** Config directory name (e.g. ".gjc") */
-export const CONFIG_DIR_NAME: string = ".gjc";
+/** Config directory name (e.g. ".vib") */
+export const CONFIG_DIR_NAME: string = ".vib";
 
 /** Version (e.g. "1.0.0") */
 export const VERSION: string = version;
@@ -31,10 +31,10 @@ export const VERSION: string = version;
 export const MIN_BUN_VERSION: string = engines.bun.replace(/[^0-9.]/g, "");
 
 /**
- * Build the diagnostic shown when the Bun runtime executing `gjc` is older
+ * Build the diagnostic shown when the Bun runtime executing `vib` is older
  * than {@link MIN_BUN_VERSION}. This is the most common Windows native-install
- * failure (issue #525): `bun install -g gajae-code` probes a recent Bun while
- * the `gjc` launcher resolves an older Bun still on PATH. The message names the
+ * failure (issue #525): `bun install -g vib-rato` probes a recent Bun while
+ * the `vib` launcher resolves an older Bun still on PATH. The message names the
  * exact detected runtime path and gives a platform-specific upgrade + PATH fix
  * instead of a bare `bun upgrade`.
  *
@@ -56,16 +56,16 @@ export function formatBunRuntimeError(opts: {
 	if (platform === "win32") {
 		lines.push(
 			"",
-			"The 'gjc' launcher is using an older Bun than the one used to install it.",
+			"The 'vib' launcher is using an older Bun than the one used to install it.",
 			"Upgrade Bun, then restart your terminal so PATH and the runtime refresh:",
 			"",
 			'  powershell -c "irm bun.sh/install.ps1|iex"',
 			"",
 			"After restarting the terminal, verify both versions match:",
 			"  bun --version",
-			"  gjc --version",
+			"  vib --version",
 			"",
-			"If 'gjc' still loads the old runtime, make sure %USERPROFILE%\\.bun\\bin is",
+			"If 'vib' still loads the old runtime, make sure %USERPROFILE%\\.bun\\bin is",
 			"first on PATH and remove any stale Bun installs shadowing it.",
 		);
 	} else {
@@ -76,7 +76,7 @@ export function formatBunRuntimeError(opts: {
 			"",
 			"Then verify:",
 			"  bun --version",
-			"  gjc --version",
+			"  vib --version",
 		);
 	}
 	return `${lines.join("\n")}\n`;
@@ -234,7 +234,7 @@ function trustedValue(
 
 function resolveConfigDirName(project: { values: Record<string, string>; dynamic: Set<string> }): string {
 	return (
-		sanitizeConfigDirName(trustedValue("GJC_CONFIG_DIR", project)) ??
+		sanitizeConfigDirName(trustedValue("VIB_CONFIG_DIR", project)) ??
 		sanitizeConfigDirName(trustedValue("PI_CONFIG_DIR", project)) ??
 		CONFIG_DIR_NAME
 	);
@@ -244,12 +244,12 @@ function resolveConfigDirName(project: { values: Record<string, string>; dynamic
  * A home directory is usable only when it is absolute and resolves to somewhere
  * strictly below a filesystem root. A relative value would anchor user state
  * beneath whatever the current directory happens to be, and a root would place
- * it at `/.gjc`.
+ * it at `/.vib`.
  *
  * The root test normalizes first, because a root has many spellings: `/.`, `//`,
  * `/foo/..` and `C:\x\..` are all roots that a raw string comparison against
- * `path.parse(home).root` misses, and `path.join(home, ".gjc")` would happily
- * produce `/.gjc` from every one of them.
+ * `path.parse(home).root` misses, and `path.join(home, ".vib")` would happily
+ * produce `/.vib` from every one of them.
  *
  * The **original spelling** is returned, never the normalized form. Provenance
  * compares the declared dotenv value against this result, and both sides must
@@ -413,8 +413,8 @@ export function getConfigAgentDirName(): string {
 type XdgCategory = "data" | "state" | "cache";
 
 /**
- * Resolves and caches all gajae-code directory paths. On Linux, when XDG environment
- * variables are set, paths are redirected under $XDG_*_HOME/gjc/. A new
+ * Resolves and caches all vib-rato directory paths. On Linux, when XDG environment
+ * variables are set, paths are redirected under $XDG_*_HOME/vib/. A new
  * instance is created whenever the agent directory changes, which naturally
  * invalidates all cached paths.
  *
@@ -436,7 +436,7 @@ class DirResolver {
 	#xdgEligible: boolean;
 
 	// Per-category base dirs. Without XDG, all three equal configRoot / agentDir.
-	// With XDG on Linux, they point to $XDG_*_HOME/gjc/.
+	// With XDG on Linux, they point to $XDG_*_HOME/vib/.
 	#rootDirs: Record<XdgCategory, string>;
 	#agentDirs: Record<XdgCategory, string>;
 
@@ -456,18 +456,18 @@ class DirResolver {
 		// profile, XDG categories included, however it arrived.
 		//
 		// Deciding this from override state instead was tried and reverted: it is
-		// unobservably wrong. `setAgentDir()` exports `GJC_CODING_AGENT_DIR`, so a
+		// unobservably wrong. `setAgentDir()` exports `VIB_CODING_AGENT_DIR`, so a
 		// child process inherits the same value the parent set programmatically and
 		// cannot tell the two apart. Treating the inherited form as "not default"
 		// put parent and child on different storage lanes for one logical profile --
-		// the parent reading `$XDG_STATE_HOME/gjc/python-gateway` while the child
+		// the parent reading `$XDG_STATE_HOME/vib/python-gateway` while the child
 		// read `<agentDir>/python-gateway`. Splitting a live store in half is worse
 		// than the narrower complaint it was meant to answer.
 		const isDefault = this.agentDir === defaultAgent;
 		// That decision is then *sticky*. Recomputing it later from path shape is
 		// what let a pinned agent directory silently change storage lane when a home
 		// refresh made it coincide with the new default: `getAgentDir()` looked
-		// unchanged while `agent.db` moved into `$XDG_DATA_HOME/gjc`.
+		// unchanged while `agent.db` moved into `$XDG_DATA_HOME/vib`.
 		this.#xdgEligible = isDefault;
 
 		this.#rootDirs = { data: this.configRoot, state: this.configRoot, cache: this.configRoot };
@@ -600,7 +600,7 @@ class DirResolver {
 
 const INITIAL_PROJECT_SNAPSHOT = projectEnvSnapshot();
 const trustedAgentOverride =
-	trustedValue("GJC_CODING_AGENT_DIR", INITIAL_PROJECT_SNAPSHOT) ??
+	trustedValue("VIB_CODING_AGENT_DIR", INITIAL_PROJECT_SNAPSHOT) ??
 	trustedValue("PI_CODING_AGENT_DIR", INITIAL_PROJECT_SNAPSHOT);
 let dirs = new DirResolver(trustedAgentOverride, INITIAL_PROJECT_SNAPSHOT);
 
@@ -608,7 +608,7 @@ let dirs = new DirResolver(trustedAgentOverride, INITIAL_PROJECT_SNAPSHOT);
 // Root directories
 // =============================================================================
 
-/** Get the config root directory (~/.gjc). */
+/** Get the config root directory (~/.vib). */
 export function getConfigRootDir(): string {
 	dirs.refreshConfigDirOverride();
 	dirs.assertHomeAvailable();
@@ -639,15 +639,15 @@ export function getTrustedConfigRootDir(): string {
  * Set the coding agent directory. Creates a fresh resolver, invalidating all
  * cached paths.
  *
- * This also exports `GJC_CODING_AGENT_DIR`, so child processes inherit the same
+ * This also exports `VIB_CODING_AGENT_DIR`, so child processes inherit the same
  * selection and resolve the same storage lane.
  */
 export function setAgentDir(dir: string): void {
 	dirs = new DirResolver(dir, dirs.trustSnapshot);
-	process.env.GJC_CODING_AGENT_DIR = dir;
+	process.env.VIB_CODING_AGENT_DIR = dir;
 }
 
-/** Get the agent config directory (~/.gjc/agent). */
+/** Get the agent config directory (~/.vib/agent). */
 export function getAgentDir(): string {
 	dirs.refreshConfigDirOverride();
 	dirs.assertHomeAvailable();
@@ -661,7 +661,7 @@ export function getConfigDirName(): string {
 /**
  * Join a file under the provenance-checked agent directory, never the XDG
  * state category. Automatic crash relay must not follow `XDG_STATE_HOME`:
- * a checkout `.env` can set that variable and create `$XDG_STATE_HOME/gjc`,
+ * a checkout `.env` can set that variable and create `$XDG_STATE_HOME/vib`,
  * which the ordinary state resolver would then treat as the crash store.
  */
 export function getTrustedAgentFile(filename: string): string {
@@ -673,32 +673,32 @@ export function isProjectEnvDeclaration(name: string): boolean {
 	return dirs.isProjectEnvDeclaration(name);
 }
 
-/** Get the project-local config directory (.gjc). */
+/** Get the project-local config directory (.vib). */
 export function getProjectAgentDir(cwd: string = getProjectDir()): string {
 	return path.join(cwd, CONFIG_DIR_NAME);
 }
 
 // =============================================================================
-// Config-root subdirectories (~/.gjc/*)
+// Config-root subdirectories (~/.vib/*)
 // =============================================================================
 
-/** Get the reports directory (~/.gjc/reports). */
+/** Get the reports directory (~/.vib/reports). */
 export function getReportsDir(): string {
 	return dirs.rootSubdir("reports", "state");
 }
 
-/** Get the logs directory (~/.gjc/logs). */
+/** Get the logs directory (~/.vib/logs). */
 export function getLogsDir(): string {
 	return dirs.rootSubdir("logs", "state");
 }
 
-/** Get the path to a dated log file (~/.gjc/logs/gjc.YYYY-MM-DD.log). */
+/** Get the path to a dated log file (~/.vib/logs/vib.YYYY-MM-DD.log). */
 export function getLogPath(date = new Date()): string {
 	return path.join(getLogsDir(), `${APP_NAME}.${date.toISOString().slice(0, 10)}.log`);
 }
 
 /**
- * Get the plugins directory (~/.gjc/plugins or its XDG equivalent).
+ * Get the plugins directory (~/.vib/plugins or its XDG equivalent).
  *
  * No-arg form (production callers) goes through the XDG-aware DirResolver so
  * reads and writes always agree. The optional `home` parameter names an explicit
@@ -723,52 +723,52 @@ export function getPluginsDir(home?: string): string {
 	return dirs.rootSubdir("plugins", "data");
 }
 
-/** Where npm installs packages (~/.gjc/plugins/node_modules). */
+/** Where npm installs packages (~/.vib/plugins/node_modules). */
 export function getPluginsNodeModules(): string {
 	return path.join(getPluginsDir(), "node_modules");
 }
 
-/** Plugin manifest (~/.gjc/plugins/package.json). */
+/** Plugin manifest (~/.vib/plugins/package.json). */
 export function getPluginsPackageJson(): string {
 	return path.join(getPluginsDir(), "package.json");
 }
 
-/** Plugin lock file (~/.gjc/plugins/gjc-plugins.lock.json). */
+/** Plugin lock file (~/.vib/plugins/vib-plugins.lock.json). */
 export function getPluginsLockfile(): string {
-	return path.join(getPluginsDir(), "gjc-plugins.lock.json");
+	return path.join(getPluginsDir(), "vib-plugins.lock.json");
 }
 
-/** Get the remote mount directory (~/.gjc/remote). */
+/** Get the remote mount directory (~/.vib/remote). */
 export function getRemoteDir(): string {
 	return dirs.rootSubdir("remote", "data");
 }
 
-/** Get the agent-managed worktrees directory (~/.gjc/wt). */
+/** Get the agent-managed worktrees directory (~/.vib/wt). */
 export function getWorktreesDir(): string {
 	return dirs.rootSubdir("wt", "data");
 }
 
-/** Get the SSH control socket directory (~/.gjc/ssh-control). */
+/** Get the SSH control socket directory (~/.vib/ssh-control). */
 export function getSshControlDir(): string {
 	return dirs.rootSubdir("ssh-control", "state");
 }
 
-/** Get the remote host info directory (~/.gjc/remote-host). */
+/** Get the remote host info directory (~/.vib/remote-host). */
 export function getRemoteHostDir(): string {
 	return dirs.rootSubdir("remote-host", "data");
 }
 
-/** Get the managed Python venv directory (~/.gjc/python-env). */
+/** Get the managed Python venv directory (~/.vib/python-env). */
 export function getPythonEnvDir(): string {
 	return dirs.rootSubdir("python-env", "data");
 }
 
-/** Get the shared Python gateway state directory (~/.gjc/agent/python-gateway; XDG default: $XDG_STATE_HOME/gjc/python-gateway). */
+/** Get the shared Python gateway state directory (~/.vib/agent/python-gateway; XDG default: $XDG_STATE_HOME/vib/python-gateway). */
 export function getPythonGatewayDir(): string {
 	return dirs.agentSubdir(undefined, "python-gateway", "state");
 }
 
-/** Get the puppeteer sandbox directory (~/.gjc/puppeteer). */
+/** Get the puppeteer sandbox directory (~/.vib/puppeteer). */
 export function getPuppeteerDir(): string {
 	return dirs.rootSubdir("puppeteer", "cache");
 }
@@ -777,7 +777,7 @@ export function getPuppeteerDir(): string {
  * Stable 7-character hex digest of an absolute filesystem path.
  *
  * Used to pack the project identity into a single short fs-safe segment
- * (e.g. PR-checkout and task-isolation worktree dirs under `~/.gjc/wt/`).
+ * (e.g. PR-checkout and task-isolation worktree dirs under `~/.vib/wt/`).
  * Bun.hash is non-cryptographic — collision space is ~2^28, which is fine
  * for naming a handful of repos on a single machine. Same input on the
  * same Bun runtime yields the same output.
@@ -786,12 +786,12 @@ export function hashPath(absPath: string): string {
 	return Bun.hash(path.resolve(absPath)).toString(16).padStart(16, "0").slice(-7);
 }
 
-/** Get the path to a single worktree directory (~/.gjc/wt/<segment>). */
+/** Get the path to a single worktree directory (~/.vib/wt/<segment>). */
 export function getWorktreeDir(segment: string): string {
 	return path.join(getWorktreesDir(), segment);
 }
 
-/** Get the GPU cache path (~/.gjc/gpu_cache.json). */
+/** Get the GPU cache path (~/.vib/gpu_cache.json). */
 export function getGpuCachePath(): string {
 	const defaultAgentDir = path.join(dirs.trustedHome, dirs.configDirName, "agent");
 	if (path.resolve(dirs.agentDir) !== path.resolve(defaultAgentDir)) return path.join(dirs.agentDir, "gpu_cache.json");
@@ -799,12 +799,12 @@ export function getGpuCachePath(): string {
 }
 
 /**
- * Get the GitHub view cache database path (~/.gjc/cache/github-cache.db).
- * Honors the `GJC_GITHUB_CACHE_DB` env var when set so tests can isolate the
+ * Get the GitHub view cache database path (~/.vib/cache/github-cache.db).
+ * Honors the `VIB_GITHUB_CACHE_DB` env var when set so tests can isolate the
  * cache file without touching the rest of the config root.
  */
 export function getGithubCacheDbPath(): string {
-	const override = process.env.GJC_GITHUB_CACHE_DB;
+	const override = process.env.VIB_GITHUB_CACHE_DB;
 	if (override) return override;
 	return dirs.rootSubdir(path.join("cache", "github-cache.db"), "cache");
 }
@@ -814,18 +814,18 @@ export function getToolChoiceCapabilityCachePath(): string {
 	return dirs.rootSubdir(path.join("cache", "tool-choice-capabilities.db"), "cache");
 }
 
-/** Get the natives directory (~/.gjc/natives). */
+/** Get the natives directory (~/.vib/natives). */
 export function getNativesDir(): string {
 	return dirs.rootSubdir("natives", "cache");
 }
 
-/** Get the stats database path (~/.gjc/stats.db). */
+/** Get the stats database path (~/.vib/stats.db). */
 export function getStatsDbPath(): string {
 	return dirs.rootSubdir("stats.db", "data");
 }
 
 // =============================================================================
-// Agent subdirectories (~/.gjc/agent/*)
+// Agent subdirectories (~/.vib/agent/*)
 // =============================================================================
 
 /** Get the path to agent.db (SQLite database for settings and auth storage). */
@@ -843,12 +843,12 @@ export function getModelDbPath(agentDir?: string): string {
 	return dirs.agentSubdir(agentDir, "models.db", "data");
 }
 
-/** Get the sessions directory (~/.gjc/agent/sessions). */
+/** Get the sessions directory (~/.vib/agent/sessions). */
 export function getSessionsDir(agentDir?: string): string {
 	return dirs.agentSubdir(agentDir, "sessions", "data");
 }
 
-/** Get the content-addressed blob store directory (~/.gjc/agent/blobs). */
+/** Get the content-addressed blob store directory (~/.vib/agent/blobs). */
 export function getBlobsDir(agentDir?: string): string {
 	return dirs.agentSubdir(agentDir, "blobs", "data");
 }
@@ -863,91 +863,91 @@ export function getSidecarCacheRootDir(profileAgentDir: string): string {
 	return dirs.agentSubdir(profileAgentDir, "sidecar-cache", "cache");
 }
 
-/** Get the custom themes directory (~/.gjc/agent/themes). */
+/** Get the custom themes directory (~/.vib/agent/themes). */
 export function getCustomThemesDir(agentDir?: string): string {
 	return dirs.agentSubdir(agentDir, "themes");
 }
 
-/** Get the tools directory (~/.gjc/agent/tools). */
+/** Get the tools directory (~/.vib/agent/tools). */
 export function getToolsDir(agentDir?: string): string {
 	return dirs.agentSubdir(agentDir, "tools");
 }
 
-/** Get the slash commands directory (~/.gjc/agent/commands). */
+/** Get the slash commands directory (~/.vib/agent/commands). */
 export function getCommandsDir(agentDir?: string): string {
 	return dirs.agentSubdir(agentDir, "commands");
 }
 
-/** Get the prompts directory (~/.gjc/agent/prompts). */
+/** Get the prompts directory (~/.vib/agent/prompts). */
 export function getPromptsDir(agentDir?: string): string {
 	return dirs.agentSubdir(agentDir, "prompts");
 }
 
-/** Get the user-level Python modules directory (~/.gjc/agent/modules). */
+/** Get the user-level Python modules directory (~/.vib/agent/modules). */
 export function getAgentModulesDir(agentDir?: string): string {
 	return dirs.agentSubdir(agentDir, "modules");
 }
 
-/** Get the memories directory (~/.gjc/agent/memories). */
+/** Get the memories directory (~/.vib/agent/memories). */
 export function getMemoriesDir(agentDir?: string): string {
 	return dirs.agentSubdir(agentDir, "memories", "state");
 }
 
-/** Get the terminal sessions directory (~/.gjc/agent/terminal-sessions). */
+/** Get the terminal sessions directory (~/.vib/agent/terminal-sessions). */
 export function getTerminalSessionsDir(agentDir?: string): string {
 	return dirs.agentSubdir(agentDir, "terminal-sessions", "state");
 }
 
-/** Get the crash log path (~/.gjc/agent/gjc-crash.log). */
+/** Get the crash log path (~/.vib/agent/vib-crash.log). */
 export function getCrashLogPath(agentDir?: string): string {
-	return dirs.agentSubdir(agentDir, "gjc-crash.log", "state");
+	return dirs.agentSubdir(agentDir, "vib-crash.log", "state");
 }
 
-/** Get the crash event journal path (~/.gjc/agent/gjc-crash-events.jsonl). */
+/** Get the crash event journal path (~/.vib/agent/vib-crash-events.jsonl). */
 export function getCrashEventsPath(agentDir?: string): string {
-	return dirs.agentSubdir(agentDir, "gjc-crash-events.jsonl", "state");
+	return dirs.agentSubdir(agentDir, "vib-crash-events.jsonl", "state");
 }
 
-/** Get the compacted crash signature index path (~/.gjc/agent/gjc-crash-index.json). */
+/** Get the compacted crash signature index path (~/.vib/agent/vib-crash-index.json). */
 export function getCrashIndexPath(agentDir?: string): string {
-	return dirs.agentSubdir(agentDir, "gjc-crash-index.json", "state");
+	return dirs.agentSubdir(agentDir, "vib-crash-index.json", "state");
 }
 
-/** Get the handled error log path (~/.gjc/agent/gjc-error.log). */
+/** Get the handled error log path (~/.vib/agent/vib-error.log). */
 export function getHandledErrorLogPath(agentDir?: string): string {
-	return dirs.agentSubdir(agentDir, "gjc-error.log", "state");
+	return dirs.agentSubdir(agentDir, "vib-error.log", "state");
 }
 
-/** Get the handled error event journal path (~/.gjc/agent/gjc-error-events.jsonl). */
+/** Get the handled error event journal path (~/.vib/agent/vib-error-events.jsonl). */
 export function getHandledErrorEventsPath(agentDir?: string): string {
-	return dirs.agentSubdir(agentDir, "gjc-error-events.jsonl", "state");
+	return dirs.agentSubdir(agentDir, "vib-error-events.jsonl", "state");
 }
 
-/** Get the compacted handled error signature index path (~/.gjc/agent/gjc-error-index.json). */
+/** Get the compacted handled error signature index path (~/.vib/agent/vib-error-index.json). */
 export function getHandledErrorIndexPath(agentDir?: string): string {
-	return dirs.agentSubdir(agentDir, "gjc-error-index.json", "state");
+	return dirs.agentSubdir(agentDir, "vib-error-index.json", "state");
 }
 
-/** Get the debug log path (~/.gjc/agent/gjc-debug.log). */
+/** Get the debug log path (~/.vib/agent/vib-debug.log). */
 export function getDebugLogPath(agentDir?: string): string {
 	return dirs.agentSubdir(agentDir, `${APP_NAME}-debug.log`, "state");
 }
 
 // =============================================================================
-// Project subdirectories (.gjc/*)
+// Project subdirectories (.vib/*)
 // =============================================================================
 
-/** Get the project-level Python modules directory (.gjc/modules). */
+/** Get the project-level Python modules directory (.vib/modules). */
 export function getProjectModulesDir(cwd: string = getProjectDir()): string {
 	return path.join(getProjectAgentDir(cwd), "modules");
 }
 
-/** Get the project-level prompts directory (.gjc/prompts). */
+/** Get the project-level prompts directory (.vib/prompts). */
 export function getProjectPromptsDir(cwd: string = getProjectDir()): string {
 	return path.join(getProjectAgentDir(cwd), "prompts");
 }
 
-/** Get the project-level plugin overrides path (.gjc/plugin-overrides.json). */
+/** Get the project-level plugin overrides path (.vib/plugin-overrides.json). */
 export function getProjectPluginOverridesPath(cwd: string = getProjectDir()): string {
 	return path.join(getProjectAgentDir(cwd), "plugin-overrides.json");
 }
@@ -960,7 +960,7 @@ export function getProjectPluginOverridesPath(cwd: string = getProjectDir()): st
  * Get the primary MCP config file path (first candidate).
  *
  * User scope lives in the agent directory, so a profile override
- * (`--agent-dir`, `GJC_CODING_AGENT_DIR`, `setAgentDir()`) moves it. Pass
+ * (`--agent-dir`, `VIB_CODING_AGENT_DIR`, `setAgentDir()`) moves it. Pass
  * `agentDir` to resolve the scope of a session whose agent directory differs
  * from the process-wide one.
  */

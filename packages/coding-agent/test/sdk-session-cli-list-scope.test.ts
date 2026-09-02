@@ -11,7 +11,7 @@ import {
 	type SdkSessionCliArgs,
 } from "../src/sdk/cli/session-cli";
 
-const tempRoot = await mkdtemp(path.join(os.tmpdir(), "gjc-sdk-session-scope-"));
+const tempRoot = await mkdtemp(path.join(os.tmpdir(), "vib-sdk-session-scope-"));
 
 async function git(cwd: string, ...args: string[]): Promise<void> {
 	const proc = Bun.spawn(["git", ...args], { cwd, stdout: "ignore", stderr: "pipe" });
@@ -30,7 +30,7 @@ async function makeRepo(name: string): Promise<string> {
 function row(sessionId: string, repoLocator: string): SdkSessionRowV1 {
 	return {
 		sessionId,
-		locator: { repo: repoLocator, stateRoot: `${repoLocator}/.gjc/state` },
+		locator: { repo: repoLocator, stateRoot: `${repoLocator}/.vib/state` },
 		endpointGeneration: 1,
 		pid: 100,
 		live: false,

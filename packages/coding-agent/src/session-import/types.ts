@@ -3,7 +3,7 @@
  *
  * An import accepts ONE explicit user-selected Codex or Claude transcript/export
  * file, normalizes it into the intermediate representation below, and rebuilds a
- * bounded, redacted continuation context inside a NEW GJC session. The source
+ * bounded, redacted continuation context inside a NEW Vibrato session. The source
  * file is only ever read; provider process state is never scraped.
  */
 
@@ -114,7 +114,7 @@ export interface SessionImportProvenance {
 	/** SHA-256 over the exact source bytes that were imported. */
 	sourceSha256: string;
 	sourceBytes: number;
-	/** RFC 4122 UUID of the GJC session that received the import. */
+	/** RFC 4122 UUID of the Vibrato session that received the import. */
 	targetSessionId: string;
 	importedAt: string;
 	converterVersion: number;

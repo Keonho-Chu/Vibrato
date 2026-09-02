@@ -1,16 +1,16 @@
 /**
  * RLM session artifact layout under
- * <cwd>/.gjc/_session-{gjcSessionId}/autoresearch/runs/<rlmSessionId>/.
+ * <cwd>/.vib/_session-{vibSessionId}/autoresearch/runs/<rlmSessionId>/.
  *
- * The GJC session id (process boundary) scopes the directory; the RLM session id
+ * The Vibrato session id (process boundary) scopes the directory; the RLM session id
  * names the individual research run within it. The two ids are kept distinct.
  * The whole subtree lives under the session autoresearch root.
  */
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { readNotebookDocument } from "../edit/notebook";
-import { autoresearchRlmArtifactRoot } from "../gjc-runtime/session-layout";
-import { resolveGjcSessionForWrite } from "../gjc-runtime/session-resolution";
+import { autoresearchRlmArtifactRoot } from "../vib-runtime/session-layout";
+import { resolveVibSessionForWrite } from "../vib-runtime/session-resolution";
 import type { RlmArtifactPaths } from "./types";
 
 export const RLM_DIR_SEGMENT = "runs";
@@ -28,13 +28,13 @@ export function generateRlmSessionId(now: Date = new Date()): string {
 	return `${stamp}-${suffix}`;
 }
 
-export function resolveRlmArtifactPaths(cwd: string, sessionId: string, gjcSessionId?: string): RlmArtifactPaths {
+export function resolveRlmArtifactPaths(cwd: string, sessionId: string, vibSessionId?: string): RlmArtifactPaths {
 	if (!isValidRlmSessionId(sessionId)) {
 		throw new Error(`Invalid RLM session id: ${JSON.stringify(sessionId)}`);
 	}
 	const dir = autoresearchRlmArtifactRoot(
 		cwd,
-		gjcSessionId ?? resolveGjcSessionForWrite(cwd, { envSessionId: process.env.GJC_SESSION_ID }).gjcSessionId,
+		vibSessionId ?? resolveVibSessionForWrite(cwd, { envSessionId: process.env.VIB_SESSION_ID }).vibSessionId,
 		sessionId,
 	);
 	return {
@@ -50,8 +50,8 @@ export async function ensureRlmSessionDir(paths: RlmArtifactPaths): Promise<void
 	await fs.mkdir(paths.dir, { recursive: true });
 }
 
-export async function rlmSessionExists(cwd: string, sessionId: string, gjcSessionId?: string): Promise<boolean> {
-	const paths = resolveRlmArtifactPaths(cwd, sessionId, gjcSessionId);
+export async function rlmSessionExists(cwd: string, sessionId: string, vibSessionId?: string): Promise<boolean> {
+	const paths = resolveRlmArtifactPaths(cwd, sessionId, vibSessionId);
 	try {
 		const stat = await fs.stat(paths.dir);
 		return stat.isDirectory();
@@ -60,8 +60,8 @@ export async function rlmSessionExists(cwd: string, sessionId: string, gjcSessio
 	}
 }
 
-export async function readRlmNotebookIfPresent(cwd: string, sessionId: string, gjcSessionId?: string) {
-	const paths = resolveRlmArtifactPaths(cwd, sessionId, gjcSessionId);
+export async function readRlmNotebookIfPresent(cwd: string, sessionId: string, vibSessionId?: string) {
+	const paths = resolveRlmArtifactPaths(cwd, sessionId, vibSessionId);
 	try {
 		return await readNotebookDocument(paths.notebookPath, paths.notebookPath);
 	} catch (error) {

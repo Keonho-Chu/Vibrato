@@ -9,7 +9,7 @@ macOS desktop via the OpenAI computer-use action set. Built fresh (the
 open-source `openai/codex` repo has no GUI computer-use source to copy; only the
 public action *schema* is mirrored).
 
-This feature was scoped through GJC's deep-interview (requirements) and ralplan
+This feature was scoped through Vibrato's deep-interview (requirements) and ralplan
 (Planner/Architect/Critic consensus) workflows. The full deep-interview spec and
 the consensus plan + ADR are the authoritative source of truth; this document is
 the committed summary and roadmap.
@@ -31,7 +31,7 @@ the committed summary and roadmap.
   screenshot's pixel dimensions *are* the action coordinate space; Rust owns the
   transform to macOS logical points (Retina/HiDPI-safe) and display selection.
 - **Permissions:** macOS TCC (Accessibility + Screen & System Audio Recording)
-  is checked for the actual GJC launcher; on a missing grant, open the
+  is checked for the actual Vibrato launcher; on a missing grant, open the
   relevant Settings pane and return a clear "grant then fully relaunch" error.
   macOS grants belong to the launcher's code identity, so a permission granted
   to Terminal, Bun, or an older rebuilt binary is not proof that the current

@@ -7,7 +7,7 @@
  */
 
 import { createHash } from "node:crypto";
-import type { Api, Model } from "@gajae-code/ai/core";
+import type { Api, Model } from "@vib-rato/ai/core";
 import {
 	AUTOROUTING_TIERS,
 	type AutoroutingSetup,

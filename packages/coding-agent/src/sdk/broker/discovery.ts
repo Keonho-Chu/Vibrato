@@ -3,14 +3,14 @@ import * as fsSync from "node:fs";
 import * as fs from "node:fs/promises";
 import path from "node:path";
 
-import type { NativeRetainedBrokerPublication } from "@gajae-code/natives";
+import type { NativeRetainedBrokerPublication } from "@vib-rato/natives";
 
-type NativeBrokerDiscoveryBindings = Pick<typeof import("@gajae-code/natives"), "retainBrokerPublication">;
+type NativeBrokerDiscoveryBindings = Pick<typeof import("@vib-rato/natives"), "retainBrokerPublication">;
 let nativeBrokerDiscoveryBindings: NativeBrokerDiscoveryBindings | undefined;
 
 function nativeBrokerDiscovery(): NativeBrokerDiscoveryBindings {
 	if (!nativeBrokerDiscoveryBindings)
-		nativeBrokerDiscoveryBindings = require("@gajae-code/natives") as NativeBrokerDiscoveryBindings;
+		nativeBrokerDiscoveryBindings = require("@vib-rato/natives") as NativeBrokerDiscoveryBindings;
 	return nativeBrokerDiscoveryBindings;
 }
 

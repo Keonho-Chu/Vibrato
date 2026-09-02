@@ -2,8 +2,8 @@ import { afterEach, describe, expect, it, vi } from "bun:test";
 import {
 	emergencyCompactionReason,
 	resetEmergencyRetainedMemoryDiagnosticsForTests,
-} from "@gajae-code/agent-core/compaction";
-import { logger } from "@gajae-code/utils";
+} from "@vib-rato/agent-core/compaction";
+import { logger } from "@vib-rato/utils";
 
 const MIB = 1024 * 1024;
 const sample = { heapUsedBytes: 0, providerBytes: 0, messageCount: 0, imageBytes: 0 };

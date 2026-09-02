@@ -1,17 +1,17 @@
 /**
  * Extension runner - executes extensions and manages their lifecycle.
  */
-import type { AgentMessage } from "@gajae-code/agent-core";
-import type { AttemptScope } from "@gajae-code/agent-core/attempt-scope";
+import type { AgentMessage } from "@vib-rato/agent-core";
+import type { AttemptScope } from "@vib-rato/agent-core/attempt-scope";
 import type {
 	AttemptScopeRef,
 	CredentialDisabledEvent,
 	ImageContent,
 	Model,
 	ProviderResponseMetadata,
-} from "@gajae-code/ai/core";
-import type { KeyId } from "@gajae-code/tui";
-import { logger } from "@gajae-code/utils";
+} from "@vib-rato/ai/core";
+import type { KeyId } from "@vib-rato/tui";
+import { logger } from "@vib-rato/utils";
 import type { ModelRegistry } from "../../config/model-registry";
 import type { Settings } from "../../config/settings";
 import type { WorkflowGateEmitter } from "../../modes/shared/agent-wire/workflow-gate-broker";

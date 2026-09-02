@@ -56,8 +56,8 @@ describe("compiled daemon smoke coverage", () => {
 	}
 
 	test("root CLI defers the chat daemon bus graph while the hidden daemon child still spawns", async () => {
-		const agentDir = tempDir("gjc-chat-daemon-root-entry-");
-		const cwd = tempDir("gjc-chat-daemon-root-cwd-");
+		const agentDir = tempDir("vib-chat-daemon-root-entry-");
+		const cwd = tempDir("vib-chat-daemon-root-cwd-");
 		const configPath = path.join(agentDir, "config.yml");
 		const config = "notifications:\n  enabled: false\n";
 		fs.writeFileSync(configPath, config);
@@ -101,13 +101,13 @@ describe("compiled daemon smoke coverage", () => {
 			new Response(proc.stderr).text(),
 		]);
 		expect(`${exitCode}\n${stdout}\n${stderr}`).toStartWith("0\n");
-		fs.copyFileSync(path.join(repoRoot, `packages/coding-agent/dist/gjc${executableSuffix}`), outPath);
+		fs.copyFileSync(path.join(repoRoot, `packages/coding-agent/dist/vib${executableSuffix}`), outPath);
 		fs.chmodSync(outPath, 0o755);
 	}
 
 	test("hidden daemon CLI smoke creates and removes its temp lock without leaking tokens", async () => {
-		const agentDir = tempDir("gjc-compiled-daemon-agent-");
-		const cwd = tempDir("gjc-compiled-daemon-cwd-");
+		const agentDir = tempDir("vib-compiled-daemon-agent-");
+		const cwd = tempDir("vib-compiled-daemon-cwd-");
 		const token = "123456:super-secret-token";
 		const proc = Bun.spawn(
 			[
@@ -122,8 +122,8 @@ describe("compiled daemon smoke coverage", () => {
 				cwd,
 				env: {
 					...process.env,
-					GJC_CODING_AGENT_DIR: agentDir,
-					GJC_TG_BOT_TOKEN: token,
+					VIB_CODING_AGENT_DIR: agentDir,
+					VIB_TG_BOT_TOKEN: token,
 				},
 				stdout: "pipe",
 				stderr: "pipe",
@@ -147,7 +147,7 @@ describe("compiled daemon smoke coverage", () => {
 	});
 
 	test("source chat worker reads disabled config without modifying it", async () => {
-		const agentDir = tempDir("gjc-chat-daemon-disabled-");
+		const agentDir = tempDir("vib-chat-daemon-disabled-");
 		const configPath = path.join(agentDir, "config.yml");
 		const config = "notifications:\n  enabled: false\n";
 		fs.writeFileSync(configPath, config);
@@ -175,8 +175,8 @@ describe("compiled daemon smoke coverage", () => {
 		}
 	});
 	test("compiled binary preserves the shipped chat worker entrypoint", async () => {
-		const temp = tempDir("gjc-compiled-daemon-binary-");
-		const binaryPath = path.join(temp, `gjc-repro${executableSuffix}`);
+		const temp = tempDir("vib-compiled-daemon-binary-");
+		const binaryPath = path.join(temp, `vib-repro${executableSuffix}`);
 		try {
 			await buildCompiledDaemonSmokeBinary(binaryPath);
 			const nativeVersion = (
@@ -185,7 +185,7 @@ describe("compiled daemon smoke coverage", () => {
 				}
 			).version;
 			const xdgDataHome = path.join(temp, "xdg");
-			const nativeCache = path.join(xdgDataHome, "gjc", "natives", nativeVersion);
+			const nativeCache = path.join(xdgDataHome, "vib", "natives", nativeVersion);
 			fs.mkdirSync(nativeCache, { recursive: true });
 			const nativeSrcDir = path.join(repoRoot, "packages/natives/native");
 			for (const nativeFile of fs.readdirSync(nativeSrcDir)) {
@@ -199,7 +199,7 @@ describe("compiled daemon smoke coverage", () => {
 				10_000,
 			);
 			expect(version.timedOut).toBe(false);
-			expect(`${version.exitCode}\n${version.stdout}\n${version.stderr}`).toStartWith("0\ngjc/");
+			expect(`${version.exitCode}\n${version.stdout}\n${version.stderr}`).toStartWith("0\nvib/");
 		} finally {
 			fs.rmSync(temp, { recursive: true, force: true });
 		}
@@ -219,11 +219,11 @@ describe("compiled daemon smoke coverage", () => {
 
 	test("compiled-mode spawn args self-spawn the binary without a script prefix and carry a reload warning", () => {
 		const { command, args, runtime } = buildTelegramDaemonSpawnArgs({
-			execPath: "/opt/gjc/gjc",
+			execPath: "/opt/vib/vib",
 			ownerId: "owner-1",
 			agentDir: "/tmp/agent",
 		});
-		expect(command).toBe("/opt/gjc/gjc");
+		expect(command).toBe("/opt/vib/vib");
 		// No bun/node entry-script prefix in compiled mode: the binary self-spawns its subcommand.
 		expect(args[0]).toBe("notify");
 		expect(args).toContain("daemon-internal");
@@ -237,11 +237,11 @@ describe("compiled daemon smoke coverage", () => {
 		for (const kind of ["discord", "slack"] as const) {
 			const { command, args, runtime } = buildChatDaemonSpawnArgs({
 				kind,
-				execPath: "/opt/gjc/gjc",
+				execPath: "/opt/vib/vib",
 				ownerId: "owner-1",
 				agentDir: "/tmp/agent",
 			});
-			expect(command).toBe("/opt/gjc/gjc");
+			expect(command).toBe("/opt/vib/vib");
 			expect(args).toEqual(expect.arrayContaining(["daemon", `${kind}-internal`, "--owner-id", "owner-1"]));
 			expect(runtime.mode).toBe("compiled");
 		}

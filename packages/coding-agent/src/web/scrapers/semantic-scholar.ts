@@ -1,4 +1,4 @@
-import { tryParseJson } from "@gajae-code/utils";
+import { tryParseJson } from "@vib-rato/utils";
 import type { SpecialHandler } from "./types";
 import { buildResult, formatNumber, loadPage } from "./types";
 

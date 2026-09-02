@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import type { ToolResultMessage } from "@gajae-code/ai";
+import type { ToolResultMessage } from "@vib-rato/ai";
 import { DEFAULT_COMPACTION_SETTINGS, prepareCompaction, shouldCompact } from "../src/compaction/compaction";
 import type { SessionEntry } from "../src/compaction/entries";
 import { applyToolOutputPrune as pruneToolOutputs } from "./pruning-test-utils";

@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { Model } from "@gajae-code/ai/core";
+import type { Model } from "@vib-rato/ai/core";
 import {
 	isModelProfileProviderAvailable,
 	MODEL_PROFILE_DISCOVERY_QUERY,
@@ -33,7 +33,7 @@ afterEach(async () => {
 });
 
 async function temp(): Promise<string> {
-	const directory = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-sdk-profiles-"));
+	const directory = await fs.mkdtemp(path.join(os.tmpdir(), "vib-sdk-profiles-"));
 	dirs.push(directory);
 	return directory;
 }
@@ -472,7 +472,7 @@ describe("broker model-profile validation", () => {
 		expect(validateBrokerModelPresetForTest(agentDir, "custom/profile !")).toBe("custom/profile !");
 		expect(validateBrokerModelPresetForTest(agentDir, "codex-standard")).toBe("codex-medium");
 		const cwd = await temp();
-		const stateRoot = path.join(cwd, ".gjc", "state");
+		const stateRoot = path.join(cwd, ".vib", "state");
 		await fs.mkdir(stateRoot, { recursive: true });
 		await Bun.write(
 			path.join(cwd, "models.yml"),

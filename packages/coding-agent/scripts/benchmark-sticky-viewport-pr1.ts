@@ -1,6 +1,6 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { Container, renderMetrics, Text, TUI } from "@gajae-code/tui";
+import { Container, renderMetrics, Text, TUI } from "@vib-rato/tui";
 import { VirtualTerminal } from "../../tui/test/virtual-terminal";
 import {
 	__ircSidebarPerfCounters,

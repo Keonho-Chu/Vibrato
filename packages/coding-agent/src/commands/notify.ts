@@ -1,7 +1,7 @@
 /**
  * Configure Telegram, Discord, or Slack notifications.
  */
-import { Args, Command, Flags } from "@gajae-code/utils/cli";
+import { Args, Command, Flags } from "@vib-rato/utils/cli";
 import {
 	assertStrictActivateThreadInvocation,
 	assertStrictBindThreadInvocation,
@@ -61,7 +61,7 @@ export default class Notify extends Command {
 		}),
 		probe: Flags.boolean({ description: "notify health: run the selected provider's REST diagnostic" }),
 		message: Flags.string({ description: "notify test: custom message body" }),
-		"session-id": Flags.string({ description: "Live GJC session to bind to an existing Slack thread" }),
+		"session-id": Flags.string({ description: "Live Vibrato session to bind to an existing Slack thread" }),
 		"thread-ts": Flags.string({ description: "Existing Slack root thread timestamp" }),
 		"owner-id": Flags.string({ description: "Internal: daemon owner id" }),
 		"agent-dir": Flags.string({ description: "Internal: agent dir for the daemon" }),

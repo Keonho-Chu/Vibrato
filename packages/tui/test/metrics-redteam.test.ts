@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { MAX_LABEL_MAP_ENTRIES, REPAINT_STORM_THRESHOLD, RenderMetrics } from "@gajae-code/tui/metrics";
+import { MAX_LABEL_MAP_ENTRIES, REPAINT_STORM_THRESHOLD, RenderMetrics } from "@vib-rato/tui/metrics";
 import { makeRecordedSession, runReplay } from "./replay-harness";
 
 function recordUnexpectedRender(metrics: RenderMetrics, cause = "extraLines > height"): void {

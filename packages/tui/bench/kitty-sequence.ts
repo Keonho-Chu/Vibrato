@@ -1,4 +1,4 @@
-import { matchesKittySequence as nativeMatchesKittySequence } from "@gajae-code/natives";
+import { matchesKittySequence as nativeMatchesKittySequence } from "@vib-rato/natives";
 import { parseKittySequence } from "../src/keys";
 
 const ITERATIONS = 2000;

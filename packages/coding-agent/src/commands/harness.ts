@@ -1,6 +1,6 @@
 /**
- * `gjc harness <verb>` — AI-native stateless JSON CLI for the coding-harness
- * operations control plane (v1, gajae-code adapter).
+ * `vib harness <verb>` — AI-native stateless JSON CLI for the coding-harness
+ * operations control plane (v1, vib-rato adapter).
  *
  * Every verb emits the universal contract `{ ok, state, evidence, nextAllowedActions }`.
  * Foundation milestone (M1/M2) implements: start, observe, classify, events, retire,
@@ -13,29 +13,8 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { Args, Command, Flags } from "@gajae-code/utils/cli";
-import { $credentialEnv } from "@gajae-code/utils/env";
-import {
-	GJC_TMUX_OWNER_GENERATION_ENV,
-	GJC_TMUX_OWNER_SERVER_KEY_ENV,
-	GJC_TMUX_OWNER_STATE_DIR_ENV,
-} from "../gjc-runtime/session-state-sidecar";
-import { resolveGjcTmuxBinary, resolveGjcTmuxCommand, sanitizeTmuxToken } from "../gjc-runtime/tmux-common";
-import {
-	captureOwnerGenerationBaselineSync,
-	classifyCgroup,
-	isExactScopedBootstrapSuccessReceipt,
-	isOwnerGenerationBaselineCurrentSync,
-	isSafeServerProof,
-	type OwnerGenerationBaseline,
-	type OwnerIsolationProbe,
-	observeOwnerTerminal,
-	ownerProcessStartTime,
-	planTmuxOwnerIsolation,
-	replaceOwnerGenerationSync,
-	sameServerIdentity,
-	type TmuxServerProof,
-} from "../gjc-runtime/tmux-owner-isolation";
+import { Args, Command, Flags } from "@vib-rato/utils/cli";
+import { $credentialEnv } from "@vib-rato/utils/env";
 import { classifyRecovery } from "../harness-control-plane/classifier";
 import { callEndpoint, EndpointUnreachableError } from "../harness-control-plane/control-endpoint";
 import {
@@ -76,6 +55,27 @@ import {
 	type SessionState,
 } from "../harness-control-plane/types";
 import { SPAWN_PROVENANCE_ENV } from "../sdk/bus/config";
+import {
+	VIB_TMUX_OWNER_GENERATION_ENV,
+	VIB_TMUX_OWNER_SERVER_KEY_ENV,
+	VIB_TMUX_OWNER_STATE_DIR_ENV,
+} from "../vib-runtime/session-state-sidecar";
+import { resolveVibTmuxBinary, resolveVibTmuxCommand, sanitizeTmuxToken } from "../vib-runtime/tmux-common";
+import {
+	captureOwnerGenerationBaselineSync,
+	classifyCgroup,
+	isExactScopedBootstrapSuccessReceipt,
+	isOwnerGenerationBaselineCurrentSync,
+	isSafeServerProof,
+	type OwnerGenerationBaseline,
+	type OwnerIsolationProbe,
+	observeOwnerTerminal,
+	ownerProcessStartTime,
+	planTmuxOwnerIsolation,
+	replaceOwnerGenerationSync,
+	sameServerIdentity,
+	type TmuxServerProof,
+} from "../vib-runtime/tmux-owner-isolation";
 
 const PRIVATE_OWNER_CONTROL_FIELDS = new Set([
 	"socket_key",
@@ -333,18 +333,18 @@ interface OwnerExitEvidence {
 
 function ownerExitGuidance(reason: string, startupBlocker: boolean): string {
 	if (startupBlocker) {
-		return "owner started and reported live but exited before accepting the first prompt; run `gjc harness recover --session <id>` to respawn the owner, then resubmit the prompt";
+		return "owner started and reported live but exited before accepting the first prompt; run `vib harness recover --session <id>` to respawn the owner, then resubmit the prompt";
 	}
 	switch (reason) {
 		case "owner-exited-after-prompt-acceptance":
-			return "owner exited after accepting a prompt; run `gjc harness recover --session <id>` to preserve in-flight work and classify the vanish before resubmitting";
+			return "owner exited after accepting a prompt; run `vib harness recover --session <id>` to preserve in-flight work and classify the vanish before resubmitting";
 		case "owner-lease-expired":
 		case "owner-endpoint-unreachable":
-			return "owner lease is stale or its endpoint did not route; run `gjc harness recover --session <id>` to respawn or take over the owner";
+			return "owner lease is stale or its endpoint did not route; run `vib harness recover --session <id>` to respawn or take over the owner";
 		case "owner-liveness-unknown-permission-denied":
 			return "owner liveness cannot be probed (permission denied); verify the owner process out-of-band before recover";
 		default:
-			return "no live owner holds this session; run `gjc harness recover --session <id>` to (re)spawn an owner, then resubmit";
+			return "no live owner holds this session; run `vib harness recover --session <id>` to (re)spawn an owner, then resubmit";
 	}
 }
 
@@ -561,7 +561,7 @@ function scopedBootstrapReceipt(stdout: Uint8Array): ScopedBootstrapReceipt | nu
 }
 
 function ownerIsolationPlatform(): NodeJS.Platform {
-	return process.platform === "linux" || process.env.GJC_HARNESS_TEST_ASSUME_LINUX_OWNER_ISOLATION !== "1"
+	return process.platform === "linux" || process.env.VIB_HARNESS_TEST_ASSUME_LINUX_OWNER_ISOLATION !== "1"
 		? process.platform
 		: "linux";
 }
@@ -573,14 +573,14 @@ function ownerIsolationPlatform(): NodeJS.Platform {
  * The result is spawned, so whatever can set it chooses which binary runs.
  * `$env` merges the caller's `cwd/.env` into `process.env`, so reading it there
  * would let repository content pick the command; resolve it the same way
- * provider credentials are (launching shell plus GJC/user-owned `.env` files,
+ * provider credentials are (launching shell plus Vibrato/user-owned `.env` files,
  * never the project `.env`). A malformed override stays fatal rather than
  * silently falling back to `ps`, matching the previous behavior.
  */
 type ProcessStartCommandOverride = { kind: "none" } | { kind: "invalid" } | { kind: "command"; command: string[] };
 
 function processStartCommandOverride(): ProcessStartCommandOverride {
-	const configured = $credentialEnv("GJC_HARNESS_PROCESS_START_COMMAND");
+	const configured = $credentialEnv("VIB_HARNESS_PROCESS_START_COMMAND");
 	if (!configured) return { kind: "none" };
 	try {
 		const parsed = JSON.parse(configured) as unknown;
@@ -622,7 +622,7 @@ function portableProcessStartTime(pid: number): string | null {
 }
 
 function deterministicHarnessTmuxSessionName(sessionId: string): string {
-	return `gajae_code_harness_${sanitizeTmuxToken(sessionId)}`;
+	return `vib_rato_harness_${sanitizeTmuxToken(sessionId)}`;
 }
 
 async function loadState(root: string, sessionId: string): Promise<SessionState> {
@@ -638,7 +638,7 @@ function requireSessionId(input: Record<string, unknown>, flagSession: string | 
 }
 
 export default class Harness extends Command {
-	static description = "Operate coding harnesses (v1: gajae-code) as a session/evidence/recovery/PR control plane";
+	static description = "Operate coding harnesses (v1: vib-rato) as a session/evidence/recovery/PR control plane";
 	static strict = false;
 
 	static args = {
@@ -661,10 +661,10 @@ export default class Harness extends Command {
 	};
 
 	static examples = [
-		`gjc harness start --input '{"harness":"gajae-code","workspace":".","branch":"feat/x"}'`,
-		"gjc harness observe --session <id>",
-		`gjc harness classify --input '{"observation":{"ownerLive":false,"gitDelta":"dirty","risk":"vanished-dirty"}}'`,
-		"gjc harness events --session <id> --follow",
+		`vib harness start --input '{"harness":"vib-rato","workspace":".","branch":"feat/x"}'`,
+		"vib harness observe --session <id>",
+		`vib harness classify --input '{"observation":{"ownerLive":false,"gitDelta":"dirty","risk":"vanished-dirty"}}'`,
+		"vib harness events --session <id> --follow",
 	];
 
 	async run(): Promise<void> {
@@ -732,7 +732,7 @@ export default class Harness extends Command {
 				preflight,
 				guidance: preflight.ok
 					? "workspace metadata is normalized"
-					: "fix blockers before gjc harness start; branch must match the actual checkout and issueOrPr must be numeric or a recognized PR/issue form",
+					: "fix blockers before vib harness start; branch must match the actual checkout and issueOrPr must be numeric or a recognized PR/issue form",
 			},
 		});
 		if (!preflight.ok) process.exitCode = 1;
@@ -857,7 +857,7 @@ export default class Harness extends Command {
 	async #harnessOwnerIsolationProbe(tmuxCommand: string): Promise<OwnerIsolationProbe> {
 		return {
 			readCallerCgroup: async () =>
-				process.env.GJC_HARNESS_TEST_CALLER_CGROUP ??
+				process.env.VIB_HARNESS_TEST_CALLER_CGROUP ??
 				(await fs.readFile("/proc/self/cgroup", "utf8").catch(() => null)),
 			probeServer: async (socketKey, tmuxControlArgv): Promise<TmuxServerProof> => {
 				const platform = ownerIsolationPlatform();
@@ -876,9 +876,9 @@ export default class Harness extends Command {
 				const pid = Number(result.stdout.toString().trim());
 				if (!Number.isSafeInteger(pid) || pid <= 0) return { state: "unverifiable" };
 				const cgroupText =
-					process.env.GJC_HARNESS_TEST_SERVER_CGROUP ??
+					process.env.VIB_HARNESS_TEST_SERVER_CGROUP ??
 					(platform === "linux" ? await fs.readFile(`/proc/${pid}/cgroup`, "utf8").catch(() => null) : null);
-				const testStartTime = process.env.GJC_HARNESS_TEST_SERVER_START_TIME;
+				const testStartTime = process.env.VIB_HARNESS_TEST_SERVER_START_TIME;
 				const stat =
 					testStartTime || platform !== "linux"
 						? null
@@ -954,12 +954,12 @@ export default class Harness extends Command {
 				nativeSessionId,
 				"-F",
 				predicate,
-				`kill-session -t '${nativeSessionId}' ; display-message -p __gjc_harness_cleanup_ok__`,
-				"display-message -p __gjc_harness_cleanup_refused__",
+				`kill-session -t '${nativeSessionId}' ; display-message -p __vib_harness_cleanup_ok__`,
+				"display-message -p __vib_harness_cleanup_refused__",
 			],
 			{ stdout: "pipe", stderr: "pipe" },
 		);
-		if (killed.exitCode !== 0 || killed.stdout.toString().trim() !== "__gjc_harness_cleanup_ok__")
+		if (killed.exitCode !== 0 || killed.stdout.toString().trim() !== "__vib_harness_cleanup_ok__")
 			throw new Error("tmux-owner-cleanup_uncertain");
 	}
 
@@ -974,18 +974,18 @@ export default class Harness extends Command {
 		reason: string | null;
 		cleanup?: () => Promise<void>;
 	}> {
-		const tmuxCommand = resolveGjcTmuxCommand();
+		const tmuxCommand = resolveVibTmuxCommand();
 		const sessionName = deterministicHarnessTmuxSessionName(sessionId);
 		if (Bun.which(tmuxCommand) === null)
 			return { started: false, sessionName, socketKey: null, reason: "tmux-unavailable" };
-		if (resolveGjcTmuxBinary({ env: process.env }).isPsmux)
+		if (resolveVibTmuxBinary({ env: process.env }).isPsmux)
 			return {
 				started: false,
 				sessionName,
 				socketKey: null,
 				reason: "tmux-owner-native_session_identity_unavailable",
 			};
-		const socketKey = `gjc-owner-${randomBytes(24).toString("hex")}`;
+		const socketKey = `vib-owner-${randomBytes(24).toString("hex")}`;
 		const ownerStateDir = root;
 		let baseline: OwnerGenerationBaseline;
 		try {
@@ -999,17 +999,17 @@ export default class Harness extends Command {
 		await fs.mkdir(path.join(ownerStateDir, sessionId, "owner-lifecycle"), { recursive: true, mode: 0o700 });
 		const ownerGeneration = randomUUID();
 		const envAssignments = [
-			`GJC_HARNESS_STATE_ROOT=${shellQuote(root)}`,
-			`${GJC_TMUX_OWNER_GENERATION_ENV}=${shellQuote(ownerGeneration)}`,
-			`${GJC_TMUX_OWNER_STATE_DIR_ENV}=${shellQuote(ownerStateDir)}`,
-			`${GJC_TMUX_OWNER_SERVER_KEY_ENV}=${shellQuote(socketKey)}`,
+			`VIB_HARNESS_STATE_ROOT=${shellQuote(root)}`,
+			`${VIB_TMUX_OWNER_GENERATION_ENV}=${shellQuote(ownerGeneration)}`,
+			`${VIB_TMUX_OWNER_STATE_DIR_ENV}=${shellQuote(ownerStateDir)}`,
+			`${VIB_TMUX_OWNER_SERVER_KEY_ENV}=${shellQuote(socketKey)}`,
 		];
 		if (process.env[RECEIPT_SPOOL_DIR_ENV])
 			envAssignments.push(`${RECEIPT_SPOOL_DIR_ENV}=${shellQuote(process.env[RECEIPT_SPOOL_DIR_ENV])}`);
-		if (process.env.GJC_HARNESS_TEST_NODE_MODULES)
-			envAssignments.push(`GJC_HARNESS_TEST_NODE_MODULES=${shellQuote(process.env.GJC_HARNESS_TEST_NODE_MODULES)}`);
-		if (process.env.GJC_SDK_DISABLE)
-			envAssignments.push(`GJC_SDK_DISABLE=${shellQuote(process.env.GJC_SDK_DISABLE)}`);
+		if (process.env.VIB_HARNESS_TEST_NODE_MODULES)
+			envAssignments.push(`VIB_HARNESS_TEST_NODE_MODULES=${shellQuote(process.env.VIB_HARNESS_TEST_NODE_MODULES)}`);
+		if (process.env.VIB_SDK_DISABLE)
+			envAssignments.push(`VIB_SDK_DISABLE=${shellQuote(process.env.VIB_SDK_DISABLE)}`);
 		const shellCommand = `exec env ${envAssignments.join(" ")} ${this.#buildOwnerCommand(sessionId).map(shellQuote).join(" ")}`;
 		const probe = await this.#harnessOwnerIsolationProbe(tmuxCommand);
 		const probeServer = probe.probeServer;
@@ -1207,14 +1207,14 @@ export default class Harness extends Command {
 			cwd,
 			env: {
 				...process.env,
-				GJC_HARNESS_STATE_ROOT: root,
+				VIB_HARNESS_STATE_ROOT: root,
 				...(process.env[RECEIPT_SPOOL_DIR_ENV]
 					? { [RECEIPT_SPOOL_DIR_ENV]: process.env[RECEIPT_SPOOL_DIR_ENV] }
 					: {}),
-				...(process.env.GJC_HARNESS_TEST_NODE_MODULES
-					? { GJC_HARNESS_TEST_NODE_MODULES: process.env.GJC_HARNESS_TEST_NODE_MODULES }
+				...(process.env.VIB_HARNESS_TEST_NODE_MODULES
+					? { VIB_HARNESS_TEST_NODE_MODULES: process.env.VIB_HARNESS_TEST_NODE_MODULES }
 					: {}),
-				...(process.env.GJC_SDK_DISABLE ? { GJC_SDK_DISABLE: process.env.GJC_SDK_DISABLE } : {}),
+				...(process.env.VIB_SDK_DISABLE ? { VIB_SDK_DISABLE: process.env.VIB_SDK_DISABLE } : {}),
 			},
 			stdout: "ignore",
 			stderr: "ignore",
@@ -1235,12 +1235,12 @@ export default class Harness extends Command {
 	}
 
 	async #start(root: string, input: Record<string, unknown>): Promise<void> {
-		const harness = (typeof input.harness === "string" ? input.harness : "gajae-code") as HarnessKind;
-		if (harness !== "gajae-code") {
+		const harness = (typeof input.harness === "string" ? input.harness : "vib-rato") as HarnessKind;
+		if (harness !== "vib-rato") {
 			writeJson({
 				ok: false,
 				error: `harness_unsupported_in_v1:${harness}`,
-				evidence: { seam: true, supported: ["gajae-code"] },
+				evidence: { seam: true, supported: ["vib-rato"] },
 			});
 			process.exitCode = 1;
 			return;
@@ -1254,7 +1254,7 @@ export default class Harness extends Command {
 				evidence: {
 					preflight: { ...preflight, blockers: fatalBlockers, ok: false },
 					guidance:
-						"fix blockers before start; run gjc harness preflight with the same input for branch and issue/PR diagnostics",
+						"fix blockers before start; run vib harness preflight with the same input for branch and issue/PR diagnostics",
 				},
 			});
 			process.exitCode = 1;
@@ -1461,7 +1461,7 @@ export default class Harness extends Command {
 			state: {
 				sessionId: "(none)",
 				lifecycle: full.lifecycle,
-				harness: "gajae-code",
+				harness: "vib-rato",
 				ownerLive: full.ownerLive,
 				blockers: [],
 			},
@@ -1666,7 +1666,7 @@ export default class Harness extends Command {
 					schemaVersion: SESSION_SCHEMA_VERSION,
 					sessionId: "(none)",
 					lifecycle: "new",
-					harness: "gajae-code",
+					harness: "vib-rato",
 					handle: {} as SessionHandle,
 					retries: {},
 					blockers: [],

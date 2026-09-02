@@ -14,7 +14,7 @@
 import { type ChildProcess, spawn as nodeSpawn } from "node:child_process";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
-import { $which } from "@gajae-code/utils";
+import { $which } from "@vib-rato/utils";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 /** packages/coding-agent/vendor/insane-search */

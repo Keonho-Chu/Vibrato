@@ -5,7 +5,7 @@
  * Endpoint: POST https://api.synthetic.new/v2/search
  */
 
-import { type AuthStorage, getEnvApiKey } from "@gajae-code/ai/core";
+import { type AuthStorage, getEnvApiKey } from "@vib-rato/ai/core";
 import type { SearchResponse, SearchSource } from "../../../web/search/types";
 import { SearchProviderError } from "../../../web/search/types";
 import type { SearchParams } from "./base";
@@ -68,7 +68,7 @@ async function callSyntheticSearch(
 export async function searchSynthetic(params: SearchParams): Promise<SearchResponse> {
 	const apiKey = await findApiKey(params.authStorage, params.sessionId, params.signal);
 	if (!apiKey) {
-		throw new Error("Synthetic credentials not found. Set SYNTHETIC_API_KEY or login with 'gjc /login synthetic'.");
+		throw new Error("Synthetic credentials not found. Set SYNTHETIC_API_KEY or login with 'vib /login synthetic'.");
 	}
 
 	const data = await callSyntheticSearch(apiKey, params.query, params.signal);

@@ -5,7 +5,7 @@
  * with stdin/stdout pipes and a sanitized, explicitly-owned child environment
  * that NEVER spreads `process.env`. Every HOME/XDG/cache/state/runtime/tmp/agent
  * dir is owned by the test and rooted under an isolated temp root, so session
- * transcripts and artifacts never land in the developer's real `~/.gjc`.
+ * transcripts and artifacts never land in the developer's real `~/.vib`.
  *
  * Over the public SDK 1.2.1 surface (`ClientSideConnection` / `ndJsonStream`)
  * this proves the full lifecycle against a real subprocess: capability
@@ -132,7 +132,7 @@ function buildChildEnv(root: string): Record<string, string> {
 		XDG_STATE_HOME: path.join(root, ".local", "state"),
 		XDG_CACHE_HOME: path.join(root, ".cache"),
 		XDG_RUNTIME_DIR: path.join(root, ".run"),
-		GJC_CODING_AGENT_DIR: path.join(root, "agent"),
+		VIB_CODING_AGENT_DIR: path.join(root, "agent"),
 		PI_CODING_AGENT_DIR: path.join(root, "agent"),
 		PI_NO_TITLE: "1",
 		NO_COLOR: "1",
@@ -156,7 +156,7 @@ interface Oracle {
 
 /** Spawn the real ACP subprocess and wire the SDK client to its stdio. */
 async function spawnOracle(): Promise<Oracle> {
-	const root = await fs.promises.mkdtemp(path.join(os.tmpdir(), "gjc-acp-delete-wire-"));
+	const root = await fs.promises.mkdtemp(path.join(os.tmpdir(), "vib-acp-delete-wire-"));
 	const env = buildChildEnv(root);
 
 	// Create every owned directory up front so the child finds writable roots.
@@ -168,7 +168,7 @@ async function spawnOracle(): Promise<Oracle> {
 		env.XDG_STATE_HOME,
 		env.XDG_CACHE_HOME,
 		env.XDG_RUNTIME_DIR,
-		env.GJC_CODING_AGENT_DIR,
+		env.VIB_CODING_AGENT_DIR,
 	];
 	await Promise.all(ownedDirs.map(dir => fs.promises.mkdir(dir, { recursive: true })));
 

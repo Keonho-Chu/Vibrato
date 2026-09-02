@@ -10,10 +10,10 @@ export class NativeRuntimeCompatibilityError extends Error {
 		readonly workflowArbitrationAvailable: boolean,
 	) {
 		super(
-			`Incompatible @gajae-code/natives for @gajae-code/coding-agent@${runtimeVersion}: ` +
+			`Incompatible @vib-rato/natives for @vib-rato/coding-agent@${runtimeVersion}: ` +
 				`loaded native version is ${nativeVersion}, and required workflow arbitration methods are ` +
 				`${workflowArbitrationAvailable ? "available" : "missing"}. ` +
-				`Reinstall matching @gajae-code/coding-agent and @gajae-code/natives packages.`,
+				`Reinstall matching @vib-rato/coding-agent and @vib-rato/natives packages.`,
 		);
 		this.name = "NativeRuntimeCompatibilityError";
 	}

@@ -1,10 +1,10 @@
+import { CANONICAL_VIB_WORKFLOW_SKILLS } from "../skill-state/canonical-skills";
 import {
 	classifyStateArgv,
 	STATE_ACTION_NAMES,
 	type StateAction,
 	type StateArgvClassification,
-} from "../gjc-runtime/state-argv";
-import { CANONICAL_GJC_WORKFLOW_SKILLS } from "../skill-state/canonical-skills";
+} from "../vib-runtime/state-argv";
 
 export interface BashAllowedPrefixesCheck {
 	allowed: boolean;
@@ -27,7 +27,7 @@ const UNSAFE_UNQUOTED_EXPANSION_CHARS = new Set(["$", "*", "?", "[", "]", "{", "
 // in either the `name=value` or the compound `name+=value` form.
 const ASSIGNMENT_NAME_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*\+?$/u;
 const ALLOWED_STATE_ACTIONS = new Set(["read", "write", "contract"]);
-const CANONICAL_STATE_TARGETS = new Set<string>(CANONICAL_GJC_WORKFLOW_SKILLS);
+const CANONICAL_STATE_TARGETS = new Set<string>(CANONICAL_VIB_WORKFLOW_SKILLS);
 const READ_ONLY_COMMANDS = new Set(["grep", "rg", "tree", "ls", "pwd", "wc", "du", "file", "stat"]);
 
 function parseShellWords(command: string): { words: string[]; reason?: string } {
@@ -158,7 +158,7 @@ function wordsStartWith(words: readonly string[], prefix: readonly string[]): bo
 }
 
 function malformedStateShape(): StateActionClassification {
-	return { reason: "restricted role-agent bash only allows documented `gjc state` action shapes" };
+	return { reason: "restricted role-agent bash only allows documented `vib state` action shapes" };
 }
 
 interface ParsedStateAction {
@@ -191,10 +191,10 @@ function classifyStateAction(words: readonly string[]): StateActionClassificatio
 	const modeFlags = classification.flags.filter(flag => flag.name === "--mode");
 	const inputFlags = classification.flags.filter(flag => flag.name === "--input");
 	if (modeFlags.length > 1 || inputFlags.length > 1) {
-		return { reason: "restricted role-agent bash rejects repeated or conflicting `gjc state` target selectors" };
+		return { reason: "restricted role-agent bash rejects repeated or conflicting `vib state` target selectors" };
 	}
 	if (classification.inputs.some(input => input.kind === "file")) {
-		return { reason: "restricted role-agent bash does not allow file-backed `gjc state --input` values" };
+		return { reason: "restricted role-agent bash does not allow file-backed `vib state --input` values" };
 	}
 	if (classification.inputs.some(input => input.kind === "invalid")) return malformedStateShape();
 
@@ -206,11 +206,11 @@ function classifyStateAction(words: readonly string[]): StateActionClassificatio
 	if (distinctTargets.size > 1 || (runtimeTarget && suppliedTargets.some(target => target !== runtimeTarget))) {
 		return {
 			reason:
-				"restricted role-agent bash rejects conflicting `gjc state` selectors that disagree with runtime precedence",
+				"restricted role-agent bash rejects conflicting `vib state` selectors that disagree with runtime precedence",
 		};
 	}
 	if (!runtimeTarget || !CANONICAL_STATE_TARGETS.has(runtimeTarget)) {
-		return { reason: "restricted role-agent bash requires a canonical workflow skill for `gjc state` commands" };
+		return { reason: "restricted role-agent bash requires a canonical workflow skill for `vib state` commands" };
 	}
 	return { parsed: { action: classification.effectiveAction, target: runtimeTarget } };
 }
@@ -268,12 +268,12 @@ function validateReadOnlyCommand(words: readonly string[]): BashAllowedPrefixesC
 	return { allowed: true };
 }
 
-function validateMatchedGjcCommand(words: readonly string[]): BashAllowedPrefixesCheck {
-	if (words[0] !== "gjc") return { allowed: true };
+function validateMatchedVibCommand(words: readonly string[]): BashAllowedPrefixesCheck {
+	if (words[0] !== "vib") return { allowed: true };
 
 	if (words[1] === "ralplan") {
 		if (!words.includes("--write")) {
-			return { allowed: false, reason: "restricted role-agent bash only allows `gjc ralplan --write ...`" };
+			return { allowed: false, reason: "restricted role-agent bash only allows `vib ralplan --write ...`" };
 		}
 		return { allowed: true };
 	}
@@ -284,13 +284,13 @@ function validateMatchedGjcCommand(words: readonly string[]): BashAllowedPrefixe
 			return {
 				allowed: false,
 				reason:
-					classification.reason ?? "restricted role-agent bash only allows documented `gjc state` action shapes",
+					classification.reason ?? "restricted role-agent bash only allows documented `vib state` action shapes",
 			};
 		}
 		if (!ALLOWED_STATE_ACTIONS.has(classification.parsed.action)) {
 			return {
 				allowed: false,
-				reason: `restricted role-agent bash does not allow \`gjc state ${classification.parsed.action}\``,
+				reason: `restricted role-agent bash does not allow \`vib state ${classification.parsed.action}\``,
 			};
 		}
 		return { allowed: true };
@@ -342,5 +342,5 @@ export function checkBashAllowedPrefixes(
 	if (options.profile === "read-only") {
 		return validateReadOnlyCommand(parsed.words);
 	}
-	return validateMatchedGjcCommand(parsed.words);
+	return validateMatchedVibCommand(parsed.words);
 }

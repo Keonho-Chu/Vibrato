@@ -9,7 +9,7 @@ import {
 	sanitizeBtwError,
 	truncateUtf8,
 	utf8ByteLength,
-} from "@gajae-code/coding-agent/session/btw-contract";
+} from "@vib-rato/coding-agent/session/btw-contract";
 
 describe("/btw bounded text contract", () => {
 	it("keeps exact-boundary Unicode and truncates one byte over without splitting a scalar", () => {

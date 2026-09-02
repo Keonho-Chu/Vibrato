@@ -1,11 +1,11 @@
 /**
- * `gjc auth-gateway` command handlers.
+ * `vib auth-gateway` command handlers.
  *
  * Boots a forward-proxy server that lets less-trusted clients (the macOS
  * usage widget and containerized deployments) make provider API calls without ever
  * seeing the access token. The gateway is itself a broker client and
  * resolves credentials through the configured broker (via the same
- * `GJC_AUTH_BROKER_URL` / `auth.broker.url` precedence used elsewhere).
+ * `VIB_AUTH_BROKER_URL` / `auth.broker.url` precedence used elsewhere).
  *
  * Sub-verbs:
  *   - `serve --provider=<id> [--bind=…]` — boots a provider-scoped gateway against the configured broker.
@@ -14,13 +14,13 @@
  */
 import * as crypto from "node:crypto";
 import * as path from "node:path";
-import { cleanReason } from "@gajae-code/ai/auth-broker/redact";
+import { cleanReason } from "@vib-rato/ai/auth-broker/redact";
 import {
 	createAuthGatewayModelCatalog,
 	isAuthGatewayModelBrokerConsumable,
 	isSafeProviderScope,
 	startAuthGateway,
-} from "@gajae-code/ai/auth-gateway/server";
+} from "@vib-rato/ai/auth-gateway/server";
 import {
 	AuthBrokerClient,
 	type AuthCredentialSnapshot,
@@ -32,8 +32,8 @@ import {
 	getBundledModels,
 	RemoteAuthCredentialStore,
 	type SnapshotResponse,
-} from "@gajae-code/ai/core";
-import { getConfigRootDir, VERSION } from "@gajae-code/utils";
+} from "@vib-rato/ai/core";
+import { getConfigRootDir, VERSION } from "@vib-rato/utils";
 import chalk from "chalk";
 import {
 	createSecureTokenFileExclusive,
@@ -186,7 +186,7 @@ function requireProviderScope(provider: string | undefined, action: "serve"): st
 	const normalized = normalizeProviderScope(provider);
 	if (!normalized) {
 		throw new Error(
-			`gjc auth-gateway ${action} requires --provider=<id>; an unscoped gateway is disabled to prevent model-id ambiguity.`,
+			`vib auth-gateway ${action} requires --provider=<id>; an unscoped gateway is disabled to prevent model-id ambiguity.`,
 		);
 	}
 	return normalized;
@@ -240,7 +240,7 @@ async function runServe(flags: AuthGatewayCommandArgs["flags"]): Promise<void> {
 	const brokerConfig = (await resolveStartupAuthConfig()).broker;
 	if (!brokerConfig) {
 		throw new Error(
-			"`gjc auth-gateway serve` requires GJC_AUTH_BROKER_URL (or `auth.broker.url`/`auth.broker.token` in config.yml). The gateway is itself a broker client.",
+			"`vib auth-gateway serve` requires VIB_AUTH_BROKER_URL (or `auth.broker.url`/`auth.broker.token` in config.yml). The gateway is itself a broker client.",
 		);
 	}
 	const bind = flags.bind ?? DEFAULT_AUTH_GATEWAY_BIND;
@@ -377,7 +377,7 @@ async function runStatus(flags: AuthGatewayCommandArgs["flags"]): Promise<void> 
 			process.stdout.write(`${JSON.stringify(status)}\n`);
 		} else {
 			process.stdout.write(`scope: ${provider ?? "(required: --provider=<id>)"}\n`);
-			process.stdout.write(`${chalk.yellow("No broker configured.")} Set GJC_AUTH_BROKER_URL.\n`);
+			process.stdout.write(`${chalk.yellow("No broker configured.")} Set VIB_AUTH_BROKER_URL.\n`);
 			process.stdout.write(
 				`token: ${status.tokenPresent ? chalk.green("present") : chalk.red("missing")} at ${status.tokenFile}\n`,
 			);
@@ -447,7 +447,7 @@ async function runStatus(flags: AuthGatewayCommandArgs["flags"]): Promise<void> 
 			);
 			if (!tokenPresent && !noAuth) {
 				process.stdout.write(
-					"Run `gjc auth-gateway token` or `gjc auth-gateway serve` to create a bearer token.\n",
+					"Run `vib auth-gateway token` or `vib auth-gateway serve` to create a bearer token.\n",
 				);
 			}
 			if (credentialCount === 0) {
@@ -518,7 +518,7 @@ export async function runAuthGatewayCommand(cmd: AuthGatewayCommandArgs): Promis
 }
 
 /**
- * `gjc auth-gateway check` — probe each broker-supplied credential and print
+ * `vib auth-gateway check` — probe each broker-supplied credential and print
  * per-credential auth health. Use this when the gateway is returning 401s and
  * you need to find which row in a multi-account pool is the bad one. The
  * aggregate `/v1/usage` endpoint silently drops failed credentials, so a
@@ -529,7 +529,7 @@ async function runCheck(flags: AuthGatewayCommandArgs["flags"]): Promise<void> {
 	const brokerConfig = (await resolveStartupAuthConfig()).broker;
 	if (!brokerConfig) {
 		throw new Error(
-			"`gjc auth-gateway check` requires GJC_AUTH_BROKER_URL (or `auth.broker.url`/`auth.broker.token` in config.yml). It probes the same credentials the gateway would serve.",
+			"`vib auth-gateway check` requires VIB_AUTH_BROKER_URL (or `auth.broker.url`/`auth.broker.token` in config.yml). It probes the same credentials the gateway would serve.",
 		);
 	}
 

@@ -20,7 +20,7 @@ const KEY = "EXA_API_KEY";
 const tempDirs: string[] = [];
 
 function tempDir(): string {
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-exa-key-trust-"));
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-exa-key-trust-"));
 	tempDirs.push(dir);
 	return dir;
 }
@@ -41,10 +41,10 @@ async function keyIn(cwd: string, overrides: Record<string, string> = {}): Promi
 		if (value !== undefined) env[key] = value;
 	}
 	delete env[KEY];
-	// `$credentialEnv` also consults the agent `.env`, the GJC config `.env`,
+	// `$credentialEnv` also consults the agent `.env`, the Vibrato config `.env`,
 	// `~/.env` and the login shell rc files; keep all of them neutral.
 	env.HOME = tempDir();
-	env.GJC_CODING_AGENT_DIR = tempDir();
+	env.VIB_CODING_AGENT_DIR = tempDir();
 	Object.assign(env, overrides);
 
 	const proc = Bun.spawn([process.execPath, PROBE], { cwd, env, stdout: "pipe", stderr: "pipe" });

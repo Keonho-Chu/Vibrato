@@ -177,7 +177,7 @@ def main() -> int:
     env.update(
         {
             "TERM": env.get("TERM", "xterm-256color"),
-            "GJC_ISSUE4481_HEARTBEAT_PATH": str(heartbeat_path),
+            "VIB_ISSUE4481_HEARTBEAT_PATH": str(heartbeat_path),
         }
     )
     command = instrumented_command(args.command, preload, repo)

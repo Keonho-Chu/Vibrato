@@ -42,7 +42,7 @@ describe("frictionless onboarding", () => {
 	});
 
 	test("writes readable state and survives malformed input", async () => {
-		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-onboarding-"));
+		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-onboarding-"));
 		expect(
 			await writeOnboardingState(
 				{
@@ -180,7 +180,7 @@ describe("frictionless onboarding", () => {
 	});
 
 	test("uses one safely parsed supported session without fallback corroboration", async () => {
-		const home = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-onboarding-session-"));
+		const home = await fs.mkdtemp(path.join(os.tmpdir(), "vib-onboarding-session-"));
 		const sessions = path.join(home, ".codex", "sessions", "2026");
 		await fs.mkdir(sessions, { recursive: true });
 		const transcript = [
@@ -275,8 +275,8 @@ describe("frictionless onboarding", () => {
 	});
 
 	test("rejects symlinked roots and marks unsupported real roots", async () => {
-		const home = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-onboarding-home-"));
-		const external = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-onboarding-external-"));
+		const home = await fs.mkdtemp(path.join(os.tmpdir(), "vib-onboarding-home-"));
+		const external = await fs.mkdtemp(path.join(os.tmpdir(), "vib-onboarding-external-"));
 		await fs.symlink(external, path.join(home, ".codex"));
 		await fs.mkdir(path.join(home, ".claude"));
 		await fs.mkdir(path.join(home, ".opencode"));
@@ -289,9 +289,9 @@ describe("frictionless onboarding", () => {
 	});
 
 	test("rejects a provider root replaced after disclosure", async () => {
-		const home = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-onboarding-root-swap-"));
+		const home = await fs.mkdtemp(path.join(os.tmpdir(), "vib-onboarding-root-swap-"));
 		const original = path.join(home, ".codex");
-		const outside = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-onboarding-root-outside-"));
+		const outside = await fs.mkdtemp(path.join(os.tmpdir(), "vib-onboarding-root-outside-"));
 		await fs.mkdir(original);
 		const presence = await discoverOnboardingRootPresence({ home });
 		await fs.rename(original, path.join(home, ".codex-original"));
@@ -303,7 +303,7 @@ describe("frictionless onboarding", () => {
 	});
 
 	test("treats depth-zero EACCES as unavailable instead of metadata fallback", async () => {
-		const home = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-onboarding-eacces-"));
+		const home = await fs.mkdtemp(path.join(os.tmpdir(), "vib-onboarding-eacces-"));
 		const sessions = path.join(home, ".codex", "sessions");
 		await fs.mkdir(sessions, { recursive: true });
 		const presence = await discoverOnboardingRootPresence({ home });
@@ -333,7 +333,7 @@ describe("frictionless onboarding", () => {
 
 	test("builds each manual answer as previewable command guidance", () => {
 		expect(createManualOnboardingProfile("en", "migration")).toMatchObject({
-			workflow: ["Map my existing workflow to GJC"],
+			workflow: ["Map my existing workflow to Vibrato"],
 			operations: ["learn-commands"],
 		});
 		expect(createManualOnboardingProfile("en", "commands").operations).toEqual(["learn-commands"]);
@@ -346,7 +346,7 @@ describe("frictionless onboarding", () => {
 	});
 
 	test("fails soft when the onboarding state path is unwritable", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-onboarding-write-failure-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-onboarding-write-failure-"));
 		await Bun.write(path.join(root, "onboarding"), "not a directory");
 		expect(await writeOnboardingState({ version: 1, decision: "skipped" }, root)).toBe(false);
 		await fs.rm(root, { recursive: true, force: true });

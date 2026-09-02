@@ -14,12 +14,12 @@
  * - Uses ID-based tracking: agent outputs [DONE:id] to mark steps complete
  *
  * Usage:
- * 1. Copy this file to ~/.gjc/agent/extensions/ (legacy: ~/.pi/agent/extensions/) or your project's .gjc/extensions/
+ * 1. Copy this file to ~/.vib/agent/extensions/ (legacy: ~/.pi/agent/extensions/) or your project's .vib/extensions/
  * 2. Use /plan to toggle plan mode on/off
  * 3. Or start in plan mode with --plan flag
  */
-import type { ExtensionAPI, ExtensionContext } from "@gajae-code/coding-agent";
-import { Key } from "@gajae-code/tui";
+import type { ExtensionAPI, ExtensionContext } from "@vib-rato/coding-agent";
+import { Key } from "@vib-rato/tui";
 
 // Read-only tools for plan mode
 const PLAN_MODE_TOOLS = ["read", "bash", "search", "find"];

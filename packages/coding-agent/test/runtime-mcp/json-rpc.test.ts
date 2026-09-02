@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 import { callMCP } from "../../src/runtime-mcp/json-rpc";
 
 describe("runtime MCP JSON-RPC diagnostics", () => {

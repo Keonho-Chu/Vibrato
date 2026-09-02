@@ -1,4 +1,4 @@
-import { Container, Input, matchesKey, Spacer, Text, TruncatedText } from "@gajae-code/tui";
+import { Container, Input, matchesKey, Spacer, Text, TruncatedText } from "@vib-rato/tui";
 import { MODEL_PROFILE_NAME_PATTERN } from "../../config/model-registry";
 import type { ModelProfileConfig } from "../../config/models-config-schema";
 import { theme } from "../theme/theme";

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import type { AssistantMessage, Model, Usage } from "@gajae-code/ai";
-import { formatSessionDumpText } from "@gajae-code/coding-agent/session/session-dump-format";
+import type { AssistantMessage, Model, Usage } from "@vib-rato/ai";
+import { formatSessionDumpText } from "@vib-rato/coding-agent/session/session-dump-format";
 
 const zeroUsage: Usage = {
 	input: 0,

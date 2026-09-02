@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import * as path from "node:path";
-import type { AgentTelemetryWarning, AgentTelemetryWarningCode } from "@gajae-code/agent-core";
+import type { AgentTelemetryWarning, AgentTelemetryWarningCode } from "@vib-rato/agent-core";
 
 /** Regression coverage for issue #264 dogfood failures. */
 describe("issue #264 — dogfood build and telemetry boundaries", () => {
@@ -21,6 +21,6 @@ describe("issue #264 — dogfood build and telemetry boundaries", () => {
 
 		expect(source).toContain('new Bun.Glob("pi_natives.*.node")');
 		expect(source).toContain('path.join(packageDir, "dist", filename)');
-		expect(source.indexOf("await stageWorkspaceNativeAddons();")).toBeGreaterThan(source.indexOf('"dist/gjc"'));
+		expect(source.indexOf("await stageWorkspaceNativeAddons();")).toBeGreaterThan(source.indexOf('"dist/vib"'));
 	});
 });

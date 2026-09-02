@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test";
 import {
 	isOpenAIUsageExhaustionResponse,
 	wrapOpenAIFetchForBoundedRateLimits,
-} from "@gajae-code/ai/providers/openai-bounded-rate-limits";
+} from "@vib-rato/ai/providers/openai-bounded-rate-limits";
 
 describe("isOpenAIUsageExhaustionResponse", () => {
 	it("flags an out-of-range Retry-After as exhaustion", () => {

@@ -1,4 +1,4 @@
-# Build context for the pi-root `Dockerfile` (gajae-code/pi:dev). Shadows
+# Build context for the pi-root `Dockerfile` (vib-rato/pi:dev). Shadows
 
 # Heavy build outputs — must never reach the build context. `target/` alone is
 # >100 GB on a dev machine.
@@ -17,7 +17,7 @@ geobench/
 .wt/
 .opencode/
 .pi_config/
-.gjc/plugins/
+.vib/plugins/
 
 # VCS, editors, IDEs — irrelevant to the build, churn on every IDE keystroke.
 .git/

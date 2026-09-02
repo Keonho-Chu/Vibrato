@@ -12,16 +12,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as path from "node:path";
 import { scheduler } from "node:timers/promises";
-import { Agent, type AgentOptions } from "@gajae-code/agent-core";
-import { type AssistantMessage, getBundledModel, type Model } from "@gajae-code/ai";
-import { AssistantMessageEventStream } from "@gajae-code/ai/utils/event-stream";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
+import { Agent, type AgentOptions } from "@vib-rato/agent-core";
+import { type AssistantMessage, getBundledModel, type Model } from "@vib-rato/ai";
+import { AssistantMessageEventStream } from "@vib-rato/ai/utils/event-stream";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
 import {
 	formatProviderSafetyStopDisplayError,
 	resolveProviderSafetyStopHint,
-} from "@gajae-code/coding-agent/session/provider-safety-stop-hint";
-import { TempDir } from "@gajae-code/utils";
+} from "@vib-rato/coding-agent/session/provider-safety-stop-hint";
+import { TempDir } from "@vib-rato/utils";
 import {
 	mintProviderSafetyStop,
 	PROVIDER_SAFETY_STOP_ADAPTER_CAPABILITY,

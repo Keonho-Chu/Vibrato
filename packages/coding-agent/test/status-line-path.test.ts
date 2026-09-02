@@ -2,7 +2,7 @@ import { afterEach, beforeAll, describe, expect, it } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { getProjectDir, setProjectDir } from "@gajae-code/utils";
+import { getProjectDir, setProjectDir } from "@vib-rato/utils";
 import { registerOwnedDeletionRoot, safeRmSync } from "../../../scripts/safe-cleanup";
 import type { SegmentContext } from "../src/modes/components/status-line/segments";
 import { renderSegment } from "../src/modes/components/status-line/segments";
@@ -72,10 +72,10 @@ describe("status line path segment", () => {
 		const projectsRoot = path.join(fs.realpathSync(os.homedir()), "Projects");
 		fs.mkdirSync(projectsRoot, { recursive: true });
 
-		const realProjectDir = path.join(projectsRoot, `gjc-status-line-${process.pid}-${Date.now()}`);
+		const realProjectDir = path.join(projectsRoot, `vib-status-line-${process.pid}-${Date.now()}`);
 		const forgetRealGrant = registerOwnedDeletionRoot(realProjectDir);
 		const nestedDir = path.join(realProjectDir, "nested");
-		const aliasRoot = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-status-line-alias-"));
+		const aliasRoot = fs.mkdtempSync(path.join(os.tmpdir(), "vib-status-line-alias-"));
 		const homeAlias = path.join(aliasRoot, "home-link");
 
 		try {
@@ -100,7 +100,7 @@ describe("status line path segment", () => {
 	});
 
 	it("strips the scratch root and shows only the trailing folder inside the OS tmp dir", () => {
-		const scratchDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-status-line-scratch-"));
+		const scratchDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-status-line-scratch-"));
 		try {
 			setProjectDir(scratchDir);
 
@@ -117,7 +117,7 @@ describe("status line path segment", () => {
 	});
 
 	it("keeps nested subpaths visible under a scratch root", () => {
-		const scratchDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-status-line-scratch-nest-"));
+		const scratchDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-status-line-scratch-nest-"));
 		const nested = path.join(scratchDir, "sub", "deep");
 		fs.mkdirSync(nested, { recursive: true });
 		try {
@@ -134,7 +134,7 @@ describe("status line path segment", () => {
 	});
 
 	it("keeps the folder icon for scratch paths when stripWorkPrefix is disabled", () => {
-		const scratchDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-status-line-scratch-noprefix-"));
+		const scratchDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-status-line-scratch-noprefix-"));
 		try {
 			setProjectDir(scratchDir);
 
@@ -152,7 +152,7 @@ describe("status line path segment", () => {
 	it("keeps the folder icon for paths outside any scratch root", () => {
 		const projectsRoot = path.join(fs.realpathSync(os.homedir()), "Projects");
 		fs.mkdirSync(projectsRoot, { recursive: true });
-		const realProjectDir = path.join(projectsRoot, `gjc-status-line-real-${process.pid}-${Date.now()}`);
+		const realProjectDir = path.join(projectsRoot, `vib-status-line-real-${process.pid}-${Date.now()}`);
 		const forgetRealGrant = registerOwnedDeletionRoot(realProjectDir);
 		fs.mkdirSync(realProjectDir);
 		try {
@@ -176,12 +176,12 @@ describe("status line path segment", () => {
 		// This uses the same HOME the product sees at render time.
 		const projectsRoot = path.join(fs.realpathSync(os.homedir()), "Projects");
 		fs.mkdirSync(projectsRoot, { recursive: true });
-		const realProjectDir = path.join(projectsRoot, `gjc-status-line-nested-${process.pid}-${Date.now()}`);
+		const realProjectDir = path.join(projectsRoot, `vib-status-line-nested-${process.pid}-${Date.now()}`);
 		// Issue #4794: real-home fixture kept for render semantics; deletion is
 		// granted only for this exact process-created directory.
 		const forgetRealGrant = registerOwnedDeletionRoot(realProjectDir);
 		fs.mkdirSync(realProjectDir, { recursive: true });
-		const aliasRoot = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-status-line-nested-alias-"));
+		const aliasRoot = fs.mkdtempSync(path.join(os.tmpdir(), "vib-status-line-nested-alias-"));
 		const homeAlias = path.join(aliasRoot, "home-link");
 
 		try {

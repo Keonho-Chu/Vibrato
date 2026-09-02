@@ -1,5 +1,5 @@
 /**
- * CLI contract tests for `gjc quick-lane` (issue #3984).
+ * CLI contract tests for `vib quick-lane` (issue #3984).
  *
  * Spawns the real CLI as a child process and asserts the action-first surface:
  * `classify` is required, task text is required, parse failures exit 2 with
@@ -31,7 +31,7 @@ function runCli(args: string[]): CliRun {
 	return { exitCode: result.exitCode, stdout, stderr, combined: `${stdout}\n${stderr}` };
 }
 
-describe("gjc quick-lane CLI contract (issue #3984)", () => {
+describe("vib quick-lane CLI contract (issue #3984)", () => {
 	it("classifies a bounded task with concrete anchors into the quick lane", () => {
 		const run = runCli(["quick-lane", "classify", "add validation to processKeywordDetector"]);
 		expect(run.exitCode, run.combined).toBe(0);
@@ -82,9 +82,9 @@ describe("gjc quick-lane CLI contract (issue #3984)", () => {
 			expect(run.exitCode, run.combined).toBe(0);
 			expect(run.stdout, run.combined).toContain("classify");
 			expect(run.stdout, run.combined).toContain(
-				'$ gjc quick-lane classify "add validation to processKeywordDetector"',
+				'$ vib quick-lane classify "add validation to processKeywordDetector"',
 			);
-			expect(run.stdout, run.combined).toContain('$ gjc quick-lane classify --json "fix src/hooks/bridge.ts"');
+			expect(run.stdout, run.combined).toContain('$ vib quick-lane classify --json "fix src/hooks/bridge.ts"');
 		}
 	});
 

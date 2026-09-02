@@ -198,7 +198,7 @@ async function main() {
 	const output: BenchOutput = {
 		schemaVersion: 1,
 		command: "bun packages/coding-agent/bench/word-diff-lcs.ts --out <path> [--baseline <path>]",
-		package: "@gajae-code/coding-agent",
+		package: "@vib-rato/coding-agent",
 		bench: "word-diff-lcs",
 		fixture: "all",
 		fixtureDimensions: { fixtureCount: fixtures.length },

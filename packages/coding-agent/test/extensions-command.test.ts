@@ -9,8 +9,8 @@ import {
 	executeBuiltinSlashCommand,
 	executeLocalHeadlessBuiltinSlashCommand,
 	lookupBuiltinSlashCommand,
-} from "@gajae-code/coding-agent/slash-commands/builtin-registry";
-import type { SlashCommandRuntime } from "@gajae-code/coding-agent/slash-commands/types";
+} from "@vib-rato/coding-agent/slash-commands/builtin-registry";
+import type { SlashCommandRuntime } from "@vib-rato/coding-agent/slash-commands/types";
 
 describe("/extensions slash command registration", () => {
 	test("is registered with the exact owner-contract description", () => {

@@ -3,7 +3,7 @@ import * as fsSync from "node:fs";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import * as native from "@gajae-code/natives";
+import * as native from "@vib-rato/natives";
 import { ArtifactManager } from "../src/session/artifacts";
 import { ManagedSessionDescendantStore, managedDirectoryRoot } from "../src/session/internal/managed-session-storage";
 import { createManagedTaskPersistence } from "../src/task/executor";
@@ -29,7 +29,7 @@ async function readSelected(artifactsDir: string, taskId: string): Promise<{ out
 
 describe("explicit artifact path allocation", () => {
 	it("preserves writable paths for explicit persistent destinations", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-task-explicit-artifact-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-task-explicit-artifact-"));
 		temporaryDirectories.push(root);
 		const artifacts = new ArtifactManager(path.join(root, "artifacts"));
 		const allocated = await artifacts.allocatePath("bash");
@@ -42,7 +42,7 @@ describe("explicit artifact path allocation", () => {
 
 describe.skipIf(process.platform !== "linux")("managed task descendant persistence", () => {
 	it("publishes output and metadata through one retained parent capability", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-task-managed-descendants-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-task-managed-descendants-"));
 		temporaryDirectories.push(root);
 		const artifactsDir = path.join(root, "artifacts");
 		const artifacts = new ArtifactManager(
@@ -61,7 +61,7 @@ describe.skipIf(process.platform !== "linux")("managed task descendant persisten
 	});
 
 	it("keeps the prior output and metadata when retained replacement creation fails", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-task-managed-no-loss-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-task-managed-no-loss-"));
 		temporaryDirectories.push(root);
 		const artifactsDir = path.join(root, "artifacts");
 		const artifacts = new ArtifactManager(
@@ -86,7 +86,7 @@ describe.skipIf(process.platform !== "linux")("managed task descendant persisten
 	});
 
 	it("keeps the selected generation when staging metadata fails", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-task-managed-generation-staging-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-task-managed-generation-staging-"));
 		temporaryDirectories.push(root);
 		const artifactsDir = path.join(root, "artifacts");
 		const artifacts = new ArtifactManager(
@@ -118,7 +118,7 @@ describe.skipIf(process.platform !== "linux")("managed task descendant persisten
 	});
 
 	it("rejects output after the retained artifacts directory is replaced", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-task-managed-replacement-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-task-managed-replacement-"));
 		temporaryDirectories.push(root);
 		const artifactsDir = path.join(root, "artifacts");
 		const artifacts = new ArtifactManager(
@@ -136,7 +136,7 @@ describe.skipIf(process.platform !== "linux")("managed task descendant persisten
 	});
 
 	it("never writes output bytes into a subtree swapped during replacement", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-task-managed-boundary-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-task-managed-boundary-"));
 		temporaryDirectories.push(root);
 		const artifactsDir = path.join(root, "artifacts");
 		const artifacts = new ArtifactManager(
@@ -176,7 +176,7 @@ describe.skipIf(process.platform !== "linux")("managed task descendant persisten
 	});
 
 	it("does not issue a fallible root fsync after native publication commits", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-task-managed-fsync-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-task-managed-fsync-"));
 		temporaryDirectories.push(root);
 		const artifactsDir = path.join(root, "artifacts");
 		const artifacts = new ArtifactManager(
@@ -196,7 +196,7 @@ describe.skipIf(process.platform !== "linux")("managed task descendant persisten
 	});
 
 	it("supports managed output replacement above the recovery-state size cap", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-task-managed-large-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-task-managed-large-"));
 		temporaryDirectories.push(root);
 		const artifactsDir = path.join(root, "artifacts");
 		const artifacts = new ArtifactManager(

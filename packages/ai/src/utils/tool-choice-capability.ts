@@ -2,9 +2,9 @@ import { Database } from "bun:sqlite";
 import * as crypto from "node:crypto";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { getToolChoiceCapabilityCachePath } from "@gajae-code/utils/dirs";
-import { extractHttpStatusFromError } from "@gajae-code/utils/fetch-retry";
-import * as logger from "@gajae-code/utils/logger";
+import { getToolChoiceCapabilityCachePath } from "@vib-rato/utils/dirs";
+import { extractHttpStatusFromError } from "@vib-rato/utils/fetch-retry";
+import * as logger from "@vib-rato/utils/logger";
 import type { Api, Model, ToolChoice, ToolChoiceCompat, ToolChoiceSupport, ToolChoiceSupportSource } from "../types";
 
 const supportRank: Record<ToolChoiceSupport, number> = {
@@ -24,7 +24,7 @@ const CACHE_MAX_ENTRIES = 256;
 const REGISTRY_MAX_ENTRIES = 256;
 const CACHE_MUTATION_LOCK_STALE_MS = 5_000;
 
-type NativeExactUnlinkBindings = Pick<typeof import("@gajae-code/natives"), "exactUnlink">;
+type NativeExactUnlinkBindings = Pick<typeof import("@vib-rato/natives"), "exactUnlink">;
 
 let nativeExactUnlinkBindings: NativeExactUnlinkBindings | undefined;
 
@@ -192,7 +192,7 @@ function exactUnlinkCapabilityLock(lockPath: string, expectedOwner: string): boo
 	const parent = fs.statSync(path.dirname(lockPath), { bigint: true });
 	if (!parent.isDirectory()) return false;
 	if (!nativeExactUnlinkBindings)
-		nativeExactUnlinkBindings = require("@gajae-code/natives") as NativeExactUnlinkBindings;
+		nativeExactUnlinkBindings = require("@vib-rato/natives") as NativeExactUnlinkBindings;
 	const bindings = nativeExactUnlinkBindings;
 	const result = bindings.exactUnlink(lockPath, {
 		dev: stat.dev,

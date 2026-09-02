@@ -15,8 +15,8 @@ export const compileAutoloadDisableFlags = [
 ];
 
 const compiledDefineFlags = ['process.env.PI_COMPILED="true"'];
-const releaseDefineFlags = [...compiledDefineFlags, 'process.env.GJC_BUILD_CHANNEL="release"'];
-const devDefineFlags = [...compiledDefineFlags, 'process.env.GJC_BUILD_CHANNEL="dev"'];
+const releaseDefineFlags = [...compiledDefineFlags, 'process.env.VIB_BUILD_CHANNEL="release"'];
+const devDefineFlags = [...compiledDefineFlags, 'process.env.VIB_BUILD_CHANNEL="dev"'];
 
 export const compiledExternalPackages = ["mupdf"];
 
@@ -26,7 +26,7 @@ export const releaseEntrypoints = [
 	"./packages/coding-agent/src/tools/browser/tab-worker-entry.ts",
 	"./packages/coding-agent/src/eval/js/worker-entry.ts",
 	"./packages/coding-agent/src/config/atomic-yaml-patch-worker.ts",
-	"./packages/coding-agent/src/gjc-runtime/coordinator-sidecar-bootstrap-worker.ts",
+	"./packages/coding-agent/src/vib-runtime/coordinator-sidecar-bootstrap-worker.ts",
 	"./packages/natives/native/index.js",
 	"./packages/coding-agent/src/sdk/bus/telegram-daemon-cli.ts",
 	"./packages/coding-agent/src/sdk/bus/chat-daemon-cli.ts",
@@ -45,10 +45,10 @@ export const devEntrypoints = [
 	"./src/tools/browser/tab-worker-entry.ts",
 	"./src/eval/js/worker-entry.ts",
 	"./src/config/atomic-yaml-patch-worker.ts",
-	"./src/gjc-runtime/coordinator-sidecar-bootstrap-worker.ts",
+	"./src/vib-runtime/coordinator-sidecar-bootstrap-worker.ts",
 	// W5b: natives has no static importer anymore (global native gate), so the
 	// dev bundle must list it as an extra entrypoint like the release build or
-	// runtime import("@gajae-code/natives") fails inside the compiled bunfs.
+	// runtime import("@vib-rato/natives") fails inside the compiled bunfs.
 	"../natives/native/index.js",
 	"./src/sdk/bus/telegram-daemon-cli.ts",
 	"./src/sdk/bus/chat-daemon-cli.ts",
@@ -66,7 +66,7 @@ export function buildReleaseCompileArgs(target: string, outfile: string): string
 	});
 }
 
-export function buildDevCompileArgs(outfile = "dist/gjc"): string[] {
+export function buildDevCompileArgs(outfile = "dist/vib"): string[] {
 	return buildCompileArgs({
 		root: "../..",
 		entrypoints: devEntrypoints,

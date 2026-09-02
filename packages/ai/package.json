@@ -1,18 +1,18 @@
 {
 	"type": "module",
-	"name": "@gajae-code/ai",
+	"name": "@vib-rato/ai",
 	"version": "0.15.6",
 	"description": "Unified LLM API with automatic model discovery and provider configuration",
-	"homepage": "https://gajae-code.com",
-	"author": "Yeachan-Heo and Gajae Code Contributors",
+	"homepage": "https://vib-rato.com",
+	"author": "Yeachan-Heo and Vibrato Contributors",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/Yeachan-Heo/gajae-code.git",
+		"url": "git+https://github.com/Keonho-Chu/Vibrato.git",
 		"directory": "packages/ai"
 	},
 	"bugs": {
-		"url": "https://github.com/Yeachan-Heo/gajae-code/issues"
+		"url": "https://github.com/Keonho-Chu/Vibrato/issues"
 	},
 	"keywords": [
 		"ai",
@@ -40,8 +40,8 @@
 	"dependencies": {
 		"@anthropic-ai/sdk": "catalog:",
 		"@bufbuild/protobuf": "catalog:",
-		"@gajae-code/natives": "catalog:",
-		"@gajae-code/utils": "catalog:",
+		"@vib-rato/natives": "catalog:",
+		"@vib-rato/utils": "catalog:",
 		"openai": "catalog:",
 		"partial-json": "catalog:",
 		"zod": "catalog:"

@@ -44,11 +44,11 @@ async function runAutoroutingSession(config: string): Promise<{
 	agent: AcpAgent;
 	close: () => Promise<void>;
 }> {
-	const root = await mkdtemp(path.join(tmpdir(), "gjc-acp-autorouting-notice-"));
+	const root = await mkdtemp(path.join(tmpdir(), "vib-acp-autorouting-notice-"));
 	const cwd = path.join(root, "workspace");
 	const agentDir = path.join(root, "agent");
-	await mkdir(path.join(cwd, ".gjc"), { recursive: true });
-	await writeFile(path.join(cwd, ".gjc", "config.yml"), config);
+	await mkdir(path.join(cwd, ".vib"), { recursive: true });
+	await writeFile(path.join(cwd, ".vib", "config.yml"), config);
 
 	const environment = createFixtureBrokerEnvironment(root, agentDir);
 	const started = await withFixtureBrokerEnvironment(() =>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { BUILTIN_MODEL_PROFILES } from "../src/config/model-profiles";
-import { getBundledGrokBuildExtensionFactory, getBundledGrokCliModelDefaults } from "../src/defaults/gjc-grok-cli";
+import { getBundledGrokBuildExtensionFactory, getBundledGrokCliModelDefaults } from "../src/defaults/vib-grok-cli";
 
 describe("Grok Build post-merge sequence", () => {
 	it("ships the extension, reference models, and grok-build-pro profile needed by the user flow", () => {

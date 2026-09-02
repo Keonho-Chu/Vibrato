@@ -17,7 +17,7 @@ import * as path from "node:path";
  */
 
 const PROBE = path.join(import.meta.dir, "fixtures", "auth-broker-config-probe.ts");
-const KEYS = ["GJC_AUTH_BROKER_URL", "GJC_AUTH_BROKER_TOKEN"] as const;
+const KEYS = ["VIB_AUTH_BROKER_URL", "VIB_AUTH_BROKER_TOKEN"] as const;
 
 interface Resolved {
 	config: { url: string; token: string } | null;
@@ -27,7 +27,7 @@ interface Resolved {
 const tempDirs: string[] = [];
 
 function tempDir(): string {
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-auth-broker-trust-"));
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-auth-broker-trust-"));
 	tempDirs.push(dir);
 	return dir;
 }
@@ -51,7 +51,7 @@ async function resolveIn(cwd: string, overrides: Record<string, string> = {}): P
 	// Never let the outer environment leak broker settings into the child, and keep
 	// the probe away from the developer's real agent dir / config.yml.
 	for (const key of KEYS) delete env[key];
-	env.GJC_CODING_AGENT_DIR = tempDir();
+	env.VIB_CODING_AGENT_DIR = tempDir();
 	Object.assign(env, overrides);
 
 	const proc = Bun.spawn([process.execPath, PROBE], { cwd, env, stdout: "pipe", stderr: "pipe" });
@@ -70,7 +70,7 @@ describe("auth broker configuration trust boundary", () => {
 
 	it("ignores a broker URL and token planted by the project .env", async () => {
 		const cwd = projectDir(
-			["GJC_AUTH_BROKER_URL=https://attacker.example", "GJC_AUTH_BROKER_TOKEN=attacker-token"].join("\n"),
+			["VIB_AUTH_BROKER_URL=https://attacker.example", "VIB_AUTH_BROKER_TOKEN=attacker-token"].join("\n"),
 		);
 		const resolved = await resolveIn(cwd);
 		expect(resolved.config).toBeNull();
@@ -78,7 +78,7 @@ describe("auth broker configuration trust boundary", () => {
 	});
 
 	it("ignores colon-form broker declarations planted by the project .env", async () => {
-		const cwd = projectDir("GJC_AUTH_BROKER_URL: https://attacker.example\nGJC_AUTH_BROKER_TOKEN: attacker-token\n");
+		const cwd = projectDir("VIB_AUTH_BROKER_URL: https://attacker.example\nVIB_AUTH_BROKER_TOKEN: attacker-token\n");
 		const resolved = await resolveIn(cwd);
 		expect(resolved.config).toBeNull();
 		expect(resolved.error).toBeNull();
@@ -86,7 +86,7 @@ describe("auth broker configuration trust boundary", () => {
 
 	it("ignores a planted broker URL even without a planted token", async () => {
 		// A planted URL alone must not reach the throw-on-missing-token path either.
-		const cwd = projectDir("GJC_AUTH_BROKER_URL=https://attacker.example\n");
+		const cwd = projectDir("VIB_AUTH_BROKER_URL=https://attacker.example\n");
 		const resolved = await resolveIn(cwd);
 		expect(resolved.config).toBeNull();
 		expect(resolved.error).toBeNull();
@@ -94,25 +94,25 @@ describe("auth broker configuration trust boundary", () => {
 
 	it("still honors a broker inherited from the launching shell", async () => {
 		const resolved = await resolveIn(projectDir(), {
-			GJC_AUTH_BROKER_URL: "https://broker.internal",
-			GJC_AUTH_BROKER_TOKEN: "operator-token",
+			VIB_AUTH_BROKER_URL: "https://broker.internal",
+			VIB_AUTH_BROKER_TOKEN: "operator-token",
 		});
 		expect(resolved.config).toEqual({ url: "https://broker.internal", token: "operator-token" });
 	});
 
 	it("does not let the project .env override an inherited broker", async () => {
 		const cwd = projectDir(
-			["GJC_AUTH_BROKER_URL=https://attacker.example", "GJC_AUTH_BROKER_TOKEN=attacker-token"].join("\n"),
+			["VIB_AUTH_BROKER_URL=https://attacker.example", "VIB_AUTH_BROKER_TOKEN=attacker-token"].join("\n"),
 		);
 		const resolved = await resolveIn(cwd, {
-			GJC_AUTH_BROKER_URL: "https://broker.internal",
-			GJC_AUTH_BROKER_TOKEN: "operator-token",
+			VIB_AUTH_BROKER_URL: "https://broker.internal",
+			VIB_AUTH_BROKER_TOKEN: "operator-token",
 		});
 		expect(resolved.config).toEqual({ url: "https://broker.internal", token: "operator-token" });
 	});
 
 	it("ignores broker credentials planted by .env.local and NODE_ENV variants", async () => {
-		const hostile = ["GJC_AUTH_BROKER_URL=https://attacker.example", "GJC_AUTH_BROKER_TOKEN=attacker-token"].join(
+		const hostile = ["VIB_AUTH_BROKER_URL=https://attacker.example", "VIB_AUTH_BROKER_TOKEN=attacker-token"].join(
 			"\n",
 		);
 		const cwd = projectDir(undefined, {
@@ -126,12 +126,12 @@ describe("auth broker configuration trust boundary", () => {
 	});
 
 	it("preserves a genuinely distinct inherited broker over a checkout declaration", async () => {
-		const cwd = projectDir("GJC_AUTH_BROKER_URL=https://attacker.example\nGJC_AUTH_BROKER_TOKEN=attacker-token\n", {
-			".env.local": "GJC_AUTH_BROKER_URL=https://attacker-local.example\nGJC_AUTH_BROKER_TOKEN=attacker-local\n",
+		const cwd = projectDir("VIB_AUTH_BROKER_URL=https://attacker.example\nVIB_AUTH_BROKER_TOKEN=attacker-token\n", {
+			".env.local": "VIB_AUTH_BROKER_URL=https://attacker-local.example\nVIB_AUTH_BROKER_TOKEN=attacker-local\n",
 		});
 		const resolved = await resolveIn(cwd, {
-			GJC_AUTH_BROKER_URL: "https://broker.internal",
-			GJC_AUTH_BROKER_TOKEN: "operator-token",
+			VIB_AUTH_BROKER_URL: "https://broker.internal",
+			VIB_AUTH_BROKER_TOKEN: "operator-token",
 		});
 		expect(resolved.config).toEqual({ url: "https://broker.internal", token: "operator-token" });
 	});

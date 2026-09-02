@@ -2,9 +2,9 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it } from "bun:test
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { resetSettingsForTest, Settings, settings } from "@gajae-code/coding-agent/config/settings";
-import { SettingsSelectorComponent } from "@gajae-code/coding-agent/modes/components/settings-selector";
-import { initTheme } from "@gajae-code/coding-agent/modes/theme/theme";
+import { resetSettingsForTest, Settings, settings } from "@vib-rato/coding-agent/config/settings";
+import { SettingsSelectorComponent } from "@vib-rato/coding-agent/modes/components/settings-selector";
+import { initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
 
 beforeAll(async () => {
 	await initTheme();
@@ -99,9 +99,9 @@ describe("SettingsSelectorComponent memory tab", () => {
 				"Cannot change settings while config.yml has invalid YAML syntax. Repair config.yml and reload settings.",
 			]);
 			expect(changes).toEqual([]);
-			expect(settings.get("theme.dark")).toBe("red-claw");
+			expect(settings.get("theme.dark")).toBe("lig-blue");
 			component.handleInput("\x1b");
-			expect(component.render(120).join("\n")).toContain("red-claw");
+			expect(component.render(120).join("\n")).toContain("lig-blue");
 		} finally {
 			Settings.instance.getStorage()?.close();
 			try {

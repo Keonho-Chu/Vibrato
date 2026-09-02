@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "bun:test";
-import type { CommandPaletteComponent } from "@gajae-code/coding-agent/modes/components/command-palette";
-import { SelectorController } from "@gajae-code/coding-agent/modes/controllers/selector-controller";
-import type { InteractiveModeContext } from "@gajae-code/coding-agent/modes/types";
-import type { SlashCommand } from "@gajae-code/tui";
+import type { CommandPaletteComponent } from "@vib-rato/coding-agent/modes/components/command-palette";
+import { SelectorController } from "@vib-rato/coding-agent/modes/controllers/selector-controller";
+import type { InteractiveModeContext } from "@vib-rato/coding-agent/modes/types";
+import type { SlashCommand } from "@vib-rato/tui";
 
 describe("SelectorController command palette", () => {
 	it("surfaces rejected handlers without an unhandled rejection", async () => {

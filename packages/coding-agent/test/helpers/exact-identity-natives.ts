@@ -7,11 +7,11 @@ import type {
 	NativeDirectoryTreeSnapshot,
 	NativeExactFileIdentity,
 	NativeExactUnlinkResult,
-} from "@gajae-code/natives";
+} from "@vib-rato/natives";
 import {
 	type SessionStateLockNativeBindings,
 	setSessionStateLockNativeBindings,
-} from "../../src/gjc-runtime/session-state-lock";
+} from "../../src/vib-runtime/session-state-lock";
 
 /**
  * A faithful in-process stand-in for the identity-bound deletion primitives.
@@ -199,7 +199,7 @@ export const exactIdentityNativeBindings: SessionStateLockNativeBindings = {
 /** Whether the compiled addon actually loads in this environment. */
 function compiledNativesAvailable(): boolean {
 	try {
-		return typeof (require("@gajae-code/natives") as { exactUnlink?: unknown }).exactUnlink === "function";
+		return typeof (require("@vib-rato/natives") as { exactUnlink?: unknown }).exactUnlink === "function";
 	} catch {
 		return false;
 	}

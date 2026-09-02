@@ -1,12 +1,12 @@
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { WindowsJobMemoryProbeResult } from "@gajae-code/natives";
+import type { WindowsJobMemoryProbeResult } from "@vib-rato/natives";
 
 function safeProbeWindowsJobMemory(): WindowsJobMemoryProbeResult {
 	try {
 		// eslint-disable-next-line @typescript-eslint/no-var-requires
-		const natives = require("@gajae-code/natives") as { probeWindowsJobMemory?: () => unknown };
+		const natives = require("@vib-rato/natives") as { probeWindowsJobMemory?: () => unknown };
 		if (typeof natives.probeWindowsJobMemory === "function") {
 			return natives.probeWindowsJobMemory() as WindowsJobMemoryProbeResult;
 		}
@@ -16,7 +16,7 @@ function safeProbeWindowsJobMemory(): WindowsJobMemoryProbeResult {
 	return { kind: "unsupported_platform", platform: process.platform };
 }
 
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 import type { Settings } from "../config/settings";
 import { computeMemoryGuardDomain } from "../runtime/memory-domain";
 import { chooseMemoryGuardAction, MemoryGuardHost, resolveMemoryGuardPolicy } from "../runtime/memory-guard";
@@ -33,9 +33,9 @@ import { cleanupStaleScreenshotFallbackDirs, hasCreatedScreenshotFallbackDir } f
  *    processes) via an idle sweep and an opportunistic RSS-pressure sweep, and
  *  - stale computer-use screenshot fallback directories on disk (lazy-armed + throttled).
  *
- * Eviction targets ONLY alive, non-in-flight, GJC-managed headless/spawned tabs owned by a
+ * Eviction targets ONLY alive, non-in-flight, Vibrato-managed headless/spawned tabs owned by a
  * registered session; connected/real-Chrome/held/in-flight tabs and ownerless tabs are never
- * touched. RSS is the GJC parent-process RSS only (`process.memoryUsage().rss`); pressure
+ * touched. RSS is the Vibrato parent-process RSS only (`process.memoryUsage().rss`); pressure
  * eviction is best-effort and never force-evicts.
  */
 
@@ -613,7 +613,7 @@ function isCoarselyEligible(snapshot: TabGcSnapshot): boolean {
 	);
 }
 
-/** Collect idle, non-in-flight, GJC-managed, owned-and-enabled tabs, sorted LRU (oldest first). */
+/** Collect idle, non-in-flight, Vibrato-managed, owned-and-enabled tabs, sorted LRU (oldest first). */
 function collectIdleCandidates(d: ResourceGcDeps): Array<{ snapshot: TabGcSnapshot; policy: BrowserGcPolicy }> {
 	const candidates: Array<{ snapshot: TabGcSnapshot; policy: BrowserGcPolicy }> = [];
 	for (const snapshot of d.listTabs()) {
@@ -628,7 +628,7 @@ function collectIdleCandidates(d: ResourceGcDeps): Array<{ snapshot: TabGcSnapsh
 }
 
 async function sweepBrowserTabs(d: ResourceGcDeps): Promise<void> {
-	// Reclamation honors IR-1 strictly: ONLY idle, non-in-flight, GJC-managed, owned tabs are ever
+	// Reclamation honors IR-1 strictly: ONLY idle, non-in-flight, Vibrato-managed, owned tabs are ever
 	// evicted. RSS pressure never relaxes that boundary — it only drives the warning below.
 	for (const { snapshot, policy } of collectIdleCandidates(d)) {
 		await d.releaseTab(snapshot.name, { now: d.now, idleMs: policy.idleMs });

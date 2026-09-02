@@ -2,7 +2,7 @@ import { describe, expect, test, vi } from "bun:test";
 import * as fsSync from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 
 import { daemonPaths } from "../src/sdk/bus/daemon-paths";
 import {
@@ -403,7 +403,7 @@ describe("Telegram provider-local adoption reservations", () => {
 	});
 
 	test("real filesystem sidecars survive rehydrate", async () => {
-		const agentDir = fsSync.mkdtempSync(path.join(os.tmpdir(), "gjc-adoption-provider-key-"));
+		const agentDir = fsSync.mkdtempSync(path.join(os.tmpdir(), "vib-adoption-provider-key-"));
 		try {
 			const writer = new TelegramAdoptionIntentStore({ agentDir, now: () => 1_000 });
 			await writer.put(reservation({ providerRequestKey: "telegram:42:21", topicId: 21 }));

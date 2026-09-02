@@ -7,7 +7,7 @@
  *
  * Strategy: spawn a bun child (hidden, so the test itself never allocates a
  * window) that calls `kernel32!FreeConsole` to become console-less — the
- * exact state of a GJC agent embedded in a console-less ACP/GUI host — and
+ * exact state of a Vibrato agent embedded in a console-less ACP/GUI host — and
  * self-verifies `GetConsoleWindow() == null` before proceeding, so the
  * scenario can never silently degrade into a vacuous pass. It then exercises
  * the native brush shell exactly the way the bash tool does (`executeShell`)
@@ -49,7 +49,7 @@ const NATIVES_ENTRY_URL = url.pathToFileURL(path.resolve("packages/natives/nativ
 //                  DETACHED_PROCESS would report zero.
 //   - visible:     handle non-null and IsWindowVisible(handle).
 const PROBE_PS = [
-	"$w = Add-Type -Namespace GjcProbe -Name Win -PassThru -MemberDefinition @'",
+	"$w = Add-Type -Namespace VibProbe -Name Win -PassThru -MemberDefinition @'",
 	'[DllImport("kernel32.dll")] public static extern IntPtr GetConsoleWindow();',
 	'[DllImport("kernel32.dll")] public static extern uint GetConsoleCP();',
 	'[DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr h);',

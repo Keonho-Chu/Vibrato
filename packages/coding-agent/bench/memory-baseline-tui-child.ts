@@ -1,4 +1,4 @@
-import { Container, Text } from "@gajae-code/tui";
+import { Container, Text } from "@vib-rato/tui";
 import { buildMemoryFixture } from "./perf-corpus.bench";
 import type { MemoryWorkload } from "./memory-baseline-workloads";
 import type { MemoryWorkloadProfile } from "./perf-corpus-schema";
@@ -37,7 +37,7 @@ export function createTuiWorkload(): TuiMemoryWorkload {
 }
 
 if (import.meta.main) {
-	const profile: MemoryWorkloadProfile = process.env.GJC_MEMORY_PROFILE === "soak" ? "soak" : "short";
-	const durationTargetMs = Number(process.env.GJC_MEMORY_DURATION_MS) || 0;
+	const profile: MemoryWorkloadProfile = process.env.VIB_MEMORY_PROFILE === "soak" ? "soak" : "short";
+	const durationTargetMs = Number(process.env.VIB_MEMORY_DURATION_MS) || 0;
 	process.stdout.write(`${JSON.stringify(buildMemoryFixture(createTuiWorkload(), profile, durationTargetMs))}\n`);
 }

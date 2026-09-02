@@ -2,8 +2,8 @@ import { afterEach, describe, expect, it, spyOn } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { SessionManager, type UsageStatistics } from "@gajae-code/coding-agent/session/session-manager";
-import { logger } from "@gajae-code/utils";
+import { SessionManager, type UsageStatistics } from "@vib-rato/coding-agent/session/session-manager";
+import { logger } from "@vib-rato/utils";
 
 const tempDirs: string[] = [];
 const managers: SessionManager[] = [];
@@ -14,7 +14,7 @@ afterEach(async () => {
 });
 
 function makeTempDir(): string {
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-malformed-usage-"));
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-malformed-usage-"));
 	tempDirs.push(dir);
 	return dir;
 }

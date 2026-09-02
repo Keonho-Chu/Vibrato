@@ -1,8 +1,8 @@
-# Choosing models in GJC: role-based profiles
+# Choosing models in Vibrato: role-based profiles
 
-A practical guide to picking models for GJC's roles, for every subscription situation — one vendor, two vendors, or the full multi-vendor set. It adds curated cross-vendor `profiles:` for `~/.gjc/agent/models.yml` and verified selector notes on top of the mechanism in [Model profiles](./models.md#model-profiles---mpreset). Everything here is **user config**; it complements the built-in `--mpreset` presets and overrides a built-in only when it shares its exact name.
+A practical guide to picking models for Vibrato's roles, for every subscription situation — one vendor, two vendors, or the full multi-vendor set. It adds curated cross-vendor `profiles:` for `~/.vib/agent/models.yml` and verified selector notes on top of the mechanism in [Model profiles](./models.md#model-profiles---mpreset). Everything here is **user config**; it complements the built-in `--mpreset` presets and overrides a built-in only when it shares its exact name.
 
-> Selectors, prices, and "axis leaders" are catalog- and time-sensitive (selectors and prices observed 2026-07 on the current bundled catalog; the measured latency and single-message-limit notes below were observed 2026-06 on `claude-opus-4-8` and have not been re-measured on `claude-opus-5`). Re-verify any selector with `gjc -p --no-session --no-tools --model <selector> "Reply OK"`.
+> Selectors, prices, and "axis leaders" are catalog- and time-sensitive (selectors and prices observed 2026-07 on the current bundled catalog; the measured latency and single-message-limit notes below were observed 2026-06 on `claude-opus-4-8` and have not been re-measured on `claude-opus-5`). Re-verify any selector with `vib -p --no-session --no-tools --model <selector> "Reply OK"`.
 
 ## The five roles
 
@@ -87,8 +87,8 @@ A verified use is the cross-session final review gate: the authoring session lau
 
 ```sh
 # the one-shot gate needs only a cross-family --model; add --mpreset reviewer as an
-# optional enhancement AFTER installing this profile in ~/.gjc/agent/models.yml:
-gjc -p --no-session --model openai-codex/gpt-5.5:xhigh --tools read,search,find "<review prompt: diff + spec paths, severity findings, final line VERDICT: APPROVE|REQUEST_CHANGES>"
+# optional enhancement AFTER installing this profile in ~/.vib/agent/models.yml:
+vib -p --no-session --model openai-codex/gpt-5.5:xhigh --tools read,search,find "<review prompt: diff + spec paths, severity findings, final line VERDICT: APPROVE|REQUEST_CHANGES>"
 ```
 
 The `--tools` allowlist is part of the contract: it enforces the reviewer's read-only boundary for the built-in tool surface instead of trusting the prompt (the runtime still injects the session `goal` tool unless `goal.enabled` is off — disabling it for the reviewer invocation is **mandatory**, via a dedicated gate directory outside the repo so the reviewed checkout stays clean, see the template — plus `generate_image` when an image credential exists). In this one-shot form the session's `default` model authors the verdict — a tool-restricted print session cannot delegate to the profile's `critic`/`architect` roles — so the explicit cross-family `--model` carries provenance, and the `reviewer` profile itself serves the interactive review-session case (activate it with `--mpreset reviewer` only after copying it into `models.yml`; otherwise activation fails with an unknown-profile error). Profile names in this document live in the user namespace — a user profile overrides a builtin preset only on an exact name match, and a future builtin with the same name would be silently shadowed by your copy.
@@ -108,33 +108,33 @@ Current axis leaders and the cheaper second option, with metered price ($/1M in/
 | Multimodal review (`architect`) | `google-antigravity/gemini-3.1-pro-low:high` | `google-antigravity/gemini-3.5-flash` |
 | Independent critic | `xai/grok-4.3` (1.25/2.5) | `opencode-go/glm-5.2` · `google-antigravity/gemini-3.5-flash` |
 
-On standard tasks, all current frontier models in the catalog are accurate; **pick by cost, latency, and role fit, not by raw accuracy on easy prompts.** As an indicative GJC-routed latency reference (`gjc -p`, identical coding + reasoning prompts, all correct): `grok-4.3` and `glm-5.2` ≈ 2–3s, `deepseek-v4-pro` ≈ 3–4s, `claude-opus-4-8` / `gpt-5.5` ≈ 4–7s, `gemini-3.1-pro-low:high` ≈ 7s. `claude-opus-5` shares Opus 4.8's published context/output envelope but has not been latency-measured here.
+On standard tasks, all current frontier models in the catalog are accurate; **pick by cost, latency, and role fit, not by raw accuracy on easy prompts.** As an indicative Vibrato-routed latency reference (`vib -p`, identical coding + reasoning prompts, all correct): `grok-4.3` and `glm-5.2` ≈ 2–3s, `deepseek-v4-pro` ≈ 3–4s, `claude-opus-4-8` / `gpt-5.5` ≈ 4–7s, `gemini-3.1-pro-low:high` ≈ 7s. `claude-opus-5` shares Opus 4.8's published context/output envelope but has not been latency-measured here.
 
 ## Verified selector notes (current catalog)
 
-Observed via live `gjc -p` calls; useful when wiring the profiles above:
+Observed via live `vib -p` calls; useful when wiring the profiles above:
 
 - **Antigravity Gemini, high reasoning** → use `google-antigravity/gemini-3.1-pro-low:high`. The id `gemini-3.1-pro-high` returns HTTP 400 (no matching backend model); `thinkingLevel` is a per-request parameter, so raising it on `gemini-3.1-pro-low` invokes the model's native high-reasoning mode rather than a degraded one.
 - **openai-codex on a ChatGPT account** serves base GPT only (`gpt-5.5`, `gpt-5.4`). Standalone `-codex` variants (`gpt-5.3-codex`, `gpt-5.2-codex`, `gpt-5.1-codex-max` / `-mini`) return `not supported when using Codex with a ChatGPT account`.
 - **Single-message input limit is separate from the context window.** Measured on `claude-opus-4-8` (not yet re-measured on `claude-opus-5`, which publishes the same 1M window): the model runs with a 1M window via multi-turn accumulation, but a single `@file` message above ~400k tokens returns 400 on `anthropic` / `google-antigravity`; `xai` / `opencode-go` accept larger single messages. Chunk very large inputs across turns instead of pasting one block.
-- **Some selectors come from a provider's live catalog, not the bundled snapshot.** `opencode-go/glm-5.2` and `google-antigravity/gemini-3.5-flash` resolved in `gjc -p` tests but are **not** in `packages/ai/src/models.json`; they appear only after the provider's online model discovery has populated the registry. `required_providers` verifies credentials at activation — it does **not** guarantee fresh, non-stale discovery — so activation can still fail with `selector did not resolve` until discovery runs (re-login or retry to refresh). If you hit that, substitute a bundled id: `opencode-go/deepseek-v4-pro` for the critic, or `zai/glm-5.2` (add `zai` to `required_providers`) for GLM 5.2.
+- **Some selectors come from a provider's live catalog, not the bundled snapshot.** `opencode-go/glm-5.2` and `google-antigravity/gemini-3.5-flash` resolved in `vib -p` tests but are **not** in `packages/ai/src/models.json`; they appear only after the provider's online model discovery has populated the registry. `required_providers` verifies credentials at activation — it does **not** guarantee fresh, non-stale discovery — so activation can still fail with `selector did not resolve` until discovery runs (re-login or retry to refresh). If you hit that, substitute a bundled id: `opencode-go/deepseek-v4-pro` for the critic, or `zai/glm-5.2` (add `zai` to `required_providers`) for GLM 5.2.
 
 ## Activation
 
 ```bash
-gjc --mpreset daily               # this session only
-gjc --mpreset ultimate --default  # persist as the startup default (config.yml)
+vib --mpreset daily               # this session only
+vib --mpreset ultimate --default  # persist as the startup default (config.yml)
 ```
 
 ### Delegation is what makes vendor separation pay off
 
-Worker roles only consume the other vendor's quota when the main agent actually delegates, and the strong "delegate by default" directive is gated behind `task.eager`. When `executor` or `planner` is pinned to a provider other than the `default` role's provider, GJC therefore turns eager delegation on for that session unless `task.eager` is set explicitly in config. Setting `task.eager false` by hand stays authoritative and keeps the separated workers idle — `gjc config doctor` reports that combination as an advisory.
+Worker roles only consume the other vendor's quota when the main agent actually delegates, and the strong "delegate by default" directive is gated behind `task.eager`. When `executor` or `planner` is pinned to a provider other than the `default` role's provider, Vibrato therefore turns eager delegation on for that session unless `task.eager` is set explicitly in config. Setting `task.eager false` by hand stays authoritative and keeps the separated workers idle — `vib config doctor` reports that combination as an advisory.
 
 Activation hard-blocks when any provider in `required_providers` lacks credentials, so log in first: `/login anthropic`, `/login openai-codex`, `/login google-antigravity`, `/login xai` (and `opencode-go` via `OPENCODE_API_KEY`).
 
 ### Serving cross-vendor profiles through one OpenAI-compatible proxy
 
-When a single gateway (LiteLLM, OpenRouter, or a custom proxy) fronts several vendors, you do not need to configure every `required_providers` entry directly. Add the gateway as a provider — `gjc setup provider --preset litellm --base-url <url>` or `gjc setup provider --preset openai-compatible-proxy --base-url <url>` — and point `modelProfile.proxyProvider` at it in `config.yml`:
+When a single gateway (LiteLLM, OpenRouter, or a custom proxy) fronts several vendors, you do not need to configure every `required_providers` entry directly. Add the gateway as a provider — `vib setup provider --preset litellm --base-url <url>` or `vib setup provider --preset openai-compatible-proxy --base-url <url>` — and point `modelProfile.proxyProvider` at it in `config.yml`:
 
 ```yaml
 modelProfile:

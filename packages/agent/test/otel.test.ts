@@ -6,8 +6,16 @@
  * lifecycle hook dispatch.
  */
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "bun:test";
-import { agentLoop } from "@gajae-code/agent-core/agent-loop";
-import type { AgentRunCoverage, AgentRunSummary } from "@gajae-code/agent-core/run-collector";
+import { context, SpanStatusCode, trace } from "@opentelemetry/api";
+import { AsyncLocalStorageContextManager } from "@opentelemetry/context-async-hooks";
+import {
+	BasicTracerProvider,
+	InMemorySpanExporter,
+	type ReadableSpan,
+	SimpleSpanProcessor,
+} from "@opentelemetry/sdk-trace-base";
+import { agentLoop } from "@vib-rato/agent-core/agent-loop";
+import type { AgentRunCoverage, AgentRunSummary } from "@vib-rato/agent-core/run-collector";
 import {
 	type AgentTelemetryConfig,
 	type ChatUsageEvent,
@@ -21,20 +29,12 @@ import {
 	resetContentCaptureEnvCacheForTest,
 	resolveTelemetry,
 	type TelemetryHookContext,
-} from "@gajae-code/agent-core/telemetry";
-import type { AgentContext, AgentEvent, AgentLoopConfig, AgentMessage, AgentTool } from "@gajae-code/agent-core/types";
-import type { Message } from "@gajae-code/ai";
-import { z } from "@gajae-code/ai";
-import { createMockModel } from "@gajae-code/ai/providers/mock";
-import type { EventStream } from "@gajae-code/ai/utils/event-stream";
-import { context, SpanStatusCode, trace } from "@opentelemetry/api";
-import { AsyncLocalStorageContextManager } from "@opentelemetry/context-async-hooks";
-import {
-	BasicTracerProvider,
-	InMemorySpanExporter,
-	type ReadableSpan,
-	SimpleSpanProcessor,
-} from "@opentelemetry/sdk-trace-base";
+} from "@vib-rato/agent-core/telemetry";
+import type { AgentContext, AgentEvent, AgentLoopConfig, AgentMessage, AgentTool } from "@vib-rato/agent-core/types";
+import type { Message } from "@vib-rato/ai";
+import { z } from "@vib-rato/ai";
+import { createMockModel } from "@vib-rato/ai/providers/mock";
+import type { EventStream } from "@vib-rato/ai/utils/event-stream";
 import { createUserMessage } from "./helpers";
 
 const MOCK_IDENT = { id: "mock-model", provider: "mock-provider" } as const;

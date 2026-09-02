@@ -1,6 +1,6 @@
 import * as path from "node:path";
-import { activeSnapshotPath, assertNonEmptyGjcSessionId, modeStatePath } from "../gjc-runtime/session-layout";
-import { CANONICAL_GJC_WORKFLOW_SKILLS, type CanonicalGjcWorkflowSkill, SKILL_ACTIVE_STATE_FILE } from "./active-state";
+import { activeSnapshotPath, assertNonEmptyVibSessionId, modeStatePath } from "../vib-runtime/session-layout";
+import { CANONICAL_VIB_WORKFLOW_SKILLS, type CanonicalVibWorkflowSkill, SKILL_ACTIVE_STATE_FILE } from "./active-state";
 import { WORKFLOW_STATE_RECEIPT_FRESH_MS, WORKFLOW_STATE_RECEIPT_VERSION } from "./workflow-state-version";
 
 export {
@@ -9,8 +9,8 @@ export {
 	WORKFLOW_STATE_VERSION,
 } from "./workflow-state-version";
 
-export type { CanonicalGjcWorkflowSkill };
-export type WorkflowStateMutationOwner = "gjc-state-cli" | "gjc-runtime" | "gjc-hook";
+export type { CanonicalVibWorkflowSkill };
+export type WorkflowStateMutationOwner = "vib-state-cli" | "vib-runtime" | "vib-hook";
 export type WorkflowStateReceiptStatus = "fresh" | "stale";
 
 export interface WorkflowStateContentChecksum {
@@ -22,7 +22,7 @@ export interface WorkflowStateContentChecksum {
 
 export interface WorkflowStateReceipt {
 	version: 1;
-	skill: CanonicalGjcWorkflowSkill;
+	skill: CanonicalVibWorkflowSkill;
 	owner: WorkflowStateMutationOwner;
 	command: string;
 	state_path: string;
@@ -52,20 +52,20 @@ export interface AuditEntry {
 	paths: string[];
 }
 
-export function workflowModeStateFileName(skill: CanonicalGjcWorkflowSkill): string {
+export function workflowModeStateFileName(skill: CanonicalVibWorkflowSkill): string {
 	return `${skill}-state.json`;
 }
 
 export function buildWorkflowStateReceipt(input: {
 	cwd: string;
-	skill: CanonicalGjcWorkflowSkill;
+	skill: CanonicalVibWorkflowSkill;
 	owner: WorkflowStateMutationOwner;
 	command: string;
 	sessionId: string;
 	nowIso?: string;
 	mutationId?: string;
 }): WorkflowStateReceipt {
-	assertNonEmptyGjcSessionId(input.sessionId, "buildWorkflowStateReceipt");
+	assertNonEmptyVibSessionId(input.sessionId, "buildWorkflowStateReceipt");
 	const cwd = path.resolve(input.cwd);
 	const mutatedAt = input.nowIso ?? new Date().toISOString();
 	const freshUntil = new Date(Date.parse(mutatedAt) + WORKFLOW_STATE_RECEIPT_FRESH_MS).toISOString();
@@ -93,23 +93,23 @@ export function workflowReceiptStatus(
 	return nowMs <= freshUntilMs ? "fresh" : "stale";
 }
 
-export function canonicalWorkflowSkill(value: string): CanonicalGjcWorkflowSkill | null {
-	return (CANONICAL_GJC_WORKFLOW_SKILLS as readonly string[]).includes(value)
-		? (value as CanonicalGjcWorkflowSkill)
+export function canonicalWorkflowSkill(value: string): CanonicalVibWorkflowSkill | null {
+	return (CANONICAL_VIB_WORKFLOW_SKILLS as readonly string[]).includes(value)
+		? (value as CanonicalVibWorkflowSkill)
 		: null;
 }
 
-export function sanctionedWorkflowStateCommand(skill: CanonicalGjcWorkflowSkill): string {
-	return `gjc state ${skill} write --input '<json>'`;
+export function sanctionedWorkflowStateCommand(skill: CanonicalVibWorkflowSkill): string {
+	return `vib state ${skill} write --input '<json>'`;
 }
 
-export function describeWorkflowStateContract(skill: CanonicalGjcWorkflowSkill): string[] {
+export function describeWorkflowStateContract(skill: CanonicalVibWorkflowSkill): string[] {
 	return [
-		`Sanctioned mutation path: gjc state ${skill} read|write --input '<json>'`,
-		`Canonical active HUD state: .gjc/_session-{sessionid}/state/${SKILL_ACTIVE_STATE_FILE}`,
-		`Skill mode state: .gjc/_session-{sessionid}/state/${workflowModeStateFileName(skill)}`,
+		`Sanctioned mutation path: vib state ${skill} read|write --input '<json>'`,
+		`Canonical active HUD state: .vib/_session-{sessionid}/state/${SKILL_ACTIVE_STATE_FILE}`,
+		`Skill mode state: .vib/_session-{sessionid}/state/${workflowModeStateFileName(skill)}`,
 		"Receipts include version, skill, owner, command, state_path, storage_path, mutated_at, fresh_until, status, and mutation_id.",
 		"Receipts are fresh for 30 minutes; older receipts are stale and render as HUD warnings.",
-		"Planning artifacts under .gjc/_session-{sessionid}/specs/** and .gjc/_session-{sessionid}/plans/** remain writable outside the state command.",
+		"Planning artifacts under .vib/_session-{sessionid}/specs/** and .vib/_session-{sessionid}/plans/** remain writable outside the state command.",
 	];
 }

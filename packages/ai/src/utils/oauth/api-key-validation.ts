@@ -1,4 +1,4 @@
-import { sanitizeDisplayLine } from "@gajae-code/utils";
+import { sanitizeDisplayLine } from "@vib-rato/utils";
 
 type OpenAICompatibleValidationOptions = {
 	provider: string;

@@ -35,7 +35,7 @@ export function createSessionWorkload(): MemoryWorkload {
 }
 
 if (import.meta.main) {
-	const profile: MemoryWorkloadProfile = process.env.GJC_MEMORY_PROFILE === "soak" ? "soak" : "short";
-	const durationTargetMs = Number(process.env.GJC_MEMORY_DURATION_MS) || 0;
+	const profile: MemoryWorkloadProfile = process.env.VIB_MEMORY_PROFILE === "soak" ? "soak" : "short";
+	const durationTargetMs = Number(process.env.VIB_MEMORY_DURATION_MS) || 0;
 	process.stdout.write(`${JSON.stringify(buildMemoryFixture(createSessionWorkload(), profile, durationTargetMs))}\n`);
 }

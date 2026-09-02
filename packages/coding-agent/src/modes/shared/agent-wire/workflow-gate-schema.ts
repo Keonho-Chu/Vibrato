@@ -12,7 +12,7 @@
  * swapped in later without changing callers.
  */
 import { createHash } from "node:crypto";
-import { deepInterviewCharacterCount } from "../../../gjc-runtime/deep-interview-state";
+import { deepInterviewCharacterCount } from "../../../vib-runtime/deep-interview-state";
 import type { JsonSchema, WorkflowGateValidationError } from "./workflow-gate-types";
 
 /** Keywords this wrapper understands. Any other keyword is rejected. */

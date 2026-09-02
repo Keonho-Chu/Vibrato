@@ -10,11 +10,11 @@ const sourceSha = "abcdef0123456789abcdef0123456789abcdef01";
 const nightlyVersion = "1.2.4-nightly.20260805032109.123456.gabcdef012345";
 
 async function fixture(): Promise<string> {
-	const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-nightly-release-"));
+	const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-nightly-release-"));
 	temporaryRoots.push(root);
 	const catalog = Object.fromEntries(
 		PUBLIC_PACKAGE_DEFINITIONS
-			.filter(definition => definition.name.startsWith("@gajae-code/"))
+			.filter(definition => definition.name.startsWith("@vib-rato/"))
 			.map(definition => [definition.name, "1.2.3"]),
 	);
 	await Bun.write(path.join(root, "package.json"), `${JSON.stringify({ workspaces: { catalog } }, null, 2)}\n`);
@@ -26,7 +26,7 @@ async function fixture(): Promise<string> {
 		);
 	}
 
-	const crateNames = ["gjc-sdk", "pi-ast", "pi-iso", "pi-natives", "pi-shell"];
+	const crateNames = ["vib-sdk", "pi-ast", "pi-iso", "pi-natives", "pi-shell"];
 	await Bun.write(path.join(root, "Cargo.toml"), '[workspace]\nmembers = ["crates/*"]\n\n[workspace.package]\nversion = "1.2.3"\n');
 	await Bun.write(
 		path.join(root, "Cargo.lock"),
@@ -81,7 +81,7 @@ describe("nightly release versioning", () => {
 			expect(manifest.version).toBe(nightlyVersion);
 		}
 		const rootManifest = await Bun.file(path.join(root, "package.json")).json() as { workspaces: { catalog: Record<string, string> } };
-		for (const definition of PUBLIC_PACKAGE_DEFINITIONS.filter(candidate => candidate.name.startsWith("@gajae-code/"))) {
+		for (const definition of PUBLIC_PACKAGE_DEFINITIONS.filter(candidate => candidate.name.startsWith("@vib-rato/"))) {
 			expect(rootManifest.workspaces.catalog[definition.name]).toBe(nightlyVersion);
 		}
 		expect(await Bun.file(path.join(root, "Cargo.toml")).text()).toContain(`version = "${nightlyVersion}"`);

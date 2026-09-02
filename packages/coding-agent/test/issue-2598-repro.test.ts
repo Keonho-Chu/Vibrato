@@ -7,7 +7,7 @@ const packageDir = path.resolve(import.meta.dir, "..");
 const compiledLiteral = "./packages/coding-agent/src/tools/browser/tab-worker-entry.ts";
 const sourceEntrypoint = "./src/tools/browser/tab-worker-entry.ts";
 const workspaceUtilsDir = path.resolve(packageDir, "../utils/src");
-const workspaceUtilsSpecifier = "@gajae-code/utils/";
+const workspaceUtilsSpecifier = "@vib-rato/utils/";
 
 class FakeSmokeWorker {
 	#listeners = new Map<string, Set<EventListener>>();
@@ -40,9 +40,9 @@ class FakeSmokeWorker {
 }
 
 const forbiddenRuntimeSpecifiers = [
-	/^@gajae-code\/utils$/,
-	/^@gajae-code\/natives(?:\/|$)/,
-	/^@gajae-code\/tui(?:\/|$)/,
+	/^@vib-rato\/utils$/,
+	/^@vib-rato\/natives(?:\/|$)/,
+	/^@vib-rato\/tui(?:\/|$)/,
 ] as const;
 const forbiddenRuntimePaths = /(?:^|\/)(?:path-utils|render-utils)(?:\.ts)?$|(?:^|\/)internal-urls(?:\/|$)/;
 
@@ -54,7 +54,7 @@ function runtimeImportSpecifiers(source: string): string[] {
 	// `export function`/`export const` scan forward for the next ` from "…"`,
 	// which can land inside a later comment or string and invent an import edge
 	// that does not exist (e.g. utils/src/env.ts documents `import { $env } from
-	// "@gajae-code/utils"` in prose).
+	// "@vib-rato/utils"` in prose).
 	const reExport =
 		/^\s*export\s+(?!type\b)(?:\*(?:\s+as\s+[A-Za-z_$][\w$]*)?|\{[\s\S]*?\})\s+from\s+["']([^"']+)["'];?/gm;
 	const dynamicImport = /\bimport\(\s*["']([^"']+)["']\s*\)/g;
@@ -160,7 +160,7 @@ function expectGraphNotToContain(graph: Map<string, string[]>, file: string): vo
 /**
  * The runtime test is host evidence only: it exercises source-worker startup
  * on the current platform without launching Chrome. macos-14 hosted execution
- * of `gjc --smoke-test` remains the Darwin compiled-binary contract.
+ * of `vib --smoke-test` remains the Darwin compiled-binary contract.
  */
 describe("issue #2598 — tab worker source and compiled smoke contract", () => {
 	it("boots the actual source tab worker and closes it without a browser", async () => {
@@ -223,17 +223,17 @@ describe("issue #2598 — tab worker source and compiled smoke contract", () => 
 	});
 
 	it("rejects workspace utility subpaths that reach native bindings", async () => {
-		const graph = await collectRuntimeImportGraph(await resolveWorkspaceUtilsModule("@gajae-code/utils/procmgr"));
+		const graph = await collectRuntimeImportGraph(await resolveWorkspaceUtilsModule("@vib-rato/utils/procmgr"));
 
 		expectGraphToContain(graph, "../utils/src/procmgr.ts");
 		expect(() => expectNativeFreeRuntimeGraph(graph)).toThrow();
 	});
 
 	it("rejects unsafe or unresolved workspace utility subpaths without falling back to package resolution", async () => {
-		await expect(resolveWorkspaceUtilsModule("@gajae-code/utils/not-a-runtime-module")).rejects.toThrow(
+		await expect(resolveWorkspaceUtilsModule("@vib-rato/utils/not-a-runtime-module")).rejects.toThrow(
 			"Unresolved workspace utility subpath",
 		);
-		await expect(resolveWorkspaceUtilsModule("@gajae-code/utils/../procmgr")).rejects.toThrow(
+		await expect(resolveWorkspaceUtilsModule("@vib-rato/utils/../procmgr")).rejects.toThrow(
 			"Unsafe workspace utility subpath",
 		);
 	});

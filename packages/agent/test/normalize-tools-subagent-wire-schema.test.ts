@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { AppendOnlyContextManager } from "@gajae-code/agent-core/append-only-context";
+import { AppendOnlyContextManager } from "@vib-rato/agent-core/append-only-context";
 import * as z from "zod/v4";
 import { toolWireSchema } from "../../ai/src/utils/schema/wire";
 import { normalizeTools } from "../src/agent-loop";

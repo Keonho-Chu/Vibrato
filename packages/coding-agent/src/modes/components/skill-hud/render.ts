@@ -1,4 +1,4 @@
-import { truncateToWidth, visibleWidth } from "@gajae-code/tui";
+import { truncateToWidth, visibleWidth } from "@vib-rato/tui";
 import {
 	collapsePlanningPipeline,
 	type SkillActiveEntry,

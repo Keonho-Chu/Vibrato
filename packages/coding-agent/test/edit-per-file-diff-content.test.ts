@@ -2,16 +2,16 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { resetSettingsForTest, Settings } from "@gajae-code/coding-agent/config/settings";
+import { resetSettingsForTest, Settings } from "@vib-rato/coding-agent/config/settings";
 import {
 	DEFAULT_FUZZY_THRESHOLD,
 	EditTool,
 	type EditToolDetails,
 	executePatchSingle,
 	executeReplaceSingle,
-} from "@gajae-code/coding-agent/edit";
-import { writethroughNoop } from "@gajae-code/coding-agent/lsp";
-import type { ToolSession } from "@gajae-code/coding-agent/tools";
+} from "@vib-rato/coding-agent/edit";
+import { writethroughNoop } from "@vib-rato/coding-agent/lsp";
+import type { ToolSession } from "@vib-rato/coding-agent/tools";
 
 // ─── Minimal ToolSession stub ────────────────────────────────────────────────
 
@@ -41,7 +41,7 @@ let tempDir: string;
 
 beforeEach(async () => {
 	resetSettingsForTest();
-	tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-edit-diff-"));
+	tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-edit-diff-"));
 	await Settings.init({ inMemory: true, cwd: tempDir });
 });
 

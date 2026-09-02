@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import type { AgentMessage } from "@gajae-code/agent-core";
-import { FOLD_WAKE_MERGE_WINDOW_MS } from "@gajae-code/coding-agent/session/fold-coordinator";
-import { YieldQueue } from "@gajae-code/coding-agent/session/yield-queue";
+import type { AgentMessage } from "@vib-rato/agent-core";
+import { FOLD_WAKE_MERGE_WINDOW_MS } from "@vib-rato/coding-agent/session/fold-coordinator";
+import { YieldQueue } from "@vib-rato/coding-agent/session/yield-queue";
 
 interface Harness {
 	queue: YieldQueue;

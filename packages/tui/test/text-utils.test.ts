@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "bun:test";
-import { type Component, renderMetrics, Text, TUI } from "@gajae-code/tui";
+import { type Component, renderMetrics, Text, TUI } from "@vib-rato/tui";
 import {
 	__textHelperPerfCounters,
 	Ellipsis,
@@ -10,8 +10,8 @@ import {
 	truncateToWidth,
 	visibleWidth,
 	visibleWidths,
-} from "@gajae-code/tui/utils";
-import { getDefaultTabWidth, setDefaultTabWidth } from "@gajae-code/utils";
+} from "@vib-rato/tui/utils";
+import { getDefaultTabWidth, setDefaultTabWidth } from "@vib-rato/utils";
 import { VirtualTerminal } from "./virtual-terminal";
 
 const originalTabWidth = getDefaultTabWidth();

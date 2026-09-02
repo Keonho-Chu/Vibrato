@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { OAuthCredentialSelectorError } from "@gajae-code/ai/core";
+import { OAuthCredentialSelectorError } from "@vib-rato/ai/core";
 import { AccountsCommandError, runAccountsCommand, toAccountsCommandError } from "../src/cli/accounts-cli";
 
 function captureStream(stream: NodeJS.WriteStream): { chunks: string[]; restore: () => void } {

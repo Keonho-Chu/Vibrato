@@ -91,7 +91,7 @@ describe("OpenAI-compatible request transforms", () => {
 		expect(capturedHeaders.get("x-keep")).toBe("yes");
 		expect(capturedHeaders.get("x-custom")).toBe("configured");
 		expect(capturedHeaders.get("x-remove")).toBeNull();
-		expect(capturedHeaders.get("user-agent")).toStartWith("Gajae-Code/");
+		expect(capturedHeaders.get("user-agent")).toStartWith("Vibrato/");
 		expect(capturedBody.model).toBe("upstream-wire-id");
 		expect(capturedBody.gateway).toBe("layofflabs");
 		expect(capturedBody.metadata).toEqual({ route: "smoke" });

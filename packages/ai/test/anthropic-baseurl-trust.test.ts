@@ -28,7 +28,7 @@ interface Resolved {
 const tempDirs: string[] = [];
 
 function projectDir(dotenv?: string): string {
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-anthropic-baseurl-trust-"));
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-anthropic-baseurl-trust-"));
 	tempDirs.push(dir);
 	if (dotenv !== undefined) fs.writeFileSync(path.join(dir, ".env"), dotenv);
 	return dir;

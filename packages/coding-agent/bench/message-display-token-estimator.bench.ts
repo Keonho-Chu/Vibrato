@@ -2,7 +2,7 @@
  * Benchmark the display-token heuristic over a stable small corpus.
  * Run: bun packages/coding-agent/bench/message-display-token-estimator.bench.ts
  */
-import { estimateMessageTokensHeuristic } from "@gajae-code/agent-core/compaction";
+import { estimateMessageTokensHeuristic } from "@vib-rato/agent-core/compaction";
 
 const corpus = [
 	{ role: "user" as const, content: [{ type: "text" as const, text: "Small prompt for estimator calibration." }] },

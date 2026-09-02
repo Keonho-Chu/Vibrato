@@ -5,7 +5,7 @@
  *
  * @example
  * ```ts
- * import { isEnoent, isFsError } from "@gajae-code/utils";
+ * import { isEnoent, isFsError } from "@vib-rato/utils";
  *
  * try {
  *     return await Bun.file(path).text();

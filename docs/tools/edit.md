@@ -42,7 +42,7 @@ Patch language inside `input`:
 
 Anchors come from `read`/`search` output. `read` formats lines as `LINEhh|TEXT` via `formatHashLine` / `formatHashLines` in `packages/coding-agent/src/hashline/hash.ts`; copy only the token left of `|` into op lines.
 
-Other edit modes exist (`replace`, `patch`, `vim`, `apply_patch`) and are selected outside the tool payload by `resolveEditMode()` in `packages/coding-agent/src/utils/edit-mode.ts`. With the default `edit.mode: auto`, the mode is routed by detected model family (GPT/Codex → `apply_patch`; Claude/DeepSeek/Qwen → `replace`; MiniMax/GLM/Kimi and unknown models → `hashline`). Precedence: `GJC_EDIT_VARIANT`/`PI_EDIT_VARIANT` env force, then a matching `edit.modelVariants` rule, then explicit non-`auto` `edit.mode`, then a model-catalog edit recommendation when the session exposes one, then the built-in family mapping, then the `hashline` fallback. Their schemas are different; this document covers hashline mode.
+Other edit modes exist (`replace`, `patch`, `vim`, `apply_patch`) and are selected outside the tool payload by `resolveEditMode()` in `packages/coding-agent/src/utils/edit-mode.ts`. With the default `edit.mode: auto`, the mode is routed by detected model family (GPT/Codex → `apply_patch`; Claude/DeepSeek/Qwen → `replace`; MiniMax/GLM/Kimi and unknown models → `hashline`). Precedence: `VIB_EDIT_VARIANT`/`PI_EDIT_VARIANT` env force, then a matching `edit.modelVariants` rule, then explicit non-`auto` `edit.mode`, then a model-catalog edit recommendation when the session exposes one, then the built-in family mapping, then the `hashline` fallback. Their schemas are different; this document covers hashline mode.
 
 ## Outputs
 - Single-shot tool result; hashline mode does not use a `resolve` preview/apply handshake.
@@ -162,7 +162,7 @@ export const done = true;
   - Preserves BOM and original line-ending style.
 - Subprocesses / native bindings
   - `createLspWritethrough()` may trigger formatter / diagnostics work through the LSP subsystem.
-  - `invalidateFsScanAfterWrite()` calls native `invalidateFsScanCache()` from `@gajae-code/natives`.
+  - `invalidateFsScanAfterWrite()` calls native `invalidateFsScanCache()` from `@vib-rato/natives`.
 - Session state
   - Reads and updates the per-session `FileReadCache` used for stale-anchor recovery.
   - Stores pending deferred-diagnostics abort controllers per path inside `EditTool`.

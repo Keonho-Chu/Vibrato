@@ -2,16 +2,16 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { AuthStorage, getBundledModel } from "@gajae-code/ai";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { localBackend } from "@gajae-code/coding-agent/memory-backend/local-backend";
-import { createAgentSession } from "@gajae-code/coding-agent/sdk";
+import { AuthStorage, getBundledModel } from "@vib-rato/ai";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { localBackend } from "@vib-rato/coding-agent/memory-backend/local-backend";
+import { createAgentSession } from "@vib-rato/coding-agent/sdk";
 import {
 	SessionContextTooLargeError,
 	SessionManager,
 	SessionManagerTestHooks,
-} from "@gajae-code/coding-agent/session/session-manager";
+} from "@vib-rato/coding-agent/session/session-manager";
 
 const createdDirs = new Set<string>();
 
@@ -33,7 +33,7 @@ describe("createAgentSession memory startup", () => {
 	});
 
 	test("defers memory startup until startup model profiles have settled", async () => {
-		const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-memory-startup-"));
+		const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-memory-startup-"));
 		createdDirs.add(cwd);
 		const modelRegistry = new ModelRegistry(authStorage);
 		const settings = Settings.isolated({ "memory.backend": "local" });
@@ -73,7 +73,7 @@ describe("createAgentSession memory startup", () => {
 	}, 30_000);
 
 	test("propagates typed session-context overflow during SDK startup", async () => {
-		const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-context-overflow-"));
+		const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-context-overflow-"));
 		createdDirs.add(cwd);
 		const modelRegistry = new ModelRegistry(authStorage);
 		const sessionManager = SessionManager.inMemory();

@@ -59,12 +59,12 @@ async function setup(
 		sendUserMessage: () => {},
 	} as never;
 
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-notif-tool-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-notif-tool-"));
 	tempDirs.push(cwd);
 	const settings =
 		options.settingsOverrides === undefined
 			? undefined
-			: isolatedNotificationSettings(path.join(cwd, ".gjc", "agent"), options.settingsOverrides);
+			: isolatedNotificationSettings(path.join(cwd, ".vib", "agent"), options.settingsOverrides);
 	const controller =
 		settings === undefined
 			? undefined
@@ -91,7 +91,7 @@ async function setup(
 	} as never;
 	await handlers.get("session_start")!({ type: "session_start" } as never, ctx);
 
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "endpoint file");
 	const { url, token } = readTestSdkEndpoint(endpointFile);
 	const frames: Frame[] = [];
@@ -317,13 +317,13 @@ test("live positioned tool events use the same negotiated capability gate as rep
 }, 30000);
 
 async function withNotifications(run: () => Promise<void>): Promise<void> {
-	const previous = process.env.GJC_NOTIFICATIONS;
-	process.env.GJC_NOTIFICATIONS = "1";
+	const previous = process.env.VIB_NOTIFICATIONS;
+	process.env.VIB_NOTIFICATIONS = "1";
 	try {
 		await run();
 	} finally {
-		if (previous === undefined) delete process.env.GJC_NOTIFICATIONS;
-		else process.env.GJC_NOTIFICATIONS = previous;
+		if (previous === undefined) delete process.env.VIB_NOTIFICATIONS;
+		else process.env.VIB_NOTIFICATIONS = previous;
 	}
 }
 

@@ -2,16 +2,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { Agent, type AgentTool } from "@gajae-code/agent-core";
-import { getBundledModel } from "@gajae-code/ai";
-import { createMockModel, type MockResponse } from "@gajae-code/ai/providers/mock";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { resetSettingsForTest, Settings } from "@gajae-code/coding-agent/config/settings";
-import { createAgentSession } from "@gajae-code/coding-agent/sdk";
-import { AgentSession } from "@gajae-code/coding-agent/session/agent-session";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { convertToLlm } from "@gajae-code/coding-agent/session/messages";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
+import { Agent, type AgentTool } from "@vib-rato/agent-core";
+import { getBundledModel } from "@vib-rato/ai";
+import { createMockModel, type MockResponse } from "@vib-rato/ai/providers/mock";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { resetSettingsForTest, Settings } from "@vib-rato/coding-agent/config/settings";
+import { createAgentSession } from "@vib-rato/coding-agent/sdk";
+import { AgentSession } from "@vib-rato/coding-agent/session/agent-session";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { convertToLlm } from "@vib-rato/coding-agent/session/messages";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
 import {
 	bindToolLineage,
 	classifyOwnedCompletion,
@@ -21,13 +21,13 @@ import {
 	registerTerminalTurnScope,
 	resetTerminalAbortRegistriesForTests,
 	type TurnRegistrationKey,
-} from "@gajae-code/coding-agent/session/terminal-abort";
-import type { ToolSession } from "@gajae-code/coding-agent/tools";
-import { BashTool } from "@gajae-code/coding-agent/tools/bash";
-import { JobTool } from "@gajae-code/coding-agent/tools/job";
-import { MonitorTool } from "@gajae-code/coding-agent/tools/monitor";
-import { SubagentTool } from "@gajae-code/coding-agent/tools/subagent";
-import { Snowflake } from "@gajae-code/utils";
+} from "@vib-rato/coding-agent/session/terminal-abort";
+import type { ToolSession } from "@vib-rato/coding-agent/tools";
+import { BashTool } from "@vib-rato/coding-agent/tools/bash";
+import { JobTool } from "@vib-rato/coding-agent/tools/job";
+import { MonitorTool } from "@vib-rato/coding-agent/tools/monitor";
+import { SubagentTool } from "@vib-rato/coding-agent/tools/subagent";
+import { Snowflake } from "@vib-rato/utils";
 import { AsyncJobManager } from "../src/async";
 
 const TEST_ABORT_GRACE_MS = 50;

@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { VERSION } from "@gajae-code/utils";
+import { VERSION } from "@vib-rato/utils";
 import {
 	getDisplayChangelogEntries,
 	getInstalledVersionChangelogEntry,
@@ -12,7 +12,7 @@ import {
 const tempDirs: string[] = [];
 
 async function makeTempDir(): Promise<string> {
-	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-changelog-test-"));
+	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-changelog-test-"));
 	tempDirs.push(dir);
 	return dir;
 }
@@ -88,7 +88,7 @@ describe("getDisplayChangelogEntries", () => {
 		expect(`${top.major}.${top.minor}.${top.patch}`).toBe(VERSION);
 	});
 
-	it("ignores cwd and GJC_PACKAGE_DIR / PI_PACKAGE_DIR overrides for the displayed changelog", async () => {
+	it("ignores cwd and VIB_PACKAGE_DIR / PI_PACKAGE_DIR overrides for the displayed changelog", async () => {
 		const tempDir = await makeTempDir();
 		const decoyContent = [
 			"# Changelog",
@@ -103,12 +103,12 @@ describe("getDisplayChangelogEntries", () => {
 		await fs.writeFile(path.join(tempDir, "CHANGELOG.md"), decoyContent);
 
 		const originalCwd = process.cwd();
-		const originalGjcPackageDir = process.env.GJC_PACKAGE_DIR;
+		const originalVibPackageDir = process.env.VIB_PACKAGE_DIR;
 		const originalPiPackageDir = process.env.PI_PACKAGE_DIR;
 
 		try {
 			process.chdir(tempDir);
-			process.env.GJC_PACKAGE_DIR = tempDir;
+			process.env.VIB_PACKAGE_DIR = tempDir;
 			process.env.PI_PACKAGE_DIR = tempDir;
 
 			const entries = getDisplayChangelogEntries();
@@ -120,8 +120,8 @@ describe("getDisplayChangelogEntries", () => {
 			expect(top.content).not.toContain("bogus stale entry from cwd");
 		} finally {
 			process.chdir(originalCwd);
-			if (originalGjcPackageDir === undefined) delete process.env.GJC_PACKAGE_DIR;
-			else process.env.GJC_PACKAGE_DIR = originalGjcPackageDir;
+			if (originalVibPackageDir === undefined) delete process.env.VIB_PACKAGE_DIR;
+			else process.env.VIB_PACKAGE_DIR = originalVibPackageDir;
 			if (originalPiPackageDir === undefined) delete process.env.PI_PACKAGE_DIR;
 			else process.env.PI_PACKAGE_DIR = originalPiPackageDir;
 		}

@@ -2,8 +2,8 @@ import { createHash, generateKeyPairSync, randomUUID, sign, verify } from "node:
 import * as nodeFs from "node:fs";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { getAgentDir, isKnownSinkPeerClosedError, logger } from "@gajae-code/utils";
-import { normalizePathForComparison, VERSION } from "@gajae-code/utils/dirs";
+import { getAgentDir, isKnownSinkPeerClosedError, logger } from "@vib-rato/utils";
+import { normalizePathForComparison, VERSION } from "@vib-rato/utils/dirs";
 import { withFileLock } from "../config/file-lock";
 import {
 	COORDINATOR_MCP_PROTOCOL_VERSION,
@@ -11,13 +11,6 @@ import {
 	COORDINATOR_MCP_TOOL_NAMES,
 	type CoordinatorToolName,
 } from "../coordinator/contract";
-import { SessionStateLockUnavailableError, withSessionStateFileLock } from "../gjc-runtime/session-state-lock";
-import {
-	canonicalCoordinatorSidecarPayload,
-	classifyRuntimeToolActivity,
-	publicRuntimeToolActivity,
-	terminallySettledRuntimeToolActivity,
-} from "../gjc-runtime/session-state-sidecar";
 import { listMcpDelegateHostContexts } from "../hooks/mcp-delegate-host-context";
 import type { WorkflowGate, WorkflowGateQueryRecord } from "../modes/shared/agent-wire/workflow-gate-types";
 import type { BrokerDiscovery } from "../sdk/broker/discovery";
@@ -34,6 +27,13 @@ import {
 	SessionActivationError,
 } from "../sdk/session-activation";
 import { SessionListTraversalError, sessionListPageFromResponse, traverseSessionList } from "../sdk/session-list";
+import { SessionStateLockUnavailableError, withSessionStateFileLock } from "../vib-runtime/session-state-lock";
+import {
+	canonicalCoordinatorSidecarPayload,
+	classifyRuntimeToolActivity,
+	publicRuntimeToolActivity,
+	terminallySettledRuntimeToolActivity,
+} from "../vib-runtime/session-state-sidecar";
 import {
 	ackCodexWakeEvent,
 	bindDelegateCodexHandoff,
@@ -527,25 +527,25 @@ function toolSchema(name: CoordinatorToolName): {
 	const allowMutation = { type: "boolean", description: "Required and must be true for mutating tools." };
 	const cwd = {
 		type: "string",
-		description: "Canonicalized GJC worktree or project directory inside configured roots.",
+		description: "Canonicalized Vibrato worktree or project directory inside configured roots.",
 	};
-	const sessionId = { type: "string", description: "GJC coordinator bridge session id." };
+	const sessionId = { type: "string", description: "Vibrato coordinator bridge session id." };
 	const pathField = { type: "string", description: "Artifact path inside configured safe roots." };
 	const mpreset = {
 		type: "string",
 		description:
-			"Optional GJC model profile (`gjc --mpreset <profile>`). Unknown names are rejected with the available-profile listing.",
+			"Optional Vibrato model profile (`vib --mpreset <profile>`). Unknown names are rejected with the available-profile listing.",
 	};
 	const modelPin = {
 		type: "string",
 		description:
-			"Optional explicit model pin (`gjc --model <provider/model>`, e.g. cursor/claude-fable-5-xhigh). Unknown ids are rejected with the same not-found error as the CLI; when both model and mpreset are given, the explicit model wins exactly like `gjc --mpreset <p> --model <m>`.",
+			"Optional explicit model pin (`vib --model <provider/model>`, e.g. cursor/claude-fable-5-xhigh). Unknown ids are rejected with the same not-found error as the CLI; when both model and mpreset are given, the explicit model wins exactly like `vib --mpreset <p> --model <m>`.",
 	};
 
 	const worktree = {
 		type: "string",
 		description:
-			"Name this session's git worktree and branch instead of the configured default, so concurrent sessions in one repository get isolated checkouts. Requires GJC_COORDINATOR_MCP_SESSION_COMMAND to select worktree mode. Without it every session in a repository shares one worktree derived from the repository's current branch.",
+			"Name this session's git worktree and branch instead of the configured default, so concurrent sessions in one repository get isolated checkouts. Requires VIB_COORDINATOR_MCP_SESSION_COMMAND to select worktree mode. Without it every session in a repository shares one worktree derived from the repository's current branch.",
 	};
 	const common = { type: "object", properties: {} as Record<string, unknown> };
 	const idempotencyKey = {
@@ -553,11 +553,11 @@ function toolSchema(name: CoordinatorToolName): {
 		description: "Caller-provided idempotency key for durable coordinator mutation replay.",
 	};
 
-	if (name === "gjc_coordinator_register_session") {
+	if (name === "vib_coordinator_register_session") {
 		return {
 			name,
 			description:
-				"Re-register a broker-indexed GJC session with an established sidecar authority; use start_session for a new runtime. Tmux identifiers are advisory process metadata only.",
+				"Re-register a broker-indexed Vibrato session with an established sidecar authority; use start_session for a new runtime. Tmux identifiers are advisory process metadata only.",
 			inputSchema: {
 				type: "object",
 				properties: {
@@ -576,11 +576,11 @@ function toolSchema(name: CoordinatorToolName): {
 			},
 		};
 	}
-	if (name === "gjc_coordinator_start_session") {
+	if (name === "vib_coordinator_start_session") {
 		return {
 			name,
 			description:
-				"Start a broker-managed GJC session through canonical SDK lifecycle control. Set prepare_existing_thread to hold the session at prepared (endpoint-addressable, readiness withheld) so an existing chat thread can be bound before activation.",
+				"Start a broker-managed Vibrato session through canonical SDK lifecycle control. Set prepare_existing_thread to hold the session at prepared (endpoint-addressable, readiness withheld) so an existing chat thread can be bound before activation.",
 			inputSchema: {
 				type: "object",
 				properties: {
@@ -589,7 +589,7 @@ function toolSchema(name: CoordinatorToolName): {
 					prepare_existing_thread: {
 						type: "boolean",
 						description:
-							"Create the session prepared instead of ready: no readiness is published and no initial prompt is accepted until gjc_coordinator_activate_session proves activation.",
+							"Create the session prepared instead of ready: no readiness is published and no initial prompt is accepted until vib_coordinator_activate_session proves activation.",
 					},
 					mpreset,
 					model: modelPin,
@@ -601,7 +601,7 @@ function toolSchema(name: CoordinatorToolName): {
 			},
 		};
 	}
-	if (name === "gjc_coordinator_retire_start_session") {
+	if (name === "vib_coordinator_retire_start_session") {
 		return {
 			name,
 			description:
@@ -641,7 +641,7 @@ function toolSchema(name: CoordinatorToolName): {
 			},
 		};
 	}
-	if (name === "gjc_coordinator_activate_session") {
+	if (name === "vib_coordinator_activate_session") {
 		return {
 			name,
 			description:
@@ -657,7 +657,7 @@ function toolSchema(name: CoordinatorToolName): {
 			},
 		};
 	}
-	if (name === "gjc_coordinator_stop_session") {
+	if (name === "vib_coordinator_stop_session") {
 		return {
 			name,
 			description:
@@ -668,7 +668,7 @@ function toolSchema(name: CoordinatorToolName): {
 					session_id: sessionId,
 					force: {
 						type: "boolean",
-						description: "Close a non-ephemeral session; requires the GJC_COORDINATOR_MCP_FORCE_STOP capability.",
+						description: "Close a non-ephemeral session; requires the VIB_COORDINATOR_MCP_FORCE_STOP capability.",
 					},
 					reason: { type: "string", description: "Optional audit reason recorded on the session.reaped event." },
 					allow_mutation: allowMutation,
@@ -677,7 +677,7 @@ function toolSchema(name: CoordinatorToolName): {
 			},
 		};
 	}
-	if (name === "gjc_coordinator_send_prompt") {
+	if (name === "vib_coordinator_send_prompt") {
 		return {
 			name,
 			description:
@@ -696,7 +696,7 @@ function toolSchema(name: CoordinatorToolName): {
 			},
 		};
 	}
-	if (name === "gjc_coordinator_read_turn") {
+	if (name === "vib_coordinator_read_turn") {
 		return {
 			name,
 			description: "Read authoritative durable turn state without terminal-pane inspection.",
@@ -707,7 +707,7 @@ function toolSchema(name: CoordinatorToolName): {
 			},
 		};
 	}
-	if (name === "gjc_coordinator_await_turn") {
+	if (name === "vib_coordinator_await_turn") {
 		return {
 			name,
 			description: "Poll a durable turn for a bounded time and return the same shape as read_turn.",
@@ -729,7 +729,7 @@ function toolSchema(name: CoordinatorToolName): {
 			},
 		};
 	}
-	if (name === "gjc_coordinator_submit_question_answer") {
+	if (name === "vib_coordinator_submit_question_answer") {
 		return {
 			name,
 			description: "Submit a bounded structured answer by question id.",
@@ -756,7 +756,7 @@ function toolSchema(name: CoordinatorToolName): {
 			},
 		};
 	}
-	if (name === "gjc_coordinator_report_status") {
+	if (name === "vib_coordinator_report_status") {
 		return {
 			name,
 			description: "Write a bounded coordinator coordination status report.",
@@ -777,7 +777,7 @@ function toolSchema(name: CoordinatorToolName): {
 			},
 		};
 	}
-	if (name === "gjc_coordinator_read_artifact") {
+	if (name === "vib_coordinator_read_artifact") {
 		return {
 			name,
 			description: coordinatorArtifactCapability().available
@@ -786,21 +786,21 @@ function toolSchema(name: CoordinatorToolName): {
 			inputSchema: { type: "object", properties: { path: pathField }, required: ["path"] },
 		};
 	}
-	if (name === "gjc_coordinator_read_status") {
+	if (name === "vib_coordinator_read_status") {
 		return {
 			name,
-			description: "Read selected broker-indexed GJC session status from SDK discovery.",
+			description: "Read selected broker-indexed Vibrato session status from SDK discovery.",
 			inputSchema: { type: "object", properties: { session_id: sessionId } },
 		};
 	}
-	if (name === "gjc_coordinator_read_tail") {
+	if (name === "vib_coordinator_read_tail") {
 		return {
 			name,
 			description: "Read bounded last-assistant output through the session SDK, never terminal scrollback.",
 			inputSchema: { type: "object", properties: { session_id: sessionId, lines: { type: "number" } } },
 		};
 	}
-	if (name === "gjc_coordinator_list_questions") {
+	if (name === "vib_coordinator_list_questions") {
 		return {
 			name,
 			description: "List bounded structured questions for coordinator coordination.",
@@ -812,10 +812,10 @@ function toolSchema(name: CoordinatorToolName): {
 			},
 		};
 	}
-	if (name === "gjc_coordinator_list_artifacts") {
+	if (name === "vib_coordinator_list_artifacts") {
 		return { name, description: "List known safe artifact roots for coordinator coordination.", inputSchema: common };
 	}
-	if (name === "gjc_coordinator_read_coordination_status") {
+	if (name === "vib_coordinator_read_coordination_status") {
 		return {
 			name,
 			description:
@@ -826,7 +826,7 @@ function toolSchema(name: CoordinatorToolName): {
 			},
 		};
 	}
-	if (name === "gjc_coordinator_watch_events") {
+	if (name === "vib_coordinator_watch_events") {
 		return {
 			name,
 			description: "Long-poll the durable coordinator event journal for new bounded event records.",
@@ -845,7 +845,7 @@ function toolSchema(name: CoordinatorToolName): {
 			},
 		};
 	}
-	if (name === "gjc_coordinator_register_codex_handoff") {
+	if (name === "vib_coordinator_register_codex_handoff") {
 		return {
 			name,
 			description: "Register a Codex app-server resume handoff using only unix or loopback TCP endpoints.",
@@ -870,14 +870,14 @@ function toolSchema(name: CoordinatorToolName): {
 			},
 		};
 	}
-	if (name === "gjc_coordinator_read_codex_handoff") {
+	if (name === "vib_coordinator_read_codex_handoff") {
 		return {
 			name,
 			description: "Read a Codex app-server resume handoff and durable wake events.",
 			inputSchema: { type: "object", properties: { session_id: sessionId }, required: ["session_id"] },
 		};
 	}
-	if (name === "gjc_coordinator_ack_codex_handoff") {
+	if (name === "vib_coordinator_ack_codex_handoff") {
 		return {
 			name,
 			description: "Acknowledge a durable Codex app-server resume wake event.",
@@ -904,7 +904,7 @@ function toolSchema(name: CoordinatorToolName): {
 					cwd,
 					task: {
 						type: "string",
-						description: "Delegated task or objective to run through the selected GJC workflow.",
+						description: "Delegated task or objective to run through the selected Vibrato workflow.",
 					},
 					prompt: { type: "string", description: "Alias for task; accepted when task is absent." },
 					allow_mutation: allowMutation,
@@ -912,12 +912,12 @@ function toolSchema(name: CoordinatorToolName): {
 					session_id: {
 						type: "string",
 						description:
-							"Optional existing GJC coordinator bridge session id to reuse; omitted starts a fresh session.",
+							"Optional existing Vibrato coordinator bridge session id to reuse; omitted starts a fresh session.",
 					},
 					codex_host_session_id: {
 						type: "string",
 						description:
-							"Optional Codex resume-bridge correlation: the session_id previously passed to gjc_coordinator_register_codex_handoff. When set, the new delegate session auto-binds to that registration's Codex thread; ambient host-context inference is skipped.",
+							"Optional Codex resume-bridge correlation: the session_id previously passed to vib_coordinator_register_codex_handoff. When set, the new delegate session auto-binds to that registration's Codex thread; ambient host-context inference is skipped.",
 					},
 					queue: {
 						type: "boolean",
@@ -934,7 +934,7 @@ function toolSchema(name: CoordinatorToolName): {
 					timeout_ms: {
 						type: "number",
 						description:
-							"Bounded await timeout in milliseconds, capped at 30 minutes like gjc_coordinator_await_turn.",
+							"Bounded await timeout in milliseconds, capped at 30 minutes like vib_coordinator_await_turn.",
 					},
 					poll_interval_ms: { type: "number", description: "Bounded await polling interval." },
 				},
@@ -942,29 +942,29 @@ function toolSchema(name: CoordinatorToolName): {
 			},
 		};
 	}
-	if (name === "gjc_coordinator_list_sessions") {
+	if (name === "vib_coordinator_list_sessions") {
 		return {
 			name,
 			description:
-				"Enumerate GJC sessions discovered on the broker under the allowed roots. Each entry reports " +
+				"Enumerate Vibrato sessions discovered on the broker under the allowed roots. Each entry reports " +
 				"`registered`: only sessions with `registered: true` can be used with the other coordinator " +
 				"tools. Calling read_status, read_tail, or send_prompt on an entry with `registered: false` " +
 				"returns not_found, and stop_session reports unknown_session; register it with " +
-				"gjc_coordinator_register_session first. The marker is a hint at listing time and can change " +
+				"vib_coordinator_register_session first. The marker is a hint at listing time and can change " +
 				"between listing and use.",
 			inputSchema: common,
 		};
 	}
-	return { name, description: "List known scoped GJC coordinator bridge sessions.", inputSchema: common };
+	return { name, description: "List known scoped Vibrato coordinator bridge sessions.", inputSchema: common };
 }
 
 type DelegateWorkflow = "plan" | "execute";
 
 function workflowForDelegateTool(name: string): DelegateWorkflow | null {
 	switch (name) {
-		case "gjc_delegate_plan":
+		case "vib_delegate_plan":
 			return "plan";
-		case "gjc_delegate_execute":
+		case "vib_delegate_execute":
 			return "execute";
 		default:
 			return null;
@@ -983,9 +983,9 @@ function workflowSkill(workflow: DelegateWorkflow): "ralplan" | "ultragoal" {
 function delegateToolDescription(workflow: DelegateWorkflow): string {
 	switch (workflow) {
 		case "plan":
-			return "Delegate consensus planning to GJC: start a session and run /skill:ralplan to completion, returning durable turn status and artifact references.";
+			return "Delegate consensus planning to Vibrato: start a session and run /skill:ralplan to completion, returning durable turn status and artifact references.";
 		case "execute":
-			return "Delegate execution to GJC: start a session and run /skill:ultragoal to completion, returning durable turn status and artifact references.";
+			return "Delegate execution to Vibrato: start a session and run /skill:ultragoal to completion, returning durable turn status and artifact references.";
 	}
 }
 
@@ -1011,7 +1011,7 @@ function workflowPrompt(
 		"Task:",
 		task,
 		"",
-		"Return durable status and artifact references through GJC runtime/coordinator state. Do not expose host-facing tmux controls.",
+		"Return durable status and artifact references through Vibrato runtime/coordinator state. Do not expose host-facing tmux controls.",
 	].join("\n");
 }
 
@@ -1054,11 +1054,11 @@ function normalizeSession(session: Record<string, unknown>): Record<string, unkn
 	return normalized;
 }
 
-/** Whether the configured selector puts sessions in a GJC-managed worktree. */
+/** Whether the configured selector puts sessions in a Vibrato-managed worktree. */
 function coordinatorWorktreeEnabled(sessionCommand: string | null): boolean {
 	if (!sessionCommand) return false;
 	const [executable, ...args] = sessionCommand.trim().split(/\s+/);
-	return executable === "gjc" && args[0] === "--worktree";
+	return executable === "vib" && args[0] === "--worktree";
 }
 
 type CoordinatorWorktreeResolution = { ok: true; name?: string } | { ok: false; reason: string };
@@ -1066,7 +1066,7 @@ type CoordinatorWorktreeResolution = { ok: true; name?: string } | { ok: false; 
 /**
  * Resolves the worktree name for one session creation.
  *
- * The configured selector stays the capability gate: it decides whether GJC manages
+ * The configured selector stays the capability gate: it decides whether Vibrato manages
  * a worktree at all, so a request cannot turn worktree mode on for a coordinator
  * deliberately configured to run in place. Within worktree mode the request names
  * this session's worktree, which is what lets concurrent sessions in one repository
@@ -1115,10 +1115,10 @@ function coordinatorLifecycleTarget(
 ): Record<string, unknown> {
 	if (!sessionCommand) return { path: cwd };
 	const [executable, ...args] = sessionCommand.trim().split(/\s+/);
-	if (executable !== "gjc")
+	if (executable !== "vib")
 		throw new SdkClientError(
 			"invalid_input",
-			"GJC_COORDINATOR_MCP_SESSION_COMMAND must be exactly gjc with an optional --worktree [name] selector.",
+			"VIB_COORDINATOR_MCP_SESSION_COMMAND must be exactly vib with an optional --worktree [name] selector.",
 		);
 	if (args.length === 0) return { path: cwd };
 	if (
@@ -1128,7 +1128,7 @@ function coordinatorLifecycleTarget(
 	)
 		throw new SdkClientError(
 			"invalid_input",
-			"GJC_COORDINATOR_MCP_SESSION_COMMAND supports only gjc or gjc --worktree [name] under SDK lifecycle control.",
+			"VIB_COORDINATOR_MCP_SESSION_COMMAND supports only vib or vib --worktree [name] under SDK lifecycle control.",
 		);
 	const name = requestedWorktree ?? args[1];
 	return {
@@ -1409,7 +1409,7 @@ function boundedCodexHandoffResponse(response: Record<string, unknown>): Record<
 }
 
 function boundedToolResponse(tool: string, response: Record<string, unknown>): Record<string, unknown> {
-	if (tool === "gjc_coordinator_register_codex_handoff") return boundedCodexHandoffResponse(response);
+	if (tool === "vib_coordinator_register_codex_handoff") return boundedCodexHandoffResponse(response);
 	return boundedPublicResponse(response);
 }
 
@@ -2163,8 +2163,8 @@ async function autoBindDelegateCodexHandoff(
 				work_unit: workUnit,
 				source,
 				origin: {
-					gjc_session_id: workUnit,
-					gjc_turn_id: delegationId,
+					vib_session_id: workUnit,
+					vib_turn_id: delegationId,
 					codex_thread_id: source.thread_id,
 					codex_turn_id: null,
 					codex_host_session_id: explicitHostWorkUnit,
@@ -2220,8 +2220,8 @@ async function autoBindDelegateCodexHandoff(
 			work_unit: workUnit,
 			source,
 			origin: {
-				gjc_session_id: workUnit,
-				gjc_turn_id: delegationId,
+				vib_session_id: workUnit,
+				vib_turn_id: delegationId,
 				codex_thread_id: source.thread_id,
 				codex_turn_id: context.turn_id,
 				codex_host_session_id: context.session_id,
@@ -2953,7 +2953,7 @@ function turnAwaitingRuntimeAckExpired(turn: TurnRecord, nowMs: number, ackTimeo
 
 async function markTurnFailedForUnacknowledgedDelivery(turn: TurnRecord, ackTimeoutMs: number): Promise<TurnRecord> {
 	const timestamp = new Date().toISOString();
-	const message = `Tmux key delivery succeeded, but the GJC runtime did not acknowledge the prompt or emit turn_start within ${ackTimeoutMs}ms. The turn never started; stop waiting and inspect/retry the coordinator session.`;
+	const message = `Tmux key delivery succeeded, but the Vibrato runtime did not acknowledge the prompt or emit turn_start within ${ackTimeoutMs}ms. The turn never started; stop waiting and inspect/retry the coordinator session.`;
 	const failed: TurnRecord = {
 		...turn,
 		status: "failed",
@@ -3239,7 +3239,7 @@ export async function readCoordinatorArtifact(
 export function createCoordinatorMcpServer(options: CoordinatorMcpServerOptions = {}): CoordinatorMcpServer {
 	const env = options.env ?? process.env;
 	const config = buildCoordinatorMcpConfig(env);
-	const promptAckTimeoutMs = boundedRuntimePromptAckTimeoutMs(env.GJC_COORDINATOR_MCP_PROMPT_ACK_TIMEOUT_MS);
+	const promptAckTimeoutMs = boundedRuntimePromptAckTimeoutMs(env.VIB_COORDINATOR_MCP_PROMPT_ACK_TIMEOUT_MS);
 	const services = options.services ?? {};
 	const routerAgentDir = services.getAgentDir?.() ?? getAgentDir();
 	const router = new SessionRouter({ agentDir: routerAgentDir, deps: services.routerDeps });
@@ -3275,7 +3275,7 @@ export function createCoordinatorMcpServer(options: CoordinatorMcpServerOptions 
 		eventWebhookConfig = parseEventWebhookConfig(options.env);
 	} catch (error) {
 		// Fail closed: an invalid webhook config disables delivery rather than
-		// crashing the whole coordinator bridge. `gjc coordinator doctor`
+		// crashing the whole coordinator bridge. `vib coordinator doctor`
 		// surfaces the same error as a failing check.
 		eventWebhookConfig = null;
 		const reason = error instanceof Error ? error.message : "coordinator_event_webhook_invalid";
@@ -5535,7 +5535,7 @@ export function createCoordinatorMcpServer(options: CoordinatorMcpServerOptions 
 	}
 	/**
 	 * Session ids that have a durable coordinator projection usable by the
-	 * session-scoped tools, i.e. that `gjc_coordinator_read_status` can resolve.
+	 * session-scoped tools, i.e. that `vib_coordinator_read_status` can resolve.
 	 * One directory scan answers every listed broker row, so a listing over
 	 * hundreds of sessions costs one readdir plus one read per projected row
 	 * instead of one read per broker row; unregistered broker sessions are free.
@@ -5916,7 +5916,7 @@ export function createCoordinatorMcpServer(options: CoordinatorMcpServerOptions 
 					const now = new Date().toISOString();
 					transaction.requests.operations[deletionId] = {
 						operation_id: deletionId,
-						tool: "gjc_coordinator_stop_session",
+						tool: "vib_coordinator_stop_session",
 						key_digest: deletionKey,
 						request_digest: deletionKey,
 						local_id: id,
@@ -7310,7 +7310,7 @@ export function createCoordinatorMcpServer(options: CoordinatorMcpServerOptions 
 
 	async function callTool(name: string, args: Record<string, unknown> = {}): Promise<Record<string, unknown>> {
 		try {
-			if (name === "gjc_coordinator_list_sessions") {
+			if (name === "vib_coordinator_list_sessions") {
 				// listSessions() enumerates the broker across allowed roots, but every other
 				// coordinator tool resolves a session through its durable projection. Without
 				// an explicit marker a controller cannot tell the two apart and burns a
@@ -7326,7 +7326,7 @@ export function createCoordinatorMcpServer(options: CoordinatorMcpServerOptions 
 				}));
 				return { ok: true, sessions };
 			}
-			if (name === "gjc_coordinator_register_session") {
+			if (name === "vib_coordinator_register_session") {
 				requireCoordinatorMutation(config, "sessions", args);
 				const idempotencyKey = requiredIdempotencyKey(args);
 				const sessionId = safeExternalId("session", args.session_id);
@@ -7439,7 +7439,7 @@ export function createCoordinatorMcpServer(options: CoordinatorMcpServerOptions 
 					isUnobservedCompensation,
 				);
 			}
-			if (name === "gjc_coordinator_register_codex_handoff") {
+			if (name === "vib_coordinator_register_codex_handoff") {
 				requireCoordinatorMutation(config, "sessions", args);
 				const idempotencyKey = requiredIdempotencyKey(args);
 				const sessionId = safeExternalId("session", args.session_id);
@@ -7496,7 +7496,7 @@ export function createCoordinatorMcpServer(options: CoordinatorMcpServerOptions 
 					},
 				);
 			}
-			if (name === "gjc_coordinator_read_codex_handoff") {
+			if (name === "vib_coordinator_read_codex_handoff") {
 				const sessionId = safeExternalId("session", args.session_id);
 				try {
 					await assertCanonicalHandoffAuthority(sessionId);
@@ -7532,7 +7532,7 @@ export function createCoordinatorMcpServer(options: CoordinatorMcpServerOptions 
 					pending_wake_events: pendingWakeEvents,
 				};
 			}
-			if (name === "gjc_coordinator_ack_codex_handoff") {
+			if (name === "vib_coordinator_ack_codex_handoff") {
 				requireCoordinatorMutation(config, "sessions", args);
 				const idempotencyKey = requiredIdempotencyKey(args);
 				const sessionId = safeExternalId("session", args.session_id);
@@ -7571,7 +7571,7 @@ export function createCoordinatorMcpServer(options: CoordinatorMcpServerOptions 
 					},
 				);
 			}
-			if (name === "gjc_coordinator_read_status") {
+			if (name === "vib_coordinator_read_status") {
 				await recoverCanonicalNamespaceProjections();
 				const sessionId = args.session_id;
 				if (sessionId) {
@@ -7626,7 +7626,7 @@ export function createCoordinatorMcpServer(options: CoordinatorMcpServerOptions 
 					return sdkError(error);
 				}
 			}
-			if (name === "gjc_coordinator_read_tail") {
+			if (name === "vib_coordinator_read_tail") {
 				const sessionId = safeExternalId("session", args.session_id);
 				const session = asRecord(await readJsonFile(sessionFile(sessionId)));
 				if (!session)
@@ -7646,11 +7646,11 @@ export function createCoordinatorMcpServer(options: CoordinatorMcpServerOptions 
 					return sdkError(error);
 				}
 			}
-			if (name === "gjc_coordinator_list_questions") return await listQuestions(args);
-			if (name === "gjc_coordinator_list_artifacts") return { ok: true, roots: config.allowedRoots };
-			if (name === "gjc_coordinator_read_artifact")
+			if (name === "vib_coordinator_list_questions") return await listQuestions(args);
+			if (name === "vib_coordinator_list_artifacts") return { ok: true, roots: config.allowedRoots };
+			if (name === "vib_coordinator_read_artifact")
 				return await readCoordinatorArtifact(config, { path: args.path });
-			if (name === "gjc_coordinator_read_coordination_status") {
+			if (name === "vib_coordinator_read_coordination_status") {
 				const scopedSessionId = args.session_id == null ? null : safeExternalId("session", args.session_id);
 				if (scopedSessionId) await ensureQuestionTransaction(scopedSessionId);
 				await recoverCanonicalNamespaceProjections(scopedSessionId);
@@ -7793,7 +7793,7 @@ export function createCoordinatorMcpServer(options: CoordinatorMcpServerOptions 
 					recent_events: eventSummaries(scopedJournalEvents.slice(-10)),
 				}) as Record<string, unknown>;
 			}
-			if (name === "gjc_coordinator_watch_events") {
+			if (name === "vib_coordinator_watch_events") {
 				const timeoutMs = boundedEventWatchTimeoutMs(args.timeout_ms);
 				const absoluteDeadline = Date.now() + timeoutMs;
 				const limit = boundedEventLimit(args.limit);
@@ -8380,12 +8380,12 @@ export function createCoordinatorMcpServer(options: CoordinatorMcpServerOptions 
 					response => creationRemoteStarted || isRouterRequestAmbiguous(response),
 				);
 			}
-			if (name === "gjc_coordinator_stop_session") {
+			if (name === "vib_coordinator_stop_session") {
 				requireCoordinatorMutation(config, "sessions", args);
 				const sessionId = safeExternalId("session", args.session_id);
 				const forceRequested = args.force === true;
 				// force is a capability distinct from allow_mutation: closing a non-ephemeral
-				// user-registered session requires GJC_COORDINATOR_MCP_FORCE_STOP to be enabled.
+				// user-registered session requires VIB_COORDINATOR_MCP_FORCE_STOP to be enabled.
 				if (forceRequested && !config.forceStopEnabled) {
 					return { ok: false, reason: "force_not_authorized", session_id: sessionId, closed: false };
 				}
@@ -8402,7 +8402,7 @@ export function createCoordinatorMcpServer(options: CoordinatorMcpServerOptions 
 					...(result.detail ? { detail: result.detail } : {}),
 				};
 			}
-			if (name === "gjc_coordinator_start_session") {
+			if (name === "vib_coordinator_start_session") {
 				requireCoordinatorMutation(config, "sessions", args);
 				const suppliedPrompt = Object.hasOwn(args, "prompt");
 				if (suppliedPrompt && (typeof args.prompt !== "string" || args.prompt.trim().length === 0))
@@ -8688,7 +8688,7 @@ export function createCoordinatorMcpServer(options: CoordinatorMcpServerOptions 
 						isUnobservedCompensation(response) || creationRemoteStarted || isRouterRequestAmbiguous(response),
 				);
 			}
-			if (name === "gjc_coordinator_retire_start_session") {
+			if (name === "vib_coordinator_retire_start_session") {
 				requireCoordinatorMutation(config, "sessions", args);
 				const retirementKey = requiredIdempotencyKey(args);
 				const creationKey = requiredString(args.creation_idempotency_key, "creation_idempotency_key");
@@ -8735,7 +8735,7 @@ export function createCoordinatorMcpServer(options: CoordinatorMcpServerOptions 
 					typeof endpointMtimeMs !== "number" ||
 					!Number.isFinite(endpointMtimeMs) ||
 					endpointMtimeMs <= 0 ||
-					path.resolve(stateRoot) !== path.join(cwd, ".gjc", "state")
+					path.resolve(stateRoot) !== path.join(cwd, ".vib", "state")
 				)
 					return {
 						ok: false,
@@ -8759,7 +8759,7 @@ export function createCoordinatorMcpServer(options: CoordinatorMcpServerOptions 
 					lifecycle_request_id: lifecycleRequestId,
 					remote_create_key: remoteCreateKey,
 				};
-				const creationKeyDigest = creationDigests("gjc_coordinator_start_session", creationKey, {}).keyDigest;
+				const creationKeyDigest = creationDigests("vib_coordinator_start_session", creationKey, {}).keyDigest;
 				const brokerRequestKey = `coordinator-retire:${creationKeyDigest}:${createHash("sha256")
 					.update(JSON.stringify(proof))
 					.digest("hex")}`;
@@ -8801,7 +8801,7 @@ export function createCoordinatorMcpServer(options: CoordinatorMcpServerOptions 
 								const original = originalFileState.value;
 								if (
 									original.schema_version !== 1 ||
-									original.tool !== "gjc_coordinator_start_session" ||
+									original.tool !== "vib_coordinator_start_session" ||
 									original.key_digest !== createHash("sha256").update(creationKey).digest("hex") ||
 									original.request_digest !== requestDigest
 								)
@@ -8967,7 +8967,7 @@ export function createCoordinatorMcpServer(options: CoordinatorMcpServerOptions 
 						),
 				);
 			}
-			if (name === "gjc_coordinator_activate_session") {
+			if (name === "vib_coordinator_activate_session") {
 				requireCoordinatorMutation(config, "sessions", args);
 				const idempotencyKey = requiredIdempotencyKey(args);
 				const sessionId = safeExternalId("session", args.session_id);
@@ -9072,7 +9072,7 @@ export function createCoordinatorMcpServer(options: CoordinatorMcpServerOptions 
 					response => isUnknownActivationOutcome(response) || isRouterRequestAmbiguous(response),
 				);
 			}
-			if (name === "gjc_coordinator_send_prompt") {
+			if (name === "vib_coordinator_send_prompt") {
 				requireCoordinatorMutation(config, "sessions", args);
 				if (typeof args.prompt !== "string" || args.prompt.trim().length === 0)
 					return { ok: false, error: { code: "invalid_input", message: "Prompt must not be empty." } };
@@ -9189,13 +9189,13 @@ export function createCoordinatorMcpServer(options: CoordinatorMcpServerOptions 
 					true,
 				);
 			}
-			if (name === "gjc_coordinator_read_turn") {
+			if (name === "vib_coordinator_read_turn") {
 				return await readTurnPayload(args.turn_id, args.session_id);
 			}
-			if (name === "gjc_coordinator_await_turn") {
+			if (name === "vib_coordinator_await_turn") {
 				return await awaitTurnPayload(args.turn_id, args.session_id, args.timeout_ms, args.poll_interval_ms);
 			}
-			if (name === "gjc_coordinator_submit_question_answer") {
+			if (name === "vib_coordinator_submit_question_answer") {
 				requireCoordinatorMutation(config, "questions", args);
 				const idempotencyKey = requiredIdempotencyKey(args);
 				const sessionId = safeExternalId("session", args.session_id);
@@ -9689,7 +9689,7 @@ export function createCoordinatorMcpServer(options: CoordinatorMcpServerOptions 
 					},
 				);
 			}
-			if (name === "gjc_coordinator_report_status") {
+			if (name === "vib_coordinator_report_status") {
 				requireCoordinatorMutation(config, "reports", args);
 				const idempotencyKey = requiredIdempotencyKey(args);
 				const sessionId = args.session_id == null ? null : safeExternalId("session", args.session_id);
@@ -10134,7 +10134,7 @@ export interface PumpCoordinatorOptions {
 /**
  * Pump a newline-delimited JSON-RPC stream with BOUNDED concurrent dispatch.
  *
- * A long-running tool call (e.g. gjc_coordinator_await_turn, which polls for
+ * A long-running tool call (e.g. vib_coordinator_await_turn, which polls for
  * minutes) must not block the read loop from answering keepalive pings on the
  * same stdio channel. But naive unbounded concurrency reintroduces its own
  * hazards, so this pump enforces the safety envelope the coordinator needs:

@@ -4,12 +4,12 @@ import * as crypto from "node:crypto";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { exactReplacePath, type NativeExactFileIdentity, type NativeExactUnlinkResult } from "@gajae-code/natives";
-import { logger } from "@gajae-code/utils";
+import { exactReplacePath, type NativeExactFileIdentity, type NativeExactUnlinkResult } from "@vib-rato/natives";
+import { logger } from "@vib-rato/utils";
 import { withFileLock } from "../../config/file-lock";
 import type { Settings } from "../../config/settings";
 import type { DaemonRuntimeInfo } from "../../daemon/control-types";
-import { resolveGjcRuntimeSpawnInfo } from "../../daemon/runtime";
+import { resolveVibRuntimeSpawnInfo } from "../../daemon/runtime";
 import { resizeImageBuffer } from "../../utils/image-resize";
 import { isProcessIncarnation, processIncarnation } from "../broker/process-incarnation";
 import {
@@ -3110,7 +3110,7 @@ export function buildTelegramDaemonSpawnArgs(input: {
 	args: string[];
 	runtime: DaemonRuntimeInfo;
 } {
-	const rt = resolveGjcRuntimeSpawnInfo(input.execPath ?? process.execPath);
+	const rt = resolveVibRuntimeSpawnInfo(input.execPath ?? process.execPath);
 	const args = [
 		...rt.argsPrefix,
 		"notify",
@@ -3219,7 +3219,7 @@ export async function spawnTelegramDaemonOwner(
 
 /**
  * Owner-bound reclamation of a confirmed-dead daemon owner, mirroring the
- * daemon step of `gjc notify recovery`. It returns a structured, actionable
+ * daemon step of `vib notify recovery`. It returns a structured, actionable
  * result and removes only identity-verified dead-owner artifacts while holding
  * the transition fence; live, successor, unknown, or unreadable evidence is
  * retained.
@@ -3333,7 +3333,7 @@ async function ensureTelegramDaemonRunningDetailedOnce(
 		});
 		if (!preflight.recovered && preflight.reason !== "not-confirmed-dead") {
 			logger.warn(
-				`notifications: startup recovery unsafe (${preflight.reason}); run \`gjc notify recovery\` for diagnostics`,
+				`notifications: startup recovery unsafe (${preflight.reason}); run \`vib notify recovery\` for diagnostics`,
 			);
 			return "blocked_identity";
 		}
@@ -3402,7 +3402,7 @@ async function ensureTelegramDaemonRunningDetailedOnce(
 	}
 	if (spawned.result === "blocked") {
 		logger.warn(
-			`notifications: failed to ensure Telegram daemon: ${recoveryReason ? `stale recovery ${recoveryReason}; run \`gjc notify recovery\`` : spawned.warnings.join("; ")}`,
+			`notifications: failed to ensure Telegram daemon: ${recoveryReason ? `stale recovery ${recoveryReason}; run \`vib notify recovery\`` : spawned.warnings.join("; ")}`,
 		);
 		return "blocked_identity";
 	}
@@ -3522,7 +3522,7 @@ async function ensureTelegramDaemonRunningDetailedOnce(
 				const { reapTelegramDaemonOrphans, writeTelegramOrphanRecoveryReceipt } = await import(
 					"./telegram-daemon-orphan-reap"
 				);
-				const { nativeProcessBindings } = await import("@gajae-code/utils/native-process");
+				const { nativeProcessBindings } = await import("@vib-rato/utils/native-process");
 				const pidForReap = cur.pid;
 				const incarnationForReap = cur.incarnation;
 				const reapResult = await reapTelegramDaemonOrphans({
@@ -4008,7 +4008,7 @@ interface BtwTerminalDeliveryReceipt {
 	outcome: BtwTerminalDeliveryOutcome;
 }
 
-const BTW_TERMINAL_DELIVERY_TEST_OBSERVER = Symbol.for("gjc.test.btw-terminal-delivery-observer");
+const BTW_TERMINAL_DELIVERY_TEST_OBSERVER = Symbol.for("vib.test.btw-terminal-delivery-observer");
 
 export interface TelegramDaemonOptions {
 	settings: Settings;
@@ -4051,7 +4051,7 @@ export interface TelegramDaemonOptions {
 	sound?: "all" | "important" | "none";
 	/**
 	 * Telegram forum-topic naming. `nameTemplate` supports the `{repo}`,
-	 * `{branch}`, and `{title}` placeholders; unset uses the GJC session title
+	 * `{branch}`, and `{title}` placeholders; unset uses the Vibrato session title
 	 * and falls back to a short session id while the title is unavailable.
 	 */
 	topics?: { nameTemplate?: string };
@@ -6546,7 +6546,7 @@ export class TelegramNotificationDaemon {
 			await this.#sendBtwMessage({
 				threadId: pending.threadId,
 				messageId: pending.messageId,
-				text: "This /btw question stopped because the GJC session closed or changed. Reopen it and try again.",
+				text: "This /btw question stopped because the Vibrato session closed or changed. Reopen it and try again.",
 				allowWhileStopping,
 				signal,
 			});
@@ -7324,11 +7324,11 @@ export class TelegramNotificationDaemon {
 		const branch = typeof msg?.branch === "string" && msg.branch.trim() ? msg.branch.trim() : undefined;
 		const title = typeof msg?.title === "string" && msg.title.trim() ? msg.title.trim() : undefined;
 		// A configured `nameTemplate` remains an explicit override. The default
-		// topic name is the GJC session title, not repository or branch identity.
+		// topic name is the Vibrato session title, not repository or branch identity.
 		const templated = this.renderTopicNameTemplate({ repo, branch, title });
 		if (templated !== undefined) return templated;
 		if (title) return title;
-		return `GJC ${sessionId.slice(-6)}`;
+		return `Vibrato ${sessionId.slice(-6)}`;
 	}
 
 	/**
@@ -8707,7 +8707,7 @@ export class TelegramNotificationDaemon {
 		if (existing) return existing;
 		// mkdtemp creates a directory with an unguessable suffix and 0700 perms;
 		// chmod defensively in case of an unusual platform/umask.
-		const dir = await fs.promises.mkdtemp(path.join(os.tmpdir(), "gjc-telegram-"));
+		const dir = await fs.promises.mkdtemp(path.join(os.tmpdir(), "vib-telegram-"));
 		await fs.promises.chmod(dir, 0o700).catch(() => undefined);
 		this.attachmentDirs.set(sessionId, dir);
 		return dir;
@@ -10390,7 +10390,7 @@ export class TelegramNotificationDaemon {
 							: msg.status === "timeout"
 								? "This /btw question timed out after 120 seconds. Send it again to retry."
 								: msg.status === "cancelled" || msg.status === "session_unavailable"
-									? "This /btw question stopped because the GJC session closed or changed. Reopen it and try again."
+									? "This /btw question stopped because the Vibrato session closed or changed. Reopen it and try again."
 									: "This /btw question failed. Send it again to retry.";
 					try {
 						if (!isAuthoritative())
@@ -11250,7 +11250,7 @@ export class TelegramNotificationDaemon {
 		if (!(await this.pairedChatIsPrivate())) return;
 		await this.botApi.call("sendMessage", {
 			chat_id: this.opts.chatId,
-			text: "This button is stale after notification daemon restart. Please answer locally in the GJC session or wait for a fresh notification.",
+			text: "This button is stale after notification daemon restart. Please answer locally in the Vibrato session or wait for a fresh notification.",
 			parse_mode: TELEGRAM_PARSE_MODE,
 			...(telegramDisableNotification(this.opts.sound, "finalized") === true ? { disable_notification: true } : {}),
 		});
@@ -11371,7 +11371,7 @@ export class TelegramNotificationDaemon {
 				{
 					chat_id: this.opts.chatId,
 					message_thread_id: threadId,
-					text: "Choose where to start the GJC session:",
+					text: "Choose where to start the Vibrato session:",
 					reply_markup: {
 						inline_keyboard: aliases.map(choice => [{ text: choice.label, callback_data: choice.alias }]),
 					},
@@ -11699,7 +11699,7 @@ export class TelegramNotificationDaemon {
 				.call("sendMessage", {
 					chat_id: this.opts.chatId,
 					message_thread_id: threadId,
-					text: "This topic was not opened for a new GJC session, or its folder picker expired. Open a new topic and try again.",
+					text: "This topic was not opened for a new Vibrato session, or its folder picker expired. Open a new topic and try again.",
 				})
 				.catch(error => {
 					logger.warn(
@@ -12276,7 +12276,7 @@ export class TelegramNotificationDaemon {
 							await this.botApi.call("sendMessage", {
 								chat_id: this.opts.chatId,
 								message_thread_id: Number(inbound.threadId),
-								text: "Session control unavailable: this local GJC session is disconnected.",
+								text: "Session control unavailable: this local Vibrato session is disconnected.",
 								...(telegramDisableNotification(this.opts.sound, "finalized") === true
 									? { disable_notification: true }
 									: {}),
@@ -12321,7 +12321,7 @@ export class TelegramNotificationDaemon {
 					await this.#sendBtwMessage({
 						threadId: inbound.threadId,
 						messageId: inbound.messageId,
-						text: "Restart this GJC session to enable /btw.",
+						text: "Restart this Vibrato session to enable /btw.",
 						isAuthoritative: routeLeaseAllows,
 					});
 					return;
@@ -12392,7 +12392,7 @@ export class TelegramNotificationDaemon {
 							await this.#sendBtwMessage({
 								threadId: inbound.threadId,
 								messageId: inbound.messageId,
-								text: "Restart this GJC session to enable /btw.",
+								text: "Restart this Vibrato session to enable /btw.",
 								isAuthoritative: routeLeaseAllows,
 							});
 							return;
@@ -12440,7 +12440,7 @@ export class TelegramNotificationDaemon {
 							await this.#sendBtwMessage({
 								threadId: inbound.threadId,
 								messageId: inbound.messageId,
-								text: "Unable to start /btw because this GJC session disconnected. Reopen the session and try again.",
+								text: "Unable to start /btw because this Vibrato session disconnected. Reopen the session and try again.",
 								isAuthoritative: routeLeaseAllows,
 							});
 							return;
@@ -12681,9 +12681,12 @@ export class TelegramNotificationDaemon {
 					{ command: "context", description: "Show current context usage for this session" },
 					{ command: "compact", description: "Compact this session: /compact [instructions]" },
 					{ command: "btw", description: "Ask an ephemeral side question in this session" },
-					{ command: "session_create", description: "Create a GJC session: path, worktree, or dir [--mpreset]" },
-					{ command: "session_recent", description: "List recent GJC sessions" },
-					{ command: "session_close", description: "Close a GJC-managed session" },
+					{
+						command: "session_create",
+						description: "Create a Vibrato session: path, worktree, or dir [--mpreset]",
+					},
+					{ command: "session_recent", description: "List recent Vibrato sessions" },
+					{ command: "session_close", description: "Close a Vibrato-managed session" },
 					{ command: "session_resume", description: "Resume or reattach a session" },
 				],
 			});

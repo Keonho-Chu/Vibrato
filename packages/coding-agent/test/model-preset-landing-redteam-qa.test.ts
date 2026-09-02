@@ -1,13 +1,13 @@
 import { beforeAll, describe, expect, test, vi } from "bun:test";
-import { Effort, type Model } from "@gajae-code/ai";
-import { BUILTIN_MODEL_PROFILES, type ModelProfileDefinition } from "@gajae-code/coding-agent/config/model-profiles";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
+import { Effort, type Model } from "@vib-rato/ai";
+import { BUILTIN_MODEL_PROFILES, type ModelProfileDefinition } from "@vib-rato/coding-agent/config/model-profiles";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
 import {
 	ModelSelectorComponent,
 	type ModelSelectorSelection,
-} from "@gajae-code/coding-agent/modes/components/model-selector";
-import { getThemeByName, setThemeInstance } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { TUI } from "@gajae-code/tui";
+} from "@vib-rato/coding-agent/modes/components/model-selector";
+import { getThemeByName, setThemeInstance } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { TUI } from "@vib-rato/tui";
 
 function normalizeRenderedText(text: string): string {
 	return text
@@ -67,10 +67,20 @@ const combo: ModelProfileDefinition = {
 	modelMapping: { default: "anthropic/claude-opus-5:xhigh", executor: "openai-codex/gpt-5.5:low" },
 	source: "builtin",
 };
-const comboOpencode: ModelProfileDefinition = {
-	name: "codex-opencodego",
-	requiredProviders: ["openai-codex", "opencode-go"],
-	modelMapping: { default: "opencode-go/kimi-k3", executor: "openai-codex/gpt-5.5:low" },
+// A COMBOS entry that only pins allowlisted providers, so it survives the
+// preset landing's selectability filter.
+const comboVllm: ModelProfileDefinition = {
+	name: "codex-vllm",
+	displayName: "Codex + vLLM",
+	providerGroup: "COMBOS",
+	requiredProviders: ["openai-codex", "vllm"],
+	modelMapping: { default: "vllm/qwen3-local", executor: "openai-codex/gpt-5.5:low" },
+	source: "builtin",
+};
+const claudeOpus: ModelProfileDefinition = {
+	name: "claude-opus",
+	requiredProviders: ["anthropic"],
+	modelMapping: { default: "anthropic/claude-opus-5:medium" },
 	source: "builtin",
 };
 const minimax: ModelProfileDefinition = {
@@ -106,30 +116,25 @@ function installTestTheme(): void {
 
 function createRegistry(
 	authenticatedProviders: readonly string[],
-	profiles: ModelProfileDefinition[] = [codexEco, combo, minimax, noSuffixProfile],
+	profiles: ModelProfileDefinition[] = [codexEco, combo, claudeOpus, noSuffixProfile],
+	extraModels: readonly Model[] = [],
 ) {
 	const profileMap = new Map(profiles.map(profile => [profile.name, profile]));
+	const catalog = [
+		codexModel,
+		anthropicModel,
+		minimaxModel,
+		noSuffixModel,
+		{ ...noSuffixModel, provider: "provider-b" },
+		...builtinCodexModels,
+		...builtinComboModels,
+		...extraModels,
+	];
 	return {
 		refresh: vi.fn(async () => {}),
 		getError: () => undefined,
-		getAvailable: () => [
-			codexModel,
-			anthropicModel,
-			minimaxModel,
-			noSuffixModel,
-			{ ...noSuffixModel, provider: "provider-b" },
-			...builtinCodexModels,
-			...builtinComboModels,
-		],
-		getAll: () => [
-			codexModel,
-			anthropicModel,
-			minimaxModel,
-			noSuffixModel,
-			{ ...noSuffixModel, provider: "provider-b" },
-			...builtinCodexModels,
-			...builtinComboModels,
-		],
+		getAvailable: () => catalog,
+		getAll: () => catalog,
 		hasConfiguredProviderAuth: (provider: string) => authenticatedProviders.includes(provider),
 		getDiscoverableProviders: () => [],
 		getCanonicalModels: () => [],
@@ -152,6 +157,7 @@ function createSelector(
 		onCancel?: () => void;
 		onSelect?: (selection: ModelSelectorSelection) => void | Promise<void>;
 		profiles?: ModelProfileDefinition[];
+		extraModels?: readonly Model[];
 	} = {},
 ) {
 	const ui = { requestRender: vi.fn() } as unknown as TUI;
@@ -162,6 +168,7 @@ function createSelector(
 		createRegistry(
 			options.authenticatedProviders ?? ["openai-codex", "anthropic", "minimax-code", "provider-a"],
 			options.profiles,
+			options.extraModels,
 		) as never,
 		options.scopedModels ?? [],
 		options.onSelect ?? (() => {}),
@@ -264,7 +271,7 @@ describe("preset landing adversarial QA", () => {
 		expect(scoped).toContain("Showing models from --models scope");
 	});
 
-	test("partial combo auth blocks selection and MiniMax hint uses canonical provider id only", async () => {
+	test("partial combo auth blocks selection and the login hint uses the canonical provider id only", async () => {
 		const selections: ModelSelectorSelection[] = [];
 		const comboSelector = createSelector({
 			authenticatedProviders: ["openai-codex"],
@@ -275,7 +282,7 @@ describe("preset landing adversarial QA", () => {
 		await rendered(comboSelector);
 		comboSelector.handleInput("\x1b[C"); // expand CODEX so COMBOS is visible
 		comboSelector.handleInput("\x1b[B"); // codex-eco profile
-		comboSelector.handleInput("\x1b[B"); // MINIMAX group
+		comboSelector.handleInput("\x1b[B"); // CLAUDE group
 		comboSelector.handleInput("\x1b[B"); // COMBOS group
 		comboSelector.handleInput("\n");
 		let text = normalizeRenderedText(comboSelector.render(260).join("\n"));
@@ -283,24 +290,40 @@ describe("preset landing adversarial QA", () => {
 		expect(text).toContain("anthropic");
 		expect(selections).toEqual([]);
 
-		const miniSelector = createSelector({ authenticatedProviders: ["openai-codex", "anthropic", "provider-a"] });
-		await rendered(miniSelector);
-		miniSelector.handleInput("\x1b[B");
-		miniSelector.handleInput("\n");
-		text = normalizeRenderedText(miniSelector.render(260).join("\n"));
-		expect(text).toContain("/login minimax-code");
-		expect(text).not.toContain("minimax/");
-		expect(text).not.toContain("/login minimax ");
+		const claudeSelector = createSelector({ authenticatedProviders: ["openai-codex", "provider-a"] });
+		await rendered(claudeSelector);
+		claudeSelector.handleInput("\x1b[B");
+		claudeSelector.handleInput("\n");
+		text = normalizeRenderedText(claudeSelector.render(260).join("\n"));
+		// The hint names the provider id, not the profile or group label.
+		expect(text).toContain("/login anthropic");
+		expect(text).not.toContain("/login claude");
+		expect(text).not.toContain("/login CLAUDE");
+	});
+
+	test("presets pinning a provider outside the allowlist never reach the landing", async () => {
+		// minimax-code is compiled in but unselectable, so its group must not appear
+		// even when the profile is registered and its model is in the catalog.
+		const selector = createSelector({
+			authenticatedProviders: ["openai-codex", "anthropic", "minimax-code"],
+			profiles: [codexEco, minimax, claudeOpus],
+		});
+		const text = await rendered(selector);
+		expect(text).toContain("CODEX");
+		expect(text).toContain("CLAUDE");
+		expect(text).not.toContain("MINIMAX");
+		expect(text).not.toContain("MiniMax Medium");
 	});
 
 	test("COMBOS group stays available when at least one combo is usable", async () => {
 		// Regression: a group is a list of alternative presets, not an all-or-nothing
-		// bundle. With codex + opencode-go authenticated, codex-opencodego is fully
-		// usable, so the COMBOS group must render as available (✓) even though the
-		// sibling opus-codex preset is missing its anthropic credential.
+		// bundle. With codex + vllm authenticated, codex-vllm is fully usable, so the
+		// COMBOS group must render as available (✓) even though the sibling
+		// opus-codex preset is missing its anthropic credential.
 		const selector = createSelector({
-			authenticatedProviders: ["openai-codex", "opencode-go"],
-			profiles: [codexEco, combo, comboOpencode],
+			authenticatedProviders: ["openai-codex", "vllm"],
+			profiles: [codexEco, combo, comboVllm],
+			extraModels: [model("vllm", "qwen3-local")],
 		});
 		const text = await rendered(selector);
 		expect(text).toContain("✓ COMBOS");
@@ -423,32 +446,32 @@ describe("preset landing adversarial QA", () => {
 		await rendered(selector);
 		selector.handleInput("\x1b[C"); // expand CODEX explicitly
 		selector.handleInput("\x1b[B"); // CODEX header -> Codex Eco profile
-		selector.handleInput("\x1b[B"); // cross boundary into MINIMAX group
+		selector.handleInput("\x1b[B"); // cross boundary into CLAUDE group
 		const label = cursorRowLabel(selector);
-		expect(label).toContain("MINIMAX");
-		expect(label).not.toContain("MiniMax Medium");
+		expect(label).toContain("CLAUDE");
+		expect(label).not.toContain("Claude Opus");
 	});
 
 	test("#688 Down from a multi-profile group does not skip the destination header onto Browse", async () => {
 		// With several profiles in the source group, the old numeric clamp could
 		// overshoot the destination group entirely (header + only profile) and land
 		// on the trailing Browse row.
-		const selector = createSelector({ profiles: [codexEco, codexMedium, codexPro, minimax] });
+		const selector = createSelector({ profiles: [codexEco, codexMedium, codexPro, claudeOpus] });
 		await rendered(selector);
 		selector.handleInput("\x1b[C"); // expand CODEX explicitly
 		selector.handleInput("\x1b[B"); // Codex Eco
 		selector.handleInput("\x1b[B"); // Codex Medium
 		selector.handleInput("\x1b[B"); // Codex Pro (last profile of CODEX)
-		selector.handleInput("\x1b[B"); // cross boundary into MINIMAX group
+		selector.handleInput("\x1b[B"); // cross boundary into CLAUDE group
 		const headerLabel = cursorRowLabel(selector);
-		expect(headerLabel).toContain("MINIMAX");
+		expect(headerLabel).toContain("CLAUDE");
 		expect(headerLabel).not.toContain("Browse all models");
-		expect(headerLabel).not.toContain("MiniMax Medium");
+		expect(headerLabel).not.toContain("Claude Opus");
 
 		// Navigation continues correctly through the destination group after
 		// explicit expansion; focus/up-down alone must not auto-expand.
 		selector.handleInput("\x1b[C");
-		selector.handleInput("\x1b[B"); // MINIMAX header -> MiniMax Medium profile
-		expect(cursorRowLabel(selector)).toContain("MiniMax Medium");
+		selector.handleInput("\x1b[B"); // CLAUDE header -> Claude Opus profile
+		expect(cursorRowLabel(selector)).toContain("Claude Opus");
 	});
 });

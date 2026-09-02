@@ -11,7 +11,7 @@ afterEach(async () => {
 });
 
 async function tempDir(): Promise<string> {
-	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-autoresearch-datactx-"));
+	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-autoresearch-datactx-"));
 	tempRoots.push(dir);
 	return dir;
 }

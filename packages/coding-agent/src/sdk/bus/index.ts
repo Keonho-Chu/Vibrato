@@ -3,7 +3,7 @@
  * Notifications extension.
  *
  * Hosts a per-session loopback WebSocket notification server (the Rust core via
- * N-API) and bridges GJC session events + the `ask` tool to it so a remote client
+ * N-API) and bridges Vibrato session events + the `ask` tool to it so a remote client
  * (e.g. a Telegram bot) can both see action-needed signals and answer them
  * through SDK-native session capabilities:
  *
@@ -15,8 +15,8 @@
  * - `turn_end` -> `action_needed` (kind `idle`, deduped per turn).
  * - `session_shutdown` -> `session_closed` frame, stop server, deregister answer source.
  *
- * Enable with Settings notifications config, `GJC_NOTIFICATIONS=1` (a token is
- * generated), or `GJC_NOTIFICATIONS_TOKEN`.
+ * Enable with Settings notifications config, `VIB_NOTIFICATIONS=1` (a token is
+ * generated), or `VIB_NOTIFICATIONS_TOKEN`.
  */
 
 import { AsyncLocalStorage } from "node:async_hooks";
@@ -27,11 +27,11 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { promisify } from "node:util";
-import { type RunSettlementProof, ThinkingLevel } from "@gajae-code/agent-core";
-import type { ImageContent, TextContent, Tool } from "@gajae-code/ai/core";
-import type { NotificationServer as NativeNotificationServer } from "@gajae-code/natives";
+import { type RunSettlementProof, ThinkingLevel } from "@vib-rato/agent-core";
+import type { ImageContent, TextContent, Tool } from "@vib-rato/ai/core";
+import type { NotificationServer as NativeNotificationServer } from "@vib-rato/natives";
 
-type NativeSdkBusBindings = Pick<typeof import("@gajae-code/natives"), "NotificationServer" | "nativeBuildInfo">;
+type NativeSdkBusBindings = Pick<typeof import("@vib-rato/natives"), "NotificationServer" | "nativeBuildInfo">;
 let nativeSdkBusBindings: NativeSdkBusBindings | undefined;
 
 /**
@@ -41,13 +41,13 @@ let nativeSdkBusBindings: NativeSdkBusBindings | undefined;
  * calls) each build a runtime and the loser observes a foreign registration.
  */
 function sdkBusNatives(): NativeSdkBusBindings {
-	nativeSdkBusBindings ??= require("@gajae-code/natives") as NativeSdkBusBindings;
+	nativeSdkBusBindings ??= require("@vib-rato/natives") as NativeSdkBusBindings;
 	return nativeSdkBusBindings;
 }
 
 type NotificationServer = NativeNotificationServer;
 
-import { $credentialEnv, logger, postmortem, VERSION } from "@gajae-code/utils";
+import { $credentialEnv, logger, postmortem, VERSION } from "@vib-rato/utils";
 
 import { AsyncJobManager } from "../../async";
 import { Settings, validateSettingPatch } from "../../config/settings";
@@ -82,9 +82,9 @@ import type {
 } from "../../tools";
 import { RECOMMENDED_SUFFIX } from "../../tools/ask";
 import {
-	GJC_ASK_TIMEOUT_CODE,
 	registerAskAnswerSource,
 	registerWorkflowGateEmitterListener,
+	VIB_ASK_TIMEOUT_CODE,
 } from "../../tools/ask-answer-registry";
 import { acpFinalTextFromMessage } from "../acp/final-text";
 import { ensureBroker } from "../broker/ensure";
@@ -218,7 +218,7 @@ const PROMPT_TERMINAL_FAILURE_REASON_LOG_MAX = 512;
  * deterministic tests.
  */
 const sdkReconciliationDrainTimeoutMs = (): number => {
-	const override = Number(process.env.GJC_SDK_RECONCILIATION_DRAIN_TIMEOUT_MS);
+	const override = Number(process.env.VIB_SDK_RECONCILIATION_DRAIN_TIMEOUT_MS);
 	return override > 0 ? override : 5_000;
 };
 /**
@@ -450,7 +450,7 @@ function gitCommonDir(gd: string): string {
 
 /**
  * Best-effort real repository name (no git spawn): resolves the main worktree
- * root directory so linked worktrees report the repo (e.g. `gajae-code`)
+ * root directory so linked worktrees report the repo (e.g. `vib-rato`)
  * instead of the worktree directory (e.g. `feat-foo-01047f11`).
  */
 export function readGitRepoName(cwd: string): string | undefined {
@@ -1525,24 +1525,24 @@ const defaultConfig: NotificationConfig = {
  * view, and this direct read was the outlier.
  */
 export function notificationsEnabled(): boolean {
-	return $credentialEnv("GJC_NOTIFICATIONS") === "1" || Boolean($credentialEnv("GJC_NOTIFICATIONS_TOKEN"));
+	return $credentialEnv("VIB_NOTIFICATIONS") === "1" || Boolean($credentialEnv("VIB_NOTIFICATIONS_TOKEN"));
 }
 
 function streamIntervalMs(): number {
-	return Math.max(200, Number(process.env.GJC_NOTIFICATIONS_STREAM_INTERVAL_MS) || 500);
+	return Math.max(200, Number(process.env.VIB_NOTIFICATIONS_STREAM_INTERVAL_MS) || 500);
 }
 // Max chars of a turn's assistant text carried by the FINALIZED turn_stream (and
 // the pre-ask capture). Finalized turns default to the bounded full-turn ceiling
 // because split-capable clients such as the Telegram daemon schedule each
 // splitTelegramHtml chunk through the shared rate-limit pool. Operators who want
-// glanceable summaries can lower this with GJC_NOTIFICATIONS_TURN_MAX. The value
+// glanceable summaries can lower this with VIB_NOTIFICATIONS_TURN_MAX. The value
 // is always clamped to a finite [280, TURN_TEXT_MAX_CEILING] range so the cap can
 // never be unbounded. Live frames are intentionally NOT raised — they stay one
 // editable preview message rather than fanning a long in-progress turn across
 // sends.
 const TURN_TEXT_MAX_CEILING = 40_000;
 function turnTextMax(): number {
-	const raw = Number(process.env.GJC_NOTIFICATIONS_TURN_MAX);
+	const raw = Number(process.env.VIB_NOTIFICATIONS_TURN_MAX);
 	if (!Number.isFinite(raw) || raw <= 0) return TURN_TEXT_MAX_CEILING;
 	return Math.min(TURN_TEXT_MAX_CEILING, Math.max(280, raw));
 }
@@ -1565,7 +1565,7 @@ function resolveSettings(settingsOverride?: Settings): ResolvedSettings {
 }
 
 function resolveToken(): string {
-	// `GJC_NOTIFICATIONS_TOKEN` remains an enablement compatibility flag, never
+	// `VIB_NOTIFICATIONS_TOKEN` remains an enablement compatibility flag, never
 	// a reusable endpoint credential. Every host identity gets fresh authority.
 	return crypto.randomBytes(24).toString("base64url");
 }
@@ -2171,7 +2171,7 @@ export function createSdkPermissionAskAnswerSource(
 				rejectRequest(error);
 			},
 		);
-		const askTimeoutError = Object.assign(new Error("ask timed out"), { code: GJC_ASK_TIMEOUT_CODE });
+		const askTimeoutError = Object.assign(new Error("ask timed out"), { code: VIB_ASK_TIMEOUT_CODE });
 		let response: unknown;
 		try {
 			response = await requestPromise;
@@ -2630,7 +2630,7 @@ function sdkControlSurface(
 	 */
 
 	/**
-	 * Route a synthetic `gajae-code/<profile>` model selection into the
+	 * Route a synthetic `vib-rato/<profile>` model selection into the
 	 * session-scoped activation transaction. ACP model selection never writes a
 	 * global profile default; persistence remains an explicit TUI choice. Only
 	 * an absent or `off` thinking level is forwarded (synthetic rows advertise
@@ -4038,8 +4038,8 @@ export function createNotificationsExtension(
 		settings?: Settings;
 		ensureTelegramDaemon?: (input: { settings: Settings }) => Promise<EnsureDaemonResult>;
 		ensureProviderDaemon?: (provider: "discord" | "slack", settings: Settings) => Promise<unknown>;
-		/** Suppress auto-delivery for a GJC-spawned child under `sessionScope=primary`. */
-		spawnedByGjc?: boolean;
+		/** Suppress auto-delivery for a Vibrato-spawned child under `sessionScope=primary`. */
+		spawnedByVib?: boolean;
 		controller?: NotificationSessionController;
 		/** Whether this host mode can own the root SDK endpoint. Default: true. */
 		sdkHostModeSupported?: boolean;
@@ -4083,7 +4083,7 @@ export function createNotificationsExtension(
 		new NotificationSessionController({
 			eligible: true,
 			getConfig: () => resolveSettings(options.settings).cfg,
-			spawnedByGjc: options.spawnedByGjc,
+			spawnedByVib: options.spawnedByVib,
 		});
 
 	// Failed terminal teardown remains fenced from normal runtime lookup while the
@@ -4489,7 +4489,7 @@ export function createNotificationsExtension(
 
 	async function startSession(ctx: ExtensionContext): Promise<SessionStartResult> {
 		const id = sessionId(ctx);
-		const lifecycleRequestId = safeLifecycleRequestId(process.env.GJC_LIFECYCLE_REQUEST_ID);
+		const lifecycleRequestId = safeLifecycleRequestId(process.env.VIB_LIFECYCLE_REQUEST_ID);
 		const { settings, cfg, settingsAvailable } = resolveSettings(options.settings);
 		const notificationsEnabledForSession = controller.query(ctx).genericSessionEnabled;
 		const sdkEnabledForSession =
@@ -4533,7 +4533,7 @@ export function createNotificationsExtension(
 			return { status: "already", runtime: existingRuntime };
 		}
 
-		const stateRoot = path.join(ctx.cwd, ".gjc", "state");
+		const stateRoot = path.join(ctx.cwd, ".vib", "state");
 		let isolateChatEndpoint = forceIsolatedChatSessions.delete(id);
 		if (
 			!isolateChatEndpoint &&
@@ -6533,7 +6533,7 @@ export function createNotificationsExtension(
 		 * Existing-thread preparation.
 		 *
 		 * A prepared session withholds its readiness signal so
-		 * `gjc notify bind-thread` can adopt an operator-supplied Slack root before
+		 * `vib notify bind-thread` can adopt an operator-supplied Slack root before
 		 * any stock root is published; activation then publishes readiness once and
 		 * the daemon adopts that root.
 		 *
@@ -6541,7 +6541,7 @@ export function createNotificationsExtension(
 		 * broker lifecycle-managed session is prepared only by the broker-issued,
 		 * session-scoped readiness intent on its launch request, which the
 		 * lifecycle wait completes on the prepared signal instead of readiness. A
-		 * manual/source session keeps the explicit `GJC_NOTIFY_BIND_EXISTING_THREAD`
+		 * manual/source session keeps the explicit `VIB_NOTIFY_BIND_EXISTING_THREAD`
 		 * opt-in, which is refused for lifecycle-managed sessions so an inherited
 		 * process-global flag can never silently defer a broker-created session.
 		 *
@@ -7150,12 +7150,12 @@ export function createNotificationsExtension(
 			});
 			// Required: the negotiated-capability callback is how the TS host learns
 			// each connection's caps for replay-frame gating. If the linked
-			// @gajae-code/natives binary predates it (linked/deduped installs where the
+			// @vib-rato/natives binary predates it (linked/deduped installs where the
 			// version did not change), fail loudly with an actionable message instead of
 			// silently shipping a half-wired capability bridge.
 			if (typeof server.onNegotiatedCapabilities !== "function") {
 				throw new Error(
-					"@gajae-code/natives is out of date: missing onNegotiatedCapabilities. Rebuild the native addon (bun --cwd=packages/natives run build).",
+					"@vib-rato/natives is out of date: missing onNegotiatedCapabilities. Rebuild the native addon (bun --cwd=packages/natives run build).",
 				);
 			}
 			if (
@@ -7163,12 +7163,12 @@ export function createNotificationsExtension(
 				server.supportsPositionedRawExclusion() !== true
 			) {
 				throw new Error(
-					"@gajae-code/natives is out of date: missing positioned raw-fan-out exclusion. Rebuild the native addon (bun --cwd=packages/natives run build).",
+					"@vib-rato/natives is out of date: missing positioned raw-fan-out exclusion. Rebuild the native addon (bun --cwd=packages/natives run build).",
 				);
 			}
 			if (typeof server.sendToWithReceipt !== "function" || typeof server.queueIdleAfterDirected !== "function") {
 				throw new Error(
-					"@gajae-code/natives is out of date: missing recipient-bound dependent delivery. Rebuild the native addon (bun --cwd=packages/natives run build).",
+					"@vib-rato/natives is out of date: missing recipient-bound dependent delivery. Rebuild the native addon (bun --cwd=packages/natives run build).",
 				);
 			}
 			server.onNegotiatedCapabilities((_err, connectionId, capabilities) => {
@@ -8178,12 +8178,12 @@ export function createNotificationsExtension(
 			const command = args.trim().split(/\s+/, 1)[0]?.toLowerCase() || "status";
 			const resolved = resolveSettings(options.settings);
 			const manualEligibilityEnv =
-				process.env.GJC_NOTIFICATIONS === "0" ? { ...process.env, GJC_NOTIFICATIONS: undefined } : process.env;
+				process.env.VIB_NOTIFICATIONS === "0" ? { ...process.env, VIB_NOTIFICATIONS: undefined } : process.env;
 			const enabledWithoutLocalOff = resolveGenericNotificationSessionEligibility({
 				cfg: resolved.cfg,
 				env: manualEligibilityEnv,
 				sessionDisabled: false,
-				spawnedByGjc: options.spawnedByGjc,
+				spawnedByVib: options.spawnedByVib,
 			}).enabled;
 
 			if (command === "off") {
@@ -8204,7 +8204,7 @@ export function createNotificationsExtension(
 				}
 				if (!enabledWithoutLocalOff) {
 					ctx.ui.notify(
-						"Notifications are not configured. Run `gjc notify setup` or set GJC_NOTIFICATIONS=1.",
+						"Notifications are not configured. Run `vib notify setup` or set VIB_NOTIFICATIONS=1.",
 						"warning",
 					);
 					return;

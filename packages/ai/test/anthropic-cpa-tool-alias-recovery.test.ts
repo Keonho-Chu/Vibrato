@@ -4,8 +4,8 @@ import {
 	isCpaToolAliasRestoreFailure,
 	parseCpaToolAliasRestoreFailure,
 	streamAnthropic,
-} from "@gajae-code/ai/providers/anthropic";
-import type { Context, Model, ProviderSessionState, Tool, UserMessage } from "@gajae-code/ai/types";
+} from "@vib-rato/ai/providers/anthropic";
+import type { Context, Model, ProviderSessionState, Tool, UserMessage } from "@vib-rato/ai/types";
 
 const model: Model<"anthropic-messages"> = {
 	api: "anthropic-messages",

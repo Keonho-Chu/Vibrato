@@ -121,7 +121,7 @@ export function CostChart({ costSeries }: CostChartProps) {
 	if (byModel) {
 		const lineData = {
 			labels: chartData.labels,
-			datasets: styleDatasets(chartData, i => lineDatasetStyle(MODEL_COLORS[i % MODEL_COLORS.length])),
+			datasets: styleDatasets(chartData, i => lineDatasetStyle(MODEL_COLORS[theme][i % MODEL_COLORS[theme].length])),
 		};
 
 		const lineOptions: ChartOptions<"line"> = {
@@ -136,7 +136,7 @@ export function CostChart({ costSeries }: CostChartProps) {
 	} else {
 		const barData = {
 			labels: chartData.labels,
-			datasets: styleDatasets(chartData, i => barDatasetStyle(MODEL_COLORS[i % MODEL_COLORS.length])),
+			datasets: styleDatasets(chartData, i => barDatasetStyle(MODEL_COLORS[theme][i % MODEL_COLORS[theme].length])),
 		};
 
 		const barLabelPlugin = makeBarLabelPlugin(BAR_LABEL_COLORS[theme]);

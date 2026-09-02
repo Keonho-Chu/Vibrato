@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 import * as fs from "node:fs";
-import { getProjectDir, setProjectDir } from "@gajae-code/utils";
+import { getProjectDir, setProjectDir } from "@vib-rato/utils";
 import { resetSettingsForTest, Settings } from "../src/config/settings";
 import { StatusLineComponent } from "../src/modes/components/tool-status-header";
 import { EMPTY_JOBS_SNAPSHOT } from "../src/modes/jobs-observer";
@@ -141,8 +141,8 @@ describe("StatusLineComponent cache red-team coverage", () => {
 	it("refreshes branch cache when project dir changes inside the TTL", () => {
 		const now = 75_000;
 		spyOn(Date, "now").mockImplementation(() => now);
-		const repoA = "/tmp/gjc-status-line-repo-a";
-		const repoB = "/tmp/gjc-status-line-repo-b";
+		const repoA = "/tmp/vib-status-line-repo-a";
+		const repoB = "/tmp/vib-status-line-repo-b";
 		const resolveSpy = spyOn(git.head, "resolveSync").mockImplementation(projectDir => {
 			const branch = projectDir === repoB ? "feature/repo-b" : "feature/repo-a";
 			const head = refHead(branch) as NonNullable<ReturnType<typeof git.head.resolveSync>>;

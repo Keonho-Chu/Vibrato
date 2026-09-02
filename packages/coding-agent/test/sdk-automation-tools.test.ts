@@ -2,11 +2,11 @@ import { afterEach, describe, expect, it } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { AgentTool } from "@gajae-code/agent-core";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import type { CustomTool } from "@gajae-code/coding-agent/extensibility/custom-tools/types";
-import { type AutomationTools, createAgentSession } from "@gajae-code/coding-agent/sdk";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
+import type { AgentTool } from "@vib-rato/agent-core";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import type { CustomTool } from "@vib-rato/coding-agent/extensibility/custom-tools/types";
+import { type AutomationTools, createAgentSession } from "@vib-rato/coding-agent/sdk";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
 import { z } from "zod/v4";
 
 const automationSchema = z.object({
@@ -46,7 +46,7 @@ describe("createAgentSession external automation tools", () => {
 	});
 
 	function sessionOptions() {
-		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-automation-"));
+		const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-automation-"));
 		tempDirs.push(tempDir);
 		return {
 			cwd: tempDir,

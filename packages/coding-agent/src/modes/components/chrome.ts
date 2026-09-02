@@ -1,4 +1,4 @@
-import { Container, type SelectItem, SelectList } from "@gajae-code/tui";
+import { Container, type SelectItem, SelectList } from "@vib-rato/tui";
 import { getSelectListTheme, theme } from "../../modes/theme/theme";
 import { DynamicBorder } from "./dynamic-border";
 import { DynamicThemeText } from "./dynamic-theme-text";

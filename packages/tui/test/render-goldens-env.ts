@@ -1,9 +1,9 @@
 /**
  * Deterministic terminal-capability baseline for render-golden capture.
  *
- * `@gajae-code/tui/terminal-capabilities` computes `TERMINAL`/`TERMINAL_ID`
+ * `@vib-rato/tui/terminal-capabilities` computes `TERMINAL`/`TERMINAL_ID`
  * at module-import time from env vars (TERM_PROGRAM etc.), so the baseline
- * MUST be applied before any `@gajae-code/tui` import is evaluated. Import
+ * MUST be applied before any `@vib-rato/tui` import is evaluated. Import
  * this module FIRST in render-goldens.ts (side-effect import).
  *
  * The committed goldens were captured under this exact baseline; fixtures
@@ -22,7 +22,7 @@ export const GOLDEN_BASELINE_ENV: Record<string, string | undefined> = {
 	TERMUX_VERSION: undefined,
 	SSH_TTY: undefined,
 	CI: undefined,
-	GJC_TUI_IME_CURSOR: "0",
+	VIB_TUI_IME_CURSOR: "0",
 };
 
 for (const [key, value] of Object.entries(GOLDEN_BASELINE_ENV)) {

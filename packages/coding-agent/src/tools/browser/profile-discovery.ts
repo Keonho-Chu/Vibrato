@@ -10,7 +10,7 @@
 
 import * as os from "node:os";
 import * as path from "node:path";
-import { $credentialEnv } from "@gajae-code/utils/env";
+import { $credentialEnv } from "@vib-rato/utils/env";
 
 export interface DiscoveryEnv {
 	platform: NodeJS.Platform;

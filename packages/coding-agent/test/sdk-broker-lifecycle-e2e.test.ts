@@ -4,11 +4,10 @@ import * as syncFs from "node:fs";
 import { renameSync, writeFileSync } from "node:fs";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import * as native from "@gajae-code/natives";
-import { NotificationServer } from "@gajae-code/natives";
-import { logger } from "@gajae-code/utils";
+import * as native from "@vib-rato/natives";
+import { NotificationServer } from "@vib-rato/natives";
+import { logger } from "@vib-rato/utils";
 import { openLifecycleSessionManager, runSessionHost, watchSessionHostBrokerLiveness } from "../src/commands/sdk";
-import { planLaunchWorktree } from "../src/gjc-runtime/launch-worktree";
 import { AcpAgent } from "../src/modes/acp/acp-agent";
 import { Broker, type BrokerCleanupEvidence, type BrokerResponse } from "../src/sdk/broker/broker";
 import { brokerOwnerForTest, startFixtureBrokerWithLeaseForTest } from "../src/sdk/broker/ensure";
@@ -40,6 +39,7 @@ import { SessionRouter } from "../src/sdk/router";
 import { listManagedSessionCandidates, resolveManagedSessionScope } from "../src/sdk/session-directory";
 import { sanitizeSdkStartupMessage } from "../src/sdk/startup-capability";
 import { SessionManager } from "../src/session/session-manager";
+import { planLaunchWorktree } from "../src/vib-runtime/launch-worktree";
 
 const cliEntrypoint = path.resolve(import.meta.dir, "../src/cli.ts");
 const spawned: Array<ReturnType<typeof Bun.spawn>> = [];
@@ -145,7 +145,7 @@ function canonicalJson(value: unknown): string {
 }
 function deleteRequestHash(request: Record<string, unknown>): string {
 	const cwd = canonicalDeleteLocatorPath(String(request.cwd));
-	const input = { ...request, cwd, stateRoot: path.join(cwd, ".gjc", "state") };
+	const input = { ...request, cwd, stateRoot: path.join(cwd, ".vib", "state") };
 	return createHash("sha256")
 		.update(canonicalJson({ operation: "session.delete", input }))
 		.digest("hex");
@@ -185,7 +185,7 @@ async function snapshotDeleteSurface(
 test("startup diagnostics redact identifier-prefixed assignment secrets before bounded truncation", () => {
 	const secret = "credential-value";
 	const message = sanitizeSdkStartupMessage(
-		`OPENAI_API_KEY=${secret} GJC_NOTIFICATIONS_TOKEN=${secret} SERVICE-password=${secret} ${"x".repeat(600)}０`,
+		`OPENAI_API_KEY=${secret} VIB_NOTIFICATIONS_TOKEN=${secret} SERVICE-password=${secret} ${"x".repeat(600)}０`,
 	);
 	expect(message).not.toContain(secret);
 	expect(message.match(/\[redacted-secret\]/g)?.length).toBe(3);
@@ -193,7 +193,7 @@ test("startup diagnostics redact identifier-prefixed assignment secrets before b
 });
 
 test("ledger restart quarantines terminal response and durable-effect digest corruption", async () => {
-	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-ledger-digest-"));
+	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-ledger-digest-"));
 	try {
 		const ledger = await new LifecycleLedger(agentDir).open();
 		const responseIdentity = "response-digest-corruption";
@@ -259,7 +259,7 @@ test("fatal lifecycle JSON decoding rejects malformed UTF-8 without mutating val
 });
 
 test("ledger reopen bounds malformed persisted rows before they gain cleanup authority", async () => {
-	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-ledger-bounds-"));
+	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-ledger-bounds-"));
 	const ledgerPath = path.join(agentDir, "sdk", "lifecycle-ledger.jsonl");
 	const corruptPath = `${ledgerPath}.corrupt`;
 	const cleanupSentinel = path.join(agentDir, "cleanup-sentinel");
@@ -331,7 +331,7 @@ test("ledger reopen bounds malformed persisted rows before they gain cleanup aut
 
 test("rejects oversized lifecycle idempotency keys before create admission", async () => {
 	if (process.platform !== "linux") return;
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-sdk-key-bound-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-sdk-key-bound-"));
 	const broker = new Broker({ agentDir: path.join(root, "agent") });
 	try {
 		await broker.start();
@@ -346,8 +346,8 @@ test("rejects oversized lifecycle idempotency keys before create admission", asy
 });
 
 test("legacy metadata cleanup rejects mixed lifecycle and arbitrary receipt keys before mutation", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-legacy-metadata-allowlist-"));
-	const stateRoot = path.join(root, ".gjc", "state");
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-legacy-metadata-allowlist-"));
+	const stateRoot = path.join(root, ".vib", "state");
 	const sessionId = "legacy-allowlist";
 	const markerPath = path.join(stateRoot, "sdk", `${sessionId}.lifecycle.json`);
 	const readyPath = path.join(stateRoot, "sdk", `${sessionId}.lifecycle.ready.json`);
@@ -369,7 +369,7 @@ test("legacy metadata cleanup rejects mixed lifecycle and arbitrary receipt keys
 				mtimeNs: stat.mtimeNs.toString(),
 				sha256: createHash("sha256").update(bytes).digest("hex"),
 			},
-			plannedMetadataPath: path.join(stateRoot, "sdk", `.gjc-delete-${sessionId}.lifecycle.json`),
+			plannedMetadataPath: path.join(stateRoot, "sdk", `.vib-delete-${sessionId}.lifecycle.json`),
 		};
 		for (const extra of [{ lifecycleFiles: [] }, { lifecycleDeleteMetadata: true }, { arbitrary: true }]) {
 			const outcome = await executeLifecycle(
@@ -389,7 +389,7 @@ test("legacy metadata cleanup rejects mixed lifecycle and arbitrary receipt keys
 });
 
 async function liveLifecycleSession(root: string, agentDir: string, sessionId: string, staleMarkerFirst = false) {
-	const stateRoot = path.join(root, ".gjc", "state");
+	const stateRoot = path.join(root, ".vib", "state");
 	const request = {
 		operation: "session.create",
 		sessionId,
@@ -403,11 +403,11 @@ async function liveLifecycleSession(root: string, agentDir: string, sessionId: s
 		env: {
 			...process.env,
 			HOME: root,
-			GJC_AGENT_DIR: agentDir,
-			GJC_CODING_AGENT_DIR: agentDir,
-			GJC_SESSION_ID: sessionId,
-			GJC_LIFECYCLE_REQUEST_ID: "subprocess-proof",
-			GJC_SDK_LIFECYCLE_REQUEST: JSON.stringify(request),
+			VIB_AGENT_DIR: agentDir,
+			VIB_CODING_AGENT_DIR: agentDir,
+			VIB_SESSION_ID: sessionId,
+			VIB_LIFECYCLE_REQUEST_ID: "subprocess-proof",
+			VIB_SDK_LIFECYCLE_REQUEST: JSON.stringify(request),
 		},
 		stdout: "pipe",
 		stderr: "pipe",
@@ -449,7 +449,7 @@ async function liveLifecycleSession(root: string, agentDir: string, sessionId: s
 }
 
 test("lifecycle child ignores a stale marker until its current effect marker replaces it", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-stale-marker-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-stale-marker-"));
 	const agentDir = path.join(root, "agent");
 	try {
 		const { child, endpoint } = await liveLifecycleSession(root, agentDir, "stale-marker", true);
@@ -462,7 +462,7 @@ test("lifecycle child ignores a stale marker until its current effect marker rep
 }, 20_000);
 
 test("lifecycle host rejects a transcript replaced after strict authorization before it can be consumed", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-lifecycle-transcript-race-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-lifecycle-transcript-race-"));
 	const agentDir = path.join(root, "agent");
 	const session = SessionManager.create(root, SessionManager.managedDestination(root, agentDir));
 	try {
@@ -498,7 +498,7 @@ test("lifecycle host rejects a transcript replaced after strict authorization be
 						operation: "session.resume",
 						sessionId: candidate.id,
 						cwd: root,
-						stateRoot: path.join(root, ".gjc", "state"),
+						stateRoot: path.join(root, ".vib", "state"),
 						sessionPath,
 						...deriveLifecycleDeadlines(Date.now(), 4_000),
 						sessionIdentity: {
@@ -525,7 +525,7 @@ test("lifecycle host rejects a transcript replaced after strict authorization be
 });
 
 test("lifecycle fork rejects a source replaced after capture without destination residue", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-lifecycle-fork-race-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-lifecycle-fork-race-"));
 	const agentDir = path.join(root, "agent");
 	const sourceCwd = path.join(root, "source");
 	const targetCwd = path.join(root, "target");
@@ -566,7 +566,7 @@ test("lifecycle fork rejects a source replaced after capture without destination
 						operation: "session.fork",
 						sessionId: "fork-destination",
 						cwd: targetCwd,
-						stateRoot: path.join(targetCwd, ".gjc", "state"),
+						stateRoot: path.join(targetCwd, ".vib", "state"),
 						...deriveLifecycleDeadlines(Date.now(), 4_000),
 						sourceCwd,
 						sourceSessionId: candidate.id,
@@ -586,7 +586,7 @@ test("lifecycle fork rejects a source replaced after capture without destination
 			).rejects.toThrow("Lifecycle saved session authority changed while the session host forked it.");
 			expect(replaced).toBe(true);
 			const initializedEntries = await fs.readdir(destinationSessionDir);
-			expect(initializedEntries).toContain(".gjc-managed-session-scope.v2.json");
+			expect(initializedEntries).toContain(".vib-managed-session-scope.v2.json");
 			expect(initializedEntries.filter(entry => entry.endsWith(".jsonl"))).toEqual([]);
 		} finally {
 			SessionManager.captureTranscriptStrict = originalCapture;
@@ -622,13 +622,13 @@ test("broker derives and validates the exact five-timestamp lifecycle windows", 
 });
 
 test("session host exact cutoff writes proven pre-session absence", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-lifecycle-exact-cutoff-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-lifecycle-exact-cutoff-"));
 	const agentDir = path.join(root, "agent");
-	const stateRoot = path.join(root, ".gjc", "state");
+	const stateRoot = path.join(root, ".vib", "state");
 	const sessionId = "exact-cutoff";
 	const effectMarker = "exact-cutoff-marker";
 	const deadlines = deriveLifecycleDeadlines(1_000, 4_000);
-	const names = ["GJC_AGENT_DIR", "GJC_STATE_ROOT", "GJC_LIFECYCLE_REQUEST_ID", "GJC_SDK_LIFECYCLE_REQUEST"] as const;
+	const names = ["VIB_AGENT_DIR", "VIB_STATE_ROOT", "VIB_LIFECYCLE_REQUEST_ID", "VIB_SDK_LIFECYCLE_REQUEST"] as const;
 	const previous = names.map(name => process.env[name]);
 	try {
 		await fs.mkdir(path.join(stateRoot, "sdk"), { recursive: true });
@@ -636,10 +636,10 @@ test("session host exact cutoff writes proven pre-session absence", async () => 
 			path.join(stateRoot, "sdk", `${sessionId}.lifecycle.json`),
 			JSON.stringify({ pid: process.pid, effectMarker, incarnation: "test-incarnation" }),
 		);
-		process.env.GJC_AGENT_DIR = agentDir;
-		process.env.GJC_STATE_ROOT = stateRoot;
-		process.env.GJC_LIFECYCLE_REQUEST_ID = effectMarker;
-		process.env.GJC_SDK_LIFECYCLE_REQUEST = JSON.stringify({
+		process.env.VIB_AGENT_DIR = agentDir;
+		process.env.VIB_STATE_ROOT = stateRoot;
+		process.env.VIB_LIFECYCLE_REQUEST_ID = effectMarker;
+		process.env.VIB_SDK_LIFECYCLE_REQUEST = JSON.stringify({
 			operation: "session.create",
 			sessionId,
 			cwd: root,
@@ -677,21 +677,21 @@ test("session host exact cutoff writes proven pre-session absence", async () => 
 });
 
 test("session host fails closed when its lifecycle effect marker is corrupt", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-lifecycle-corrupt-marker-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-lifecycle-corrupt-marker-"));
 	const agentDir = path.join(root, "agent");
-	const stateRoot = path.join(root, ".gjc", "state");
+	const stateRoot = path.join(root, ".vib", "state");
 	const sessionId = "corrupt-marker";
 	const effectMarker = "corrupt-marker-effect";
 	const deadlines = deriveLifecycleDeadlines(1_000, 4_000);
-	const names = ["GJC_AGENT_DIR", "GJC_STATE_ROOT", "GJC_LIFECYCLE_REQUEST_ID", "GJC_SDK_LIFECYCLE_REQUEST"] as const;
+	const names = ["VIB_AGENT_DIR", "VIB_STATE_ROOT", "VIB_LIFECYCLE_REQUEST_ID", "VIB_SDK_LIFECYCLE_REQUEST"] as const;
 	const previous = names.map(name => process.env[name]);
 	try {
 		await fs.mkdir(path.join(stateRoot, "sdk"), { recursive: true });
 		await fs.writeFile(path.join(stateRoot, "sdk", `${sessionId}.lifecycle.json`), "{");
-		process.env.GJC_AGENT_DIR = agentDir;
-		process.env.GJC_STATE_ROOT = stateRoot;
-		process.env.GJC_LIFECYCLE_REQUEST_ID = effectMarker;
-		process.env.GJC_SDK_LIFECYCLE_REQUEST = JSON.stringify({
+		process.env.VIB_AGENT_DIR = agentDir;
+		process.env.VIB_STATE_ROOT = stateRoot;
+		process.env.VIB_LIFECYCLE_REQUEST_ID = effectMarker;
+		process.env.VIB_SDK_LIFECYCLE_REQUEST = JSON.stringify({
 			operation: "session.create",
 			sessionId,
 			cwd: root,
@@ -753,7 +753,7 @@ test("session host orphan watchdog resolves only after the broker publication st
 });
 
 test("startup failure artifacts reject symlink and oversize collisions while accepting byte-identical owner evidence", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-lifecycle-artifact-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-lifecycle-artifact-"));
 	const id = "artifact-session";
 	const marker = "artifact-marker";
 	const artifactPath = path.join(root, "sdk", `${id}.lifecycle.failure.${marker}.json`);
@@ -1023,13 +1023,13 @@ test("broker fails closed for failed or malformed Windows FILETIME process-incar
 });
 
 test("broker bounds a hanging WebSocket upgrade by the lifecycle deadline and cleans its child", async () => {
-	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-hanging-upgrade-"));
-	const stateRoot = path.join(agentDir, ".gjc", "state");
+	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-hanging-upgrade-"));
+	const stateRoot = path.join(agentDir, ".vib", "state");
 	const fixture = path.join(agentDir, "hanging-upgrade.js");
 	const fixturePidPath = path.join(agentDir, "hanging-upgrade.pid");
 	const fixtureRequestPath = path.join(agentDir, "hanging-upgrade.request.json");
-	const previousCommand = process.env.GJC_SDK_SESSION_COMMAND;
-	const previousUrl = process.env.GJC_HANGING_UPGRADE_URL;
+	const previousCommand = process.env.VIB_SDK_SESSION_COMMAND;
+	const previousUrl = process.env.VIB_HANGING_UPGRADE_URL;
 	const hangingUpgrade = Bun.serve({
 		hostname: "127.0.0.1",
 		port: 0,
@@ -1044,12 +1044,12 @@ test("broker bounds a hanging WebSocket upgrade by the lifecycle deadline and cl
 			fixture,
 			`
 const fs=require('fs'), path=require('path'), crypto=require('crypto');
-const root=process.env.GJC_STATE_ROOT, id=process.env.GJC_SESSION_ID, agent=process.env.GJC_AGENT_DIR;
+const root=process.env.VIB_STATE_ROOT, id=process.env.VIB_SESSION_ID, agent=process.env.VIB_AGENT_DIR;
 fs.mkdirSync(path.join(root,'sdk'),{recursive:true});
 fs.writeFileSync(${JSON.stringify(fixturePidPath)},String(process.pid));
-fs.writeFileSync(${JSON.stringify(fixtureRequestPath)},process.env.GJC_SDK_LIFECYCLE_REQUEST);
+fs.writeFileSync(${JSON.stringify(fixtureRequestPath)},process.env.VIB_SDK_LIFECYCLE_REQUEST);
 const endpoint=path.join(root,'sdk',id+'.json');
-fs.writeFileSync(endpoint,JSON.stringify({sessionId:id,pid:process.pid,url:process.env.GJC_HANGING_UPGRADE_URL,token:'hang'}));
+fs.writeFileSync(endpoint,JSON.stringify({sessionId:id,pid:process.pid,url:process.env.VIB_HANGING_UPGRADE_URL,token:'hang'}));
 const m=fs.statSync(endpoint).mtimeMs;
 const log=path.join(agent,'sdk','sessions','index.jsonl');fs.mkdirSync(path.dirname(log),{recursive:true});const indexSeq=fs.existsSync(log)?fs.readFileSync(log,'utf8').trim().split('\\n').filter(Boolean).length+1:1;
 const event={type:'host_registered',sessionId:id,locator:{repo:agent,stateRoot:root},endpointGeneration:1,pid:process.pid,endpointMtimeMs:m,version:1,indexSeq,ts:Date.now()};
@@ -1057,8 +1057,8 @@ event.checksum=crypto.createHash('sha256').update(JSON.stringify(event)).digest(
 setInterval(()=>{},1000);
 `,
 		);
-		process.env.GJC_SDK_SESSION_COMMAND = `${process.execPath} ${fixture}`;
-		process.env.GJC_HANGING_UPGRADE_URL = `ws://127.0.0.1:${hangingUpgrade.port}`;
+		process.env.VIB_SDK_SESSION_COMMAND = `${process.execPath} ${fixture}`;
+		process.env.VIB_HANGING_UPGRADE_URL = `ws://127.0.0.1:${hangingUpgrade.port}`;
 		await broker.start();
 		const started = Date.now();
 		const lifecycle = broker.handleRequest(
@@ -1093,10 +1093,10 @@ setInterval(()=>{},1000);
 				process.kill(fixturePid, "SIGKILL");
 			} catch {}
 		}
-		if (previousCommand === undefined) delete process.env.GJC_SDK_SESSION_COMMAND;
-		else process.env.GJC_SDK_SESSION_COMMAND = previousCommand;
-		if (previousUrl === undefined) delete process.env.GJC_HANGING_UPGRADE_URL;
-		else process.env.GJC_HANGING_UPGRADE_URL = previousUrl;
+		if (previousCommand === undefined) delete process.env.VIB_SDK_SESSION_COMMAND;
+		else process.env.VIB_SDK_SESSION_COMMAND = previousCommand;
+		if (previousUrl === undefined) delete process.env.VIB_HANGING_UPGRADE_URL;
+		else process.env.VIB_HANGING_UPGRADE_URL = previousUrl;
 		hangingUpgrade.stop(true);
 		await broker.stop();
 		await fs.rm(agentDir, { recursive: true, force: true });
@@ -1104,17 +1104,17 @@ setInterval(()=>{},1000);
 }, 10_000);
 
 test("broker rejects an endpoint-only lifecycle child that never authenticates session_ready", async () => {
-	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-life-"));
-	const stateRoot = path.join(agentDir, ".gjc", "state");
+	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-life-"));
+	const stateRoot = path.join(agentDir, ".vib", "state");
 	const fixture = path.join(agentDir, "fixture.js");
 	await fs.writeFile(
 		fixture,
 		`
 const fs=require('fs'), path=require('path'), crypto=require('crypto');
-const root=process.env.GJC_STATE_ROOT, id=process.env.GJC_SESSION_ID, agent=process.env.GJC_AGENT_DIR;
+const root=process.env.VIB_STATE_ROOT, id=process.env.VIB_SESSION_ID, agent=process.env.VIB_AGENT_DIR;
 fs.mkdirSync(path.join(root,'sdk'),{recursive:true});
 fs.writeFileSync(path.join(agent,'fixture.pid'),String(process.pid));
-fs.writeFileSync(path.join(agent,'fixture.request.json'),process.env.GJC_SDK_LIFECYCLE_REQUEST);
+fs.writeFileSync(path.join(agent,'fixture.request.json'),process.env.VIB_SDK_LIFECYCLE_REQUEST);
 
 fs.writeFileSync(path.join(root,'sdk',id+'.json'),JSON.stringify({sessionId:id,pid:process.pid,url:'ws://127.0.0.1:1',token:'fake'}));
 const m=fs.statSync(path.join(root,'sdk',id+'.json')).mtimeMs;
@@ -1124,8 +1124,8 @@ event.checksum=crypto.createHash('sha256').update(JSON.stringify(event)).digest(
 setInterval(()=>{},1000);
 `,
 	);
-	const previous = process.env.GJC_SDK_SESSION_COMMAND;
-	process.env.GJC_SDK_SESSION_COMMAND = `${process.execPath} ${fixture}`;
+	const previous = process.env.VIB_SDK_SESSION_COMMAND;
+	process.env.VIB_SDK_SESSION_COMMAND = `${process.execPath} ${fixture}`;
 	const broker = new Broker({ agentDir });
 	await broker.start();
 	try {
@@ -1160,20 +1160,20 @@ setInterval(()=>{},1000);
 		expect(JSON.stringify(listed.result)).toContain('"terminalUncertain":true');
 	} finally {
 		await broker.stop();
-		if (previous === undefined) delete process.env.GJC_SDK_SESSION_COMMAND;
-		else process.env.GJC_SDK_SESSION_COMMAND = previous;
+		if (previous === undefined) delete process.env.VIB_SDK_SESSION_COMMAND;
+		else process.env.VIB_SDK_SESSION_COMMAND = previous;
 		await fs.rm(agentDir, { recursive: true, force: true });
 	}
 }, 15_000);
 
 test("broker rejects a cross-workspace cold fork source before spawning", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-cross-workspace-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-cross-workspace-"));
 	const agentDir = path.join(root, "agent");
 	const sourceCwd = path.join(root, "source");
 	const targetCwd = path.join(root, "target");
 	const fixture = path.join(root, "spawned.js");
 	const spawnedPath = path.join(root, "spawned");
-	const previousCommand = process.env.GJC_SDK_SESSION_COMMAND;
+	const previousCommand = process.env.VIB_SDK_SESSION_COMMAND;
 	const broker = new Broker({ agentDir });
 	try {
 		await fs.mkdir(sourceCwd, { recursive: true });
@@ -1186,14 +1186,14 @@ test("broker rejects a cross-workspace cold fork source before spawning", async 
 			fixture,
 			`require("fs").writeFileSync(${JSON.stringify(spawnedPath)}, "spawned"); setInterval(() => {}, 1000);`,
 		);
-		process.env.GJC_SDK_SESSION_COMMAND = `${process.execPath} ${fixture}`;
+		process.env.VIB_SDK_SESSION_COMMAND = `${process.execPath} ${fixture}`;
 		await broker.start();
 		expect(
 			await broker.handleRequest(
 				"session.fork",
 				{
 					cwd: targetCwd,
-					stateRoot: path.join(targetCwd, ".gjc", "state"),
+					stateRoot: path.join(targetCwd, ".vib", "state"),
 					sourceSessionId: source.getSessionId(),
 					sourceSessionPath: sourcePath,
 				},
@@ -1208,30 +1208,30 @@ test("broker rejects a cross-workspace cold fork source before spawning", async 
 		});
 		await expect(fs.stat(spawnedPath)).rejects.toThrow();
 	} finally {
-		if (previousCommand === undefined) delete process.env.GJC_SDK_SESSION_COMMAND;
-		else process.env.GJC_SDK_SESSION_COMMAND = previousCommand;
+		if (previousCommand === undefined) delete process.env.VIB_SDK_SESSION_COMMAND;
+		else process.env.VIB_SDK_SESSION_COMMAND = previousCommand;
 		await broker.stop();
 		await fs.rm(root, { recursive: true, force: true });
 	}
 });
 
 test("broker rejects duplicate owned source candidates before spawning", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-duplicate-owned-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-duplicate-owned-"));
 	const agentDir = path.join(root, "agent");
-	const stateRoot = path.join(root, ".gjc", "state");
+	const stateRoot = path.join(root, ".vib", "state");
 	const spawnedPath = path.join(root, "spawned");
 	const command = path.join(root, "spawned.js");
 	const broker = new Broker({ agentDir });
-	const previousCommand = process.env.GJC_SDK_SESSION_COMMAND;
-	const previousRequestId = process.env.GJC_LIFECYCLE_REQUEST_ID;
-	const previousSessionId = process.env.GJC_SESSION_ID;
+	const previousCommand = process.env.VIB_SDK_SESSION_COMMAND;
+	const previousRequestId = process.env.VIB_LIFECYCLE_REQUEST_ID;
+	const previousSessionId = process.env.VIB_SESSION_ID;
 	try {
 		const scopeResult = await resolveManagedSessionScope({ cwd: root, agentDir });
 		expect(scopeResult.kind).toBe("resolved");
 		if (scopeResult.kind !== "resolved") throw new Error(scopeResult.message);
 		const createDuplicate = async (suffix: string) => {
-			process.env.GJC_LIFECYCLE_REQUEST_ID = `duplicate-prepare-${suffix}`;
-			process.env.GJC_SESSION_ID = "duplicate-owned-source";
+			process.env.VIB_LIFECYCLE_REQUEST_ID = `duplicate-prepare-${suffix}`;
+			process.env.VIB_SESSION_ID = "duplicate-owned-source";
 			const session = SessionManager.create(root, SessionManager.managedDestination(root, agentDir));
 			await session.ensureOnDisk();
 			const sourcePath = session.getSessionFile();
@@ -1242,8 +1242,8 @@ test("broker rejects duplicate owned source candidates before spawning", async (
 		};
 		const first = await createDuplicate("a");
 		const second = await createDuplicate("b");
-		delete process.env.GJC_LIFECYCLE_REQUEST_ID;
-		delete process.env.GJC_SESSION_ID;
+		delete process.env.VIB_LIFECYCLE_REQUEST_ID;
+		delete process.env.VIB_SESSION_ID;
 		const inventory = await listManagedSessionCandidates({ scope: scopeResult.scope });
 		expect(inventory.kind).toBe("complete");
 		if (inventory.kind !== "complete") throw new Error(inventory.message);
@@ -1258,7 +1258,7 @@ test("broker rejects duplicate owned source candidates before spawning", async (
 			command,
 			`require("fs").writeFileSync(${JSON.stringify(spawnedPath)}, "spawned"); setInterval(() => {}, 1000);`,
 		);
-		process.env.GJC_SDK_SESSION_COMMAND = `${process.execPath} ${command}`;
+		process.env.VIB_SDK_SESSION_COMMAND = `${process.execPath} ${command}`;
 		await broker.start();
 		expect(
 			await broker.handleRequest(
@@ -1295,21 +1295,21 @@ test("broker rejects duplicate owned source candidates before spawning", async (
 			.sessions.filter(session => session.sessionId === "duplicate-owned-source");
 		expect(registrations).toHaveLength(0);
 	} finally {
-		if (previousCommand === undefined) delete process.env.GJC_SDK_SESSION_COMMAND;
-		else process.env.GJC_SDK_SESSION_COMMAND = previousCommand;
-		if (previousRequestId === undefined) delete process.env.GJC_LIFECYCLE_REQUEST_ID;
-		else process.env.GJC_LIFECYCLE_REQUEST_ID = previousRequestId;
-		if (previousSessionId === undefined) delete process.env.GJC_SESSION_ID;
-		else process.env.GJC_SESSION_ID = previousSessionId;
+		if (previousCommand === undefined) delete process.env.VIB_SDK_SESSION_COMMAND;
+		else process.env.VIB_SDK_SESSION_COMMAND = previousCommand;
+		if (previousRequestId === undefined) delete process.env.VIB_LIFECYCLE_REQUEST_ID;
+		else process.env.VIB_LIFECYCLE_REQUEST_ID = previousRequestId;
+		if (previousSessionId === undefined) delete process.env.VIB_SESSION_ID;
+		else process.env.VIB_SESSION_ID = previousSessionId;
 		await broker.stop();
 		await fs.rm(root, { recursive: true, force: true });
 	}
 });
 
 test("broker directly resumes and forks a canonical cold saved session with scoped cleanup", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-canonical-cold-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-canonical-cold-"));
 	const agentDir = path.join(root, "agent");
-	const stateRoot = path.join(root, ".gjc", "state");
+	const stateRoot = path.join(root, ".vib", "state");
 	const broker = new Broker({ agentDir });
 	try {
 		const scopeResult = await resolveManagedSessionScope({ cwd: root, agentDir });
@@ -1541,9 +1541,9 @@ test("broker directly resumes and forks a canonical cold saved session with scop
 }, 50_000);
 
 test("broker replays one identity-bound lifecycle metadata cleanup plan after the first delete detach", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-delete-metadata-crash-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-delete-metadata-crash-"));
 	const agentDir = path.join(root, "agent");
-	const stateRoot = path.join(root, ".gjc", "state");
+	const stateRoot = path.join(root, ".vib", "state");
 	const saved = SessionManager.create(root, SessionManager.managedDestination(root, agentDir));
 	let crashing: Broker | undefined;
 	let reopened: Broker | undefined;
@@ -1615,9 +1615,9 @@ test("broker replays one identity-bound lifecycle metadata cleanup plan after th
 }, 30_000);
 
 test("broker uses incarnation-aware observations before fresh lifecycle metadata cleanup", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-delete-incarnation-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-delete-incarnation-"));
 	const agentDir = path.join(root, "agent");
-	const stateRoot = path.join(root, ".gjc", "state");
+	const stateRoot = path.join(root, ".vib", "state");
 	const broker = new Broker({ agentDir });
 	try {
 		await broker.start();
@@ -1673,9 +1673,9 @@ test("broker uses incarnation-aware observations before fresh lifecycle metadata
 	}
 }, 30_000);
 test("broker refuses fresh lifecycle cleanup when ready sibling has a different owner marker", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-mismatched-ready-cleanup-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-mismatched-ready-cleanup-"));
 	const agentDir = path.join(root, "agent");
-	const stateRoot = path.join(root, ".gjc", "state");
+	const stateRoot = path.join(root, ".vib", "state");
 	const saved = SessionManager.create(root, SessionManager.managedDestination(root, agentDir));
 	const broker = new Broker({ agentDir });
 	try {
@@ -1753,9 +1753,9 @@ test("broker refuses fresh lifecycle cleanup when ready sibling has a different 
 }, 30_000);
 
 test("broker preserves ready-only lifecycle metadata without canonical marker authority during fresh delete", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-ready-only-cleanup-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-ready-only-cleanup-"));
 	const agentDir = path.join(root, "agent");
-	const stateRoot = path.join(root, ".gjc", "state");
+	const stateRoot = path.join(root, ".vib", "state");
 	const saved = SessionManager.create(root, SessionManager.managedDestination(root, agentDir));
 	const broker = new Broker({ agentDir });
 	try {
@@ -1811,13 +1811,13 @@ test("broker preserves ready-only lifecycle metadata without canonical marker au
 }, 30_000);
 
 test("broker replays an unmarked base metadata cleanup receipt and rejects a replaced ready sibling after marker loss", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-legacy-metadata-replay-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-legacy-metadata-replay-"));
 	const agentDir = path.join(root, "agent");
-	const stateRoot = path.join(root, ".gjc", "state");
+	const stateRoot = path.join(root, ".vib", "state");
 	const sessionId = "legacy-metadata-replay";
 	const markerPath = path.join(stateRoot, "sdk", `${sessionId}.lifecycle.json`);
 	const readyPath = path.join(stateRoot, "sdk", `${sessionId}.lifecycle.ready.json`);
-	const plannedPath = path.join(stateRoot, "sdk", `.gjc-delete-base-${sessionId}.lifecycle.json`);
+	const plannedPath = path.join(stateRoot, "sdk", `.vib-delete-base-${sessionId}.lifecycle.json`);
 	const request = { cwd: root, stateRoot, sessionId };
 	const key = "base-metadata-cleanup-replay";
 	let broker: Broker | undefined;
@@ -1915,7 +1915,7 @@ test("broker replays an unmarked base metadata cleanup receipt and rejects a rep
 		const mismatchedPlannedPath = path.join(
 			stateRoot,
 			"sdk",
-			`.gjc-delete-base-${mismatchedSessionId}.lifecycle.json`,
+			`.vib-delete-base-${mismatchedSessionId}.lifecycle.json`,
 		);
 		const replacedReady = {
 			pid: process.pid + 1,
@@ -1983,9 +1983,9 @@ test("broker replays an unmarked base metadata cleanup receipt and rejects a rep
 }, 30_000);
 
 test("broker rejects a corrupt completed lifecycle cleanup receipt when its ready sibling remains", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-completed-lifecycle-replay-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-completed-lifecycle-replay-"));
 	const agentDir = path.join(root, "agent");
-	const stateRoot = path.join(root, ".gjc", "state");
+	const stateRoot = path.join(root, ".vib", "state");
 	const sessionId = "completed-lifecycle-replay";
 	const markerPath = path.join(stateRoot, "sdk", `${sessionId}.lifecycle.json`);
 	const readyPath = path.join(stateRoot, "sdk", `${sessionId}.lifecycle.ready.json`);
@@ -2041,7 +2041,7 @@ test("broker rejects a corrupt completed lifecycle cleanup receipt when its read
 								attempt: 1,
 								plannedPath: path.join(
 									path.dirname(markerPath),
-									`.gjc-delete-marker-${sessionId}.lifecycle.json`,
+									`.vib-delete-marker-${sessionId}.lifecycle.json`,
 								),
 
 								completed: true,
@@ -2067,9 +2067,9 @@ test("broker rejects a corrupt completed lifecycle cleanup receipt when its read
 }, 30_000);
 
 test("broker rejects malformed lifecycle cleanup receipts without mutating metadata", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-malformed-lifecycle-replay-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-malformed-lifecycle-replay-"));
 	const agentDir = path.join(root, "agent");
-	const stateRoot = path.join(root, ".gjc", "state");
+	const stateRoot = path.join(root, ".vib", "state");
 	const sessionId = "malformed-lifecycle-replay";
 	const markerPath = path.join(stateRoot, "sdk", `${sessionId}.lifecycle.json`);
 	const readyPath = path.join(stateRoot, "sdk", `${sessionId}.lifecycle.ready.json`);
@@ -2096,7 +2096,7 @@ test("broker rejects malformed lifecycle cleanup receipts without mutating metad
 			path: markerPath,
 			identity,
 			attempt: 1,
-			plannedPath: path.join(stateRoot, "sdk", ".gjc-delete-malformed-marker"),
+			plannedPath: path.join(stateRoot, "sdk", ".vib-delete-malformed-marker"),
 		};
 		const malformed = [
 			{ lifecycleFiles: [null] },
@@ -2129,9 +2129,9 @@ test("broker rejects malformed lifecycle cleanup receipts without mutating metad
 });
 
 test("broker rejects oversized lifecycle marker and readiness receipts before hashing or unlinking", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-oversized-lifecycle-replay-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-oversized-lifecycle-replay-"));
 	const agentDir = path.join(root, "agent");
-	const stateRoot = path.join(root, ".gjc", "state");
+	const stateRoot = path.join(root, ".vib", "state");
 	const sessionId = "oversized-lifecycle-replay";
 	const markerPath = path.join(stateRoot, "sdk", `${sessionId}.lifecycle.json`);
 	const readyPath = path.join(stateRoot, "sdk", `${sessionId}.lifecycle.ready.json`);
@@ -2162,13 +2162,13 @@ test("broker rejects oversized lifecycle marker and readiness receipts before ha
 				path: markerPath,
 				identity: await capture(markerPath),
 				attempt: 1,
-				plannedPath: path.join(stateRoot, "sdk", ".gjc-delete-oversized-marker"),
+				plannedPath: path.join(stateRoot, "sdk", ".vib-delete-oversized-marker"),
 			},
 			{
 				path: readyPath,
 				identity: await capture(readyPath),
 				attempt: 1,
-				plannedPath: path.join(stateRoot, "sdk", ".gjc-delete-oversized-ready"),
+				plannedPath: path.join(stateRoot, "sdk", ".vib-delete-oversized-ready"),
 			},
 		],
 	});
@@ -2197,9 +2197,9 @@ test("broker rejects oversized lifecycle marker and readiness receipts before ha
 });
 
 test("broker rejects duplicate lifecycle marker replay authorities without unlinking siblings", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-duplicate-lifecycle-replay-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-duplicate-lifecycle-replay-"));
 	const agentDir = path.join(root, "agent");
-	const stateRoot = path.join(root, ".gjc", "state");
+	const stateRoot = path.join(root, ".vib", "state");
 	const sessionId = "duplicate-lifecycle-replay";
 	const markerPath = path.join(stateRoot, "sdk", `${sessionId}.lifecycle.json`);
 	const readyPath = path.join(stateRoot, "sdk", `${sessionId}.lifecycle.ready.json`);
@@ -2249,8 +2249,8 @@ test("broker rejects duplicate lifecycle marker replay authorities without unlin
 						sessionId,
 						metadataRoot: stateRoot,
 						lifecycleFiles: [
-							cleanupFile(path.join(stateRoot, "sdk", ".gjc-delete-one")),
-							cleanupFile(path.join(stateRoot, "sdk", ".gjc-delete-two")),
+							cleanupFile(path.join(stateRoot, "sdk", ".vib-delete-one")),
+							cleanupFile(path.join(stateRoot, "sdk", ".vib-delete-two")),
 						],
 					},
 				},
@@ -2270,9 +2270,9 @@ test("broker rejects duplicate lifecycle marker replay authorities without unlin
 	}
 }, 30_000);
 test("broker rejects a ready-only lifecycle replay entry without marker authority", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-ready-only-replay-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-ready-only-replay-"));
 	const agentDir = path.join(root, "agent");
-	const stateRoot = path.join(root, ".gjc", "state");
+	const stateRoot = path.join(root, ".vib", "state");
 	const sessionId = "ready-only-lifecycle-replay";
 	const readyPath = path.join(stateRoot, "sdk", `${sessionId}.lifecycle.ready.json`);
 	const request = { cwd: root, stateRoot, sessionId };
@@ -2314,7 +2314,7 @@ test("broker rejects a ready-only lifecycle replay entry without marker authorit
 									sha256: createHash("sha256").update(readyBytes).digest("hex"),
 								},
 								attempt: 1,
-								plannedPath: path.join(stateRoot, "sdk", ".gjc-delete-ready-only"),
+								plannedPath: path.join(stateRoot, "sdk", ".vib-delete-ready-only"),
 							},
 						],
 					},
@@ -2334,9 +2334,9 @@ test("broker rejects a ready-only lifecycle replay entry without marker authorit
 	}
 }, 30_000);
 test("broker fails closed when a lifecycle ready sibling is swapped after marker reconciliation", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-lifecycle-swap-replay-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-lifecycle-swap-replay-"));
 	const agentDir = path.join(root, "agent");
-	const stateRoot = path.join(root, ".gjc", "state");
+	const stateRoot = path.join(root, ".vib", "state");
 	const sessionId = "lifecycle-swap-replay";
 	const markerPath = path.join(stateRoot, "sdk", `${sessionId}.lifecycle.json`);
 	const readyPath = path.join(stateRoot, "sdk", `${sessionId}.lifecycle.ready.json`);
@@ -2393,7 +2393,7 @@ test("broker fails closed when a lifecycle ready sibling is swapped after marker
 								sha256: createHash("sha256").update(bytes).digest("hex"),
 							},
 							attempt: 1,
-							plannedPath: path.join(stateRoot, "sdk", `.gjc-delete-swap-${path.basename(file)}`),
+							plannedPath: path.join(stateRoot, "sdk", `.vib-delete-swap-${path.basename(file)}`),
 						})),
 					},
 				},
@@ -2418,12 +2418,12 @@ test("broker fails closed when a lifecycle ready sibling is swapped after marker
 	}
 }, 30_000);
 test("broker terminalizes default command resolver failures", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-resolver-failure-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-resolver-failure-"));
 	const agentDir = path.join(root, "agent");
-	const previousCommand = process.env.GJC_SDK_SESSION_COMMAND;
+	const previousCommand = process.env.VIB_SDK_SESSION_COMMAND;
 	const broker = new Broker({ agentDir });
 	try {
-		delete process.env.GJC_SDK_SESSION_COMMAND;
+		delete process.env.VIB_SDK_SESSION_COMMAND;
 		setLifecycleCommandResolverForTest(broker, () => {
 			throw new Error("SDK internal launch refused: compiled-runtime marker evidence is inconsistent.");
 		});
@@ -2431,7 +2431,7 @@ test("broker terminalizes default command resolver failures", async () => {
 		const requestId = "resolver-failure-terminal-receipt";
 		const response = await broker.handleRequest(
 			"session.create",
-			{ cwd: root, stateRoot: path.join(root, ".gjc", "state") },
+			{ cwd: root, stateRoot: path.join(root, ".vib", "state") },
 			requestId,
 		);
 		expect(response).toEqual({
@@ -2445,7 +2445,7 @@ test("broker terminalizes default command resolver failures", async () => {
 		expect(
 			await broker.handleRequest(
 				"session.create",
-				{ cwd: root, stateRoot: path.join(root, ".gjc", "state") },
+				{ cwd: root, stateRoot: path.join(root, ".vib", "state") },
 				requestId,
 			),
 		).toEqual(response);
@@ -2457,18 +2457,18 @@ test("broker terminalizes default command resolver failures", async () => {
 		expect(terminal?.response).toEqual(response);
 	} finally {
 		setLifecycleCommandResolverForTest(broker, undefined);
-		if (previousCommand === undefined) delete process.env.GJC_SDK_SESSION_COMMAND;
-		else process.env.GJC_SDK_SESSION_COMMAND = previousCommand;
+		if (previousCommand === undefined) delete process.env.VIB_SDK_SESSION_COMMAND;
+		else process.env.VIB_SDK_SESSION_COMMAND = previousCommand;
 		await broker.stop();
 		await fs.rm(root, { recursive: true, force: true });
 	}
 });
 
 test("broker preserves spawn_failed when the ChildProcess emits an error before PID ownership", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-child-error-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-child-error-"));
 	const broker = new Broker({ agentDir: path.join(root, "agent") });
 	try {
-		setLifecycleCommandResolverForTest(broker, () => ({ file: path.join(root, "missing-gjc"), args: [] }));
+		setLifecycleCommandResolverForTest(broker, () => ({ file: path.join(root, "missing-vib"), args: [] }));
 		await broker.start();
 		await expect(
 			broker.handleRequest("session.create", { cwd: root }, "child-error-before-pid"),
@@ -2484,8 +2484,8 @@ test("broker preserves spawn_failed when the ChildProcess emits an error before 
 });
 
 test("reaps only lifecycle markers whose exact owner is proven dead", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-lifecycle-marker-reap-"));
-	const sdk = path.join(root, ".gjc", "state", "sdk");
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-lifecycle-marker-reap-"));
+	const sdk = path.join(root, ".vib", "state", "sdk");
 	const deadId = "dead-session";
 	const liveId = "live-session";
 	const unreadableId = "unreadable-session";
@@ -2511,8 +2511,8 @@ test("reaps only lifecycle markers whose exact owner is proven dead", async () =
 });
 
 test("bounds stale lifecycle marker inspection even when candidates are not reapable", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-lifecycle-marker-limit-"));
-	const stateRoot = path.join(root, ".gjc", "state");
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-lifecycle-marker-limit-"));
+	const stateRoot = path.join(root, ".vib", "state");
 	const sdk = path.join(stateRoot, "sdk");
 	const originalKill = process.kill;
 	let observations = 0;
@@ -2535,8 +2535,8 @@ test("bounds stale lifecycle marker inspection even when candidates are not reap
 });
 
 test("does not follow lifecycle sdk symlinks or partially reap an unsafe ready sibling", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-lifecycle-marker-safety-"));
-	const stateRoot = path.join(root, ".gjc", "state");
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-lifecycle-marker-safety-"));
+	const stateRoot = path.join(root, ".vib", "state");
 	const redirectedSdk = path.join(root, "redirected-sdk");
 	const dead = { pid: 999_999_999, effectMarker: "dead", incarnation: "linux:1" };
 	try {
@@ -2562,7 +2562,7 @@ test("does not follow lifecycle sdk symlinks or partially reap an unsafe ready s
 });
 
 test("retains the concrete spawn failure when cleanup proof is unavailable", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-spawn-failure-cause-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-spawn-failure-cause-"));
 	const agentDir = path.join(root, "agent");
 	const broker = new Broker({ agentDir });
 	try {
@@ -2586,17 +2586,17 @@ test("retains the concrete spawn failure when cleanup proof is unavailable", asy
 });
 
 test("broker rejects invalid and oversized readiness timeouts before spawning", async () => {
-	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-timeout-"));
+	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-timeout-"));
 	const fixture = path.join(agentDir, "spawned.js");
 	const spawnedPath = path.join(agentDir, "spawned");
-	const previousCommand = process.env.GJC_SDK_SESSION_COMMAND;
+	const previousCommand = process.env.VIB_SDK_SESSION_COMMAND;
 	const broker = new Broker({ agentDir });
 	try {
 		await fs.writeFile(
 			fixture,
 			`require("fs").writeFileSync(${JSON.stringify(spawnedPath)}, "spawned"); setInterval(() => {}, 1000);`,
 		);
-		process.env.GJC_SDK_SESSION_COMMAND = `${process.execPath} ${fixture}`;
+		process.env.VIB_SDK_SESSION_COMMAND = `${process.execPath} ${fixture}`;
 		await broker.start();
 		for (const readinessTimeoutMs of [0, 60_001]) {
 			expect(
@@ -2615,25 +2615,25 @@ test("broker rejects invalid and oversized readiness timeouts before spawning", 
 		}
 		await expect(fs.stat(spawnedPath)).rejects.toThrow();
 	} finally {
-		if (previousCommand === undefined) delete process.env.GJC_SDK_SESSION_COMMAND;
-		else process.env.GJC_SDK_SESSION_COMMAND = previousCommand;
+		if (previousCommand === undefined) delete process.env.VIB_SDK_SESSION_COMMAND;
+		else process.env.VIB_SDK_SESSION_COMMAND = previousCommand;
 		await broker.stop();
 		await fs.rm(agentDir, { recursive: true, force: true });
 	}
 });
 
 test("broker propagates an owned lifecycle startup failure without semantic readiness or endpoint survivors", async () => {
-	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-child-exit-"));
+	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-child-exit-"));
 	const fixture = path.join(agentDir, "exit.js");
 	const sessionIdPath = path.join(agentDir, "session-id");
-	const previousCommand = process.env.GJC_SDK_SESSION_COMMAND;
+	const previousCommand = process.env.VIB_SDK_SESSION_COMMAND;
 	const broker = new Broker({ agentDir });
 	try {
 		await fs.writeFile(
 			fixture,
-			`require('fs').writeFileSync(${JSON.stringify(sessionIdPath)}, process.env.GJC_SESSION_ID); setTimeout(() => process.exit(0), 100);`,
+			`require('fs').writeFileSync(${JSON.stringify(sessionIdPath)}, process.env.VIB_SESSION_ID); setTimeout(() => process.exit(0), 100);`,
 		);
-		process.env.GJC_SDK_SESSION_COMMAND = `${process.execPath} ${fixture}`;
+		process.env.VIB_SDK_SESSION_COMMAND = `${process.execPath} ${fixture}`;
 		await broker.start();
 		const started = Date.now();
 		const response = await broker.handleRequest(
@@ -2646,32 +2646,32 @@ test("broker propagates an owned lifecycle startup failure without semantic read
 		expect(Date.now() - started).toBeLessThan(1_000);
 		const sessionId = await fs.readFile(sessionIdPath, "utf8");
 		await expect(
-			fs.stat(path.join(agentDir, ".gjc", "state", "sdk", `${sessionId}.lifecycle.ready.json`)),
+			fs.stat(path.join(agentDir, ".vib", "state", "sdk", `${sessionId}.lifecycle.ready.json`)),
 		).rejects.toThrow();
-		await expect(fs.stat(path.join(agentDir, ".gjc", "state", "sdk", `${sessionId}.json`))).rejects.toThrow();
+		await expect(fs.stat(path.join(agentDir, ".vib", "state", "sdk", `${sessionId}.json`))).rejects.toThrow();
 		expect(await broker.handleRequest("session.list", {})).toMatchObject({
 			ok: true,
 			result: { sessions: [{ sessionId, terminalUncertain: true }] },
 		});
 	} finally {
-		if (previousCommand === undefined) delete process.env.GJC_SDK_SESSION_COMMAND;
-		else process.env.GJC_SDK_SESSION_COMMAND = previousCommand;
+		if (previousCommand === undefined) delete process.env.VIB_SDK_SESSION_COMMAND;
+		else process.env.VIB_SDK_SESSION_COMMAND = previousCommand;
 		await broker.stop();
 		await fs.rm(agentDir, { recursive: true, force: true });
 	}
 });
 
 test("broker preserves a code-less lifecycle startup failure message", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-startup-message-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-startup-message-"));
 	const agentDir = path.join(root, "agent");
 	const fixture = path.join(root, "startup-failure.ts");
-	const previousCommand = process.env.GJC_SDK_SESSION_COMMAND;
+	const previousCommand = process.env.VIB_SDK_SESSION_COMMAND;
 	const broker = new Broker({ agentDir });
 	try {
 		await fs.writeFile(
 			fixture,
 			`import { writeSessionLifecycleFailure } from ${JSON.stringify(path.resolve(import.meta.dir, "../src/sdk/broker/lifecycle.ts"))};
-const request = JSON.parse(process.env.GJC_SDK_LIFECYCLE_REQUEST!);
+const request = JSON.parse(process.env.VIB_SDK_LIFECYCLE_REQUEST!);
 await writeSessionLifecycleFailure(
 	request.stateRoot,
 	request.sessionId,
@@ -2682,7 +2682,7 @@ await writeSessionLifecycleFailure(
 await Bun.sleep(60_000);
 `,
 		);
-		process.env.GJC_SDK_SESSION_COMMAND = `${process.execPath} ${fixture}`;
+		process.env.VIB_SDK_SESSION_COMMAND = `${process.execPath} ${fixture}`;
 		await broker.start();
 		const response = await broker.handleRequest(
 			"session.create",
@@ -2694,18 +2694,18 @@ await Bun.sleep(60_000);
 			error: { code: "spawn_failed", message: "owned synthetic startup failure" },
 		});
 	} finally {
-		if (previousCommand === undefined) delete process.env.GJC_SDK_SESSION_COMMAND;
-		else process.env.GJC_SDK_SESSION_COMMAND = previousCommand;
+		if (previousCommand === undefined) delete process.env.VIB_SDK_SESSION_COMMAND;
+		else process.env.VIB_SDK_SESSION_COMMAND = previousCommand;
 		await broker.stop();
 		await fs.rm(root, { recursive: true, force: true });
 	}
 });
 
 test("broker replays immutable lifecycle cleanup after a crash immediately after an exact detach", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-ledger-crash-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-ledger-crash-"));
 	const agentDir = path.join(root, "agent");
 	const fixture = path.join(root, "owned-startup-failure.ts");
-	const previousCommand = process.env.GJC_SDK_SESSION_COMMAND;
+	const previousCommand = process.env.VIB_SDK_SESSION_COMMAND;
 	let crashing: Broker | undefined;
 	let reopened: Broker | undefined;
 	let normal: Broker | undefined;
@@ -2717,11 +2717,11 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { SessionIndex } from ${JSON.stringify(path.resolve(import.meta.dir, "../src/sdk/broker/session-index.ts"))};
 import { writeSessionLifecycleFailure } from ${JSON.stringify(path.resolve(import.meta.dir, "../src/sdk/broker/lifecycle.ts"))};
-const request = JSON.parse(process.env.GJC_SDK_LIFECYCLE_REQUEST!);
+const request = JSON.parse(process.env.VIB_SDK_LIFECYCLE_REQUEST!);
 const endpoint = path.join(request.stateRoot, "sdk", request.sessionId + ".json");
 await fs.mkdir(path.dirname(endpoint), { recursive: true, mode: 0o700 });
 await fs.writeFile(endpoint, JSON.stringify({ sessionId: request.sessionId, pid: process.pid, url: "ws://127.0.0.1:1", token: "owned-startup-failure" }), { mode: 0o600 });
-const index = await new SessionIndex(process.env.GJC_AGENT_DIR!).open();
+const index = await new SessionIndex(process.env.VIB_AGENT_DIR!).open();
 const endpointGeneration = 1;
 await index.append({ type: "host_registered", sessionId: request.sessionId, locator: { repo: request.cwd, stateRoot: request.stateRoot }, endpointGeneration, pid: process.pid, endpointMtimeMs: (await fs.stat(endpoint)).mtimeMs, lifecycleRequestId: request.effectMarker });
 const source = await fs.readFile(request.sessionPath);
@@ -2732,7 +2732,7 @@ await index.append({ type: "host_unregistered", sessionId: request.sessionId, lo
 await fs.rm(endpoint);
 `,
 		);
-		process.env.GJC_SDK_SESSION_COMMAND = `${process.execPath} ${fixture}`;
+		process.env.VIB_SDK_SESSION_COMMAND = `${process.execPath} ${fixture}`;
 		const saved = SessionManager.create(root, SessionManager.managedDestination(root, agentDir));
 		await saved.ensureOnDisk();
 		const sessionId = saved.getSessionId();
@@ -2767,13 +2767,13 @@ await fs.rm(endpoint);
 						expect.objectContaining({
 							path: expect.stringContaining(`${sessionId}.lifecycle.failure.`),
 							identity: expect.objectContaining({ sha256: expect.any(String) }),
-							plannedPath: expect.stringContaining(".gjc-delete-"),
+							plannedPath: expect.stringContaining(".vib-delete-"),
 						}),
 					]),
 				},
 			},
 		});
-		const stateRoot = path.join(root, ".gjc", "state", "sdk");
+		const stateRoot = path.join(root, ".vib", "state", "sdk");
 		const artifact = path.join(stateRoot, `${sessionId}.lifecycle.failure.${persisted.effectMarker}.json`);
 		const marker = path.join(stateRoot, `${sessionId}.lifecycle.json`);
 		await expect(fs.stat(artifact)).rejects.toThrow();
@@ -2799,7 +2799,7 @@ await fs.rm(endpoint);
 		await reopened.stop();
 		reopened = undefined;
 
-		const normalRoot = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-ledger-normal-"));
+		const normalRoot = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-ledger-normal-"));
 		const normalAgentDir = path.join(normalRoot, "agent");
 		const normalSaved = SessionManager.create(
 			normalRoot,
@@ -2812,7 +2812,7 @@ await fs.rm(endpoint);
 			const normalSessionId = normalSaved.getSessionId();
 			await normalSaved.close();
 			await fs.copyFile(fixture, path.join(normalRoot, "owned-startup-failure.ts"));
-			process.env.GJC_SDK_SESSION_COMMAND = `${process.execPath} ${path.join(normalRoot, "owned-startup-failure.ts")}`;
+			process.env.VIB_SDK_SESSION_COMMAND = `${process.execPath} ${path.join(normalRoot, "owned-startup-failure.ts")}`;
 			normal = new Broker({ agentDir: normalAgentDir });
 			await normal.start();
 			const normalResponse = await normal.handleRequest(
@@ -2839,7 +2839,7 @@ await fs.rm(endpoint);
 				fs.stat(
 					path.join(
 						normalRoot,
-						".gjc",
+						".vib",
 						"state",
 						"sdk",
 						`${normalSessionId}.lifecycle.failure.${normalTerminal.effectMarker}.json`,
@@ -2847,7 +2847,7 @@ await fs.rm(endpoint);
 				),
 			).rejects.toThrow();
 			await expect(
-				fs.stat(path.join(normalRoot, ".gjc", "state", "sdk", `${normalSessionId}.lifecycle.json`)),
+				fs.stat(path.join(normalRoot, ".vib", "state", "sdk", `${normalSessionId}.lifecycle.json`)),
 			).rejects.toThrow();
 			expect({
 				crashAfterDetachRecovered: await Promise.all([
@@ -2864,13 +2864,13 @@ await fs.rm(endpoint);
 					fs.stat(
 						path.join(
 							normalRoot,
-							".gjc",
+							".vib",
 							"state",
 							"sdk",
 							`${normalSessionId}.lifecycle.failure.${normalTerminal.effectMarker}.json`,
 						),
 					),
-					fs.stat(path.join(normalRoot, ".gjc", "state", "sdk", `${normalSessionId}.lifecycle.json`)),
+					fs.stat(path.join(normalRoot, ".vib", "state", "sdk", `${normalSessionId}.lifecycle.json`)),
 				]).then(
 					() => false,
 					() => true,
@@ -2882,8 +2882,8 @@ await fs.rm(endpoint);
 			await fs.rm(normalRoot, { recursive: true, force: true });
 		}
 	} finally {
-		if (previousCommand === undefined) delete process.env.GJC_SDK_SESSION_COMMAND;
-		else process.env.GJC_SDK_SESSION_COMMAND = previousCommand;
+		if (previousCommand === undefined) delete process.env.VIB_SDK_SESSION_COMMAND;
+		else process.env.VIB_SDK_SESSION_COMMAND = previousCommand;
 		await reopened?.stop();
 		await crashing?.stop();
 		await fs.rm(root, { recursive: true, force: true });
@@ -2891,7 +2891,7 @@ await fs.rm(endpoint);
 }, 20_000);
 
 test("session index rejects a stale unregister from an earlier matching PID-generation registration", async () => {
-	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-session-index-unregister-"));
+	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-session-index-unregister-"));
 	const index = await new SessionIndex(agentDir).open();
 	const host = spawnDisposableHost();
 	const shared = {
@@ -2914,7 +2914,7 @@ test("session index rejects a stale unregister from an earlier matching PID-gene
 	}
 });
 test("session index proves ordinary host unregistration using a newer matching registration sequence", async () => {
-	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-session-index-ordinary-close-"));
+	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-session-index-ordinary-close-"));
 	const index = await new SessionIndex(agentDir).open();
 	const host = spawnDisposableHost();
 	const shared = {
@@ -2935,7 +2935,7 @@ test("session index proves ordinary host unregistration using a newer matching r
 });
 
 test("broker records the resolved worktree state root and preserves pre-child preparation failures", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-lifecycle-worktree-prechild-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-lifecycle-worktree-prechild-"));
 	const repo = path.join(root, "repo");
 	const agentDir = path.join(root, "agent");
 	const worktreeName = "conflict";
@@ -2972,7 +2972,7 @@ test("broker records the resolved worktree state root and preserves pre-child pr
 			"session.create",
 			{
 				cwd: repo,
-				stateRoot: path.join(repo, ".gjc", "state"),
+				stateRoot: path.join(repo, ".vib", "state"),
 				target: { worktree: { enabled: true, name: worktreeName } },
 			},
 			"pre-child-worktree-conflict",
@@ -2989,7 +2989,7 @@ test("broker records the resolved worktree state root and preserves pre-child pr
 		expect(terminal).toMatchObject({
 			response,
 			effectIntent: {
-				stateRoot: path.join(worktreeRoot, ".gjc", "state"),
+				stateRoot: path.join(worktreeRoot, ".vib", "state"),
 				childOwnershipEstablished: false,
 			},
 		});
@@ -2999,7 +2999,7 @@ test("broker records the resolved worktree state root and preserves pre-child pr
 	}
 }, 20_000);
 test("broker fails closed when the reopened terminal ledger cannot reproduce its response", async () => {
-	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-ledger-mismatch-"));
+	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-ledger-mismatch-"));
 	const broker = new Broker({ agentDir });
 	const originalReadTerminal = LifecycleLedger.prototype.readTerminal;
 	try {
@@ -3026,12 +3026,12 @@ test("broker fails closed when the reopened terminal ledger cannot reproduce its
 });
 
 test("broker rejects a ready foreign host for the spawned session id", async () => {
-	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-foreign-ready-"));
-	const stateRoot = path.join(agentDir, ".gjc", "state");
+	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-foreign-ready-"));
+	const stateRoot = path.join(agentDir, ".vib", "state");
 	const fixture = path.join(agentDir, "foreign.js");
 	const foreignIdPath = path.join(agentDir, "foreign-session-id");
-	const previousCommand = process.env.GJC_SDK_SESSION_COMMAND;
-	const previousEndpoint = process.env.GJC_FOREIGN_ENDPOINT_URL;
+	const previousCommand = process.env.VIB_SDK_SESSION_COMMAND;
+	const previousEndpoint = process.env.VIB_FOREIGN_ENDPOINT_URL;
 	let replayRequests = 0;
 	const foreign = Bun.serve({
 		hostname: "127.0.0.1",
@@ -3067,11 +3067,11 @@ test("broker rejects a ready foreign host for the spawned session id", async () 
 			fixture,
 			`
 const fs=require('fs'), path=require('path'), crypto=require('crypto');
-const root=process.env.GJC_STATE_ROOT, id=process.env.GJC_SESSION_ID, agent=process.env.GJC_AGENT_DIR;
+const root=process.env.VIB_STATE_ROOT, id=process.env.VIB_SESSION_ID, agent=process.env.VIB_AGENT_DIR;
 fs.mkdirSync(path.join(root,'sdk'),{recursive:true});
 fs.writeFileSync(path.join(agent,'foreign-session-id'),id);
 const endpoint=path.join(root,'sdk',id+'.json');
-fs.writeFileSync(endpoint,JSON.stringify({sessionId:id,pid:process.ppid,url:process.env.GJC_FOREIGN_ENDPOINT_URL,token:'foreign'}));
+fs.writeFileSync(endpoint,JSON.stringify({sessionId:id,pid:process.ppid,url:process.env.VIB_FOREIGN_ENDPOINT_URL,token:'foreign'}));
 const m=fs.statSync(endpoint).mtimeMs;
 const log=path.join(agent,'sdk','sessions','index.jsonl');fs.mkdirSync(path.dirname(log),{recursive:true});const indexSeq=fs.existsSync(log)?fs.readFileSync(log,'utf8').trim().split('\\n').filter(Boolean).length+1:1;
 const event={type:'host_registered',sessionId:id,locator:{repo:'foreign',stateRoot:root},endpointGeneration:1,pid:process.ppid,endpointMtimeMs:m,version:1,indexSeq,ts:Date.now()};
@@ -3079,8 +3079,8 @@ event.checksum=crypto.createHash('sha256').update(JSON.stringify(event)).digest(
 setInterval(()=>{},1000);
 `,
 		);
-		process.env.GJC_SDK_SESSION_COMMAND = `${process.execPath} ${fixture}`;
-		process.env.GJC_FOREIGN_ENDPOINT_URL = `ws://127.0.0.1:${foreign.port}`;
+		process.env.VIB_SDK_SESSION_COMMAND = `${process.execPath} ${fixture}`;
+		process.env.VIB_FOREIGN_ENDPOINT_URL = `ws://127.0.0.1:${foreign.port}`;
 		await broker.start();
 		expect(
 			await broker.handleRequest(
@@ -3092,10 +3092,10 @@ setInterval(()=>{},1000);
 		expect((await fs.readFile(foreignIdPath, "utf8")).length).toBeGreaterThan(0);
 		expect(replayRequests).toBe(0);
 	} finally {
-		if (previousCommand === undefined) delete process.env.GJC_SDK_SESSION_COMMAND;
-		else process.env.GJC_SDK_SESSION_COMMAND = previousCommand;
-		if (previousEndpoint === undefined) delete process.env.GJC_FOREIGN_ENDPOINT_URL;
-		else process.env.GJC_FOREIGN_ENDPOINT_URL = previousEndpoint;
+		if (previousCommand === undefined) delete process.env.VIB_SDK_SESSION_COMMAND;
+		else process.env.VIB_SDK_SESSION_COMMAND = previousCommand;
+		if (previousEndpoint === undefined) delete process.env.VIB_FOREIGN_ENDPOINT_URL;
+		else process.env.VIB_FOREIGN_ENDPOINT_URL = previousEndpoint;
 		foreign.stop(true);
 		await broker.stop();
 		await fs.rm(agentDir, { recursive: true, force: true });
@@ -3103,10 +3103,10 @@ setInterval(()=>{},1000);
 });
 
 test("broker fences ambiguous state roots from checkpoint, endpoint, and resume authority until one resolves", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-ambiguous-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-ambiguous-"));
 	const agentDir = path.join(root, "agent");
-	const stateRoot = path.join(root, ".gjc", "state");
-	const alternateStateRoot = path.join(root, ".gjc", "alternate-state");
+	const stateRoot = path.join(root, ".vib", "state");
+	const alternateStateRoot = path.join(root, ".vib", "alternate-state");
 	const broker = new Broker({ agentDir });
 	const source = SessionManager.create(root, SessionManager.managedDestination(root, agentDir));
 	await source.ensureOnDisk();
@@ -3237,11 +3237,11 @@ test("broker fences ambiguous state roots from checkpoint, endpoint, and resume 
 	}
 });
 test("broker promotes the lower-generation root after the higher-generation root terminates", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-ambiguous-reverse-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-ambiguous-reverse-"));
 	const agentDir = path.join(root, "agent");
-	const currentStateRoot = path.join(root, ".gjc", "state");
+	const currentStateRoot = path.join(root, ".vib", "state");
 	const alternateRepo = path.join(root, "alternate-worktree");
-	const alternateStateRoot = path.join(alternateRepo, ".gjc", "state");
+	const alternateStateRoot = path.join(alternateRepo, ".vib", "state");
 	const broker = new Broker({ agentDir });
 	const sessionId = "reverse-root";
 	const endpointPath = path.join(alternateStateRoot, "sdk", `${sessionId}.json`);
@@ -3302,7 +3302,7 @@ test("broker promotes the lower-generation root after the higher-generation root
 	}
 });
 test("broker refuses a stale registered PID when no durable effect marker proves ownership", async () => {
-	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-stale-"));
+	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-stale-"));
 	const stateRoot = path.join(agentDir, "state");
 	const broker = new Broker({ agentDir });
 	const host = spawnDisposableHost();
@@ -3328,11 +3328,11 @@ test("broker refuses a stale registered PID when no durable effect marker proves
 });
 
 test("broker closes a live host whose workspace state root is gone using its registered incarnation", async () => {
-	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-lost-workspace-"));
+	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-lost-workspace-"));
 	// The workspace — and with it the spawn-time lifecycle marker and endpoint —
 	// was deleted while the host kept running, which is exactly how an orphan that
 	// still serves its original source outlives every later close attempt.
-	const stateRoot = path.join(agentDir, "deleted-workspace", ".gjc", "state");
+	const stateRoot = path.join(agentDir, "deleted-workspace", ".vib", "state");
 	const child = Bun.spawn([process.execPath, "-e", "setInterval(() => {}, 1000)"], {
 		stdio: ["ignore", "ignore", "ignore"],
 	});
@@ -3396,7 +3396,7 @@ test("broker closes a live host whose workspace state root is gone using its reg
 }, 15_000);
 
 test("broker refuses same-generation close authority from a prior endpoint incarnation", async () => {
-	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-close-incarnation-"));
+	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-close-incarnation-"));
 	const stateRoot = path.join(agentDir, "state");
 	const sessionId = "successor";
 	const endpoint = path.join(stateRoot, "sdk", `${sessionId}.json`);
@@ -3443,9 +3443,9 @@ test("broker refuses same-generation close authority from a prior endpoint incar
 });
 
 test("dead endpoint cleanup preserves a successor rebound between capture and native unlink", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-dead-endpoint-rebind-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-dead-endpoint-rebind-"));
 	const agentDir = path.join(root, "agent");
-	const stateRoot = path.join(root, ".gjc", "state");
+	const stateRoot = path.join(root, ".vib", "state");
 	const sessionId = "dead-endpoint-rebind";
 	const endpointPath = path.join(stateRoot, "sdk", `${sessionId}.json`);
 	const successorPath = path.join(stateRoot, "sdk", `${sessionId}.successor.json`);
@@ -3528,7 +3528,7 @@ test("dead endpoint cleanup preserves a successor rebound between capture and na
 	}
 }, 20_000);
 test("broker rebinds implicit close only for a matching non-empty lifecycle request id", async () => {
-	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-close-rebind-"));
+	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-close-rebind-"));
 	const stateRoot = path.join(agentDir, "state");
 	const broker = new Broker({ agentDir });
 	const originalHandleRequest = broker.handleRequest.bind(broker);
@@ -3608,9 +3608,9 @@ test("broker rebinds implicit close only for a matching non-empty lifecycle requ
 	}
 });
 test("broker atomically reuses the indexed live owner for distinct resume keys", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-resume-live-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-resume-live-"));
 	const agentDir = path.join(root, "agent");
-	const stateRoot = path.join(root, ".gjc", "state");
+	const stateRoot = path.join(root, ".vib", "state");
 	const savedSession = SessionManager.create(root, SessionManager.managedDestination(root, agentDir));
 	await savedSession.ensureOnDisk();
 	const sessionId = savedSession.getSessionId();
@@ -3673,7 +3673,7 @@ test("broker atomically reuses the indexed live owner for distinct resume keys",
 	}
 });
 test("broker never signals a PID reused after its lifecycle marker was written", async () => {
-	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-reused-"));
+	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-reused-"));
 	const stateRoot = path.join(agentDir, "state");
 	const sessionId = "reused";
 	const endpoint = path.join(stateRoot, "sdk", `${sessionId}.json`);
@@ -3715,7 +3715,7 @@ test("broker never signals a PID reused after its lifecycle marker was written",
 	}
 });
 test("broker binds close-escalation terminal uncertainty to the indexed reused-pid incarnation", async () => {
-	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-reused-terminal-"));
+	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-reused-terminal-"));
 	const stateRoot = path.join(agentDir, "state");
 	const sessionId = "reused-terminal";
 	const endpointPath = path.join(stateRoot, "sdk", `${sessionId}.json`);
@@ -3817,7 +3817,7 @@ test("broker binds close-escalation terminal uncertainty to the indexed reused-p
 	}
 });
 test("broker records terminal uncertainty when SIGKILL re-verification fails after SIGTERM", async () => {
-	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-uncertain-"));
+	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-uncertain-"));
 	const stateRoot = path.join(agentDir, "state");
 	const sessionId = "unkillable";
 	const endpoint = path.join(stateRoot, "sdk", `${sessionId}.json`);
@@ -3873,8 +3873,8 @@ test("broker records terminal uncertainty when SIGKILL re-verification fails aft
 }, 10_000);
 
 test("reconcile_uncertain retires one dead create identity and refuses live hosts", async () => {
-	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-reconcile-"));
-	const stateRoot = path.join(agentDir, ".gjc", "state");
+	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-reconcile-"));
+	const stateRoot = path.join(agentDir, ".vib", "state");
 	const sessionId = "reconcile-proof";
 	const child = spawnDisposableHost();
 	const broker = new Broker({ agentDir });
@@ -4015,8 +4015,8 @@ test("reconcile_uncertain retires one dead create identity and refuses live host
 });
 
 test("reconcile_uncertain replays a ledger-stage receipt after deletion and same-ID replacement", async () => {
-	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-reconcile-delete-race-"));
-	const stateRoot = path.join(agentDir, ".gjc", "state");
+	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-reconcile-delete-race-"));
+	const stateRoot = path.join(agentDir, ".vib", "state");
 	const sessionId = "reconcile-delete-race";
 	const lifecycleRequestId = "reconcile-delete-effect";
 	const remoteCreateKey = "reconcile-delete-create";
@@ -4176,9 +4176,9 @@ test("reconcile_uncertain replays a ledger-stage receipt after deletion and same
 
 test("reconcile_uncertain fails closed when deletion wins the closure append race", async () => {
 	const agentDir = await fs.mkdtemp(
-		path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-reconcile-index-delete-race-"),
+		path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-reconcile-index-delete-race-"),
 	);
-	const stateRoot = path.join(agentDir, ".gjc", "state");
+	const stateRoot = path.join(agentDir, ".vib", "state");
 	const sessionId = "reconcile-index-delete-race";
 	const lifecycleRequestId = "reconcile-index-delete-effect";
 	const remoteCreateKey = "reconcile-index-delete-create";
@@ -4276,12 +4276,12 @@ test("reconcile_uncertain fails closed when deletion wins the closure append rac
 
 if (process.platform === "darwin") {
 	test("broker records terminal uncertainty when a spawned child incarnation is unreadable", async () => {
-		const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-incarnation-"));
-		const previousCommand = process.env.GJC_SDK_SESSION_COMMAND;
+		const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-incarnation-"));
+		const previousCommand = process.env.VIB_SDK_SESSION_COMMAND;
 		let incarnationReads = 0;
 		let childPid: number | undefined;
 		const broker = new Broker({ agentDir });
-		process.env.GJC_SDK_SESSION_COMMAND = "/bin/sleep 60";
+		process.env.VIB_SDK_SESSION_COMMAND = "/bin/sleep 60";
 		setProcessIncarnationForTest(broker, pid => {
 			childPid ??= pid;
 			return ++incarnationReads === 1 ? `test:${pid}` : undefined;
@@ -4301,8 +4301,8 @@ if (process.platform === "darwin") {
 				result: { sessions: [expect.objectContaining({ terminalUncertain: true })] },
 			});
 		} finally {
-			if (previousCommand === undefined) delete process.env.GJC_SDK_SESSION_COMMAND;
-			else process.env.GJC_SDK_SESSION_COMMAND = previousCommand;
+			if (previousCommand === undefined) delete process.env.VIB_SDK_SESSION_COMMAND;
+			else process.env.VIB_SDK_SESSION_COMMAND = previousCommand;
 			setProcessIncarnationForTest(broker, undefined);
 			const pid = childPid;
 			if (
@@ -4324,7 +4324,7 @@ if (process.platform === "darwin") {
 }
 
 test("dead-registration sweeps retain terminal rows without appending duplicate retirements", async () => {
-	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-sweep-terminal-"));
+	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-sweep-terminal-"));
 	const stateRoot = path.join(agentDir, "state");
 	const broker = new Broker({ agentDir });
 	const deadPid = 4_194_304;
@@ -4355,7 +4355,7 @@ test("dead-registration sweeps retain terminal rows without appending duplicate 
 	}
 });
 test("dead-registration sweep retains stale and uncertain live registrations", async () => {
-	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-sweep-proof-"));
+	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-sweep-proof-"));
 	const stateRoot = path.join(agentDir, "state");
 	const broker = new Broker({ agentDir });
 	const originalKill = process.kill;
@@ -4424,7 +4424,7 @@ test("dead-registration sweep retains stale and uncertain live registrations", a
 	}
 });
 test("dead-registration sweep retires a reused identity without signaling its replacement", async () => {
-	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-sweep-reused-"));
+	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-sweep-reused-"));
 	const stateRoot = path.join(agentDir, "state");
 	const broker = new Broker({ agentDir });
 	const replacement = spawnDisposableHost();
@@ -4458,7 +4458,7 @@ test("dead-registration sweep retires a reused identity without signaling its re
 	}
 });
 test("dead-registration sweep retires a dead losing root and preserves the live authority", async () => {
-	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-sweep-losing-root-"));
+	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-sweep-losing-root-"));
 	const liveStateRoot = path.join(agentDir, "live-state");
 	const deadStateRoot = path.join(agentDir, "dead-state");
 	const broker = new Broker({ agentDir });
@@ -4506,7 +4506,7 @@ test("dead-registration sweep retires a dead losing root and preserves the live 
 	}
 });
 test("dead-registration sweep retains terminal uncertainty appended after its snapshot", async () => {
-	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-sweep-race-"));
+	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-sweep-race-"));
 	const stateRoot = path.join(agentDir, "state");
 	const broker = new Broker({ agentDir });
 	const deadPid = 4_194_304;
@@ -4548,10 +4548,10 @@ test("dead-registration sweep retains terminal uncertainty appended after its sn
 });
 
 test("conditional unregister accepts a reconciled equivalent repository locator", async () => {
-	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-reconciled-repo-"));
+	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-reconciled-repo-"));
 	const repo = path.join(agentDir, "repo");
 	const repoAlias = path.join(agentDir, "repo-alias");
-	const stateRoot = path.join(repo, ".gjc", "state");
+	const stateRoot = path.join(repo, ".vib", "state");
 	const host = spawnDisposableHost();
 	try {
 		await fs.mkdir(repo, { recursive: true });
@@ -4594,9 +4594,9 @@ test("conditional unregister accepts a reconciled equivalent repository locator"
 });
 
 test("close preserves terminal uncertainty when conditional endpoint unregister is refused", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-close-unregister-race-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-close-unregister-race-"));
 	const agentDir = path.join(root, "agent");
-	const stateRoot = path.join(root, ".gjc", "state");
+	const stateRoot = path.join(root, ".vib", "state");
 	const broker = new Broker({ agentDir });
 	const deadPid = 4_194_304;
 	try {
@@ -4652,9 +4652,9 @@ test("close preserves terminal uncertainty when conditional endpoint unregister 
 });
 
 test("close removes an unchanged dead endpoint with a fractional nanosecond mtime", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-dead-mtime-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-dead-mtime-"));
 	const agentDir = path.join(root, "agent");
-	const stateRoot = path.join(root, ".gjc", "state");
+	const stateRoot = path.join(root, ".vib", "state");
 	const sessionId = "fractional-mtime";
 	const endpointPath = path.join(stateRoot, "sdk", `${sessionId}.json`);
 	const broker = new Broker({ agentDir });
@@ -4705,10 +4705,10 @@ test("close removes an unchanged dead endpoint with a fractional nanosecond mtim
 });
 
 test("startup cleanup accepts a payload-durable scrubbed endpoint placeholder", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-scrubbed-endpoint-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-scrubbed-endpoint-"));
 	const agentDir = path.join(root, "agent");
 	const fixture = path.join(root, "retained-startup-failure.ts");
-	const previousCommand = process.env.GJC_SDK_SESSION_COMMAND;
+	const previousCommand = process.env.VIB_SDK_SESSION_COMMAND;
 	const broker = new Broker({ agentDir });
 	try {
 		await fs.writeFile(
@@ -4718,11 +4718,11 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { SessionIndex } from ${JSON.stringify(path.resolve(import.meta.dir, "../src/sdk/broker/session-index.ts"))};
 import { writeSessionLifecycleFailure } from ${JSON.stringify(path.resolve(import.meta.dir, "../src/sdk/broker/lifecycle.ts"))};
-const request = JSON.parse(process.env.GJC_SDK_LIFECYCLE_REQUEST!);
+const request = JSON.parse(process.env.VIB_SDK_LIFECYCLE_REQUEST!);
 const endpoint = path.join(request.stateRoot, "sdk", request.sessionId + ".json");
 await fs.mkdir(path.dirname(endpoint), { recursive: true, mode: 0o700 });
 await fs.writeFile(endpoint, JSON.stringify({ sessionId: request.sessionId, pid: process.pid, url: "ws://127.0.0.1:1", token: "retained-startup-failure" }), { mode: 0o600 });
-const index = await new SessionIndex(process.env.GJC_AGENT_DIR!).open();
+const index = await new SessionIndex(process.env.VIB_AGENT_DIR!).open();
 const endpointGeneration = 1;
 await index.append({ type: "host_registered", sessionId: request.sessionId, locator: { repo: request.cwd, stateRoot: request.stateRoot }, endpointGeneration, pid: process.pid, endpointMtimeMs: (await fs.stat(endpoint)).mtimeMs, lifecycleRequestId: request.effectMarker });
 const source = await fs.readFile(request.sessionPath);
@@ -4732,18 +4732,18 @@ await writeSessionLifecycleFailure(request.stateRoot, request.sessionId, request
 await Bun.sleep(150);
 `,
 		);
-		process.env.GJC_SDK_SESSION_COMMAND = `${process.execPath} ${fixture}`;
+		process.env.VIB_SDK_SESSION_COMMAND = `${process.execPath} ${fixture}`;
 		const saved = SessionManager.create(root, SessionManager.managedDestination(root, agentDir));
 		await saved.ensureOnDisk();
 		const sessionId = saved.getSessionId();
 		const sessionPath = saved.getSessionFile();
 		if (!sessionPath) throw new Error("Expected persisted resume transcript.");
 		await saved.close();
-		const endpointPath = path.join(root, ".gjc", "state", "sdk", `${sessionId}.json`);
+		const endpointPath = path.join(root, ".vib", "state", "sdk", `${sessionId}.json`);
 		const hasPublishedFailure = (): boolean => {
 			try {
 				return syncFs
-					.readdirSync(path.join(root, ".gjc", "state", "sdk"))
+					.readdirSync(path.join(root, ".vib", "state", "sdk"))
 					.some(name => name.startsWith(`${sessionId}.lifecycle.failure.`));
 			} catch {
 				return false;
@@ -4772,7 +4772,7 @@ await Bun.sleep(150);
 					code: "cleanup_pending",
 					payloadDurable: true,
 					detachedPath,
-					retainedPlaceholderPath: path.join(path.dirname(pathname), ".gjc-exact-unlink-placeholder-fixture"),
+					retainedPlaceholderPath: path.join(path.dirname(pathname), ".vib-exact-unlink-placeholder-fixture"),
 				};
 			}
 			if (detachedPath && path.resolve(pathname) === detachedPath) {
@@ -4797,8 +4797,8 @@ await Bun.sleep(150);
 		expect(syncFs.lstatSync(detachedPath).size).toBe(0);
 		await expect(fs.access(endpointPath)).rejects.toThrow();
 	} finally {
-		if (previousCommand === undefined) delete process.env.GJC_SDK_SESSION_COMMAND;
-		else process.env.GJC_SDK_SESSION_COMMAND = previousCommand;
+		if (previousCommand === undefined) delete process.env.VIB_SDK_SESSION_COMMAND;
+		else process.env.VIB_SDK_SESSION_COMMAND = previousCommand;
 		setProcessIncarnationForTest(broker, undefined);
 		await broker.stop();
 		await fs.rm(root, { recursive: true, force: true });
@@ -4806,9 +4806,9 @@ await Bun.sleep(150);
 }, 15_000);
 
 test("idempotent lifecycle replay refreshes authority after a broker restart", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-replay-authority-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-replay-authority-"));
 	const agentDir = path.join(root, "agent");
-	const stateRoot = path.join(root, ".gjc", "state");
+	const stateRoot = path.join(root, ".vib", "state");
 	const sessionId = "replay-authority";
 	const endpointPath = path.join(stateRoot, "sdk", `${sessionId}.json`);
 	let initial: Broker | undefined;
@@ -4893,7 +4893,7 @@ test("idempotent lifecycle replay refreshes authority after a broker restart", a
 });
 
 test("broker starts from the production broker entrypoint with no sessions", async () => {
-	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-zero-"));
+	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-zero-"));
 	const broker = new Broker({ agentDir });
 	try {
 		const discovery = await broker.start();
@@ -4910,7 +4910,7 @@ test("broker starts from the production broker entrypoint with no sessions", asy
 });
 
 test("shipped sdk session-host-internal stays alive only after a semantic ready event and serves real requests", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-sdk-subprocess-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-sdk-subprocess-"));
 	const agentDir = path.join(root, "agent");
 	const sessionId = "shipped-subprocess";
 	brokerDirs.push(agentDir);
@@ -4949,10 +4949,10 @@ test("shipped sdk session-host-internal stays alive only after a semantic ready 
 }, 20_000);
 
 test("session-host-internal exits with a sanitized startup failure before writing lifecycle readiness", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-sdk-startup-failure-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-sdk-startup-failure-"));
 	const agentDir = path.join(root, "agent");
 	const sessionId = "startup-failure";
-	const stateRoot = path.join(root, ".gjc", "state");
+	const stateRoot = path.join(root, ".vib", "state");
 	try {
 		await fs.mkdir(path.dirname(stateRoot), { recursive: true });
 		await fs.writeFile(stateRoot, "not-a-directory");
@@ -4961,11 +4961,11 @@ test("session-host-internal exits with a sanitized startup failure before writin
 			env: {
 				...process.env,
 				HOME: root,
-				GJC_AGENT_DIR: agentDir,
-				GJC_CODING_AGENT_DIR: agentDir,
-				GJC_SESSION_ID: sessionId,
-				GJC_LIFECYCLE_REQUEST_ID: "startup-failure-proof",
-				GJC_SDK_LIFECYCLE_REQUEST: JSON.stringify({
+				VIB_AGENT_DIR: agentDir,
+				VIB_CODING_AGENT_DIR: agentDir,
+				VIB_SESSION_ID: sessionId,
+				VIB_LIFECYCLE_REQUEST_ID: "startup-failure-proof",
+				VIB_SDK_LIFECYCLE_REQUEST: JSON.stringify({
 					operation: "session.create",
 					sessionId,
 					cwd: root,
@@ -4992,16 +4992,16 @@ test("session-host-internal exits with a sanitized startup failure before writin
 
 test("production lifecycle factory failure preserves reason and redacts collected secrets", async () => {
 	if (process.platform !== "linux") return;
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-sdk-factory-failure-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-sdk-factory-failure-"));
 	const agentDir = path.join(root, "agent");
 	const broker = new Broker({ agentDir });
-	const names = ["GJC_SDK_TEST_FACTORY_FAILURE", "GJC_SDK_TEST_FACTORY_SECRET"] as const;
+	const names = ["VIB_SDK_TEST_FACTORY_FAILURE", "VIB_SDK_TEST_FACTORY_SECRET"] as const;
 	const previous = names.map(name => process.env[name]);
 	const bare = "factory-bare-secret";
 	const overlap = `${bare}-overlap`;
 	const normalized = "factory-secret０".normalize("NFKC");
-	process.env.GJC_SDK_TEST_FACTORY_FAILURE = root;
-	process.env.GJC_SDK_TEST_FACTORY_SECRET = `${overlap} ${normalized} ${"x".repeat(600)}`;
+	process.env.VIB_SDK_TEST_FACTORY_FAILURE = root;
+	process.env.VIB_SDK_TEST_FACTORY_SECRET = `${overlap} ${normalized} ${"x".repeat(600)}`;
 	try {
 		await broker.start();
 		const response = await broker.handleRequest(
@@ -5072,11 +5072,11 @@ test("production lifecycle factory failure preserves reason and redacts collecte
 }, 10_000);
 test("never-settling model profile startup cuts off with proven pre-registration cleanup", async () => {
 	if (process.platform !== "linux") return;
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-sdk-profile-cutoff-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-sdk-profile-cutoff-"));
 	const agentDir = path.join(root, "agent");
 	const broker = new Broker({ agentDir });
-	const previous = process.env.GJC_SDK_TEST_HANG_MODEL_PROFILE;
-	process.env.GJC_SDK_TEST_HANG_MODEL_PROFILE = root;
+	const previous = process.env.VIB_SDK_TEST_HANG_MODEL_PROFILE;
+	process.env.VIB_SDK_TEST_HANG_MODEL_PROFILE = root;
 	try {
 		await broker.start();
 		const input = { cwd: root, readinessTimeoutMs: 4_000 };
@@ -5111,8 +5111,8 @@ test("never-settling model profile startup cuts off with proven pre-registration
 		});
 		expect(await broker.handleRequest("session.create", input, "profile-cutoff")).toEqual(response);
 	} finally {
-		if (previous === undefined) delete process.env.GJC_SDK_TEST_HANG_MODEL_PROFILE;
-		else process.env.GJC_SDK_TEST_HANG_MODEL_PROFILE = previous;
+		if (previous === undefined) delete process.env.VIB_SDK_TEST_HANG_MODEL_PROFILE;
+		else process.env.VIB_SDK_TEST_HANG_MODEL_PROFILE = previous;
 		await broker.stop();
 		await fs.rm(root, { recursive: true, force: true });
 	}
@@ -5120,7 +5120,7 @@ test("never-settling model profile startup cuts off with proven pre-registration
 
 test("unregistered cutoff receipt gets bounded publication and post-signal proof", async () => {
 	if (process.platform !== "linux") return;
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-sdk-pre-registration-boundary-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-sdk-pre-registration-boundary-"));
 	const agentDir = path.join(root, "agent");
 	const fixture = path.join(root, "pre-registration-boundary.ts");
 	const pidPath = path.join(root, "child.pid");
@@ -5133,7 +5133,7 @@ test("unregistered cutoff receipt gets bounded publication and post-signal proof
 	await fs.writeFile(
 		fixture,
 		`await Bun.write(${JSON.stringify(pidPath)}, String(process.pid));
-await Bun.write(${JSON.stringify(requestPath)}, process.env.GJC_SDK_LIFECYCLE_REQUEST ?? "");
+await Bun.write(${JSON.stringify(requestPath)}, process.env.VIB_SDK_LIFECYCLE_REQUEST ?? "");
 setInterval(() => {}, 1_000_000);
 `,
 	);
@@ -5228,7 +5228,7 @@ setInterval(() => {}, 1_000_000);
 
 test("delayed lifecycle reconciliation proof cannot return spawn_failed cleanup after its deadline", async () => {
 	if (process.platform !== "linux") return;
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-sdk-delayed-proof-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-sdk-delayed-proof-"));
 	const agentDir = path.join(root, "agent");
 	const fixture = path.join(root, "delayed-proof.ts");
 	const pidPath = path.join(root, "child.pid");
@@ -5242,7 +5242,7 @@ test("delayed lifecycle reconciliation proof cannot return spawn_failed cleanup 
 	await fs.writeFile(
 		fixture,
 		`await Bun.write(${JSON.stringify(pidPath)}, String(process.pid));
-await Bun.write(${JSON.stringify(requestPath)}, process.env.GJC_SDK_LIFECYCLE_REQUEST ?? "");
+await Bun.write(${JSON.stringify(requestPath)}, process.env.VIB_SDK_LIFECYCLE_REQUEST ?? "");
 setInterval(() => {}, 1_000_000);
 `,
 	);
@@ -5321,11 +5321,11 @@ setInterval(() => {}, 1_000_000);
 
 test("production post-registration startup failure proves cleanup and exact replay", async () => {
 	if (process.platform !== "linux") return;
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-sdk-production-failure-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-sdk-production-failure-"));
 	const agentDir = path.join(root, "agent");
 	const broker = new Broker({ agentDir });
-	const previousFailure = process.env.GJC_SDK_TEST_FAIL_AFTER_REGISTRATION;
-	process.env.GJC_SDK_TEST_FAIL_AFTER_REGISTRATION = root;
+	const previousFailure = process.env.VIB_SDK_TEST_FAIL_AFTER_REGISTRATION;
+	process.env.VIB_SDK_TEST_FAIL_AFTER_REGISTRATION = root;
 	try {
 		await broker.start();
 		const input = { cwd: root, readinessTimeoutMs: 10_000 };
@@ -5376,27 +5376,27 @@ test("production post-registration startup failure proves cleanup and exact repl
 			ok: true,
 			result: { sessions: [expect.objectContaining({ terminal: true, live: false })] },
 		});
-		const sdkDir = path.join(root, ".gjc", "state", "sdk");
+		const sdkDir = path.join(root, ".vib", "state", "sdk");
 		const entries = await fs.readdir(sdkDir);
-		// Retained `.gjc-delete-*` quarantines are typed cleanup evidence; only
+		// Retained `.vib-delete-*` quarantines are typed cleanup evidence; only
 		// canonical lifecycle metadata must be gone. Every remaining entry that
 		// still matches a lifecycle pattern must be an authorized quarantine name.
-		const canonical = entries.filter(entry => !entry.startsWith(".gjc-delete-"));
+		const canonical = entries.filter(entry => !entry.startsWith(".vib-delete-"));
 		expect(canonical.some(entry => entry.includes(".lifecycle.failure."))).toBe(false);
 		expect(canonical.some(entry => entry.endsWith(".lifecycle.json"))).toBe(false);
 		const retained = entries.filter(
 			entry => entry.includes(".lifecycle.failure.") || entry.endsWith(".lifecycle.json"),
 		);
-		expect(retained.every(entry => entry.startsWith(".gjc-delete-"))).toBe(true);
+		expect(retained.every(entry => entry.startsWith(".vib-delete-"))).toBe(true);
 	} finally {
-		if (previousFailure === undefined) delete process.env.GJC_SDK_TEST_FAIL_AFTER_REGISTRATION;
-		else process.env.GJC_SDK_TEST_FAIL_AFTER_REGISTRATION = previousFailure;
+		if (previousFailure === undefined) delete process.env.VIB_SDK_TEST_FAIL_AFTER_REGISTRATION;
+		else process.env.VIB_SDK_TEST_FAIL_AFTER_REGISTRATION = previousFailure;
 		await broker.stop();
 		await fs.rm(root, { recursive: true, force: true });
 	}
 }, 20_000);
 test("production broker session.create authenticates a source-workspace v3 native endpoint", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-sdk-v3-broker-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-sdk-v3-broker-"));
 	const agentDir = path.join(root, "agent");
 	const broker = new Broker({ agentDir });
 	try {
@@ -5434,7 +5434,7 @@ test("production broker session.create authenticates a source-workspace v3 nativ
 			ok: true,
 			result: { sessionId },
 		});
-		const sdkEntries = await fs.readdir(path.join(root, ".gjc", "state", "sdk"));
+		const sdkEntries = await fs.readdir(path.join(root, ".vib", "state", "sdk"));
 		expect(sdkEntries.some(entry => entry.includes(".lifecycle.failure."))).toBe(false);
 	} finally {
 		await broker.stop();
@@ -5443,7 +5443,7 @@ test("production broker session.create authenticates a source-workspace v3 nativ
 }, 30_000);
 
 test("broker agentDir profile validates, activates, and is discoverable through session Q27", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-sdk-profile-agent-dir-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-sdk-profile-agent-dir-"));
 	const cwd = path.join(root, "workspace");
 	const agentDir = path.join(root, "agent");
 	await fs.mkdir(cwd, { recursive: true });
@@ -5499,7 +5499,7 @@ test("child profile activation failures preserve typed codes through readiness a
 		{ code: "unknown_model_profile", replacement: "profiles: {}\n" },
 		{ code: "model_profile_registry_error", replacement: "profiles: [invalid\n" },
 	] as const) {
-		const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", `gjc-sdk-${scenario.code}-`));
+		const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", `vib-sdk-${scenario.code}-`));
 		const cwd = path.join(root, "workspace");
 		const agentDir = path.join(root, "agent");
 		await fs.mkdir(cwd, { recursive: true });
@@ -5513,7 +5513,7 @@ test("child profile activation failures preserve typed codes through readiness a
 			file: "/bin/sh",
 			args: [
 				"-c",
-				`printf %s ${shellQuote(scenario.replacement)} > "$GJC_AGENT_DIR/models.yml"; exec ${shellQuote(process.execPath)} run ${shellQuote(cliEntrypoint)} sdk session-host-internal`,
+				`printf %s ${shellQuote(scenario.replacement)} > "$VIB_AGENT_DIR/models.yml"; exec ${shellQuote(process.execPath)} run ${shellQuote(cliEntrypoint)} sdk session-host-internal`,
 			],
 		}));
 		try {
@@ -5543,7 +5543,7 @@ test("child profile activation failures preserve typed codes through readiness a
 }, 40_000);
 
 test("broker close acknowledges before terminating the lifecycle child and preserves its terminal host index", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-sdk-close-subprocess-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-sdk-close-subprocess-"));
 	const agentDir = path.join(root, "agent");
 	const sessionId = "close-subprocess";
 	const broker = new Broker({ agentDir });
@@ -5588,7 +5588,7 @@ test("broker close acknowledges before terminating the lifecycle child and prese
 }, 20_000);
 
 test("broker preserves an acknowledged session.close result when endpoint client close rejects", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-sdk-close-cleanup-rejection-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-sdk-close-cleanup-rejection-"));
 	const agentDir = path.join(root, "agent");
 	const sessionId = "close-cleanup-rejection";
 	const broker = new Broker({ agentDir });
@@ -5624,7 +5624,7 @@ test("broker preserves an acknowledged session.close result when endpoint client
 }, 20_000);
 
 test("ACP, MCP, and daemon global requests bootstrap a broker with zero sessions", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-sdk-zero-global-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-sdk-zero-global-"));
 	const agentDirs = ["acp", "mcp", "daemon"].map(name => path.join(root, name, "agent"));
 	brokerDirs.push(...agentDirs);
 	try {
@@ -5633,7 +5633,7 @@ test("ACP, MCP, and daemon global requests bootstrap a broker with zero sessions
 		expect(await readSdkBrokerDiscovery(agentDirs[0])).not.toBeNull();
 
 		const mcp = createSdkMcpServer({ agentDir: agentDirs[1] });
-		expect(await mcp.callTool("gjc_session_global", { operation: "session.list" })).toMatchObject({
+		expect(await mcp.callTool("vib_session_global", { operation: "session.list" })).toMatchObject({
 			ok: true,
 			result: { sessions: [] },
 		});
@@ -5652,8 +5652,8 @@ test("ACP, MCP, and daemon global requests bootstrap a broker with zero sessions
 }, 20_000);
 
 test("lifecycle cleanup rejects transplanted and ambiguous receipts before mutation", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-cleanup-receipt-"));
-	const stateRoot = path.join(root, ".gjc", "state");
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-cleanup-receipt-"));
+	const stateRoot = path.join(root, ".vib", "state");
 	const sessionId = "cleanup-receipt";
 	const markerPath = path.join(stateRoot, "sdk", `${sessionId}.lifecycle.json`);
 	const broker = new Broker({ agentDir: path.join(root, "agent") });
@@ -5679,13 +5679,13 @@ test("lifecycle cleanup rejects transplanted and ambiguous receipts before mutat
 			lifecycleDeleteMetadata: true,
 			sessionId,
 			metadataRoot: stateRoot,
-			lifecycleFiles: [file(path.join(stateRoot, "sdk", ".gjc-delete-cleanup"))],
+			lifecycleFiles: [file(path.join(stateRoot, "sdk", ".vib-delete-cleanup"))],
 		};
 		for (const [operation, input] of [
 			["session.delete", { cwd: root, stateRoot, sessionId: "other-cleanup-receipt" }],
 			[
 				"session.delete",
-				{ cwd: path.join(root, "other"), stateRoot: path.join(root, "other", ".gjc", "state"), sessionId },
+				{ cwd: path.join(root, "other"), stateRoot: path.join(root, "other", ".vib", "state"), sessionId },
 			],
 			["session.create", { cwd: root, stateRoot }],
 		] as const) {
@@ -5698,20 +5698,20 @@ test("lifecycle cleanup rejects transplanted and ambiguous receipts before mutat
 			sessionId,
 			metadataRoot: stateRoot,
 			lifecycleFiles: [
-				file(path.join(stateRoot, "sdk", ".gjc-delete-one")),
-				file(path.join(stateRoot, "sdk", ".gjc-delete-two")),
+				file(path.join(stateRoot, "sdk", ".vib-delete-one")),
+				file(path.join(stateRoot, "sdk", ".vib-delete-two")),
 			],
 		};
 		const mixed: BrokerCleanupEvidence = {
 			...duplicate,
 			metadataPath: markerPath,
-			lifecycleFiles: [file(path.join(stateRoot, "sdk", ".gjc-delete-mixed"))],
+			lifecycleFiles: [file(path.join(stateRoot, "sdk", ".vib-delete-mixed"))],
 		};
 		const shared: BrokerCleanupEvidence = {
 			phase: "lifecycle",
 			sessionId,
 			metadataRoot: stateRoot,
-			lifecycleFiles: [{ ...file(path.join(stateRoot, "sdk", ".gjc-delete-shared")), detachedPath: markerPath }],
+			lifecycleFiles: [{ ...file(path.join(stateRoot, "sdk", ".vib-delete-shared")), detachedPath: markerPath }],
 		};
 		for (const cleanup of [duplicate, mixed, shared]) {
 			const result = await executeLifecycle(
@@ -5731,9 +5731,9 @@ test("lifecycle cleanup rejects transplanted and ambiguous receipts before mutat
 });
 
 test("lifecycle cleanup receipt parser rejects hostile bounded inputs without touching user data", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-hostile-lifecycle-receipt-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-hostile-lifecycle-receipt-"));
 	const agentDir = path.join(root, "agent");
-	const stateRoot = path.join(root, ".gjc", "state");
+	const stateRoot = path.join(root, ".vib", "state");
 	const sessionId = "hostile-lifecycle-receipt";
 	const markerPath = path.join(stateRoot, "sdk", `${sessionId}.lifecycle.json`);
 	const readyPath = path.join(stateRoot, "sdk", `${sessionId}.lifecycle.ready.json`);
@@ -5771,13 +5771,13 @@ test("lifecycle cleanup receipt parser rejects hostile bounded inputs without to
 				path: markerPath,
 				identity: await capture(markerPath),
 				attempt: 1,
-				plannedPath: path.join(stateRoot, "sdk", ".gjc-delete-hostile-marker"),
+				plannedPath: path.join(stateRoot, "sdk", ".vib-delete-hostile-marker"),
 			},
 			{
 				path: readyPath,
 				identity: await capture(readyPath),
 				attempt: 1,
-				plannedPath: path.join(stateRoot, "sdk", ".gjc-delete-hostile-ready"),
+				plannedPath: path.join(stateRoot, "sdk", ".vib-delete-hostile-ready"),
 			},
 		],
 	});
@@ -5905,7 +5905,7 @@ test("lifecycle cleanup receipt parser rejects hostile bounded inputs without to
 });
 
 test("session/list does not grant a second ACP connection destructive lifecycle control", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-acp-list-ownership-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-acp-list-ownership-"));
 	const agentDir = path.join(root, "agent");
 	const cwd = path.join(root, "repo");
 	await fs.mkdir(cwd, { recursive: true });

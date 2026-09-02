@@ -85,7 +85,7 @@ export function ModelsTable({ models, performanceSeries, timeRange }: ModelsTabl
 					const key = `${model.model}::${model.provider}`;
 					const performance = performanceSeriesByKey.get(key);
 					const trendData = performance?.data ?? [];
-					const trendColor = MODEL_COLORS[index % MODEL_COLORS.length];
+					const trendColor = MODEL_COLORS[theme][index % MODEL_COLORS[theme].length];
 					const isExpanded = expandedKey === key;
 					const errorRate = model.errorRate * 100;
 

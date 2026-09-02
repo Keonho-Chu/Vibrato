@@ -55,7 +55,7 @@ describe("SDK-owned Telegram lifecycle integration", () => {
 			result: {
 				sessionId: "broker-session-2",
 				endpoint: { url: "ws://private", token: "secret" },
-				lifecycle: { tmuxSession: "gjc-private", sessionStateFile: "/private/state" },
+				lifecycle: { tmuxSession: "vib-private", sessionStateFile: "/private/state" },
 			},
 		});
 		const outcome = await service.resume({

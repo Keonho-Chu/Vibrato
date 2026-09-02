@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
-import * as themeModule from "@gajae-code/coding-agent/modes/theme/theme";
-import * as nativesModule from "@gajae-code/natives";
-import { MacOSAppearance } from "@gajae-code/natives";
+import * as themeModule from "@vib-rato/coding-agent/modes/theme/theme";
+import * as nativesModule from "@vib-rato/natives";
+import { MacOSAppearance } from "@vib-rato/natives";
 
 const originalPlatform = process.platform;
 const originalColorfgbg = Bun.env.COLORFGBG;

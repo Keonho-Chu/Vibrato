@@ -2,9 +2,9 @@ import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from "bun:
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { AuthCredentialIfAbsentSnapshotResult } from "@gajae-code/ai";
-import { Container } from "@gajae-code/tui";
-import { logger, VERSION } from "@gajae-code/utils";
+import type { AuthCredentialIfAbsentSnapshotResult } from "@vib-rato/ai";
+import { Container } from "@vib-rato/tui";
+import { logger, VERSION } from "@vib-rato/utils";
 
 import { handleCredentialsSetup } from "../src/cli/setup-cli";
 import { ProviderOnboardingSelectorComponent } from "../src/modes/components/provider-onboarding-selector";
@@ -287,7 +287,7 @@ describe("startup credential auto-import marker matrix", () => {
 		expect(result.refreshCalls).toEqual(["offline"]);
 		expect(result.notice).toContain(CREDENTIAL_AUTO_IMPORT_ROTATION_WARNING);
 		expect(CREDENTIAL_AUTO_IMPORT_ROTATION_WARNING).toBe(
-			"Refreshing in gjc may log out the Claude/Codex CLI because OAuth refresh tokens can rotate.",
+			"Refreshing in vib may log out the Claude/Codex CLI because OAuth refresh tokens can rotate.",
 		);
 		expect(result.marker.resolution).toBe("accepted");
 	});
@@ -392,7 +392,7 @@ describe("credential auto-import state classification and compatibility", () => 
 	});
 
 	async function createTemporaryAgentDir(): Promise<string> {
-		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-credential-auto-import-"));
+		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-credential-auto-import-"));
 		temporaryAgentDirs.push(agentDir);
 		return agentDir;
 	}
@@ -883,7 +883,7 @@ describe("bare /login external credential import gate", () => {
 			settings: {
 				getAgentDir: () => {
 					settingsReads.push("read");
-					return args.agentDir ?? path.join(os.tmpdir(), "gjc-credential-auto-import-controller");
+					return args.agentDir ?? path.join(os.tmpdir(), "vib-credential-auto-import-controller");
 				},
 			},
 			showWarning: (message: string) => warnings.push(message),
@@ -1120,7 +1120,7 @@ describe("bare /login external credential import gate", () => {
 	});
 
 	test("bare /login reads resolved state from the configured agent directory", async () => {
-		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-credential-auto-import-controller-"));
+		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-credential-auto-import-controller-"));
 		try {
 			await createCredentialAutoImportStateStore(agentDir).write({ initialImportResolution: "declined" });
 			const harness = createControllerHarness({ confirm: true, agentDir });
@@ -1151,7 +1151,7 @@ describe("bare /login external credential import gate", () => {
 		},
 	] as const) {
 		test(`bare /login skips discovery for ${label} state projection`, async () => {
-			const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-credential-auto-import-controller-"));
+			const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-credential-auto-import-controller-"));
 			const statePath = getCredentialAutoImportStatePath(agentDir);
 			try {
 				await fs.writeFile(statePath, serialized);
@@ -1179,7 +1179,7 @@ describe("bare /login external credential import gate", () => {
 			["accepted", true],
 			["declined", false],
 		] as const) {
-			const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-credential-auto-import-controller-"));
+			const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-credential-auto-import-controller-"));
 			try {
 				let firstDiscoveryReads = 0;
 				const first = createControllerHarness({ confirm, agentDir });
@@ -1226,7 +1226,7 @@ describe("bare /login external credential import gate", () => {
 		await oldMarkerHarness.controller.showOAuthSelector("login", undefined, bareLoginOptions());
 		expect(oldMarkerHarness.confirmMessages).toHaveLength(1);
 
-		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-credential-auto-import-controller-"));
+		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-credential-auto-import-controller-"));
 		try {
 			const realStateStore = createCredentialAutoImportStateStore(agentDir);
 			let writes = 0;

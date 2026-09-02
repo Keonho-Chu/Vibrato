@@ -1,7 +1,7 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { gunzipSync } from "node:zlib";
-import { getAgentDir, isEnoent, logger, ptree, tryParseJson } from "@gajae-code/utils";
+import { getAgentDir, isEnoent, logger, ptree, tryParseJson } from "@vib-rato/utils";
 import { ToolAbortError } from "../../tools/tool-errors";
 import type { RenderResult, SpecialHandler } from "./types";
 import { buildResult, MAX_BYTES } from "./types";
@@ -393,7 +393,7 @@ export const handleDocsRs: SpecialHandler = async (
 		const response = await fetch(jsonUrl, {
 			signal: requestSignal,
 			headers: {
-				"User-Agent": "gjc-web-fetch/1.0",
+				"User-Agent": "vib-web-fetch/1.0",
 				Accept: "application/gzip",
 				"Accept-Encoding": "identity",
 			},

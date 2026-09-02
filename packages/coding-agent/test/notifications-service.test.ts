@@ -307,7 +307,7 @@ describe("notification-service health", () => {
 		const { fs } = mockFs({ [statePath]: daemonStateJson({ pid: 999 }) });
 		const report = await checkNotificationHealth({
 			settings,
-			stateRoot: "/tmp/gjc-none",
+			stateRoot: "/tmp/vib-none",
 			deps: { fs, now: () => 1_500, pidAlive: () => false },
 		});
 		expect(report.daemon.present).toBe(true);
@@ -321,7 +321,7 @@ describe("notification-service health", () => {
 		store.set(statePath, '{"pid":1000');
 		const report = await checkNotificationHealth({
 			settings,
-			stateRoot: "/tmp/gjc-none",
+			stateRoot: "/tmp/vib-none",
 			deps: { fs, now: () => 1_500, pidAlive: () => true },
 		});
 		expect(report.daemon.present).toBe(false);
@@ -339,7 +339,7 @@ describe("notification-service health", () => {
 		});
 		const report = await checkNotificationHealth({
 			settings,
-			stateRoot: "/tmp/gjc-none",
+			stateRoot: "/tmp/vib-none",
 			deps: { fs, now: () => 1_500, pidAlive: pid => pid === 1000 },
 		});
 		expect(report.daemon.alive).toBe(true);
@@ -350,7 +350,7 @@ describe("notification-service health", () => {
 	test("healthy daemon with fresh heartbeat and matching identity is ok", async () => {
 		const { fs } = mockFs({
 			[statePath]: daemonStateJson({ pid: 1000, heartbeatAt: 1_490, generation: DAEMON_GENERATION }),
-			[path.join("/tmp/gjc-none", "sdk", "session-a.json")]: JSON.stringify({
+			[path.join("/tmp/vib-none", "sdk", "session-a.json")]: JSON.stringify({
 				sessionId: "session-a",
 				url: "ws://127.0.0.1:3000",
 				token: "endpoint-token",
@@ -359,7 +359,7 @@ describe("notification-service health", () => {
 		});
 		const report = await checkNotificationHealth({
 			settings,
-			stateRoot: "/tmp/gjc-none",
+			stateRoot: "/tmp/vib-none",
 			deps: { fs, now: () => 1_500, pidAlive: pid => pid === 1000 },
 		});
 		expect(report.daemon.identityMatches).toBe(true);
@@ -384,7 +384,7 @@ describe("notification-service health", () => {
 		const { fs } = mockFs({ [statePath]: daemonStateJson({ pid: 1000, heartbeatAt: 1_490 }) });
 		const report = await checkNotificationHealth({
 			settings,
-			stateRoot: "/tmp/gjc-none",
+			stateRoot: "/tmp/vib-none",
 			deps: { fs, now: () => 1_500, pidAlive: pid => pid === 1000 },
 		});
 		const hint = report.checks.find(check => check.name === "local_endpoint");
@@ -394,7 +394,7 @@ describe("notification-service health", () => {
 			name: "local_endpoint",
 			level: "warn",
 			detail:
-				"No local notification endpoint for this working directory. In this GJC terminal run /notify on; if it does not report notifications enabled, start a new local GJC session. Do not re-pair Telegram.",
+				"No local notification endpoint for this working directory. In this Vibrato terminal run /notify on; if it does not report notifications enabled, start a new local Vibrato session. Do not re-pair Telegram.",
 		});
 		expect(report.checks.indexOf(hint!)).toBe(report.checks.findIndex(check => check.name === "endpoints") + 1);
 	});
@@ -402,7 +402,7 @@ describe("notification-service health", () => {
 	const heartbeatPath = daemonPaths(settings.getAgentDir()).heartbeat;
 	// Matches the owner tag daemonStateJson() writes, so the sidecar is accepted as this owner's own.
 	const ownerSidecarTag = { pid: 1000, incarnation: "linux:100", ownerId: "owner-a", acquisitionId: "owner-a" };
-	const attachStateRoot = "/tmp/gjc-attachment";
+	const attachStateRoot = "/tmp/vib-attachment";
 	const attachEndpoint = JSON.stringify({
 		sessionId: "session-a",
 		url: "ws://127.0.0.1:3000",
@@ -528,7 +528,7 @@ describe("notification-service health", () => {
 		});
 		const report = await checkNotificationHealth({
 			settings,
-			stateRoot: "/tmp/gjc-none",
+			stateRoot: "/tmp/vib-none",
 			deps: { fs, now: () => 1_500, pidAlive: pid => pid === 1000 },
 		});
 		expect(report.endpoints.total).toBe(0);
@@ -536,13 +536,13 @@ describe("notification-service health", () => {
 			name: "local_endpoint",
 			level: "warn",
 			detail:
-				"No local notification endpoint for this working directory. In this GJC terminal run /notify on; if it does not report notifications enabled, start a new local GJC session. Do not re-pair Telegram.",
+				"No local notification endpoint for this working directory. In this Vibrato terminal run /notify on; if it does not report notifications enabled, start a new local Vibrato session. Do not re-pair Telegram.",
 		});
 		expect(report.checks.some(check => check.name === "endpoint_attachment")).toBe(false);
 		expect(report.overall).toBe("warn");
 	});
 	test("ignores shared lifecycle, ready, and broker records when discovering endpoints", async () => {
-		const stateRoot = "/tmp/gjc-shared-sdk-state";
+		const stateRoot = "/tmp/vib-shared-sdk-state";
 		const { fs } = mockFs({
 			[statePath]: daemonStateJson({ pid: 1000, heartbeatAt: 1_490 }),
 			[path.join(stateRoot, "sdk", "session-a.lifecycle.json")]: JSON.stringify({
@@ -577,7 +577,7 @@ describe("notification-service health", () => {
 		const { fs } = mockFs({ [statePath]: daemonStateJson({ pid: 1000, heartbeatAt: 1_490, stoppedAt: 1_495 }) });
 		const report = await checkNotificationHealth({
 			settings,
-			stateRoot: "/tmp/gjc-none",
+			stateRoot: "/tmp/vib-none",
 			deps: { fs, now: () => 1_500, pidAlive: pid => pid === 1000 },
 		});
 		expect(report.checks.some(check => check.name === "local_endpoint")).toBe(false);
@@ -620,14 +620,14 @@ describe("notification-service health", () => {
 				: { "notifications.enabled": false },
 		);
 		const rowStatePath = daemonPaths(rowSettings.getAgentDir()).state;
-		const endpointPath = path.join("/tmp/gjc-none", "sdk", "session-a.json");
+		const endpointPath = path.join("/tmp/vib-none", "sdk", "session-a.json");
 		const { fs } = mockFs({
 			...(state ? { [rowStatePath]: state } : {}),
 			...(endpoint ? { [endpointPath]: typeof endpoint === "string" ? endpoint : JSON.stringify(endpoint) } : {}),
 		});
 		const report = await checkNotificationHealth({
 			settings: rowSettings,
-			stateRoot: "/tmp/gjc-none",
+			stateRoot: "/tmp/vib-none",
 			deps: { fs, now: () => (_name === "stale" ? 1_000_000 : 1_500), pidAlive: pid => pid === 1000 },
 		});
 		expect(report.checks.some(check => check.name === "local_endpoint")).toBe(false);
@@ -647,7 +647,7 @@ describe("notification-service health", () => {
 			});
 			const report = await checkNotificationHealth({
 				settings,
-				stateRoot: "/tmp/gjc-none",
+				stateRoot: "/tmp/vib-none",
 				deps: { fs, now: () => 1_500, pidAlive: pid => pid === 1000 },
 			});
 			expect(report.daemon.heartbeatAt).toBe(1_490);
@@ -668,7 +668,7 @@ describe("notification-service health", () => {
 			});
 			const report = await checkNotificationHealth({
 				settings,
-				stateRoot: "/tmp/gjc-none",
+				stateRoot: "/tmp/vib-none",
 				deps: { fs, now: () => 1_500, pidAlive: pid => pid === 1000 },
 			});
 			expect(report.daemon.heartbeatAt).toBeUndefined();
@@ -687,7 +687,7 @@ describe("notification-service health", () => {
 		for (const generation of malformedGenerationValues) {
 			const { fs } = mockFs({
 				[statePath]: daemonStateJson({ pid: 1000, heartbeatAt: 1_490, generation }),
-				[path.join("/tmp/gjc-none", "sdk", "session-a.json")]: JSON.stringify({
+				[path.join("/tmp/vib-none", "sdk", "session-a.json")]: JSON.stringify({
 					sessionId: "session-a",
 					url: "ws://127.0.0.1:3000",
 					token: "endpoint-token",
@@ -696,7 +696,7 @@ describe("notification-service health", () => {
 			});
 			const report = await checkNotificationHealth({
 				settings,
-				stateRoot: "/tmp/gjc-none",
+				stateRoot: "/tmp/vib-none",
 				deps: { fs, now: () => 1_500, pidAlive: pid => pid === 1000 },
 			});
 			expect(report.daemon.generation).toBeUndefined();
@@ -718,7 +718,7 @@ describe("notification-service health", () => {
 		});
 		const report = await checkNotificationHealth({
 			settings,
-			stateRoot: "/tmp/gjc-none",
+			stateRoot: "/tmp/vib-none",
 			deps: { fs, now: () => 1_500, pidAlive: pid => pid === 1000 },
 		});
 		expect(report.daemon.heartbeatAt).toBeUndefined();
@@ -740,7 +740,7 @@ describe("notification-service health", () => {
 		});
 		const report = await checkNotificationHealth({
 			settings,
-			stateRoot: "/tmp/gjc-none",
+			stateRoot: "/tmp/vib-none",
 			deps: { fs, now: () => 1_500, pidAlive: pid => pid === 1000 },
 		});
 		expect(report.daemon.identityMatches).toBe(false);
@@ -761,7 +761,7 @@ describe("notification-service health", () => {
 			const { fs } = mockFs({ [statePath]: daemonStateJson(state) });
 			const report = await checkNotificationHealth({
 				settings,
-				stateRoot: "/tmp/gjc-none",
+				stateRoot: "/tmp/vib-none",
 				deps: {
 					fs,
 					now: () => 1_500,
@@ -828,7 +828,7 @@ describe("notification-service recovery", () => {
 		"notifications.telegram.chatId": "12345",
 	});
 	const paths = daemonPaths(settings.getAgentDir());
-	const stateRoot = "/tmp/gjc-recovery-state";
+	const stateRoot = "/tmp/vib-recovery-state";
 	const epDir = path.join(stateRoot, "sdk");
 
 	test("removes only dead/stale endpoints and never a live owner's lock", async () => {
@@ -996,7 +996,7 @@ describe("notification-service recovery", () => {
 		});
 		const report = await recoverNotifications({
 			settings,
-			stateRoot: "/tmp/gjc-empty",
+			stateRoot: "/tmp/vib-empty",
 			deps: { fs, pidAlive: () => false },
 		});
 		expect(report.daemon.action).toBe("cleared-dead-owner-lock");
@@ -1023,7 +1023,7 @@ describe("notification-service recovery", () => {
 	});
 	test("reports a detached endpoint after native post-detach failure for retry", async () => {
 		const endpoint = path.join(epDir, "detached.json");
-		const detached = path.join(epDir, ".gjc-delete-notification-endpoint-retry.json");
+		const detached = path.join(epDir, ".vib-delete-notification-endpoint-retry.json");
 		const { fs, store, unlinked } = mockFs(
 			{
 				[endpoint]: JSON.stringify({ sessionId: "detached", url: "ws://x", token: "t", pid: 999 }),
@@ -1049,8 +1049,8 @@ describe("notification-service recovery", () => {
 	});
 	test("reports detached stale endpoints and retained successors as separate recovery paths", async () => {
 		const endpoint = path.join(epDir, "raced.json");
-		const detached = path.join(epDir, ".gjc-delete-notification-endpoint-raced.json");
-		const successor = path.join(epDir, ".gjc-exact-unlink-placeholder-raced.json");
+		const detached = path.join(epDir, ".vib-delete-notification-endpoint-raced.json");
+		const successor = path.join(epDir, ".vib-exact-unlink-placeholder-raced.json");
 		const { fs, unlinked } = mockFs(
 			{
 				[endpoint]: JSON.stringify({ sessionId: "raced", url: "ws://x", token: "t", pid: 999 }),
@@ -1085,7 +1085,7 @@ describe("notification-service recovery", () => {
 	});
 	test("reports a retained internal exchange placeholder separately from stale objects and live successors", async () => {
 		const endpoint = path.join(epDir, "placeholder.json");
-		const placeholder = path.join(epDir, ".gjc-exact-unlink-placeholder-verified");
+		const placeholder = path.join(epDir, ".vib-exact-unlink-placeholder-verified");
 		const { fs, unlinked } = mockFs(
 			{
 				[endpoint]: JSON.stringify({ sessionId: "placeholder", url: "ws://x", token: "t", pid: 999 }),
@@ -1114,7 +1114,7 @@ describe("notification-service recovery", () => {
 	});
 	test("reports an unverified retained cleanup entry separately from stale objects and verified placeholders", async () => {
 		const endpoint = path.join(epDir, "unknown.json");
-		const unknown = path.join(epDir, ".gjc-exact-unlink-placeholder-mismatch");
+		const unknown = path.join(epDir, ".vib-exact-unlink-placeholder-mismatch");
 		const { fs, unlinked } = mockFs(
 			{
 				[endpoint]: JSON.stringify({ sessionId: "unknown", url: "ws://x", token: "t", pid: 999 }),
@@ -1146,7 +1146,7 @@ describe("notification-service recovery", () => {
 		});
 		const report = await recoverNotifications({
 			settings,
-			stateRoot: "/tmp/gjc-empty",
+			stateRoot: "/tmp/vib-empty",
 			deps: { fs, pidAlive: () => false },
 		});
 		expect(report.daemon.action).toBe("orphan-lock-left");
@@ -1159,7 +1159,7 @@ describe("notification-service endpoint liveness (owner-proof)", () => {
 		"notifications.telegram.botToken": TOKEN,
 		"notifications.telegram.chatId": "12345",
 	});
-	const stateRoot = "/tmp/gjc-liveness-state";
+	const stateRoot = "/tmp/vib-liveness-state";
 	const epDir = path.join(stateRoot, "sdk");
 
 	test("health treats a PID-less endpoint as unknown, never dead", async () => {
@@ -1235,15 +1235,15 @@ describe("notification-service recovery lock TOCTOU (owner-bound)", () => {
 		});
 		const report = await recoverNotifications({
 			settings,
-			stateRoot: "/tmp/gjc-contended",
+			stateRoot: "/tmp/vib-contended",
 			deps: { fs, pidAlive: () => false },
 		});
 		expect(report.daemon.action).toBe("left-contended");
 		expect(report.daemon.blockingReason).toBe("transition-marker-unavailable-or-contended");
-		expect(report.daemon.forceCommand).toBe("gjc notify recovery --force-daemon-lock");
+		expect(report.daemon.forceCommand).toBe("vib notify recovery --force-daemon-lock");
 		const text = formatNotificationRecoveryReport(report);
 		expect(text).toContain("blocking reason: transition-marker-unavailable-or-contended");
-		expect(text).toContain("safe escape: gjc notify recovery --force-daemon-lock");
+		expect(text).toContain("safe escape: vib notify recovery --force-daemon-lock");
 		expect(unlinked).not.toContain(paths.lock);
 	});
 
@@ -1266,7 +1266,7 @@ describe("notification-service recovery lock TOCTOU (owner-bound)", () => {
 		);
 		const report = await recoverNotifications({
 			settings,
-			stateRoot: "/tmp/gjc-superseded",
+			stateRoot: "/tmp/vib-superseded",
 			deps: { fs, pidAlive: pid => pid === 1000 },
 		});
 		expect(report.daemon.action).toBe("owner-superseded");
@@ -1275,7 +1275,7 @@ describe("notification-service recovery lock TOCTOU (owner-bound)", () => {
 });
 
 describe("notification-service stale debris sweep", () => {
-	const dir = "/tmp/gjc-debris/notifications";
+	const dir = "/tmp/vib-debris/notifications";
 	const NOW = 10 * NOTIFICATION_DEBRIS_MIN_AGE_MS;
 	const OLD = NOW - NOTIFICATION_DEBRIS_MIN_AGE_MS - 1;
 	const YOUNG = NOW - 1_000;
@@ -1283,7 +1283,7 @@ describe("notification-service stale debris sweep", () => {
 	test("removes stale quarantine, placeholder, and dead-writer staging files only", async () => {
 		const staleTransition = path.join(dir, "transition-005aa822-3f0b-45c9-bd39-e7047b1d3be4");
 		const youngTransition = path.join(dir, "transition-11111111-2222-4333-8444-555555555555");
-		const stalePlaceholder = path.join(dir, ".gjc-exact-unlink-placeholder-abc.json");
+		const stalePlaceholder = path.join(dir, ".vib-exact-unlink-placeholder-abc.json");
 		const deadWriterTmp = path.join(dir, "telegram-callback-aliases.json.777.1786499330704.2o3rwhj5qax.tmp");
 		const liveWriterTmp = path.join(dir, "telegram-presentation-state.json.1000.1786546900647.sucg48nr9uk.tmp");
 		const canonical = path.join(dir, "telegram-daemon.state.json");
@@ -1372,7 +1372,7 @@ describe("notification-service stale debris sweep", () => {
 	});
 
 	test("an unlink failure is reported as a failure, not silently kept", async () => {
-		const debris = path.join(dir, ".gjc-exact-unlink-placeholder-locked.json");
+		const debris = path.join(dir, ".vib-exact-unlink-placeholder-locked.json");
 		const { fs } = mockFs({ [debris]: "" }, { mtimes: { [debris]: OLD }, failUnlink: new Set([debris]) });
 		const report = await sweepNotificationDebris({
 			dir,
@@ -1386,7 +1386,7 @@ describe("notification-service stale debris sweep", () => {
 	test("a failed directory listing is reported instead of looking like a clean sweep", async () => {
 		const { fs } = mockFs({});
 		const report = await sweepNotificationDebris({
-			dir: "/tmp/gjc-debris-missing-dir",
+			dir: "/tmp/vib-debris-missing-dir",
 			deps: { fs, now: () => NOW, pidAlive: () => false },
 		});
 		expect(report).toMatchObject({ removed: [], kept: 0, failures: 0, scanFailed: true });
@@ -1453,8 +1453,8 @@ describe("notification-service stale debris sweep", () => {
 		// A nonempty placeholder can still carry retained cleanup evidence for an
 		// endpoint whose verified removal failed; only the terminal scrubbed
 		// (zero-length) remnant is inert.
-		const evidence = path.join(dir, ".gjc-exact-unlink-placeholder-with-evidence.json");
-		const scrubbed = path.join(dir, ".gjc-exact-unlink-placeholder-scrubbed");
+		const evidence = path.join(dir, ".vib-exact-unlink-placeholder-with-evidence.json");
+		const scrubbed = path.join(dir, ".vib-exact-unlink-placeholder-scrubbed");
 		const { fs, unlinked } = mockFs(
 			{ [evidence]: '{"retained":"cleanup-evidence"}', [scrubbed]: "" },
 			{ mtimes: { [evidence]: OLD, [scrubbed]: OLD } },
@@ -1490,12 +1490,12 @@ describe("notification-service stale debris sweep", () => {
 			"notifications.telegram.chatId": "12345",
 		});
 		const paths = daemonPaths(settings.getAgentDir());
-		const stateRoot = "/tmp/gjc-debris-recovery";
+		const stateRoot = "/tmp/vib-debris-recovery";
 		const daemonDebris = path.join(paths.dir, "transition-005aa822-3f0b-45c9-bd39-e7047b1d3be4");
 		const endpointDebris = path.join(
 			stateRoot,
 			"sdk",
-			".gjc-delete-notification-endpoint-005aa822-3f0b-45c9-bd39-e7047b1d3be4.json",
+			".vib-delete-notification-endpoint-005aa822-3f0b-45c9-bd39-e7047b1d3be4.json",
 		);
 		const { fs } = mockFs(
 			{ [daemonDebris]: "", [endpointDebris]: "{}" },
@@ -1517,7 +1517,7 @@ describe("notification-service bounded notify recovery (#4701)", () => {
 		"notifications.telegram.botToken": TOKEN,
 		"notifications.telegram.chatId": "12345",
 	});
-	const stateRoot = "/tmp/gjc-4701";
+	const stateRoot = "/tmp/vib-4701";
 	const epDir = path.join(stateRoot, "sdk");
 	const NOW = 10 * NOTIFICATION_DEBRIS_MIN_AGE_MS;
 	const OLD = NOW - NOTIFICATION_DEBRIS_MIN_AGE_MS - 1;
@@ -1533,10 +1533,10 @@ describe("notification-service bounded notify recovery (#4701)", () => {
 		token: "endpoint-token",
 		stale: false,
 	});
-	const quarantineA = path.join(epDir, ".gjc-delete-notification-endpoint-005aa822-3f0b-45c9-bd39-e7047b1d3be4.json");
-	const quarantineB = path.join(epDir, ".gjc-delete-notification-endpoint-11111111-2222-4333-8444-555555555555.json");
-	const placeholder = path.join(epDir, ".gjc-exact-unlink-placeholder-1-1");
-	const DEBRIS_BASENAME = /^\.gjc-(?:delete-notification-endpoint-[0-9a-f-]{36}\.json|exact-unlink-placeholder-)/;
+	const quarantineA = path.join(epDir, ".vib-delete-notification-endpoint-005aa822-3f0b-45c9-bd39-e7047b1d3be4.json");
+	const quarantineB = path.join(epDir, ".vib-delete-notification-endpoint-11111111-2222-4333-8444-555555555555.json");
+	const placeholder = path.join(epDir, ".vib-exact-unlink-placeholder-1-1");
+	const DEBRIS_BASENAME = /^\.vib-(?:delete-notification-endpoint-[0-9a-f-]{36}\.json|exact-unlink-placeholder-)/;
 
 	function debrisCount(store: Map<string, string>): number {
 		let count = 0;
@@ -1622,7 +1622,7 @@ describe("notification-service bounded notify recovery (#4701)", () => {
 		const pidless = path.join(epDir, "pidless.json");
 		const quarantineB = path.join(
 			epDir,
-			".gjc-delete-notification-endpoint-11111111-2222-4333-8444-555555555555.json",
+			".vib-delete-notification-endpoint-11111111-2222-4333-8444-555555555555.json",
 		);
 		const { fs, unlinked } = mockFs(
 			{
@@ -1681,8 +1681,8 @@ describe("notification-service bounded notify recovery (#4701)", () => {
 				if (DEBRIS_BASENAME.test(path.basename(file))) {
 					debrisExactUnlinkCalls += 1;
 					const uuid = crypto.randomUUID();
-					files.set(path.join(epDir, `.gjc-delete-notification-endpoint-${uuid}.json`), "");
-					files.set(path.join(epDir, `.gjc-exact-unlink-placeholder-${uuid}`), "");
+					files.set(path.join(epDir, `.vib-delete-notification-endpoint-${uuid}.json`), "");
+					files.set(path.join(epDir, `.vib-exact-unlink-placeholder-${uuid}`), "");
 				}
 			},
 		});
@@ -1769,7 +1769,7 @@ describe("notification-service forced stale-marker recovery", () => {
 		);
 		const report = await recoverNotifications({
 			settings,
-			stateRoot: "/tmp/gjc-forced",
+			stateRoot: "/tmp/vib-forced",
 			deps: { fs, now: () => NOW, pidAlive: () => false },
 			forceDaemonLock: true,
 		});
@@ -1788,7 +1788,7 @@ describe("notification-service forced stale-marker recovery", () => {
 		);
 		const report = await recoverNotifications({
 			settings,
-			stateRoot: "/tmp/gjc-unforced",
+			stateRoot: "/tmp/vib-unforced",
 			deps: { fs, now: () => NOW, pidAlive: () => false },
 		});
 		expect(report.daemon.action).toBe("left-contended");
@@ -1806,7 +1806,7 @@ describe("notification-service forced stale-marker recovery", () => {
 		);
 		const report = await recoverNotifications({
 			settings,
-			stateRoot: "/tmp/gjc-forced-young",
+			stateRoot: "/tmp/vib-forced-young",
 			deps: { fs, now: () => NOW, pidAlive: () => false },
 			forceDaemonLock: true,
 		});
@@ -1833,7 +1833,7 @@ describe("notification-service forced stale-marker recovery", () => {
 		);
 		const report = await recoverNotifications({
 			settings,
-			stateRoot: "/tmp/gjc-forced-valid",
+			stateRoot: "/tmp/vib-forced-valid",
 			deps: { fs, now: () => NOW, pidAlive: pid => pid === process.pid },
 			forceDaemonLock: true,
 		});
@@ -1880,7 +1880,7 @@ describe("notification-service diagnostic sanitization (secret-safe)", () => {
 		}) as unknown as typeof fetch;
 		const report = await checkNotificationHealth({
 			settings,
-			stateRoot: "/tmp/gjc-probe",
+			stateRoot: "/tmp/vib-probe",
 			probe: true,
 			deps: { fs: mockFs({}).fs, now: () => 1, pidAlive: () => false, fetchImpl },
 		});
@@ -1924,7 +1924,7 @@ describe("notification-service diagnostic sanitization (secret-safe)", () => {
 		};
 		const report = await checkNotificationHealth({
 			settings,
-			stateRoot: "/tmp/gjc-discord-probe",
+			stateRoot: "/tmp/vib-discord-probe",
 			provider: "discord",
 			probe: true,
 			deps: { fs: mockFs({}).fs, createDiscordDiagnostic: () => diagnostic },
@@ -1958,7 +1958,7 @@ describe("notification-service diagnostic sanitization (secret-safe)", () => {
 		};
 		const report = await checkNotificationHealth({
 			settings,
-			stateRoot: "/tmp/gjc-slack-probe",
+			stateRoot: "/tmp/vib-slack-probe",
 			provider: "slack",
 			probe: true,
 			deps: { fs: mockFs({}).fs, createSlackDiagnostic: () => diagnostic },
@@ -1985,7 +1985,7 @@ describe("notification-service diagnostic sanitization (secret-safe)", () => {
 		});
 		const report = await checkNotificationHealth({
 			settings,
-			stateRoot: "/tmp/gjc-slack-workspace-probe",
+			stateRoot: "/tmp/vib-slack-workspace-probe",
 			provider: "slack",
 			probe: true,
 			deps: {

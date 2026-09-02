@@ -1,4 +1,4 @@
-import type { AuthStorage } from "@gajae-code/ai/core";
+import type { AuthStorage } from "@vib-rato/ai/core";
 import type { ActiveSearchModelContext, SearchProviderId, SearchResponse } from "../types";
 
 /** Non-sensitive provider policy passed to search implementations. */
@@ -14,8 +14,8 @@ export interface SearchProviderSettings {
 	};
 }
 
-export const SEARXNG_BASIC_CREDENTIAL_PREFIX = "gjc-searxng-basic:";
-export const SEARXNG_BEARER_CREDENTIAL_PREFIX = "gjc-searxng-bearer:";
+export const SEARXNG_BASIC_CREDENTIAL_PREFIX = "vib-searxng-basic:";
+export const SEARXNG_BEARER_CREDENTIAL_PREFIX = "vib-searxng-bearer:";
 
 /**
  * Shared web search parameters passed to providers.

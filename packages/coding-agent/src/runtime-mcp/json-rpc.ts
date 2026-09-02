@@ -4,7 +4,7 @@
  * Lightweight utilities for calling MCP servers directly via HTTP
  * without maintaining persistent connections.
  */
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 import { cancelMCPStream, MCP_HTTP_TIMEOUT_MS, MCP_MAX_CONTENT_BYTES, readMCPResponseText } from "./content-limits";
 import { redactMCPDiagnosticValue, redactMCPEndpoint } from "./redaction";
 

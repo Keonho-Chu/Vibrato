@@ -1,10 +1,10 @@
 import { appendFile, mkdir, stat } from "node:fs/promises";
 import * as path from "node:path";
-import { getAgentDir, getConfigDirName } from "@gajae-code/utils";
+import { getAgentDir, getConfigDirName } from "@vib-rato/utils";
 import { YAML } from "bun";
 import type { SkillDiscoverySettings } from "../config/skill-settings-defaults";
 import { DEFAULT_DISABLED_EXTENSIONS, DEFAULT_SKILL_DISCOVERY_SETTINGS } from "../config/skill-settings-defaults";
-import { sessionLogsDir } from "../gjc-runtime/session-layout";
+import { sessionLogsDir } from "../vib-runtime/session-layout";
 import {
 	detectMcpDelegateFlowActivation,
 	type McpDelegateHostContextV1,
@@ -20,16 +20,16 @@ import {
 	recordSkillActivation,
 } from "./skill-state";
 
-export type GjcNativeHookEventName = "UserPromptSubmit" | "Stop";
+export type VibNativeHookEventName = "UserPromptSubmit" | "Stop";
 
-export interface GjcNativeHookDispatchResult {
-	hookEventName: GjcNativeHookEventName | null;
+export interface VibNativeHookDispatchResult {
+	hookEventName: VibNativeHookEventName | null;
 	outputJson: Record<string, unknown> | null;
 }
 
 type HookPayload = Record<string, unknown>;
 
-interface GjcNativeHookDispatchOptions {
+interface VibNativeHookDispatchOptions {
 	cwd?: string;
 	stateDir?: string;
 	effectiveSkillConfig?: EffectiveSkillConfigInput;
@@ -77,12 +77,12 @@ function configCacheKey(input: {
 	});
 }
 
-export function clearGjcNativeSkillHookCachesForTesting(): void {
+export function clearVibNativeSkillHookCachesForTesting(): void {
 	effectiveSkillConfigCache.clear();
 	effectiveSkillConfigResolutionCount = 0;
 }
 
-export function getGjcNativeSkillHookCacheStatsForTesting(): { effectiveSkillConfigResolutions: number } {
+export function getVibNativeSkillHookCacheStatsForTesting(): { effectiveSkillConfigResolutions: number } {
 	return { effectiveSkillConfigResolutions: effectiveSkillConfigResolutionCount };
 }
 
@@ -168,7 +168,7 @@ async function readRawConfig(filePath: string): Promise<Record<string, unknown> 
  * These paths pick the `config.yml` whose `skills.customDirectories` the agent
  * then loads skills from, so the directory they are built from is a trust
  * boundary. Bun loads `cwd/.env` into `process.env` before any module runs, so
- * reading `GJC_CODING_AGENT_DIR` / `GJC_CONFIG_DIR` directly let a repository
+ * reading `VIB_CODING_AGENT_DIR` / `VIB_CONFIG_DIR` directly let a repository
  * point this at a directory it ships and inject its own skill directories.
  *
  * `getAgentDir()` and `getConfigDirName()` apply the escalation guards that
@@ -214,7 +214,7 @@ async function resolveEffectiveSkillConfig(
 	}
 }
 
-export async function resolveGjcNativeSkillConfigForTesting(input: {
+export async function resolveVibNativeSkillConfigForTesting(input: {
 	cwd: string;
 	configPaths?: string[];
 	sessionId?: string;
@@ -232,7 +232,7 @@ function safeString(value: unknown): string {
 	return typeof value === "string" ? value : "";
 }
 
-function readHookEventName(payload: HookPayload): GjcNativeHookEventName | null {
+function readHookEventName(payload: HookPayload): VibNativeHookEventName | null {
 	const raw = safeString(payload.hook_event_name ?? payload.hookEventName ?? payload.event ?? payload.name).trim();
 	return raw === "UserPromptSubmit" || raw === "Stop" ? raw : null;
 }
@@ -286,15 +286,15 @@ function readSessionFile(payload: HookPayload): string | undefined {
 		safeString(
 			payload.session_file ?? payload.sessionFile ?? payload.transcript_path ?? payload.transcriptPath,
 		).trim() ||
-		process.env.GJC_SESSION_FILE?.trim() ||
+		process.env.VIB_SESSION_FILE?.trim() ||
 		undefined
 	);
 }
 
-export async function dispatchGjcNativeSkillHook(
+export async function dispatchVibNativeSkillHook(
 	payload: HookPayload,
-	options: GjcNativeHookDispatchOptions = {},
-): Promise<GjcNativeHookDispatchResult> {
+	options: VibNativeHookDispatchOptions = {},
+): Promise<VibNativeHookDispatchResult> {
 	const hookEventName = readHookEventName(payload);
 	const cwd = (options.cwd ?? safeString(payload.cwd).trim()) || process.cwd();
 	if (hookEventName === "UserPromptSubmit") {
@@ -363,7 +363,9 @@ export async function dispatchGjcNativeSkillHook(
 		}
 		const additionalContext = [
 			skillState ? buildSkillActivationAdditionalContext(skillState, effectiveSkillConfig) : activeUltragoalContext,
-			delegateHostContext ? `GJC MCP delegate-flow host context persisted at ${delegateHostContext.path}.` : null,
+			delegateHostContext
+				? `Vibrato MCP delegate-flow host context persisted at ${delegateHostContext.path}.`
+				: null,
 			recoveryContext,
 			classifyQuestionOnlyPrompt(prompt),
 		]
@@ -398,8 +400,8 @@ export async function dispatchGjcNativeSkillHook(
 	return { hookEventName, outputJson: null };
 }
 
-export async function runGjcNativeSkillHookInProcess(payload: HookPayload): Promise<string> {
-	const result = await dispatchGjcNativeSkillHook(payload);
+export async function runVibNativeSkillHookInProcess(payload: HookPayload): Promise<string> {
+	const result = await dispatchVibNativeSkillHook(payload);
 	if (result.outputJson) {
 		return `${JSON.stringify(result.outputJson)}\n`;
 	}
@@ -424,8 +426,8 @@ async function readStdinJson(): Promise<{ payload: HookPayload; parseError: Erro
 }
 
 async function logHookError(cwd: string, type: string, error: unknown): Promise<void> {
-	const gjcSessionId = process.env.GJC_SESSION_ID?.trim();
-	if (!gjcSessionId) {
+	const vibSessionId = process.env.VIB_SESSION_ID?.trim();
+	if (!vibSessionId) {
 		console.error(
 			JSON.stringify({
 				timestamp: new Date().toISOString(),
@@ -435,7 +437,7 @@ async function logHookError(cwd: string, type: string, error: unknown): Promise<
 		);
 		return;
 	}
-	const logsDir = sessionLogsDir(cwd, gjcSessionId);
+	const logsDir = sessionLogsDir(cwd, vibSessionId);
 	await mkdir(logsDir, { recursive: true }).catch(() => {});
 	await appendFile(
 		path.join(logsDir, `native-hook-${new Date().toISOString().split("T")[0]}.jsonl`),
@@ -443,17 +445,17 @@ async function logHookError(cwd: string, type: string, error: unknown): Promise<
 	).catch(() => {});
 }
 
-export async function runGjcNativeSkillHookCli(): Promise<void> {
+export async function runVibNativeSkillHookCli(): Promise<void> {
 	const { payload, parseError } = await readStdinJson();
 	if (parseError) {
 		await logHookError(process.cwd(), "native_hook_stdin_parse_error", parseError);
 		process.stdout.write(
 			`${JSON.stringify({
 				decision: "block",
-				reason: "GJC native hook received malformed JSON input.",
+				reason: "Vibrato native hook received malformed JSON input.",
 				hookSpecificOutput: {
 					hookEventName: "Unknown",
-					additionalContext: `stdin JSON parsing failed inside gjc codex-native-hook: ${parseError.message}`,
+					additionalContext: `stdin JSON parsing failed inside vib codex-native-hook: ${parseError.message}`,
 				},
 			})}\n`,
 		);
@@ -461,7 +463,7 @@ export async function runGjcNativeSkillHookCli(): Promise<void> {
 	}
 
 	try {
-		const result = await dispatchGjcNativeSkillHook(payload);
+		const result = await dispatchVibNativeSkillHook(payload);
 		if (result.outputJson) {
 			process.stdout.write(`${JSON.stringify(result.outputJson)}\n`);
 		} else if (result.hookEventName === "Stop") {
@@ -475,9 +477,9 @@ export async function runGjcNativeSkillHookCli(): Promise<void> {
 			process.stdout.write(
 				`${JSON.stringify({
 					decision: "block",
-					reason: "GJC native Stop hook failed before normal continuation handling.",
-					stopReason: "gjc_native_stop_dispatch_failure",
-					systemMessage: `GJC native Stop hook failed before normal continuation handling. Failure: ${detail}`,
+					reason: "Vibrato native Stop hook failed before normal continuation handling.",
+					stopReason: "vib_native_stop_dispatch_failure",
+					systemMessage: `Vibrato native Stop hook failed before normal continuation handling. Failure: ${detail}`,
 				})}\n`,
 			);
 		} else {

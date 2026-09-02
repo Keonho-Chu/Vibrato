@@ -1,13 +1,13 @@
 import { describe, expect, it } from "bun:test";
 import * as path from "node:path";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { AgentRegistry } from "@gajae-code/coding-agent/registry/agent-registry";
-import { createAgentSession } from "@gajae-code/coding-agent/sdk";
-import type { AgentSession } from "@gajae-code/coding-agent/session/agent-session";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { TempDir } from "@gajae-code/utils";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { AgentRegistry } from "@vib-rato/coding-agent/registry/agent-registry";
+import { createAgentSession } from "@vib-rato/coding-agent/sdk";
+import type { AgentSession } from "@vib-rato/coding-agent/session/agent-session";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { TempDir } from "@vib-rato/utils";
 
 interface SessionRequest {
 	registry: AgentRegistry;
@@ -22,7 +22,7 @@ interface SessionEnvironment {
 }
 
 async function createSessionEnvironment(): Promise<SessionEnvironment> {
-	const tempDir = TempDir.createSync("@gjc-agent-roster-label-");
+	const tempDir = TempDir.createSync("@vib-agent-roster-label-");
 	let authStorage: AuthStorage | undefined;
 	try {
 		authStorage = await AuthStorage.create(path.join(tempDir.path(), "auth.db"));

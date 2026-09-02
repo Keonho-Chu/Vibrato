@@ -1,5 +1,5 @@
-import { ThinkingLevel } from "@gajae-code/agent-core";
-import { getSupportedEfforts, type Model, modelSupportsServiceTier, modelsAreEqual } from "@gajae-code/ai/core";
+import { ThinkingLevel } from "@vib-rato/agent-core";
+import { getSupportedEfforts, type Model, modelSupportsServiceTier, modelsAreEqual } from "@vib-rato/ai/core";
 import {
 	Container,
 	fuzzyFilter,
@@ -12,8 +12,8 @@ import {
 	Text,
 	type TUI,
 	truncateToWidth,
-} from "@gajae-code/tui";
-import { sanitizeText } from "@gajae-code/utils";
+} from "@vib-rato/tui";
+import { sanitizeText } from "@vib-rato/utils";
 import {
 	type AutoroutingProviderOrderHint,
 	type AutoroutingSetup,
@@ -39,13 +39,13 @@ import {
 	type ModelProfileDefinition,
 	resolveProfileBindings,
 } from "../../config/model-profiles";
-import type { GjcModelAssignmentTargetId, ModelRegistry } from "../../config/model-registry";
+import type { ModelRegistry, VibModelAssignmentTargetId } from "../../config/model-registry";
 import {
-	GJC_MODEL_ASSIGNMENT_TARGET_IDS,
-	GJC_MODEL_ASSIGNMENT_TARGETS,
 	isAuthenticated,
 	kNoAuth,
 	requiresExplicitThinkingChoice,
+	VIB_MODEL_ASSIGNMENT_TARGET_IDS,
+	VIB_MODEL_ASSIGNMENT_TARGETS,
 } from "../../config/model-registry";
 import {
 	formatModelSelectorValue,
@@ -56,6 +56,7 @@ import {
 } from "../../config/model-resolver";
 import { type ModelSelectorValue, normalizeModelSelectorValue, selectorHead } from "../../config/model-selector-value";
 import type { ModelProfileConfig } from "../../config/models-config-schema";
+import { isProviderSelectable, selectableModels } from "../../config/provider-allowlist";
 import { getProviderAuthHealth } from "../../config/provider-auth-health";
 import { compareRankedProviders, type ProviderAuthState } from "../../config/provider-ranking";
 import type { Settings } from "../../config/settings";
@@ -146,8 +147,8 @@ export type ModelSelectorSelection =
 	| {
 			kind: "assignment";
 			model: Model;
-			role: GjcModelAssignmentTargetId | null;
-			roles?: readonly GjcModelAssignmentTargetId[];
+			role: VibModelAssignmentTargetId | null;
+			roles?: readonly VibModelAssignmentTargetId[];
 			thinkingLevel?: ThinkingLevel;
 			selector?: string;
 	  }
@@ -175,8 +176,8 @@ export type ModelSelectorSelection =
 
 interface PendingThinkingChoice {
 	item: ModelItem | CanonicalModelItem;
-	role: GjcModelAssignmentTargetId | null;
-	roles?: readonly GjcModelAssignmentTargetId[];
+	role: VibModelAssignmentTargetId | null;
+	roles?: readonly VibModelAssignmentTargetId[];
 	levels: ThinkingLevel[];
 }
 
@@ -278,7 +279,7 @@ function presetRowIdentity(row: PresetLandingRow): string {
 	}
 }
 
-const PROFILE_ROLE_PREVIEW_ORDER: GjcModelAssignmentTargetId[] = [
+const PROFILE_ROLE_PREVIEW_ORDER: VibModelAssignmentTargetId[] = [
 	"default",
 	"executor",
 	"planner",
@@ -371,7 +372,7 @@ function isCustomUserProfile(profile: ModelProfileDefinition): boolean {
  * - Preset landing Left/Right: Collapse/expand selected provider
  * - Model browser Tab/Arrow Left/Right: Switch between provider tabs
  * - Arrow Up/Down: Navigate rows
- * - Enter: Open assignment actions for default plus GJC role-agent models
+ * - Enter: Open assignment actions for default plus Vibrato role-agent models
  * - Escape: Close selector
  */
 export class ModelSelectorComponent extends Container {
@@ -632,8 +633,8 @@ export class ModelSelectorComponent extends Container {
 			? this.#modelRegistry.getModelProfile(this.#activeModelProfile)
 			: undefined;
 		const activeProfileBindings = activeProfile ? resolveProfileBindings(activeProfile) : undefined;
-		for (const role of GJC_MODEL_ASSIGNMENT_TARGET_IDS) {
-			const target = GJC_MODEL_ASSIGNMENT_TARGETS[role];
+		for (const role of VIB_MODEL_ASSIGNMENT_TARGET_IDS) {
+			const target = VIB_MODEL_ASSIGNMENT_TARGETS[role];
 			const roleValue =
 				target.settingsPath === "modelRoles" ? this.#settings.getModelRole(role) : agentModelOverrides[role];
 			if (!roleValue) continue;
@@ -832,7 +833,7 @@ export class ModelSelectorComponent extends Container {
 	}
 
 	#buildAvailableModelItems(): ModelItem[] {
-		return this.#modelRegistry.getAvailable().map((model: Model) => ({
+		return selectableModels(this.#modelRegistry.getAvailable()).map((model: Model) => ({
 			kind: "provider",
 			provider: model.provider,
 			id: model.id,
@@ -997,7 +998,7 @@ export class ModelSelectorComponent extends Container {
 			providerSet.add(item.provider);
 		}
 		for (const provider of this.#modelRegistry.getDiscoverableProviders()) {
-			providerSet.add(provider);
+			if (isProviderSelectable(provider)) providerSet.add(provider);
 		}
 		const providerAuthStateById = new Map<string, ProviderAuthState>();
 		for (const provider of providerSet) {
@@ -1269,7 +1270,7 @@ export class ModelSelectorComponent extends Container {
 		}
 
 		const agentOverrides = this.#settings.get("task.agentModelOverrides");
-		for (const role of GJC_MODEL_ASSIGNMENT_TARGET_IDS) {
+		for (const role of VIB_MODEL_ASSIGNMENT_TARGET_IDS) {
 			if (role === "default") continue;
 			const selector = this.#resolveProfileModelSelector(agentOverrides[role]);
 			if (selector) modelMapping[role] = selector;
@@ -1329,9 +1330,11 @@ export class ModelSelectorComponent extends Container {
 
 	#getProfileAvailableModels(): Model[] {
 		const getAvailableForProfileActivation = this.#modelRegistry.getAvailableForProfileActivation;
-		return typeof getAvailableForProfileActivation === "function"
-			? getAvailableForProfileActivation.call(this.#modelRegistry)
-			: this.#modelRegistry.getAvailable();
+		return selectableModels(
+			typeof getAvailableForProfileActivation === "function"
+				? getAvailableForProfileActivation.call(this.#modelRegistry)
+				: this.#modelRegistry.getAvailable(),
+		);
 	}
 
 	#createProfileResolutionRegistry(availableModels: readonly Model[]) {
@@ -1697,7 +1700,7 @@ export class ModelSelectorComponent extends Container {
 		for (const role of PROFILE_ROLE_PREVIEW_ORDER) {
 			const assigned = this.#roles[role];
 			if (!assigned) continue;
-			const label = GJC_MODEL_ASSIGNMENT_TARGETS[role].tag ?? role.toUpperCase();
+			const label = VIB_MODEL_ASSIGNMENT_TARGETS[role].tag ?? role.toUpperCase();
 			lines.push(
 				theme.fg("dim", `  ${label}: ${this.#formatAssignedModelLabel(assigned.model, assigned.thinkingLevel)}`),
 			);
@@ -1933,7 +1936,7 @@ export class ModelSelectorComponent extends Container {
 				aliasIntent: "preset-equivalent",
 				credentialSessionId: this.#authSessionId,
 			});
-			const label = GJC_MODEL_ASSIGNMENT_TARGETS[role].tag ?? role.toUpperCase();
+			const label = VIB_MODEL_ASSIGNMENT_TARGETS[role].tag ?? role.toUpperCase();
 			this.#listContainer.addChild(
 				new Text(`  ${label}: ${formatClampedModelSelector(selectorHead(selector) ?? "", resolved.model)}`, 0, 0),
 			);
@@ -2036,8 +2039,8 @@ export class ModelSelectorComponent extends Container {
 			// the standalone current glyph below — a subagent-only match must NOT, since
 			// subagent badges reflect the subagent tier, not the current model.
 			let currentModelEffectiveGlyphRendered = false;
-			for (const role of GJC_MODEL_ASSIGNMENT_TARGET_IDS) {
-				const roleInfo = GJC_MODEL_ASSIGNMENT_TARGETS[role];
+			for (const role of VIB_MODEL_ASSIGNMENT_TARGET_IDS) {
+				const roleInfo = VIB_MODEL_ASSIGNMENT_TARGETS[role];
 				const assigned = this.#roles[role];
 				if (roleInfo.tag && assigned && modelsAreEqual(assigned.model, item.model)) {
 					const badge = makeInvertedBadge(roleInfo.tag, roleInfo.color ?? "muted");
@@ -2155,10 +2158,10 @@ export class ModelSelectorComponent extends Container {
 		const actionCount = this.#getActionCount(item.model);
 		for (let i = 0; i < actionCount; i++) {
 			const prefix = i === this.#selectedActionIndex ? theme.fg("accent", `${theme.nav.cursor} `) : "  ";
-			const role = GJC_MODEL_ASSIGNMENT_TARGET_IDS[i];
+			const role = VIB_MODEL_ASSIGNMENT_TARGET_IDS[i];
 			const label = role
-				? `Set as ${GJC_MODEL_ASSIGNMENT_TARGETS[role].tag ?? role.toUpperCase()} (${GJC_MODEL_ASSIGNMENT_TARGETS[role].name}) — now: ${this.#formatRoleBinding(role)}`
-				: i === GJC_MODEL_ASSIGNMENT_TARGET_IDS.length
+				? `Set as ${VIB_MODEL_ASSIGNMENT_TARGETS[role].tag ?? role.toUpperCase()} (${VIB_MODEL_ASSIGNMENT_TARGETS[role].name}) — now: ${this.#formatRoleBinding(role)}`
+				: i === VIB_MODEL_ASSIGNMENT_TARGET_IDS.length
 					? "Set for all role agents"
 					: "Set for all targets";
 			this.#listContainer.addChild(
@@ -2173,8 +2176,8 @@ export class ModelSelectorComponent extends Container {
 	 * only way to learn a role's model is to scan the whole (800+ entry) model list
 	 * for role badges.
 	 */
-	#formatRoleBinding(role: GjcModelAssignmentTargetId): string {
-		const target = GJC_MODEL_ASSIGNMENT_TARGETS[role];
+	#formatRoleBinding(role: VibModelAssignmentTargetId): string {
+		const target = VIB_MODEL_ASSIGNMENT_TARGETS[role];
 		const configured =
 			target.settingsPath === "modelRoles"
 				? this.#settings.getModelRole(role)
@@ -2211,7 +2214,7 @@ export class ModelSelectorComponent extends Container {
 				: "all role agents"
 			: choice.role === null
 				? "temporary model"
-				: GJC_MODEL_ASSIGNMENT_TARGETS[choice.role].name;
+				: VIB_MODEL_ASSIGNMENT_TARGETS[choice.role].name;
 		// Show the highlighted reasoning level — never the model id (that mislabel
 		// made "Reasoning for Default: gpt-5.6-luna" look like a level).
 		const selectedLevel = choice.levels[this.#selectedThinkingIndex];
@@ -2236,7 +2239,7 @@ export class ModelSelectorComponent extends Container {
 		return this.#roles[role]?.thinkingLevel ?? ThinkingLevel.Inherit;
 	}
 	#getActionCount(_model: Model): number {
-		return GJC_MODEL_ASSIGNMENT_TARGET_IDS.length + 2;
+		return VIB_MODEL_ASSIGNMENT_TARGET_IDS.length + 2;
 	}
 
 	#getSelectedItem(): ModelItem | CanonicalModelItem | undefined {
@@ -2545,15 +2548,15 @@ export class ModelSelectorComponent extends Container {
 		}
 		if (matchesKey(keyData, "enter") || matchesKey(keyData, "return") || keyData === "\n") {
 			this.#pendingActionItem = undefined;
-			const role = GJC_MODEL_ASSIGNMENT_TARGET_IDS[this.#selectedActionIndex];
+			const role = VIB_MODEL_ASSIGNMENT_TARGET_IDS[this.#selectedActionIndex];
 			if (role) {
 				this.#handleSelect(item, role);
 				return;
 			}
 			const roles =
-				this.#selectedActionIndex === GJC_MODEL_ASSIGNMENT_TARGET_IDS.length
+				this.#selectedActionIndex === VIB_MODEL_ASSIGNMENT_TARGET_IDS.length
 					? (["executor", "architect", "planner", "critic"] as const)
-					: GJC_MODEL_ASSIGNMENT_TARGET_IDS;
+					: VIB_MODEL_ASSIGNMENT_TARGET_IDS;
 			this.#handleSelect(item, "default", undefined, roles);
 			return;
 		}
@@ -2589,8 +2592,8 @@ export class ModelSelectorComponent extends Container {
 			if (choice.role !== null) {
 				this.#pendingActionItem = choice.item;
 				this.#selectedActionIndex = choice.roles
-					? GJC_MODEL_ASSIGNMENT_TARGET_IDS.length + (choice.roles.includes("default") ? 1 : 0)
-					: Math.max(0, GJC_MODEL_ASSIGNMENT_TARGET_IDS.indexOf(choice.role));
+					? VIB_MODEL_ASSIGNMENT_TARGET_IDS.length + (choice.roles.includes("default") ? 1 : 0)
+					: Math.max(0, VIB_MODEL_ASSIGNMENT_TARGET_IDS.indexOf(choice.role));
 			}
 			this.#updateList();
 		}
@@ -2598,8 +2601,8 @@ export class ModelSelectorComponent extends Container {
 	#getInitialThinkingChoiceIndex(
 		item: ModelItem | CanonicalModelItem,
 		levels: ThinkingLevel[],
-		role: GjcModelAssignmentTargetId | null = null,
-		roles?: readonly GjcModelAssignmentTargetId[],
+		role: VibModelAssignmentTargetId | null = null,
+		roles?: readonly VibModelAssignmentTargetId[],
 	): number {
 		const preferred = this.#getPreferredThinkingLevel(item, role, roles);
 		if (preferred && preferred !== ThinkingLevel.Inherit) {
@@ -2616,8 +2619,8 @@ export class ModelSelectorComponent extends Container {
 	 */
 	#getPreferredThinkingLevel(
 		item: ModelItem | CanonicalModelItem,
-		role: GjcModelAssignmentTargetId | null = null,
-		roles?: readonly GjcModelAssignmentTargetId[],
+		role: VibModelAssignmentTargetId | null = null,
+		roles?: readonly VibModelAssignmentTargetId[],
 	): ThinkingLevel | undefined {
 		const roleThinking = this.#getAssignedThinkingLevelForModel(item.model, role, roles);
 		if (roleThinking && roleThinking !== ThinkingLevel.Inherit) {
@@ -2631,8 +2634,8 @@ export class ModelSelectorComponent extends Container {
 
 	#getAssignedThinkingLevelForModel(
 		model: Model,
-		role: GjcModelAssignmentTargetId | null,
-		roles?: readonly GjcModelAssignmentTargetId[],
+		role: VibModelAssignmentTargetId | null,
+		roles?: readonly VibModelAssignmentTargetId[],
 	): ThinkingLevel | undefined {
 		if (roles && roles.length > 0) {
 			const assignedLevels = roles
@@ -2656,9 +2659,9 @@ export class ModelSelectorComponent extends Container {
 
 	#handleSelect(
 		item: ModelItem | CanonicalModelItem,
-		role: GjcModelAssignmentTargetId | null,
+		role: VibModelAssignmentTargetId | null,
 		thinkingLevel?: ThinkingLevel,
-		roles?: readonly GjcModelAssignmentTargetId[],
+		roles?: readonly VibModelAssignmentTargetId[],
 	): void {
 		const itemThinkingLevel = thinkingLevel ?? item.thinkingLevel;
 		const hasExplicitThinkingChoice = thinkingLevel !== undefined || item.explicitThinkingLevel === true;

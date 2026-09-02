@@ -1,4 +1,4 @@
-import { getEnvApiKey } from "@gajae-code/ai/core";
+import { getEnvApiKey } from "@vib-rato/ai/core";
 import type { AgentStorage } from "../session/agent-storage";
 import { findCredential, withHardTimeout } from "./search/providers/utils";
 
@@ -291,7 +291,7 @@ export async function searchWithParallel(
 	const apiKey = findParallelApiKey(storage);
 	if (!apiKey) {
 		throw new ParallelApiError(
-			"Parallel credentials not found. Set PARALLEL_API_KEY or login with 'gjc /login parallel'.",
+			"Parallel credentials not found. Set PARALLEL_API_KEY or login with 'vib /login parallel'.",
 		);
 	}
 
@@ -324,7 +324,7 @@ export async function extractWithParallel(
 	const apiKey = findParallelApiKey(storage);
 	if (!apiKey) {
 		throw new ParallelApiError(
-			"Parallel credentials not found. Set PARALLEL_API_KEY or login with 'gjc /login parallel'.",
+			"Parallel credentials not found. Set PARALLEL_API_KEY or login with 'vib /login parallel'.",
 		);
 	}
 

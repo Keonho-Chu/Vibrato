@@ -622,7 +622,7 @@ describe("provider-scoped auth-gateway credential dispatch", () => {
 			},
 			source,
 		);
-		const tempDir = await Bun.$`mktemp -d /tmp/gjc-auth-gateway-scope.XXXXXX`.text();
+		const tempDir = await Bun.$`mktemp -d /tmp/vib-auth-gateway-scope.XXXXXX`.text();
 		const root = tempDir.trim();
 		const store = await SqliteAuthCredentialStore.open(`${root}/auth.db`);
 		const storage = new AuthStorage(store);
@@ -883,7 +883,7 @@ describe("provider-scoped auth-gateway credential dispatch", () => {
 			},
 			source,
 		);
-		const tempDir = await Bun.$`mktemp -d /tmp/gjc-auth-gateway-live-revoke.XXXXXX`.text();
+		const tempDir = await Bun.$`mktemp -d /tmp/vib-auth-gateway-live-revoke.XXXXXX`.text();
 		const root = tempDir.trim();
 		const store = await SqliteAuthCredentialStore.open(`${root}/auth.db`);
 		const storage = new AuthStorage(store);
@@ -965,7 +965,7 @@ describe("provider-scoped auth-gateway credential dispatch", () => {
 			},
 			source,
 		);
-		const root = (await Bun.$`mktemp -d /tmp/gjc-auth-gateway-broker-revoke.XXXXXX`.text()).trim();
+		const root = (await Bun.$`mktemp -d /tmp/vib-auth-gateway-broker-revoke.XXXXXX`.text()).trim();
 		const brokerStore = await SqliteAuthCredentialStore.open(`${root}/broker.db`);
 		const brokerStorage = new AuthStorage(brokerStore);
 		brokerStore.upsertAuthCredentialForProvider(provider, { type: "api_key", key: "credential-a" });

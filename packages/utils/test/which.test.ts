@@ -8,7 +8,7 @@ describe.skipIf(process.platform === "win32")("$which lookup options", () => {
 	it("honors explicit PATH and cwd overrides without cache collisions", async () => {
 		const tempDir = await TempDir.create();
 		try {
-			const command = "gjc-which-option-test";
+			const command = "vib-which-option-test";
 			const executable = tempDir.join(command);
 			await Bun.write(executable, "#!/bin/sh\nexit 0\n");
 			await fs.chmod(executable, 0o755);

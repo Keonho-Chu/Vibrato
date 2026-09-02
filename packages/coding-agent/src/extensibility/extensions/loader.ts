@@ -4,10 +4,10 @@
 import type * as fs1 from "node:fs";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import type { ThinkingLevel } from "@gajae-code/agent-core";
-import type { ImageContent, Model, TextContent, Tool, UsageReport } from "@gajae-code/ai/core";
-import type { KeyId } from "@gajae-code/tui";
-import { hasFsCode, isEacces, isEnoent, logger } from "@gajae-code/utils";
+import type { ThinkingLevel } from "@vib-rato/agent-core";
+import type { ImageContent, Model, TextContent, Tool, UsageReport } from "@vib-rato/ai/core";
+import type { KeyId } from "@vib-rato/tui";
+import { hasFsCode, isEacces, isEnoent, logger } from "@vib-rato/utils";
 import * as Zod from "zod/v4";
 import { type ExtensionModule, extensionModuleCapability } from "../../capability/extension-module";
 import { loadCapability } from "../../discovery";
@@ -253,7 +253,7 @@ class ConcreteExtensionAPI implements ExtensionAPI {
 	readonly zod = Zod;
 
 	constructor(
-		public readonly pi: typeof import("@gajae-code/coding-agent"),
+		public readonly pi: typeof import("@vib-rato/coding-agent"),
 		private readonly extension: Extension,
 		private readonly runtime: IExtensionRuntime,
 		private readonly activation: ExtensionActivationScope,
@@ -268,7 +268,7 @@ class ConcreteExtensionAPI implements ExtensionAPI {
 	}
 
 	registerTool<
-		TParams extends import("@gajae-code/ai/core").TSchema = import("@gajae-code/ai/core").TSchema,
+		TParams extends import("@vib-rato/ai/core").TSchema = import("@vib-rato/ai/core").TSchema,
 		TDetails = unknown,
 	>(tool: ToolDefinition<TParams, TDetails>): void {
 		this.extension.tools.set(tool.name, {
@@ -477,7 +477,7 @@ async function loadExtension(
 		const extension = createExtension(extensionPath, resolvedPath);
 		activation = new ExtensionActivationScope(runtime);
 		const api = new ConcreteExtensionAPI(
-			await import("@gajae-code/coding-agent"),
+			await import("@vib-rato/coding-agent"),
 			extension,
 			runtime,
 			activation,
@@ -508,7 +508,7 @@ export async function loadExtensionFromFactory(
 	const extension = createExtension(name, name);
 	const activation = new ExtensionActivationScope(runtime);
 	const api = new ConcreteExtensionAPI(
-		await import("@gajae-code/coding-agent"),
+		await import("@vib-rato/coding-agent"),
 		extension,
 		runtime,
 		activation,
@@ -562,8 +562,8 @@ interface ExtensionManifest {
 
 async function readExtensionManifest(packageJsonPath: string): Promise<ExtensionManifest | null> {
 	try {
-		const pkg = (await Bun.file(packageJsonPath).json()) as { gjc?: ExtensionManifest; pi?: ExtensionManifest };
-		const manifest = pkg.gjc ?? pkg.pi;
+		const pkg = (await Bun.file(packageJsonPath).json()) as { vib?: ExtensionManifest; pi?: ExtensionManifest };
+		const manifest = pkg.vib ?? pkg.pi;
 		if (manifest && typeof manifest === "object") {
 			return manifest;
 		}
@@ -636,7 +636,7 @@ async function resolveExtensionEntries(dir: string): Promise<string[] | null> {
  * Discovery rules:
  * 1. Direct files: `extensions/*.ts` or `*.js` → load
  * 2. Subdirectory with index: `extensions/<ext>/index.ts` or `index.js` → load
- * 3. Subdirectory with package.json: `extensions/<ext>/package.json` with "gjc"/"pi" field → load declared paths
+ * 3. Subdirectory with package.json: `extensions/<ext>/package.json` with "vib"/"pi" field → load declared paths
  *
  * No recursion beyond one level. Complex packages must use package.json manifest.
  */
@@ -708,7 +708,7 @@ export async function discoverAndLoadExtensions(
 		}
 	};
 
-	// 1. Discover extension modules via capability API (native .gjc/.pi only)
+	// 1. Discover extension modules via capability API (native .vib/.pi only)
 	const discovered = await loadCapability<ExtensionModule>(extensionModuleCapability.id, { cwd });
 	for (const ext of discovered.items) {
 		if (ext._source.provider !== "native") continue;

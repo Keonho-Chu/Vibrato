@@ -1,5 +1,5 @@
 /**
- * Red-team / adversarial tests for `gjc migrate`. These try to break the feature:
+ * Red-team / adversarial tests for `vib migrate`. These try to break the feature:
  * secret leakage, path traversal, all-malformed input, and cross-source collisions.
  */
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
@@ -70,7 +70,7 @@ describe("red-team: path traversal", () => {
 		const escaped2 = path.join(path.dirname(cwd), "evil");
 		expect(await exists(escaped)).toBe(false);
 		expect(await exists(escaped2)).toBe(false);
-		const skillsDir = path.join(cwd, ".gjc", "skills");
+		const skillsDir = path.join(cwd, ".vib", "skills");
 		const entries = await fs.readdir(skillsDir).catch(() => []);
 		for (const e of entries) expect(e.includes("..")).toBe(false);
 	});
@@ -83,7 +83,7 @@ describe("red-team: all-malformed input", () => {
 		await write(".config/opencode/opencode.json", "{ broken");
 		const report = await runMigrate(base({}));
 		expect(report.ok).toBe(false);
-		expect(await exists(path.join(cwd, ".gjc", "mcp.json"))).toBe(false);
+		expect(await exists(path.join(cwd, ".vib", "mcp.json"))).toBe(false);
 	});
 });
 
@@ -97,7 +97,7 @@ describe("red-team: cross-source slug collision", () => {
 		expect(skillActions[0].status).toBe("imported");
 		expect(skillActions[1].status).toBe("skipped_exists");
 		// The first (canonical-order: claude-code) wins on disk.
-		const written = await fs.readFile(path.join(cwd, ".gjc", "skills", "shared", "SKILL.md"), "utf-8");
+		const written = await fs.readFile(path.join(cwd, ".vib", "skills", "shared", "SKILL.md"), "utf-8");
 		expect(written).toContain("from-claude");
 	});
 });

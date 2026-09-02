@@ -11,7 +11,7 @@ import {
 	withFixtureBrokerEnvironment,
 } from "./helpers/fixture-broker-cleanup";
 
-const temp = () => fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-fixture-cleanup-"));
+const temp = () => fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-fixture-cleanup-"));
 
 function lease(events: string[], failures = 0) {
 	let attempts = 0;
@@ -99,16 +99,16 @@ describe("fixture broker root cleanup", () => {
 	});
 
 	it("sanitizes and restores the production SDK opt-out without contacting operator state", async () => {
-		const prior = process.env.GJC_SDK_DISABLE;
-		process.env.GJC_SDK_DISABLE = "1";
+		const prior = process.env.VIB_SDK_DISABLE;
+		process.env.VIB_SDK_DISABLE = "1";
 		try {
 			await withFixtureBrokerEnvironment(async () => {
-				expect(process.env.GJC_SDK_DISABLE).toBeUndefined();
+				expect(process.env.VIB_SDK_DISABLE).toBeUndefined();
 			});
-			expect(process.env.GJC_SDK_DISABLE).toBe("1");
+			expect(process.env.VIB_SDK_DISABLE).toBe("1");
 		} finally {
-			if (prior === undefined) delete process.env.GJC_SDK_DISABLE;
-			else process.env.GJC_SDK_DISABLE = prior;
+			if (prior === undefined) delete process.env.VIB_SDK_DISABLE;
+			else process.env.VIB_SDK_DISABLE = prior;
 		}
 	});
 
@@ -238,10 +238,10 @@ describe("fixture broker root cleanup", () => {
 		expect(environment).toMatchObject({
 			HOME: root,
 			XDG_CONFIG_HOME: path.join(root, "config"),
-			GJC_AGENT_DIR: agentDir,
-			GJC_CODING_AGENT_DIR: agentDir,
+			VIB_AGENT_DIR: agentDir,
+			VIB_CODING_AGENT_DIR: agentDir,
 		});
-		expect(environment.GJC_SDK_DISABLE).toBeUndefined();
+		expect(environment.VIB_SDK_DISABLE).toBeUndefined();
 	});
 
 	it("replaces hostile Windows profile variables with fixture-owned paths", () => {

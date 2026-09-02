@@ -1,11 +1,11 @@
 import { describe, expect, test, vi } from "bun:test";
-import { AsyncJobManager } from "@gajae-code/coding-agent/async/job-manager";
+import { AsyncJobManager } from "@vib-rato/coding-agent/async/job-manager";
 import {
 	lookupOwnedRegistration,
 	registerOwnedRegistration,
 	resetTerminalAbortRegistriesForTests,
-} from "@gajae-code/coding-agent/session/terminal-abort";
-import { logger } from "@gajae-code/utils";
+} from "@vib-rato/coding-agent/session/terminal-abort";
+import { logger } from "@vib-rato/utils";
 import { JobsObserver } from "../../src/modes/jobs-observer";
 
 async function waitFor(predicate: () => boolean, timeoutMs = 5_000): Promise<void> {

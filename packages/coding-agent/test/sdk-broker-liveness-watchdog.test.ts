@@ -2,7 +2,7 @@ import { afterEach, expect, test, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import * as native from "@gajae-code/natives";
+import * as native from "@vib-rato/natives";
 import { Broker, setHeartbeatStallForTest, setLivenessGraceForTest } from "../src/sdk/broker/broker";
 import { publishBrokerDiscovery } from "../src/sdk/broker/discovery";
 
@@ -15,7 +15,7 @@ const brokers: Broker[] = [];
 const roots: string[] = [];
 
 async function startBroker(): Promise<Broker> {
-	const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-liveness-"));
+	const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-liveness-"));
 	roots.push(root);
 	const broker = new Broker({ agentDir: path.join(root, "agent"), heartbeatTtlMs: HEARTBEAT_TTL_MS });
 	brokers.push(broker);
@@ -75,7 +75,7 @@ test("a broker that keeps publishing is never terminated by the liveness deadlin
 });
 
 test("the retained heartbeat never runs its blocking write or fsync on the JS thread", async () => {
-	const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-liveness-thread-"));
+	const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-liveness-thread-"));
 	roots.push(root);
 	const agentDir = path.join(root, "agent");
 	// The write and its fsync block until the device returns, which is what leaves

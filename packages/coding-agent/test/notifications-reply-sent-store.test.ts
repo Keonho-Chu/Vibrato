@@ -8,7 +8,7 @@ import { ReplySentStore, type ReplySentStoreFs } from "../src/sdk/bus/reply-sent
 const INDEX_FILENAME = "telegram-rich-sent-index.json";
 
 function tempAgentDir(): string {
-	return fs.mkdtempSync(path.join(os.tmpdir(), "gjc-reply-store-test-"));
+	return fs.mkdtempSync(path.join(os.tmpdir(), "vib-reply-store-test-"));
 }
 
 /**

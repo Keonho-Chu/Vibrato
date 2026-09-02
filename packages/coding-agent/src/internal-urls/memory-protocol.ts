@@ -1,6 +1,6 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { getAgentDir, getMemoriesDir, isEnoent } from "@gajae-code/utils";
+import { getAgentDir, getMemoriesDir, isEnoent } from "@vib-rato/utils";
 import { AgentRegistry } from "../registry/agent-registry";
 import { validateRelativePath } from "./skill-protocol";
 import type { InternalResource, InternalUrl, ProtocolHandler } from "./types";

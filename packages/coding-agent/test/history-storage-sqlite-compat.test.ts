@@ -23,7 +23,7 @@ afterEach(async () => {
 });
 
 it("migrates legacy history schema away from unixepoch defaults", async () => {
-	tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-history-storage-legacy-"));
+	tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-history-storage-legacy-"));
 	const dbPath = path.join(tempDir, "history.db");
 	const legacyDb = new Database(dbPath);
 	legacyDb.exec(`

@@ -1,11 +1,11 @@
 import { describe, expect, it, setSystemTime } from "bun:test";
-import type { BuildSystemPromptResult } from "@gajae-code/coding-agent/system-prompt";
+import type { BuildSystemPromptResult } from "@vib-rato/coding-agent/system-prompt";
 import {
 	buildSystemPrompt,
 	buildVolatileProjectContext,
 	getLocalTimeContext,
-} from "@gajae-code/coding-agent/system-prompt";
-import type { WorkspaceTree } from "@gajae-code/coding-agent/workspace-tree";
+} from "@vib-rato/coding-agent/system-prompt";
+import type { WorkspaceTree } from "@vib-rato/coding-agent/workspace-tree";
 import { hashPrefix } from "../../orchestration-token-benchmark/src/prefix-stability";
 
 function workspaceTree(rendered: string): WorkspaceTree {

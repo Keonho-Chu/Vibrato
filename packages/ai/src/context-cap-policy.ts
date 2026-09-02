@@ -8,13 +8,13 @@ import type { Api, Model } from "./types";
  * The authenticated Codex backend discovery endpoint (`GET {base}/codex/models`
  * with an OAuth bearer token) is the authoritative runtime source of Codex OAuth
  * model context-window metadata (`models[].context_window`). OpenAI owns that
- * value; GJC consumes it read-only via `fetchCodexModels` and must not silently
+ * value; Vibrato consumes it read-only via `fetchCodexModels` and must not silently
  * invent a larger limit without upstream evidence.
  *
  * This bundled policy is a client-side conservative guard, not a primary source.
  * It exists because OpenAI temporarily reverted the GPT-5.6 Sol product context
  * limit from 372K to 272K on 2026-07-13 (staff announcement quoted in
- * gajae-code issues #2240 / #2260), while planning to restore 372K later.
+ * vib-rato issues #2240 / #2260), while planning to restore 372K later.
  * `ceiling` must only be raised with an upstream evidence citation; an
  * unverified report that "372K is live again" is not sufficient.
  *

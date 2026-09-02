@@ -3,8 +3,8 @@
  */
 import * as path from "node:path";
 
-import { type Api, type AssistantMessage, completeSimple, type Model, type Tool } from "@gajae-code/ai/core";
-import { logger, prompt } from "@gajae-code/utils";
+import { type Api, type AssistantMessage, completeSimple, type Model, type Tool } from "@vib-rato/ai/core";
+import { logger, prompt } from "@vib-rato/utils";
 import type { ModelRegistry } from "../config/model-registry";
 import { resolveRoleSelection } from "../config/model-resolver";
 import type { Settings } from "../config/settings";
@@ -14,7 +14,7 @@ import { syncHerdrPaneTitle } from "./herdr-pane";
 
 const TITLE_SYSTEM_PROMPT = prompt.render(titleSystemPrompt);
 
-const DEFAULT_TERMINAL_TITLE = "GJC";
+const DEFAULT_TERMINAL_TITLE = "Vibrato";
 const TERMINAL_TITLE_CONTROL_CHARS = /[\u0000-\u001f\u007f-\u009f]/g;
 
 const MAX_INPUT_CHARS = 2000;

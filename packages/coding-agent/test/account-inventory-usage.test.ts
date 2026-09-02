@@ -4,8 +4,8 @@ import type {
 	CachedUsageReport,
 	CredentialHealthResult,
 	CredentialInventoryRecord,
-} from "@gajae-code/ai/core";
-import * as aiCore from "@gajae-code/ai/core";
+} from "@vib-rato/ai/core";
+import * as aiCore from "@vib-rato/ai/core";
 import { buildAccountInventorySnapshot, checkAccountInventory } from "../src/session/account-inventory";
 
 const NOW = 1_700_000_000_000;
@@ -67,7 +67,7 @@ const CODEX_ENV_KEY = "test-env-row-token";
 
 /**
  * Make env-key resolution deterministic for one test: getEnvApiKey is spied at
- * the @gajae-code/ai/core boundary and restored after each test, so the suite
+ * the @vib-rato/ai/core boundary and restored after each test, so the suite
  * never reads the inherited credential snapshot, agent/user `.env` files, or
  * shell startup files — regardless of what the host machine carries — and never
  * mutates process.env.

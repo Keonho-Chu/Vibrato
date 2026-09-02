@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 
-import { currentExecutablePath } from "@gajae-code/natives";
+import { currentExecutablePath } from "@vib-rato/natives";
 
 import internalSourceMarker from "./internal-source-marker-2178.txt" with { type: "file" };
 
@@ -88,7 +88,7 @@ function isBunVirtualExecutablePath(file: string): boolean {
  * Bun normally exposes the compiled application's on-disk path through
  * `process.execPath`. Some single-file builds instead expose their virtual
  * bundle entry there. Exact compiled-marker evidence proves this is the
- * bundled GJC process; the fallback comes from the OS current-image query,
+ * bundled Vibrato process; the fallback comes from the OS current-image query,
  * never argv or PATH.
  */
 function compiledExecutable(options: SdkInternalRuntimeDescriptorTestOptions): string {
@@ -108,7 +108,7 @@ function internalEnvironment(environment: NodeJS.ProcessEnv, source: boolean): N
 	delete isolated.BUN_OPTIONS;
 	if (source) {
 		delete isolated.PI_COMPILED;
-		delete isolated.GJC_COMPILED;
+		delete isolated.VIB_COMPILED;
 	}
 	return isolated;
 }
@@ -117,7 +117,7 @@ function expectedPackageName(packageDirectory: string): void {
 		const manifest = JSON.parse(fs.readFileSync(path.join(packageDirectory, "package.json"), "utf8")) as {
 			name?: unknown;
 		};
-		if (manifest.name !== "@gajae-code/coding-agent") throw new Error("unexpected package name");
+		if (manifest.name !== "@vib-rato/coding-agent") throw new Error("unexpected package name");
 	} catch {
 		throw new Error("SDK internal launch refused: product package identity is invalid.");
 	}

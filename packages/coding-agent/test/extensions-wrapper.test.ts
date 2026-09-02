@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "bun:test";
-import type { ExtensionRunner } from "@gajae-code/coding-agent/extensibility/extensions/runner";
-import type { RegisteredTool } from "@gajae-code/coding-agent/extensibility/extensions/types";
-import { RegisteredToolAdapter } from "@gajae-code/coding-agent/extensibility/extensions/wrapper";
+import type { ExtensionRunner } from "@vib-rato/coding-agent/extensibility/extensions/runner";
+import type { RegisteredTool } from "@vib-rato/coding-agent/extensibility/extensions/types";
+import { RegisteredToolAdapter } from "@vib-rato/coding-agent/extensibility/extensions/wrapper";
 
 function createRegisteredTool(overrides: Partial<RegisteredTool["definition"]> = {}): RegisteredTool {
 	return {

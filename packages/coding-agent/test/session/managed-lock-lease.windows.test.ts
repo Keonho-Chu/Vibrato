@@ -15,7 +15,7 @@ afterEach(() => {
 });
 
 function createLockRoot(name: string): string {
-	const root = fs.mkdtempSync(path.join(os.tmpdir(), `gjc-managed-lock-${name}-`));
+	const root = fs.mkdtempSync(path.join(os.tmpdir(), `vib-managed-lock-${name}-`));
 	temporaryDirectories.push(root);
 	const locks = path.join(root, "locks");
 	fs.mkdirSync(locks, { recursive: true });

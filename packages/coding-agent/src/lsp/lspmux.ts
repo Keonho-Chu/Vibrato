@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { $flag, $which, logger } from "@gajae-code/utils";
+import { $flag, $which, logger } from "@vib-rato/utils";
 import { TOML } from "bun";
 import { spawnOwnedProcess } from "../runtime/process-lifecycle";
 import { isProjectControlledPath } from "./path-trust";
@@ -166,11 +166,11 @@ function resolveTrustedLspmuxBinary(cwd: string): string | null {
  * Detect lspmux availability and state.
  * Results are cached for STATE_CACHE_TTL_MS.
  *
- * Set GJC_DISABLE_LSPMUX=1 or PI_DISABLE_LSPMUX=1 to disable.
+ * Set VIB_DISABLE_LSPMUX=1 or PI_DISABLE_LSPMUX=1 to disable.
  */
 export async function detectLspmux(cwd = process.cwd()): Promise<LspmuxState> {
 	const now = Date.now();
-	if ($flag("GJC_DISABLE_LSPMUX") || $flag("PI_DISABLE_LSPMUX")) {
+	if ($flag("VIB_DISABLE_LSPMUX") || $flag("PI_DISABLE_LSPMUX")) {
 		cachedState = { available: false, running: false, binaryPath: null, config: null };
 		cacheTimestamp = now;
 		cacheCwd = cwd;

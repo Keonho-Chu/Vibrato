@@ -15,7 +15,7 @@ import { recordFatalCrash } from "../src/postmortem";
 const FP = "0123456789abcdef0123456789abcdef";
 
 function tempDir(): string {
-	return fs.mkdtempSync(path.join(os.tmpdir(), "gjc-crash-journal-"));
+	return fs.mkdtempSync(path.join(os.tmpdir(), "vib-crash-journal-"));
 }
 
 function occurrence(overrides: Partial<CrashOccurrenceEvent> = {}): CrashOccurrenceEvent {
@@ -54,18 +54,18 @@ describe("crash event line", () => {
 
 	it("rejects malformed, out-of-alphabet and out-of-range events", () => {
 		expect(parseCrashEventLine("not an event")).toBeUndefined();
-		expect(parseCrashEventLine('gjc-crash-event.v1 {"k":"occurrence"}')).toBeUndefined();
+		expect(parseCrashEventLine('vib-crash-event.v1 {"k":"occurrence"}')).toBeUndefined();
 		expect(
-			parseCrashEventLine(`gjc-crash-event.v1 {"k":"occurrence","fp":"nope","at":1,"id":"aa","fpv":1}`),
+			parseCrashEventLine(`vib-crash-event.v1 {"k":"occurrence","fp":"nope","at":1,"id":"aa","fpv":1}`),
 		).toBeUndefined();
-		expect(parseCrashEventLine(`gjc-crash-event.v1 {"k":"nudged","at":0}`)).toBeUndefined();
-		expect(parseCrashEventLine(`gjc-crash-event.v1 {"k":"unknown","at":${Date.now()}}`)).toBeUndefined();
+		expect(parseCrashEventLine(`vib-crash-event.v1 {"k":"nudged","at":0}`)).toBeUndefined();
+		expect(parseCrashEventLine(`vib-crash-event.v1 {"k":"unknown","at":${Date.now()}}`)).toBeUndefined();
 	});
 });
 
 describe("appendCrashEvent", () => {
 	it("appends whole lines from concurrent writers", () => {
-		const journal = path.join(tempDir(), "nested", "gjc-crash-events.jsonl");
+		const journal = path.join(tempDir(), "nested", "vib-crash-events.jsonl");
 		for (let index = 0; index < 20; index++) {
 			appendCrashEvent(occurrence({ recordId: index.toString(16).padStart(16, "0") }), journal);
 		}
@@ -78,7 +78,7 @@ describe("appendCrashEvent", () => {
 	it("swallows a write failure instead of masking the original fatal", () => {
 		const dir = tempDir();
 		// A directory where the journal file should be: every open fails.
-		const journal = path.join(dir, "gjc-crash-events.jsonl");
+		const journal = path.join(dir, "vib-crash-events.jsonl");
 		fs.mkdirSync(journal);
 		expect(appendCrashEvent(occurrence(), journal)).toBe(false);
 	});
@@ -87,7 +87,7 @@ describe("appendCrashEvent", () => {
 		// The latch is process-wide and deliberately never cleared, so this must be
 		// exercised in a fresh process rather than sharing the test runner's.
 		const dir = tempDir();
-		const journal = path.join(dir, "gjc-crash-events.jsonl");
+		const journal = path.join(dir, "vib-crash-events.jsonl");
 		const script = path.join(dir, "latch.ts");
 		fs.writeFileSync(
 			script,
@@ -106,7 +106,7 @@ describe("appendCrashEvent", () => {
 describe("recordFatalCrash identity", () => {
 	it("appends a parseable identity line and journals the occurrence beside the log", () => {
 		const dir = tempDir();
-		const target = path.join(dir, "gjc-crash.log");
+		const target = path.join(dir, "vib-crash.log");
 		// A fresh process: the fatal journal latch fires once per process lifetime.
 		const script = path.join(dir, "crash.ts");
 		fs.writeFileSync(
@@ -118,12 +118,12 @@ describe("recordFatalCrash identity", () => {
 		expect(spawned.exitCode).toBe(0);
 
 		const contents = fs.readFileSync(target, "utf8");
-		const markerLine = contents.split("\n").find(line => line.startsWith("gjc-crash-record.v1 "));
+		const markerLine = contents.split("\n").find(line => line.startsWith("vib-crash-record.v1 "));
 		const marker = parseCrashRecordMarker(markerLine ?? "");
 		expect(marker?.fingerprint).toMatch(/^[0-9a-f]{32}$/);
 		expect(marker?.version).toBe(1);
 
-		const journal = fs.readFileSync(path.join(dir, "gjc-crash-events.jsonl"), "utf8");
+		const journal = fs.readFileSync(path.join(dir, "vib-crash-events.jsonl"), "utf8");
 		const event = parseCrashEventLine(journal.split("\n")[0] ?? "");
 		expect(event?.kind).toBe("occurrence");
 		expect(event && "fingerprint" in event ? event.fingerprint : undefined).toBe(marker?.fingerprint ?? "");
@@ -131,7 +131,7 @@ describe("recordFatalCrash identity", () => {
 
 	it("keeps the identity line even when the record body is truncated", () => {
 		const dir = tempDir();
-		const target = path.join(dir, "gjc-crash.log");
+		const target = path.join(dir, "vib-crash.log");
 		recordFatalCrash("Uncaught Exception", new Error("x".repeat(200_000)), { path: target });
 		const contents = fs.readFileSync(target, "utf8");
 		expect(contents).toContain("[crash record truncated]");

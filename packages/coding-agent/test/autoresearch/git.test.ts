@@ -20,7 +20,7 @@ afterEach(async () => {
 });
 
 function tempDir(): string {
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-autoresearch-git-"));
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-autoresearch-git-"));
 	tempRoots.push(dir);
 	return dir;
 }

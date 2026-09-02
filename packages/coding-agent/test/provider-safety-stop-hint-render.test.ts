@@ -6,11 +6,11 @@
  * error kinds. Rendering only — no dispatch, no state mutation.
  */
 import { beforeAll, describe, expect, it } from "bun:test";
-import type { AssistantMessage } from "@gajae-code/ai/core";
-import { resetSettingsForTest, Settings } from "@gajae-code/coding-agent/config/settings";
-import { AssistantMessageComponent } from "@gajae-code/coding-agent/modes/components/assistant-message";
-import { getThemeByName, setThemeInstance } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { ProviderSafetyStopHintSession } from "@gajae-code/coding-agent/session/provider-safety-stop-hint";
+import type { AssistantMessage } from "@vib-rato/ai/core";
+import { resetSettingsForTest, Settings } from "@vib-rato/coding-agent/config/settings";
+import { AssistantMessageComponent } from "@vib-rato/coding-agent/modes/components/assistant-message";
+import { getThemeByName, setThemeInstance } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { ProviderSafetyStopHintSession } from "@vib-rato/coding-agent/session/provider-safety-stop-hint";
 
 const REFUSAL = "Refusal (reasoning_extraction): This request was blocked as it seems to violate restrictions.";
 

@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import * as fsSync from "node:fs";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { getAgentDir } from "@gajae-code/utils";
+import { getAgentDir } from "@vib-rato/utils";
 import { repo as resolveGitRepository } from "../../utils/git";
 import { ensureBroker } from "../broker/ensure";
 import { lifecycleRequestTimeoutMs } from "../broker/startup-budget";
@@ -85,7 +85,7 @@ export interface RetainedTranscriptTailReader {
 }
 
 const SECRET_FIELD = /(?:secret|token|password|credential|authorization|api[_-]?key)/i;
-const SDK_SESSION_CLI_LIFECYCLE_ACTOR = { id: "gjc-sdk-session-cli", namespace: "sdk:session-cli" } as const;
+const SDK_SESSION_CLI_LIFECYCLE_ACTOR = { id: "vib-sdk-session-cli", namespace: "sdk:session-cli" } as const;
 const ROUTER_START_TIMEOUT_MS = 10_000;
 const ROUTER_STOP_TIMEOUT_MS = 5_000;
 const TAIL_STATUS_POLL_MS = 100;
@@ -1494,7 +1494,7 @@ function rawKind(action: string, args: SdkSessionCliArgs): SdkSessionCliRawKind 
 	return action === "control" || action === "query" || action === "global" ? action : undefined;
 }
 
-/** Runs the broker-bound `gjc sdk session` command family without exposing endpoint credentials. */
+/** Runs the broker-bound `vib sdk session` command family without exposing endpoint credentials. */
 export async function runSdkSessionCli(
 	args: SdkSessionCliArgs,
 	writeOutput: (value: unknown) => void = writeJson,

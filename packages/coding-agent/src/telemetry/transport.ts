@@ -2,7 +2,7 @@ import { Settings } from "../config/settings";
 import { getTelemetryStatus } from "./control";
 import { getTelemetryInstallId, serializeTelemetryEvent, type TelemetryEvent, type TelemetryEventName } from "./events";
 
-export const TELEMETRY_ENDPOINT = "https://telemetry.gajae.dev/v1/events" as const;
+export const TELEMETRY_ENDPOINT = "https://telemetry.vibrato.dev/v1/events" as const;
 export const TELEMETRY_MAX_IN_FLIGHT = 2 as const;
 export const TELEMETRY_TIMEOUT_MS = 1500 as const;
 export const TELEMETRY_FLUSH_TIMEOUT_MS = 2000 as const;

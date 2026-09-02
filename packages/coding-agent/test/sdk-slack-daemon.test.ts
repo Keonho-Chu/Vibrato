@@ -188,7 +188,7 @@ async function withDaemon(
 		now?: () => number;
 	} = {},
 ): Promise<void> {
-	const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-slack-daemon-"));
+	const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-slack-daemon-"));
 	let daemon: SlackNotificationDaemon | undefined;
 	try {
 		const fake = new FakeSlack();
@@ -343,7 +343,7 @@ describe("SlackNotificationDaemon fake-provider acceptance", () => {
 	});
 
 	it("allows only the durable posting-root owner to publish a concurrent root", async () => {
-		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-slack-concurrent-"));
+		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-slack-concurrent-"));
 		try {
 			const fake = new FakeSlack();
 			const options = {
@@ -367,7 +367,7 @@ describe("SlackNotificationDaemon fake-provider acceptance", () => {
 	});
 
 	it("takes over an expired crashed root publisher while retaining its client message identity", async () => {
-		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-slack-root-lease-"));
+		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-slack-root-lease-"));
 		try {
 			let now = 1;
 			const fake = new FakeSlack();
@@ -417,7 +417,7 @@ describe("SlackNotificationDaemon fake-provider acceptance", () => {
 	});
 
 	it("renews a live root lease across an external-call overrun so a peer cannot take over", async () => {
-		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-slack-root-renewal-"));
+		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-slack-root-renewal-"));
 		try {
 			const fake = new FakeSlack();
 			const gate = Promise.withResolvers<void>();
@@ -482,7 +482,7 @@ describe("SlackNotificationDaemon fake-provider acceptance", () => {
 		}
 	});
 	it("renews a live action lease across an external-call overrun", async () => {
-		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-slack-action-renewal-"));
+		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-slack-action-renewal-"));
 		try {
 			const fake = new FakeSlack();
 			const base = {
@@ -574,7 +574,7 @@ describe("SlackNotificationDaemon fake-provider acceptance", () => {
 	});
 
 	it("allows one cross-store lease holder to publish a shared outbound action", async () => {
-		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-slack-action-lease-"));
+		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-slack-action-lease-"));
 		try {
 			const fake = new FakeSlack();
 			const base = {
@@ -801,7 +801,7 @@ describe("SlackNotificationDaemon fake-provider acceptance", () => {
 	});
 
 	it("publishes the non-creator same-daemon rollover notification in the new root thread", async () => {
-		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-slack-rollover-same-daemon-"));
+		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-slack-rollover-same-daemon-"));
 		let daemon: SlackNotificationDaemon | undefined;
 		try {
 			const fake = new FakeSlack();
@@ -859,7 +859,7 @@ describe("SlackNotificationDaemon fake-provider acceptance", () => {
 	});
 
 	it("serializes rollover publication across daemon instances sharing the store", async () => {
-		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-slack-rollover-cross-daemon-"));
+		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-slack-rollover-cross-daemon-"));
 		try {
 			const fake = new FakeSlack();
 			let generation = 1;
@@ -944,7 +944,7 @@ describe("SlackNotificationDaemon fake-provider acceptance", () => {
 	});
 
 	it("restores a root mapping from an accepted provider receipt during startup replay", async () => {
-		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-slack-root-receipt-"));
+		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-slack-root-receipt-"));
 		try {
 			const fake = new FakeSlack();
 			const options = {
@@ -985,7 +985,7 @@ describe("SlackNotificationDaemon fake-provider acceptance", () => {
 	});
 
 	it("restores action authority from an accepted provider receipt during startup replay", async () => {
-		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-slack-action-receipt-"));
+		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-slack-action-receipt-"));
 		try {
 			const fake = new FakeSlack();
 			let id = 0;
@@ -1031,7 +1031,7 @@ describe("SlackNotificationDaemon fake-provider acceptance", () => {
 	});
 
 	it("reconciles terminal root and action receipts before Socket Mode can ACK an early envelope", async () => {
-		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-slack-startup-barrier-"));
+		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-slack-startup-barrier-"));
 		let restarted: SlackNotificationDaemon | undefined;
 		try {
 			const fake = new FakeSlack();
@@ -1474,7 +1474,7 @@ describe("SlackNotificationDaemon fake-provider acceptance", () => {
 	});
 
 	it("suppresses a generation-N provider effect after close and generation-N+1 resume", async () => {
-		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-slack-stale-provider-effect-"));
+		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-slack-stale-provider-effect-"));
 		try {
 			const fake = new FakeSlack();
 			let generation = 1;
@@ -1557,7 +1557,7 @@ describe("SlackNotificationDaemon fake-provider acceptance", () => {
 	});
 
 	it("replays an ACK-boundary command receipt with its persisted idempotency key", async () => {
-		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-slack-command-replay-"));
+		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-slack-command-replay-"));
 		try {
 			const firstProvider = new FakeSlack();
 			const first = new SlackNotificationDaemon({
@@ -1655,7 +1655,7 @@ describe("SlackNotificationDaemon fake-provider acceptance", () => {
 	});
 
 	it("restores durable pending action authority after restart", async () => {
-		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-slack-restart-"));
+		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-slack-restart-"));
 		try {
 			const firstFake = new FakeSlack();
 			const first = new SlackNotificationDaemon({
@@ -1801,7 +1801,7 @@ describe("SlackNotificationDaemon fake-provider acceptance", () => {
 	});
 
 	it("retries a definite pre-send failure from the journal after restart", async () => {
-		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-slack-definite-restart-"));
+		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-slack-definite-restart-"));
 		try {
 			const first = new SlackNotificationDaemon({
 				agentDir,
@@ -1863,7 +1863,7 @@ describe("SlackNotificationDaemon fake-provider acceptance", () => {
 	});
 
 	it("drains a durable ACK-boundary receipt on startup with its captured payload", async () => {
-		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-slack-startup-replay-"));
+		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-slack-startup-replay-"));
 		try {
 			const firstFake = new FakeSlack();
 			const first = new SlackNotificationDaemon({
@@ -2058,7 +2058,7 @@ describe("SlackNotificationDaemon fake-provider acceptance", () => {
 	});
 
 	it("does not replay an accepted-disconnected inbound reply after restart", async () => {
-		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-slack-inbound-uncertain-"));
+		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-slack-inbound-uncertain-"));
 		try {
 			const first = new SlackNotificationDaemon({
 				agentDir,
@@ -2113,7 +2113,7 @@ describe("SlackNotificationDaemon fake-provider acceptance", () => {
 	});
 
 	it("terminalizes a crash-orphaned inbound effect after its root is superseded without SDK dispatch", async () => {
-		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-slack-orphan-root-"));
+		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-slack-orphan-root-"));
 		try {
 			const first = new SlackNotificationDaemon({
 				agentDir,
@@ -2180,7 +2180,7 @@ describe("SlackNotificationDaemon fake-provider acceptance", () => {
 	});
 
 	it("suppresses a generation-rotated provider effect before post or terminal commit", async () => {
-		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-slack-stale-effect-"));
+		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-slack-stale-effect-"));
 		try {
 			let generation = 1;
 			const fake = new FakeSlack();
@@ -2207,7 +2207,7 @@ describe("SlackNotificationDaemon fake-provider acceptance", () => {
 		}
 	});
 	it("ACKs a redelivery yet recovers its dead unexpired lease without another envelope", async () => {
-		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-slack-lease-recovery-"));
+		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-slack-lease-recovery-"));
 		let daemon: SlackNotificationDaemon | undefined;
 		try {
 			let now = 0;
@@ -2322,7 +2322,7 @@ describe("SlackNotificationDaemon fake-provider acceptance", () => {
 	});
 
 	it("revalidates the fallback attachment authority persisted for an adopted root", async () => {
-		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-slack-bind-authority-"));
+		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-slack-bind-authority-"));
 		try {
 			const fake = new FakeSlack();
 			const rootTs = "9.124";

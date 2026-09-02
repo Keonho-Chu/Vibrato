@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
 import * as path from "node:path";
-import { disposeAllKernelSessions, executePythonWithKernel } from "@gajae-code/coding-agent/eval/py/executor";
-import { DEFAULT_MAX_BYTES } from "@gajae-code/coding-agent/session/streaming-output";
-import { TempDir } from "@gajae-code/utils";
+import { disposeAllKernelSessions, executePythonWithKernel } from "@vib-rato/coding-agent/eval/py/executor";
+import { DEFAULT_MAX_BYTES } from "@vib-rato/coding-agent/session/streaming-output";
+import { TempDir } from "@vib-rato/utils";
 import { FakeKernel } from "./helpers";
 
 describe("executePythonWithKernel", () => {

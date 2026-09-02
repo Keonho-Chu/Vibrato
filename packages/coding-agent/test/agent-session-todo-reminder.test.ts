@@ -2,16 +2,16 @@ import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { Agent, type AgentMessage } from "@gajae-code/agent-core";
-import { type DeveloperMessage, getBundledModel, type TextContent } from "@gajae-code/ai";
-import { createMockModel, type MockModelHandle } from "@gajae-code/ai/providers/mock";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { AgentSession, type AgentSessionEvent } from "@gajae-code/coding-agent/session/agent-session";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import type { TodoPhase } from "@gajae-code/coding-agent/tools/todo-write";
-import { Snowflake } from "@gajae-code/utils";
+import { Agent, type AgentMessage } from "@vib-rato/agent-core";
+import { type DeveloperMessage, getBundledModel, type TextContent } from "@vib-rato/ai";
+import { createMockModel, type MockModelHandle } from "@vib-rato/ai/providers/mock";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { AgentSession, type AgentSessionEvent } from "@vib-rato/coding-agent/session/agent-session";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import type { TodoPhase } from "@vib-rato/coding-agent/tools/todo-write";
+import { Snowflake } from "@vib-rato/utils";
 
 /**
  * Regression coverage for the todo completion reminder reopening a finished turn.

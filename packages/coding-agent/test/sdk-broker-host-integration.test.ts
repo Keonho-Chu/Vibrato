@@ -22,7 +22,7 @@ const event = (
 });
 
 test("broker preserves host registration endpoint metadata across heartbeats", async () => {
-	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-host-"));
+	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-host-"));
 	const stateRoot = path.join(agentDir, "state");
 	const endpointPath = path.join(stateRoot, "sdk", "live.json");
 	await fs.mkdir(path.dirname(endpointPath), { recursive: true });
@@ -60,7 +60,7 @@ test("broker preserves host registration endpoint metadata across heartbeats", a
 });
 
 test("broker session.list returns bounded stable cursor pages", async () => {
-	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-page-"));
+	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-page-"));
 	const stateRoot = path.join(agentDir, "state");
 	const broker = new Broker({ agentDir });
 	await broker.start();
@@ -101,7 +101,7 @@ test("broker session.list returns bounded stable cursor pages", async () => {
 });
 
 test("broker session.list keeps cursor warnings snapshot-stable", async () => {
-	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-warning-snapshot-"));
+	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-warning-snapshot-"));
 	const stateRoot = path.join(agentDir, "state");
 	const broker = new Broker({ agentDir });
 	await broker.start();
@@ -124,7 +124,7 @@ test("broker session.list keeps cursor warnings snapshot-stable", async () => {
 });
 
 test("broker session.list rejects a new cursor stream at capacity without evicting active cursors", async () => {
-	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-cursor-capacity-"));
+	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-cursor-capacity-"));
 	const stateRoot = path.join(agentDir, "state");
 	const broker = new Broker({ agentDir });
 	await broker.start();
@@ -169,7 +169,7 @@ test("broker session.list rejects a new cursor stream at capacity without evicti
 });
 
 test("SDK-only runtime registers its broker endpoint and retracts it on shutdown", async () => {
-	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-sdk-only-broker-"));
+	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-sdk-only-broker-"));
 	const cwd = path.join(agentDir, "workspace");
 	const sessionId = "sdk-only-live";
 	const broker = new Broker({ agentDir });

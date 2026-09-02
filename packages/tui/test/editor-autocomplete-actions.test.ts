@@ -7,8 +7,8 @@ import {
 	type AutocompleteItem,
 	type AutocompleteProvider,
 	CombinedAutocompleteProvider,
-} from "@gajae-code/tui/autocomplete";
-import { Editor } from "@gajae-code/tui/components/editor";
+} from "@vib-rato/tui/autocomplete";
+import { Editor } from "@vib-rato/tui/components/editor";
 import { defaultEditorTheme } from "./test-themes";
 
 class HashActionProvider implements AutocompleteProvider {

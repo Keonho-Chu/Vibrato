@@ -1,15 +1,15 @@
-# Gajae-Code SDK
+# Vibrato SDK
 
-For embedding GJC in-process, see [the embedding SDK guide](./sdk-embedding.md).
+For embedding Vibrato in-process, see [the embedding SDK guide](./sdk-embedding.md).
 For a beginner-friendly application development guide (recipes, customization, and surface selection), see [Building applications on the SDK](./sdk-app-guide.md).
 
 <p align="center">
-  <img src="../assets/telegram-mobile-hero.png" alt="Gajae Code mobile answers for coding agents hero illustration" width="100%" />
+  <img src="../assets/telegram-mobile-hero.png" alt="Vibrato mobile answers for coding agents hero illustration" width="100%" />
 </p>
 
 The SDK exposes a generic action/reply protocol without requiring integrations to scrape the terminal. SDK core owns all managed attachment discovery and credential-bearing clients through `SessionRouter`; Telegram, Discord, Slack, ACP, MCP, and CLI adapters receive only capability-scoped operations and never endpoint credentials.
 
-> Status: the Rust core (`crates/gjc-sdk`) provides the session-local wire protocol and endpoint record. TypeScript SDK core provides Broker lifecycle authority and `SessionRouter` attachment authority. Endpoint records and tokens are internal implementation details, not an external attachment surface.
+> Status: the Rust core (`crates/vib-sdk`) provides the session-local wire protocol and endpoint record. TypeScript SDK core provides Broker lifecycle authority and `SessionRouter` attachment authority. Endpoint records and tokens are internal implementation details, not an external attachment surface.
 
 ## External attachment policy
 
@@ -17,37 +17,37 @@ External and managed integrations attach through SDK-core surfaces only:
 
 - lifecycle mutations use `SessionLifecycleService` and the Broker lifecycle ledger;
 - live session controls use opaque `SessionAttachment` capabilities issued by `SessionRouter`;
-- endpoint URL/token discovery, raw WebSocket relays, and `gjc sdk serve` are not public attachment mechanisms;
+- endpoint URL/token discovery, raw WebSocket relays, and `vib sdk serve` are not public attachment mechanisms;
 - lifecycle-equivalent per-session controls are prohibited on Telegram, Discord, Slack, ACP, MCP, and daemon CLI adapters.
 
 For terminal-side session operation, use the broker-bound [SDK session CLI](./sdk-session-cli.md):
-`gjc sdk session list|inspect|send|status|tail` plus the explicit `raw`
+`vib sdk session list|inspect|send|status|tail` plus the explicit `raw`
 `control|query|global` hatch. The CLI resolves the exact attachment through SDK
 core and emits credential-free JSON.
 
 ## Migration from removed external transports
 
-The retired `--mode rpc`, `rpc-ui`, `bridge`, and `gjc sdk serve` transports
+The retired `--mode rpc`, `rpc-ui`, `bridge`, and `vib sdk serve` transports
 have no replacement wire client. Process-isolated controllers use Coordinator
-MCP, `gjc sdk session`, or a configured managed adapter. In-process applications
+MCP, `vib sdk session`, or a configured managed adapter. In-process applications
 use the [embedding SDK](./sdk-embedding.md).
 
 ## External-agent SDK skills
 
 The generated `sdk-skills/` bundle provides host-neutral guidance for scripts
 that invoke the broker-bound session CLI. It is intentionally separate from
-GJC's four internal workflow skills, the coordinator MCP plugin, and the SDK MCP
+Vibrato's four internal workflow skills, the coordinator MCP plugin, and the SDK MCP
 adapter. Its TypeScript and Python templates do not discover endpoints or create
 transport clients.
 
 The bundle owns exactly six files:
 
 - `manifest.json`
-- `gjc-sdk-discover/SKILL.md`
-- `gjc-sdk-operate/SKILL.md`
-- `gjc-sdk-author/SKILL.md`
-- `gjc-sdk-author/templates/direct-sdk.ts`
-- `gjc-sdk-author/templates/direct-sdk.py`
+- `vib-sdk-discover/SKILL.md`
+- `vib-sdk-operate/SKILL.md`
+- `vib-sdk-author/SKILL.md`
+- `vib-sdk-author/templates/direct-sdk.ts`
+- `vib-sdk-author/templates/direct-sdk.py`
 
 Regenerate with `bun run generate-sdk-skills`; CI checks byte-for-byte content
 and rejects unexpected files with `bun run check:sdk-skills`.
@@ -59,7 +59,7 @@ identifies `formatVersion` (currently `1`) and the exact relative file closure
 that regeneration owns. Consumers must treat a bundle whose manifest is missing,
 malformed, or declares an unsupported version as unreadable and fail closed. The
 skill prompts are authored as static Markdown sources under
-`scripts/gjc-sdk-skills/prompts/`; the generator copies them verbatim and
+`scripts/vib-sdk-skills/prompts/`; the generator copies them verbatim and
 `check:sdk-skills` proves the committed bundle matches the generated artifacts.
 
 ### Trust boundary
@@ -83,10 +83,10 @@ Broker lifecycle → Session runtime endpoint → SessionRouter → opaque adapt
 The Broker is the sole lifecycle executor and durable terminal authority. `SessionRouter` is the sole credential-bearing external attachment manager. Provider supervisors own only provider transport and presentation state.
 
 - **One endpoint per top-level session.** Each top-level session runs its own loopback WebSocket server. Subagents do not host endpoints. The Broker index is the authoritative live-session catalog, and `SessionRouter` multiplexes managed provider attachments across indexed sessions.
-- **Hosted by default.** SDK hosting is independent of notification configuration. Set `GJC_SDK_DISABLE=1` to opt out of hosting for a top-level session.
+- **Hosted by default.** SDK hosting is independent of notification configuration. Set `VIB_SDK_DISABLE=1` to opt out of hosting for a top-level session.
 - **Notification delivery is optional.** Configure and enable a managed notification adapter only when remote delivery is needed; the SDK endpoint remains available without one.
 - **Managed integrations use opaque attachments.** Telegram, Discord, Slack, ACP, MCP, and CLI adapters compose SDK-core services; they do not discover endpoint files or receive URL/token credentials.
-- **Zero wire-protocol change.** New transports do not require changes to `crates/gjc-sdk` or the JSON protocol.
+- **Zero wire-protocol change.** New transports do not require changes to `crates/vib-sdk` or the JSON protocol.
 - **tmux-agnostic.** The endpoint behaves identically with or without tmux.
 
 ## Internal endpoint publication
@@ -97,9 +97,9 @@ The record path, schema, credential transport, and handshake are not public clie
 
 ### Internal broker launch isolation
 
-When the SDK starts its default internal broker or session host from the published TypeScript source, GJC uses a fixed Bun launch policy: `--no-env-file`, a product-owned empty `bunfig.toml`, absolute product entrypoint paths, and no inherited `BUN_OPTIONS` or mutable compiled-mode markers. The broker bootstraps from the product SDK directory rather than the caller project; a session host still runs with the lifecycle-authorized workspace as its process cwd.
+When the SDK starts its default internal broker or session host from the published TypeScript source, Vibrato uses a fixed Bun launch policy: `--no-env-file`, a product-owned empty `bunfig.toml`, absolute product entrypoint paths, and no inherited `BUN_OPTIONS` or mutable compiled-mode markers. The broker bootstraps from the product SDK directory rather than the caller project; a session host still runs with the lifecycle-authorized workspace as its process cwd.
 
-This boundary prevents a child from newly loading caller-cwd or user-global Bun preload/dotenv policy. It cannot determine how a value already present in the parent environment was originally loaded, so ordinary provider/GJC environment values remain inherited. Default internal children, including compiled self-spawns, remove inherited `BUN_OPTIONS` so parent eval/test/inspect/debug/runtime options cannot be replayed into a detached child. Compiled binaries otherwise retain their existing self-spawn command contract, corroborated by a dedicated embedded marker and exact anchored Bun virtual-filesystem identity. The explicit `GJC_SDK_SESSION_COMMAND` session-host override remains a trusted legacy operator boundary and is not parsed as a shell-safe general command API. There is no broker-command override.
+This boundary prevents a child from newly loading caller-cwd or user-global Bun preload/dotenv policy. It cannot determine how a value already present in the parent environment was originally loaded, so ordinary provider/Vibrato environment values remain inherited. Default internal children, including compiled self-spawns, remove inherited `BUN_OPTIONS` so parent eval/test/inspect/debug/runtime options cannot be replayed into a detached child. Compiled binaries otherwise retain their existing self-spawn command contract, corroborated by a dedicated embedded marker and exact anchored Bun virtual-filesystem identity. The explicit `VIB_SDK_SESSION_COMMAND` session-host override remains a trusted legacy operator boundary and is not parsed as a shell-safe general command API. There is no broker-command override.
 
 Broker and per-session discovery tokens remain in their authoritative private discovery files for SDK-core resolution. Launch errors, logs, and diagnostics redact those tokens and never include the child environment or isolation configuration contents.
 
@@ -159,7 +159,7 @@ The frames above are the internal transport contract implemented by SDK-core att
 
 SDK core creates inbound frames only after Router attachment checks. External
 integrations must not construct or persist them. Managed adapters use their
-opaque `SessionAttachment`, and process-isolated scripts use `gjc sdk session`;
+opaque `SessionAttachment`, and process-isolated scripts use `vib sdk session`;
 neither path receives transport credentials.
 
 ## Model catalog query (Q10)
@@ -176,7 +176,7 @@ Each row preserves the five legacy fields (`provider`, `id`, `name`,
 row when the live session has a thinking level. The exported DTO types are
 `Q10Model`, `Q10ThinkingCapabilities`, `Q10ThinkingEffort`,
 `Q10SettableThinkingLevel`, `Q10CurrentThinkingLevel`, and
-`Q10ThinkingMode`, all from `@gajae-code/coding-agent/sdk`; there is no public
+`Q10ThinkingMode`, all from `@vib-rato/coding-agent/sdk`; there is no public
 `/sdk/models` subpath.
 
 ```json
@@ -211,16 +211,16 @@ as a `model.set` input.
 Malformed reasoning descriptors are not client-recoverable catalog data. The
 query returns the SDK's safe `internal` error rather than exposing a partially
 formed row or descriptor details.
-### Model profiles as synthetic models (`gajae-code/<profile>`)
+### Model profiles as synthetic models (`vib-rato/<profile>`)
 
 The Q10 catalog also exposes model profiles as logical synthetic models under
-the reserved provider namespace `gajae-code`, e.g. `gajae-code/codex-eco`.
+the reserved provider namespace `vib-rato`, e.g. `vib-rato/codex-eco`.
 These rows let clients (such as ACP model pickers) offer presets like ordinary
 models without provider-specific metadata:
 
 ```json
 {
-  "provider": "gajae-code",
+  "provider": "vib-rato",
   "id": "codex-eco",
   "name": "Codex Eco",
   "contextWindow": 222222,
@@ -231,7 +231,7 @@ models without provider-specific metadata:
 }
 ```
 
-- `gajae-code/<profile>` is a **logical namespace, not a callable provider**. No
+- `vib-rato/<profile>` is a **logical namespace, not a callable provider**. No
   API transport, credentials, or streaming route is registered for it; send the
   value back through the generic `model.set` control (or the ACP `Model`
   select) to activate the profile.
@@ -253,20 +253,20 @@ models without provider-specific metadata:
   creates a synthetic current row. Selecting a concrete `provider/model` clears
   the active marker and restores concrete current semantics.
 - **Selecting a synthetic profile is session-scoped.** `model.set` with
-  `gajae-code/<profile>` activates the full profile in the live session without
+  `vib-rato/<profile>` activates the full profile in the live session without
   writing `modelProfile.default`, `modelRoles`, or
   `task.agentModelOverrides`. Persisting a profile remains an explicit TUI
-  choice (`/model` → default), mirroring `gjc --mpreset <profile> --default`.
+  choice (`/model` → default), mirroring `vib --mpreset <profile> --default`.
   Unknown or ambiguous synthetic ids fail with `invalid_input`; missing profile
   credentials fail with the existing authentication-required error.
-- `gajae-code` is **reserved**: a user-defined `models.yml` provider of the same
+- `vib-rato` is **reserved**: a user-defined `models.yml` provider of the same
   name disables the synthetic facade (rows are omitted and synthetic selection
   is rejected) rather than being silently shadowed. Q27 (`models.profiles.list`)
   remains the full profile catalog with explicit `available` status; Q10 is the
   availability-aware facade for client selection.
 `config.patch` mutations are serialized through the same session admission
 boundary as profile activation and default-model selection, so a patch racing
-a synthetic `gajae-code/*` selection (or another patch) is applied in a
+a synthetic `vib-rato/*` selection (or another patch) is applied in a
 deterministic order and is never lost or clobbered by an activation rollback.
 The cost is the same as `model.set`: an external `config.patch` queues behind
 any in-flight prompt admission rather than applying mid-turn.
@@ -309,7 +309,7 @@ Callers that must recover from a lost acknowledgement should assign one fresh
 logical prompt, then reconcile through the broker-bound CLI:
 
 ```sh
-gjc sdk session raw query <sessionId> --query turn.result \
+vib sdk session raw query <sessionId> --query turn.result \
   --json-input '{"kind":"prompt","clientRef":"request-018f"}'
 ```
 
@@ -326,7 +326,7 @@ Correlated `agent_end` and `agent_failed` frames carry the same finalized
 `outcome`. Clients must correlate those frames and Q26 by the prompt identifiers,
 not infer terminality from stream activity or an earlier pending claim.
 
-Reconciliation state survives client disconnect/reconnect. With the session-private durable store (`.sdk-reconciliation/`), accepted and terminal prompt records also survive **GJC session-process restart** for the same session identity within capacity, subject to crash-consistent fsync. A non-terminal prompt record at restart finalizes its pending outcome and receipt state. A stopped prompt without receipt evidence becomes `terminal_ok + missing`; failed prompt or skill settlement without body evidence becomes `unknown`. Eviction or absence still returns honest `unknown`; that means the prior outcome is unknowable, not that execution did not occur. Active records are capped at 128 per kind and are never aged into terminal. Terminal records are capped at 256 per kind and evicted oldest-terminal first, with no age-based eviction. Reconciliation stores no prompt, transcript, credential, or provider-response body.
+Reconciliation state survives client disconnect/reconnect. With the session-private durable store (`.sdk-reconciliation/`), accepted and terminal prompt records also survive **Vibrato session-process restart** for the same session identity within capacity, subject to crash-consistent fsync. A non-terminal prompt record at restart finalizes its pending outcome and receipt state. A stopped prompt without receipt evidence becomes `terminal_ok + missing`; failed prompt or skill settlement without body evidence becomes `unknown`. Eviction or absence still returns honest `unknown`; that means the prior outcome is unknowable, not that execution did not occur. Active records are capped at 128 per kind and are never aged into terminal. Terminal records are capped at 256 per kind and evicted oldest-terminal first, with no age-based eviction. Reconciliation stores no prompt, transcript, credential, or provider-response body.
 
 `turn.prompt` remains ordered and non-idempotent. Its envelope `idempotencyKey`
 does not replay a response or produce `idempotency_conflict`. A retained duplicate
@@ -366,9 +366,9 @@ capacity/retention limits, but an active skill record at restart settles with
 
 ## Correlated steer acknowledgement (Q30)
 
-`turn.steer` accepts an optional `clientRef` (trimmed, non-empty, at most 128 characters). When present, GJC hashes the exact validated steer text with SHA-256 and durably reserves `dispatching` before queueing. The result contains `sessionId`, `clientRef`, `status: accepted | rejected | uncertain`, known `acceptedAt` or `terminalAt`, and bounded error metadata; it never echoes text.
+`turn.steer` accepts an optional `clientRef` (trimmed, non-empty, at most 128 characters). When present, Vibrato hashes the exact validated steer text with SHA-256 and durably reserves `dispatching` before queueing. The result contains `sessionId`, `clientRef`, `status: accepted | rejected | uncertain`, known `acceptedAt` or `terminalAt`, and bounded error metadata; it never echoes text.
 
-Replay the same `clientRef` with the same text to recover the retained result without dispatching again. Reuse with different text returns `client_ref_conflict`. A live `dispatching` record and a restart during dispatch both project `uncertain`; GJC never automatically redispatches an ordered control whose first effect is unknowable. Query the same session with:
+Replay the same `clientRef` with the same text to recover the retained result without dispatching again. Reuse with different text returns `client_ref_conflict`. A live `dispatching` record and a restart during dispatch both project `uncertain`; Vibrato never automatically redispatches an ordered control whose first effect is unknowable. Query the same session with:
 
 ```json
 { "type": "query_request", "query": "turn.steer_status", "input": { "clientRef": "steer-018f" } }
@@ -399,20 +399,20 @@ than returning a plausible built-ins-only catalog.
 
 Broker `session.create`, `session.fork`, and `session.resume` validate `modelPreset`
 before spawning against the same `<broker.settings.agentDir>/models.yml` authority
-that the child receives through `GJC_AGENT_DIR` / `GJC_CODING_AGENT_DIR`. Unknown
+that the child receives through `VIB_AGENT_DIR` / `VIB_CODING_AGENT_DIR`. Unknown
 IDs return `unknown_model_profile`. Both typed errors include bounded `details`
 with `requestedProfile` where applicable, whole exact `availableProfiles` entries
 that fit the detail budget, and `discoveryQuery: "models.profiles.list"`. The
 discovery pointer is authoritative when the bounded error cannot include every ID.
 
 The same lifecycle operations accept an optional `modelId`: an explicit
-`provider/model` pin with `gjc --model` grammar (#4707). Coordinators resolve it
+`provider/model` pin with `vib --model` grammar (#4707). Coordinators resolve it
 against the full model registry (the CLI `--model` surface, not the
 authenticated-only subset) before sending the create request, so unknown ids are
 rejected before any session exists. The broker guards only its shape; the child
 applies it exactly like a CLI `--model` selection, which also means an explicit
 `modelId` wins over `modelPreset` when both are supplied — the same precedence as
-`gjc --mpreset <profile> --model <model>`. The full effective order is:
+`vib --mpreset <profile> --model <model>`. The full effective order is:
 
 ```
 modelId pin  >  modelPreset  >  configured modelProfile.default  >  role/resume/default
@@ -481,9 +481,9 @@ Q12 (`workflow.gates.list`) exposes durable query records and additive SDK v3 di
 
 ### Coordinator MCP question pull loop
 
-The Coordinator MCP bridge is a separate, public-safe pull surface for external coordinators. `gjc_coordinator_list_questions` requires `session_id` and reconciles pending `workflow.gates.list` rows on every call, returning bounded public `questions`, `diagnostics`, and `reconciliation`. It accepts `status: "pending"`; `status: "open"` remains a compatibility alias. Multiple pending rows can be returned. A pending row carries its safe question shape, public option ids, and `answer_binding`, never raw/private gate payloads or values.
+The Coordinator MCP bridge is a separate, public-safe pull surface for external coordinators. `vib_coordinator_list_questions` requires `session_id` and reconciles pending `workflow.gates.list` rows on every call, returning bounded public `questions`, `diagnostics`, and `reconciliation`. It accepts `status: "pending"`; `status: "open"` remains a compatibility alias. Multiple pending rows can be returned. A pending row carries its safe question shape, public option ids, and `answer_binding`, never raw/private gate payloads or values.
 
-`gjc_coordinator_submit_question_answer` requires `session_id`, `turn_id`, `question_id`, `answer_binding`, `answer`, `idempotency_key`, and `allow_mutation: true`. It re-lists/revalidates after restart and resolves through `workflow.gate_answer`, not generic `ask.answer`. An incomplete reconciliation returns `terminal_uncertain`; stale, terminal, missing, or ownership-mismatched rows cannot be answered. Re-list after restart rather than retaining old identifiers. An identical retry with the same idempotency key replays the accepted result; conflicting reuse returns `idempotency_conflict`.
+`vib_coordinator_submit_question_answer` requires `session_id`, `turn_id`, `question_id`, `answer_binding`, `answer`, `idempotency_key`, and `allow_mutation: true`. It re-lists/revalidates after restart and resolves through `workflow.gate_answer`, not generic `ask.answer`. An incomplete reconciliation returns `terminal_uncertain`; stale, terminal, missing, or ownership-mismatched rows cannot be answered. Re-list after restart rather than retaining old identifiers. An identical retry with the same idempotency key replays the accepted result; conflicting reuse returns `idempotency_conflict`.
 
 This contract does not change #2549/#2551 or unattended plain-CLI behavior.
 
@@ -500,14 +500,14 @@ state remain private: these APIs do not create a public authority value.
 
 ### Runtime and native addon release pairing
 
-The `@gajae-code/coding-agent` runtime and `@gajae-code/natives` native addon ship from the same source release at exact matching package versions. The native loader requires the matching version sentinel; mixed native/runtime versions are unsupported and must not claim SDK compatibility.
+The `@vib-rato/coding-agent` runtime and `@vib-rato/natives` native addon ship from the same source release at exact matching package versions. The native loader requires the matching version sentinel; mixed native/runtime versions are unsupported and must not claim SDK compatibility.
 
 ## Minimal provider adapter example
 
 Provider integrations compose SDK core's `SessionRouter`; they never read endpoint files or retain URL/token credentials:
 
 ```js
-import { router } from "@gajae-code/coding-agent/sdk";
+import { router } from "@vib-rato/coding-agent/sdk";
 
 const sessionRouter = new router.SessionRouter({
   agentDir,
@@ -594,14 +594,14 @@ Model-role selectors may be ordered fallback chains; see [Fallback chains](./mod
 
 ## Managed session-directory adapter guidance
 
-SDK adapters that need to inspect saved sessions must import only the supported public surface from `@gajae-code/coding-agent/sdk`:
+SDK adapters that need to inspect saved sessions must import only the supported public surface from `@vib-rato/coding-agent/sdk`:
 
 ```ts
 import {
   SESSION_DIRECTORY_API_VERSION,
   listManagedSessionCandidates,
   resolveManagedSessionScope,
-} from "@gajae-code/coding-agent/sdk";
+} from "@vib-rato/coding-agent/sdk";
 
 if (SESSION_DIRECTORY_API_VERSION !== 1) throw new Error("Unsupported session-directory API");
 const resolved = await resolveManagedSessionScope({ cwd: process.cwd() });
@@ -611,17 +611,17 @@ if (resolved.kind === "resolved") {
 }
 ```
 
-This is a readonly resolver/listing contract. Do not import `@gajae-code/coding-agent/session/internal/*`, derive `v2-…` names, write bindings, or implement migration/cleanup in an adapter; private internal subpaths are intentionally unavailable from the packaged module. Treat `network_unsupported`, binding/security errors, incomplete listings, invalid candidates, and foreign candidates as non-authoritative results rather than retrying with a guessed path.
+This is a readonly resolver/listing contract. Do not import `@vib-rato/coding-agent/session/internal/*`, derive `v2-…` names, write bindings, or implement migration/cleanup in an adapter; private internal subpaths are intentionally unavailable from the packaged module. Treat `network_unsupported`, binding/security errors, incomplete listings, invalid candidates, and foreign candidates as non-authoritative results rather than retrying with a guessed path.
 
 The resolver uses canonical native identity: supported POSIX and Windows local aliases can designate one scope, while UNC/network workspaces are unsupported. Scope digests are collision-resistant identifiers, not injective aliases, credentials, or authentication. The owner-only checks protect managed local storage paths but do not authenticate an adapter or make hostile concurrent filesystem races safe. Adapters that need mutations must use the higher-level lifecycle/session APIs rather than the readonly directory API.
 ## Managed notification adapters
 
-GJC ships managed SDK adapters for Telegram, Discord, and Slack. `SessionRouter` resolves one session-owned endpoint per attachment and keeps every endpoint credential inside SDK core. Provider daemons receive only opaque attachment capabilities; they neither change the wire protocol nor expose a remote shell.
+Vibrato ships managed SDK adapters for Telegram, Discord, and Slack. `SessionRouter` resolves one session-owned endpoint per attachment and keeps every endpoint credential inside SDK core. Provider daemons receive only opaque attachment capabilities; they neither change the wire protocol nor expose a remote shell.
 
 The recommended interactive path is `/settings` → **Notifications**. It owns
 setup, health, test, recovery, reconnect, local enablement, and Telegram
 removal without exposing stored credentials.
-`gjc notify setup` remains the authoritative CLI fallback for headless and
+`vib notify setup` remains the authoritative CLI fallback for headless and
 automated environments.
 
 Notification credentials and `notifications.*` settings are global-only.
@@ -633,18 +633,18 @@ setup fails closed without saving or exposing the raw token.
 
 Configuration completeness, provider-local quarantine, durable desired intent, effective enablement, runtime readiness, and delivery outcomes are separate contracts. The global `notifications.enabled` master never erases provider credentials or desired flags. `/settings` edits secrets through explicit `keep`, `replace`, or `remove` actions, commits only the selected provider in one CAS batch, and reports post-commit observer or activation failures without pretending the durable save rolled back. Malformed provider-local values are quarantined for explicit repair while safe sibling providers remain usable; malformed global notification structure remains fail-closed.
 
-`GJC_NOTIFICATIONS=0` suppresses only automatic generic current-session admission. Explicit `/notify on` can opt the current session back in without mutating durable provider state, and direct provider APIs remain governed by provider effectiveness and their own runtime readiness. Telegram, Discord, and Slack attachments are reconstructed through `SessionRouter`; no provider receives the shared endpoint token.
+`VIB_NOTIFICATIONS=0` suppresses only automatic generic current-session admission. Explicit `/notify on` can opt the current session back in without mutating durable provider state, and direct provider APIs remain governed by provider effectiveness and their own runtime readiness. Telegram, Discord, and Slack attachments are reconstructed through `SessionRouter`; no provider receives the shared endpoint token.
 
 - [Telegram notification onboarding](./telegram-onboarding.md) documents
-  `gjc notify setup` and private-chat pairing.
+  `vib notify setup` and private-chat pairing.
 - [Discord notification onboarding](./discord-onboarding.md) documents
-  `gjc notify setup discord`, required configuration, thread lifecycle, and
+  `vib notify setup discord`, required configuration, thread lifecycle, and
   least-privilege permissions.
 - [Slack notification onboarding](./slack-onboarding.md) documents
-  `gjc notify setup slack`, Socket Mode configuration, immediate envelope ack,
+  `vib notify setup slack`, Socket Mode configuration, immediate envelope ack,
   and thread lifecycle.
 
-`gjc notify status` reports provider completeness, repair/quarantine state, desired intent, effective enablement, and masked tokens. Destination identifiers remain visible and may be sensitive. The Discord and Slack setup commands are non-interactive and require their documented identifier and token flags; supply secrets through an approved local mechanism, not examples, committed files, shell history, logs, or chat. `gjc notify health --provider <provider> --probe` performs a provider-owned REST diagnostic even when complete credentials are intentionally inactive, while `gjc notify test --provider <provider>` additionally requires effective enablement and runtime readiness.
+`vib notify status` reports provider completeness, repair/quarantine state, desired intent, effective enablement, and masked tokens. Destination identifiers remain visible and may be sensitive. The Discord and Slack setup commands are non-interactive and require their documented identifier and token flags; supply secrets through an approved local mechanism, not examples, committed files, shell history, logs, or chat. `vib notify health --provider <provider> --probe` performs a provider-owned REST diagnostic even when complete credentials are intentionally inactive, while `vib notify test --provider <provider>` additionally requires effective enablement and runtime readiness.
 
 Session lifecycle and attachment routing are SDK-core services shared by every
 chat provider. `SessionLifecycleService` authorizes typed create, fork, resume,
@@ -666,7 +666,7 @@ allocate SessionIds, or perform session process lifecycle effects.
 The managed Telegram client is a provider supervisor and presentation adapter.
 It owns the single `getUpdates` poller and Telegram topic state, while
 `SessionRouter` reconstructs SDK attachments from Broker state. A provider
-restart never creates, resumes, closes, or mutates a GJC session by itself.
+restart never creates, resumes, closes, or mutates a Vibrato session by itself.
 
 For Telegram forum topics, the daemon deletes the presentation topic through
 `deleteForumTopic` (falling back to `closeForumTopic` when deletion is unavailable)
@@ -699,7 +699,7 @@ aliases for inline buttons, and routes replies back to the exact session/action.
 Ordinary sessions use flat delivery and do not create topics. A forum-enabled
 supergroup is no longer required: when the bot owner enables Threaded Mode in
 @BotFather, the daemon creates topics only for admitted orchestration sessions.
-GJC cannot enable Threaded Mode through the Bot API; setup only verifies the
+Vibrato cannot enable Threaded Mode through the Bot API; setup only verifies the
 capability and guides the manual BotFather toggle.
 
 If BotFather's per-bot **Bot Settings** menu does not show **Threads Settings**
@@ -746,7 +746,7 @@ sends guidance and does not guess a target session or action.
 ### Discord and Slack setup
 
 Discord and Slack use the same internal notification events and reply protocol as
-Telegram. Store only runtime credentials in local GJC settings or environment;
+Telegram. Store only runtime credentials in local Vibrato settings or environment;
 never paste bot tokens, webhook URLs, transcripts, prompts, host paths, or raw logs
 into docs, tests, issues, or PR comments.
 
@@ -786,14 +786,14 @@ redaction is disabled, all content is delivered unchanged.
 
 ### Local `/notify`
 
-Inside a GJC session, `/notify` controls the current session only:
+Inside a Vibrato session, `/notify` controls the current session only:
 
 - `/notify status` reports enabled/disabled state, daemon observation when known,
   and redaction state without printing secrets;
 - `/notify off` disables the current session's notification endpoint and removes
   its discovery record without mutating global Settings;
 - `/notify on` re-enables the current session when global setup is complete and
-  `GJC_NOTIFICATIONS=0` is not forcing opt-out.
+  `VIB_NOTIFICATIONS=0` is not forcing opt-out.
 
 ## Session lifecycle and attachment surfaces
 
@@ -859,9 +859,9 @@ mapping.
 
 ### Phone test guide (create / close / resume from Telegram)
 
-End-to-end manual check once `gjc notify setup` has paired your private chat:
+End-to-end manual check once `vib notify setup` has paired your private chat:
 
-1. Run `gjc notify setup` and start or reload the Telegram provider supervisor.
+1. Run `vib notify setup` and start or reload the Telegram provider supervisor.
    The supervisor owns only the Telegram poller and presentation state.
 2. Send `/session_create path <repo-dir>`, `/session_create worktree <repo>
    <branch>`, or `/session_create dir <newdir>`. The SDK lifecycle service submits

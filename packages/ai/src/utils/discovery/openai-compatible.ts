@@ -1,5 +1,5 @@
 import * as net from "node:net";
-import { UNK_CONTEXT_WINDOW, UNK_MAX_TOKENS } from "@gajae-code/ai";
+import { UNK_CONTEXT_WINDOW, UNK_MAX_TOKENS } from "@vib-rato/ai";
 import * as z from "zod/v4";
 import type { Api, FetchImpl, Model, Provider } from "../../types";
 import { toNumber } from "../../utils";

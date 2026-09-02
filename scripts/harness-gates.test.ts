@@ -50,7 +50,7 @@ describe("VB001 gen-3 harness gates", () => {
 		expect(options.compare).toBe(true);
 		expect(options.baseline).toBeUndefined();
 
-		const tempRoot = await fs.mkdtemp(path.join("/tmp", "gjc-harness-default-baseline-"));
+		const tempRoot = await fs.mkdtemp(path.join("/tmp", "vib-harness-default-baseline-"));
 		try {
 			const canonical = path.join(tempRoot, `${GIT_COMMIT}.json`);
 			await fs.writeFile(canonical, structurallyValidBaseline(), "utf8");
@@ -72,7 +72,7 @@ describe("VB001 gen-3 harness gates", () => {
 	});
 
 	test("default baseline resolution fails closed for missing, malformed, and foreign-commit checkpoints while explicit baseline wins", async () => {
-		const tempRoot = await fs.mkdtemp(path.join("/tmp", "gjc-harness-default-baseline-errors-"));
+		const tempRoot = await fs.mkdtemp(path.join("/tmp", "vib-harness-default-baseline-errors-"));
 		try {
 			expect(errorCode(() => resolveDefaultBaseline(GIT_COMMIT, tempRoot))).toBe("BaselineDefaultMissing");
 			const sameCommitLastRun = path.join(tempRoot, `${GIT_COMMIT}.last-run.json`);
@@ -93,8 +93,8 @@ describe("VB001 gen-3 harness gates", () => {
 	});
 
 	test("M3 rejects failed and incomplete S4/S5 proof while preserving positive provider probes", () => {
-		const s4Marker = "gjc-rss-reference-0123456789abcdef ... of 29960 lines";
-		const s5Marker = "GJC_RSS_BASH_BYTES=8388608";
+		const s4Marker = "vib-rss-reference-0123456789abcdef ... of 29960 lines";
+		const s5Marker = "VIB_RSS_BASH_BYTES=8388608";
 		expect(successfulScenarioResult("S4", s4Marker)).toBe(true);
 		expect(successfulScenarioResult("S4", `${s4Marker}\nERROR: read failed`)).toBe(false);
 		expect(successfulScenarioResult("S5", s5Marker)).toBe(true);
@@ -128,7 +128,7 @@ describe("VB001 gen-3 harness gates", () => {
 
 	test("M6 rejects retired re-scope records and preserves the three-run W1c evidence identity", async () => {
 		const policy = FLOOR_POLICIES.W1c;
-		const tempRoot = await fs.mkdtemp(path.join("/tmp", "gjc-harness-gates-"));
+		const tempRoot = await fs.mkdtemp(path.join("/tmp", "vib-harness-gates-"));
 		try {
 			for (const [name, record] of [
 				["retired-flag.json", { retired: true }],

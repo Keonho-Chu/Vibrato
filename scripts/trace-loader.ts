@@ -14,7 +14,7 @@ type TraceRecord = {
 	kind?: string;
 };
 
-const TRACE_ROOT_SENTINEL = "__GJC_TRACE_ROOT__";
+const TRACE_ROOT_SENTINEL = "__VIB_TRACE_ROOT__";
 
 class TraceWriteError extends Error {
 	readonly code = "TraceWriteError";
@@ -41,7 +41,7 @@ function failCapture(error: TraceCaptureError): never {
 }
 
 const startTime = Bun.nanoseconds();
-const traceOutput = process.env.GJC_TRACE_OUT;
+const traceOutput = process.env.VIB_TRACE_OUT;
 const records: TraceRecord[] = [];
 const recordKeys = new Set<string>();
 const scannedModules = new Set<string>();

@@ -7,7 +7,7 @@
  *
  * Pipeline under test:
  *   client → POST /v1/responses (OpenAI shape)
- *     → openai-responses parser → gjc Context
+ *     → openai-responses parser → vib Context
  *     → pi-ai anthropic provider (auto cache_control via cacheRetention)
  *     → upstream Anthropic (Messages API)
  *     → assistant stream → openai-responses encoder
@@ -20,11 +20,11 @@
  * mutates the cached prefix bytes.
  *
  * Skips unless a local gateway is reachable at the default `127.0.0.1:4000`
- * (override via `GJC_E2E_GATEWAY_URL`) AND the bearer token file exists at
- * `~/.gjc/auth-gateway.token`.
+ * (override via `VIB_E2E_GATEWAY_URL`) AND the bearer token file exists at
+ * `~/.vib/auth-gateway.token`.
  *
  * To run: `bun --cwd packages/ai test test/auth-gateway-cross-protocol-caching.test.ts`
- * with the gateway live (`gjc auth-gateway serve --provider=<provider>` or pm2).
+ * with the gateway live (`vib auth-gateway serve --provider=<provider>` or pm2).
  */
 import { describe, expect, it } from "bun:test";
 import { AUTH_GATEWAY_E2E_URL, checkAuthGatewayE2EAvailable } from "./helpers";
@@ -47,7 +47,7 @@ interface OpenAIResponse {
 	error?: { type?: string; message: string };
 }
 
-const MODEL = Bun.env.GJC_E2E_ANTHROPIC_MODEL ?? "claude-sonnet-4-5";
+const MODEL = Bun.env.VIB_E2E_ANTHROPIC_MODEL ?? "claude-sonnet-4-5";
 
 const gateway = await checkAuthGatewayE2EAvailable({ provider: "anthropic", modelId: MODEL });
 
@@ -55,7 +55,7 @@ const gateway = await checkAuthGatewayE2EAvailable({ provider: "anthropic", mode
 // cache floor for Sonnet.
 const INSTRUCTIONS_PARAGRAPH = `
 You are a precise assistant participating in an automated end-to-end test of
-the gjc auth-gateway's cross-protocol prompt-caching pipeline. The request
+the vib auth-gateway's cross-protocol prompt-caching pipeline. The request
 arrives over the OpenAI Responses wire format but is fulfilled by an
 Anthropic backend, so the gateway must preserve the cached prefix across the
 translation. Always respond with extreme brevity: a single short word or

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import type { AuthCredentialSnapshot, CredentialHealthResult } from "@gajae-code/ai/core";
+import type { AuthCredentialSnapshot, CredentialHealthResult } from "@vib-rato/ai/core";
 import {
 	assertEnabledProviderCredential,
 	filterCredentialCheckResults,

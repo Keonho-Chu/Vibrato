@@ -5,7 +5,7 @@
  * sequences when the active terminal supports hyperlinks and the user setting
  * permits it. Falls back to plain text when disabled.
  */
-import { TERMINAL } from "@gajae-code/tui";
+import { TERMINAL } from "@vib-rato/tui";
 import { settings } from "../config/settings";
 import {
 	LocalProtocolHandler,
@@ -97,7 +97,7 @@ export function fileHyperlink(absPath: string, displayText: string, opts?: { lin
  * during the call/streaming phase before a result lands).
  *
  * Async-resolved schemes (`artifact://`, `agent://`, `skill://`, `rule://`,
- * `gjc://`) are not handled here — those rely on `details.resolvedPath` set
+ * `vib://`) are not handled here — those rely on `details.resolvedPath` set
  * by the read tool's router resolution.
  */
 export function tryResolveInternalUrlSync(input: string): string | undefined {

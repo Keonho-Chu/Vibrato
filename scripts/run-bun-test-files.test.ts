@@ -111,12 +111,12 @@ describe("fresh-process test harness contracts", () => {
 		expect(spec.cwd).toBe("/repo root");
 		expect(spec.argv).not.toContain("--isolate");
 		expect(spec.env.HOME).toBe("/tmp/sandbox with spaces/home");
-		expect(spec.env.GJC_HOME).toBe("/tmp/sandbox with spaces/gjc-home");
+		expect(spec.env.VIB_HOME).toBe("/tmp/sandbox with spaces/vib-home");
 		expect(spec.env.XDG_STATE_HOME).toBe("/tmp/sandbox with spaces/xdg/state");
 		expect(spec.env.XDG_RUNTIME_DIR).toBe("/tmp/sandbox with spaces/xdg/runtime");
-		expect(spec.env.GJC_CODING_AGENT_DIR).toBeUndefined();
-		expect(spec.env.GJC_SESSION_ID).toBeUndefined();
-		expect(spec.env.GJC_STATE_ROOT).toBeUndefined();
+		expect(spec.env.VIB_CODING_AGENT_DIR).toBeUndefined();
+		expect(spec.env.VIB_SESSION_ID).toBeUndefined();
+		expect(spec.env.VIB_STATE_ROOT).toBeUndefined();
 		expect(spec.env.E2E).toBeUndefined();
 		expect(spec.env.ANTHROPIC_API_KEY).toBeUndefined();
 		expect(spec.env.ANTHROPIC_BASE_URL).toBeUndefined();
@@ -153,7 +153,7 @@ describe("fresh-process test harness contracts", () => {
 		await fs.mkdir(path.join(root, "tests"), { recursive: true });
 		await Bun.write(
 			path.join(root, "tests", "01-leak.test.ts"),
-			'import { test } from "bun:test"; test("leak shared state", () => { process.env.GJC_TEST_NUDGE_BUDGET = "10"; (globalThis as Record<string, unknown>).sdkMemoryStartup = Promise.resolve(); });\n',
+			'import { test } from "bun:test"; test("leak shared state", () => { process.env.VIB_TEST_NUDGE_BUDGET = "10"; (globalThis as Record<string, unknown>).sdkMemoryStartup = Promise.resolve(); });\n',
 		);
 		await Bun.write(
 			path.join(root, "tests", "02-sdk-memory-startup.test.ts"),
@@ -161,7 +161,7 @@ describe("fresh-process test harness contracts", () => {
 		);
 		await Bun.write(
 			path.join(root, "tests", "03-ultragoal-nudge-guard.test.ts"),
-			'import { expect, test } from "bun:test"; test("nudge budget stays private", () => { expect(Number(process.env.GJC_TEST_NUDGE_BUDGET ?? "3")).toBe(3); });\n',
+			'import { expect, test } from "bun:test"; test("nudge budget stays private", () => { expect(Number(process.env.VIB_TEST_NUDGE_BUDGET ?? "3")).toBe(3); });\n',
 		);
 		expect(
 			await runHarness({ root: "tests", testTimeoutMs: 30_000, fileTimeoutMs: 30_000, concurrency: 1 }, undefined, root),
@@ -172,9 +172,9 @@ describe("fresh-process test harness contracts", () => {
 		const root = path.join(import.meta.dir, "..");
 		const files = [
 			"packages/coding-agent/test/sdk-memory-startup.test.ts",
-			"packages/coding-agent/test/gjc-runtime/ultragoal-nudge-guard.test.ts",
+			"packages/coding-agent/test/vib-runtime/ultragoal-nudge-guard.test.ts",
 		];
-		const sandboxes = await Promise.all(files.map(() => fs.mkdtemp(path.join(os.tmpdir(), "gjc-exact-leak-spec-"))));
+		const sandboxes = await Promise.all(files.map(() => fs.mkdtemp(path.join(os.tmpdir(), "vib-exact-leak-spec-"))));
 		tempDirs.push(...sandboxes);
 		const specs = files.map((file, index) => buildTestProcessSpec(file, sandboxes[index]!, 30_000, root));
 		expect(specs.map(spec => spec.file)).toEqual(files);
@@ -182,7 +182,7 @@ describe("fresh-process test harness contracts", () => {
 		expect(specs[1]?.argv.at(-1)).toBe(`./${files[1]}`);
 		expect(specs[0]?.env.HOME).not.toBe(specs[1]?.env.HOME);
 		expect(specs[0]?.env.XDG_STATE_HOME).not.toBe(specs[1]?.env.XDG_STATE_HOME);
-		expect(specs[0]?.env.GJC_HOME).not.toBe(specs[1]?.env.GJC_HOME);
+		expect(specs[0]?.env.VIB_HOME).not.toBe(specs[1]?.env.VIB_HOME);
 	});
 
 	test("runs every file and aggregates non-zero, signal, and timeout failures", async () => {

@@ -1,4 +1,4 @@
-import type { AttemptScope, AttemptScopeAuthority } from "@gajae-code/agent-core/attempt-scope";
+import type { AttemptScope, AttemptScopeAuthority } from "@vib-rato/agent-core/attempt-scope";
 
 export type AttemptExecutionState = "unknown" | "clean" | "executed";
 

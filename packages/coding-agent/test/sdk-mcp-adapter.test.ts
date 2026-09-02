@@ -20,7 +20,7 @@ afterEach(async () => {
 });
 
 async function fixture() {
-	const repo = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-mcp-"));
+	const repo = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-mcp-"));
 	dirs.push(repo);
 	const agentDir = path.join(repo, "agent");
 	const token = "sdk-mcp-test-token";
@@ -53,7 +53,7 @@ async function fixture() {
 	});
 	servers.push(server);
 	const sessionId = "live-session";
-	const stateRoot = path.join(repo, ".gjc", "state");
+	const stateRoot = path.join(repo, ".vib", "state");
 	const sdkDir = path.join(stateRoot, "sdk");
 	fs.mkdirSync(sdkDir, { recursive: true });
 	const endpointPath = path.join(sdkDir, `${sessionId}.json`);
@@ -95,10 +95,10 @@ test("MCP SDK schemas exclude endpoint credentials and reject G02 before any Web
 	const { agentDir, sessionId, sent } = await fixture();
 	const mcp = createSdkMcpServer({ agentDir });
 	expect(JSON.stringify(mcp.tools)).not.toContain("get_endpoint");
-	await expect(mcp.callTool("gjc_session_control", { sessionId, operation: "session.get_endpoint" })).resolves.toEqual(
+	await expect(mcp.callTool("vib_session_control", { sessionId, operation: "session.get_endpoint" })).resolves.toEqual(
 		{ ok: false, error: expect.objectContaining({ code: "unknown_operation" }) },
 	);
-	await expect(mcp.callTool("gjc_session_global", { operation: "session.get_endpoint" })).resolves.toEqual({
+	await expect(mcp.callTool("vib_session_global", { operation: "session.get_endpoint" })).resolves.toEqual({
 		ok: false,
 		error: expect.objectContaining({ code: "endpoint_credential_forbidden" }),
 	});
@@ -119,7 +119,7 @@ test("MCP lifecycle responses never expose broker endpoint credentials", async (
 		}),
 	});
 	const mcp = createSdkMcpServer({ agentDir, lifecycleService });
-	const result = await mcp.callTool("gjc_session_global", {
+	const result = await mcp.callTool("vib_session_global", {
 		operation: "session.create",
 		input: { cwd: repo },
 		idempotencyKey: "create-1",
@@ -130,7 +130,7 @@ test("MCP lifecycle responses never expose broker endpoint credentials", async (
 });
 
 test("MCP forwards the lifecycle startup budget to the lifecycle service", async () => {
-	const repo = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-mcp-startup-budget-"));
+	const repo = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-mcp-startup-budget-"));
 	dirs.push(repo);
 	const agentDir = path.join(repo, "agent");
 	let forwardedTimeoutMs: number | undefined;
@@ -141,7 +141,7 @@ test("MCP forwards the lifecycle startup budget to the lifecycle service", async
 		},
 	});
 	const mcp = createSdkMcpServer({ agentDir, lifecycleService });
-	const result = await mcp.callTool("gjc_session_global", {
+	const result = await mcp.callTool("vib_session_global", {
 		operation: "session.create",
 		input: { cwd: repo, readinessTimeoutMs: 4_000 },
 		idempotencyKey: "forward-startup-budget",
@@ -158,9 +158,9 @@ test("MCP forwards the bounded idempotency key on control envelopes", async () =
 	const { agentDir, sessionId } = await fixture();
 	const mcp = createSdkMcpServer({ agentDir });
 	try {
-		const control = mcp.tools.find(tool => tool.name === "gjc_session_control")!;
+		const control = mcp.tools.find(tool => tool.name === "vib_session_control")!;
 		expect(control.inputSchema).toMatchObject({ properties: { idempotencyKey: { type: "string" } } });
-		const result = await mcp.callTool("gjc_session_control", {
+		const result = await mcp.callTool("vib_session_control", {
 			sessionId,
 			operation: "turn.abort",
 			input: { mode: "terminal" },
@@ -180,10 +180,10 @@ test("MCP forwards the bounded idempotency key on control envelopes", async () =
 test("MCP global schema exposes and requires caller lifecycle idempotency keys", async () => {
 	const { repo, agentDir } = await fixture();
 	const mcp = createSdkMcpServer({ agentDir });
-	const global = mcp.tools.find(tool => tool.name === "gjc_session_global")!;
+	const global = mcp.tools.find(tool => tool.name === "vib_session_global")!;
 	expect(global.inputSchema).toMatchObject({ properties: { idempotencyKey: { type: "string" } } });
 	await expect(
-		mcp.callTool("gjc_session_global", { operation: "session.create", input: { cwd: repo } }),
+		mcp.callTool("vib_session_global", { operation: "session.create", input: { cwd: repo } }),
 	).resolves.toMatchObject({
 		ok: false,
 		error: { code: "invalid_input" },
@@ -195,9 +195,9 @@ test("MCP rejects unknown operation names before Router startup or connection", 
 	const { agentDir, sessionId } = await fixture();
 	const mcp = createSdkMcpServer({ agentDir });
 	for (const [tool, args] of [
-		["gjc_session_control", { sessionId, operation: "not.real" }],
-		["gjc_session_query", { sessionId, query: "not.real" }],
-		["gjc_session_global", { operation: "not.real" }],
+		["vib_session_control", { sessionId, operation: "not.real" }],
+		["vib_session_query", { sessionId, query: "not.real" }],
+		["vib_session_global", { operation: "not.real" }],
 	] as const)
 		expect(await mcp.callTool(tool, args)).toMatchObject({ ok: false, error: { code: "unknown_operation" } });
 	await mcp.close();
@@ -207,7 +207,7 @@ test("MCP fails closed on corrupt endpoint records without exposing discovery de
 	const { agentDir, sessionId, endpointPath } = await fixture();
 	fs.writeFileSync(endpointPath, "not-json");
 	const mcp = createSdkMcpServer({ agentDir });
-	const result = await mcp.callTool("gjc_session_query", { sessionId, query: "session.metadata" });
+	const result = await mcp.callTool("vib_session_query", { sessionId, query: "session.metadata" });
 	expect(result).toMatchObject({ ok: false, error: { code: "not_found" } });
 	await mcp.close();
 });
@@ -218,7 +218,7 @@ test("MCP fails closed on unreadable endpoint records without exposing discovery
 	fs.chmodSync(endpointPath, 0o000);
 	try {
 		const mcp = createSdkMcpServer({ agentDir });
-		const result = await mcp.callTool("gjc_session_query", { sessionId, query: "session.metadata" });
+		const result = await mcp.callTool("vib_session_query", { sessionId, query: "session.metadata" });
 		expect(result).toMatchObject({ ok: false, error: { code: "not_found" } });
 		await mcp.close();
 	} finally {
@@ -235,7 +235,7 @@ test("MCP rejects every registry-prohibited operation without sending a frame or
 			(operation.adapterDispositions.mcp === "prohibited" || operation.adapterDispositions.mcp === "machine_only"),
 	);
 	for (const operation of blocked) {
-		const tool = operation.kind === "global" ? "gjc_session_global" : "gjc_session_control";
+		const tool = operation.kind === "global" ? "vib_session_global" : "vib_session_control";
 		const args =
 			operation.kind === "global"
 				? { operation: operation.sdkId, input: { token: "mcp-secret" } }
@@ -251,7 +251,7 @@ test("MCP rejects every registry-prohibited operation without sending a frame or
 test("MCP rejects secret-bearing config patches before Router startup", async () => {
 	const { agentDir, sessionId, sent } = await fixture();
 	const mcp = createSdkMcpServer({ agentDir });
-	const result = await mcp.callTool("gjc_session_control", {
+	const result = await mcp.callTool("vib_session_control", {
 		sessionId,
 		operation: "config.patch",
 		input: { patch: { apiKey: "mcp-secret" } },
@@ -266,13 +266,13 @@ test("MCP SDK control/query tools use Router-owned live attachments and unknown 
 	const { agentDir, sessionId } = await fixture();
 	const mcp = createSdkMcpServer({ agentDir });
 	await expect(
-		mcp.callTool("gjc_session_control", { sessionId, operation: "turn.prompt", input: { text: "hello" } }),
+		mcp.callTool("vib_session_control", { sessionId, operation: "turn.prompt", input: { text: "hello" } }),
 	).resolves.toMatchObject({ ok: true, echoed: { operation: "turn.prompt" } });
 	await expect(
-		mcp.callTool("gjc_session_query", { sessionId, query: "session.metadata", cursor: "next" }),
+		mcp.callTool("vib_session_query", { sessionId, query: "session.metadata", cursor: "next" }),
 	).resolves.toMatchObject({ ok: true, echoed: { query: "session.metadata", cursor: "next" } });
 	await expect(
-		mcp.callTool("gjc_session_query", { sessionId: "missing", query: "session.metadata" }),
+		mcp.callTool("vib_session_query", { sessionId: "missing", query: "session.metadata" }),
 	).resolves.toEqual({ ok: false, error: expect.objectContaining({ code: "not_found" }) });
 	await mcp.close();
 });
@@ -291,7 +291,7 @@ test("MCP rejects repeated session.list cursors without returning partial sessio
 		),
 	});
 	try {
-		const result = await mcp.callTool("gjc_session_list");
+		const result = await mcp.callTool("vib_session_list");
 		expect(result).toEqual({
 			ok: false,
 			error: { code: "protocol_error", message: "session.list returned a repeated continuation cursor." },
@@ -316,7 +316,7 @@ test("MCP rejects malformed session.list continuation pages without returning pa
 		),
 	});
 	try {
-		const result = await mcp.callTool("gjc_session_list");
+		const result = await mcp.callTool("vib_session_list");
 		expect(result).toEqual({
 			ok: false,
 			error: { code: "protocol_error", message: "session.list returned a malformed page." },

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import * as path from "node:path";
-import type { AgentMessage } from "@gajae-code/agent-core";
-import { TempDir } from "@gajae-code/utils";
+import type { AgentMessage } from "@vib-rato/agent-core";
+import { TempDir } from "@vib-rato/utils";
 import { $ } from "bun";
 import {
 	buildContributionPrepWorkerPrompt,
@@ -60,7 +60,7 @@ describe("contribution prep", () => {
 	});
 
 	it("writes a manifest with redacted file-pointer artifacts", async () => {
-		const tempDir = TempDir.createSync("@gjc-contribution-prep-");
+		const tempDir = TempDir.createSync("@vib-contribution-prep-");
 		try {
 			await Bun.write(path.join(tempDir.path(), "tracked.txt"), "changed");
 			await $`git init`.cwd(tempDir.path()).quiet();
@@ -156,7 +156,7 @@ describe("contribution prep", () => {
 	});
 
 	it("can prepare a worker spawn without mutating source-session identity", async () => {
-		const tempDir = TempDir.createSync("@gjc-contribution-prep-spawn-");
+		const tempDir = TempDir.createSync("@vib-contribution-prep-spawn-");
 		try {
 			const spawns: Array<{ args: string[]; cwd: string }> = [];
 			const result = await prepareContributionPrep(
@@ -183,8 +183,8 @@ describe("contribution prep", () => {
 		}
 	});
 
-	it("resolves worker spawn argv through the GJC command and prompt file", async () => {
-		const tempDir = TempDir.createSync("@gjc-contribution-prep-real-spawn-");
+	it("resolves worker spawn argv through the Vibrato command and prompt file", async () => {
+		const tempDir = TempDir.createSync("@vib-contribution-prep-real-spawn-");
 		try {
 			const child = Bun.spawn({
 				cmd: [process.execPath, "--version"],

@@ -99,7 +99,7 @@ test("4356 AcpAgent recovery preserves mcpServers and makes failure observable",
 	// Only reconnect_exhausted may terminalize; stale-attachment must be filtered.
 	expect(agentText).toContain('error.code !== "reconnect_exhausted"');
 	// Recovery failure must be observable, not swallowed.
-	expect(agentText).toContain("gjcRecoverFailed");
+	expect(agentText).toContain("vibRecoverFailed");
 });
 
 test("4356 session/load path preserves mcpServers declaration", async () => {

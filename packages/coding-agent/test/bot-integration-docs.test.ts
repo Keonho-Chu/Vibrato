@@ -21,8 +21,8 @@ describe("external controller integration docs", () => {
 		const guide = await readRepoFile("docs", "bot-integration.md");
 
 		expect(guide).toContain("# External controller integration guide");
-		expect(guide).toContain("gjc mcp-serve coordinator");
-		expect(guide).toContain("gjc setup hermes");
+		expect(guide).toContain("vib mcp-serve coordinator");
+		expect(guide).toContain("vib setup hermes");
 		expect(guide).toContain("compatibility alias, not a separate contract");
 		expect(guide).toContain("Generic smoke strategy");
 		expect(guide).toContain("Contract smoke");
@@ -34,10 +34,10 @@ describe("external controller integration docs", () => {
 		expect(guide).not.toContain("SDK WebSocket lifecycle");
 		expect(guide).not.toContain("Connect to the session's loopback SDK endpoint");
 		expect(guide).not.toContain("RPC lifecycle below");
-		expect(guide).not.toContain("gjc --mode " + "rpc");
+		expect(guide).not.toContain("vib --mode " + "rpc");
 		expect(guide).not.toContain("docs/rpc.md");
 		expect(guide).not.toContain("docs/bridge.md");
-		expect(guide).toContain("gjc_coordinator_register_session");
+		expect(guide).toContain("vib_coordinator_register_session");
 		expect(guide).toContain("SDK-discoverable session");
 		expect(guide).toContain("advisory process metadata only");
 		expect(guide).not.toContain("visible tmux fallback");
@@ -86,7 +86,7 @@ describe("external controller integration docs", () => {
 
 		expect(guide).toContain("docs-only");
 		expect(guide).toContain("aside mcp");
-		expect(guide).toContain("gjc mcp add aside aside mcp --project");
+		expect(guide).toContain("vib mcp add aside aside mcp --project");
 		expect(guide).toContain("/aside");
 		expect(guide).toContain("composer slash command");
 		expect(guide).toContain("browser actions and form submissions");
@@ -114,7 +114,7 @@ describe("external controller integration docs", () => {
 		expect(readiness).toContain("ACP");
 		expect(readiness).toContain("have been removed");
 
-		for (const command of ["gjc mcp-serve coordinator", "gjc --mode acp", "gjc acp"]) {
+		for (const command of ["vib mcp-serve coordinator", "vib --mode acp", "vib acp"]) {
 			expect(readiness).toContain(command);
 		}
 
@@ -128,9 +128,9 @@ describe("external controller integration docs", () => {
 		}
 
 		expect(cliArgs).toContain('export type Mode = "text" | "json" | "acp"');
-		expect(cliArgs).toContain("was removed; external control now uses the Gajae-Code SDK");
+		expect(cliArgs).toContain("was removed; external control now uses the Vibrato SDK");
 		expect(cli).toContain('{ name: "acp", load: () => import("./commands/acp").then(m => m.default) }');
-		expect(acpCommand).toContain("Run Gajae Code as an ACP (Agent Client Protocol) server over stdio");
+		expect(acpCommand).toContain("Run Vibrato as an ACP (Agent Client Protocol) server over stdio");
 		expect(mcpCommand).toContain('server !== "coordinator" && server !== "hermes"');
 	});
 
@@ -140,7 +140,7 @@ describe("external controller integration docs", () => {
 		expect(guide).toContain("Forward finish/stop lifecycle notifications");
 		expect(guide).toContain("turn_end");
 		expect(guide).toContain("agent_end");
-		expect(guide).toContain("gjc_coordinator_watch_events");
+		expect(guide).toContain("vib_coordinator_watch_events");
 		expect(guide).toContain("waiting_for_answer");
 		expect(guide).toContain("metadata-only");
 		expect(guide).toContain("caller-supplied sanitized summary");

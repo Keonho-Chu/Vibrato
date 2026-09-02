@@ -2,10 +2,10 @@ import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 import { spawnSync } from "node:child_process";
-import type { AssistantMessage, Message, TextContent, ToolCall, ToolResultMessage, Usage } from "@gajae-code/ai";
+import type { AssistantMessage, Message, TextContent, ToolCall, ToolResultMessage, Usage } from "@vib-rato/ai";
 import { SessionManager } from "../src/session/session-manager";
 
-const PACKAGE_NAME = "@gajae-code/coding-agent";
+const PACKAGE_NAME = "@vib-rato/coding-agent";
 const BENCH_NAME = "session-get-entries";
 const WARMUP_ITERATIONS = 20;
 const MEASURE_ITERATIONS = 200;
@@ -158,7 +158,7 @@ function appendFixtureMessage(manager: SessionManager, index: number): void {
 }
 
 async function createFixture(): Promise<SessionManager> {
-	const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-session-get-entries-"));
+	const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-session-get-entries-"));
 	const sessionDir = path.join(root, "sessions");
 	const manager = SessionManager.create(root, sessionDir);
 	for (let i = 0; i < ENTRY_COUNT; i++) {

@@ -1,6 +1,6 @@
 # Custom Tools Examples
 
-Example custom tools for gjc-coding-agent.
+Example custom tools for vib-coding-agent.
 
 ## Examples
 
@@ -23,13 +23,13 @@ Full-featured example demonstrating:
 
 ```bash
 # Test directly (can point to any .ts file)
-gjc --tool examples/custom-tools/todo/index.ts
+vib --tool examples/custom-tools/todo/index.ts
 
 # Or copy entire folder to tools directory for persistent use
-cp -r todo ~/.gjc/agent/tools/
+cp -r todo ~/.vib/agent/tools/
 ```
 
-Then in gjc:
+Then in vib:
 
 ```
 > add a todo "test custom tools"
@@ -47,8 +47,8 @@ See [docs/custom-tools.md](../../docs/custom-tools.md) for full documentation.
 **Factory pattern:**
 
 ```typescript
-import { Text } from "@gajae-code/tui";
-import type { CustomToolFactory } from "@gajae-code/coding-agent";
+import { Text } from "@vib-rato/tui";
+import type { CustomToolFactory } from "@vib-rato/coding-agent";
 
 const factory: CustomToolFactory = (pi) => ({
 	name: "my_tool",

@@ -1,15 +1,15 @@
 # Hooks Examples
 
-Example hooks for gjc-coding-agent.
+Example hooks for vib-coding-agent.
 
 ## Usage
 
 ```bash
 # Load a hook with --hook flag
-gjc --hook examples/hooks/permission-gate.ts
+vib --hook examples/hooks/permission-gate.ts
 
 # Or copy to hooks directory for auto-discovery
-cp permission-gate.ts ~/.gjc/agent/hooks/
+cp permission-gate.ts ~/.vib/agent/hooks/
 ```
 
 ## Examples
@@ -34,7 +34,7 @@ cp permission-gate.ts ~/.gjc/agent/hooks/
 See [docs/hooks.md](../../docs/hooks.md) for full documentation.
 
 ```typescript
-import type { HookAPI } from "@gajae-code/coding-agent/hooks";
+import type { HookAPI } from "@vib-rato/coding-agent/hooks";
 
 export default function (pi: HookAPI) {
 	// Subscribe to events

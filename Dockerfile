@@ -1,20 +1,20 @@
 # syntax=docker/dockerfile:1.7-labs
 ###############################################################################
-# gajae-code — pi image
+# vib-rato — pi image
 #
 # Stages:
 #   natives-builder — Rust + Bun → pi_natives.linux-<arch>.node
-#   pi-base         — python + bun + natives + /usr/local/bin/gjc shim
+#   pi-base         — python + bun + natives + /usr/local/bin/vib shim
 #   pi-dev          — pi-base + build toolchain (build-essential, rustup)
 #   pi-runtime      — pi-base + pi source + bun install      (DEFAULT, runnable)
 #
 # Build:
-#     docker build -t gajae-code/pi:dev .                          # default = pi-runtime
-#     docker build --target pi-base -t gajae-code/pi-base:dev .    # base for derived images
+#     docker build -t vib-rato/pi:dev .                          # default = pi-runtime
+#     docker build --target pi-base -t vib-rato/pi-base:dev .    # base for derived images
 #
 # Run:
-#     docker run --rm gajae-code/pi:dev --help
-#     docker run --rm -it -v "$PWD":/work gajae-code/pi:dev cli    # interactive gjc
+#     docker run --rm vib-rato/pi:dev --help
+#     docker run --rm -it -v "$PWD":/work vib-rato/pi:dev cli    # interactive vib
 #
 ###############################################################################
 
@@ -75,7 +75,7 @@ RUN --mount=type=cache,target=/root/.cargo/registry \
 ############################
 
 ############################
-# 2) pi-base — python + bun + natives + gjc shim
+# 2) pi-base — python + bun + natives + vib shim
 #
 # Sharable runtime base. `pi-runtime` below uses this stage and overrides
 # `PI_ROOT` to `/pi` because its source is baked in.
@@ -104,7 +104,7 @@ RUN curl -fsSL https://bun.sh/install | bash -s "bun-v${BUN_VERSION}" \
 COPY --from=natives-builder /out/pi_natives.linux-*.node /opt/bun/bin/
 
 
-# `gjc` shim — runs the coding-agent CLI against $PI_ROOT via Bun. Derived
+# `vib` shim — runs the coding-agent CLI against $PI_ROOT via Bun. Derived
 # images override PI_ROOT to point at wherever their pi source lives.
 RUN printf '%s\n' \
     '#!/usr/bin/env bash' \
@@ -115,8 +115,8 @@ RUN printf '%s\n' \
     '  exit 127' \
     'fi' \
     'exec bun "$PI_ROOT/packages/coding-agent/src/cli.ts" "$@"' \
-    > /usr/local/bin/gjc \
-    && chmod +x /usr/local/bin/gjc
+    > /usr/local/bin/vib \
+    && chmod +x /usr/local/bin/vib
 
 ############################
 # 4) pi-dev — pi-base + build toolchain for derived development images
@@ -144,7 +144,7 @@ RUN curl -fsSL https://sh.rustup.rs -o /tmp/rustup-init.sh \
 ############################
 # 5) pi-runtime — pi-base + pi source + bun install (DEFAULT)
 #
-# A self-contained, runnable gjc image. `docker run gajae-code/pi:dev --help`
+# A self-contained, runnable vib image. `docker run vib-rato/pi:dev --help`
 # Just Works without a host checkout.
 ############################
 FROM pi-base AS pi-runtime
@@ -172,5 +172,5 @@ COPY . /pi/
 # package.json's `prepare` script normally handles this on a vanilla install.
 RUN bun --cwd=packages/coding-agent run generate-docs-index
 
-ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/gjc"]
+ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/vib"]
 CMD ["--help"]

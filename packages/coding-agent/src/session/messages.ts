@@ -4,13 +4,13 @@
  * Extends the base AgentMessage type with coding-agent specific message types,
  * and provides a transformer to convert them to LLM-compatible messages.
  */
-import type { AgentMessage } from "@gajae-code/agent-core";
+import type { AgentMessage } from "@vib-rato/agent-core";
 import {
 	type BranchSummaryMessage,
 	type CompactionSummaryMessage,
 	renderBranchSummaryContext,
 	renderCompactionSummaryContext,
-} from "@gajae-code/agent-core/compaction/messages";
+} from "@vib-rato/agent-core/compaction/messages";
 import type {
 	AssistantMessage,
 	ImageContent,
@@ -18,16 +18,16 @@ import type {
 	MessageAttribution,
 	TextContent,
 	ToolResultMessage,
-} from "@gajae-code/ai/core";
+} from "@vib-rato/ai/core";
 
 export {
 	type BranchSummaryMessage,
 	type CompactionSummaryMessage,
 	createBranchSummaryMessage,
 	createCompactionSummaryMessage,
-} from "@gajae-code/agent-core/compaction/messages";
+} from "@vib-rato/agent-core/compaction/messages";
 
-import type { LoadedSubskillActivation } from "../extensibility/gjc-plugins";
+import type { LoadedSubskillActivation } from "../extensibility/vib-plugins";
 import type { OutputMeta } from "../tools/output-meta";
 import { formatOutputNotice } from "../tools/output-meta";
 
@@ -99,7 +99,7 @@ export interface SkillPromptDetails {
  *  `ui-helpers.addMessageToChat` (renderers), `SessionObserverOverlay
  *  #buildTranscriptLines`, `runPrintMode`, and `AcpAgent#replayAssistantMessage`
  *  (fallback error emission) read it via `isSilentAbort`. */
-export const SILENT_ABORT_MARKER = "__gjc.silent_abort__";
+export const SILENT_ABORT_MARKER = "__vib.silent_abort__";
 
 /** Type-guard for `SILENT_ABORT_MARKER`. Renderers MUST branch on this rather
  *  than string-comparing inline so refactors to the marker constant (e.g.,
@@ -289,7 +289,7 @@ export interface FileMentionMessage {
 
 // Extend CustomAgentMessages via declaration merging
 // Legacy hookMessage is kept for migration; new code should use custom.
-declare module "@gajae-code/agent-core" {
+declare module "@vib-rato/agent-core" {
 	interface CustomAgentMessages {
 		bashExecution: BashExecutionMessage;
 		pythonExecution: PythonExecutionMessage;

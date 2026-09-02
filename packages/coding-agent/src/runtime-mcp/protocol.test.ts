@@ -26,7 +26,7 @@ import {
 
 const CONTEXT = {
 	protocolVersion: MCP_PROTOCOL_VERSION_2026_07_28,
-	clientInfo: { name: "gjc-coding-agent", version: "1.0.0" },
+	clientInfo: { name: "vib-coding-agent", version: "1.0.0" },
 	capabilities: { roots: { listChanged: true } },
 };
 
@@ -58,7 +58,7 @@ describe("modern per-request _meta", () => {
 	it("carries protocol version, client info, and client capabilities", () => {
 		const meta = buildModernRequestMeta(CONTEXT);
 		expect(meta[MCP_META_PROTOCOL_VERSION]).toBe(MCP_PROTOCOL_VERSION_2026_07_28);
-		expect(meta[MCP_META_CLIENT_INFO]).toEqual({ name: "gjc-coding-agent", version: "1.0.0" });
+		expect(meta[MCP_META_CLIENT_INFO]).toEqual({ name: "vib-coding-agent", version: "1.0.0" });
 		expect(meta[MCP_META_CLIENT_CAPABILITIES]).toEqual({ roots: { listChanged: true } });
 	});
 

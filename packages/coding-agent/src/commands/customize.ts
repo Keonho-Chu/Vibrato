@@ -1,12 +1,12 @@
 /**
- * `gjc customize` — customization inspection commands.
+ * `vib customize` — customization inspection commands.
  *
  * Currently exposes a single subcommand: `doctor`, a read-only provenance and
- * status report over everything GJC discovers (MCP servers, skills, hooks,
+ * status report over everything Vibrato discovers (MCP servers, skills, hooks,
  * tools, extensions, slash commands, plugin bundles).
  */
-import { getProjectDir } from "@gajae-code/utils";
-import { Args, Command, Flags, renderCommandHelp } from "@gajae-code/utils/cli";
+import { getProjectDir } from "@vib-rato/utils";
+import { Args, Command, Flags, renderCommandHelp } from "@vib-rato/utils/cli";
 import { runCustomizeDoctorCommand } from "../cli/customize-doctor";
 
 const ACTIONS = ["doctor"] as const;
@@ -15,7 +15,7 @@ export default class Customize extends Command {
 	static description = "Inspect discovered customizations (MCP, skills, hooks, tools, extensions, commands, plugins)";
 	static delegateHelp = true;
 
-	static examples = ["gjc customize doctor", "gjc customize doctor --json"];
+	static examples = ["vib customize doctor", "vib customize doctor --json"];
 
 	static args = {
 		action: Args.string({
@@ -42,7 +42,7 @@ export default class Customize extends Command {
 		const { args, flags } = await this.parse(Customize);
 		const action = (args.action ?? "doctor") as (typeof ACTIONS)[number];
 		if (action !== "doctor") {
-			renderCommandHelp("gjc", "customize", Customize);
+			renderCommandHelp("vib", "customize", Customize);
 			return;
 		}
 
@@ -53,7 +53,7 @@ export default class Customize extends Command {
 		process.stdout.write(`Inspect discovered customizations and their runtime status
 
 USAGE
-  $ gjc customize doctor [FLAGS]
+  $ vib customize doctor [FLAGS]
 
 COMMANDS
   doctor  Provenance and status report for MCP servers, skills, hooks, tools,
@@ -63,11 +63,11 @@ FLAGS
   -j, --json  Emit machine-readable JSON with secrets redacted
 
 EXAMPLES
-  $ gjc customize doctor
-  $ gjc customize doctor --json
+  $ vib customize doctor
+  $ vib customize doctor --json
 
 WHAT IT REPORTS
-  For every discovered item: source convention and scope (gjc, Claude project,
+  For every discovered item: source convention and scope (vib, Claude project,
   Codex project, plugin, explicit config), effective precedence and shadowing,
   runtime status (loaded/disabled/shadowed/rejected/quarantined/stored-only),
   a bounded reason code, remediation commands, trust requirements, and whether

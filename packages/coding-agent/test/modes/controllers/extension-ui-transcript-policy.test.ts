@@ -1,5 +1,5 @@
 import { describe, expect, it, type Mock, vi } from "bun:test";
-import { Container } from "@gajae-code/tui";
+import { Container } from "@vib-rato/tui";
 import type {
 	ExtensionActions,
 	ExtensionCommandContextActions,

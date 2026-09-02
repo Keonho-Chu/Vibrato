@@ -7,7 +7,7 @@ import { createShellSnapshotCacheForTesting } from "../src/utils/shell-snapshot"
 const BASH_PATH = "/bin/bash";
 const temporaryRoots: string[] = [];
 async function makeHarness(platform: NodeJS.Platform = process.platform) {
-	const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-shell-snapshot-test-"));
+	const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "vib-shell-snapshot-test-"));
 	temporaryRoots.push(tempRoot);
 	const home = path.join(tempRoot, "home");
 	await fs.mkdir(home);
@@ -25,7 +25,7 @@ describe("shell snapshot private cache", () => {
 		const bash = BASH_PATH;
 		const { cache, tempRoot } = await makeHarness();
 		const legacyTarget = path.join(tempRoot, "legacy-target");
-		const legacyPath = path.join(tempRoot, "gjc-shell-snapshots");
+		const legacyPath = path.join(tempRoot, "vib-shell-snapshots");
 		await fs.mkdir(legacyTarget);
 		await Bun.write(path.join(legacyTarget, "sentinel"), "untouched");
 		await fs.symlink(legacyTarget, legacyPath, "dir");
@@ -46,7 +46,7 @@ describe("shell snapshot private cache", () => {
 			expect(rootStat.uid).toBe(process.getuid());
 			expect(leafStat.uid).toBe(process.getuid());
 		}
-		expect((await fs.readdir(tempRoot)).filter(name => name.startsWith("gjc-shell-snapshots-"))).toHaveLength(1);
+		expect((await fs.readdir(tempRoot)).filter(name => name.startsWith("vib-shell-snapshots-"))).toHaveLength(1);
 		expect(await fs.readdir(privateRoot)).toEqual([path.basename(snapshotPath)]);
 		expect((await fs.lstat(legacyPath)).isSymbolicLink()).toBe(true);
 		expect(await Bun.file(path.join(legacyTarget, "sentinel")).text()).toBe("untouched");
@@ -68,7 +68,7 @@ describe("shell snapshot private cache", () => {
 		expect(await cache.getOrCreateSnapshot(wrapper, env)).toBeNull();
 		const privateRoot = path.join(
 			tempRoot,
-			(await fs.readdir(tempRoot)).find(name => name.startsWith("gjc-shell-snapshots-")) ?? "missing",
+			(await fs.readdir(tempRoot)).find(name => name.startsWith("vib-shell-snapshots-")) ?? "missing",
 		);
 		expect(await fs.readdir(privateRoot)).toEqual([]);
 		await Bun.write(wrapper, `#!/bin/sh\nexec ${bash} "$@"\n`);
@@ -89,7 +89,7 @@ describe("shell snapshot private cache", () => {
 		expect(await cache.getOrCreateSnapshot(wrapper, env)).toBeNull();
 		const [createdDuringCleanup] = await Promise.all([creation, cleanup]);
 		expect(createdDuringCleanup).toBeNull();
-		expect((await fs.readdir(tempRoot)).filter(name => name.startsWith("gjc-shell-snapshots-"))).toEqual([]);
+		expect((await fs.readdir(tempRoot)).filter(name => name.startsWith("vib-shell-snapshots-"))).toEqual([]);
 		expect(await cache.getOrCreateSnapshot(wrapper, env)).not.toBeNull();
 		await cache.cleanup();
 	});

@@ -11,15 +11,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { AuthStorage, getBundledModel } from "@gajae-code/ai";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { createAgentSession } from "@gajae-code/coding-agent/sdk";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { getAgentDir, setAgentDir } from "@gajae-code/utils";
+import { AuthStorage, getBundledModel } from "@vib-rato/ai";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { createAgentSession } from "@vib-rato/coding-agent/sdk";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { getAgentDir, setAgentDir } from "@vib-rato/utils";
 import { safeRm } from "../../../../scripts/safe-cleanup";
 import { runMCPCommand } from "../../src/cli/mcp-cli";
-import { installGjcBundle } from "../../src/extensibility/gjc-plugins";
+import { installVibBundle } from "../../src/extensibility/vib-plugins";
 import { MCPManager } from "../../src/runtime-mcp";
 import { loadAllMCPConfigs } from "../../src/runtime-mcp/config";
 import type { MCPStdioServerConfig } from "../../src/runtime-mcp/types";
@@ -61,13 +61,13 @@ describe("red-team: conventional MCP autoload", () => {
 
 	beforeEach(async () => {
 		MCPManager.resetForTests();
-		projectDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), "gjc-mcp-redteam-project-"));
-		tempHome = await fs.promises.mkdtemp(path.join(os.tmpdir(), "gjc-mcp-redteam-home-"));
-		// The MCP user scope is the agent directory (that is where `gjc mcp add`
+		projectDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), "vib-mcp-redteam-project-"));
+		tempHome = await fs.promises.mkdtemp(path.join(os.tmpdir(), "vib-mcp-redteam-home-"));
+		// The MCP user scope is the agent directory (that is where `vib mcp add`
 		// writes), so isolating it is exactly `setAgentDir`. Anchor it inside the
 		// temp home so the layout matches a real profile and nothing here can reach
-		// the developer's real `~/.gjc/agent/mcp.json`.
-		agentDir = path.join(tempHome, ".gjc", "agent");
+		// the developer's real `~/.vib/agent/mcp.json`.
+		agentDir = path.join(tempHome, ".vib", "agent");
 		await fs.promises.mkdir(agentDir, { recursive: true });
 		setAgentDir(agentDir);
 		vi.spyOn(os, "homedir").mockReturnValue(tempHome);
@@ -121,7 +121,7 @@ describe("red-team: conventional MCP autoload", () => {
 		// malformed config in one scope must not abort discovery of valid servers
 		// in the other scope.
 		it("a malformed project config does NOT abort discovery of valid user-scope servers", async () => {
-			await writeProjectConfig(".gjc/mcp.json", '{ "mcpServers": { "broken": {');
+			await writeProjectConfig(".vib/mcp.json", '{ "mcpServers": { "broken": {');
 			await writeUserNativeConfig({
 				mcpServers: { userSrv: demoConfig() },
 			});
@@ -137,7 +137,7 @@ describe("red-team: conventional MCP autoload", () => {
 		});
 
 		it("a malformed project config at session startup still loads valid user-scope servers", async () => {
-			await writeProjectConfig(".gjc/mcp.json", "not json at all {");
+			await writeProjectConfig(".vib/mcp.json", "not json at all {");
 			await writeUserNativeConfig({
 				mcpServers: { userSrv: demoConfig() },
 			});
@@ -159,7 +159,7 @@ describe("red-team: conventional MCP autoload", () => {
 			// the same malformed file. The capability provider's tryParseJson
 			// returns empty items for the malformed file.
 			await writeProjectConfig(
-				".gjc/mcp.json",
+				".vib/mcp.json",
 				'{"mcpServers": {"fragment": {"type": "stdio", "command": "/usr/bin/false",',
 			);
 			const loaded = await loadAllMCPConfigs(projectDir, {
@@ -176,7 +176,7 @@ describe("red-team: conventional MCP autoload", () => {
 			// JSON.parse defines __proto__ as an OWN property, so this raw text
 			// genuinely exercises the loader with a hostile key.
 			await writeProjectConfig(
-				".gjc/mcp.json",
+				".vib/mcp.json",
 				'{"mcpServers": {"__proto__": {"type": "stdio", "command": "evil-bin"}, "constructor": {"type": "stdio", "command": "ctor-bin"}, "prototype": {"type": "stdio", "command": "proto-bin"}, "ok": ' +
 					JSON.stringify(demoConfig()) +
 					"}}",
@@ -203,7 +203,7 @@ describe("red-team: conventional MCP autoload", () => {
 
 		it("session startup survives a __proto__-named server and never connects it", async () => {
 			await writeProjectConfig(
-				".gjc/mcp.json",
+				".vib/mcp.json",
 				'{"mcpServers": {"__proto__": {"type": "stdio", "command": "evil-bin"}, "good": ' +
 					JSON.stringify(demoConfig()) +
 					"}}",
@@ -222,11 +222,11 @@ describe("red-team: conventional MCP autoload", () => {
 	});
 
 	describe("--no-mcp and plugin-bundle MCPs", () => {
-		const fixturesRoot = path.join(import.meta.dir, "..", "fixtures", "gjc-plugins");
+		const fixturesRoot = path.join(import.meta.dir, "..", "fixtures", "vib-plugins");
 		const mcpBundle = path.join(fixturesRoot, "valid-mcp-bundle");
 
 		it("--no-mcp (enableMcpAutoload: false) suppresses conventional registrations but keeps plugin-bundle MCPs", async () => {
-			const r = await installGjcBundle({ cwd: projectDir }, "project", mcpBundle);
+			const r = await installVibBundle({ cwd: projectDir }, "project", mcpBundle);
 			expect(r.ok).toBe(true);
 			// Conventional registration in the same project.
 			await runMCPCommand({
@@ -243,10 +243,10 @@ describe("red-team: conventional MCP autoload", () => {
 			});
 			try {
 				// Plugin-bundle server still connects: --no-mcp only gates the
-				// conventional `.gjc` scopes.
+				// conventional `.vib` scopes.
 				expect(mcpManager).toBeDefined();
 				expect(mcpManager?.getConnectedServers()).toEqual(["domain_docs"]);
-				expect(mcpManager?.getSource("domain_docs")?.provider).toBe("gjc-plugins");
+				expect(mcpManager?.getSource("domain_docs")?.provider).toBe("vib-plugins");
 				// The conventional registration is NOT connected.
 				expect(mcpManager?.getConnectedServers()).not.toContain("solo");
 				expect(session.getAllToolNames()).toContain("mcp__domain_docs_lookup");
@@ -257,7 +257,7 @@ describe("red-team: conventional MCP autoload", () => {
 		}, 30_000);
 
 		it("plugin-bundle MCPs override conventional entries on name collisions; both load otherwise", async () => {
-			const r = await installGjcBundle({ cwd: projectDir }, "project", mcpBundle);
+			const r = await installVibBundle({ cwd: projectDir }, "project", mcpBundle);
 			expect(r.ok).toBe(true);
 			// Conventional entry colliding with the plugin's domain_docs, plus a
 			// non-colliding conventional entry.
@@ -282,7 +282,7 @@ describe("red-team: conventional MCP autoload", () => {
 				expect(mcpManager?.getConnectedServers().sort()).toEqual(["domain_docs", "solo"]);
 				// The winning domain_docs connection is the plugin-bundle one
 				// (adapter boundary: noInheritEnv true, cwd pinned to plugin root).
-				expect(mcpManager?.getSource("domain_docs")?.provider).toBe("gjc-plugins");
+				expect(mcpManager?.getSource("domain_docs")?.provider).toBe("vib-plugins");
 				const connection = mcpManager?.getConnection("domain_docs");
 				expect(connection?.config.type).toBe("stdio");
 				if (connection?.config.type === "stdio") {
@@ -303,7 +303,7 @@ describe("red-team: conventional MCP autoload", () => {
 
 	describe("disabledServers / enabled:false / autoload:false at the runtime boundary", () => {
 		it("disabledServers is enforced at discovery even when the entry is otherwise valid", async () => {
-			await writeProjectConfig(".gjc/mcp.json", {
+			await writeProjectConfig(".vib/mcp.json", {
 				mcpServers: { denied: demoConfig() },
 				disabledServers: ["denied"],
 			});
@@ -316,7 +316,7 @@ describe("red-team: conventional MCP autoload", () => {
 		});
 
 		it("an explicit connect can still attach a disabledServers-denylisted server (interactive /mcp test path)", async () => {
-			await writeProjectConfig(".gjc/mcp.json", {
+			await writeProjectConfig(".vib/mcp.json", {
 				mcpServers: { denied: demoConfig() },
 				disabledServers: ["denied"],
 			});
@@ -331,7 +331,7 @@ describe("red-team: conventional MCP autoload", () => {
 			// point used by the interactive surface via /mcp test ->
 			// #syncManagerConnection) attaches the server without consulting it.
 			const manager = new MCPManager(projectDir, null);
-			const source = { provider: "native", providerName: "GJC", level: "project" as const, path: "" };
+			const source = { provider: "native", providerName: "Vibrato", level: "project" as const, path: "" };
 			const result = await manager.connectServers(
 				{ denied: loaded.configs.denied ?? demoConfig() },
 				{ denied: source },
@@ -345,7 +345,7 @@ describe("red-team: conventional MCP autoload", () => {
 		}, 30_000);
 
 		it("an enabled:false server is likewise connectable at the manager level (the interactive surface blocks it via /mcp test's enabled check)", async () => {
-			await writeProjectConfig(".gjc/mcp.json", {
+			await writeProjectConfig(".vib/mcp.json", {
 				mcpServers: { off: demoConfig({ enabled: false }) },
 			});
 			const loaded = await loadAllMCPConfigs(projectDir, {
@@ -356,7 +356,7 @@ describe("red-team: conventional MCP autoload", () => {
 			expect(Object.keys(loaded.configs)).toEqual([]);
 
 			const manager = new MCPManager(projectDir, null);
-			const source = { provider: "native", providerName: "GJC", level: "project" as const, path: "" };
+			const source = { provider: "native", providerName: "Vibrato", level: "project" as const, path: "" };
 			const result = await manager.connectServers({ off: demoConfig({ enabled: false }) }, { off: source });
 			try {
 				expect(result.connectedServers).toContain("off");
@@ -366,7 +366,7 @@ describe("red-team: conventional MCP autoload", () => {
 		}, 30_000);
 
 		it("autoload:false servers stay connectable on demand while excluded from startup", async () => {
-			await writeProjectConfig(".gjc/mcp.json", {
+			await writeProjectConfig(".vib/mcp.json", {
 				mcpServers: { lazy: demoConfig({ autoload: false }) },
 			});
 			const loaded = await loadAllMCPConfigs(projectDir, {
@@ -377,7 +377,7 @@ describe("red-team: conventional MCP autoload", () => {
 			expect(Object.keys(loaded.configs)).toEqual([]);
 
 			const manager = new MCPManager(projectDir, null);
-			const source = { provider: "native", providerName: "GJC", level: "project" as const, path: "" };
+			const source = { provider: "native", providerName: "Vibrato", level: "project" as const, path: "" };
 			const result = await manager.connectServers({ lazy: demoConfig({ autoload: false }) }, { lazy: source });
 			try {
 				expect(result.connectedServers).toContain("lazy");
@@ -389,8 +389,8 @@ describe("red-team: conventional MCP autoload", () => {
 
 	describe("sealed plugin sessions and re-discovery", () => {
 		it("a session manager with plugin-bundle MCPs is sealed: re-discovery (the /mcp reload surface) is refused", async () => {
-			const fixturesRoot = path.join(import.meta.dir, "..", "fixtures", "gjc-plugins");
-			const r = await installGjcBundle({ cwd: projectDir }, "project", path.join(fixturesRoot, "valid-mcp-bundle"));
+			const fixturesRoot = path.join(import.meta.dir, "..", "fixtures", "vib-plugins");
+			const r = await installVibBundle({ cwd: projectDir }, "project", path.join(fixturesRoot, "valid-mcp-bundle"));
 			expect(r.ok).toBe(true);
 
 			const { session, mcpManager } = await createAgentSession(isolatedSessionOptions());
@@ -407,7 +407,7 @@ describe("red-team: conventional MCP autoload", () => {
 		}, 30_000);
 
 		it("a conventional-only session manager stays mutable so /mcp reload can re-discover", async () => {
-			await writeProjectConfig(".gjc/mcp.json", {
+			await writeProjectConfig(".vib/mcp.json", {
 				mcpServers: { solo: demoConfig() },
 			});
 			const { session, mcpManager } = await createAgentSession(isolatedSessionOptions());
@@ -422,11 +422,11 @@ describe("red-team: conventional MCP autoload", () => {
 	});
 
 	describe("native file precedence", () => {
-		it(".gjc/mcp.json wins over .gjc/.mcp.json on a same-name collision", async () => {
-			await writeProjectConfig(".gjc/mcp.json", {
+		it(".vib/mcp.json wins over .vib/.mcp.json on a same-name collision", async () => {
+			await writeProjectConfig(".vib/mcp.json", {
 				mcpServers: { dup: { type: "stdio", command: "from-mcp-json" } },
 			});
-			await writeProjectConfig(".gjc/.mcp.json", {
+			await writeProjectConfig(".vib/.mcp.json", {
 				mcpServers: { dup: { type: "stdio", command: "from-dot-mcp-json" } },
 			});
 			const loaded = await loadAllMCPConfigs(projectDir, {
@@ -437,7 +437,7 @@ describe("red-team: conventional MCP autoload", () => {
 			expect(loaded.configs.dup).toMatchObject({ command: "from-mcp-json" });
 		});
 
-		it("user .gjc/agent/.mcp.json is read alongside user .gjc/agent/mcp.json", async () => {
+		it("user .vib/agent/.mcp.json is read alongside user .vib/agent/mcp.json", async () => {
 			await writeUserNativeConfig({ mcpServers: { dotUser: demoConfig() } }, ".mcp.json");
 			const loaded = await loadAllMCPConfigs(projectDir, {
 				filterExa: false,
@@ -449,7 +449,7 @@ describe("red-team: conventional MCP autoload", () => {
 
 		it("repeated loads are deterministic and do not leak proto-pollution across calls", async () => {
 			await writeProjectConfig(
-				".gjc/mcp.json",
+				".vib/mcp.json",
 				'{"mcpServers": {"__proto__": {"type": "stdio", "command": "evil-bin"}, "ok": ' +
 					JSON.stringify(demoConfig()) +
 					"}}",

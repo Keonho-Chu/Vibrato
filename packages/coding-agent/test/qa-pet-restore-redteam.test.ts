@@ -1,10 +1,10 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from "bun:test";
-import { KeybindingsManager } from "@gajae-code/coding-agent/config/keybindings";
-import { ExtensionUiController } from "@gajae-code/coding-agent/modes/controllers/extension-ui-controller";
-import { getThemeByName, setThemeInstance } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { InteractiveModeContext } from "@gajae-code/coding-agent/modes/types";
-import type { Component, TUI } from "@gajae-code/tui";
-import { setKeybindings } from "@gajae-code/tui";
+import { KeybindingsManager } from "@vib-rato/coding-agent/config/keybindings";
+import { ExtensionUiController } from "@vib-rato/coding-agent/modes/controllers/extension-ui-controller";
+import { getThemeByName, setThemeInstance } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { InteractiveModeContext } from "@vib-rato/coding-agent/modes/types";
+import type { Component, TUI } from "@vib-rato/tui";
+import { setKeybindings } from "@vib-rato/tui";
 
 type TestEditor = {
 	id: string;

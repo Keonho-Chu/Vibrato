@@ -2,8 +2,8 @@ import { afterEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { AgentEvent } from "@gajae-code/agent-core";
-import type { AssistantMessage } from "@gajae-code/ai";
+import type { AgentEvent } from "@vib-rato/agent-core";
+import type { AssistantMessage } from "@vib-rato/ai";
 import { AsyncJobManager } from "../../src/async/job-manager";
 import { kNoAuth } from "../../src/config/model-registry";
 import { Settings } from "../../src/config/settings";
@@ -91,7 +91,7 @@ describe("rejected payload output artifact", () => {
 			setToolUIContext: () => {},
 			eventBus: new EventBus(),
 		} as CreateAgentSessionResult);
-		const artifactsDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-rejected-payload-"));
+		const artifactsDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-rejected-payload-"));
 		const id = "0-RejectedPayload";
 		const agent: AgentDefinition = { name: "executor", description: "test", systemPrompt: "test", source: "bundled" };
 

@@ -1,16 +1,16 @@
 import { afterEach, beforeAll, describe, expect, it } from "bun:test";
 import { stripVTControlCharacters } from "node:util";
-import { visibleWidth } from "@gajae-code/tui";
+import { visibleWidth } from "@vib-rato/tui";
 import { resolveWelcomeIntroTickMs, WelcomeComponent } from "../src/modes/components/welcome";
 import { getThemeByName, setThemeInstance } from "../src/modes/theme/theme";
 
-const originalBuildChannel = process.env.GJC_BUILD_CHANNEL;
+const originalBuildChannel = process.env.VIB_BUILD_CHANNEL;
 
 afterEach(() => {
 	if (originalBuildChannel === undefined) {
-		delete process.env.GJC_BUILD_CHANNEL;
+		delete process.env.VIB_BUILD_CHANNEL;
 	} else {
-		process.env.GJC_BUILD_CHANNEL = originalBuildChannel;
+		process.env.VIB_BUILD_CHANNEL = originalBuildChannel;
 	}
 });
 beforeAll(async () => {
@@ -147,16 +147,16 @@ describe("WelcomeComponent viewport sizing", () => {
 		});
 		const rendered = welcome.render(120).map(stripRenderControls).join("\n");
 
-		expect(rendered).toContain("gjc v1.2.3 · release build · GJC Forge");
+		expect(rendered).toContain("vib v1.2.3 · release build · Vibrato Forge");
 		expect(rendered).not.toContain("dev build");
 	});
 
 	it("renders the production metadata resolver label when no override is provided", () => {
-		process.env.GJC_BUILD_CHANNEL = "release";
+		process.env.VIB_BUILD_CHANNEL = "release";
 		const welcome = new WelcomeComponent("1.2.3", "test-model", "test-provider", [], [], "ascii");
 		const rendered = welcome.render(120).map(stripRenderControls).join("\n");
 
-		expect(rendered).toContain("gjc v1.2.3 · release build · GJC Forge");
+		expect(rendered).toContain("vib v1.2.3 · release build · Vibrato Forge");
 		expect(rendered).not.toContain("dev build");
 	});
 
@@ -186,7 +186,7 @@ describe("WelcomeComponent viewport sizing", () => {
 		for (const line of lines) {
 			expect(visibleWidth(line)).toBe(100);
 		}
-		expect(lines.some(line => line.includes("GJC Forge"))).toBe(true);
+		expect(lines.some(line => line.includes("Vibrato Forge"))).toBe(true);
 		expect(lines.some(line => line.includes("What's New"))).toBe(true);
 	});
 	it("integrates changelog highlights without overflowing narrow CJK content", () => {

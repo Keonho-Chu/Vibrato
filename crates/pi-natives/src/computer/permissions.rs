@@ -14,7 +14,7 @@
 //! missing rather than acting on a stale assumption. TCC grants are evaluated
 //! for the current executable identity, so diagnostics include the actual
 //! launcher path and pid instead of implying that a grant for Terminal, Bun,
-//! or a previous GJC binary applies automatically.
+//! or a previous Vibrato binary applies automatically.
 
 use std::process::Command;
 
@@ -85,7 +85,7 @@ impl std::fmt::Display for PermissionError {
 		write!(
 			f,
 			"COMPUTER_PERMISSION_REQUIRED: {name} permission is required to {what}. Grant it in \
-			 System Settings for the current GJC launcher, then fully quit and relaunch GJC before \
+			 System Settings for the current Vibrato launcher, then fully quit and relaunch Vibrato before \
 			 retrying. {}",
 			current_process_diagnostic()
 		)
@@ -114,7 +114,7 @@ pub fn screen_recording_granted() -> bool {
 /// Identify the process whose TCC grant is being queried.
 ///
 /// macOS privacy grants are evaluated for the current executable's code
-/// identity. The path is especially important in development, where GJC may
+/// identity. The path is especially important in development, where Vibrato may
 /// run as Bun, a compiled ad-hoc binary, or a launcher from another terminal.
 #[must_use]
 pub fn current_process_diagnostic() -> String {
@@ -200,7 +200,7 @@ mod tests {
 	#[test]
 	fn permission_error_explains_launcher_identity_and_relaunch() {
 		let message = PermissionError { missing: TccPermission::Accessibility }.to_string();
-		assert!(message.contains("current GJC launcher"));
+		assert!(message.contains("current Vibrato launcher"));
 		assert!(message.contains("fully quit and relaunch"));
 		assert!(message.contains("TCC identity:"));
 	}

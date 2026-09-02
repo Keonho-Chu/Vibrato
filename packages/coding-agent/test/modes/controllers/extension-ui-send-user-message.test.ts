@@ -13,7 +13,7 @@
  * (actions.sendUserMessage), not AgentSession alone.
  */
 import { afterEach, describe, expect, it, vi } from "bun:test";
-import { Container } from "@gajae-code/tui";
+import { Container } from "@vib-rato/tui";
 import type {
 	ExtensionActions,
 	ExtensionCommandContextActions,

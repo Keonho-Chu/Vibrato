@@ -16,7 +16,7 @@ import type {
 	TransportFailureFacts,
 	TSchema,
 	UserMessage,
-} from "@gajae-code/ai";
+} from "@vib-rato/ai";
 import type { AppendOnlyContextManager } from "./append-only-context";
 import type { AttemptMinter, AttemptRunHandle, AttemptScope } from "./attempt-scope";
 import type { HarmonyAuditEvent } from "./harmony-leak";
@@ -638,7 +638,7 @@ export interface AfterToolCallContext {
  *
  * @example
  * ```typescript
- * declare module "@gajae-code/agent" {
+ * declare module "@vib-rato/agent" {
  *   interface CustomAgentMessages {
  *     artifact: ArtifactMessage;
  *     notification: NotificationMessage;

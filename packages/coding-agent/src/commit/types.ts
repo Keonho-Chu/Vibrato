@@ -1,5 +1,5 @@
 /**
- * Types for the gjc commit pipeline.
+ * Types for the vib commit pipeline.
  */
 export type CommitType =
 	| "feat"

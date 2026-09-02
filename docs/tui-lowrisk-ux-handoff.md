@@ -3,9 +3,9 @@
 > Planned as a "low-risk" batch. During review it was reclassified as changing public TUI
 > behavior and reviewed as high-risk; treat the scope label in the plan accordingly.
 
-Shipped in PR [#4965](https://github.com/Yeachan-Heo/gajae-code/pull/4965) (merged into `dev`).
+Shipped in PR [#4965](https://github.com/Keonho-Chu/Vibrato/pull/4965) (merged into `dev`).
 
-Six defects where the TUI rendered an affordance nothing could reach, or discarded information without saying so. The implementation landed in merged PR [#4965](https://github.com/Yeachan-Heo/gajae-code/pull/4965); this document records the shipped behavior, deliberate follow-ups, and review evidence without depending on private execution history.
+Six defects where the TUI rendered an affordance nothing could reach, or discarded information without saying so. The implementation landed in merged PR [#4965](https://github.com/Keonho-Chu/Vibrato/pull/4965); this document records the shipped behavior, deliberate follow-ups, and review evidence without depending on private execution history.
 
 ## What shipped
 

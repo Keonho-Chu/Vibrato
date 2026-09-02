@@ -18,7 +18,7 @@ const PROBE = path.join(import.meta.dir, "fixtures", "compaction-endpoint-probe.
 const tempDirs: string[] = [];
 
 function projectDir(dotenv?: string): string {
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-compaction-endpoint-trust-"));
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-compaction-endpoint-trust-"));
 	tempDirs.push(dir);
 	if (dotenv !== undefined) fs.writeFileSync(path.join(dir, ".env"), dotenv);
 	return dir;
@@ -38,7 +38,7 @@ async function endpointIn(cwd: string, overrides: Record<string, string> = {}): 
 	const home = path.join(cwd, ".home");
 	fs.mkdirSync(home, { recursive: true });
 	env.HOME = home;
-	delete env.GJC_CONFIG_DIR;
+	delete env.VIB_CONFIG_DIR;
 	delete env.PI_CONFIG_DIR;
 	Object.assign(env, overrides);
 

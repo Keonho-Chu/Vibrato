@@ -1,15 +1,15 @@
 /**
  * Scope-aware MCP configuration access.
  *
- * Canonical read/write contract for GJC's native MCP config in both scopes —
- * project `<project>/.gjc/mcp.json` and global `~/.gjc/agent/mcp.json`.
+ * Canonical read/write contract for Vibrato's native MCP config in both scopes —
+ * project `<project>/.vib/mcp.json` and global `~/.vib/agent/mcp.json`.
  * These wrappers resolve the scope to its file path, reuse the atomic config
  * writer, and return provenance (scope + path) with every read so callers can
  * show source and status without re-deriving path rules. Secret values are
  * never printed by these APIs; the CLI applies its existing redaction layer on
  * top of returned configs.
  */
-import { getMCPConfigPath, getProjectDir } from "@gajae-code/utils";
+import { getMCPConfigPath, getProjectDir } from "@vib-rato/utils";
 import {
 	getMCPServer,
 	readDisabledServers,

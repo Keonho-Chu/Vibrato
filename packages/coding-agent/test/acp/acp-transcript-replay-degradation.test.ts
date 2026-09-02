@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import * as path from "node:path";
 import type { AgentSideConnection, SessionNotification } from "@agentclientprotocol/sdk";
-import { AcpAgent, transcriptReplayContent } from "@gajae-code/coding-agent/modes/acp/acp-agent";
-import { TempDir } from "@gajae-code/utils";
+import { AcpAgent, transcriptReplayContent } from "@vib-rato/coding-agent/modes/acp/acp-agent";
+import { TempDir } from "@vib-rato/utils";
 import { writeBrokerDiscovery } from "../../src/sdk/broker/discovery";
 import {
 	type ExactSessionAuthorityFixture,
@@ -36,7 +36,7 @@ function updateMeta(notification: SessionNotification): Record<string, unknown> 
 
 function skipBoundaries(notifications: SessionNotification[]): unknown[] {
 	return notifications
-		.map(notification => updateMeta(notification)?.gjcTranscriptReplaySkipped)
+		.map(notification => updateMeta(notification)?.vibTranscriptReplaySkipped)
 		.filter(value => value !== undefined);
 }
 
@@ -282,7 +282,7 @@ describe("ACP transcript replay degradation", () => {
 		await waitFor(
 			() =>
 				updates.some(update => update.update.sessionUpdate === "available_commands_update") &&
-				updates.some(update => updateMeta(update)?.gjcPhase === "idle"),
+				updates.some(update => updateMeta(update)?.vibPhase === "idle"),
 			"new session bootstrap",
 		);
 		updates.length = 0;
@@ -371,7 +371,7 @@ describe("ACP transcript replay degradation", () => {
 			{ sessionUpdate: "agent_message_chunk", text: "Earlier response", messageId: "assistant-1" },
 		]);
 		expect(updateMeta(replayed[0]!)).toEqual({
-			gjcTranscriptImageReplay: { available: false, reason: "historical_transcript_images_unavailable" },
+			vibTranscriptImageReplay: { available: false, reason: "historical_transcript_images_unavailable" },
 		});
 		expect(skipBoundaries(replayed)).toEqual([]);
 	});

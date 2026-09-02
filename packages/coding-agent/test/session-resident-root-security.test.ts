@@ -8,12 +8,12 @@ import {
 	MemoryBlobStore,
 	openVerifiedResidentCacheInstanceDir,
 	ResidentCacheTrustError,
-} from "@gajae-code/coding-agent/session/blob-store";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { getAgentDir, getResidentCacheRootDir, setAgentDir } from "@gajae-code/utils";
+} from "@vib-rato/coding-agent/session/blob-store";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { getAgentDir, getResidentCacheRootDir, setAgentDir } from "@vib-rato/utils";
 
 const originalAgentDir = getAgentDir();
-const originalAgentDirOverride = process.env.GJC_CODING_AGENT_DIR;
+const originalAgentDirOverride = process.env.VIB_CODING_AGENT_DIR;
 const temporaryDirectories: string[] = [];
 
 beforeEach(() => {
@@ -23,14 +23,14 @@ beforeEach(() => {
 afterEach(async () => {
 	vi.restoreAllMocks();
 	setAgentDir(originalAgentDir);
-	if (originalAgentDirOverride === undefined) delete process.env.GJC_CODING_AGENT_DIR;
-	else process.env.GJC_CODING_AGENT_DIR = originalAgentDirOverride;
+	if (originalAgentDirOverride === undefined) delete process.env.VIB_CODING_AGENT_DIR;
+	else process.env.VIB_CODING_AGENT_DIR = originalAgentDirOverride;
 	await Promise.all(
 		temporaryDirectories.splice(0).map(directory => fs.promises.rm(directory, { recursive: true, force: true })),
 	);
 });
 
-function makeTempDir(prefix = "gjc-resident-root-security-"): string {
+function makeTempDir(prefix = "vib-resident-root-security-"): string {
 	const directory = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
 	temporaryDirectories.push(directory);
 	return directory;

@@ -1,7 +1,7 @@
 /**
- * Manage GJC background daemons (status/list/stop/restart).
+ * Manage Vibrato background daemons (status/list/stop/restart).
  */
-import { Args, CliParseError, Command, Flags } from "@gajae-code/utils/cli";
+import { Args, CliParseError, Command, Flags } from "@vib-rato/utils/cli";
 import {
 	type DaemonCommandAction,
 	type DaemonCommandArgs,
@@ -28,14 +28,14 @@ function parsePositiveTimeout(raw: string | undefined, flagName: string): number
 
 export default class Daemon extends Command {
 	static description =
-		"Manage GJC background daemons. Routine use: `gjc daemon status` to check, `gjc daemon restart` to reload (spawns one if none is running). `stop`/`list` and the escalation flags below are advanced primitives.";
+		"Manage Vibrato background daemons. Routine use: `vib daemon status` to check, `vib daemon restart` to reload (spawns one if none is running). `stop`/`list` and the escalation flags below are advanced primitives.";
 
 	static examples = [
-		"# Check the daemon (concise per-daemon result)\n  gjc daemon status",
-		"# Reload, spawning a fresh owner if none is running\n  gjc daemon restart",
-		"# Full runtime detail and the roots list\n  gjc daemon status --verbose",
-		"# Machine-readable output for automation\n  gjc daemon status --json",
-		"# Stop, hard-killing an unresponsive owner\n  gjc daemon stop --force",
+		"# Check the daemon (concise per-daemon result)\n  vib daemon status",
+		"# Reload, spawning a fresh owner if none is running\n  vib daemon restart",
+		"# Full runtime detail and the roots list\n  vib daemon status --verbose",
+		"# Machine-readable output for automation\n  vib daemon status --json",
+		"# Stop, hard-killing an unresponsive owner\n  vib daemon stop --force",
 	];
 
 	static args = {

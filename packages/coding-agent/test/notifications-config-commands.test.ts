@@ -60,9 +60,9 @@ describe("parseRichToggleCommand", () => {
 	});
 
 	test("accepts the /rich@botname group form", () => {
-		expect(parseRichToggleCommand("/rich@GajaeCodeBot off")).toBe(false);
-		expect(parseRichToggleCommand("/rich@GajaeCodeBot on")).toBe(true);
-		expect(parseRichToggleCommand("/RICH@GajaeCodeBot ON")).toBe(true);
+		expect(parseRichToggleCommand("/rich@VibratoCodeBot off")).toBe(false);
+		expect(parseRichToggleCommand("/rich@VibratoCodeBot on")).toBe(true);
+		expect(parseRichToggleCommand("/RICH@VibratoCodeBot ON")).toBe(true);
 	});
 
 	test("missing/invalid arg and non-rich commands -> undefined", () => {
@@ -83,18 +83,20 @@ describe("parseToolActivityToggleCommand", () => {
 		expect(parseToolActivityToggleCommand("/toolactivity off")).toBe(false);
 		expect(parseToolActivityToggleCommand("/toolactivity false")).toBe(false);
 		expect(parseToolActivityToggleCommand("/toolactivity 0")).toBe(false);
-		expect(parseToolActivityToggleCommand("/TOOLACTIVITY@GajaeCodeBot OFF", "GajaeCodeBot")).toBe(false);
+		expect(parseToolActivityToggleCommand("/TOOLACTIVITY@VibratoCodeBot OFF", "VibratoCodeBot")).toBe(false);
 	});
 
 	test("fails closed for malformed, trailing, unrelated, and foreign-addressed commands", () => {
 		expect(parseToolActivityToggleCommand("/toolactivity")).toBeUndefined();
 		expect(parseToolActivityToggleCommand("/toolactivity maybe")).toBeUndefined();
 		expect(parseToolActivityToggleCommand("/toolactivity off accidental")).toBeUndefined();
-		expect(parseToolActivityToggleCommand("/toolactivity@OtherBot off", "GajaeCodeBot")).toBeUndefined();
-		expect(parseToolActivityToggleCommand("/toolactivity@ off", "GajaeCodeBot")).toBeUndefined();
-		expect(parseToolActivityToggleCommand("/toolactivity@@ off", "GajaeCodeBot")).toBeUndefined();
-		expect(parseToolActivityToggleCommand("/toolactivity@GajaeCodeBot@OtherBot off", "GajaeCodeBot")).toBeUndefined();
-		expect(parseToolActivityToggleCommand("/toolactivity@GajaeCodeBot off")).toBeUndefined();
+		expect(parseToolActivityToggleCommand("/toolactivity@OtherBot off", "VibratoCodeBot")).toBeUndefined();
+		expect(parseToolActivityToggleCommand("/toolactivity@ off", "VibratoCodeBot")).toBeUndefined();
+		expect(parseToolActivityToggleCommand("/toolactivity@@ off", "VibratoCodeBot")).toBeUndefined();
+		expect(
+			parseToolActivityToggleCommand("/toolactivity@VibratoCodeBot@OtherBot off", "VibratoCodeBot"),
+		).toBeUndefined();
+		expect(parseToolActivityToggleCommand("/toolactivity@VibratoCodeBot off")).toBeUndefined();
 		expect(parseToolActivityToggleCommand("/tools off")).toBeUndefined();
 		expect(parseToolActivityToggleCommand("toolactivity off")).toBeUndefined();
 	});
@@ -102,15 +104,15 @@ describe("parseToolActivityToggleCommand", () => {
 
 describe("parseTelegramControlCommand", () => {
 	test("parses command roots and bot suffixes", () => {
-		expect(parseTelegramControlCommand("/context@GajaeCodeBot", "GajaeCodeBot")).toEqual({
+		expect(parseTelegramControlCommand("/context@VibratoCodeBot", "VibratoCodeBot")).toEqual({
 			kind: "command",
 			command: { name: "context" },
 		});
-		expect(parseTelegramControlCommand("/usage", "GajaeCodeBot")).toEqual({
+		expect(parseTelegramControlCommand("/usage", "VibratoCodeBot")).toEqual({
 			kind: "command",
 			command: { name: "usage" },
 		});
-		expect(parseTelegramControlCommand("/compact keep architecture notes", "GajaeCodeBot")).toEqual({
+		expect(parseTelegramControlCommand("/compact keep architecture notes", "VibratoCodeBot")).toEqual({
 			kind: "command",
 			command: { name: "compact", instructions: "keep architecture notes" },
 		});
@@ -182,7 +184,7 @@ describe("parseTelegramControlCommand", () => {
 	test("unknown commands and wrong bot suffix fall through", () => {
 		expect(parseTelegramControlCommand("/unknown")).toEqual({ kind: "none" });
 		expect(parseTelegramControlCommand("/btw why is this happening?")).toEqual({ kind: "none" });
-		expect(parseTelegramControlCommand("/context@OtherBot", "GajaeCodeBot")).toEqual({
+		expect(parseTelegramControlCommand("/context@OtherBot", "VibratoCodeBot")).toEqual({
 			kind: "ignored",
 			commandName: "context",
 		});

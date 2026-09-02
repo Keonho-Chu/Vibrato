@@ -2,18 +2,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { resetSettingsForTest, Settings } from "@gajae-code/coding-agent/config/settings";
-import { getRuntimeResourceCounts } from "@gajae-code/coding-agent/debug/runtime-gauges";
+import { resetSettingsForTest, Settings } from "@vib-rato/coding-agent/config/settings";
+import { getRuntimeResourceCounts } from "@vib-rato/coding-agent/debug/runtime-gauges";
 import {
 	disposeAllShellSessions,
 	executeBash,
 	getShellSessionCount,
 	normalizeMinimizedSaveResultForTests,
-} from "@gajae-code/coding-agent/exec/bash-executor";
-import { DEFAULT_MAX_BYTES } from "@gajae-code/coding-agent/session/streaming-output";
-import * as shellSnapshot from "@gajae-code/coding-agent/utils/shell-snapshot";
-import type { Shell } from "@gajae-code/natives";
-import * as piNatives from "@gajae-code/natives";
+} from "@vib-rato/coding-agent/exec/bash-executor";
+import { DEFAULT_MAX_BYTES } from "@vib-rato/coding-agent/session/streaming-output";
+import * as shellSnapshot from "@vib-rato/coding-agent/utils/shell-snapshot";
+import type { Shell } from "@vib-rato/natives";
+import * as piNatives from "@vib-rato/natives";
 import { safeRmSync } from "../../../scripts/safe-cleanup";
 
 const BACKGROUND_COMPLETION_RACE_MS = 750;
@@ -23,7 +23,7 @@ const KILL_MARKER_DELAY_SECONDS = "0.4";
 const KILL_MARKER_ASSERTION_WAIT_MS = 900;
 
 function makeTempDir(): string {
-	return fs.mkdtempSync(path.join(os.tmpdir(), "gjc-bash-exec-"));
+	return fs.mkdtempSync(path.join(os.tmpdir(), "vib-bash-exec-"));
 }
 
 describe("executeBash", () => {
@@ -64,14 +64,14 @@ describe("executeBash", () => {
 	});
 
 	it("scrubs inherited managed transcript paths from shell sessions", async () => {
-		const previousSessionFile = process.env.GJC_SESSION_FILE;
-		const previousOwnerPath = process.env.GJC_MANAGED_OWNER_TRANSCRIPT_PATH;
-		process.env.GJC_SESSION_FILE = "/managed/session.jsonl";
-		process.env.GJC_MANAGED_OWNER_TRANSCRIPT_PATH = "/managed/owner.jsonl";
+		const previousSessionFile = process.env.VIB_SESSION_FILE;
+		const previousOwnerPath = process.env.VIB_MANAGED_OWNER_TRANSCRIPT_PATH;
+		process.env.VIB_SESSION_FILE = "/managed/session.jsonl";
+		process.env.VIB_MANAGED_OWNER_TRANSCRIPT_PATH = "/managed/owner.jsonl";
 		try {
 			await disposeAllShellSessions();
 			const result = await executeBash(
-				'printf "%s|%s" "$(printenv GJC_SESSION_FILE || printf unset)" "$(printenv GJC_MANAGED_OWNER_TRANSCRIPT_PATH || printf unset)"',
+				'printf "%s|%s" "$(printenv VIB_SESSION_FILE || printf unset)" "$(printenv VIB_MANAGED_OWNER_TRANSCRIPT_PATH || printf unset)"',
 				{
 					cwd: tempDir,
 					timeout: 5000,
@@ -80,10 +80,10 @@ describe("executeBash", () => {
 			);
 			expect(result.output).toBe("unset|unset");
 		} finally {
-			if (previousSessionFile === undefined) delete process.env.GJC_SESSION_FILE;
-			else process.env.GJC_SESSION_FILE = previousSessionFile;
-			if (previousOwnerPath === undefined) delete process.env.GJC_MANAGED_OWNER_TRANSCRIPT_PATH;
-			else process.env.GJC_MANAGED_OWNER_TRANSCRIPT_PATH = previousOwnerPath;
+			if (previousSessionFile === undefined) delete process.env.VIB_SESSION_FILE;
+			else process.env.VIB_SESSION_FILE = previousSessionFile;
+			if (previousOwnerPath === undefined) delete process.env.VIB_MANAGED_OWNER_TRANSCRIPT_PATH;
+			else process.env.VIB_MANAGED_OWNER_TRANSCRIPT_PATH = previousOwnerPath;
 			await disposeAllShellSessions();
 		}
 	});

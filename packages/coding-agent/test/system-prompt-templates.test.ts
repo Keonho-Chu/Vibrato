@@ -2,13 +2,13 @@ import { afterEach, describe, expect, test, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { type AgentTool, INTENT_FIELD } from "@gajae-code/agent-core";
+import { type AgentTool, INTENT_FIELD } from "@vib-rato/agent-core";
 import {
 	buildSystemPrompt,
 	buildSystemPromptToolMetadata,
 	buildVolatileProjectContext,
-} from "@gajae-code/coding-agent/system-prompt";
-import { prompt } from "@gajae-code/utils";
+} from "@vib-rato/coding-agent/system-prompt";
+import { prompt } from "@vib-rato/utils";
 import Handlebars from "handlebars";
 import * as z from "zod/v4";
 import { getBundledAgent } from "../src/task/agents";
@@ -175,13 +175,13 @@ describe("system Handlebars prompt templates", () => {
 		const sub = prompt.render(template, { ...baseRenderContext, subagent: true });
 
 		// Top-level agent keeps concise routing and soul blocks.
-		expect(full).toContain("<gjc-runtime>");
+		expect(full).toContain("<vib-runtime>");
 		expect(full).toContain("<routing>");
 		expect(full).toContain("<soul>");
 		expect(full).not.toContain("<role-agent-surface>");
 
 		// Subagent base prompt drops runtime routing and soul.
-		expect(sub).not.toContain("<gjc-runtime>");
+		expect(sub).not.toContain("<vib-runtime>");
 		expect(sub).not.toContain("<routing>");
 		expect(sub).not.toContain("<soul>");
 
@@ -289,7 +289,7 @@ describe("system Handlebars prompt templates", () => {
 
 		expect(rendered).toContain('explicit user request to use a worktree (for example, "use worktree")');
 		expect(rendered).toContain("delegate implementation through `task` with `isolated: true`");
-		expect(rendered).toContain("in-session counterpart of launching `gjc --worktree`");
+		expect(rendered).toContain("in-session counterpart of launching `vib --worktree`");
 		expect(rendered).toContain("report that conflict instead of editing in the parent session");
 	});
 
@@ -330,8 +330,8 @@ describe("system Handlebars prompt templates", () => {
 	});
 	test("buildSystemPrompt wires SYSTEM.md customization without replacing the base prompt", async () => {
 		await withTempDir(async dir => {
-			await fs.mkdir(path.join(dir, ".gjc"), { recursive: true });
-			await fs.writeFile(path.join(dir, ".gjc", "SYSTEM.md"), "Project system sentinel.");
+			await fs.mkdir(path.join(dir, ".vib"), { recursive: true });
+			await fs.writeFile(path.join(dir, ".vib", "SYSTEM.md"), "Project system sentinel.");
 
 			const { systemPrompt } = await buildSystemPrompt({
 				cwd: dir,
@@ -349,7 +349,7 @@ describe("system Handlebars prompt templates", () => {
 			});
 
 			expect(systemPrompt).toHaveLength(2);
-			expect(systemPrompt[0]).toContain("<gajae-code-system-prompt>");
+			expect(systemPrompt[0]).toContain("<vib-rato-system-prompt>");
 			expect(systemPrompt[0]).toContain("<soul>");
 			expect(systemPrompt[0]).toContain("The Boss’s Orders = Absolute Obedience");
 			expect(systemPrompt[0]).toContain("<system-prompt-customization>");

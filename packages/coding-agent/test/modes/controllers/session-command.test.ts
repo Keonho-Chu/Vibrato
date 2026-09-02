@@ -1,9 +1,9 @@
 import { beforeAll, describe, expect, it } from "bun:test";
-import { getBundledModel, type Model, type Usage } from "@gajae-code/ai";
-import { CommandController } from "@gajae-code/coding-agent/modes/controllers/command-controller";
-import { getThemeByName, setThemeInstance } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { InteractiveModeContext } from "@gajae-code/coding-agent/modes/types";
-import { Text } from "@gajae-code/tui";
+import { getBundledModel, type Model, type Usage } from "@vib-rato/ai";
+import { CommandController } from "@vib-rato/coding-agent/modes/controllers/command-controller";
+import { getThemeByName, setThemeInstance } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { InteractiveModeContext } from "@vib-rato/coding-agent/modes/types";
+import { Text } from "@vib-rato/tui";
 
 async function renderSessionInfo(costBreakdown?: Usage["cost"], model?: Model): Promise<string> {
 	const chatContainer = {

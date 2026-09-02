@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
-import { emitHostStatus } from "@gajae-code/coding-agent/modes/utils/host-status";
+import { emitHostStatus } from "@vib-rato/coding-agent/modes/utils/host-status";
 
 afterEach(() => {
 	vi.restoreAllMocks();
@@ -13,9 +13,9 @@ describe("host status markers", () => {
 		emitHostStatus("attention", output);
 		emitHostStatus("finished", output);
 
-		expect(output.write).toHaveBeenNthCalledWith(1, "\x1b]777;notify;Terax;gjc;working\x07");
-		expect(output.write).toHaveBeenNthCalledWith(2, "\x1b]777;notify;Terax;gjc;attention\x07");
-		expect(output.write).toHaveBeenNthCalledWith(3, "\x1b]777;notify;Terax;gjc;finished\x07");
+		expect(output.write).toHaveBeenNthCalledWith(1, "\x1b]777;notify;Terax;vib;working\x07");
+		expect(output.write).toHaveBeenNthCalledWith(2, "\x1b]777;notify;Terax;vib;attention\x07");
+		expect(output.write).toHaveBeenNthCalledWith(3, "\x1b]777;notify;Terax;vib;finished\x07");
 	});
 
 	it("reports without asking the host to identify itself", () => {

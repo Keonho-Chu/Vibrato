@@ -17,7 +17,7 @@
  *  - Owner/timer gauges — long-lived resource counts for leak gates.
  */
 import { performance } from "node:perf_hooks";
-import { $flag } from "@gajae-code/utils";
+import { $flag } from "@vib-rato/utils";
 
 /** Number of consecutive unexpected full redraws that constitute a "storm". */
 export const REPAINT_STORM_THRESHOLD = 3;

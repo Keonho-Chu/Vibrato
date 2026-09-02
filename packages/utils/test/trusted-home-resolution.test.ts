@@ -44,13 +44,13 @@ async function probe(options: {
 	for (const [key, value] of Object.entries(process.env)) {
 		if (value !== undefined) env[key] = value;
 	}
-	delete env.GJC_CODING_AGENT_DIR;
+	delete env.VIB_CODING_AGENT_DIR;
 	delete env.PI_CODING_AGENT_DIR;
-	delete env.GJC_CONFIG_DIR;
+	delete env.VIB_CONFIG_DIR;
 	delete env.PI_CONFIG_DIR;
 	delete env.XDG_DATA_HOME;
 	if (options.xdgDataHome) env.XDG_DATA_HOME = options.xdgDataHome;
-	if (options.agentDirOverride) env.GJC_CODING_AGENT_DIR = options.agentDirOverride;
+	if (options.agentDirOverride) env.VIB_CODING_AGENT_DIR = options.agentDirOverride;
 	if (options.home) {
 		// Only the platform-authoritative variable selects the home, and the
 		// opposite one is cleared so an inherited value cannot shadow it. The
@@ -61,7 +61,7 @@ async function probe(options: {
 		env[homeKey] = options.home;
 		delete env[unusedHomeKey];
 	}
-	env.GJC_PROBE_SECOND_HOME = options.secondHome;
+	env.VIB_PROBE_SECOND_HOME = options.secondHome;
 
 	const proc = Bun.spawn([process.execPath, PROBE], { cwd: import.meta.dir, env, stdout: "pipe", stderr: "pipe" });
 	const [stdout, stderr] = await Promise.all([new Response(proc.stdout).text(), new Response(proc.stderr).text()]);
@@ -89,7 +89,7 @@ async function probe(options: {
 const tempDirs: string[] = [];
 
 async function tempDir(): Promise<string> {
-	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-trusted-home-"));
+	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-trusted-home-"));
 	tempDirs.push(dir);
 	return dir;
 }
@@ -151,7 +151,7 @@ describe("authoritative home resolution", () => {
 	});
 
 	it("never anchors user state at a filesystem root", async () => {
-		// A bare root would place user state at `/.gjc`. It is rejected as a
+		// A bare root would place user state at `/.vib`. It is rejected as a
 		// candidate, so resolution falls through to the account home rather than
 		// adopting the root and failing later.
 		const root = path.parse(process.cwd()).root;
@@ -180,7 +180,7 @@ describe("authoritative home resolution", () => {
 	it("rejects every spelling of a filesystem root, not just the canonical one", async () => {
 		// A root has many spellings. Comparing the raw string against
 		// `path.parse(home).root` misses `/.`, `//`, `/..` and `/foo/..`, and
-		// `path.join(home, ".gjc")` turns every one of them into `/.gjc`.
+		// `path.join(home, ".vib")` turns every one of them into `/.vib`.
 		const root = path.parse(process.cwd()).root;
 		for (const alias of ["/.", "//", "/..", "/foo/..", "/./", "/../.."]) {
 			const spy = vi.spyOn(os, "homedir").mockReturnValue(alias);
@@ -194,7 +194,7 @@ describe("authoritative home resolution", () => {
 
 	it("resolves an empty runtime home to an absolute account home", async () => {
 		// An empty string is neither absolute nor a root; it must not survive as a
-		// candidate and produce a bare `/.gjc`.
+		// candidate and produce a bare `/.vib`.
 		vi.spyOn(os, "homedir").mockReturnValue("");
 
 		const resolved = getTrustedHomeDir();
@@ -216,7 +216,7 @@ describe("authoritative home resolution", () => {
 		// against exactly the defect this is meant to rule out.
 		const parentAgentDirBefore = getAgentDir();
 
-		// Lane 1: `GJC_CODING_AGENT_DIR` is an explicit operator selection, not a
+		// Lane 1: `VIB_CODING_AGENT_DIR` is an explicit operator selection, not a
 		// home-derived path. Re-deriving the home must not drag it around.
 		const override = await tempDir();
 		const overrideSecondHome = await tempDir();
@@ -257,11 +257,11 @@ describe("authoritative home resolution", () => {
 		// *change*: an agent directory decided at construction must not be re-decided
 		// from path shape because a home refresh made it coincide with the new
 		// default. `getAgentDir()` would look unchanged while `agent.db` moved into
-		// `$XDG_DATA_HOME/gjc` -- the same store read through two roots.
+		// `$XDG_DATA_HOME/vib` -- the same store read through two roots.
 		const firstHome = await tempDir();
 		const secondHome = await tempDir();
 		const xdgDataHome = await tempDir();
-		await fs.mkdir(path.join(xdgDataHome, "gjc"), { recursive: true });
+		await fs.mkdir(path.join(xdgDataHome, "vib"), { recursive: true });
 		// Not the default under the startup home, but exactly the default under the
 		// home the resolver refreshes to.
 		const override = path.join(secondHome, CONFIG_DIR_NAME, "agent");
@@ -273,19 +273,19 @@ describe("authoritative home resolution", () => {
 		expect(probed.before.agentDb).toBe(path.join(override, "agent.db"));
 		expect(probed.after.agentDir).toBe(override);
 		expect(probed.after.agentDb).toBe(probed.before.agentDb);
-		expect(probed.after.agentDb).not.toBe(path.join(xdgDataHome, "gjc", "agent.db"));
+		expect(probed.after.agentDb).not.toBe(path.join(xdgDataHome, "vib", "agent.db"));
 	});
 
 	it("keeps an XDG-eligible agent dir on XDG after a home refresh makes it non-default", async () => {
 		// The converse of the case above. A dir that WAS the default at construction
 		// stays XDG-eligible even once a home refresh makes its path no longer equal
 		// the default. Without stickiness the recomputation flips it off the XDG lane
-		// mid-process, so `agent.db` would move out of `$XDG_DATA_HOME/gjc` while the
+		// mid-process, so `agent.db` would move out of `$XDG_DATA_HOME/vib` while the
 		// agent dir itself never changed.
 		const firstHome = await tempDir();
 		const secondHome = await tempDir();
 		const xdgDataHome = await tempDir();
-		await fs.mkdir(path.join(xdgDataHome, "gjc"), { recursive: true });
+		await fs.mkdir(path.join(xdgDataHome, "vib"), { recursive: true });
 		// Exactly the default under the *startup* home, so it starts XDG-eligible;
 		// after the refresh to `secondHome` the same path is no longer the default.
 		const agentDir = path.join(firstHome, CONFIG_DIR_NAME, "agent");
@@ -294,22 +294,22 @@ describe("authoritative home resolution", () => {
 		const probed = await probe({ agentDirOverride: agentDir, secondHome, home: firstHome, xdgDataHome });
 
 		expect(probed.before.agentDir).toBe(agentDir);
-		expect(probed.before.agentDb).toBe(path.join(xdgDataHome, "gjc", "agent.db"));
+		expect(probed.before.agentDb).toBe(path.join(xdgDataHome, "vib", "agent.db"));
 		// The home moved and the path is no longer default-shaped, but the lane holds.
 		expect(probed.after.agentDir).toBe(agentDir);
 		expect(probed.after.agentDb).toBe(probed.before.agentDb);
 	});
 
 	it("puts a parent and its child on the same storage lane for one profile", async () => {
-		// `setAgentDir()` exports `GJC_CODING_AGENT_DIR`, so a child inherits the
+		// `setAgentDir()` exports `VIB_CODING_AGENT_DIR`, so a child inherits the
 		// exact value the parent set programmatically and cannot distinguish the two.
 		// If an inherited agent dir equal to the default were treated as "not the
 		// default profile", parent and child would read one logical store through two
-		// different lanes -- the parent under `$XDG_STATE_HOME/gjc`, the child under
+		// different lanes -- the parent under `$XDG_STATE_HOME/vib`, the child under
 		// `<agentDir>` -- silently splitting live state in half.
 		const home = await tempDir();
 		const xdgStateHome = await tempDir();
-		await fs.mkdir(path.join(xdgStateHome, "gjc"), { recursive: true });
+		await fs.mkdir(path.join(xdgStateHome, "vib"), { recursive: true });
 		const defaultAgent = path.join(home, CONFIG_DIR_NAME, "agent");
 		await fs.mkdir(defaultAgent, { recursive: true });
 
@@ -318,9 +318,9 @@ describe("authoritative home resolution", () => {
 			for (const [key, value] of Object.entries(process.env)) {
 				if (value !== undefined) childEnv[key] = value;
 			}
-			delete childEnv.GJC_CODING_AGENT_DIR;
+			delete childEnv.VIB_CODING_AGENT_DIR;
 			delete childEnv.PI_CODING_AGENT_DIR;
-			delete childEnv.GJC_CONFIG_DIR;
+			delete childEnv.VIB_CONFIG_DIR;
 			delete childEnv.PI_CONFIG_DIR;
 			Object.assign(childEnv, env);
 			const source = `import { getPythonGatewayDir } from ${JSON.stringify(DIRS)};\nconsole.log(getPythonGatewayDir());`;
@@ -334,7 +334,7 @@ describe("authoritative home resolution", () => {
 		const withInherited = await read({
 			HOME: home,
 			XDG_STATE_HOME: xdgStateHome,
-			GJC_CODING_AGENT_DIR: defaultAgent,
+			VIB_CODING_AGENT_DIR: defaultAgent,
 		});
 
 		expect(withInherited).toBe(withoutOverride);
@@ -366,8 +366,8 @@ describe("authoritative home resolution", () => {
 	});
 
 	it("never treats the project directory as the home", async () => {
-		// Project scope (`<cwd>/.gjc`) and user scope (`<home>/.gjc`) must stay
-		// distinct: collapsing them is what makes a checkout's `.gjc` readable as
+		// Project scope (`<cwd>/.vib`) and user scope (`<home>/.vib`) must stay
+		// distinct: collapsing them is what makes a checkout's `.vib` readable as
 		// trusted user state.
 		const planted = await tempDir();
 		vi.spyOn(os, "homedir").mockReturnValue(planted);

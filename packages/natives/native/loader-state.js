@@ -9,7 +9,7 @@ import packageJson from "../package.json" with { type: "json" };
 import { embeddedAddon } from "./embedded-addon.js";
 
 /**
- * Native addon loader for `@gajae-code/natives`.
+ * Native addon loader for `@vib-rato/natives`.
  *
  * Owns every step between "Node imports `native/index.js`" and "the right
  * `pi_natives.<platform>-<arch>*.node` is required, validated, and returned":
@@ -34,11 +34,11 @@ import { embeddedAddon } from "./embedded-addon.js";
 
 const SUPPORTED_PLATFORMS = ["linux-x64", "linux-arm64", "darwin-x64", "darwin-arm64", "win32-x64"];
 const OPTIONAL_PACKAGE_BY_PLATFORM_TAG = {
-	"darwin-arm64": "@gajae-code/natives-darwin-arm64",
-	"darwin-x64": "@gajae-code/natives-darwin-x64",
-	"linux-arm64": "@gajae-code/natives-linux-arm64",
-	"linux-x64": "@gajae-code/natives-linux-x64",
-	"win32-x64": "@gajae-code/natives-win32-x64",
+	"darwin-arm64": "@vib-rato/natives-darwin-arm64",
+	"darwin-x64": "@vib-rato/natives-darwin-x64",
+	"linux-arm64": "@vib-rato/natives-linux-arm64",
+	"linux-x64": "@vib-rato/natives-linux-x64",
+	"win32-x64": "@vib-rato/natives-win32-x64",
 };
 const WINDOWS_GENERIC_READ = 0x80000000;
 const WINDOWS_FILE_SHARE_READ = 0x00000001;
@@ -56,10 +56,10 @@ class StagedCandidateChangedError extends Error {
 
 function getNativesDir() {
 	const xdgDataHome = process.env.XDG_DATA_HOME;
-	if (xdgDataHome && fs.existsSync(path.join(xdgDataHome, "gjc"))) {
-		return path.join(xdgDataHome, "gjc", "natives");
+	if (xdgDataHome && fs.existsSync(path.join(xdgDataHome, "vib"))) {
+		return path.join(xdgDataHome, "vib", "natives");
 	}
-	return path.join(os.homedir(), ".gjc", "natives");
+	return path.join(os.homedir(), ".vib", "natives");
 }
 
 function safeFileSnapshot(file) {
@@ -249,14 +249,14 @@ export function resolveOptionalPackageNativeDirs({ packageNames, requireResolve 
 
 /**
  * Decide whether the loader should snapshot installed package addons into the
- * per-version cache directory (`~/.gjc/natives/<version>/`) before loading.
+ * per-version cache directory (`~/.vib/natives/<version>/`) before loading.
  *
- * Windows-only safety net for `bun install -g` updates: when a previous `gjc`
+ * Windows-only safety net for `bun install -g` updates: when a previous `vib`
  * process is running, bun cannot overwrite the locked `.node` inside
- * `node_modules/@gajae-code/natives/native/`, leaving an old binary next to a
+ * `node_modules/@vib-rato/natives/native/`, leaving an old binary next to a
  * newer `index.js` and producing `<sym> is not a function` crashes on the next
  * launch. Content-addressed staging gives each byte set its own immutable path,
- * so concurrent gjc processes never collide and bun can overwrite the
+ * so concurrent vib processes never collide and bun can overwrite the
  * `node_modules` copy on subsequent updates.
  * Disabled on non-Windows (no file-lock problem), in workspace dev (`nativeDir`
  * is not inside a `node_modules` segment), and for compiled binaries (handled
@@ -393,7 +393,7 @@ export function cachedEmbeddedExtractionIsFresh({ targetPath, embeddedPath, size
 // and prevents a wedged PowerShell process from starving native loading.
 const WIN32_AVX2_PROBE_TIMEOUT_MS = 4_000;
 const WIN32_AVX2_PROBE_MAX_BUFFER = 4 * 1024;
-const WIN32_AVX2_PROBE_WARNING_CODE = "GJC_WIN32_AVX2_PROBE";
+const WIN32_AVX2_PROBE_WARNING_CODE = "VIB_WIN32_AVX2_PROBE";
 
 function emitWin32Avx2ProbeDiagnostic(kind) {
 	process.emitWarning(`Windows AVX2 probe inconclusive (${kind}); using baseline variant.`, {
@@ -463,8 +463,8 @@ function probeWin32Avx2ViaPowerShell(run = runCommand, report = emitWin32Avx2Pro
 		"-NoProfile",
 		"-NonInteractive",
 		"-Command",
-		"Add-Type -Namespace GjcNative -Name Cpu -MemberDefinition '[DllImport(\"kernel32.dll\")] public static extern bool IsProcessorFeaturePresent(int feature);'; " +
-			`[GjcNative.Cpu]::IsProcessorFeaturePresent(${WIN32_PF_AVX2_INSTRUCTIONS_AVAILABLE})`,
+		"Add-Type -Namespace VibNative -Name Cpu -MemberDefinition '[DllImport(\"kernel32.dll\")] public static extern bool IsProcessorFeaturePresent(int feature);'; " +
+			`[VibNative.Cpu]::IsProcessorFeaturePresent(${WIN32_PF_AVX2_INSTRUCTIONS_AVAILABLE})`,
 	], report);
 	if (output === null) return false;
 	const normalized = output.toLowerCase();
@@ -733,7 +733,7 @@ export function maybeStageNodeModulesAddon(ctx, errors) {
 export function validateLoadedBindings(ctx, bindings, candidate) {
 	if (typeof bindings[ctx.versionSentinelExport] !== "function") {
 		throw new Error(
-			`Loaded ${candidate} but it does not expose the @gajae-code/natives@${ctx.packageVersion} ` +
+			`Loaded ${candidate} but it does not expose the @vib-rato/natives@${ctx.packageVersion} ` +
 				`version sentinel \`${ctx.versionSentinelExport}\`. The .node file on disk is from a different ` +
 				"release than this loader — reinstall to re-sync.",
 		);
@@ -760,7 +760,7 @@ function buildHelpMessage(ctx) {
 		const expectedPaths = ctx.addonFilenames.map(filename => `  ${path.join(ctx.versionedDir, filename)}`).join("\n");
 		const downloadHints = ctx.addonFilenames
 			.map(filename => {
-				const downloadUrl = `https://github.com/Yeachan-Heo/gajae-code/releases/latest/download/${filename}`;
+				const downloadUrl = `https://github.com/Keonho-Chu/Vibrato/releases/latest/download/${filename}`;
 				const targetPath = path.join(ctx.versionedDir, filename);
 				return `  curl -fsSL "${downloadUrl}" -o "${targetPath}"`;
 			})
@@ -771,7 +771,7 @@ function buildHelpMessage(ctx) {
 		);
 	}
 	return (
-		"If installed via npm/bun, try reinstalling: bun install @gajae-code/natives\n" +
+		"If installed via npm/bun, try reinstalling: bun install @vib-rato/natives\n" +
 		"If developing locally, build with: bun --cwd=packages/natives run build\n" +
 		"Optional x64 variants: TARGET_VARIANT=baseline|modern bun --cwd=packages/natives run build"
 	);
@@ -791,7 +791,7 @@ function initLoaderContext(require_) {
 	const versionedDir = path.join(getNativesDir(), packageVersion);
 	const userDataDir =
 		process.platform === "win32"
-			? path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), "AppData", "Local"), "gjc")
+			? path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), "AppData", "Local"), "vib")
 			: path.join(os.homedir(), ".local", "bin");
 
 	const isCompiledBinary = detectCompiledBinary({

@@ -2,7 +2,7 @@
  * Best-effort credential scrubbing for durable crash records.
  *
  * This is a *persistence-time* scrub: it keeps obvious credential shapes out of
- * a file GJC keeps indefinitely. It is explicitly NOT a privacy guarantee and
+ * a file Vibrato keeps indefinitely. It is explicitly NOT a privacy guarantee and
  * must never be treated as one for data that leaves the machine — outbound
  * text goes through `sanitizeExternalCrashV1` instead.
  */

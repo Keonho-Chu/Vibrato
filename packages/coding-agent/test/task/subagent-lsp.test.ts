@@ -1,10 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
-import type { AssistantMessage } from "@gajae-code/ai";
+import type { AssistantMessage } from "@vib-rato/ai";
 import { AsyncJobManager } from "../../src/async";
 import type { ModelRegistry } from "../../src/config/model-registry";
 import { Settings } from "../../src/config/settings";
 import type { LoadExtensionsResult } from "../../src/extensibility/extensions/types";
-import * as repositoryBindingModule from "../../src/gjc-runtime/repository-binding";
 import type { PlanModeState } from "../../src/plan-mode/state";
 import type { CreateAgentSessionOptions, CreateAgentSessionResult } from "../../src/sdk";
 import * as sdkModule from "../../src/sdk";
@@ -15,6 +14,7 @@ import type { AgentDefinition, TaskParams } from "../../src/task/types";
 import type { IsolationHandle, WorktreeBaseline } from "../../src/task/worktree";
 import * as worktreeModule from "../../src/task/worktree";
 import type { ToolSession } from "../../src/tools";
+import * as repositoryBindingModule from "../../src/vib-runtime/repository-binding";
 import "../../src/tools/yield";
 import { EventBus } from "../../src/utils/event-bus";
 
@@ -165,7 +165,7 @@ function mockIsolation(): void {
 	vi.spyOn(worktreeModule, "captureDeltaPatch").mockResolvedValue({ rootPatch: "", nestedPatches: [] });
 	vi.spyOn(worktreeModule, "cleanupIsolation").mockResolvedValue();
 	const binding: repositoryBindingModule.RepositoryBinding = {
-		schema: "gjc.repository_binding.v1",
+		schema: "vib.repository_binding.v1",
 		worktreeRoot: "/repo",
 		commonDir: null,
 		displayPath: "/repo",

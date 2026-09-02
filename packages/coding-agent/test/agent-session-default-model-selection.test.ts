@@ -2,23 +2,23 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { Agent, type AgentTool, ThinkingLevel } from "@gajae-code/agent-core";
-import { Effort, type Model } from "@gajae-code/ai";
-import { AssistantMessageEventStream } from "@gajae-code/ai/utils/event-stream";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { resetSettingsForTest, Settings } from "@gajae-code/coding-agent/config/settings";
-import type { CustomTool } from "@gajae-code/coding-agent/extensibility/custom-tools/types";
-import { AgentSession, DefaultModelSelectionRecoveryError } from "@gajae-code/coding-agent/session/agent-session";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
+import { Agent, type AgentTool, ThinkingLevel } from "@vib-rato/agent-core";
+import { Effort, type Model } from "@vib-rato/ai";
+import { AssistantMessageEventStream } from "@vib-rato/ai/utils/event-stream";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { resetSettingsForTest, Settings } from "@vib-rato/coding-agent/config/settings";
+import type { CustomTool } from "@vib-rato/coding-agent/extensibility/custom-tools/types";
+import { AgentSession, DefaultModelSelectionRecoveryError } from "@vib-rato/coding-agent/session/agent-session";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
 import {
 	MemorySessionStorage,
 	type SessionStorageWriter,
 	type SessionStorageWriterCloseState,
 	type SessionStorageWriterOpenOptions,
 	SessionStorageWriterRetryableCloseError,
-} from "@gajae-code/coding-agent/session/session-storage";
-import { logger } from "@gajae-code/utils";
+} from "@vib-rato/coding-agent/session/session-storage";
+import { logger } from "@vib-rato/utils";
 import { z } from "zod";
 import {
 	DEFAULT_MODEL_SELECTION_RECOVERY_MESSAGE,
@@ -286,7 +286,7 @@ describe("AgentSession durable default model selection", () => {
 
 	beforeEach(async () => {
 		streamCreated = Promise.withResolvers<void>();
-		tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-default-model-session-"));
+		tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "vib-default-model-session-"));
 		authStorage = await AuthStorage.create(path.join(tempRoot, "auth.db"));
 		authStorage.setRuntimeApiKey(INITIAL_MODEL.provider, "initial-key");
 		authStorage.setRuntimeApiKey("target-provider", "target-key");

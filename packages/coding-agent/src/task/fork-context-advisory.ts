@@ -21,8 +21,8 @@ const RECEIPT_TRIGGERS = [
 	{ pattern: /earlier in this session/i, reason: "prior-session-reference:earlier-in-this-session" },
 	{ pattern: /per the plan above/i, reason: "prior-session-reference:per-the-plan-above" },
 	{ pattern: /the previous review/i, reason: "prior-session-reference:the-previous-review" },
-	{ pattern: /\.gjc\/plans\//i, reason: "prior-session-reference:gjc-plans-path" },
-	{ pattern: /\.gjc\/specs\//i, reason: "prior-session-reference:gjc-specs-path" },
+	{ pattern: /\.vib\/plans\//i, reason: "prior-session-reference:vib-plans-path" },
+	{ pattern: /\.vib\/specs\//i, reason: "prior-session-reference:vib-specs-path" },
 ] as const;
 
 const LAST_TURN_TRIGGERS = [

@@ -1,8 +1,8 @@
 import { expect, setDefaultTimeout, test, vi } from "bun:test";
 import * as path from "node:path";
 import type { AgentSideConnection, PromptRequest, SessionNotification } from "@agentclientprotocol/sdk";
-import { getProviderFirstEventTimeoutFallbackMs } from "@gajae-code/ai/utils/idle-iterator";
-import { logger, TempDir } from "@gajae-code/utils";
+import { getProviderFirstEventTimeoutFallbackMs } from "@vib-rato/ai/utils/idle-iterator";
+import { logger, TempDir } from "@vib-rato/utils";
 import { AcpAgent } from "../src/modes/acp/acp-agent";
 import { writeBrokerDiscovery } from "../src/sdk/broker/discovery";
 import {
@@ -112,7 +112,7 @@ function workingUpdates(updates: SessionNotification[]): number {
 	return updates.filter(
 		update =>
 			update.update.sessionUpdate === "session_info_update" &&
-			(update.update as { _meta?: { gjcPhase?: string } })._meta?.gjcPhase === "working",
+			(update.update as { _meta?: { vibPhase?: string } })._meta?.vibPhase === "working",
 	).length;
 }
 
@@ -120,7 +120,7 @@ function idleUpdates(updates: SessionNotification[]): number {
 	return updates.filter(
 		update =>
 			update.update.sessionUpdate === "session_info_update" &&
-			(update.update as { _meta?: { gjcPhase?: string } })._meta?.gjcPhase === "idle",
+			(update.update as { _meta?: { vibPhase?: string } })._meta?.vibPhase === "idle",
 	).length;
 }
 

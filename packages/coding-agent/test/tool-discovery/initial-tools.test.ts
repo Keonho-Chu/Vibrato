@@ -207,7 +207,7 @@ describe("built-in tool loadMode annotations", () => {
 
 describe("alwaysActiveToolNames keeps discoverable coordination tools loaded", () => {
 	async function tempDir(): Promise<string> {
-		return await fs.mkdtemp(path.join(os.tmpdir(), "gjc-always-active-"));
+		return await fs.mkdtemp(path.join(os.tmpdir(), "vib-always-active-"));
 	}
 
 	it("hides irc from a subagent-style session by default and forces it active when requested", async () => {
@@ -230,7 +230,7 @@ describe("alwaysActiveToolNames keeps discoverable coordination tools loaded", (
 
 describe("an explicitly empty tool selection disables every built-in tool", () => {
 	async function tempDir(): Promise<string> {
-		return await fs.mkdtemp(path.join(os.tmpdir(), "gjc-empty-tools-"));
+		return await fs.mkdtemp(path.join(os.tmpdir(), "vib-empty-tools-"));
 	}
 
 	it("keeps the goal tool out of an empty selection while preserving it for non-empty ones", async () => {

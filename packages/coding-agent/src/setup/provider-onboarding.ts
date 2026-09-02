@@ -1,9 +1,10 @@
 import { randomUUID } from "node:crypto";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { getAgentDbPath, getAgentDir } from "@gajae-code/utils";
+import { getAgentDbPath, getAgentDir } from "@vib-rato/utils";
 import { YAML } from "bun";
 import { type ModelsConfig, ModelsConfigSchema, type ProviderDiscovery } from "../config/models-config-schema";
+import { isSelectableProvider } from "../config/provider-allowlist";
 import { compareRankedProviders, famousProviderIndex } from "../config/provider-ranking";
 import { AuthStorage } from "../session/auth-storage";
 import providerPresets from "./provider-presets.json";
@@ -64,7 +65,9 @@ interface ProviderPreset {
 const PROVIDER_ID_PATTERN = /^[a-z0-9][a-z0-9._-]*$/;
 const REDACT_PREFIX = 4;
 const REDACT_SUFFIX = 4;
-export const PROVIDER_PRESETS: readonly ProviderPreset[] = providerPresets as ProviderPreset[];
+export const PROVIDER_PRESETS: readonly ProviderPreset[] = (providerPresets as ProviderPreset[]).filter(preset =>
+	isSelectableProvider(preset.providerId),
+);
 
 export function getDefaultModelsPath(): string {
 	return path.join(getAgentDir(), "models.yml");
@@ -248,7 +251,9 @@ function validateSetupInput(input: ProviderSetupInput): {
 		throw new Error("Base URL must use http or https.");
 	}
 	if (url.protocol === "http:" && !isLocalHttpHost(url.hostname)) {
-		throw new Error("Base URL must use https unless it targets localhost or a loopback address.");
+		throw new Error(
+			"Base URL must use https unless it targets localhost, a loopback address, or a private-network host (10/8, 172.16/12, 192.168/16, link-local, or a bare LAN hostname).",
+		);
 	}
 
 	const apiKeyEnv = resolved.apiKeyEnv?.trim();
@@ -257,25 +262,34 @@ function validateSetupInput(input: ProviderSetupInput): {
 			throw new Error("API key environment variable must be a valid environment variable name.");
 		}
 	}
-	const apiKey = apiKeyEnv ?? resolved.apiKey?.trim() ?? "";
+	// A pasted key wins over a preset's default env-var name; an explicit env name still applies when no literal key is given.
+	const literalApiKey = resolved.apiKey?.trim() || undefined;
+	const apiKey = literalApiKey ?? apiKeyEnv ?? "";
 	if (!apiKey) throw new Error("API key is required.");
 
 	const models = parseModelList(resolved.models);
-	if (models.length === 0 && !resolved.discovery)
-		throw new Error("At least one model id or model discovery is required.");
+	// vLLM and SGLang speak the chat-completions API; a bare provider id should
+	// not inherit the generic OpenAI default (responses API).
+	const api =
+		!resolved.preset && (providerId === "vllm" || providerId === "sglang") ? "openai-completions" : resolved.api;
+	// vLLM and SGLang expose /v1/models, so a bare endpoint needs no model list.
+	const discovery =
+		resolved.discovery ??
+		(models.length === 0 && (providerId === "vllm" || providerId === "sglang") ? { type: providerId } : undefined);
+	if (models.length === 0 && !discovery) throw new Error("At least one model id or model discovery is required.");
 	validateModelApi(resolved.modelApi, models, resolved.preset?.id ?? resolved.providerId);
 
 	return {
 		providerId,
 		baseUrl,
 		apiKey,
-		credentialSource: apiKeyEnv ? "env" : "literal",
+		credentialSource: literalApiKey ? "literal" : "env",
 		models,
 		compatibility: resolved.compatibility,
-		api: resolved.api,
+		api,
 		modelApi: resolved.modelApi,
 		compat: resolved.compat,
-		discovery: resolved.discovery,
+		discovery,
 		preset: resolved.preset,
 	};
 }
@@ -385,13 +399,25 @@ export async function addApiCompatibleProvider(input: ProviderSetupInput): Promi
 
 function isLocalHttpHost(hostname: string): boolean {
 	const normalized = hostname.toLowerCase().replace(/^\[(.*)]$/, "$1");
-	return (
+	if (
 		normalized === "localhost" ||
 		normalized === "127.0.0.1" ||
 		normalized === "::1" ||
 		normalized.endsWith(".localhost") ||
 		/^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(normalized)
-	);
+	) {
+		return true;
+	}
+	// Private-network hosts (a vLLM/SGLang box on the LAN) are served over plain
+	// http far more often than not; keep https mandatory for public hosts.
+	if (/^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(normalized)) return true;
+	if (/^192\.168\.\d{1,3}\.\d{1,3}$/.test(normalized)) return true;
+	if (/^172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}$/.test(normalized)) return true;
+	if (/^169\.254\.\d{1,3}\.\d{1,3}$/.test(normalized)) return true;
+	if (/^f[cd][0-9a-f]{2}:/.test(normalized) || /^fe[89ab][0-9a-f]:/.test(normalized)) return true;
+	if (normalized.endsWith(".local") || normalized.endsWith(".internal") || normalized.endsWith(".lan")) return true;
+	// A bare single-label hostname only resolves inside the local network.
+	return /^[a-z0-9-]+$/.test(normalized) && !/^\d+$/.test(normalized);
 }
 
 export function formatProviderSetupResult(result: ProviderSetupResult): string {

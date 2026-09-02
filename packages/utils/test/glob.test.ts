@@ -7,7 +7,7 @@ import { globPaths } from "../src/glob";
 let tempDir: string | undefined;
 
 async function makeTempDir(): Promise<string> {
-	tempDir = await mkdtemp(join(tmpdir(), "gajae-glob-"));
+	tempDir = await mkdtemp(join(tmpdir(), "vibrato-glob-"));
 	return tempDir;
 }
 

@@ -1,7 +1,7 @@
-import type { ThinkingLevel } from "@gajae-code/agent-core";
-import type { Api, AssistantMessage, Model } from "@gajae-code/ai/core";
-import { completeSimple, validateToolCall } from "@gajae-code/ai/core";
-import { prompt } from "@gajae-code/utils";
+import type { ThinkingLevel } from "@vib-rato/agent-core";
+import type { Api, AssistantMessage, Model } from "@vib-rato/ai/core";
+import { completeSimple, validateToolCall } from "@vib-rato/ai/core";
+import { prompt } from "@vib-rato/utils";
 import * as z from "zod/v4";
 import summarySystemPrompt from "../../commit/prompts/summary-system.md" with { type: "text" };
 import summaryUserPrompt from "../../commit/prompts/summary-user.md" with { type: "text" };

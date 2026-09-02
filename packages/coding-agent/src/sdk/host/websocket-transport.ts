@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { exactUnlink, type NativeExactFileIdentity } from "@gajae-code/natives";
+import { exactUnlink, type NativeExactFileIdentity } from "@vib-rato/natives";
 import type { SessionSdkTransport } from "./session-runtime";
 import type { SdkFrame } from "./types";
 
@@ -167,7 +167,7 @@ export async function createSdkWebSocketTransport(
 
 			const pending = (async (): Promise<{ url: string }> => {
 				const tempEndpointFile = `${endpointFile}.${randomUUID()}.tmp`;
-				const endpointQuarantineName = `.gjc-delete-endpoint-${randomUUID()}-${path.basename(endpointFile)}`;
+				const endpointQuarantineName = `.vib-delete-endpoint-${randomUUID()}-${path.basename(endpointFile)}`;
 				let endpointSource: string | undefined;
 				let localServer: SdkServer | undefined;
 				const failures: unknown[] = [];

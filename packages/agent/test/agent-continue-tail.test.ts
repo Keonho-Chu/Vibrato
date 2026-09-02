@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import { Agent, type AgentMessage, canContinuePersistedHistory } from "@gajae-code/agent-core";
-import { createMockModel } from "@gajae-code/ai/providers/mock";
+import { Agent, type AgentMessage, canContinuePersistedHistory } from "@vib-rato/agent-core";
+import { createMockModel } from "@vib-rato/ai/providers/mock";
 import { createAssistantMessage } from "./helpers";
 
 function userMessage() {

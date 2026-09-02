@@ -28,10 +28,10 @@ Does not cover `/tree` UI rendering behavior beyond semantics that affect sessio
 Default managed session file location:
 
 ```text
-~/.gjc/agent/sessions/v2-<52-char-base32-sha256>/<timestamp>_<sessionId>.jsonl
+~/.vib/agent/sessions/v2-<52-char-base32-sha256>/<timestamp>_<sessionId>.jsonl
 ```
 
-The `v2-…` component is a fixed-width SHA-256/base32 digest of the native canonical workspace identity (identity version 1); it is **not** a reversible or injective user-facing encoding. The binding file `.gjc-managed-session-scope.v2.json` records the canonical identity and digest. Existing bindings must be regular, canonically encoded files that agree with the resolved identity; a mismatch or unsafe path fails closed.
+The `v2-…` component is a fixed-width SHA-256/base32 digest of the native canonical workspace identity (identity version 1); it is **not** a reversible or injective user-facing encoding. The binding file `.vib-managed-session-scope.v2.json` records the canonical identity and digest. Existing bindings must be regular, canonically encoded files that agree with the resolved identity; a mismatch or unsafe path fails closed.
 
 Identity is platform-specific:
 
@@ -51,18 +51,18 @@ Migration does not automatically clean up legacy files, copied files, locks, art
 
 Managed storage enforces owner-only directory/file security and refuses unsafe symlinks or malformed bindings on the paths it verifies. This is a local storage-integrity boundary, not authentication, authorization, encryption, or a guarantee against a hostile concurrent local actor/race outside the verified operations. Callers must still protect the agent directory and session contents.
 
-On Linux filesystems where the exact POSIX ACL xattr operation returns `ENOTSUP`/`EOPNOTSUPP`, GJC treats that result only as proof that the filesystem cannot store that ACL attribute. The ACL gate still requires the same opened object to pass effective-owner, exact `0700` directory or `0600` file mode, safe-type, no-follow traversal, and identity/replacement checks. Permission denial, I/O errors, present or malformed ACL data, and unknown results remain failures. Managed descriptors use close-on-exec and are not delegated as authority to subprocesses. This compatibility rule does not change explicit `--session-dir`, macOS ACL, or Windows DACL policy.
+On Linux filesystems where the exact POSIX ACL xattr operation returns `ENOTSUP`/`EOPNOTSUPP`, Vibrato treats that result only as proof that the filesystem cannot store that ACL attribute. The ACL gate still requires the same opened object to pass effective-owner, exact `0700` directory or `0600` file mode, safe-type, no-follow traversal, and identity/replacement checks. Permission denial, I/O errors, present or malformed ACL data, and unknown results remain failures. Managed descriptors use close-on-exec and are not delegated as authority to subprocesses. This compatibility rule does not change explicit `--session-dir`, macOS ACL, or Windows DACL policy.
 
 Blob store location:
 
 ```text
-~/.gjc/agent/blobs/<sha256>
+~/.vib/agent/blobs/<sha256>
 ```
 
 Terminal breadcrumb files are written under:
 
 ```text
-~/.gjc/agent/terminal-sessions/<terminal-id>
+~/.vib/agent/terminal-sessions/<terminal-id>
 ```
 
 Breadcrumb content is two lines: original cwd, then session file path. `continueRecent()` prefers this terminal-scoped pointer before scanning most-recent mtime.
@@ -519,7 +519,7 @@ Defined in `session-manager.ts`:
 - `getRecentSessions(sessionDir, limit)` -> lightweight metadata for UI/session picker
 - `findMostRecentSession(sessionDir)` -> newest by mtime
 - `list(cwd, sessionDir?)` -> sessions in one project scope
-- `listAll()` -> sessions across all project scopes under `~/.gjc/agent/sessions`
+- `listAll()` -> sessions across all project scopes under `~/.vib/agent/sessions`
 
 Metadata extraction reads only a prefix (`readTextPrefix(..., 4096)`) where possible.
 
@@ -527,7 +527,7 @@ Metadata extraction reads only a prefix (`readTextPrefix(..., 4096)`) where poss
 
 `HistoryStorage` (`history-storage.ts`) is a separate SQLite subsystem for prompt recall/search, not session replay.
 
-- DB: `~/.gjc/agent/history.db`
+- DB: `~/.vib/agent/history.db`
 - Table: `history(id, prompt, created_at, cwd)`
 - FTS5 index: `history_fts` with trigger-maintained sync
 - Deduplicates consecutive identical prompts using in-memory last-prompt cache

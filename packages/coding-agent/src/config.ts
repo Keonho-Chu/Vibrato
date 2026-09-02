@@ -1,6 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { CONFIG_DIR_NAME, getConfigAgentDirName, getProjectDir, getTrustedHomeDir } from "@gajae-code/utils";
+import { CONFIG_DIR_NAME, getConfigAgentDirName, getProjectDir, getTrustedHomeDir } from "@vib-rato/utils";
 import { expandTilde } from "./tools/path-utils";
 
 export * from "./config/config-file";
@@ -19,7 +19,7 @@ const PROJECT_CONFIG_PRIORITY = [{ dir: CONFIG_DIR_NAME }, { dir: ".gemini" }];
  */
 export function getPackageDir(): string {
 	// Allow override via environment variable (useful for Nix/Guix where store paths tokenize poorly)
-	const envDir = process.env.GJC_PACKAGE_DIR ?? process.env.PI_PACKAGE_DIR;
+	const envDir = process.env.VIB_PACKAGE_DIR ?? process.env.PI_PACKAGE_DIR;
 	if (envDir) {
 		return expandTilde(envDir);
 	}
@@ -46,8 +46,8 @@ export function getChangelogPath(): string {
 
 /**
  * Config directory bases in priority order (highest first).
- * User-level: ~/.gjc/agent, ~/.gemini
- * Project-level: .gjc, .gemini
+ * User-level: ~/.vib/agent, ~/.gemini
+ * Project-level: .vib, .gemini
  */
 const USER_CONFIG_BASES = USER_CONFIG_PRIORITY.map(({ dir, globalAgentDir }) => ({
 	base: () => path.join(getTrustedHomeDir(), globalAgentDir ? globalAgentDir() : dir),
@@ -61,14 +61,14 @@ const PROJECT_CONFIG_BASES = PROJECT_CONFIG_PRIORITY.map(({ dir }) => ({
 
 export interface ConfigDirEntry {
 	path: string;
-	source: string; // e.g. ".gjc"
+	source: string; // e.g. ".vib"
 	level: "user" | "project";
 }
 
 export interface GetConfigDirsOptions {
-	/** Include user-level directories (~/.gjc/agent/...). Default: true */
+	/** Include user-level directories (~/.vib/agent/...). Default: true */
 	user?: boolean;
-	/** Include project-level directories (.gjc/...). Default: true */
+	/** Include project-level directories (.vib/...). Default: true */
 	project?: boolean;
 	/** Current working directory for project paths. Default: getProjectDir() */
 	cwd?: string;
@@ -86,7 +86,7 @@ export interface GetConfigDirsOptions {
  * @example
  * // Get all command directories
  * getConfigDirs("commands")
- * // → [{ path: "~/.gjc/agent/commands", source: ".gjc", level: "user" }, ...]
+ * // → [{ path: "~/.vib/agent/commands", source: ".vib", level: "user" }, ...]
  *
  * @example
  * // Get only existing project skill directories
@@ -176,7 +176,7 @@ export function findConfigFileWithMeta(
 
 /**
  * Find all nearest config directories by walking up from cwd.
- * Returns one entry per config base (.gjc, .Anthropic model) - the nearest one found.
+ * Returns one entry per config base (.vib, .Anthropic model) - the nearest one found.
  * Results are in priority order (highest first).
  */
 export function findAllNearestProjectConfigDirs(subpath: string, cwd: string = getProjectDir()): ConfigDirEntry[] {

@@ -1,19 +1,19 @@
 import { beforeAll, describe, expect, test, vi } from "bun:test";
-import type { Model } from "@gajae-code/ai";
-import type { AutoroutingSetup, TierMap } from "@gajae-code/coding-agent/config/autorouting-contract";
-import { canonicalJsonBytes } from "@gajae-code/coding-agent/config/autorouting-generator";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import type { ModelSelectorComponent } from "@gajae-code/coding-agent/modes/components/model-selector";
+import type { Model } from "@vib-rato/ai";
+import type { AutoroutingSetup, TierMap } from "@vib-rato/coding-agent/config/autorouting-contract";
+import { canonicalJsonBytes } from "@vib-rato/coding-agent/config/autorouting-generator";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import type { ModelSelectorComponent } from "@vib-rato/coding-agent/modes/components/model-selector";
 import type {
 	SmartRoutingPanelComponent,
 	SmartRoutingPreview,
-} from "@gajae-code/coding-agent/modes/components/smart-routing-panel";
+} from "@vib-rato/coding-agent/modes/components/smart-routing-panel";
 import {
 	MAX_PANEL_LINE_WIDTH,
 	SmartRoutingPanelComponent as SmartRoutingPanelClass,
-} from "@gajae-code/coding-agent/modes/components/smart-routing-panel";
-import { SelectorController } from "@gajae-code/coding-agent/modes/controllers/selector-controller";
-import { getThemeByName, setThemeInstance } from "@gajae-code/coding-agent/modes/theme/theme";
+} from "@vib-rato/coding-agent/modes/components/smart-routing-panel";
+import { SelectorController } from "@vib-rato/coding-agent/modes/controllers/selector-controller";
+import { getThemeByName, setThemeInstance } from "@vib-rato/coding-agent/modes/theme/theme";
 
 const model = (provider: string, id: string): Model =>
 	({ provider, id, name: id, api: "openai-responses", contextWindow: 1000, maxTokens: 1000 }) as Model;

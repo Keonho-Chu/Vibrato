@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, spyOn } from "bun:test";
-import { Agent, type AgentTool } from "@gajae-code/agent-core";
-import type { Model } from "@gajae-code/ai";
-import { getSSHConfigPath, TempDir } from "@gajae-code/utils";
+import { Agent, type AgentTool } from "@vib-rato/agent-core";
+import type { Model } from "@vib-rato/ai";
+import { getSSHConfigPath, TempDir } from "@vib-rato/utils";
 import { reset as resetCapabilities } from "../src/capability";
 import { type SSHHost, sshCapability } from "../src/capability/ssh";
 import { Settings } from "../src/config/settings";

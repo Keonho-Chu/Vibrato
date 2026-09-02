@@ -1,5 +1,5 @@
-import type { Effort } from "@gajae-code/ai/model-thinking";
-import { PET_MODE_IDS, PET_SKIN_IDS, PET_SKINS } from "@gajae-code/tui/components/gajae-pet";
+import type { Effort } from "@vib-rato/ai/model-thinking";
+import { PET_MODE_IDS, PET_SKIN_IDS, PET_SKINS } from "@vib-rato/tui/components/vibrato-pet";
 import { TASK_SIMPLE_MODES } from "../task/simple-mode";
 import { getThinkingLevelMetadata } from "../thinking-metadata";
 import { DEFAULT_EDIT_MODE_SETTING, EDIT_MODE_SETTINGS, EDIT_MODES, type EditMode } from "../utils/edit-mode";
@@ -36,7 +36,7 @@ import {
  *
  * The Settings singleton provides type-safe path-based access:
  *   settings.get("compaction.enabled")  // => boolean
- *   settings.set("theme.dark", "red-claw")  // sync, saves in background
+ *   settings.set("theme.dark", "lig-blue")  // sync, saves in background
  */
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -88,8 +88,8 @@ export const TAB_METADATA: Record<SettingTab, { label: string; icon: `tab.${stri
 
 /** Status line segment identifiers */
 export type StatusLineSegmentId =
-	| "gajae"
-	| "pi" // legacy custom alias; public presets use gajae
+	| "vibrato"
+	| "pi" // legacy custom alias; public presets use vibrato
 	| "model"
 	| "mode"
 	| "path"
@@ -370,9 +370,9 @@ export const SETTINGS_SCHEMA = {
 	// ────────────────────────────────────────────────────────────────────────
 	lastChangelogVersion: { type: "string", default: undefined },
 
-	// Auth broker — credentials proxied through a remote `gjc auth-broker serve`
+	// Auth broker — credentials proxied through a remote `vib auth-broker serve`
 	// host. Hidden from the UI; populate via env vars or hand-edited config.yml.
-	// Env (`GJC_AUTH_BROKER_URL` / `GJC_AUTH_BROKER_TOKEN`) takes precedence so
+	// Env (`VIB_AUTH_BROKER_URL` / `VIB_AUTH_BROKER_TOKEN`) takes precedence so
 	// per-machine overrides remain trivial.
 	"auth.broker.url": { type: "string", default: undefined },
 	"auth.broker.token": { type: "string", default: undefined },
@@ -714,27 +714,27 @@ export const SETTINGS_SCHEMA = {
 
 	cycleOrder: { type: "array", default: DEFAULT_CYCLE_ORDER },
 
-	"gjc.deepInterview.ambiguityThreshold": {
+	"vib.deepInterview.ambiguityThreshold": {
 		type: "number",
 		default: 0.05,
 		validate: (value: number) => Number.isFinite(value) && value > 0 && value <= 1,
 	},
-	"gjc.ralplan.autoHandoff": {
+	"vib.ralplan.autoHandoff": {
 		type: "enum",
 		values: ["off", "ultragoal", "autoresearch"],
 		default: "off",
 	},
-	"gjc.ralplan.maxIterations": {
+	"vib.ralplan.maxIterations": {
 		type: "number",
 		default: 5,
 		validate: (value: number) => Number.isInteger(value) && value >= 1 && value <= 20,
 	},
-	"gjc.ralplan.maxReviewPassesPerLane": {
+	"vib.ralplan.maxReviewPassesPerLane": {
 		type: "number",
 		default: 1,
 		validate: (value: number) => Number.isInteger(value) && value >= 1 && value <= 10,
 	},
-	"gjc.ultragoal.nudgeBudget": {
+	"vib.ultragoal.nudgeBudget": {
 		type: "number",
 		default: 10,
 		validate: (value: number) => Number.isInteger(value) && value >= 0,
@@ -762,7 +762,7 @@ export const SETTINGS_SCHEMA = {
 	// Theme
 	"theme.dark": {
 		type: "string",
-		default: "red-claw",
+		default: "lig-blue",
 		ui: {
 			tab: "appearance",
 			label: "Dark Theme",
@@ -773,7 +773,7 @@ export const SETTINGS_SCHEMA = {
 
 	"theme.light": {
 		type: "string",
-		default: "blue-crab",
+		default: "lig-white",
 		ui: {
 			tab: "appearance",
 			label: "Light Theme",
@@ -899,7 +899,7 @@ export const SETTINGS_SCHEMA = {
 		default: "off",
 		ui: {
 			tab: "appearance",
-			label: "Gajae Pet",
+			label: "Vibrato Pet",
 			description: "Animated pet beside the composer (pixel graphics where supported; text cells elsewhere)",
 			options: [
 				{ value: "off", label: "Off", description: "No pet" },
@@ -1546,7 +1546,7 @@ export const SETTINGS_SCHEMA = {
 			tab: "interaction",
 			label: "Mouse Support",
 			description:
-				"Enable GJC session scrolling, drag-to-copy text selection, double-click word and triple-click line selection, and overlay row selection with the mouse. Disabled by default to preserve native terminal or tmux scrollback and selection; while enabled, most terminals still reach their own selection with a modifier held (Option on macOS, Shift elsewhere), though that path copies only if the host terminal has its own copy-on-select enabled.",
+				"Enable Vibrato session scrolling, drag-to-copy text selection, double-click word and triple-click line selection, and overlay row selection with the mouse. Disabled by default to preserve native terminal or tmux scrollback and selection; while enabled, most terminals still reach their own selection with a modifier held (Option on macOS, Shift elsewhere), though that path copies only if the host terminal has its own copy-on-select enabled.",
 		},
 	},
 	// Conversation flow
@@ -1701,7 +1701,7 @@ export const SETTINGS_SCHEMA = {
 			tab: "interaction",
 			label: "Check for Updates",
 			description:
-				"At interactive startup, notify of newer versions; never install. `gjc update` installs the matching GitHub release binary. Source, linked, and unrecognized installs stay on their original method.",
+				"At interactive startup, notify of newer versions; never install. `vib update` installs the matching GitHub release binary. Source, linked, and unrecognized installs stay on their original method.",
 		},
 	},
 
@@ -1712,7 +1712,7 @@ export const SETTINGS_SCHEMA = {
 		ui: {
 			tab: "interaction",
 			label: "Update Channel",
-			description: "Release channel used by `gjc update` and the startup update check",
+			description: "Release channel used by `vib update` and the startup update check",
 			options: [
 				{ value: "stable", label: "Stable", description: "Track stable GitHub releases" },
 				{ value: "nightly", label: "Nightly", description: "Track nightly GitHub prereleases" },
@@ -1748,7 +1748,7 @@ export const SETTINGS_SCHEMA = {
 			tab: "interaction",
 			label: "Crash Report Nudge",
 			description:
-				"At interactive startup, show one rate-limited line when unreported crash signatures exist. Reads local state only; nothing is ever transmitted without the explicit consent flow in `gjc crash report`.",
+				"At interactive startup, show one rate-limited line when unreported crash signatures exist. Reads local state only; nothing is ever transmitted without the explicit consent flow in `vib crash report`.",
 		},
 	},
 
@@ -1794,7 +1794,7 @@ export const SETTINGS_SCHEMA = {
 			tab: "interaction",
 			label: "Completion Notification Command",
 			description:
-				"Optional user-level shell command to run when an agent turn completes; receives GJC_NOTIFICATION_* environment variables. On Windows, this can call PowerShell [Console]::Beep when terminal BEL is silent.",
+				"Optional user-level shell command to run when an agent turn completes; receives VIB_NOTIFICATION_* environment variables. On Windows, this can call PowerShell [Console]::Beep when terminal BEL is silent.",
 		},
 	},
 
@@ -2262,7 +2262,7 @@ export const SETTINGS_SCHEMA = {
 	},
 	"hindsight.retainEveryNTurns": { type: "number", default: 3 },
 	"hindsight.retainOverlapTurns": { type: "number", default: 2 },
-	"hindsight.retainContext": { type: "string", default: "gjc" },
+	"hindsight.retainContext": { type: "string", default: "vib" },
 
 	"hindsight.recallBudget": {
 		type: "enum",
@@ -2947,7 +2947,7 @@ export const SETTINGS_SCHEMA = {
 		ui: {
 			tab: "tools",
 			label: "GitHub view cache",
-			description: "Cache rendered issue/PR view output in ~/.gjc/cache/github-cache.db so repeated reads are free",
+			description: "Cache rendered issue/PR view output in ~/.vib/cache/github-cache.db so repeated reads are free",
 		},
 	},
 
@@ -3096,7 +3096,7 @@ export const SETTINGS_SCHEMA = {
 		ui: {
 			tab: "tools",
 			label: "Browser Tab GC",
-			description: "Automatically reclaim idle, unheld GJC-managed headless/spawned browser tabs.",
+			description: "Automatically reclaim idle, unheld Vibrato-managed headless/spawned browser tabs.",
 		},
 	},
 	"browser.gc.idleMs": {
@@ -3119,7 +3119,7 @@ export const SETTINGS_SCHEMA = {
 			description: "Parent-process RSS (MB) above which idle tabs are opportunistically evicted LRU.",
 		},
 	},
-	// `gjc gc --disk` retention policy. Report-only unless `--prune` is also passed;
+	// `vib gc --disk` retention policy. Report-only unless `--prune` is also passed;
 	// these knobs never run implicitly and never affect the PID-liveness axis.
 	"gc.sessions.maxAgeDays": {
 		type: "number",
@@ -3768,7 +3768,7 @@ export const SETTINGS_SCHEMA = {
 			tab: "customization",
 			label: "Trust Project Skills",
 			description:
-				"Load skills from project .gjc/skills, .claude/skills, and .codex/skills. Set to false to ignore project-controlled skills while keeping user skills.",
+				"Load skills from project .vib/skills, .claude/skills, and .codex/skills. Set to false to ignore project-controlled skills while keeping user skills.",
 		},
 	},
 
@@ -3778,7 +3778,7 @@ export const SETTINGS_SCHEMA = {
 			tab: "customization",
 			label: "Trust User Skills",
 			description:
-				"Load skills from ~/.gjc/agent/skills (and legacy ~/.gjc/skills / <config>/skills). Set to false to ignore user-installed skills while keeping project skills.",
+				"Load skills from ~/.vib/agent/skills (and legacy ~/.vib/skills / <config>/skills). Set to false to ignore user-installed skills while keeping project skills.",
 		},
 	},
 

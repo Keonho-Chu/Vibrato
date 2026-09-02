@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { type Api, closeModelCache, type Model, readModelCache, writeModelCache } from "@gajae-code/ai";
+import { type Api, closeModelCache, type Model, readModelCache, writeModelCache } from "@vib-rato/ai";
 import { ModelDiscoveryManager } from "../src/config/model-discovery-manager";
 
 function model(id: string): Model<Api> {

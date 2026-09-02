@@ -2,14 +2,14 @@ import { afterEach, describe, expect, it, setSystemTime } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { postmortem } from "@gajae-code/utils";
+import { postmortem } from "@vib-rato/utils";
+import { WorkerIntegrationRequestScheduler } from "../src/session/agent-session";
 import {
-	GJC_COORDINATOR_SESSION_ID_ENV,
-	GJC_COORDINATOR_SESSION_STATE_FILE_ENV,
 	persistCoordinatorRuntimeStateFromEvent,
 	persistCoordinatorRuntimeStateFromPostmortem,
-} from "../src/gjc-runtime/session-state-sidecar";
-import { WorkerIntegrationRequestScheduler } from "../src/session/agent-session";
+	VIB_COORDINATOR_SESSION_ID_ENV,
+	VIB_COORDINATOR_SESSION_STATE_FILE_ENV,
+} from "../src/vib-runtime/session-state-sidecar";
 import { installExactIdentityNatives } from "./helpers/exact-identity-natives";
 
 // Coordinator state writes serialize on a lock whose removals go through identity-bound
@@ -17,8 +17,8 @@ import { installExactIdentityNatives } from "./helpers/exact-identity-natives";
 installExactIdentityNatives();
 
 const tempDirs: string[] = [];
-const ORIGINAL_STATE_FILE = process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV];
-const ORIGINAL_SESSION_ID = process.env[GJC_COORDINATOR_SESSION_ID_ENV];
+const ORIGINAL_STATE_FILE = process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV];
+const ORIGINAL_SESSION_ID = process.env[VIB_COORDINATOR_SESSION_ID_ENV];
 
 type Deferred = { promise: Promise<void>; resolve: () => void; reject: (error: unknown) => void };
 
@@ -33,7 +33,7 @@ function deferred(): Deferred {
 }
 
 async function tempRoot(): Promise<string> {
-	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-g004-redteam-"));
+	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-g004-redteam-"));
 	tempDirs.push(dir);
 	return dir;
 }
@@ -52,10 +52,10 @@ async function statSignature(file: string): Promise<{ mtimeMs: number; size: num
 }
 
 afterEach(async () => {
-	if (ORIGINAL_STATE_FILE === undefined) delete process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV];
-	else process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = ORIGINAL_STATE_FILE;
-	if (ORIGINAL_SESSION_ID === undefined) delete process.env[GJC_COORDINATOR_SESSION_ID_ENV];
-	else process.env[GJC_COORDINATOR_SESSION_ID_ENV] = ORIGINAL_SESSION_ID;
+	if (ORIGINAL_STATE_FILE === undefined) delete process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV];
+	else process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = ORIGINAL_STATE_FILE;
+	if (ORIGINAL_SESSION_ID === undefined) delete process.env[VIB_COORDINATOR_SESSION_ID_ENV];
+	else process.env[VIB_COORDINATOR_SESSION_ID_ENV] = ORIGINAL_SESSION_ID;
 	setSystemTime();
 	await Promise.all(tempDirs.splice(0).map(dir => fs.rm(dir, { recursive: true, force: true })));
 });
@@ -64,8 +64,8 @@ describe("G004 sidecar cache and heartbeat red-team", () => {
 	it("invalidates cached previous payload after an external write with different mtime and size", async () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "runtime-state.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "g004-external-cache";
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "g004-external-cache";
 
 		setSystemTime(new Date("2026-02-01T00:00:00.000Z"));
 		await persistCoordinatorRuntimeStateFromEvent(
@@ -103,8 +103,8 @@ describe("G004 sidecar cache and heartbeat red-team", () => {
 	it("skips duplicate running heartbeat writes, refreshes after heartbeat, and always writes terminal transitions", async () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "runtime-state.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "g004-heartbeat";
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "g004-heartbeat";
 
 		setSystemTime(new Date("2026-02-01T00:00:00.000Z"));
 		await persistCoordinatorRuntimeStateFromEvent(
@@ -151,8 +151,8 @@ describe("G004 sidecar cache and heartbeat red-team", () => {
 	it("postmortem sync writer overwrites non-terminal state even when heartbeat would skip async duplicates", async () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "runtime-state.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "g004-postmortem";
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "g004-postmortem";
 
 		setSystemTime(new Date("2026-02-01T00:00:00.000Z"));
 		await persistCoordinatorRuntimeStateFromEvent(

@@ -2,31 +2,31 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { Model } from "@gajae-code/ai";
-import { getOAuthProviders } from "@gajae-code/ai/utils/oauth";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
+import type { Model } from "@vib-rato/ai";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { getSelectableOAuthProviders } from "@vib-rato/coding-agent/config/provider-allowlist";
 import {
 	clearProviderAuthHealth,
 	getProviderAuthHealth,
 	recordProviderAuthHealth,
-} from "@gajae-code/coding-agent/config/provider-auth-health";
+} from "@vib-rato/coding-agent/config/provider-auth-health";
 import {
 	compareRankedProviders,
 	PROVIDER_RANK_TIER,
 	providerRankTier,
 	type RankableProvider,
-} from "@gajae-code/coding-agent/config/provider-ranking";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { ModelSelectorComponent } from "@gajae-code/coding-agent/modes/components/model-selector";
-import { OAuthSelectorComponent } from "@gajae-code/coding-agent/modes/components/oauth-selector";
-import { getThemeByName, setThemeInstance } from "@gajae-code/coding-agent/modes/theme/theme";
-import { AuthStorage, type AuthStorage as AuthStorageType } from "@gajae-code/coding-agent/session/auth-storage";
-import type { TUI } from "@gajae-code/tui";
+} from "@vib-rato/coding-agent/config/provider-ranking";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { ModelSelectorComponent } from "@vib-rato/coding-agent/modes/components/model-selector";
+import { OAuthSelectorComponent } from "@vib-rato/coding-agent/modes/components/oauth-selector";
+import { getThemeByName, setThemeInstance } from "@vib-rato/coding-agent/modes/theme/theme";
+import { AuthStorage, type AuthStorage as AuthStorageType } from "@vib-rato/coding-agent/session/auth-storage";
+import type { TUI } from "@vib-rato/tui";
 
 const model = (provider: string, id: string): Model =>
 	({ provider, id, name: id, api: "openai-responses", contextWindow: 1000, maxTokens: 1000 }) as Model;
 
-const PROBE_API_KEY_ENV = "GJC_REDTEAM_PROVIDER_AUTH_HEALTH_PROBE_KEY";
+const PROBE_API_KEY_ENV = "VIB_REDTEAM_PROVIDER_AUTH_HEALTH_PROBE_KEY";
 
 let testTheme = await getThemeByName("red-claw");
 
@@ -186,8 +186,10 @@ describe("provider auth health state attacks", () => {
 	});
 
 	test("isolates OAuth validation health between unrelated AuthStorage instances", async () => {
-		const target = getOAuthProviders().find(provider => provider.id === "cursor");
-		if (!target) throw new Error("Expected cursor OAuth provider");
+		// The `/login` selector only validates providers it actually lists, so the
+		// probe has to target one the product allowlist keeps selectable.
+		const target = getSelectableOAuthProviders().find(provider => provider.id === "sglang");
+		if (!target) throw new Error("Expected sglang OAuth provider");
 
 		const oauthStorage = trackAuthStorage(await AuthStorage.create(":memory:"));
 		const modelStorage = trackAuthStorage(await AuthStorage.create(":memory:"));
@@ -205,14 +207,14 @@ describe("provider auth health state attacks", () => {
 			expect(getProviderAuthHealth(oauthStorage, target.id)).toBe("invalid");
 			expect(getProviderAuthHealth(modelStorage, target.id)).toBeUndefined();
 
-			const cursorModel = model("cursor", "cursor-model");
+			const sglangModel = model("sglang", "sglang-model");
 			const anthropicModel = model("anthropic", "anthropic-model");
-			const selector = await createModelSelector([anthropicModel, cursorModel], { authStorage: modelStorage });
+			const selector = await createModelSelector([anthropicModel, sglangModel], { authStorage: modelStorage });
 			try {
-				// The model selector's storage has no validation hint, so famous-list order remains anthropic before cursor.
-				expect(modelRows(selector, [cursorModel, anthropicModel])).toEqual([
+				// The model selector's storage has no validation hint, so famous-list order remains anthropic before sglang.
+				expect(modelRows(selector, [sglangModel, anthropicModel])).toEqual([
 					"anthropic/anthropic-model",
-					"cursor/cursor-model",
+					"sglang/sglang-model",
 				]);
 			} finally {
 				selector.dispose();
@@ -251,22 +253,26 @@ describe("provider auth health state attacks", () => {
 	});
 
 	test("ranks recorded invalid famous providers above tier-three unknown providers", async () => {
-		const staleInvalid = model("cursor", "cursor-model");
+		const staleInvalid = model("sglang", "sglang-model");
 		const unknown = model("tier-three-unknown", "unknown-model");
+		const hidden = model("cursor", "cursor-model");
 		const authStorage = createAuthStorageDouble();
 		recordProviderAuthHealth(authStorage, staleInvalid.provider, "invalid");
+		recordProviderAuthHealth(authStorage, hidden.provider, "invalid");
 
-		const selector = await createModelSelector([unknown, staleInvalid], { authStorage });
+		const selector = await createModelSelector([unknown, staleInvalid, hidden], { authStorage });
 		try {
-			expect(modelRows(selector, [staleInvalid, unknown])).toEqual([
-				"cursor/cursor-model",
+			expect(modelRows(selector, [staleInvalid, unknown, hidden])).toEqual([
+				"sglang/sglang-model",
 				"tier-three-unknown/unknown-model",
 			]);
+			// A recorded invalid hint does not buy a hidden provider a row.
+			expect(modelRows(selector, [hidden])).toEqual([]);
 		} finally {
 			selector.dispose();
 		}
 
-		const staleInvalidEntry: RankableProvider = { id: "cursor", label: "Cursor", authState: "invalid" };
+		const staleInvalidEntry: RankableProvider = { id: "sglang", label: "SGLang", authState: "invalid" };
 		const unknownEntry: RankableProvider = {
 			id: "tier-three-unknown",
 			label: "AAA Unknown",
@@ -333,7 +339,7 @@ describe("provider auth health state attacks", () => {
 
 describe("hasConfiguredProviderAuth contract attacks", () => {
 	test("agrees with hasConfiguredAuth for a configured provider that owns a model", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-provider-auth-health-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-provider-auth-health-"));
 		const modelsPath = path.join(root, "models.yml");
 		const authStorage = trackAuthStorage(await AuthStorage.create(":memory:"));
 		const previousProbeKey = process.env[PROBE_API_KEY_ENV];
@@ -385,7 +391,7 @@ describe("hasConfiguredProviderAuth contract attacks", () => {
 	});
 
 	test("returns true for a keyless provider with no stored credentials", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-provider-auth-health-keyless-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-provider-auth-health-keyless-"));
 		const modelsPath = path.join(root, "models.yml");
 		const authStorage = trackAuthStorage(await AuthStorage.create(":memory:"));
 		await Bun.write(

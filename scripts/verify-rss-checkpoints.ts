@@ -165,13 +165,13 @@ export class CheckpointError extends Error {
 }
 
 const repoRoot = path.resolve(import.meta.dir, "..");
-const checkpointRoot = path.join(repoRoot, ".gjc", "rss-checkpoints");
+const checkpointRoot = path.join(repoRoot, ".vib", "rss-checkpoints");
 
-const REFERENCE_CHUNK_MARKER = "gjc-rss-reference-0123456789abcdef";
+const REFERENCE_CHUNK_MARKER = "vib-rss-reference-0123456789abcdef";
 const REFERENCE_LARGE_LINE_COUNT = 29_960;
 const BASH_OUTPUT_BYTES = 8_388_608;
-const BASH_OUTPUT_MARKER = `GJC_RSS_BASH_BYTES=${BASH_OUTPUT_BYTES}`;
-const binaryPath = path.join(repoRoot, "packages", "coding-agent", "dist", "gjc");
+const BASH_OUTPUT_MARKER = `VIB_RSS_BASH_BYTES=${BASH_OUTPUT_BYTES}`;
+const binaryPath = path.join(repoRoot, "packages", "coding-agent", "dist", "vib");
 const buildCommand = "bun --cwd=packages/coding-agent run build";
 const deferredS6Reason = "requires W7/W8 authorization and daemon implementation";
 const allMeasuredScenarios: ScenarioId[] = ["S1", "S2", "S3", "S4", "S5", "S7"];
@@ -184,9 +184,9 @@ function usage(): string {
 		"  --scenario <S1..S7[,S...]>  Measure selected scenarios",
 		"  --all                       Measure S1-S5 and S7; report S6 as deferred",
 		"  --compare                   Compare against --baseline, or the current commit checkpoint when omitted",
-		"  --baseline <file>           Baseline JSON path (defaults to .gjc/rss-checkpoints/<commit>.json)",
+		"  --baseline <file>           Baseline JSON path (defaults to .vib/rss-checkpoints/<commit>.json)",
 		"  --allow-baseline-drift      Permit comparing across builds (required for milestone floor gates)",
-		"  --write-baseline            Write .gjc/rss-checkpoints/<commit>.json",
+		"  --write-baseline            Write .vib/rss-checkpoints/<commit>.json",
 		"  --milestone <W1c|W3b|W5b>  enforce the declared RSS improvement floor",
 		"  --rescope-ref <file>       accepted re-scope record for a missed floor",
 		"  --matrix <name[,name...]>   Record a named measurement matrix",
@@ -585,7 +585,7 @@ async function startProviderStub(): Promise<ProviderStub> {
 		async fetch(request) {
 			const url = new URL(request.url);
 			const isS7 = url.pathname.startsWith("/s7/");
-			if (request.method === "GET" && url.pathname.endsWith("/models")) return Response.json({ object: "list", data: [{ id: "stub-model", object: "model", owned_by: "gjc-rss" }] });
+			if (request.method === "GET" && url.pathname.endsWith("/models")) return Response.json({ object: "list", data: [{ id: "stub-model", object: "model", owned_by: "vib-rss" }] });
 			if (request.method === "POST" && (url.pathname.endsWith("/chat/completions") || url.pathname.endsWith("/responses"))) {
 				stats.requestCount += 1;
 				const body = await request.text();
@@ -606,7 +606,7 @@ async function startProviderStub(): Promise<ProviderStub> {
 				for (const resultText of scenarioToolResults(parsed)) {
 					if (!expectedScenario || !successfulScenarioResult(expectedScenario, resultText)) {
 						if (expectedScenario) stats.failedScenarioResultCount += 1;
-						if (expectedScenario && process.env.GJC_RSS_DEBUG_RESULT) { try { fsSync.writeFileSync(process.env.GJC_RSS_DEBUG_RESULT, resultText); } catch {} }
+						if (expectedScenario && process.env.VIB_RSS_DEBUG_RESULT) { try { fsSync.writeFileSync(process.env.VIB_RSS_DEBUG_RESULT, resultText); } catch {} }
 						continue;
 					}
 					if (expectedScenario === "S4") stats.successfulReadResultCount += 1;
@@ -716,9 +716,9 @@ import os, pty, select, subprocess, sys, time
 binary = ${JSON.stringify(binaryPath)}
 repo_root = ${JSON.stringify(repoRoot)}
 env = os.environ.copy()
-agent_dir = env.get("GJC_AGENT_DIR", "")
-debug_paths = [os.path.join(agent_dir, "gjc-debug.log"), os.path.join(agent_dir, "state", "gjc-debug.log")]
-barrier_file = env.get("GJC_RSS_BARRIER_FILE", "")
+agent_dir = env.get("VIB_AGENT_DIR", "")
+debug_paths = [os.path.join(agent_dir, "vib-debug.log"), os.path.join(agent_dir, "state", "vib-debug.log")]
+barrier_file = env.get("VIB_RSS_BARRIER_FILE", "")
 master, slave = pty.openpty()
 child = subprocess.Popen([binary, "--no-session", "--no-tools"], cwd=repo_root, env=env, stdin=slave, stdout=slave, stderr=slave, close_fds=True)
 os.close(slave)
@@ -814,10 +814,10 @@ async function writeProcessProbe(root: string, command: string[], cwd: string): 
 import * as fs from "node:fs";
 const target = ${JSON.stringify(command)};
 const targetCwd = ${JSON.stringify(cwd)};
-const metricsPath = process.env.GJC_RSS_MEMORY_PROBE;
-const barrierPath = process.env.GJC_RSS_BARRIER_FILE;
-const cleanupPath = process.env.GJC_RSS_CLEANUP_FILE;
-if (!metricsPath) throw new Error("GJC_RSS_MEMORY_PROBE is required");
+const metricsPath = process.env.VIB_RSS_MEMORY_PROBE;
+const barrierPath = process.env.VIB_RSS_BARRIER_FILE;
+const cleanupPath = process.env.VIB_RSS_CLEANUP_FILE;
+if (!metricsPath) throw new Error("VIB_RSS_MEMORY_PROBE is required");
 let barrierWritten = !barrierPath;
 let childDone = false;
 const snapshot = (phase: "start" | "barrier" | "exit") => {
@@ -830,14 +830,14 @@ const barrierTimer = setInterval(() => {
   if (!barrierWritten && barrierPath && fs.existsSync(barrierPath)) {
     barrierWritten = true;
     snapshot("barrier");
-    if (process.env.GJC_RSS_SCENARIO === "S7" && !childDone) setTimeout(() => { try { if (cleanupPath) fs.writeFileSync(cleanupPath, "SIGINT\\n", "utf8"); } catch {} child?.kill("SIGINT"); }, 100);
+    if (process.env.VIB_RSS_SCENARIO === "S7" && !childDone) setTimeout(() => { try { if (cleanupPath) fs.writeFileSync(cleanupPath, "SIGINT\\n", "utf8"); } catch {} child?.kill("SIGINT"); }, 100);
   }
 }, 2);
 barrierTimer.unref?.();
 let child: any;
 child = Bun.spawn(target, {
   cwd: targetCwd,
-  env: { ...Bun.env, GJC_RSS_PROBE_CHILD: "1" },
+  env: { ...Bun.env, VIB_RSS_PROBE_CHILD: "1" },
   stdin: "ignore",
   stdout: "inherit",
   stderr: "inherit",
@@ -909,7 +909,7 @@ interface ProcessMeasureOptions {
 
 async function measureProcess(command: string[], env: Record<string, string>, cwd: string, timeoutMs = 30_000, options: ProcessMeasureOptions = {}): Promise<ProcessSample> {
 	const processEnv = options.memoryProbeFile
-		? { ...env, GJC_RSS_MEMORY_PROBE: options.memoryProbeFile, ...(options.cleanupFile ? { GJC_RSS_CLEANUP_FILE: options.cleanupFile } : {}) }
+		? { ...env, VIB_RSS_MEMORY_PROBE: options.memoryProbeFile, ...(options.cleanupFile ? { VIB_RSS_CLEANUP_FILE: options.cleanupFile } : {}) }
 		: env;
 	const proc = Bun.spawn(maxRssCommand(command), { cwd, env: processEnv, stdin: "ignore", stdout: "pipe", stderr: "pipe" });
 	const stdoutPromise = new Response(proc.stdout).text();
@@ -1126,11 +1126,11 @@ async function measureScenario(
 		const missingAdvertisementBefore = provider.stats.missingScenarioAdvertisementCount;
 		const env: Record<string, string> = {
 			...baseEnv,
-			...(id === "S3" ? { GJC_DEBUG_REDRAW: "1" } : {}),
-			...(barrierFile ? { GJC_RSS_BARRIER_FILE: barrierFile } : {}),
-			GJC_RSS_SCENARIO: id,
-			GJC_RSS_REFERENCE_WORKSPACE: referenceWorkspace,
-			GJC_RSS_PROVIDER_STUB: provider.url,
+			...(id === "S3" ? { VIB_DEBUG_REDRAW: "1" } : {}),
+			...(barrierFile ? { VIB_RSS_BARRIER_FILE: barrierFile } : {}),
+			VIB_RSS_SCENARIO: id,
+			VIB_RSS_REFERENCE_WORKSPACE: referenceWorkspace,
+			VIB_RSS_PROVIDER_STUB: provider.url,
 			RSS_HARNESS_API_KEY: "rss-harness",
 		};
 		if (barrierFile) await fs.rm(barrierFile, { force: true });
@@ -1174,7 +1174,7 @@ async function measureScenario(
 	const observedToolNames = measuredToolNames;
 	const successfulToolResults = id === "S4" ? measuredSuccessfulReadResults : id === "S5" ? measuredSuccessfulBashResults : id === "S7" ? measuredMcpCalls : 0;
 	const workload = {
-		expected: id === "S4" ? "one advertised read result containing the 1 MiB marker/line count per sample" : id === "S5" ? "one advertised bash result containing GJC_RSS_BASH_BYTES=8388608 per sample" : id === "S7" ? "one MCP echo tool call and child process" : "no tool call",
+		expected: id === "S4" ? "one advertised read result containing the 1 MiB marker/line count per sample" : id === "S5" ? "one advertised bash result containing VIB_RSS_BASH_BYTES=8388608 per sample" : id === "S7" ? "one MCP echo tool call and child process" : "no tool call",
 		observedToolCalls,
 		observedToolNames,
 		observedMcpCalls,
@@ -1557,7 +1557,7 @@ async function main(): Promise<void> {
 		return;
 	}
 
-	const tempRoot = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), "gjc-rss-checkpoints-")));
+	const tempRoot = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), "vib-rss-checkpoints-")));
 	let provider: Awaited<ReturnType<typeof startProviderStub>> | undefined;
 	try {
 		const activeProvider = await startProviderStub();
@@ -1574,12 +1574,12 @@ async function main(): Promise<void> {
 		await writeModelsConfig(agentDir, activeProvider.url, activeProvider.s7Url);
 
 		const baseEnv: Record<string, string> = {};
-		for (const [key, value] of Object.entries(Bun.env)) if (!key.startsWith("GJC_") && value !== undefined) baseEnv[key] = value;
+		for (const [key, value] of Object.entries(Bun.env)) if (!key.startsWith("VIB_") && value !== undefined) baseEnv[key] = value;
 		baseEnv.HOME = home;
 		baseEnv.USERPROFILE = home;
 		baseEnv.XDG_CONFIG_HOME = xdgConfig;
-		baseEnv.GJC_CODING_AGENT_DIR = agentDir;
-		baseEnv.GJC_AGENT_DIR = agentDir;
+		baseEnv.VIB_CODING_AGENT_DIR = agentDir;
+		baseEnv.VIB_AGENT_DIR = agentDir;
 		const gitCommit = currentCommit;
 		const floorPolicy = options.milestone ? FLOOR_POLICIES[options.milestone] : undefined;
 		if (options.rescopeRef && !floorPolicy) throw new CheckpointError("RescopeReferenceInvalid", "--rescope-ref requires --milestone.");

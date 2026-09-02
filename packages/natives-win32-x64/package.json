@@ -1,18 +1,18 @@
 {
-	"name": "@gajae-code/natives-win32-x64",
+	"name": "@vib-rato/natives-win32-x64",
 	"version": "0.15.6",
-	"description": "Windows x64 native addon for @gajae-code/natives",
+	"description": "Windows x64 native addon for @vib-rato/natives",
 	"type": "module",
-	"homepage": "https://gajae-code.com",
+	"homepage": "https://vib-rato.com",
 	"author": "Yeachan-Heo",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/Yeachan-Heo/gajae-code.git",
+		"url": "git+https://github.com/Keonho-Chu/Vibrato.git",
 		"directory": "packages/natives-win32-x64"
 	},
 	"bugs": {
-		"url": "https://github.com/Yeachan-Heo/gajae-code/issues"
+		"url": "https://github.com/Keonho-Chu/Vibrato/issues"
 	},
 	"os": [
 		"win32"

@@ -8,10 +8,10 @@
 
 import * as path from "node:path";
 
-export interface GjcRuntimeSpawnInfo {
+export interface VibRuntimeSpawnInfo {
 	execPath: string;
 	mode: "source" | "compiled";
-	/** Prefix prepended before the gjc subcommand args; `[Bun.main]` in source mode, otherwise `[]`. */
+	/** Prefix prepended before the vib subcommand args; `[Bun.main]` in source mode, otherwise `[]`. */
 	argsPrefix: string[];
 	/** True only when respawn loads edited TypeScript directly (source/dev mode). */
 	reloadPicksUpSourceEdits: boolean;
@@ -23,16 +23,16 @@ const COMPILED_RELOAD_WARNING =
 	"Compiled binary: reload respawns the same binary. Rebuild the binary first for amended source to take effect.";
 
 /**
- * Resolve how to spawn a detached gjc subcommand for the current runtime.
+ * Resolve how to spawn a detached vib subcommand for the current runtime.
  *
  * Source/dev mode (bun/node) prepends the entry script (`Bun.main`) so the
  * respawn loads edited source. A compiled single-file binary self-spawns its
  * own subcommand directly and cannot pick up workspace source edits.
  */
-export function resolveGjcRuntimeSpawnInfo(execPath: string = process.execPath): GjcRuntimeSpawnInfo {
+export function resolveVibRuntimeSpawnInfo(execPath: string = process.execPath): VibRuntimeSpawnInfo {
 	const base = path.basename(execPath).toLowerCase();
 	const fromSource = base === "bun" || base === "node" || base.startsWith("bun") || base.startsWith("node");
-	const sourceEntry = fromSource ? path.resolve(import.meta.dir, "../../bin/gjc.js") : undefined;
+	const sourceEntry = fromSource ? path.resolve(import.meta.dir, "../../bin/vib.js") : undefined;
 	if (fromSource) {
 		return {
 			execPath,

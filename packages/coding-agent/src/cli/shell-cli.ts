@@ -1,12 +1,12 @@
 /**
  * Shell CLI command handlers.
  *
- * Handles `gjc shell` subcommand for testing the native brush-core shell.
+ * Handles `vib shell` subcommand for testing the native brush-core shell.
  */
 import * as path from "node:path";
 import { createInterface } from "node:readline/promises";
-import { Shell } from "@gajae-code/natives";
-import { APP_NAME, getProjectDir } from "@gajae-code/utils";
+import { Shell } from "@vib-rato/natives";
+import { APP_NAME, getProjectDir } from "@vib-rato/utils";
 import chalk from "chalk";
 import { Settings } from "../config/settings";
 import { buildMinimizerOptions } from "../exec/bash-executor";

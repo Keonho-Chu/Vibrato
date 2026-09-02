@@ -1,8 +1,8 @@
 /**
  * Tool wrappers for extensions.
  */
-import type { AgentTool, AgentToolContext, AgentToolUpdateCallback } from "@gajae-code/agent-core";
-import type { ImageContent, Static, TextContent, TSchema } from "@gajae-code/ai/core";
+import type { AgentTool, AgentToolContext, AgentToolUpdateCallback } from "@vib-rato/agent-core";
+import type { ImageContent, Static, TextContent, TSchema } from "@vib-rato/ai/core";
 import type { Theme } from "../../modes/theme/theme";
 import { applyToolProxy } from "../tool-proxy";
 import type { ExtensionRunner } from "./runner";

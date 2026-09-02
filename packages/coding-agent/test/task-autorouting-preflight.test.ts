@@ -3,9 +3,9 @@ import type { Dirent } from "node:fs";
 import { mkdir, mkdtemp, readdir, readFile, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import type { FallbackTriggerClass } from "@gajae-code/ai/utils/fallback-transport";
-import { getTerminalId } from "@gajae-code/tui";
-import { getTerminalSessionsDir } from "@gajae-code/utils";
+import type { FallbackTriggerClass } from "@vib-rato/ai/utils/fallback-transport";
+import { getTerminalId } from "@vib-rato/tui";
+import { getTerminalSessionsDir } from "@vib-rato/utils";
 import { AsyncJobManager } from "../src/async";
 import { Settings } from "../src/config/settings";
 import * as sdkModule from "../src/sdk";
@@ -131,7 +131,7 @@ async function snapshotTree(root: string, skipStaging = false): Promise<string> 
 			return;
 		}
 		for (const child of children.sort((left, right) => left.name.localeCompare(right.name))) {
-			if (/^\.gjc-(?:exact-(?:replace-destination|unlink-placeholder)|receipt-remove)-/.test(child.name)) continue;
+			if (/^\.vib-(?:exact-(?:replace-destination|unlink-placeholder)|receipt-remove)-/.test(child.name)) continue;
 			if (skipStaging && child.isDirectory() && child.name === ".staging") continue;
 			const childPath = path.join(directory, child.name);
 			const childRelative = path.join(relative, child.name);
@@ -174,7 +174,7 @@ async function enumerateAgentUris(root: string): Promise<string[]> {
 }
 
 async function createHarnessContext(managed: boolean): Promise<HarnessContext> {
-	const root = await mkdtemp(path.join(tmpdir(), managed ? "gjc-preflight-managed-" : "gjc-preflight-"));
+	const root = await mkdtemp(path.join(tmpdir(), managed ? "vib-preflight-managed-" : "vib-preflight-"));
 	const cwd = path.join(root, "cwd");
 	const agentDir = path.join(root, "agent");
 	await mkdir(cwd, { recursive: true });
@@ -455,7 +455,7 @@ function invalidConfigFailure(): AutoroutingPreflightFailure {
 
 describe("autorouting preflight contract", () => {
 	it("publishes no durable candidate through the real executor/event bus before the acceptance fence", async () => {
-		const root = await mkdtemp(path.join(tmpdir(), "gjc-real-preflight-fence-"));
+		const root = await mkdtemp(path.join(tmpdir(), "vib-real-preflight-fence-"));
 		const finalPath = path.join(root, "candidate.jsonl");
 		const eventBus = new EventBus();
 		const lifecycle: SubagentLifecyclePayload[] = [];
@@ -504,7 +504,7 @@ describe("autorouting preflight contract", () => {
 	});
 
 	it("fails closed to terminal when the pre-fence discard cleanup itself fails", async () => {
-		const root = await mkdtemp(path.join(tmpdir(), "gjc-real-preflight-discard-"));
+		const root = await mkdtemp(path.join(tmpdir(), "vib-real-preflight-discard-"));
 		const finalPath = path.join(root, "candidate.jsonl");
 		const jobs = new AsyncJobManager({ maxRunningJobs: 2, onJobComplete: async () => {} });
 		AsyncJobManager.setInstance(jobs);
@@ -559,7 +559,7 @@ describe("autorouting preflight contract", () => {
 	});
 
 	it("stops the public runSubprocess ledger and preserves the cleanup diagnostic on failed pre-fence discard", async () => {
-		const root = await mkdtemp(path.join(tmpdir(), "gjc-real-preflight-ledger-"));
+		const root = await mkdtemp(path.join(tmpdir(), "vib-real-preflight-ledger-"));
 		const jobs = new AsyncJobManager({ maxRunningJobs: 2, onJobComplete: async () => {} });
 		AsyncJobManager.setInstance(jobs);
 		const model = {
@@ -616,7 +616,7 @@ describe("autorouting preflight contract", () => {
 	});
 
 	it("terminalizes a captured undefined credential fault instead of retrying it as absent", async () => {
-		const root = await mkdtemp(path.join(tmpdir(), "gjc-real-preflight-credential-error-"));
+		const root = await mkdtemp(path.join(tmpdir(), "vib-real-preflight-credential-error-"));
 		const jobs = new AsyncJobManager({ maxRunningJobs: 2, onJobComplete: async () => {} });
 		AsyncJobManager.setInstance(jobs);
 		const model = {
@@ -666,7 +666,7 @@ describe("autorouting preflight contract", () => {
 	});
 
 	it("resolves preflight credentials in the parent credential session", async () => {
-		const root = await mkdtemp(path.join(tmpdir(), "gjc-real-preflight-credential-session-"));
+		const root = await mkdtemp(path.join(tmpdir(), "vib-real-preflight-credential-session-"));
 		const model = {
 			provider: "test",
 			id: "model",
@@ -780,7 +780,7 @@ describe("autorouting preflight contract", () => {
 	});
 
 	it("reserves and remaps attempt-scoped artifact IDs without mutating siblings", async () => {
-		const root = await mkdtemp(path.join(tmpdir(), "gjc-artifact-ledger-"));
+		const root = await mkdtemp(path.join(tmpdir(), "vib-artifact-ledger-"));
 		const parent = new ArtifactManager(path.join(root, "parent"));
 		await parent.save("sibling", "tool");
 		const staged = parent.createAttemptStaging("attempt");
@@ -892,7 +892,7 @@ describe("autorouting preflight contract", () => {
 		expect(rename.agentUris).toEqual(["agent://0"]);
 
 		expect(rename.failedSnapshots[0]?.after).toEqual(rename.failedSnapshots[0]?.before);
-		const root = await mkdtemp(path.join(tmpdir(), "gjc-reservation-failure-"));
+		const root = await mkdtemp(path.join(tmpdir(), "vib-reservation-failure-"));
 		const parent = new ArtifactManager(path.join(root, "parent"));
 		await parent.save("sibling", "tool");
 		const staged = parent.createAttemptStaging("reservation");
@@ -925,7 +925,7 @@ describe("autorouting preflight contract", () => {
 		expect(run.agentUris).toEqual(["agent://0"]);
 		expect(run.failedSnapshots[0]?.after).toEqual(run.failedSnapshots[0]?.before);
 
-		const root = await mkdtemp(path.join(tmpdir(), "gjc-managed-reservation-failure-"));
+		const root = await mkdtemp(path.join(tmpdir(), "vib-managed-reservation-failure-"));
 		const cwd = path.join(root, "cwd");
 		const agentDir = path.join(root, "agent");
 		await mkdir(cwd, { recursive: true });

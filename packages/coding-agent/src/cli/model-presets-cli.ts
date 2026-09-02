@@ -1,4 +1,4 @@
-import { getAgentDir } from "@gajae-code/utils";
+import { getAgentDir } from "@vib-rato/utils";
 import {
 	getModelPresetRegistryStatus,
 	type ModelPresetRegistryStatus,

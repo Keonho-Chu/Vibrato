@@ -1,4 +1,4 @@
-import type { AuthCredentialSelector, AuthCredentialSnapshotEntry } from "@gajae-code/ai/core";
+import type { AuthCredentialSelector, AuthCredentialSnapshotEntry } from "@vib-rato/ai/core";
 import { parseCliCredentialSelector } from "../../runtime-credential-selector";
 import type { SlashCommandRuntime } from "../types";
 

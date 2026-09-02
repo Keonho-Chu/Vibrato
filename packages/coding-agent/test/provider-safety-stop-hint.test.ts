@@ -10,7 +10,7 @@
  * - unrelated error kinds get no hint at all.
  */
 import { describe, expect, it } from "bun:test";
-import type { AssistantMessage, Model } from "@gajae-code/ai/core";
+import type { AssistantMessage, Model } from "@vib-rato/ai/core";
 import { parseModelPattern } from "../src/config/model-resolver";
 import {
 	formatProviderSafetyStopDisplayError,

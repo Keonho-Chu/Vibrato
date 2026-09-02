@@ -1,5 +1,5 @@
 /**
- * Black-box subprocess tests for `gjc customize doctor` read-only contract (#4406).
+ * Black-box subprocess tests for `vib customize doctor` read-only contract (#4406).
  *
  * The doctor command is an explicitly read-only inspection surface. These tests
  * spawn the real CLI as a subprocess and assert no filesystem side-effects occur
@@ -12,7 +12,7 @@
  *   - fresh empty agent/project roots
  *   - legacy agent-dir settings.json
  *   - legacy config-root settings.json
- *   - legacy project .gjc/settings.json
+ *   - legacy project .vib/settings.json
  *   - existing canonical config.yml and project config precedence/provenance
  *
  * For every case the entire relevant tree is snapshotted before/after and
@@ -156,10 +156,10 @@ interface RunResult {
 }
 
 /**
- * Spawn the real CLI as a subprocess. Only GJC_CODING_AGENT_DIR is isolated by
- * default. An optional configRoot isolates GJC_CONFIG_DIR for config-root
+ * Spawn the real CLI as a subprocess. Only VIB_CODING_AGENT_DIR is isolated by
+ * default. An optional configRoot isolates VIB_CONFIG_DIR for config-root
  * legacy migration tests; when omitted, the real home config root is used so
- * the native skill discovery (which scans ~/.gjc) works correctly.
+ * the native skill discovery (which scans ~/.vib) works correctly.
  */
 async function runDoctor(
 	projectDir: string,
@@ -171,9 +171,9 @@ async function runDoctor(
 	if (mode === "json") args.push("--json");
 	const env: Record<string, string | undefined> = {
 		...process.env,
-		GJC_CODING_AGENT_DIR: agentDir,
+		VIB_CODING_AGENT_DIR: agentDir,
 	};
-	if (configRoot !== undefined) env.GJC_CONFIG_DIR = configRoot;
+	if (configRoot !== undefined) env.VIB_CONFIG_DIR = configRoot;
 	const proc = Bun.spawn(args, {
 		cwd: projectDir,
 		env,
@@ -209,7 +209,7 @@ describe("customize doctor read-only contract (#4406)", () => {
 	// =========================================================================
 
 	it("fresh empty agent dir gains zero files (JSON mode)", async () => {
-		const { agentDir, projectDir } = await makeIsolatedEnv("gjc-empty-json");
+		const { agentDir, projectDir } = await makeIsolatedEnv("vib-empty-json");
 
 		const beforeAgent = await snapshotDir(agentDir);
 		const beforeProject = await snapshotDir(projectDir);
@@ -228,7 +228,7 @@ describe("customize doctor read-only contract (#4406)", () => {
 	});
 
 	it("fresh empty agent dir gains zero files (text mode)", async () => {
-		const { agentDir, projectDir } = await makeIsolatedEnv("gjc-empty-text");
+		const { agentDir, projectDir } = await makeIsolatedEnv("vib-empty-text");
 
 		const beforeAgent = await snapshotDir(agentDir);
 		const beforeProject = await snapshotDir(projectDir);
@@ -251,7 +251,7 @@ describe("customize doctor read-only contract (#4406)", () => {
 	// =========================================================================
 
 	it("legacy agent-dir settings.json is untouched (JSON mode)", async () => {
-		const { agentDir, projectDir } = await makeIsolatedEnv("gjc-legacy-agent-json");
+		const { agentDir, projectDir } = await makeIsolatedEnv("vib-legacy-agent-json");
 
 		// Place a legacy settings.json directly in the agent dir.
 		const legacyContent = JSON.stringify({ model: "test-legacy-agent-model" }, null, 2);
@@ -280,7 +280,7 @@ describe("customize doctor read-only contract (#4406)", () => {
 	});
 
 	it("legacy agent-dir settings.json is untouched (text mode)", async () => {
-		const { agentDir, projectDir } = await makeIsolatedEnv("gjc-legacy-agent-text");
+		const { agentDir, projectDir } = await makeIsolatedEnv("vib-legacy-agent-text");
 
 		const legacyContent = JSON.stringify({ model: "test-legacy-agent-model" }, null, 2);
 		await fs.writeFile(path.join(agentDir, "settings.json"), legacyContent);
@@ -304,12 +304,12 @@ describe("customize doctor read-only contract (#4406)", () => {
 	// =========================================================================
 
 	it("legacy config-root settings.json is untouched", async () => {
-		const { agentDir, configRoot, projectDir } = await makeIsolatedEnv("gjc-legacy-config-root");
+		const { agentDir, configRoot, projectDir } = await makeIsolatedEnv("vib-legacy-config-root");
 
 		// The config-root settings.json lives at <configRoot>/settings.json.
-		// GJC_CONFIG_DIR points the subprocess at this isolated root.
+		// VIB_CONFIG_DIR points the subprocess at this isolated root.
 		const legacyContent = JSON.stringify(
-			{ "gjc.ralplan.autoHandoff": "invalid-autoHandoff", model: "legacy-config-root" },
+			{ "vib.ralplan.autoHandoff": "invalid-autoHandoff", model: "legacy-config-root" },
 			null,
 			2,
 		);
@@ -335,18 +335,18 @@ describe("customize doctor read-only contract (#4406)", () => {
 	});
 
 	// =========================================================================
-	// 4. Legacy project .gjc/settings.json — not consumed/migrated
+	// 4. Legacy project .vib/settings.json — not consumed/migrated
 	// =========================================================================
 
-	it("legacy project .gjc/settings.json is untouched", async () => {
-		const { agentDir, projectDir } = await makeIsolatedEnv("gjc-legacy-project");
+	it("legacy project .vib/settings.json is untouched", async () => {
+		const { agentDir, projectDir } = await makeIsolatedEnv("vib-legacy-project");
 
-		const gjcDir = path.join(projectDir, ".gjc");
-		await fs.mkdir(gjcDir, { recursive: true });
-		const legacyContent = JSON.stringify({ "gjc.ralplan.maxIterations": 5, model: "legacy-project-model" }, null, 2);
-		await fs.writeFile(path.join(gjcDir, "settings.json"), legacyContent);
+		const vibDir = path.join(projectDir, ".vib");
+		await fs.mkdir(vibDir, { recursive: true });
+		const legacyContent = JSON.stringify({ "vib.ralplan.maxIterations": 5, model: "legacy-project-model" }, null, 2);
+		await fs.writeFile(path.join(vibDir, "settings.json"), legacyContent);
 		const touchTime = new Date(Date.now() - 60_000);
-		await fs.utimes(path.join(gjcDir, "settings.json"), touchTime, touchTime);
+		await fs.utimes(path.join(vibDir, "settings.json"), touchTime, touchTime);
 
 		const beforeProject = await snapshotDir(projectDir);
 		const beforeAgent = await snapshotDir(agentDir);
@@ -369,7 +369,7 @@ describe("customize doctor read-only contract (#4406)", () => {
 	// =========================================================================
 
 	it("existing config.yml and project customization trees retain name/content/mode/mtime", async () => {
-		const { agentDir, projectDir } = await makeIsolatedEnv("gjc-existing-config");
+		const { agentDir, projectDir } = await makeIsolatedEnv("vib-existing-config");
 
 		// Pre-existing config.yml in the agent dir.
 		const configYmlContent = "model: existing-model\nterminalBell: true\n";
@@ -379,22 +379,22 @@ describe("customize doctor read-only contract (#4406)", () => {
 		await fs.utimes(configPath, touchTime, touchTime);
 
 		// Pre-existing project customization tree.
-		await fs.mkdir(path.join(projectDir, ".gjc", "skills"), { recursive: true });
+		await fs.mkdir(path.join(projectDir, ".vib", "skills"), { recursive: true });
 		await fs.writeFile(
-			path.join(projectDir, ".gjc", "settings.json"),
+			path.join(projectDir, ".vib", "settings.json"),
 			JSON.stringify({ "skills.enabled": true }, null, 2),
 		);
-		await fs.utimes(path.join(projectDir, ".gjc", "settings.json"), touchTime, touchTime);
+		await fs.utimes(path.join(projectDir, ".vib", "settings.json"), touchTime, touchTime);
 		await fs.writeFile(
-			path.join(projectDir, ".gjc", "skills", "test-skill.md"),
+			path.join(projectDir, ".vib", "skills", "test-skill.md"),
 			"---\ndescription: A test skill\n---\n# Test\n",
 		);
-		await fs.utimes(path.join(projectDir, ".gjc", "skills", "test-skill.md"), touchTime, touchTime);
+		await fs.utimes(path.join(projectDir, ".vib", "skills", "test-skill.md"), touchTime, touchTime);
 		await fs.writeFile(
-			path.join(projectDir, ".gjc", "mcp.json"),
+			path.join(projectDir, ".vib", "mcp.json"),
 			JSON.stringify({ mcpServers: { "test-server": { command: "true" } } }),
 		);
-		await fs.utimes(path.join(projectDir, ".gjc", "mcp.json"), touchTime, touchTime);
+		await fs.utimes(path.join(projectDir, ".vib", "mcp.json"), touchTime, touchTime);
 
 		const beforeAgent = await snapshotDir(agentDir);
 		const beforeProject = await snapshotDir(projectDir);
@@ -422,7 +422,7 @@ describe("customize doctor read-only contract (#4406)", () => {
 	// =========================================================================
 
 	it("malformed config.yml reports diagnostics without repair writes", async () => {
-		const { agentDir, projectDir } = await makeIsolatedEnv("gjc-malformed");
+		const { agentDir, projectDir } = await makeIsolatedEnv("vib-malformed");
 
 		const malformedYaml = "model: [unclosed\n  :: invalid";
 		const configPath = path.join(agentDir, "config.yml");
@@ -457,7 +457,7 @@ describe("customize doctor read-only contract (#4406)", () => {
 	// =========================================================================
 
 	it("repeated doctor calls are idempotently read-only", async () => {
-		const { agentDir, projectDir } = await makeIsolatedEnv("gjc-idempotent");
+		const { agentDir, projectDir } = await makeIsolatedEnv("vib-idempotent");
 
 		// Set up both legacy and config.yml.
 		await fs.writeFile(path.join(agentDir, "settings.json"), JSON.stringify({ model: "legacy" }));
@@ -467,13 +467,13 @@ describe("customize doctor read-only contract (#4406)", () => {
 		await fs.utimes(path.join(agentDir, "config.yml"), touchTime, touchTime);
 
 		// Project customization.
-		const gjcDir = path.join(projectDir, ".gjc");
-		await fs.mkdir(gjcDir, { recursive: true });
+		const vibDir = path.join(projectDir, ".vib");
+		await fs.mkdir(vibDir, { recursive: true });
 		await fs.writeFile(
-			path.join(gjcDir, "mcp.json"),
+			path.join(vibDir, "mcp.json"),
 			JSON.stringify({ mcpServers: { server: { command: "true" } } }),
 		);
-		await fs.utimes(path.join(gjcDir, "mcp.json"), touchTime, touchTime);
+		await fs.utimes(path.join(vibDir, "mcp.json"), touchTime, touchTime);
 
 		const beforeAgent = await snapshotDir(agentDir);
 		const beforeProject = await snapshotDir(projectDir);
@@ -498,11 +498,11 @@ describe("customize doctor read-only contract (#4406)", () => {
 	// =========================================================================
 
 	it("produces valid JSON report with expected schema (JSON mode)", async () => {
-		const { agentDir, projectDir } = await makeIsolatedEnv("gjc-schema");
+		const { agentDir, projectDir } = await makeIsolatedEnv("vib-schema");
 
-		await fs.mkdir(path.join(projectDir, ".gjc"), { recursive: true });
+		await fs.mkdir(path.join(projectDir, ".vib"), { recursive: true });
 		await fs.writeFile(
-			path.join(projectDir, ".gjc", "mcp.json"),
+			path.join(projectDir, ".vib", "mcp.json"),
 			JSON.stringify({ mcpServers: { "schema-test": { command: "true" } } }),
 		);
 
@@ -526,11 +526,11 @@ describe("customize doctor read-only contract (#4406)", () => {
 	// =========================================================================
 
 	it("redacts secrets from both text and JSON output", async () => {
-		const { agentDir, projectDir } = await makeIsolatedEnv("gjc-redact");
+		const { agentDir, projectDir } = await makeIsolatedEnv("vib-redact");
 
-		await fs.mkdir(path.join(projectDir, ".gjc"), { recursive: true });
+		await fs.mkdir(path.join(projectDir, ".vib"), { recursive: true });
 		await fs.writeFile(
-			path.join(projectDir, ".gjc", "mcp.json"),
+			path.join(projectDir, ".vib", "mcp.json"),
 			JSON.stringify({
 				mcpServers: {
 					"secret-server": {
@@ -555,14 +555,14 @@ describe("customize doctor read-only contract (#4406)", () => {
 	// =========================================================================
 
 	it("preserves precedence behavior: project copy of bundled skill is shadowed (#4350)", async () => {
-		const { agentDir, projectDir } = await makeIsolatedEnv("gjc-precedence");
+		const { agentDir, projectDir } = await makeIsolatedEnv("vib-precedence");
 
 		// Create a project skill with a bundled workflow skill name, using the
 		// proper directory structure (<skills>/ralplan/SKILL.md) so the native
 		// provider discovers it deterministically.
-		await fs.mkdir(path.join(projectDir, ".gjc", "skills", "ralplan"), { recursive: true });
+		await fs.mkdir(path.join(projectDir, ".vib", "skills", "ralplan"), { recursive: true });
 		await fs.writeFile(
-			path.join(projectDir, ".gjc", "skills", "ralplan", "SKILL.md"),
+			path.join(projectDir, ".vib", "skills", "ralplan", "SKILL.md"),
 			"---\nname: ralplan\ndescription: Project copy of a bundled skill\n---\n# Custom\n",
 		);
 
@@ -609,7 +609,7 @@ describe("customize doctor read-only contract (#4406)", () => {
 	// =========================================================================
 
 	it("reads canonical config.yml values for doctor policy", async () => {
-		const { agentDir, projectDir } = await makeIsolatedEnv("gjc-config-read");
+		const { agentDir, projectDir } = await makeIsolatedEnv("vib-config-read");
 
 		await fs.writeFile(path.join(agentDir, "config.yml"), "model: semantic-test-model\nskills:\n  enabled: true\n");
 

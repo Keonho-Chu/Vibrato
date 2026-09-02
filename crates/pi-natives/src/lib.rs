@@ -1,4 +1,4 @@
-//! Native utilities exported via N-API for the Gajae Code toolchain.
+//! Native utilities exported via N-API for the Vibrato toolchain.
 //!
 //! # Overview
 //! High-performance primitives for clipboard access, grep, file discovery,

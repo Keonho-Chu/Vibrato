@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it } from "bun:test";
-import type { AgentToolResult } from "@gajae-code/agent-core";
-import type { Api, Model, ToolChoice } from "@gajae-code/ai";
-import { clearToolChoiceIncapabilityRegistryForTests, markToolChoiceIncapability } from "@gajae-code/ai";
-import { ToolChoiceQueue } from "@gajae-code/coding-agent/session/tool-choice-queue";
-import type { ToolSession } from "@gajae-code/coding-agent/tools";
-import { queueResolveHandler } from "@gajae-code/coding-agent/tools/resolve";
-import { ToolError } from "@gajae-code/coding-agent/tools/tool-errors";
-import { buildNamedToolChoiceResult } from "@gajae-code/coding-agent/utils/tool-choice";
+import type { AgentToolResult } from "@vib-rato/agent-core";
+import type { Api, Model, ToolChoice } from "@vib-rato/ai";
+import { clearToolChoiceIncapabilityRegistryForTests, markToolChoiceIncapability } from "@vib-rato/ai";
+import { ToolChoiceQueue } from "@vib-rato/coding-agent/session/tool-choice-queue";
+import type { ToolSession } from "@vib-rato/coding-agent/tools";
+import { queueResolveHandler } from "@vib-rato/coding-agent/tools/resolve";
+import { ToolError } from "@vib-rato/coding-agent/tools/tool-errors";
+import { buildNamedToolChoiceResult } from "@vib-rato/coding-agent/utils/tool-choice";
 
 const forcedResolve = { type: "tool", name: "resolve" } as const satisfies ToolChoice;
 const forcedTodoWrite = { type: "tool", name: "todo_write" } as const satisfies ToolChoice;

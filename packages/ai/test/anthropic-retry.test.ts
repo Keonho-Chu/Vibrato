@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { isProviderRetryableError } from "@gajae-code/ai/providers/anthropic";
+import { isProviderRetryableError } from "@vib-rato/ai/providers/anthropic";
 
 describe("isProviderRetryableError", () => {
 	it("retries known transient rate-limit errors", () => {

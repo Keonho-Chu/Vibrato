@@ -24,8 +24,8 @@
  */
 
 import { describe, expect, it } from "bun:test";
-import { getBundledModel } from "@gajae-code/ai/models";
-import { SessionManager, type SessionManagerCloseOutcome } from "@gajae-code/coding-agent/session/session-manager";
+import { getBundledModel } from "@vib-rato/ai/models";
+import { SessionManager, type SessionManagerCloseOutcome } from "@vib-rato/coding-agent/session/session-manager";
 import {
 	MemorySessionStorage,
 	type SessionStorage,
@@ -33,7 +33,7 @@ import {
 	type SessionStorageWriterCloseState,
 	type SessionStorageWriterOpenOptions,
 	SessionStorageWriterRetryableCloseError,
-} from "@gajae-code/coding-agent/session/session-storage";
+} from "@vib-rato/coding-agent/session/session-storage";
 
 class CloseHoldingStorage implements SessionStorage {
 	readonly #inner = new MemorySessionStorage();

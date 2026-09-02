@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, test } from "bun:test";
-import { getOAuthProviders } from "@gajae-code/ai/utils/oauth";
-import { OAuthSelectorComponent } from "@gajae-code/coding-agent/modes/components/oauth-selector";
-import { getThemeByName, setThemeInstance } from "@gajae-code/coding-agent/modes/theme/theme";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
+import { getSelectableOAuthProviders } from "@vib-rato/coding-agent/config/provider-allowlist";
+import { OAuthSelectorComponent } from "@vib-rato/coding-agent/modes/components/oauth-selector";
+import { getThemeByName, setThemeInstance } from "@vib-rato/coding-agent/modes/theme/theme";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
 
 let testTheme = await getThemeByName("red-claw");
 
@@ -42,48 +42,84 @@ beforeEach(async () => {
 });
 
 describe("OAuth selector filtering", () => {
-	test("a provider ranked past the visible window is reachable by typing", async () => {
-		// BizRouter ranks below the 10-row window, so it is not rendered on open.
+	test("typing narrows the list to the matching provider", async () => {
 		const { selector } = await createSelector();
-		expect(renderedText(selector)).not.toContain("BizRouter");
+		const openText = renderedText(selector);
+		expect(openText).toContain("SGLang (Local OpenAI-compatible)");
+		expect(openText).toContain("Anthropic (Claude Pro/Max)");
 
-		type(selector, "bizrouter");
+		type(selector, "sglang");
 
-		expect(renderedText(selector)).toContain("BizRouter");
+		const filtered = renderedText(selector);
+		expect(filtered).toContain("SGLang (Local OpenAI-compatible)");
+		expect(filtered).not.toContain("Anthropic (Claude Pro/Max)");
 	});
 
 	test("enter selects the filtered match rather than the ranked-list entry at that index", async () => {
 		const { selector, selected } = await createSelector();
-		type(selector, "bizrouter");
+		// SGLang ranks last in the famous tier, so the filtered match at index 0 must
+		// win over the entry the ranked list holds at that index.
+		type(selector, "sglang");
 		selector.handleInput("\n");
 
-		expect(selected).toEqual(["bizrouter"]);
+		expect(selected).toEqual(["sglang"]);
 	});
 
 	test("filtering matches on provider id as well as display name", async () => {
 		const { selector, selected } = await createSelector();
-		// "opengateway" is the id; the label is "OpenGateway by Sionic AI".
-		type(selector, "opengateway");
+		// "openai-codex-device" is the id; the label is
+		// "ChatGPT Plus/Pro (Codex, headless/device)" and contains neither "openai"
+		// nor the hyphenated id.
+		type(selector, "openai-codex-device");
 		selector.handleInput("\n");
 
-		expect(selected).toEqual(["opengateway"]);
+		expect(selected).toEqual(["openai-codex-device"]);
 	});
 
 	test("clearing the query restores the full list and keeps the matched provider selected", async () => {
 		const { selector, selected } = await createSelector();
-		const fullCount = getOAuthProviders().length;
+		const selectable = getSelectableOAuthProviders();
+		expect(selectable.length).toBeGreaterThan(1);
 
-		type(selector, "biz");
+		type(selector, "sgl");
 		selector.handleInput("\x7f"); // backspace
 		selector.handleInput("\x7f");
 		selector.handleInput("\x7f");
 
-		// Every provider is listed again...
-		expect(renderedText(selector)).toContain(`/${fullCount})`);
+		// Every selectable provider is listed again...
+		const restored = renderedText(selector);
+		for (const provider of selectable) expect(restored).toContain(provider.name);
 		// ...and the provider found via the filter stays selected, rather than the
 		// cursor snapping back to the top of the restored list.
 		selector.handleInput("\n");
-		expect(selected).toEqual(["bizrouter"]);
+		expect(selected).toEqual(["sglang"]);
+	});
+
+	test("providers outside the product allowlist are not offered at all", async () => {
+		const { selector, selected } = await createSelector();
+		const listed = renderedText(selector);
+		for (const label of ["BizRouter", "OpenGateway by Sionic AI", "Cursor", "GitHub Copilot", "xAI"]) {
+			expect(listed).not.toContain(label);
+		}
+
+		// Typing a hidden provider's id finds nothing and selects nothing.
+		type(selector, "bizrouter");
+		expect(renderedText(selector)).toContain("No providers match the filter");
+		selector.handleInput("\n");
+		expect(selected).toEqual([]);
+	});
+
+	test("web-search OAuth entries stay available even though they are not model providers", async () => {
+		const ids = getSelectableOAuthProviders().map(provider => provider.id);
+		expect(ids).toEqual(
+			expect.arrayContaining(["anthropic", "openai-codex", "openai-codex-device", "vllm", "sglang"]),
+		);
+		expect(ids).toEqual(expect.arrayContaining(["tavily", "kagi", "parallel", "perplexity"]));
+
+		const { selector, selected } = await createSelector();
+		type(selector, "tavily");
+		selector.handleInput("\n");
+		expect(selected).toEqual(["tavily"]);
 	});
 
 	test("bulk account removal requires confirmation and cancel leaves the callback untouched", async () => {
@@ -250,7 +286,7 @@ describe("OAuth selector filtering", () => {
 
 	test("arrow keys still navigate and do not leak into the filter", async () => {
 		const { selector, selected } = await createSelector();
-		const providers = getOAuthProviders();
+		const providers = getSelectableOAuthProviders();
 		expect(providers.length).toBeGreaterThan(1);
 
 		selector.handleInput("\x1b[B"); // down
@@ -268,9 +304,9 @@ describe("OAuth selector filtering", () => {
 		// at index 0 rather than keeping a stale offset into the old list.
 		selector.handleInput("\x1b[B");
 		selector.handleInput("\x1b[B");
-		type(selector, "bizrouter");
+		type(selector, "sglang");
 		selector.handleInput("\n");
 
-		expect(selected).toEqual(["bizrouter"]);
+		expect(selected).toEqual(["sglang"]);
 	});
 });

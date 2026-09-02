@@ -1,4 +1,4 @@
-import { getAgentDir } from "@gajae-code/utils";
+import { getAgentDir } from "@vib-rato/utils";
 import { ensureBroker } from "../broker/ensure";
 import { lifecycleRequestTimeoutMs } from "../broker/startup-budget";
 import { SdkClientError } from "../client/client";
@@ -14,7 +14,7 @@ import { type SessionAttachment, SessionRouter, SessionRouterError } from "../ro
 import { SessionListTraversalError, sessionListPageFromResponse, traverseSessionList } from "../session-list";
 
 const PROTOCOL_VERSION = "2024-11-05";
-const SERVER_NAME = "gjc-sdk-mcp";
+const SERVER_NAME = "vib-sdk-mcp";
 const ENDPOINT_CREDENTIAL_OPERATION = "session.get_endpoint";
 
 type Arguments = Record<string, unknown>;
@@ -33,16 +33,16 @@ export interface SdkMcpServerOptions {
 }
 
 export const SDK_MCP_TOOL_NAMES = [
-	"gjc_session_control",
-	"gjc_session_query",
-	"gjc_session_global",
-	"gjc_session_list",
+	"vib_session_control",
+	"vib_session_query",
+	"vib_session_global",
+	"vib_session_list",
 ] as const;
 
 function schema(name: (typeof SDK_MCP_TOOL_NAMES)[number]): Record<string, unknown> {
 	const common = { type: "object", additionalProperties: false };
 	switch (name) {
-		case "gjc_session_control":
+		case "vib_session_control":
 			return {
 				name,
 				description: "Run a typed SDK control operation for one session.",
@@ -61,7 +61,7 @@ function schema(name: (typeof SDK_MCP_TOOL_NAMES)[number]): Record<string, unkno
 					},
 				},
 			};
-		case "gjc_session_query":
+		case "vib_session_query":
 			return {
 				name,
 				description: "Run a typed SDK query for one session.",
@@ -76,7 +76,7 @@ function schema(name: (typeof SDK_MCP_TOOL_NAMES)[number]): Record<string, unkno
 					},
 				},
 			};
-		case "gjc_session_global":
+		case "vib_session_global":
 			return {
 				name,
 				description: "Run a typed agent-global SDK broker operation.",
@@ -94,7 +94,7 @@ function schema(name: (typeof SDK_MCP_TOOL_NAMES)[number]): Record<string, unkno
 					},
 				},
 			};
-		case "gjc_session_list":
+		case "vib_session_list":
 			return {
 				name,
 				description: "List locally discoverable SDK session IDs.",
@@ -147,7 +147,7 @@ function mcpOperationError(
 	return adapterDispositionError("mcp", kind, operation, true);
 }
 
-const MCP_LIFECYCLE_ACTOR = { id: "gjc-sdk-mcp", namespace: "sdk:mcp" } as const;
+const MCP_LIFECYCLE_ACTOR = { id: "vib-sdk-mcp", namespace: "sdk:mcp" } as const;
 const ROUTER_START_TIMEOUT_MS = 3_000;
 const ROUTER_STOP_TIMEOUT_MS = 5_000;
 type LifecycleMutationOperation = Exclude<SessionLifecycleOperation, "session.list">;
@@ -286,7 +286,7 @@ export function createSdkMcpServer(options: SdkMcpServerOptions = {}) {
 	}
 
 	async function callTool(name: string, args: Arguments = {}): Promise<unknown> {
-		if (name === "gjc_session_list") {
+		if (name === "vib_session_list") {
 			try {
 				await ensureBroker({ agentDir });
 				await start();
@@ -295,7 +295,7 @@ export function createSdkMcpServer(options: SdkMcpServerOptions = {}) {
 				return resultError(error);
 			}
 		}
-		if (name === "gjc_session_control") {
+		if (name === "vib_session_control") {
 			const sessionId = asString(args, "sessionId");
 			const operation = asString(args, "operation");
 			if (!sessionId || !operation)
@@ -325,7 +325,7 @@ export function createSdkMcpServer(options: SdkMcpServerOptions = {}) {
 				...(idempotencyKey === undefined ? {} : { idempotencyKey }),
 			});
 		}
-		if (name === "gjc_session_query") {
+		if (name === "vib_session_query") {
 			const sessionId = asString(args, "sessionId");
 			const query = asString(args, "query");
 			if (!sessionId || !query)
@@ -343,7 +343,7 @@ export function createSdkMcpServer(options: SdkMcpServerOptions = {}) {
 				...(cursor === undefined ? {} : { cursor }),
 			});
 		}
-		if (name === "gjc_session_global") {
+		if (name === "vib_session_global") {
 			const operation = asString(args, "operation");
 			if (!operation) return { ok: false, error: { code: "invalid_input", message: "operation is required" } };
 			const input = isObject(args.input) ? args.input : {};
@@ -420,7 +420,7 @@ export function createSdkMcpServer(options: SdkMcpServerOptions = {}) {
 
 /**
  * Runs the SDK MCP server over stdio (newline-delimited JSON-RPC), the shipped
- * `gjc mcp-serve sdk` entrypoint. SessionRouter owns live endpoint authority and starts lazily
+ * `vib mcp-serve sdk` entrypoint. SessionRouter owns live endpoint authority and starts lazily
  * on the first live-session tool, then stops after stdin and in-flight requests drain.
  */
 export async function runSdkMcpStdio(options: SdkMcpServerOptions = {}): Promise<void> {

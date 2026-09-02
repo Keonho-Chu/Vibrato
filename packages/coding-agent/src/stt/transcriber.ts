@@ -1,4 +1,4 @@
-import { $which, logger } from "@gajae-code/utils";
+import { $which, logger } from "@vib-rato/utils";
 import transcribeScript from "./transcribe.py" with { type: "text" };
 
 export interface TranscribeOptions {

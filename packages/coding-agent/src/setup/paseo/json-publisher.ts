@@ -55,9 +55,9 @@ function describeRefusal(targetPath: string, refusal: PublishRefusal): string {
 		case "parse-refusal":
 			return `Refusing to write ${targetPath}: it is not parseable JSON (${refusal.detail}). Fix or remove the file, then re-run.`;
 		case "format-drift":
-			return `Refusing to write ${targetPath}: ${refusal.detail}. GJC only edits files it can rewrite byte-for-byte, so it will not reformat a file it did not author.`;
+			return `Refusing to write ${targetPath}: ${refusal.detail}. Vibrato only edits files it can rewrite byte-for-byte, so it will not reformat a file it did not author.`;
 		case "cas-conflict":
-			return `Refusing to write ${targetPath}: the file changed while GJC was preparing its update. Re-run to pick up the current contents.`;
+			return `Refusing to write ${targetPath}: the file changed while Vibrato was preparing its update. Re-run to pick up the current contents.`;
 	}
 }
 
@@ -161,7 +161,7 @@ function backupSuffix(now: Date): string {
  * `options.expectedIdentity`.
  *
  * The CAS is re-read immediately before the rename, which is the narrowest
- * window GJC can achieve. It does not defend against Paseo re-writing the file
+ * window Vibrato can achieve. It does not defend against Paseo re-writing the file
  * later from its own stale in-memory copy -- Paseo exposes no lock or version
  * API, so that remains a documented residual risk detected by `--check`.
  */
@@ -188,7 +188,7 @@ export async function publishPlan(
 
 	let backupPath: string | undefined;
 	if (options.backup && observed !== ABSENT_IDENTITY) {
-		backupPath = `${targetPath}.gjc-bak-${backupSuffix(options.now)}`;
+		backupPath = `${targetPath}.vib-bak-${backupSuffix(options.now)}`;
 		await copyPrivately(targetPath, backupPath);
 	}
 

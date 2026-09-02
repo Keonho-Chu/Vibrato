@@ -17,7 +17,7 @@ function extractSetValues(sourceText: string, name: string): string[] {
 	return [...block[1].matchAll(/"([^"]+)"/g)].map(match => match[1]).sort();
 }
 
-describe("GJC utility extensibility quarantine", () => {
+describe("Vibrato utility extensibility quarantine", () => {
 	it("removes only non-ambiguous product-facing utility slash commands from the active registry", async () => {
 		const registry = await source("slash-commands", "builtin-registry.ts");
 		expect(extractSetValues(registry, "QUARANTINED_UTILITY_SLASH_COMMANDS")).toEqual(["agents"]);

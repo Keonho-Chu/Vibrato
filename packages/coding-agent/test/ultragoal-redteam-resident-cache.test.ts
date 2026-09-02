@@ -3,21 +3,21 @@ import { createHash } from "node:crypto";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { exportSessionToHtml } from "@gajae-code/coding-agent/export/html";
-import { sweepResidentCacheRoot } from "@gajae-code/coding-agent/session/blob-store";
-import { SessionManager, SessionManagerTestHooks } from "@gajae-code/coding-agent/session/session-manager";
-import * as native from "@gajae-code/natives";
-import { getAgentDir, getResidentCacheRootDir, setAgentDir } from "@gajae-code/utils";
+import { exportSessionToHtml } from "@vib-rato/coding-agent/export/html";
+import { sweepResidentCacheRoot } from "@vib-rato/coding-agent/session/blob-store";
+import { SessionManager, SessionManagerTestHooks } from "@vib-rato/coding-agent/session/session-manager";
+import * as native from "@vib-rato/natives";
+import { getAgentDir, getResidentCacheRootDir, setAgentDir } from "@vib-rato/utils";
 
 const MiB = 1024 * 1024;
 const originalAgentDir = getAgentDir();
-const originalAgentDirOverride = process.env.GJC_CODING_AGENT_DIR;
+const originalAgentDirOverride = process.env.VIB_CODING_AGENT_DIR;
 const originalMaterializedCacheMaxBytesOverride = SessionManagerTestHooks.materializedCacheMaxBytesOverride;
 const originalAfterForkSnapshot = SessionManagerTestHooks.afterForkSnapshot;
 const temporaryDirectories: string[] = [];
 
 beforeEach(() => {
-	setAgentDir(path.join(makeTempDir("gjc-redteam-agent-"), "agent"));
+	setAgentDir(path.join(makeTempDir("vib-redteam-agent-"), "agent"));
 });
 
 afterEach(async () => {
@@ -25,14 +25,14 @@ afterEach(async () => {
 	SessionManagerTestHooks.materializedCacheMaxBytesOverride = originalMaterializedCacheMaxBytesOverride;
 	setAgentDir(originalAgentDir);
 	SessionManagerTestHooks.afterForkSnapshot = originalAfterForkSnapshot;
-	if (originalAgentDirOverride === undefined) delete process.env.GJC_CODING_AGENT_DIR;
-	else process.env.GJC_CODING_AGENT_DIR = originalAgentDirOverride;
+	if (originalAgentDirOverride === undefined) delete process.env.VIB_CODING_AGENT_DIR;
+	else process.env.VIB_CODING_AGENT_DIR = originalAgentDirOverride;
 	await Promise.all(
 		temporaryDirectories.splice(0).map(directory => fs.promises.rm(directory, { recursive: true, force: true })),
 	);
 });
 
-function makeTempDir(prefix = "gjc-redteam-resident-"): string {
+function makeTempDir(prefix = "vib-redteam-resident-"): string {
 	const directory = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
 	temporaryDirectories.push(directory);
 	return directory;
@@ -102,7 +102,7 @@ function installVerifiedNativeCleanup(): void {
 }
 
 function createWorkspace(label: string): { root: string; cwd: string } {
-	const root = makeTempDir(`gjc-redteam-${label}-`);
+	const root = makeTempDir(`vib-redteam-${label}-`);
 	const cwd = path.join(root, "workspace");
 	ensureOwnerOnlyDirectory(cwd);
 	ensureOwnerOnlyDirectory(getAgentDir());
@@ -185,7 +185,7 @@ function expectReadable(manager: SessionManager, text: string): void {
 
 function expectNoResidentLeak(value: string): void {
 	expect(value).not.toContain("blob:sha256:");
-	expect(value).not.toContain("__gjcResidentBlob");
+	expect(value).not.toContain("__vibResidentBlob");
 	expect(value).not.toContain("Session resident text blob missing");
 	expect(value).not.toContain("original content unavailable");
 }

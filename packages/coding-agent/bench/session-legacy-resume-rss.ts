@@ -144,7 +144,7 @@ function forceGc(): boolean {
 }
 
 async function measureShape(seed: number, recordCount: number, bodyBytes: number): Promise<ShapeMeasurement> {
-	const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-issue-2834-rss-"));
+	const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-issue-2834-rss-"));
 	try {
 		const sessionDir = path.join(root, "sessions");
 		const transcriptPath = path.join(sessionDir, "synthetic-legacy.jsonl");

@@ -4,7 +4,7 @@
  *
  * Emits `relevant=true|false` to $GITHUB_OUTPUT. `relevant=false` is only
  * produced when the run is a pull_request with a known base SHA and EVERY
- * changed path is provably irrelevant (markdown, docs/, .gjc/). Any other
+ * changed path is provably irrelevant (markdown, docs/, .vib/). Any other
  * event, missing data, or error fails open to `relevant=true` so validation
  * is never weakened by ambiguity.
  */
@@ -21,7 +21,7 @@ interface Decision {
 }
 
 function isProvablyIrrelevant(changedPath: string): boolean {
-	return changedPath.endsWith(".md") || changedPath.startsWith("docs/") || changedPath.startsWith(".gjc/");
+	return changedPath.endsWith(".md") || changedPath.startsWith("docs/") || changedPath.startsWith(".vib/");
 }
 
 async function changedFiles(baseSha: string): Promise<string[]> {
@@ -53,7 +53,7 @@ async function decide(): Promise<Decision> {
 
 	return {
 		relevant: false,
-		reason: `all ${files.length} changed path(s) are provably irrelevant (*.md, docs/, .gjc/)`,
+		reason: `all ${files.length} changed path(s) are provably irrelevant (*.md, docs/, .vib/)`,
 	};
 }
 

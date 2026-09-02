@@ -88,7 +88,7 @@ describe("pi-natives", () => {
 	});
 
 	it("keeps native crash diagnostics opt-in", () => {
-		delete process.env.GJC_NATIVE_CRASH_DIAGNOSTICS;
+		delete process.env.VIB_NATIVE_CRASH_DIAGNOSTICS;
 		expect(initNativeCrashDiagnostics()).toBe(false);
 	});
 

@@ -15,7 +15,7 @@
  *    aborts the hedge when the primary wins.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
-import type { AuthStorage } from "@gajae-code/ai";
+import type { AuthStorage } from "@vib-rato/ai";
 import type { ToolSession } from "../../../src/tools";
 import { setDdgHedgeDelayMs, WebSearchTool } from "../../../src/web/search";
 import * as provider from "../../../src/web/search/provider";

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
-import { type Component, Container, renderMetrics, TUI } from "@gajae-code/tui";
+import { type Component, Container, renderMetrics, TUI } from "@vib-rato/tui";
 import { VirtualTerminal } from "./virtual-terminal";
 
 /** Minimal component that returns a fixed line array regardless of width. */

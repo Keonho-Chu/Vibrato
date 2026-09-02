@@ -21,7 +21,7 @@ describe("hashPrefix", () => {
 });
 
 const APPEND_ONLY_PREFIX = JSON.stringify({
-	systemPrompt: ["You are GJC.", "Use tools deterministically."],
+	systemPrompt: ["You are Vibrato.", "Use tools deterministically."],
 	tools: [
 		{
 			name: "read",

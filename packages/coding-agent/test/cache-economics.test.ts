@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import type { Model, Usage } from "@gajae-code/ai";
+import type { Model, Usage } from "@vib-rato/ai";
 import {
 	buildCacheBehaviorWarning,
 	buildCacheEconomicsWarning,
@@ -7,7 +7,7 @@ import {
 	type CacheEconomicsUsage,
 	computeCacheMissCostSummary,
 	formatCacheWarningLine,
-} from "@gajae-code/coding-agent/session/cache-economics";
+} from "@vib-rato/coding-agent/session/cache-economics";
 
 function usage(overrides: Partial<Usage>): Usage {
 	return {

@@ -39,7 +39,7 @@ export interface ProfileReuseResult {
 }
 
 function defaultTempDir(): string {
-	return fs.mkdtempSync(path.join(os.tmpdir(), "gjc-profile-warmup-"));
+	return fs.mkdtempSync(path.join(os.tmpdir(), "vib-profile-warmup-"));
 }
 
 function errorMessage(error: unknown): string {

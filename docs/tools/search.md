@@ -60,7 +60,7 @@ The tool returns a single text block in `content[0].text` plus structured `detai
    - one entry: `parseSearchPath()` splits `basePath` and optional glob;
    - multiple entries: `resolveExplicitSearchPaths()` computes a common base directory, brace-union glob, exact-file list, or degenerate-root target list.
 6. `search.ts` stats the resolved base path to decide file vs directory behavior.
-7. It calls native `grep()` from `@gajae-code/natives` with:
+7. It calls native `grep()` from `@vib-rato/natives` with:
    - `pattern`, `ignoreCase`, `multiline`, `gitignore`;
    - `hidden: true`;
    - `cache: false`;

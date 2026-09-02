@@ -1,7 +1,7 @@
 /**
  * Opt-in crash relay to a Sentry-compatible upstream.
  *
- * This is a **second, separate** egress channel from `gjc crash report`. The
+ * This is a **second, separate** egress channel from `vib crash report`. The
  * issue flow keeps its per-invocation, digest-confirmed consent boundary; this
  * one is gated by configuration instead, and is therefore deliberately much
  * narrower in what it can ever emit:
@@ -22,8 +22,8 @@
 import { createHash } from "node:crypto";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { getTrustedAgentFile, normalizeCrashFrames, VERSION } from "@gajae-code/utils";
-import { $credentialEnv } from "@gajae-code/utils/env";
+import { getTrustedAgentFile, normalizeCrashFrames, VERSION } from "@vib-rato/utils";
+import { $credentialEnv } from "@vib-rato/utils/env";
 import {
 	type CrashSignatureView,
 	type CrashStatePaths,
@@ -39,7 +39,7 @@ import { buildCrashEnvelope, type CrashEventFrame, sentryAuthHeader } from "./en
 export const SANITIZER_EGRESS_CONTRACT_VERSION = "sanitize-external-crash-v1";
 
 /** Trusted environment variable form of the DSN, for CI and one-off runs. */
-export const CRASH_UPSTREAM_DSN_ENV = "GJC_CRASH_SENTRY_DSN";
+export const CRASH_UPSTREAM_DSN_ENV = "VIB_CRASH_SENTRY_DSN";
 
 /**
  * Cap per startup. A crash loop can produce many signatures; a bounded batch
@@ -76,7 +76,7 @@ export interface CrashRelayConfig {
 /**
  * The only settings surface the relay is allowed to read.
  *
- * `Settings.get` merges project `.gjc` configuration into the answer, so using
+ * `Settings.get` merges project `.vib` configuration into the answer, so using
  * it here would let merely opening a repository turn the relay on and choose
  * its destination — an untrusted checkout could redirect crash signatures that
  * were recorded long before it was cloned. Both keys are therefore read from
@@ -252,17 +252,17 @@ async function persistRefusal(
  */
 export function resolveTrustedRelayStatePaths(): CrashStatePaths {
 	return {
-		index: getTrustedAgentFile("gjc-crash-index.json"),
-		events: getTrustedAgentFile("gjc-crash-events.jsonl"),
-		crashLog: getTrustedAgentFile("gjc-crash.log"),
+		index: getTrustedAgentFile("vib-crash-index.json"),
+		events: getTrustedAgentFile("vib-crash-events.jsonl"),
+		crashLog: getTrustedAgentFile("vib-crash.log"),
 	};
 }
 
 export function resolveTrustedHandledRelayStatePaths(): CrashStatePaths {
 	return {
-		index: getTrustedAgentFile("gjc-error-index.json"),
-		events: getTrustedAgentFile("gjc-error-events.jsonl"),
-		crashLog: getTrustedAgentFile("gjc-error.log"),
+		index: getTrustedAgentFile("vib-error-index.json"),
+		events: getTrustedAgentFile("vib-error-events.jsonl"),
+		crashLog: getTrustedAgentFile("vib-error.log"),
 	};
 }
 
@@ -291,7 +291,7 @@ async function claimRelay(
 ): Promise<
 	{ readonly status: "claimed"; readonly release: () => Promise<void> } | { readonly status: "contended" | "failed" }
 > {
-	const claimPath = path.join(path.dirname(paths.index), `.gjc-crash-relay-${fingerprint}`);
+	const claimPath = path.join(path.dirname(paths.index), `.vib-crash-relay-${fingerprint}`);
 	try {
 		const file = await fs.open(claimPath, "wx", 0o600);
 		await file.writeFile(`${JSON.stringify({ eventId, watermark })}\n`);
@@ -433,9 +433,9 @@ export async function relayCrashSignatures(options: CrashRelayOptions): Promise<
 export function resolveHandledErrorStatePaths(agentDir?: string): CrashStatePaths {
 	if (!agentDir) return resolveTrustedHandledRelayStatePaths();
 	return {
-		index: path.join(agentDir, "gjc-error-index.json"),
-		events: path.join(agentDir, "gjc-error-events.jsonl"),
-		crashLog: path.join(agentDir, "gjc-error.log"),
+		index: path.join(agentDir, "vib-error-index.json"),
+		events: path.join(agentDir, "vib-error-events.jsonl"),
+		crashLog: path.join(agentDir, "vib-error.log"),
 	};
 }
 

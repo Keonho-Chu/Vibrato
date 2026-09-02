@@ -2,10 +2,10 @@ import * as crypto from "node:crypto";
 import type { BigIntStats, Stats } from "node:fs";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import type { NativeDirectoryTreeResult, NativeExactUnlinkResult } from "@gajae-code/natives";
-import { renameNoReplacePathAsync } from "@gajae-code/natives";
-import { isEnoent } from "@gajae-code/utils/fs-error";
-import { nativeProcessBindings } from "@gajae-code/utils/native-process";
+import type { NativeDirectoryTreeResult, NativeExactUnlinkResult } from "@vib-rato/natives";
+import { renameNoReplacePathAsync } from "@vib-rato/natives";
+import { isEnoent } from "@vib-rato/utils/fs-error";
+import { nativeProcessBindings } from "@vib-rato/utils/native-process";
 
 export interface FileLockOptions {
 	staleMs?: number;
@@ -887,7 +887,7 @@ function nativeFileLockBindings(): NativeFileLockBindings {
 	if (FileLockTestHooks.nativeQuarantineBindings) return FileLockTestHooks.nativeQuarantineBindings();
 	if (nativeFileLockBindingCache) return nativeFileLockBindingCache;
 	try {
-		nativeFileLockBindingCache = require("@gajae-code/natives") as NativeFileLockBindings;
+		nativeFileLockBindingCache = require("@vib-rato/natives") as NativeFileLockBindings;
 		return nativeFileLockBindingCache;
 	} catch (error) {
 		throw Object.assign(new Error("Native identity-bound lock quarantine is unavailable."), { cause: error });
@@ -1155,7 +1155,7 @@ async function acquireLock(filePath: string, options: FileLockOptions = {}): Pro
 	}
 	throw new Error(
 		`Failed to acquire lock for ${filePath} after ${opts.retries} attempts: ${await lockHolderDescription(lockPath)} (${lockPath}); ` +
-			`a live owner is never displaced — if this is an SDK broker (gjc sdk status), it must finish or be stopped before retrying`,
+			`a live owner is never displaced — if this is an SDK broker (vib sdk status), it must finish or be stopped before retrying`,
 	);
 }
 

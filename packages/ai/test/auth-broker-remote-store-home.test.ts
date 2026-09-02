@@ -30,9 +30,9 @@ async function probe(firstHome: string, secondHome: string): Promise<ProbeResult
 	for (const [key, value] of Object.entries(process.env)) {
 		if (value !== undefined) env[key] = value;
 	}
-	delete env.GJC_CODING_AGENT_DIR;
+	delete env.VIB_CODING_AGENT_DIR;
 	delete env.PI_CODING_AGENT_DIR;
-	delete env.GJC_CONFIG_DIR;
+	delete env.VIB_CONFIG_DIR;
 	delete env.PI_CONFIG_DIR;
 	delete env.XDG_DATA_HOME;
 	delete env.XDG_STATE_HOME;
@@ -44,7 +44,7 @@ async function probe(firstHome: string, secondHome: string): Promise<ProbeResult
 	const unusedHomeKey = process.platform === "win32" ? "HOME" : "USERPROFILE";
 	env[homeKey] = firstHome;
 	delete env[unusedHomeKey];
-	env.GJC_PROBE_SECOND_HOME = secondHome;
+	env.VIB_PROBE_SECOND_HOME = secondHome;
 
 	const proc = Bun.spawn([process.execPath, PROBE], {
 		cwd: firstHome,
@@ -62,7 +62,7 @@ describe("auth-broker presentation sidecar follows the call-time home (#4786)", 
 	const tempDirs: string[] = [];
 
 	function tempDir(): string {
-		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-auth-broker-home-"));
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-auth-broker-home-"));
 		tempDirs.push(dir);
 		return dir;
 	}
@@ -76,8 +76,8 @@ describe("auth-broker presentation sidecar follows the call-time home (#4786)", 
 		const secondHome = tempDir();
 		const result = await probe(firstHome, secondHome);
 
-		expect(result.importTimeConfigRoot).toBe(path.join(firstHome, ".gjc"));
-		expect(result.configRootAfterHomeChange).toBe(path.join(secondHome, ".gjc"));
+		expect(result.importTimeConfigRoot).toBe(path.join(firstHome, ".vib"));
+		expect(result.configRootAfterHomeChange).toBe(path.join(secondHome, ".vib"));
 		expect(result.sidecarUnderImportTimeRoot).toBe(false);
 		expect(result.sidecarUnderCurrentRoot).toBe(true);
 	});

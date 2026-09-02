@@ -12,7 +12,7 @@ const API_BASE = "https://discord.com/api/v10";
 const GATEWAY_INTENTS = 1 + 512 + 32_768;
 const MAX_RATE_LIMIT_RETRIES = 2;
 const REST_REQUEST_TIMEOUT_MS = 5_000;
-const NONCE_PREFIX = "<!-- gjc-thread-nonce:";
+const NONCE_PREFIX = "<!-- vib-thread-nonce:";
 const INVALID_SESSION_RECONNECT_DELAY_MS = 1_000;
 const TERMINAL_GATEWAY_CLOSE_CODES: ReadonlySet<number> = new Set([4_004, 4_010, 4_011, 4_012, 4_013, 4_014]);
 
@@ -471,7 +471,7 @@ export class DiscordLiveProvider implements DiscordProvider, DiscordDiagnosticPr
 				d: {
 					token: this.#token,
 					intents: GATEWAY_INTENTS,
-					properties: { os: "bun", browser: "gjc", device: "gjc" },
+					properties: { os: "bun", browser: "vib", device: "vib" },
 				},
 			}),
 		);

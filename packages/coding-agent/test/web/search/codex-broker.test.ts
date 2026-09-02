@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "bun:test";
 import * as os from "node:os";
-import type { AuthStorage } from "@gajae-code/ai";
-import { hookFetch } from "@gajae-code/utils";
+import type { AuthStorage } from "@vib-rato/ai";
+import { hookFetch } from "@vib-rato/utils";
 import { AgentStorage } from "../../../src/session/agent-storage";
 import type { SearchParams } from "../../../src/web/search/providers/base";
 import { searchCodex } from "../../../src/web/search/providers/codex";

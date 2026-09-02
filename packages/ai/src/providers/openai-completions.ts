@@ -1,5 +1,5 @@
 import { scheduler } from "node:timers/promises";
-import { $credentialEnv, $env, extractHttpStatusFromError, logger } from "@gajae-code/utils";
+import { $credentialEnv, $env, extractHttpStatusFromError, logger } from "@vib-rato/utils";
 import OpenAI, { APIConnectionTimeoutError } from "openai";
 import type {
 	ChatCompletionAssistantMessageParam,
@@ -1290,9 +1290,9 @@ async function createClient(
 		// `cli-agent` marketplace category. `User-Agent` overrides the default OpenAI
 		// SDK UA so traffic is identifiable in upstream provider logs.
 		// https://openrouter.ai/docs/app-attribution
-		headers["User-Agent"] = `Gajae-Code/${packageJson.version}`;
-		headers["HTTP-Referer"] = "https://gaebal-gajae.dev/";
-		headers["X-OpenRouter-Title"] = "Gajae-Code";
+		headers["User-Agent"] = `Vibrato/${packageJson.version}`;
+		headers["HTTP-Referer"] = "https://gaebal-vibrato.dev/";
+		headers["X-OpenRouter-Title"] = "Vibrato";
 		headers["X-OpenRouter-Categories"] = "cli-agent";
 		// Always-on response caching: identical requests return cached responses for free.
 		// TTL 1h; first call hits the provider, every identical call within the window
@@ -1320,7 +1320,7 @@ async function createClient(
 		// `{...default, ...customHeaders}`). #3557.
 		headers = mergeDashScopeTokenPlanHeaders(headers);
 	}
-	headers = applyOpenAIRequestTransformHeaders(headers, model.requestTransform, `Gajae-Code/${packageJson.version}`);
+	headers = applyOpenAIRequestTransformHeaders(headers, model.requestTransform, `Vibrato/${packageJson.version}`);
 	let copilotPremiumRequests: number | undefined;
 
 	let baseUrl =
@@ -1392,7 +1392,7 @@ async function createClient(
 	const transformedFetch = wrapFetchForOpenAIRequestTransform(
 		boundedFetch,
 		model.requestTransform,
-		`Gajae-Code/${packageJson.version}`,
+		`Vibrato/${packageJson.version}`,
 	);
 	const debugFetch = onSseEvent
 		? wrapFetchForSseDebug(transformedFetch, event => onSseEvent(event, model, attemptScope))

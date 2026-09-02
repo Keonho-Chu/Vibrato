@@ -1,5 +1,5 @@
 /**
- * Deterministic coverage for the `GJC_SESSION_CONTEXT_BUDGET_BYTES` override
+ * Deterministic coverage for the `VIB_SESSION_CONTEXT_BUDGET_BYTES` override
  * contract.
  *
  * The resolver is a pure function of its override argument, so every branch —
@@ -11,7 +11,7 @@
  */
 import { afterEach, describe, expect, it, vi } from "bun:test";
 import * as path from "node:path";
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 import {
 	resolveSessionContextBudgetBytes,
 	SESSION_CONTEXT_MATERIALIZATION_BUDGET_BYTES_DEFAULT,
@@ -29,7 +29,7 @@ afterEach(() => {
 /** Run the probe in a fresh subprocess with a scrubbed environment. */
 function probeProductionBudget(): number {
 	const env = { ...process.env } as Record<string, string>;
-	delete env.GJC_SESSION_CONTEXT_BUDGET_BYTES;
+	delete env.VIB_SESSION_CONTEXT_BUDGET_BYTES;
 	const result = Bun.spawnSync({
 		cmd: [process.execPath, PROBE],
 		env,
@@ -47,7 +47,7 @@ describe("SESSION_CONTEXT_MATERIALIZATION_BUDGET_BYTES default", () => {
 	});
 
 	it("resolves to the 512 MiB default in a clean production-equivalent process", () => {
-		// No GJC_SESSION_CONTEXT_BUDGET_BYTES in the subprocess environment: the
+		// No VIB_SESSION_CONTEXT_BUDGET_BYTES in the subprocess environment: the
 		// module-load-time constant must equal the documented production default.
 		expect(probeProductionBudget()).toBe(512 * MIB);
 	});

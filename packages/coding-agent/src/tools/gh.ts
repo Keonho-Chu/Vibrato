@@ -2,9 +2,9 @@ import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 import { scheduler } from "node:timers/promises";
-import type { AgentTool, AgentToolContext, AgentToolResult, AgentToolUpdateCallback } from "@gajae-code/agent-core";
+import type { AgentTool, AgentToolContext, AgentToolResult, AgentToolUpdateCallback } from "@vib-rato/agent-core";
 
-import { getWorktreeDir, hashPath, isEnoent, prompt, untilAborted } from "@gajae-code/utils";
+import { getWorktreeDir, hashPath, isEnoent, prompt, untilAborted } from "@vib-rato/utils";
 import * as z from "zod/v4";
 import type { Settings } from "../config/settings";
 import githubDescription from "../prompts/tools/github.md" with { type: "text" };
@@ -108,10 +108,10 @@ const GH_PR_CHECKOUT_FIELDS = [
 ];
 
 const PR_CHECKOUT_BRANCH_CONFIG = {
-	headRef: "gjcPrHeadRef",
-	url: "gjcPrUrl",
-	isCrossRepository: "gjcPrIsCrossRepository",
-	maintainerCanModify: "gjcPrMaintainerCanModify",
+	headRef: "vibPrHeadRef",
+	url: "vibPrUrl",
+	isCrossRepository: "vibPrIsCrossRepository",
+	maintainerCanModify: "vibPrMaintainerCanModify",
 } as const;
 
 const LEGACY_PR_CHECKOUT_BRANCH_CONFIG = {
@@ -225,7 +225,7 @@ const RUN_SUCCESS_CONCLUSIONS = new Set(["success", "neutral", "skipped"]);
 const RUN_FAILURE_CONCLUSIONS = new Set(["failure", "timed_out", "cancelled", "action_required", "startup_failure"]);
 const JOB_FAILURE_CONCLUSIONS = new Set(["failure", "timed_out", "cancelled", "action_required"]);
 
-const PR_CREATE_BASE_CONFIG_KEYS = ["github.prBase", "gh.prBase", "gjc.github.prBase"] as const;
+const PR_CREATE_BASE_CONFIG_KEYS = ["github.prBase", "gh.prBase", "vib.github.prBase"] as const;
 const ISSUE_CLOSING_REFERENCE_PATTERN =
 	/(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+(?:https:\/\/github\.com\/([^\s/]+\/[^\s/]+)\/issues\/)?#(\d+)\b/gi;
 

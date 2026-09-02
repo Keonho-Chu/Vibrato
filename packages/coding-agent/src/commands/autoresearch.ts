@@ -1,18 +1,18 @@
-import { Command, renderCommandHelp } from "@gajae-code/utils/cli";
+import { Command, renderCommandHelp } from "@vib-rato/utils/cli";
 import { ensureWorkflowSettingsMigrated } from "../config/settings";
-import { runNativeAutoresearchCommand } from "../gjc-runtime/autoresearch-runtime";
+import { runNativeAutoresearchCommand } from "../vib-runtime/autoresearch-runtime";
 
 export default class Autoresearch extends Command {
-	static description = "Run native GJC Autoresearch workflow commands";
+	static description = "Run native Vibrato Autoresearch workflow commands";
 	static strict = false;
 	static examples = [
-		"$ gjc autoresearch intake --spec <deep-interview-spec.md> --json",
-		"$ gjc autoresearch --spec <deep-interview-spec.md> --json",
-		'$ gjc autoresearch "<goal>"',
-		"$ gjc autoresearch",
-		"$ gjc autoresearch read --json",
-		"$ gjc autoresearch clear --json",
-		"$ gjc autoresearch write --goal <goal> --mode web --slug <slug> --json",
+		"$ vib autoresearch intake --spec <deep-interview-spec.md> --json",
+		"$ vib autoresearch --spec <deep-interview-spec.md> --json",
+		'$ vib autoresearch "<goal>"',
+		"$ vib autoresearch",
+		"$ vib autoresearch read --json",
+		"$ vib autoresearch clear --json",
+		"$ vib autoresearch write --goal <goal> --mode web --slug <slug> --json",
 	];
 	static delegateHelp = true;
 
@@ -21,7 +21,7 @@ export default class Autoresearch extends Command {
 		// migration (which can create/drain agent.db, write config.yml, and
 		// retire legacy settings.json): render help before the trigger.
 		if (this.argv.includes("--help") || this.argv.includes("-h")) {
-			renderCommandHelp("gjc", "autoresearch", Autoresearch);
+			renderCommandHelp("vib", "autoresearch", Autoresearch);
 			return;
 		}
 		await ensureWorkflowSettingsMigrated(process.cwd());

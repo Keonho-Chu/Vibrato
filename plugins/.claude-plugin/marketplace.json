@@ -1,23 +1,23 @@
 {
-  "name": "gajae-code",
+  "name": "vib-rato",
   "owner": {
-    "name": "Gajae Code"
+    "name": "Vibrato"
   },
   "metadata": {
-    "description": "GJC delegation plugin with advisory SDK skills",
+    "description": "Vibrato delegation plugin with advisory SDK skills",
     "version": "0.15.6"
   },
   "plugins": [
     {
-      "name": "gajae-code",
-      "source": "./gajae-code",
-      "description": "Delegate GJC planning/execution workflows via coordinator MCP, plus advisory SDK session CLI and guide skills.",
+      "name": "vib-rato",
+      "source": "./vib-rato",
+      "description": "Delegate Vibrato planning/execution workflows via coordinator MCP, plus advisory SDK session CLI and guide skills.",
       "version": "0.15.6",
       "author": {
-        "name": "Gajae Code"
+        "name": "Vibrato"
       },
       "keywords": [
-        "gjc",
+        "vib",
         "delegation",
         "mcp",
         "planning",

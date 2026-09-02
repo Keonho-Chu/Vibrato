@@ -3,7 +3,7 @@ import * as fs from "node:fs";
 import * as fsp from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import * as native from "@gajae-code/natives";
+import * as native from "@vib-rato/natives";
 import { ArtifactManager } from "../src/session/artifacts";
 import {
 	MANAGED_ARTIFACT_MAX_FILES,
@@ -15,7 +15,7 @@ import {
 	reapScrubbedProtocolRemnantsSync,
 } from "../src/session/internal/managed-session-storage";
 
-const REMNANT_PREFIX = ".gjc-exact-unlink-placeholder-";
+const REMNANT_PREFIX = ".vib-exact-unlink-placeholder-";
 
 async function withTempDir<T>(prefix: string, run: (dir: string) => Promise<T>): Promise<T> {
 	const dir = await fsp.mkdtemp(path.join(os.tmpdir(), prefix));
@@ -50,7 +50,7 @@ async function waitFor(condition: () => Promise<boolean>, timeoutMs = 10_000): P
 
 describe("async native no-replace publication boundary (issue #4394)", () => {
 	it("renameNoReplacePathAsync publishes and never settles from a microtask", async () => {
-		await withTempDir("gjc-async-rename-", async dir => {
+		await withTempDir("vib-async-rename-", async dir => {
 			const staging = path.join(dir, "staging");
 			const destination = path.join(dir, "published");
 			await fsp.writeFile(staging, "payload");
@@ -75,7 +75,7 @@ describe("async native no-replace publication boundary (issue #4394)", () => {
 	});
 
 	it("renameNoReplacePathAsync refuses an existing destination without replacing it", async () => {
-		await withTempDir("gjc-async-rename-conflict-", async dir => {
+		await withTempDir("vib-async-rename-conflict-", async dir => {
 			const staging = path.join(dir, "staging");
 			const destination = path.join(dir, "published");
 			await fsp.writeFile(staging, "successor");
@@ -89,7 +89,7 @@ describe("async native no-replace publication boundary (issue #4394)", () => {
 	});
 
 	it("publishManagedFileNoReplace crosses the threadpool boundary and matches the sync twin", async () => {
-		await withTempDir("gjc-async-publish-", async dir => {
+		await withTempDir("vib-async-publish-", async dir => {
 			const destination = path.join(dir, "generation.output");
 			const bytes = new TextEncoder().encode("managed-output");
 
@@ -114,7 +114,7 @@ describe("async native no-replace publication boundary (issue #4394)", () => {
 	});
 
 	it("publishManagedFileNoReplace rejects an existing destination as destination_conflict", async () => {
-		await withTempDir("gjc-async-publish-conflict-", async dir => {
+		await withTempDir("vib-async-publish-conflict-", async dir => {
 			const destination = path.join(dir, "generation.output");
 			publishManagedFileNoReplaceSync(destination, new TextEncoder().encode("first"));
 			await expect(publishManagedFileNoReplace(destination, new TextEncoder().encode("second"))).rejects.toThrow(
@@ -125,7 +125,7 @@ describe("async native no-replace publication boundary (issue #4394)", () => {
 	});
 
 	it("yields macrotask turns to the event loop while a publication is in flight", async () => {
-		await withTempDir("gjc-async-publish-liveness-", async dir => {
+		await withTempDir("vib-async-publish-liveness-", async dir => {
 			const bytes = new Uint8Array(4 * 1024 * 1024).fill(0x61);
 			let settled = 0;
 			const publications = Array.from({ length: 8 }, (_, index) =>
@@ -148,7 +148,7 @@ describe("async native no-replace publication boundary (issue #4394)", () => {
 
 describe("scrubbed protocol remnant reaping (issue #4394)", () => {
 	it("reaps aged zero-byte remnants and retains everything else", async () => {
-		await withTempDir("gjc-remnant-reap-", async dir => {
+		await withTempDir("vib-remnant-reap-", async dir => {
 			const aged = await seedRemnant(dir, `${REMNANT_PREFIX}aged`, 60 * 60 * 1000);
 			const fresh = await seedRemnant(dir, `${REMNANT_PREFIX}fresh`, 0);
 			const payload = await seedRemnant(dir, `${REMNANT_PREFIX}payload`, 60 * 60 * 1000, new Uint8Array([1]));
@@ -166,7 +166,7 @@ describe("scrubbed protocol remnant reaping (issue #4394)", () => {
 	});
 
 	it("matches the sync reaper's result on the same directory shape", async () => {
-		await withTempDir("gjc-remnant-parity-", async dir => {
+		await withTempDir("vib-remnant-parity-", async dir => {
 			for (let index = 0; index < 4; index++) {
 				await seedRemnant(dir, `${REMNANT_PREFIX}aged-${index}`, 60 * 60 * 1000);
 			}
@@ -182,7 +182,7 @@ describe("scrubbed protocol remnant reaping (issue #4394)", () => {
 	});
 
 	it("drains a directory larger than the yield batch without missing entries", async () => {
-		await withTempDir("gjc-remnant-bounded-", async dir => {
+		await withTempDir("vib-remnant-bounded-", async dir => {
 			const count = 600;
 			for (let index = 0; index < count; index++) {
 				await seedRemnant(dir, `${REMNANT_PREFIX}${index.toString().padStart(4, "0")}`, 60 * 60 * 1000);
@@ -194,12 +194,12 @@ describe("scrubbed protocol remnant reaping (issue #4394)", () => {
 	});
 
 	it("treats a missing directory as a benign no-op", async () => {
-		const missing = path.join(os.tmpdir(), `gjc-remnant-missing-${Date.now()}`);
+		const missing = path.join(os.tmpdir(), `vib-remnant-missing-${Date.now()}`);
 		expect(await reapScrubbedProtocolRemnants(missing)).toEqual({ reaped: 0, failures: 0 });
 	});
 
 	it("store mutations schedule best-effort reaping of the bound per-session directory", async () => {
-		await withTempDir("gjc-remnant-store-", async dir => {
+		await withTempDir("vib-remnant-store-", async dir => {
 			const sessionDir = path.join(dir, "session");
 			await fsp.mkdir(sessionDir, { mode: 0o700 });
 			const aged = await seedRemnant(sessionDir, `${REMNANT_PREFIX}aged`, 60 * 60 * 1000);
@@ -227,7 +227,7 @@ describe("scrubbed protocol remnant reaping (issue #4394)", () => {
 	// emergency heap floor. Scale is reduced here; the over-limit dirents
 	// case is pinned by the test further below.
 	it("keeps mutating a scope saturated with inert remnants and reaps them", async () => {
-		await withTempDir("gjc-remnant-saturated-", async dir => {
+		await withTempDir("vib-remnant-saturated-", async dir => {
 			const sessionDir = path.join(dir, "session");
 			await fsp.mkdir(sessionDir, { mode: 0o700 });
 
@@ -262,7 +262,7 @@ describe("scrubbed protocol remnant reaping (issue #4394)", () => {
 	// dirents instead of receipts aborted the scan before the reaper could
 	// ever run, so this is the exact shape that failed every mutation forever.
 	it("mutates a scope holding more inert remnants than the receipt scan limit", async () => {
-		await withTempDir("gjc-remnant-over-limit-", async dir => {
+		await withTempDir("vib-remnant-over-limit-", async dir => {
 			const sessionDir = path.join(dir, "session");
 			await fsp.mkdir(sessionDir, { mode: 0o700 });
 
@@ -297,10 +297,10 @@ describe("scrubbed protocol remnant reaping (issue #4394)", () => {
 	}, 300_000);
 
 	it("fails closed on a corrupt replacement-cleanup receipt without deleting it", async () => {
-		await withTempDir("gjc-receipt-corrupt-", async dir => {
+		await withTempDir("vib-receipt-corrupt-", async dir => {
 			const sessionDir = path.join(dir, "session");
 			await fsp.mkdir(sessionDir, { mode: 0o700 });
-			const receiptPath = path.join(sessionDir, ".gjc-replace-cleanup-1-2-receipt-3-4.json");
+			const receiptPath = path.join(sessionDir, ".vib-replace-cleanup-1-2-receipt-3-4.json");
 			const receiptBytes = Buffer.from("not a receipt");
 			await fsp.writeFile(receiptPath, receiptBytes, { mode: 0o600 });
 
@@ -316,10 +316,10 @@ describe("scrubbed protocol remnant reaping (issue #4394)", () => {
 	});
 
 	it("fails closed on an unparseable pending replacement receipt", async () => {
-		await withTempDir("gjc-receipt-pending-corrupt-", async dir => {
+		await withTempDir("vib-receipt-pending-corrupt-", async dir => {
 			const sessionDir = path.join(dir, "session");
 			await fsp.mkdir(sessionDir, { mode: 0o700 });
-			const pendingPath = path.join(sessionDir, ".gjc-replace-receipt-pending-1");
+			const pendingPath = path.join(sessionDir, ".vib-replace-receipt-pending-1");
 			await fsp.writeFile(pendingPath, "garbage", { mode: 0o600 });
 
 			const store = new ManagedSessionDescendantStore(managedDirectoryRoot(dir), sessionDir);
@@ -332,11 +332,11 @@ describe("scrubbed protocol remnant reaping (issue #4394)", () => {
 	});
 
 	it("still schedules remnant reaping when reconciliation fails closed", async () => {
-		await withTempDir("gjc-receipt-fail-reap-", async dir => {
+		await withTempDir("vib-receipt-fail-reap-", async dir => {
 			const sessionDir = path.join(dir, "session");
 			await fsp.mkdir(sessionDir, { mode: 0o700 });
 			const remnant = await seedRemnant(sessionDir, `${REMNANT_PREFIX}aged`, 60 * 60 * 1000);
-			await fsp.writeFile(path.join(sessionDir, ".gjc-replace-cleanup-1-2-receipt-3-4.json"), "not a receipt", {
+			await fsp.writeFile(path.join(sessionDir, ".vib-replace-cleanup-1-2-receipt-3-4.json"), "not a receipt", {
 				mode: 0o600,
 			});
 
@@ -353,7 +353,7 @@ describe("scrubbed protocol remnant reaping (issue #4394)", () => {
 	});
 
 	it("never reaps symlinks, hardlinks, directories, or non-empty and fresh remnants", async () => {
-		await withTempDir("gjc-remnant-refusal-", async dir => {
+		await withTempDir("vib-remnant-refusal-", async dir => {
 			const sessionDir = path.join(dir, "session");
 			await fsp.mkdir(sessionDir, { mode: 0o700 });
 
@@ -403,7 +403,7 @@ describe("scrubbed protocol remnant reaping (issue #4394)", () => {
 
 describe("managed output generation publication over the async boundary", () => {
 	it("publishes selector, output, and metadata through the async path", async () => {
-		await withTempDir("gjc-managed-generation-", async dir => {
+		await withTempDir("vib-managed-generation-", async dir => {
 			const artifactsDir = path.join(dir, "artifacts");
 			const store = new ManagedSessionDescendantStore(managedDirectoryRoot(dir), artifactsDir);
 			const manager = new ArtifactManager(store);

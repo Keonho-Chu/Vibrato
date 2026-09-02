@@ -6,14 +6,14 @@ dependencies in a project so an agent can answer structural questions ("how does
 work", "who calls X", "what breaks if I change X") in a few graph queries instead
 of crawling files with `search`/`read`.
 
-This guide shows how to wire CodeGraph into GJC through the **custom-tool extension
-path** — no core changes, no built-in provider. GJC intentionally keeps third-party
+This guide shows how to wire CodeGraph into Vibrato through the **custom-tool extension
+path** — no core changes, no built-in provider. Vibrato intentionally keeps third-party
 CLI integrations like this in the user/project extension layer rather than bundling
 them, so you own the integration and its lifecycle.
 
-> CodeGraph integrates with other agents over MCP, but this guide wires it as a GJC
+> CodeGraph integrates with other agents over MCP, but this guide wires it as a Vibrato
 > custom tool around CodeGraph's local **CLI** — it does not add an MCP server or a
-> built-in provider. For how GJC treats MCP servers in standalone sessions, see
+> built-in provider. For how Vibrato treats MCP servers in standalone sessions, see
 > [`standalone-mcp.md`](standalone-mcp.md).
 
 ## 1. Install and index
@@ -32,21 +32,21 @@ machine — it is a local SQLite index.
 
 ## 2. Add the custom tool
 
-GJC discovers custom tools from a `tools/` directory in its config dirs:
+Vibrato discovers custom tools from a `tools/` directory in its config dirs:
 
-- **Project-scoped**: `<project>/.gjc/tools/`
-- **User-scoped (all projects)**: `~/.gjc/agent/tools/`
+- **Project-scoped**: `<project>/.vib/tools/`
+- **User-scoped (all projects)**: `~/.vib/agent/tools/`
 
 A `*.ts` tool file's default export is a factory `(pi) => CustomTool`. The factory
 receives an API (`pi`) with members such as `exec`, `cwd`, `zod`, and `logger` — so
-the tool needs no imports from GJC internals.
+the tool needs no imports from Vibrato internals.
 
-Save the following as `.gjc/tools/codegraph.ts` (project) or
-`~/.gjc/agent/tools/codegraph.ts` (user):
+Save the following as `.vib/tools/codegraph.ts` (project) or
+`~/.vib/agent/tools/codegraph.ts` (user):
 
 ```typescript
 /**
- * CodeGraph custom tool for gajae-code (GJC).
+ * CodeGraph custom tool for vib-rato (Vibrato).
  *
  * Wraps the local CodeGraph CLI (https://github.com/colbymchenry/codegraph) so the
  * agent can query a project's code knowledge graph instead of crawling files.
@@ -57,7 +57,7 @@ Save the following as `.gjc/tools/codegraph.ts` (project) or
  *
  * Prereqs: `npm i -g @colbymchenry/codegraph` and `codegraph init` in the project.
  */
-import type { CustomToolFactory } from "@gajae-code/coding-agent"; // optional: editor types only
+import type { CustomToolFactory } from "@vib-rato/coding-agent"; // optional: editor types only
 
 const CODEGRAPH_CLI = "codegraph";
 const TIMEOUT_MS = 60_000;
@@ -189,13 +189,13 @@ const codegraph: CustomToolFactory = (pi) => {
 export default codegraph;
 ```
 
-The `import type` line is optional — it only provides editor types when GJC is
+The `import type` line is optional — it only provides editor types when Vibrato is
 resolvable from your tool file. It is erased at runtime, so the tool loads fine
 without it.
 
 ## 3. Use it
 
-Start GJC in the project. The `codegraph` tool is now available to the model. Ask
+Start Vibrato in the project. The `codegraph` tool is now available to the model. Ask
 a structural question and it will call the tool, for example:
 
 - `codegraph` with `{ "op": "explore", "target": "how requests are routed" }` can
@@ -221,7 +221,7 @@ a structural question and it will call the tool, for example:
   query-style subcommands; it never edits your files and does not run indexing or
   sync commands. CodeGraph maintains its own local `.codegraph/` index via its CLI.
   If results look stale or `status` reports pending changes, refresh the index with
-  CodeGraph's CLI (e.g. `codegraph sync`) outside GJC.
+  CodeGraph's CLI (e.g. `codegraph sync`) outside Vibrato.
 - **Safe argument handling.** The example spawns CodeGraph with argv arrays via
   `pi.exec` (no shell), `op` is constrained to a fixed enum, and numeric inputs are
   capped — there is no shell interpolation of model-provided values.
@@ -231,6 +231,6 @@ a structural question and it will call the tool, for example:
   collides with another tool in your setup.
 - **Fallback.** If the graph reports a symbol is missing, a file is flagged as
   pending sync, or you need a non-structural text search, refresh the CodeGraph
-  index outside GJC or fall back to `read`/`search`.
-- For background on how GJC treats external tools and MCP servers in standalone
+  index outside Vibrato or fall back to `read`/`search`.
+- For background on how Vibrato treats external tools and MCP servers in standalone
   sessions, see [`standalone-mcp.md`](standalone-mcp.md).

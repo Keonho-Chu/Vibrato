@@ -22,16 +22,12 @@ describe("resolvePresetSelector", () => {
 		expect(resolvePresetSelector("codex-medium", registryWithProfiles("codex-medium"))).toBe("codex-medium");
 	});
 
-	test("matches a gajae-code/-namespaced preset name", () => {
-		expect(resolvePresetSelector("gajae-code/codex-medium", registryWithProfiles("codex-medium"))).toBe(
-			"codex-medium",
-		);
+	test("matches a vib-rato/-namespaced preset name", () => {
+		expect(resolvePresetSelector("vib-rato/codex-medium", registryWithProfiles("codex-medium"))).toBe("codex-medium");
 	});
 
-	test("matches a gajae-code/-namespaced preset name case-insensitively on the prefix", () => {
-		expect(resolvePresetSelector("GAJAE-CODE/codex-medium", registryWithProfiles("codex-medium"))).toBe(
-			"codex-medium",
-		);
+	test("matches a vib-rato/-namespaced preset name case-insensitively on the prefix", () => {
+		expect(resolvePresetSelector("VIBRATO/codex-medium", registryWithProfiles("codex-medium"))).toBe("codex-medium");
 	});
 
 	test("returns undefined for an unknown preset name so the caller falls through", () => {
@@ -47,8 +43,8 @@ describe("resolvePresetSelector", () => {
 		expect(resolvePresetSelector("other/codex-medium", registryWithProfiles("codex-medium"))).toBeUndefined();
 	});
 
-	test("returns undefined for gajae-code/ with a nested slash", () => {
-		expect(resolvePresetSelector("gajae-code/foo/bar", registryWithProfiles("foo"))).toBeUndefined();
+	test("returns undefined for vib-rato/ with a nested slash", () => {
+		expect(resolvePresetSelector("vib-rato/foo/bar", registryWithProfiles("foo"))).toBeUndefined();
 	});
 
 	test("returns undefined for an empty selector", () => {
@@ -171,10 +167,10 @@ describe("/model <preset> activation", () => {
 		expect(configNotified).toBe(1);
 	});
 
-	test("/model gajae-code/<preset> activates the named profile after stripping the namespace", async () => {
+	test("/model vib-rato/<preset> activates the named profile after stripping the namespace", async () => {
 		const { runtime } = createRuntime();
 
-		await executeAcpBuiltinSlashCommand("/model gajae-code/codex-medium", runtime);
+		await executeAcpBuiltinSlashCommand("/model vib-rato/codex-medium", runtime);
 
 		const [options, applyOptions] = activateSpy.mock.calls[0]!;
 		expect(options.profileName).toBe("codex-medium");

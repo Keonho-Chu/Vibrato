@@ -1,17 +1,17 @@
-import type { AgentTool, AgentToolResult } from "@gajae-code/agent-core";
-import { type Static, z } from "@gajae-code/ai/core";
-import { logger } from "@gajae-code/utils";
+import type { AgentTool, AgentToolResult } from "@vib-rato/agent-core";
+import { type Static, z } from "@vib-rato/ai/core";
+import { logger } from "@vib-rato/utils";
 import { Settings, type Settings as SettingsType } from "../config/settings";
 import { disposeKernelSessionsByOwner, executePython } from "../eval/py/executor";
 import type { ToolDefinition } from "../extensibility/extensions/types";
 import { applyToolProxy } from "../extensibility/tool-proxy";
+import pythonToolDescription from "../prompts/tools/python.md" with { type: "text" };
 import {
 	openPythonKernelTranscript,
 	type PythonKernelTranscript,
 	type PythonTranscriptRecord,
-} from "../gjc-runtime/python-transcript";
-import { sessionIpykernelsArtifactsDir } from "../gjc-runtime/session-layout";
-import pythonToolDescription from "../prompts/tools/python.md" with { type: "text" };
+} from "../vib-runtime/python-transcript";
+import { sessionIpykernelsArtifactsDir } from "../vib-runtime/session-layout";
 
 export const PYTHON_TOOL_NAME = "python";
 
@@ -24,7 +24,7 @@ export interface SessionPythonToolInput {
 	cwd: string;
 	/** Session settings used for Python runtime policy. */
 	settings?: SettingsType;
-	/** Resolve the GJC session id used for the kernel owner and transcript paths. */
+	/** Resolve the Vibrato session id used for the kernel owner and transcript paths. */
 	getSessionId: () => string | null;
 	/** Register cleanup with the current logical session lifecycle. */
 	registerSessionCleanup: (cleanup: () => Promise<void> | void) => void;
@@ -43,7 +43,7 @@ const paramsSchema = z.object({
 		.describe('Python source to execute when action is "execute" (required then, ignored for "clear").'),
 });
 
-const NO_SESSION_ERROR = "Python requires a GJC session id. Start or resume a session before using this tool.";
+const NO_SESSION_ERROR = "Python requires a Vibrato session id. Start or resume a session before using this tool.";
 
 interface TranscriptExecutionResult {
 	output: string;

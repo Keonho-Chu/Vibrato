@@ -6,7 +6,7 @@ import { readBrokerDiscovery } from "../src/sdk/broker/discovery";
 import { LifecycleLedger } from "../src/sdk/broker/lifecycle-ledger";
 import { SessionIndex } from "../src/sdk/broker/session-index";
 
-const temp = () => fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-sdk-version-"));
+const temp = () => fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-sdk-version-"));
 
 async function expectFailClosed(file: string, reader: () => Promise<unknown>): Promise<void> {
 	const before = await fs.readFile(file, "utf8");

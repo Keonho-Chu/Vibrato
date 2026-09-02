@@ -1,10 +1,10 @@
-import { getAgentDir } from "@gajae-code/utils";
+import { getAgentDir } from "@vib-rato/utils";
 import { readGuideCache } from "./cache";
 import { BUNDLED_GUIDE_MANIFESTS, GuideCatalog, guideFetchPolicy, isGuideFetchUrlAllowed } from "./catalog";
 import { GUIDE_CLIENT_VERSION, GUIDE_PINNED_KEYS } from "./verify";
 
 /**
- * `gjc sdk guides` command family (routing lives in `src/commands/sdk.ts`).
+ * `vib sdk guides` command family (routing lives in `src/commands/sdk.ts`).
  *
  * Verbs:
  *   refresh --url <https url>  fetch + verify the online manifest and advisory
@@ -193,7 +193,7 @@ function runTrust(): unknown {
 }
 
 /**
- * Runs the `gjc sdk guides` command family. Exported for command routing from
+ * Runs the `vib sdk guides` command family. Exported for command routing from
  * `src/commands/sdk.ts` and for direct service use; the injected `write` /
  * `setExitCode` hooks keep the surface testable without touching stdout or
  * the process exit code.

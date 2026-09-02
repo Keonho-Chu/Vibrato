@@ -1,5 +1,5 @@
-import type { AgentToolContext } from "@gajae-code/agent-core";
-import type { PtySession as NativePtySession, PtyRunResult } from "@gajae-code/natives";
+import type { AgentToolContext } from "@vib-rato/agent-core";
+import type { PtySession as NativePtySession, PtyRunResult } from "@vib-rato/natives";
 import {
 	type Component,
 	extractPrintableText,
@@ -10,8 +10,8 @@ import {
 	parseKittySequence,
 	truncateToWidth,
 	visibleWidth,
-} from "@gajae-code/tui";
-import { logger, sanitizeText } from "@gajae-code/utils";
+} from "@vib-rato/tui";
+import { logger, sanitizeText } from "@vib-rato/utils";
 import type { Terminal as XtermTerminalType } from "@xterm/headless";
 import { Settings } from "../config/settings";
 import { NON_INTERACTIVE_ENV } from "../exec/non-interactive-env";
@@ -22,11 +22,11 @@ import { resolveBashOutputSinkHeadBytes, resolveBashOutputSinkTailBytes, resolve
 import { formatStatusIcon, replaceTabs } from "./render-utils";
 
 type PtySession = NativePtySession;
-let ptySessionLoad: Promise<typeof import("@gajae-code/natives")["PtySession"]> | undefined;
+let ptySessionLoad: Promise<typeof import("@vib-rato/natives")["PtySession"]> | undefined;
 
-async function ptySessionNative(): Promise<typeof import("@gajae-code/natives")["PtySession"]> {
+async function ptySessionNative(): Promise<typeof import("@vib-rato/natives")["PtySession"]> {
 	ptySessionLoad ??= Promise.resolve(
-		(require("@gajae-code/natives") as { PtySession: typeof import("@gajae-code/natives")["PtySession"] }).PtySession,
+		(require("@vib-rato/natives") as { PtySession: typeof import("@vib-rato/natives")["PtySession"] }).PtySession,
 	);
 	return await ptySessionLoad;
 }

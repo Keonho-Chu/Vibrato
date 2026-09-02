@@ -2,10 +2,10 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { AuthStorage } from "@gajae-code/ai";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
+import { AuthStorage } from "@vib-rato/ai";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
 import { applyStartupModelProfiles } from "../src/main";
 import { createLifecycleAgentSession } from "../src/sdk/lifecycle-session";
 
@@ -55,7 +55,7 @@ describe("lifecycle session explicit model pin", () => {
 	});
 
 	const tempCwd = (): string => {
-		const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-lifecycle-model-pin-"));
+		const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-lifecycle-model-pin-"));
 		createdDirs.add(cwd);
 		return cwd;
 	};

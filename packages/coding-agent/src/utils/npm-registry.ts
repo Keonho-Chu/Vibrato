@@ -1,12 +1,12 @@
 /**
  * npm registry resolution for update checks.
  *
- * The install half of `gjc update` shells out to bun/npm, so it already honours
+ * The install half of `vib update` shells out to bun/npm, so it already honours
  * whatever registry the user configured. The *version check* half did not — it
  * fetched `registry.npmjs.org` directly. On networks that mirror or block the
  * public registry (corporate Nexus/Artifactory proxies, air-gapped setups) the
  * check fails even though the install that follows it would have worked, so
- * `gjc update` reports `Failed to fetch release info:` and exits 1.
+ * `vib update` reports `Failed to fetch release info:` and exits 1.
  *
  * This module resolves the registry — and its credentials — the way npm does,
  * so the check agrees with the install.
@@ -32,7 +32,7 @@
  */
 import * as os from "node:os";
 import * as path from "node:path";
-import { $credentialEnv, isEnoent } from "@gajae-code/utils";
+import { $credentialEnv, isEnoent } from "@vib-rato/utils";
 
 export const DEFAULT_NPM_REGISTRY = "https://registry.npmjs.org";
 
@@ -193,7 +193,7 @@ function envNamesFor(key: string): string[] {
 
 /**
  * npm's own lifecycle synthesizes `npm_config_*` from the *project* `.npmrc`,
- * expanding `${VAR}` against the parent environment on the way. Launching GJC
+ * expanding `${VAR}` against the parent environment on the way. Launching Vibrato
  * through `npm run` inside a cloned repository therefore hands us a registry —
  * and credentials — that the repository chose:
  *
@@ -329,7 +329,7 @@ async function collectLayers(
 	const env = createEnvLayer(lookupEnv, environment.installer);
 	if (env.untrusted) {
 		warnings.push(
-			"npm_config_* was ignored because GJC was launched by an npm lifecycle, " +
+			"npm_config_* was ignored because Vibrato was launched by an npm lifecycle, " +
 				"where those variables can be synthesized from a repository .npmrc",
 		);
 	}

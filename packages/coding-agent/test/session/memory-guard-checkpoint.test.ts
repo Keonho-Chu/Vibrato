@@ -2,29 +2,29 @@ import { afterEach, describe, expect, it } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { Agent } from "@gajae-code/agent-core";
-import { getBundledModel } from "@gajae-code/ai";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import {
-	acquireMemoryGuardClaims,
-	releaseMemoryGuardClaims,
-} from "@gajae-code/coding-agent/gjc-runtime/memory-guard-owner-claims";
-import { AgentSession } from "@gajae-code/coding-agent/session/agent-session";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
+import { Agent } from "@vib-rato/agent-core";
+import { getBundledModel } from "@vib-rato/ai";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { AgentSession } from "@vib-rato/coding-agent/session/agent-session";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
 import type {
 	MemoryGuardParticipantDescriptorV1,
 	MemoryGuardSessionManagerCheckpointV1,
-} from "@gajae-code/coding-agent/session/memory-guard-checkpoint-participant";
-import { memoryGuardCanonicalJson } from "@gajae-code/coding-agent/session/memory-guard-checkpoint-participant";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { openRecoveryFsRoot, type RecoveryFsRoot } from "@gajae-code/natives";
+} from "@vib-rato/coding-agent/session/memory-guard-checkpoint-participant";
+import { memoryGuardCanonicalJson } from "@vib-rato/coding-agent/session/memory-guard-checkpoint-participant";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import {
+	acquireMemoryGuardClaims,
+	releaseMemoryGuardClaims,
+} from "@vib-rato/coding-agent/vib-runtime/memory-guard-owner-claims";
+import { openRecoveryFsRoot, type RecoveryFsRoot } from "@vib-rato/natives";
 
 const tempRoots: string[] = [];
 const authStores: AuthStorage[] = [];
 
 async function makeTempRoot(): Promise<string> {
-	const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-memory-guard-checkpoint-"));
+	const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-memory-guard-checkpoint-"));
 	tempRoots.push(root);
 	return root;
 }

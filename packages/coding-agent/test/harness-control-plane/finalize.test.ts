@@ -108,7 +108,7 @@ describe("runFinalize (review-only verdict gate)", () => {
 		root,
 		sessionId: SID,
 		workspace: "/ws",
-		branch: "gajae-code-pr-414-review",
+		branch: "vib-rato-pr-414-review",
 		reviewOnly: true as const,
 		prTarget: "PR-414",
 	});
@@ -182,7 +182,7 @@ describe("runFinalize (review-only verdict from assistant text)", () => {
 		root,
 		sessionId: SID,
 		workspace: "/ws",
-		branch: "gajae-code-pr-414-review",
+		branch: "vib-rato-pr-414-review",
 		reviewOnly: true as const,
 		prTarget: "PR-414",
 	});

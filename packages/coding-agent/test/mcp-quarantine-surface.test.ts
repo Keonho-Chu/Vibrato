@@ -11,7 +11,7 @@ async function source(...parts: string[]): Promise<string> {
 	return await Bun.file(srcPath(...parts)).text();
 }
 
-describe("GJC MCP quarantine surface", () => {
+describe("Vibrato MCP quarantine surface", () => {
 	it("does not register MCP as a public internal URL protocol", async () => {
 		const router = await source("internal-urls", "router.ts");
 		const barrel = await source("internal-urls", "index.ts");

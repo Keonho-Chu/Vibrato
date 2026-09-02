@@ -12,14 +12,14 @@
  * - slash-commands: From commands/ subdirectories
  * - extension-modules: From plugins/ subdirectories
  *
- * MCP servers are intentionally NOT inherited live from OpenCode config: GJC
- * owns MCP runtime execution. Use `gjc mcp import opencode` to copy definitions
- * into GJC's own mcp.json instead.
+ * MCP servers are intentionally NOT inherited live from OpenCode config: Vibrato
+ * owns MCP runtime execution. Use `vib mcp import opencode` to copy definitions
+ * into Vibrato's own mcp.json instead.
  *
  * Priority: 55 (tool-specific provider)
  */
 import * as path from "node:path";
-import { parseFrontmatter, tryParseJson } from "@gajae-code/utils";
+import { parseFrontmatter, tryParseJson } from "@vib-rato/utils";
 import { registerProvider } from "../capability";
 import { type ContextFile, contextFileCapability } from "../capability/context-file";
 import { type ExtensionModule, extensionModuleCapability } from "../capability/extension-module";

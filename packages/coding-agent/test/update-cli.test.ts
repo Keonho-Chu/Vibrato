@@ -19,10 +19,10 @@ import {
 	parseUpdateArgs,
 	recoverWindowsUpdateJournal,
 	replaceBinaryForUpdate,
-	resolveGjcPathForTest,
 	resolveNpmManagedTargetForTest,
 	resolveUpdateDecision,
 	resolveUpdateMethodForTest,
+	resolveVibPathForTest,
 	runBinaryUpdateFlow,
 	runManagedNotifyRecovery,
 	runPackageManagerUpdateForTest,
@@ -40,7 +40,7 @@ const tempDirs: string[] = [];
 const repoRoot = path.resolve(import.meta.dir, "../../..");
 
 async function makeTempDir(): Promise<string> {
-	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-update-test-"));
+	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-update-test-"));
 	tempDirs.push(dir);
 	return dir;
 }
@@ -79,11 +79,11 @@ describe("update-cli release lookup", () => {
 			},
 		});
 
-		expect(requested).toEqual(["https://api.github.com/repos/Yeachan-Heo/gajae-code/releases/latest"]);
+		expect(requested).toEqual(["https://api.github.com/repos/Keonho-Chu/Vibrato/releases/latest"]);
 		expect(release).toEqual({
 			tag: "v9.9.9",
 			version: "9.9.9",
-			registry: "https://github.com/Yeachan-Heo/gajae-code",
+			registry: "https://github.com/Keonho-Chu/Vibrato",
 			warnings: [],
 		});
 	});
@@ -95,26 +95,26 @@ describe("update-cli release lookup", () => {
 		});
 
 		await expect(failing).rejects.toThrow(
-			"https://api.github.com/repos/Yeachan-Heo/gajae-code/releases/latest responded 503",
+			"https://api.github.com/repos/Keonho-Chu/Vibrato/releases/latest responded 503",
 		);
 	});
 });
 
 describe("update-cli install target detection", () => {
-	it("uses bun update when prioritized gjc is inside bun global bin", () => {
-		const method = resolveUpdateMethodForTest("/Users/test/.bun/bin/gjc", "/Users/test/.bun/bin");
+	it("uses bun update when prioritized vib is inside bun global bin", () => {
+		const method = resolveUpdateMethodForTest("/Users/test/.bun/bin/vib", "/Users/test/.bun/bin");
 
 		expect(method).toBe("bun");
 	});
 
-	it("uses binary update when prioritized gjc is outside bun global bin", () => {
-		const method = resolveUpdateMethodForTest("/Users/test/.local/bin/gjc", "/Users/test/.bun/bin");
+	it("uses binary update when prioritized vib is outside bun global bin", () => {
+		const method = resolveUpdateMethodForTest("/Users/test/.local/bin/vib", "/Users/test/.bun/bin");
 
 		expect(method).toBe("binary");
 	});
 
 	it("uses binary update when bun global bin cannot be resolved", () => {
-		const method = resolveUpdateMethodForTest("/Users/test/.local/bin/gjc", undefined);
+		const method = resolveUpdateMethodForTest("/Users/test/.local/bin/vib", undefined);
 
 		expect(method).toBe("binary");
 	});
@@ -122,34 +122,34 @@ describe("update-cli install target detection", () => {
 	it("detects a Windows npm wrapper shim and avoids one-file binary replacement", () => {
 		const seenRoots: Array<{ packageName: string; packageRoot: string }> = [];
 		const target = resolveNpmManagedTargetForTest(
-			"C:\\Users\\alice\\AppData\\Roaming\\npm\\gjc.cmd",
+			"C:\\Users\\alice\\AppData\\Roaming\\npm\\vib.cmd",
 			"win32",
 			(packageName, packageRoot) => {
 				seenRoots.push({ packageName, packageRoot });
-				return packageName === "gajae-code";
+				return packageName === "vib-rato";
 			},
 		);
 
-		expect(target).toEqual({ manager: "npm", packageName: "gajae-code" });
+		expect(target).toEqual({ manager: "npm", packageName: "vib-rato" });
 		expect(seenRoots[0]).toEqual({
-			packageName: "gajae-code",
-			packageRoot: "C:\\Users\\alice\\AppData\\Roaming\\npm\\node_modules\\gajae-code",
+			packageName: "vib-rato",
+			packageRoot: "C:\\Users\\alice\\AppData\\Roaming\\npm\\node_modules\\vib-rato",
 		});
 	});
 
-	it("detects PowerShell npm wrapper shims so gjc.ps1 is updated through npm too", () => {
+	it("detects PowerShell npm wrapper shims so vib.ps1 is updated through npm too", () => {
 		const target = resolveNpmManagedTargetForTest(
-			"C:\\Users\\alice\\AppData\\Roaming\\npm\\gjc.ps1",
+			"C:\\Users\\alice\\AppData\\Roaming\\npm\\vib.ps1",
 			"win32",
-			packageName => packageName === "gajae-code",
+			packageName => packageName === "vib-rato",
 		);
 
-		expect(target).toEqual({ manager: "npm", packageName: "gajae-code" });
+		expect(target).toEqual({ manager: "npm", packageName: "vib-rato" });
 	});
 
 	it("does not classify missing Windows node_modules roots as npm-managed", () => {
 		const target = resolveNpmManagedTargetForTest(
-			"C:\\Users\\alice\\AppData\\Roaming\\npm\\gjc.cmd",
+			"C:\\Users\\alice\\AppData\\Roaming\\npm\\vib.cmd",
 			"win32",
 			() => false,
 		);
@@ -158,7 +158,7 @@ describe("update-cli install target detection", () => {
 	});
 
 	it("keeps non-Windows package-manager-like shims on the existing bun/binary classifier", () => {
-		const target = resolveNpmManagedTargetForTest("/usr/local/bin/gjc", "linux", () => true);
+		const target = resolveNpmManagedTargetForTest("/usr/local/bin/vib", "linux", () => true);
 
 		expect(target).toBeUndefined();
 	});
@@ -167,13 +167,13 @@ describe("update-cli install target detection", () => {
 describe("update-cli binary release assets", () => {
 	it("downloads fallback binaries from the current owner release repository", () => {
 		expect(buildReleaseBinaryUrlForTest("0.2.3", "linux", "x64")).toBe(
-			"https://github.com/Yeachan-Heo/gajae-code/releases/download/v0.2.3/gjc-linux-x64",
+			"https://github.com/Keonho-Chu/Vibrato/releases/download/v0.2.3/vib-linux-x64",
 		);
 	});
 
 	it("uses the existing Windows .exe release asset name", () => {
 		expect(buildReleaseBinaryUrlForTest("0.2.3", "win32", "x64")).toBe(
-			"https://github.com/Yeachan-Heo/gajae-code/releases/download/v0.2.3/gjc-windows-x64.exe",
+			"https://github.com/Keonho-Chu/Vibrato/releases/download/v0.2.3/vib-windows-x64.exe",
 		);
 	});
 	it("rejects Windows ARM64 because no release asset exists", () => {
@@ -184,7 +184,7 @@ describe("update-cli binary release assets", () => {
 		const instructions = formatManualUpdateInstructionsForTest("linux");
 
 		expect(instructions).toContain(
-			"curl -fsSL https://raw.githubusercontent.com/Yeachan-Heo/gajae-code/main/scripts/install.sh | sh",
+			"curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/main/scripts/install.sh | sh",
 		);
 		expect(instructions).toContain("Bun is only required for source development/build");
 		expect(instructions).not.toContain("bun install -g");
@@ -194,7 +194,7 @@ describe("update-cli binary release assets", () => {
 		const instructions = formatManualUpdateInstructionsForTest("win32");
 
 		expect(instructions).toContain(
-			"irm https://raw.githubusercontent.com/Yeachan-Heo/gajae-code/main/scripts/install.ps1 | iex",
+			"irm https://raw.githubusercontent.com/Keonho-Chu/Vibrato/main/scripts/install.ps1 | iex",
 		);
 		expect(instructions).toContain("Bun is only required for source development/build");
 		expect(instructions).not.toContain("bun install -g");
@@ -205,11 +205,11 @@ describe("update-cli binary release assets", () => {
 		const shellInstaller = await Bun.file(path.join(repoRoot, "scripts/install.sh")).text();
 		const windowsInstaller = await Bun.file(path.join(repoRoot, "scripts/install.ps1")).text();
 
-		expect(instructions).toContain("raw.githubusercontent.com/Yeachan-Heo/gajae-code/main/scripts/install.sh");
-		expect(shellInstaller).toContain('REPO="Yeachan-Heo/gajae-code"');
-		expect(windowsInstaller).toContain('$Repo = "Yeachan-Heo/gajae-code"');
+		expect(instructions).toContain("raw.githubusercontent.com/Keonho-Chu/Vibrato/main/scripts/install.sh");
+		expect(shellInstaller).toContain('REPO="Keonho-Chu/Vibrato"');
+		expect(windowsInstaller).toContain('$Repo = "Keonho-Chu/Vibrato"');
 		expect(formatManualUpdateInstructionsForTest("win32")).toContain(
-			"raw.githubusercontent.com/Yeachan-Heo/gajae-code/main/scripts/install.ps1",
+			"raw.githubusercontent.com/Keonho-Chu/Vibrato/main/scripts/install.ps1",
 		);
 	});
 
@@ -232,39 +232,39 @@ describe("update-cli binary release assets", () => {
 
 	it("includes actionable guidance when a release asset download fails", () => {
 		const message = formatBinaryDownloadFailureMessageForTest(
-			"gjc-linux-x64",
-			"https://github.com/Yeachan-Heo/gajae-code/releases/download/v0.2.3/gjc-linux-x64",
+			"vib-linux-x64",
+			"https://github.com/Keonho-Chu/Vibrato/releases/download/v0.2.3/vib-linux-x64",
 			"Not Found",
 			"linux",
 		);
 
-		expect(message).toContain("Download failed for gjc-linux-x64");
-		expect(message).toContain("Yeachan-Heo/gajae-code/releases/download/v0.2.3/gjc-linux-x64");
+		expect(message).toContain("Download failed for vib-linux-x64");
+		expect(message).toContain("Keonho-Chu/Vibrato/releases/download/v0.2.3/vib-linux-x64");
 		expect(message).toContain(
-			"curl -fsSL https://raw.githubusercontent.com/Yeachan-Heo/gajae-code/main/scripts/install.sh | sh",
+			"curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/main/scripts/install.sh | sh",
 		);
 	});
 
 	it("points at the mirror that named the version when the GitHub asset is missing", () => {
 		const message = formatBinaryDownloadFailureMessageForTest(
-			"gjc-linux-x64",
-			"https://github.com/Yeachan-Heo/gajae-code/releases/download/v0.2.3/gjc-linux-x64",
+			"vib-linux-x64",
+			"https://github.com/Keonho-Chu/Vibrato/releases/download/v0.2.3/vib-linux-x64",
 			"Not Found",
 			"linux",
 			"Version 0.2.3 was resolved from https://nexus.example.com/npm, not https://registry.npmjs.org; a version published only to that registry has no matching GitHub release asset.",
 		);
 
-		expect(message).toContain("Download failed for gjc-linux-x64");
+		expect(message).toContain("Download failed for vib-linux-x64");
 		expect(message).toContain("was resolved from https://nexus.example.com/npm");
 		expect(message).toContain(
-			"curl -fsSL https://raw.githubusercontent.com/Yeachan-Heo/gajae-code/main/scripts/install.sh | sh",
+			"curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/main/scripts/install.sh | sh",
 		);
 	});
 
 	it("says nothing about provenance when the public registry named the version", () => {
 		const message = formatBinaryDownloadFailureMessageForTest(
-			"gjc-linux-x64",
-			"https://github.com/Yeachan-Heo/gajae-code/releases/download/v0.2.3/gjc-linux-x64",
+			"vib-linux-x64",
+			"https://github.com/Keonho-Chu/Vibrato/releases/download/v0.2.3/vib-linux-x64",
 			"Not Found",
 			"linux",
 		);
@@ -274,7 +274,7 @@ describe("update-cli binary release assets", () => {
 
 	it("includes actionable guidance when the platform has no release asset", () => {
 		expect(() => buildReleaseBinaryUrlForTest("0.2.3", "freebsd", "x64")).toThrow(
-			"curl -fsSL https://raw.githubusercontent.com/Yeachan-Heo/gajae-code/main/scripts/install.sh | sh",
+			"curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/main/scripts/install.sh | sh",
 		);
 	});
 });
@@ -291,12 +291,12 @@ describe("update-cli package-manager verification", () => {
 				expectedVersion: "0.7.8",
 				runInstall: async () => ({
 					exitCode: 1,
-					text: () => 'Fail extracting tarball for "@gajae-code/natives"',
+					text: () => 'Fail extracting tarball for "@vib-rato/natives"',
 				}),
 				verifyInstalledRuntime: async expectedVersion => ({
 					ok: true,
 					actual: expectedVersion,
-					path: "/Users/test/.bun/bin/gjc",
+					path: "/Users/test/.bun/bin/vib",
 				}),
 				printRecoveredVerification: () => {},
 			});
@@ -324,14 +324,14 @@ describe("update-cli package-manager verification", () => {
 				runInstall: async () => ({ exitCode: 0, text: () => "installed" }),
 				verifyInstalledRuntime: async expectedVersion => {
 					verificationCalls += 1;
-					return { ok: true, actual: expectedVersion, path: "/Users/test/.bun/bin/gjc" };
+					return { ok: true, actual: expectedVersion, path: "/Users/test/.bun/bin/vib" };
 				},
 			});
 
 			expect(result.ok).toBe(true);
 			expect(verificationCalls).toBe(1);
 			expect(output.filter(line => line.includes("Updated to 0.7.8"))).toHaveLength(1);
-			expect(output.filter(line => line.includes("Restart gjc to use the new version"))).toHaveLength(1);
+			expect(output.filter(line => line.includes("Restart vib to use the new version"))).toHaveLength(1);
 		} finally {
 			logSpy.mockRestore();
 		}
@@ -351,14 +351,14 @@ describe("update-cli package-manager verification", () => {
 					runInstall: async () => ({ exitCode: 0, text: () => "installed" }),
 					verifyInstalledRuntime: async () => {
 						verificationCalls += 1;
-						return { ok: false, actual: "0.7.7", path: "/Users/test/.bun/bin/gjc" };
+						return { ok: false, actual: "0.7.7", path: "/Users/test/.bun/bin/vib" };
 					},
 				}),
-			).rejects.toThrow("bun install exited successfully, but the selected gjc runtime failed verification");
+			).rejects.toThrow("bun install exited successfully, but the selected vib runtime failed verification");
 			expect(verificationCalls).toBe(1);
 			expect(output.join("\n")).not.toContain("install failed with exit code 0");
 			expect(output.filter(line => line.includes("Updated to"))).toHaveLength(0);
-			expect(output.filter(line => line.includes("Restart gjc"))).toHaveLength(0);
+			expect(output.filter(line => line.includes("Restart vib"))).toHaveLength(0);
 		} finally {
 			logSpy.mockRestore();
 		}
@@ -371,12 +371,12 @@ describe("update-cli package-manager verification", () => {
 				expectedVersion: "0.7.8",
 				runInstall: async () => ({
 					exitCode: 1,
-					text: () => 'Fail extracting tarball for "@gajae-code/natives"',
+					text: () => 'Fail extracting tarball for "@vib-rato/natives"',
 				}),
 				verifyInstalledRuntime: async () => ({
 					ok: false,
 					actual: "0.7.7",
-					path: "/Users/test/.bun/bin/gjc",
+					path: "/Users/test/.bun/bin/vib",
 				}),
 			}),
 		).rejects.toThrow("Fail extracting tarball");
@@ -416,7 +416,7 @@ describe("update-cli command verification failures", () => {
 								runInstall: async () => ({ exitCode: 0, text: () => "installed" }),
 								verifyInstalledRuntime: async () => {
 									verificationCalls += 1;
-									return { ok: false, actual: "0.0.1", path: "/test/gjc" };
+									return { ok: false, actual: "0.0.1", path: "/test/vib" };
 								},
 							});
 						},
@@ -434,11 +434,11 @@ describe("update-cli command verification failures", () => {
 			expect(exitCodes).toEqual([1]);
 			expect(refreshCalls).toBe(0);
 			expect(errors.join("\n")).toContain(
-				"install exited successfully, but the selected gjc runtime failed verification",
+				"install exited successfully, but the selected vib runtime failed verification",
 			);
 			expect(errors.join("\n")).toContain("still reports 0.0.1 (expected 999.0.0)");
 			expect(errors.join("\n")).not.toContain("install failed with exit code 0");
-			expect(output.filter(line => line.includes("Updated to") || line.includes("Restart gjc"))).toHaveLength(0);
+			expect(output.filter(line => line.includes("Updated to") || line.includes("Restart vib"))).toHaveLength(0);
 		} finally {
 			logSpy.mockRestore();
 			errorSpy.mockRestore();
@@ -480,7 +480,7 @@ describe("update-cli command verification failures", () => {
 									return {
 										ok: false,
 										actual: "999.0.0",
-										path: "/test/gjc",
+										path: "/test/vib",
 										smokeTestFailed: true,
 										smokeTestOutput: "native addon mismatch",
 									};
@@ -503,10 +503,10 @@ describe("update-cli command verification failures", () => {
 			expect(errors.join("\n")).toContain("--smoke-test failed");
 			expect(errors.join("\n")).toContain("native addon mismatch");
 			expect(errors.join("\n")).toContain(
-				"install exited successfully, but the selected gjc runtime failed verification",
+				"install exited successfully, but the selected vib runtime failed verification",
 			);
 			expect(errors.join("\n")).not.toContain("install failed with exit code 0");
-			expect(output.filter(line => line.includes("Updated to") || line.includes("Restart gjc"))).toHaveLength(0);
+			expect(output.filter(line => line.includes("Updated to") || line.includes("Restart vib"))).toHaveLength(0);
 		} finally {
 			logSpy.mockRestore();
 			errorSpy.mockRestore();
@@ -523,7 +523,7 @@ describe("update-cli managed notification recovery", () => {
 	};
 
 	describe("standalone migration preflight", () => {
-		const target = { method: "migrate" as const, path: "/standalone/gjc", previousPath: "/shim/gjc" };
+		const target = { method: "migrate" as const, path: "/standalone/vib", previousPath: "/shim/vib" };
 
 		it("verifies the release checksum before executing the migration target", async () => {
 			const calls: string[] = [];
@@ -543,8 +543,8 @@ describe("update-cli managed notification recovery", () => {
 
 		it("holds the binary update lock across migration preflight", async () => {
 			const root = await makeTempDir();
-			const runtimePath = path.join(root, "gjc");
-			const lockPath = path.join(root, ".gjc-install.lock");
+			const runtimePath = path.join(root, "vib");
+			const lockPath = path.join(root, ".vib-install.lock");
 			await runUpdateCommand(
 				{ force: false, check: false },
 				{
@@ -655,7 +655,7 @@ describe("update-cli managed notification recovery", () => {
 				);
 				expect(calls).toEqual([]);
 				expect(output.join("\n")).toContain(
-					`Standalone gjc ${release.version} is already installed and verified at ${target.path}`,
+					`Standalone vib ${release.version} is already installed and verified at ${target.path}`,
 				);
 				expect(output.join("\n")).toContain(`${target.previousPath} shadows it on PATH.`);
 				expect(output.join("\n")).toContain("must precede the shim directory");
@@ -829,17 +829,17 @@ describe("update-cli managed notification recovery", () => {
 	it("executes recovery through the verified runtime with an argv array and propagates nonzero exits", async () => {
 		const argv: Array<readonly string[]> = [];
 		await runPostUpdateRecoveryForTest(
-			"/verified path/gjc;not-a-shell",
+			"/verified path/vib;not-a-shell",
 			async args => {
 				argv.push(args);
 				return 0;
 			},
 			async () => true,
 		);
-		expect(argv).toEqual([["/verified path/gjc;not-a-shell", "update", "update-recovery"]]);
+		expect(argv).toEqual([["/verified path/vib;not-a-shell", "update", "update-recovery"]]);
 		await expect(
 			runPostUpdateRecoveryForTest(
-				"/verified/gjc",
+				"/verified/vib",
 				async () => 23,
 				async () => true,
 			),
@@ -849,7 +849,7 @@ describe("update-cli managed notification recovery", () => {
 	it("uses the bounded legacy handoff only when the verified target lacks update-recovery", async () => {
 		const argv: string[][] = [];
 		await runPostUpdateRecoveryForTest(
-			"/older stable/gjc",
+			"/older stable/vib",
 			async args => {
 				argv.push(args);
 				return 0;
@@ -858,16 +858,16 @@ describe("update-cli managed notification recovery", () => {
 			async () => ["discord"],
 		);
 		expect(argv).toEqual([
-			["/older stable/gjc", "daemon", "stop", "discord", "--force"],
-			["/older stable/gjc", "daemon", "reload", "discord"],
-			["/older stable/gjc", "notify", "recovery"],
+			["/older stable/vib", "daemon", "stop", "discord", "--force"],
+			["/older stable/vib", "daemon", "reload", "discord"],
+			["/older stable/vib", "notify", "recovery"],
 		]);
 	});
 
 	it("targets a Slack-only durable provider during legacy recovery", async () => {
 		const argv: string[][] = [];
 		await runPostUpdateRecoveryForTest(
-			"/older stable/gjc",
+			"/older stable/vib",
 			async args => {
 				argv.push(args);
 				return 0;
@@ -876,9 +876,9 @@ describe("update-cli managed notification recovery", () => {
 			async () => ["slack"],
 		);
 		expect(argv).toEqual([
-			["/older stable/gjc", "daemon", "stop", "slack", "--force"],
-			["/older stable/gjc", "daemon", "reload", "slack"],
-			["/older stable/gjc", "notify", "recovery"],
+			["/older stable/vib", "daemon", "stop", "slack", "--force"],
+			["/older stable/vib", "daemon", "reload", "slack"],
+			["/older stable/vib", "notify", "recovery"],
 		]);
 	});
 
@@ -886,7 +886,7 @@ describe("update-cli managed notification recovery", () => {
 		const argv: string[][] = [];
 		await expect(
 			runPostUpdateRecoveryForTest(
-				"/older/gjc",
+				"/older/vib",
 				async args => {
 					argv.push(args);
 					return args[2] === "reload" ? 17 : 0;
@@ -896,8 +896,8 @@ describe("update-cli managed notification recovery", () => {
 			),
 		).rejects.toThrow("legacy post-update daemon reload exited 17");
 		expect(argv).toEqual([
-			["/older/gjc", "daemon", "stop", "slack", "--force"],
-			["/older/gjc", "daemon", "reload", "slack"],
+			["/older/vib", "daemon", "stop", "slack", "--force"],
+			["/older/vib", "daemon", "reload", "slack"],
 		]);
 	});
 
@@ -931,9 +931,9 @@ describe("update-cli managed notification recovery", () => {
 		const calls: string[] = [];
 		const target =
 			method === "binary"
-				? { method, path: "/verified/gjc" }
+				? { method, path: "/verified/vib" }
 				: method === "npm"
-					? { method, packageName: "gajae-code" }
+					? { method, packageName: "vib-rato" }
 					: { method };
 		await runUpdateCommand(
 			{ force: false, check: false },
@@ -942,10 +942,10 @@ describe("update-cli managed notification recovery", () => {
 				resolveUpdateTarget: async () => target,
 				performUpdate: async () => {
 					calls.push("verified install");
-					return { ok: true, path: "/verified/gjc" };
+					return { ok: true, path: "/verified/vib" };
 				},
 				runPostUpdateRecovery: async runtimePath => {
-					expect(runtimePath).toBe("/verified/gjc");
+					expect(runtimePath).toBe("/verified/vib");
 					await runManagedNotifyRecovery({
 						settings: async () => configuredSettings({ "notifications.enabled": false }),
 						stopDaemon: async settings => {
@@ -987,7 +987,7 @@ describe("update-cli managed notification recovery", () => {
 						resolveUpdateTarget: async () => ({ method: "bun" }),
 						performUpdate: async () => {
 							calls.push("verified install");
-							return { ok: true, path: "/verified/gjc" };
+							return { ok: true, path: "/verified/vib" };
 						},
 						runPostUpdateRecovery: async () =>
 							await runManagedNotifyRecovery({
@@ -1037,7 +1037,7 @@ describe("update-cli managed notification recovery", () => {
 					{
 						getLatestRelease: async () => release,
 						resolveUpdateTarget: async () => ({ method: "bun" }),
-						performUpdate: async () => ({ ok: true, path: "/verified/gjc" }),
+						performUpdate: async () => ({ ok: true, path: "/verified/vib" }),
 						runPostUpdateRecovery: async () => {
 							throw new Error("restart failed");
 						},
@@ -1066,7 +1066,7 @@ describe("update-cli managed notification recovery", () => {
 			{ force: false, check: true },
 			{
 				getLatestRelease: async () => release,
-				resolveUpdateTarget: async () => ({ method: "binary", path: "/tmp/gjc" }),
+				resolveUpdateTarget: async () => ({ method: "binary", path: "/tmp/vib" }),
 				...lifecycle,
 			},
 		);
@@ -1074,7 +1074,7 @@ describe("update-cli managed notification recovery", () => {
 			{ force: false, check: false },
 			{
 				getLatestRelease: async () => ({ ...release, version: "0.0.1" }),
-				resolveUpdateTarget: async () => ({ method: "binary", path: "/tmp/gjc" }),
+				resolveUpdateTarget: async () => ({ method: "binary", path: "/tmp/vib" }),
 				...lifecycle,
 			},
 		);
@@ -1109,9 +1109,9 @@ describe("update-cli managed notification recovery", () => {
 			{
 				getLatestRelease: async () => release,
 				resolveUpdateTarget: async () => ({ method: "bun" }),
-				performUpdate: async () => ({ ok: true, path: "/verified/gjc" }),
+				performUpdate: async () => ({ ok: true, path: "/verified/vib" }),
 				runPostUpdateRecovery: async runtimePath => {
-					expect(runtimePath).toBe("/verified/gjc");
+					expect(runtimePath).toBe("/verified/vib");
 					await runManagedNotifyRecovery({
 						settings: async () => Settings.isolated(),
 						stopDaemon: async () => {
@@ -1134,7 +1134,7 @@ describe("update-cli managed notification recovery", () => {
 describe("update-cli install lock", () => {
 	it("locks the same file the POSIX installer uses", async () => {
 		const source = await Bun.file(path.resolve(import.meta.dir, "../src/cli/update-cli.ts")).text();
-		expect(source).toContain(".gjc-install.lock");
+		expect(source).toContain(".vib-install.lock");
 		expect(source).not.toContain("No checksum asset on");
 		expect(source).not.toContain(".update-lock");
 		expect(source).toContain(`Remove ${String.fromCharCode(36)}{lockFile} only after confirming`);
@@ -1144,7 +1144,7 @@ describe("update-cli install lock", () => {
 describe("update-cli windows journal recovery", () => {
 	it("promotes .next over the live target and does not strand the prior binary", async () => {
 		const dir = await makeTempDir();
-		const targetPath = path.join(dir, "gjc");
+		const targetPath = path.join(dir, "vib");
 		const backupPath = `${targetPath}.bak`;
 		const nextPath = `${targetPath}.next`;
 		const journalPath = `${targetPath}.update-journal`;
@@ -1160,7 +1160,7 @@ describe("update-cli windows journal recovery", () => {
 	});
 	it("promotes .next even when the journal backup path already exists", async () => {
 		const dir = await makeTempDir();
-		const targetPath = path.join(dir, "gjc");
+		const targetPath = path.join(dir, "vib");
 		const backupPath = `${targetPath}.bak`;
 		const nextPath = `${targetPath}.next`;
 		const journalPath = `${targetPath}.update-journal`;
@@ -1181,7 +1181,7 @@ describe("update-cli windows journal recovery", () => {
 describe("update-cli binary replacement", () => {
 	it("restores the previous binary when the replacement fails verification", async () => {
 		const dir = await makeTempDir();
-		const targetPath = path.join(dir, "gjc");
+		const targetPath = path.join(dir, "vib");
 		const tempPath = `${targetPath}.new`;
 		const backupPath = `${targetPath}.bak`;
 		await Bun.write(targetPath, "old binary");
@@ -1195,7 +1195,7 @@ describe("update-cli binary replacement", () => {
 				expectedVersion: "15.1.8",
 				verifyInstalledVersion: async () => ({ ok: false, path: targetPath }),
 			}),
-		).rejects.toThrow("restored previous gjc binary");
+		).rejects.toThrow("restored previous vib binary");
 
 		expect(await Bun.file(targetPath).text()).toBe("old binary");
 		expect(await Bun.file(tempPath).exists()).toBe(false);
@@ -1203,7 +1203,7 @@ describe("update-cli binary replacement", () => {
 	});
 	it("installs a fresh binary when the migration target does not exist yet", async () => {
 		const dir = await makeTempDir();
-		const targetPath = path.join(dir, "gjc");
+		const targetPath = path.join(dir, "vib");
 		const tempPath = `${targetPath}.new`;
 		const backupPath = `${targetPath}.bak`;
 		await Bun.write(tempPath, "new binary");
@@ -1224,7 +1224,7 @@ describe("update-cli binary replacement", () => {
 	it("refuses to replace a destination symlink", async () => {
 		const dir = await makeTempDir();
 		const realPath = path.join(dir, "real");
-		const targetPath = path.join(dir, "gjc");
+		const targetPath = path.join(dir, "vib");
 		const tempPath = `${targetPath}.new`;
 		const backupPath = `${targetPath}.bak`;
 		await Bun.write(realPath, "managed");
@@ -1244,7 +1244,7 @@ describe("update-cli binary replacement", () => {
 	});
 	it("does not delete the live binary when backup copy fails", async () => {
 		const dir = await makeTempDir();
-		const targetPath = path.join(dir, "gjc");
+		const targetPath = path.join(dir, "vib");
 		const tempPath = `${targetPath}.new`;
 		const backupPath = `${targetPath}.bak`;
 		await Bun.write(targetPath, "old binary");
@@ -1276,7 +1276,7 @@ describe("update-cli binary replacement", () => {
 
 	it("keeps a verified replacement when backup cleanup hits EPERM", async () => {
 		const dir = await makeTempDir();
-		const targetPath = path.join(dir, "gjc.cmd");
+		const targetPath = path.join(dir, "vib.cmd");
 		const tempPath = `${targetPath}.new`;
 		const backupPath = `${targetPath}.bak`;
 		await Bun.write(targetPath, "old binary");
@@ -1313,7 +1313,7 @@ describe("update-cli binary replacement", () => {
 
 	it("keeps the replacement only after it reports the expected version", async () => {
 		const dir = await makeTempDir();
-		const targetPath = path.join(dir, "gjc");
+		const targetPath = path.join(dir, "vib");
 		const tempPath = `${targetPath}.new`;
 		const backupPath = `${targetPath}.bak`;
 		await Bun.write(targetPath, "old binary");
@@ -1336,7 +1336,7 @@ describe("update-cli binary replacement", () => {
 describe("update-cli download durability", () => {
 	it("fsyncs a written file without altering its contents", async () => {
 		const dir = await makeTempDir();
-		const filePath = path.join(dir, "gjc.new");
+		const filePath = path.join(dir, "vib.new");
 		await Bun.write(filePath, "downloaded binary bytes");
 
 		await fsyncFileForTest(filePath);
@@ -1383,7 +1383,7 @@ describe("update-cli download durability", () => {
 describe("update-cli binary update flow", () => {
 	it("downloads, fsyncs, then replaces and verifies in that order", async () => {
 		const calls: string[] = [];
-		const targetPath = "/opt/gjc/bin/gjc";
+		const targetPath = "/opt/vib/bin/vib";
 		const flow: BinaryUpdateFlow = {
 			download: async (url, tempPath) => {
 				calls.push(`download ${url} -> ${tempPath}`);
@@ -1407,10 +1407,10 @@ describe("update-cli binary update flow", () => {
 			},
 		};
 
-		const result = await runBinaryUpdateFlow(targetPath, "https://example.test/gjc", "1.2.3", flow);
+		const result = await runBinaryUpdateFlow(targetPath, "https://example.test/vib", "1.2.3", flow);
 
 		expect(result.ok).toBe(true);
-		expect(calls[0]).toMatch(new RegExp(`^download https://example.test/gjc -> ${targetPath}\\.new\\.`));
+		expect(calls[0]).toMatch(new RegExp(`^download https://example.test/vib -> ${targetPath}\\.new\\.`));
 		expect(calls[1]).toMatch(new RegExp(`^fsync ${targetPath}\\.new\\.`));
 		expect(calls[2]).toBe("beforeReplace");
 		expect(calls[3]).toMatch(new RegExp(`^replace ${targetPath}\\.new\\..* -> ${targetPath}$`));
@@ -1420,7 +1420,7 @@ describe("update-cli binary update flow", () => {
 
 	it("aborts before replacement/verification when fsync fails", async () => {
 		const calls: string[] = [];
-		const targetPath = "/opt/gjc/bin/gjc";
+		const targetPath = "/opt/vib/bin/vib";
 		const flow: BinaryUpdateFlow = {
 			download: async (_url, tempPath) => {
 				calls.push(`download ${tempPath}`);
@@ -1442,7 +1442,7 @@ describe("update-cli binary update flow", () => {
 			},
 		};
 
-		await expect(runBinaryUpdateFlow(targetPath, "https://example.test/gjc", "1.2.3", flow)).rejects.toThrow(
+		await expect(runBinaryUpdateFlow(targetPath, "https://example.test/vib", "1.2.3", flow)).rejects.toThrow(
 			"fsync failed",
 		);
 
@@ -1521,7 +1521,7 @@ describe("update-cli release channels", () => {
 							warnings: [],
 						};
 					},
-					resolveUpdateTarget: async () => ({ method: "binary", path: "/tmp/gjc" }),
+					resolveUpdateTarget: async () => ({ method: "binary", path: "/tmp/vib" }),
 				},
 			);
 			expect(seenChannels).toEqual(["nightly"]);
@@ -1546,7 +1546,7 @@ describe("update-cli release channels", () => {
 						seenChannels.push(options?.channel ?? "stable");
 						return { tag: "v0.0.1", version: "0.0.1", registry: DEFAULT_NPM_REGISTRY, warnings: [] };
 					},
-					resolveUpdateTarget: async () => ({ method: "binary", path: "/tmp/gjc" }),
+					resolveUpdateTarget: async () => ({ method: "binary", path: "/tmp/vib" }),
 				},
 			);
 			expect(seenChannels).toEqual(["stable"]);
@@ -1574,7 +1574,7 @@ describe("update-cli release channels", () => {
 						registry: DEFAULT_NPM_REGISTRY,
 						warnings: [],
 					}),
-					resolveUpdateTarget: async () => ({ method: "binary", path: "/tmp/gjc" }),
+					resolveUpdateTarget: async () => ({ method: "binary", path: "/tmp/vib" }),
 				},
 			);
 			expect(output.join("\n")).toContain("Already up to date");
@@ -1586,31 +1586,31 @@ describe("update-cli release channels", () => {
 
 	it("prefers the compiled executable over PATH lookup", () => {
 		expect(
-			resolveGjcPathForTest({
+			resolveVibPathForTest({
 				compiled: true,
-				execPath: "/opt/gjc/gjc",
-				whichPath: "/usr/bin/gjc",
+				execPath: "/opt/vib/vib",
+				whichPath: "/usr/bin/vib",
 			}),
-		).toBe(path.resolve("/opt/gjc/gjc"));
+		).toBe(path.resolve("/opt/vib/vib"));
 		expect(
-			resolveGjcPathForTest({
+			resolveVibPathForTest({
 				compiled: false,
-				execPath: "/opt/gjc/gjc",
-				whichPath: "/usr/bin/gjc",
+				execPath: "/opt/vib/vib",
+				whichPath: "/usr/bin/vib",
 			}),
-		).toBe("/usr/bin/gjc");
+		).toBe("/usr/bin/vib");
 	});
 	it("resolves compiled execPath through a symlink", async () => {
 		const dir = await makeTempDir();
-		const realFile = path.join(dir, "gjc-real");
-		const link = path.join(dir, "gjc-link");
+		const realFile = path.join(dir, "vib-real");
+		const link = path.join(dir, "vib-link");
 		await Bun.write(realFile, "binary");
 		await fs.symlink(realFile, link);
 		expect(
-			resolveGjcPathForTest({
+			resolveVibPathForTest({
 				compiled: true,
 				execPath: link,
-				whichPath: "/usr/bin/gjc",
+				whichPath: "/usr/bin/vib",
 			}),
 		).toBe(await fs.realpath(link));
 	});
@@ -1635,7 +1635,7 @@ describe("update-cli release channels", () => {
 					}),
 					resolveUpdateTarget: async () => {
 						throw new Error(
-							"Current install at /home/alice/.local/bin/gjc is a package-manager shim in the default binary directory",
+							"Current install at /home/alice/.local/bin/vib is a package-manager shim in the default binary directory",
 						);
 					},
 					exit: ((code?: number) => {
@@ -1677,7 +1677,7 @@ describe("update-cli channel robustness", () => {
 			},
 		});
 
-		expect(requested).toEqual(["https://api.github.com/repos/Yeachan-Heo/gajae-code/releases?per_page=40"]);
+		expect(requested).toEqual(["https://api.github.com/repos/Keonho-Chu/Vibrato/releases?per_page=40"]);
 		expect(release.version).toBe("1.2.3-nightly.1.1.gabc");
 	});
 
@@ -1709,7 +1709,7 @@ describe("update-cli channel robustness", () => {
 							registry: DEFAULT_NPM_REGISTRY,
 							warnings: [],
 						}),
-						resolveUpdateTarget: async () => ({ method: "binary", path: "/tmp/gjc" }),
+						resolveUpdateTarget: async () => ({ method: "binary", path: "/tmp/vib" }),
 						exit: code => {
 							exitCodes.push(code);
 							throw sentinel;
@@ -1776,31 +1776,31 @@ describe("update-cli channel robustness", () => {
 
 describe("update-cli reported version parsing", () => {
 	it("parses stable and nightly prerelease version output", () => {
-		expect(parseReportedVersionForTest("gjc/0.12.11")).toBe("0.12.11");
-		expect(parseReportedVersionForTest("gjc/0.12.12-nightly.20260805044024.123456789.g6dd873fd26b8\n")).toBe(
+		expect(parseReportedVersionForTest("vib/0.12.11")).toBe("0.12.11");
+		expect(parseReportedVersionForTest("vib/0.12.12-nightly.20260805044024.123456789.g6dd873fd26b8\n")).toBe(
 			"0.12.12-nightly.20260805044024.123456789.g6dd873fd26b8",
 		);
-		expect(parseReportedVersionForTest("gjc: no version")).toBeUndefined();
+		expect(parseReportedVersionForTest("vib: no version")).toBeUndefined();
 	});
 });
 describe("update-cli binary-first target policy", () => {
 	it("installs standalone binaries under the user install dir, not Bun's global bin", () => {
-		expect(defaultUserBinaryPathForTest("linux", { GJC_INSTALL_DIR: "/tmp/gjc-bin", HOME: "/home/alice" })).toBe(
-			"/tmp/gjc-bin/gjc",
+		expect(defaultUserBinaryPathForTest("linux", { VIB_INSTALL_DIR: "/tmp/vib-bin", HOME: "/home/alice" })).toBe(
+			"/tmp/vib-bin/vib",
 		);
 		expect(
-			defaultUserBinaryPathForTest("win32", { GJC_INSTALL_DIR: "D:\\tools", USERPROFILE: "C:\\Users\\alice" }),
-		).toBe("D:\\tools\\gjc.exe");
-		expect(defaultUserBinaryPathForTest("linux", { HOME: "/home/alice" })).toBe("/home/alice/.local/bin/gjc");
+			defaultUserBinaryPathForTest("win32", { VIB_INSTALL_DIR: "D:\\tools", USERPROFILE: "C:\\Users\\alice" }),
+		).toBe("D:\\tools\\vib.exe");
+		expect(defaultUserBinaryPathForTest("linux", { HOME: "/home/alice" })).toBe("/home/alice/.local/bin/vib");
 	});
 
 	it("protects this repository checkout from self-overwrite", () => {
 		expect(isProtectedSourcePathForTest(path.join(repoRoot, "packages/coding-agent/src/cli.ts"))).toBe(true);
-		expect(isProtectedSourcePathForTest("/tmp/unrelated/gjc")).toBe(false);
+		expect(isProtectedSourcePathForTest("/tmp/unrelated/vib")).toBe(false);
 	});
 
 	it("keeps bun-global path detection as a shim classifier, not an install method", () => {
-		expect(resolveUpdateMethodForTest("/Users/test/.bun/bin/gjc", "/Users/test/.bun/bin")).toBe("bun");
-		expect(resolveUpdateMethodForTest("/Users/test/.local/bin/gjc", "/Users/test/.bun/bin")).toBe("binary");
+		expect(resolveUpdateMethodForTest("/Users/test/.bun/bin/vib", "/Users/test/.bun/bin")).toBe("bun");
+		expect(resolveUpdateMethodForTest("/Users/test/.local/bin/vib", "/Users/test/.bun/bin")).toBe("binary");
 	});
 });

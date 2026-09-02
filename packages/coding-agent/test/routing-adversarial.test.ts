@@ -2,21 +2,18 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { Usage } from "@gajae-code/ai";
-import { classifyFallbackTrigger } from "@gajae-code/ai/utils/fallback-transport";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { resetSettingsForTest, Settings, settings } from "@gajae-code/coding-agent/config/settings";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import {
-	buildCacheBehaviorWarning,
-	computeCacheMissCostSummary,
-} from "@gajae-code/coding-agent/session/cache-economics";
+import type { Usage } from "@vib-rato/ai";
+import { classifyFallbackTrigger } from "@vib-rato/ai/utils/fallback-transport";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { resetSettingsForTest, Settings, settings } from "@vib-rato/coding-agent/config/settings";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { buildCacheBehaviorWarning, computeCacheMissCostSummary } from "@vib-rato/coding-agent/session/cache-economics";
 import {
 	cappedExponentialWithFullJitter,
 	compactionRetryDelay,
 	effectiveFallbackDelay,
 	FallbackChainController,
-} from "@gajae-code/coding-agent/session/fallback-chain-controller";
+} from "@vib-rato/coding-agent/session/fallback-chain-controller";
 
 const THREE_HOURS_MS = 3 * 60 * 60 * 1_000;
 const zeroPriceUsage: Usage = {
@@ -36,7 +33,7 @@ describe("routing adversarial contract probes", () => {
 	beforeEach(async () => {
 		resetSettingsForTest();
 		await Settings.init({ inMemory: true });
-		root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-routing-adversarial-"));
+		root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-routing-adversarial-"));
 		authStorage = await AuthStorage.create(path.join(root, "auth.db"));
 		previousXaiKey = process.env.XAI_API_KEY;
 		delete process.env.XAI_API_KEY;

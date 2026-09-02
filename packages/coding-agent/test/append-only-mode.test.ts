@@ -3,7 +3,7 @@ import {
 	providerSupportsAppendOnlyAuto,
 	resolveAppendOnlyMode,
 	resolveIntentTracingEnabled,
-} from "@gajae-code/coding-agent/sdk";
+} from "@vib-rato/coding-agent/sdk";
 
 describe("append-only auto allowlist", () => {
 	it("auto-enables for DeepSeek and direct Anthropic only", () => {

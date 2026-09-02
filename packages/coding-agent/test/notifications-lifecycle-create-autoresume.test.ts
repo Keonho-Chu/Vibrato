@@ -4,20 +4,20 @@ import * as fsp from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 
-import { setAgentDir } from "@gajae-code/utils";
+import { setAgentDir } from "@vib-rato/utils";
 import type { Args } from "../src/cli/args";
 import { Settings } from "../src/config/settings";
 import { createSessionManager } from "../src/main";
 import { SessionManager } from "../src/session/session-manager";
 
-const LIFECYCLE_ENV = ["GJC_LIFECYCLE_REQUEST_ID", "GJC_SESSION_ID"] as const;
+const LIFECYCLE_ENV = ["VIB_LIFECYCLE_REQUEST_ID", "VIB_SESSION_ID"] as const;
 
 afterEach(() => {
 	for (const k of LIFECYCLE_ENV) delete process.env[k];
 });
 
 test("normal root launch creates a current SessionManager for root token logs", async () => {
-	const agentDir = await fsp.mkdtemp(path.join(os.tmpdir(), "gjc-root-token-session-"));
+	const agentDir = await fsp.mkdtemp(path.join(os.tmpdir(), "vib-root-token-session-"));
 	setAgentDir(agentDir);
 	const cwd = path.join(agentDir, "repo");
 	fs.mkdirSync(cwd, { recursive: true });
@@ -34,12 +34,12 @@ test("normal root launch creates a current SessionManager for root token logs", 
 });
 
 // Regression for the PR #1148 stage-17 blocker: a `/session_create` child is a
-// bare `gjc` launch with GJC_SESSION_ID/GJC_LIFECYCLE_REQUEST_ID. With autoResume
+// bare `vib` launch with VIB_SESSION_ID/VIB_LIFECYCLE_REQUEST_ID. With autoResume
 // enabled and existing history in the cwd, the child must NOT auto-resume the old
 // session (which would diverge the daemon/tmux id from the header id); it must
 // create a fresh session that adopts the pre-allocated id.
 test("lifecycle /session_create bypasses autoResume; normal launch still resumes", async () => {
-	const agentDir = await fsp.mkdtemp(path.join(os.tmpdir(), "gjc-lc-autoresume-"));
+	const agentDir = await fsp.mkdtemp(path.join(os.tmpdir(), "vib-lc-autoresume-"));
 	setAgentDir(agentDir);
 	const cwd = path.join(agentDir, "repo");
 	fs.mkdirSync(cwd, { recursive: true });
@@ -54,15 +54,15 @@ test("lifecycle /session_create bypasses autoResume; normal launch still resumes
 	await prior.flush();
 
 	// Control: a normal launch (no lifecycle env) auto-resumes the prior session.
-	delete process.env.GJC_LIFECYCLE_REQUEST_ID;
-	delete process.env.GJC_SESSION_ID;
+	delete process.env.VIB_LIFECYCLE_REQUEST_ID;
+	delete process.env.VIB_SESSION_ID;
 	const resumed = await createSessionManager({} as Args, cwd, settings);
 	expect(resumed?.getSessionId()).toBe(priorId);
 
 	// Lifecycle create: the guard returns undefined (the SDK then creates a fresh
 	// session that adopts the pre-allocated id), never auto-resuming the old one.
-	process.env.GJC_LIFECYCLE_REQUEST_ID = "lc-autoresume-1";
-	process.env.GJC_SESSION_ID = "s-prealloc-autoresume-1";
+	process.env.VIB_LIFECYCLE_REQUEST_ID = "lc-autoresume-1";
+	process.env.VIB_SESSION_ID = "s-prealloc-autoresume-1";
 	const created = await createSessionManager({} as Args, cwd, settings);
 	expect(created).toBeUndefined();
 

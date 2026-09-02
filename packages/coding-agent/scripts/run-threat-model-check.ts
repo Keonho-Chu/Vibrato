@@ -66,7 +66,7 @@ async function assertFixtureControlsStayTestOnly(): Promise<void> {
 		ensureSource.includes("startFixtureBrokerCommandWithLeaseForTest"),
 		"Dedicated fixture launch boundary is missing its explicit ForTest label",
 	);
-	assert(!/GJC_.*(?:GSF1|SSH1|SELF_REAP)/.test(ensureSource), "Production environment can select fixture controls");
+	assert(!/VIB_.*(?:GSF1|SSH1|SELF_REAP)/.test(ensureSource), "Production environment can select fixture controls");
 }
 
 async function rejectedWebSocket(url: string): Promise<void> {
@@ -123,7 +123,7 @@ async function main(): Promise<void> {
 		ids.add(check.id);
 	}
 
-	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-threat-model-"));
+	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-threat-model-"));
 	const broker = new Broker({ agentDir, packageGeneration: "threat-model" });
 	const failures: string[] = [];
 	try {
@@ -149,7 +149,7 @@ async function main(): Promise<void> {
 				assert(discovery.url === `ws://127.0.0.1:${discovery.port}`, "broker advertised a non-loopback URL");
 			},
 			"broker-token-rotation-on-stale-takeover": async () => {
-				const takeoverDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-takeover-"));
+				const takeoverDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-takeover-"));
 				const first = new Broker({ agentDir: takeoverDir, packageGeneration: "threat-model" });
 				try {
 					const previous = await first.start();
@@ -167,7 +167,7 @@ async function main(): Promise<void> {
 				}
 			},
 			"broker-per-session-token-separation": async () => {
-				const sessionRoot = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-session-token-"));
+				const sessionRoot = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-session-token-"));
 				const sessionToken = "session-token-that-must-not-authorize-broker";
 				const sessionServer = new NotificationServer("threat-model", sessionToken, sessionRoot, true);
 				try {

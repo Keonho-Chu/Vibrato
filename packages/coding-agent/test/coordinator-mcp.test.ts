@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { getAgentDir, setAgentDir } from "@gajae-code/utils";
+import { getAgentDir, setAgentDir } from "@vib-rato/utils";
 import McpServe, {
 	buildCoordinatorCheckPayload,
 	type CoordinatorBrokerObservation,
@@ -43,7 +43,7 @@ import { UnsupportedStateVersionError } from "../src/sdk/broker/state-version";
 import { SDK_MCP_TOOL_NAMES } from "../src/sdk/mcp/server";
 
 async function withTempRoot(run: (root: string) => Promise<void>): Promise<void> {
-	const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-coordinator-mcp-"));
+	const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-coordinator-mcp-"));
 	try {
 		await run(root);
 	} finally {
@@ -60,7 +60,7 @@ async function captureMcpServeCheck(argv: string[]): Promise<string> {
 		return true;
 	}) as typeof process.stdout.write;
 	try {
-		await new McpServe(argv, { bin: "gjc", version: "test", commands: new Map() }).run();
+		await new McpServe(argv, { bin: "vib", version: "test", commands: new Map() }).run();
 		return stdout;
 	} finally {
 		process.stdout.write = write;
@@ -81,7 +81,7 @@ async function withAgentDir<T>(agentDir: string, run: () => Promise<T>): Promise
 describe("canonical SDK coordinator compatibility handler", () => {
 	it("serves initialization and the canonical tool inventory", async () => {
 		await withTempRoot(async root => {
-			const env = { GJC_COORDINATOR_MCP_WORKDIR_ROOTS: root };
+			const env = { VIB_COORDINATOR_MCP_WORKDIR_ROOTS: root };
 			const initialized = await handleCoordinatorMcpRequest(
 				{ jsonrpc: "2.0", id: 1, method: "initialize" },
 				{ env },
@@ -100,7 +100,7 @@ describe("canonical SDK coordinator compatibility handler", () => {
 				...COORDINATOR_MCP_TOOL_NAMES,
 			]);
 			const promptTool = listed.result.tools.find(
-				(tool: { name: string }) => tool.name === "gjc_coordinator_send_prompt",
+				(tool: { name: string }) => tool.name === "vib_coordinator_send_prompt",
 			);
 			expect(promptTool.inputSchema.required).toEqual(expect.arrayContaining(["idempotency_key", "allow_mutation"]));
 		});
@@ -110,10 +110,10 @@ describe("canonical SDK coordinator compatibility handler", () => {
 		await withTempRoot(async root => {
 			const response = await handleCoordinatorMcpRequest(
 				{ jsonrpc: "2.0", id: 3, method: "tools/list" },
-				{ env: { GJC_COORDINATOR_MCP_WORKDIR_ROOTS: root } },
+				{ env: { VIB_COORDINATOR_MCP_WORKDIR_ROOTS: root } },
 			);
 			const tool = response.result.tools.find(
-				(candidate: { name: string }) => candidate.name === "gjc_coordinator_submit_question_answer",
+				(candidate: { name: string }) => candidate.name === "vib_coordinator_submit_question_answer",
 			);
 			expect(tool.inputSchema.required).toEqual(
 				expect.arrayContaining([
@@ -135,24 +135,24 @@ describe("canonical SDK coordinator compatibility handler", () => {
 			await Bun.write(artifact, "coordinator artifact");
 			const server = createCoordinatorMcpServer({
 				env: {
-					GJC_COORDINATOR_MCP_WORKDIR_ROOTS: root,
-					GJC_COORDINATOR_MCP_MUTATIONS: "sessions",
+					VIB_COORDINATOR_MCP_WORKDIR_ROOTS: root,
+					VIB_COORDINATOR_MCP_MUTATIONS: "sessions",
 				},
 			});
 			expect(
-				await server.callTool("gjc_coordinator_start_session", { cwd: root, idempotency_key: "start-1" }),
+				await server.callTool("vib_coordinator_start_session", { cwd: root, idempotency_key: "start-1" }),
 			).toEqual({ ok: false, reason: "coordinator_mutation_call_not_allowed:sessions" });
 			if (process.platform === "linux") {
-				expect(await server.callTool("gjc_coordinator_read_artifact", { path: artifact })).toMatchObject({
+				expect(await server.callTool("vib_coordinator_read_artifact", { path: artifact })).toMatchObject({
 					ok: true,
 					text: "coordinator artifact",
 				});
-				expect(await server.callTool("gjc_coordinator_read_artifact", { path: os.tmpdir() })).toEqual({
+				expect(await server.callTool("vib_coordinator_read_artifact", { path: os.tmpdir() })).toEqual({
 					ok: false,
 					reason: "artifact_outside_allowed_roots",
 				});
 			} else {
-				await expect(server.callTool("gjc_coordinator_read_artifact", { path: artifact })).resolves.toMatchObject({
+				await expect(server.callTool("vib_coordinator_read_artifact", { path: artifact })).resolves.toMatchObject({
 					ok: false,
 					error: { code: "artifact_unavailable" },
 				});
@@ -305,7 +305,7 @@ describe("mcp serve check command compatibility", () => {
 				});
 				expect(sdk).toEqual({
 					ok: true,
-					server: { name: "gjc-sdk-mcp" },
+					server: { name: "vib-sdk-mcp" },
 					readOnly: false,
 					tools: [...SDK_MCP_TOOL_NAMES],
 				});
@@ -317,7 +317,7 @@ describe("mcp serve check command compatibility", () => {
 					`server: ${COORDINATOR_MCP_SERVER_NAME}\ntools: ${COORDINATOR_MCP_TOOL_NAMES.length}\n`,
 				);
 				expect(await captureMcpServeCheck(["sdk", "--check"])).toBe(
-					`server: gjc-sdk-mcp\ntools: ${SDK_MCP_TOOL_NAMES.length}\n`,
+					`server: vib-sdk-mcp\ntools: ${SDK_MCP_TOOL_NAMES.length}\n`,
 				);
 				expect(brokerOwnerForTest(agentDir)).toBeUndefined();
 				for (const output of [JSON.stringify(coordinator), JSON.stringify(hermes), JSON.stringify(sdk)]) {
@@ -385,7 +385,7 @@ describe("coordinator question-state direct contracts", () => {
 			const claimed = await claimCreationRequest(paths, {
 				key_digest: "creation-key",
 				request_digest: "request-digest",
-				tool: "gjc_coordinator_start_session",
+				tool: "vib_coordinator_start_session",
 				sidecar_verifier: oldVerifier,
 			});
 			expect(claimed.phase).toBe("claimed");
@@ -865,7 +865,7 @@ describe("coordinator WAL delivery paging and capacity compaction", () => {
 			await withSessionTransaction(paths, sessionId, async transaction => {
 				transaction.requests.operations["operation-status"] = {
 					operation_id: "operation-status",
-					tool: "gjc_coordinator_report_status",
+					tool: "vib_coordinator_report_status",
 					key_digest: sha256("report-key"),
 					request_digest: sha256("report-request"),
 					local_id: sha256("report-local"),

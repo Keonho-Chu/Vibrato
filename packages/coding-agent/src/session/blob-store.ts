@@ -2,8 +2,8 @@ import * as crypto from "node:crypto";
 import * as fs from "node:fs";
 import * as fsp from "node:fs/promises";
 import * as path from "node:path";
-import { exactUnlink } from "@gajae-code/natives";
-import { isEnoent, logger, postmortem } from "@gajae-code/utils";
+import { exactUnlink } from "@vib-rato/natives";
+import { isEnoent, logger, postmortem } from "@vib-rato/utils";
 
 const BLOB_PREFIX = "blob:sha256:";
 const TAKE_BLOB_BUFFER_OWNERSHIP = Symbol("takeBlobBufferOwnership");
@@ -1711,11 +1711,11 @@ export function resolveResidentImageDataSync(
 }
 
 // =============================================================================
-// Canonical-store mark-and-sweep primitives (`gjc gc --disk`)
+// Canonical-store mark-and-sweep primitives (`vib gc --disk`)
 // =============================================================================
 //
 // The resident-cache sweep above bounds *cache* directories. These primitives
-// expose the canonical `~/.gjc/agent/blobs` store to an out-of-process retention
+// expose the canonical `~/.vib/agent/blobs` store to an out-of-process retention
 // pass so it can mark live hashes from surviving transcripts and sweep the rest.
 // They own no policy: the caller decides what "unreferenced" means.
 
@@ -1826,7 +1826,7 @@ export async function removeCanonicalBlob(
 		size: BigInt(entry.bytes),
 		mtimeNs: entry.mtimeNs,
 		sha256: entry.hash,
-		quarantineName: `.gjc-gc-blob-${entry.hash}`,
+		quarantineName: `.vib-gc-blob-${entry.hash}`,
 	});
 	if (removed.ok) return { removed: true };
 	if (removed.code === "cleanup_pending" && removed.detachedPath) {

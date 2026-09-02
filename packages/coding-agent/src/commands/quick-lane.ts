@@ -7,7 +7,7 @@
  * and mutates nothing — it only exposes the deterministic classifier so task
  * classification can be inspected, audited, and consumed by tooling.
  */
-import { Args, Command, Flags } from "@gajae-code/utils/cli";
+import { Args, Command, Flags } from "@vib-rato/utils/cli";
 import { classifyQuickLane } from "../quick-lane/classify";
 
 export default class QuickLane extends Command {
@@ -24,9 +24,9 @@ export default class QuickLane extends Command {
 	};
 
 	static examples = [
-		`$ gjc quick-lane classify "add validation to processKeywordDetector"`,
-		`$ gjc quick-lane classify --json "fix src/hooks/bridge.ts"`,
-		`$ gjc quick-lane classify "autoresearch the caching layer"`,
+		`$ vib quick-lane classify "add validation to processKeywordDetector"`,
+		`$ vib quick-lane classify --json "fix src/hooks/bridge.ts"`,
+		`$ vib quick-lane classify "autoresearch the caching layer"`,
 	];
 
 	async run(): Promise<void> {

@@ -1,4 +1,4 @@
-import type { CustomToolFactory } from "@gajae-code/coding-agent";
+import type { CustomToolFactory } from "@vib-rato/coding-agent";
 
 const factory: CustomToolFactory = pi => ({
 	name: "hello",

@@ -1,6 +1,6 @@
-import type { AgentTelemetryConfig, AgentTool } from "@gajae-code/agent-core";
-import type { Model, ServiceTier, ToolChoice } from "@gajae-code/ai/core";
-import { $env, logger } from "@gajae-code/utils";
+import type { AgentTelemetryConfig, AgentTool } from "@vib-rato/agent-core";
+import type { Model, ServiceTier, ToolChoice } from "@vib-rato/ai/core";
+import { $env, logger } from "@vib-rato/utils";
 import type { AsyncJobManager } from "../async";
 import type { PromptTemplate } from "../config/prompt-templates";
 import type { Settings } from "../config/settings";
@@ -450,7 +450,7 @@ export function computeEssentialBuiltinNames(settings: Settings): string[] {
  * `BUILTIN_TOOLS[name](session)` to construct a public coding-harness tool directly.
  *
  * Hindsight memory helpers are intentionally excluded: memory is a private backend
- * integration, not a public gajae-code tool surface.
+ * integration, not a public vib-rato tool surface.
  */
 export interface BuiltinCapabilityCatalogEntry {
 	name: string;
@@ -485,7 +485,7 @@ export interface EvalBackendsAllowance {
 }
 
 /**
- * Parse the `GJC_PY` multi-value token into per-backend booleans.
+ * Parse the `VIB_PY` multi-value token into per-backend booleans.
  *
  * Tokens (case-insensitive):
  * - `0` / `bash` → JavaScript only (`{ py: false, js: true }`)
@@ -493,13 +493,13 @@ export interface EvalBackendsAllowance {
  * - `js`         → JavaScript only (`{ py: false, js: true }`)
  * - `mix` / `both` → both backends (`{ py: true, js: true }`)
  *
- * Returns `null` when `GJC_PY` is unset, empty, or holds an unrecognized
+ * Returns `null` when `VIB_PY` is unset, empty, or holds an unrecognized
  * token, so the caller can fall back to the legacy `PI_PY` / `PI_JS` flags or
  * per-key settings. This matches the documented contract that invalid values
  * are ignored.
  */
-export function parseGjcPy(env: Record<string, string | undefined>): { py: boolean; js: boolean } | null {
-	const raw = env.GJC_PY;
+export function parseVibPy(env: Record<string, string | undefined>): { py: boolean; js: boolean } | null {
+	const raw = env.VIB_PY;
 	if (raw === undefined) return null;
 	const token = raw.trim().toLowerCase();
 	if (token === "") return null;
@@ -540,13 +540,13 @@ function parseLegacyEvalEnvFlags(env: Record<string, string | undefined>): EvalB
 }
 
 /**
- * Resolve eval-backend allowance from environment only. `GJC_PY` wins when set
+ * Resolve eval-backend allowance from environment only. `VIB_PY` wins when set
  * to a recognized token; otherwise the legacy `PI_PY` / `PI_JS` flags apply.
  * Returns `null` when no env override is set so the caller can defer to settings.
  */
 export function resolveEvalBackendsFromEnv(env: Record<string, string | undefined>): EvalBackendsAllowance | null {
-	const gjc = parseGjcPy(env);
-	if (gjc) return { python: gjc.py, js: gjc.js };
+	const vib = parseVibPy(env);
+	if (vib) return { python: vib.py, js: vib.js };
 	return parseLegacyEvalEnvFlags(env);
 }
 
@@ -559,7 +559,7 @@ export function readEvalBackendsAllowance(session: ToolSession): EvalBackendsAll
 }
 
 /**
- * Materialize the active eval backend allowance. `GJC_PY` takes precedence
+ * Materialize the active eval backend allowance. `VIB_PY` takes precedence
  * over the legacy `PI_PY` / `PI_JS` env flags, which in turn override the
  * per-key settings (defaults true). When no env override is set, settings win.
  */

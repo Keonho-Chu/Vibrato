@@ -1,5 +1,5 @@
 /**
- * Regression for https://github.com/Yeachan-Heo/gajae-code/issues/2944 and the
+ * Regression for https://github.com/Keonho-Chu/Vibrato/issues/2944 and the
  * Darwin durability path from #3760.
  *
  * Platforms without a retained native root authority (Darwin today) no longer
@@ -34,7 +34,7 @@ async function createStore(options?: { withoutNativeAuthority?: boolean }): Prom
 	filePath: string;
 	relativePath: string;
 }> {
-	const root = await fsp.mkdtemp(path.join(os.tmpdir(), "gjc-append-darwin-ctime-"));
+	const root = await fsp.mkdtemp(path.join(os.tmpdir(), "vib-append-darwin-ctime-"));
 	temporaryDirectories.push(root);
 	// Owner-only directory expected by managed security.
 	await fsp.chmod(root, 0o700);

@@ -7,7 +7,7 @@ import type {
 	InstalledPluginsRegistry,
 	MarketplaceRegistryEntry,
 	MarketplacesRegistry,
-} from "@gajae-code/coding-agent/extensibility/plugins/marketplace";
+} from "@vib-rato/coding-agent/extensibility/plugins/marketplace";
 import {
 	addInstalledPlugin,
 	addMarketplaceEntry,
@@ -22,10 +22,10 @@ import {
 	removeMarketplaceEntry,
 	writeInstalledPluginsRegistry,
 	writeMarketplacesRegistry,
-} from "@gajae-code/coding-agent/extensibility/plugins/marketplace";
+} from "@vib-rato/coding-agent/extensibility/plugins/marketplace";
 
 // Inline the parseAnthropic modelPluginsRegistry validation logic to avoid pulling
-// in discovery/helpers.ts which transitively imports @gajae-code/natives.
+// in discovery/helpers.ts which transitively imports @vib-rato/natives.
 // Matches the exact checks in helpers.ts parseAnthropic modelPluginsRegistry().
 function validateClaudeRegistryFormat(content: string): Record<string, unknown> | null {
 	let data: Record<string, unknown>;
@@ -201,7 +201,7 @@ describe("registry file I/O", () => {
 	let installedPath: string;
 
 	beforeEach(() => {
-		tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-mkt-test-"));
+		tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-mkt-test-"));
 		marketplacesPath = path.join(tmpDir, "marketplaces.json");
 		installedPath = path.join(tmpDir, "installed_plugins.json");
 	});

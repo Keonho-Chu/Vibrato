@@ -1,6 +1,6 @@
 # Provider streaming internals
 
-This document explains how token/tool streaming is normalized in `@gajae-code/ai`, then propagated through `@gajae-code/agent-core` and `coding-agent` session events.
+This document explains how token/tool streaming is normalized in `@vib-rato/ai`, then propagated through `@vib-rato/agent-core` and `coding-agent` session events.
 
 ## End-to-end flow
 
@@ -12,7 +12,7 @@ This document explains how token/tool streaming is normalized in `@gajae-code/ai
 4. `agentLoop` (`packages/agent/src/agent-loop.ts`) consumes those events, mutates in-flight assistant state, and emits `message_update` events carrying the raw `assistantMessageEvent`.
 5. `AgentSession` (`packages/coding-agent/src/session/agent-session.ts`) subscribes to agent events, persists messages, and applies session behaviors (retry, compaction, TTSR, streaming-edit abort checks).
 
-## Unified stream contract in `@gajae-code/ai`
+## Unified stream contract in `@vib-rato/ai`
 
 All providers emit the same shape (`AssistantMessageEvent` in `packages/ai/src/types.ts`):
 

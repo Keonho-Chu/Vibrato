@@ -6,8 +6,8 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
-import { parseKey, setKittyProtocolActive } from "@gajae-code/tui/keys";
-import { StdinBuffer } from "@gajae-code/tui/stdin-buffer";
+import { parseKey, setKittyProtocolActive } from "@vib-rato/tui/keys";
+import { StdinBuffer } from "@vib-rato/tui/stdin-buffer";
 
 describe("StdinBuffer", () => {
 	let buffer: StdinBuffer;

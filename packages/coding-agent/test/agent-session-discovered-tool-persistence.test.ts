@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import type { AgentTool } from "@gajae-code/agent-core";
+import type { AgentTool } from "@vib-rato/agent-core";
 import { buildSessionContext, SessionManager } from "../src/session/session-manager";
 import { selectRestorableDiscoveredBuiltinToolNames } from "../src/tool-discovery/tool-index";
 

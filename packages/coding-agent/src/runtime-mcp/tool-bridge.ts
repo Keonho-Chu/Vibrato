@@ -3,10 +3,10 @@
  *
  * Converts MCP tool definitions to CustomTool format for the agent.
  */
-import type { AgentToolUpdateCallback } from "@gajae-code/agent-core";
-import type { TSchema } from "@gajae-code/ai/core";
-import { normalizeSchemaForMCP } from "@gajae-code/ai/utils/schema";
-import { untilAborted } from "@gajae-code/utils";
+import type { AgentToolUpdateCallback } from "@vib-rato/agent-core";
+import type { TSchema } from "@vib-rato/ai/core";
+import { normalizeSchemaForMCP } from "@vib-rato/ai/utils/schema";
+import { untilAborted } from "@vib-rato/utils";
 import type { SourceMeta } from "../capability/types";
 import type {
 	CustomTool,

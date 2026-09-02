@@ -1,15 +1,15 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
 import * as path from "node:path";
-import { Agent } from "@gajae-code/agent-core";
-import type { AssistantMessage, ToolResultMessage } from "@gajae-code/ai";
-import { getBundledModel } from "@gajae-code/ai/models";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { ensureWorkflowSkillActivationState } from "@gajae-code/coding-agent/hooks/skill-state";
-import { AgentSession } from "@gajae-code/coding-agent/session/agent-session";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { TempDir, withTimeout } from "@gajae-code/utils";
+import { Agent } from "@vib-rato/agent-core";
+import type { AssistantMessage, ToolResultMessage } from "@vib-rato/ai";
+import { getBundledModel } from "@vib-rato/ai/models";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { ensureWorkflowSkillActivationState } from "@vib-rato/coding-agent/hooks/skill-state";
+import { AgentSession } from "@vib-rato/coding-agent/session/agent-session";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { TempDir, withTimeout } from "@vib-rato/utils";
 
 describe("AgentSession contended terminal assistant capture (#4565 finding)", () => {
 	let tempDir: TempDir | undefined;
@@ -25,7 +25,7 @@ describe("AgentSession contended terminal assistant capture (#4565 finding)", ()
 	});
 
 	it("still schedules the deep-interview continuation when the terminal's admission is contended behind a gated spill", async () => {
-		tempDir = TempDir.createSync("@gjc-contended-di-capture-");
+		tempDir = TempDir.createSync("@vib-contended-di-capture-");
 		authStorage = await AuthStorage.create(path.join(tempDir.path(), "auth.db"));
 		authStorage.setRuntimeApiKey("anthropic", "test-key");
 		const model = getBundledModel("anthropic", "claude-sonnet-4-5");
@@ -131,7 +131,7 @@ describe("AgentSession contended terminal assistant capture (#4565 finding)", ()
 			entry =>
 				entry.type === "message" &&
 				entry.message.role === "developer" &&
-				JSON.stringify(entry.message.content).includes("stop gate: gjc_skill_deep_interview_"),
+				JSON.stringify(entry.message.content).includes("stop gate: vib_skill_deep_interview_"),
 		);
 		expect(reminderIndex).toBeGreaterThanOrEqual(0);
 		// FIFO on reload: the continuation reminder must persist AFTER the

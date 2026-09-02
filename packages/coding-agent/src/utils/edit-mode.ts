@@ -1,4 +1,4 @@
-import { $pickenv } from "@gajae-code/utils/env";
+import { $pickenv } from "@vib-rato/utils/env";
 
 export type EditMode = "replace" | "patch" | "hashline" | "vim" | "apply_patch";
 
@@ -142,16 +142,16 @@ export interface EditModeSessionLike {
 }
 
 /**
- * Read the forced edit mode from `GJC_EDIT_VARIANT`/`PI_EDIT_VARIANT`.
+ * Read the forced edit mode from `VIB_EDIT_VARIANT`/`PI_EDIT_VARIANT`.
  * The environment force is the emergency kill switch and beats every other
  * source. Invalid values fail fast; empty and `auto` mean "not forced".
  */
 export function resolveForcedEnvEditMode(): EditMode | undefined {
-	const raw = $pickenv("GJC_EDIT_VARIANT", "PI_EDIT_VARIANT");
+	const raw = $pickenv("VIB_EDIT_VARIANT", "PI_EDIT_VARIANT");
 	if (!raw || raw === "auto") return undefined;
 	const mode = normalizeEditMode(raw);
 	if (!mode) {
-		throw new Error(`Invalid GJC_EDIT_VARIANT: ${raw}`);
+		throw new Error(`Invalid VIB_EDIT_VARIANT: ${raw}`);
 	}
 	return mode;
 }
@@ -160,7 +160,7 @@ export function resolveForcedEnvEditMode(): EditMode | undefined {
  * Resolve the active edit mode with provenance.
  *
  * Precedence:
- * 1. `GJC_EDIT_VARIANT`/`PI_EDIT_VARIANT` environment force (invalid → throw).
+ * 1. `VIB_EDIT_VARIANT`/`PI_EDIT_VARIANT` environment force (invalid → throw).
  * 2. Matching user `edit.modelVariants` rule (matched invalid → throw).
  * 3. Explicit `edit.mode` setting when it is not `auto`.
  * 4. Model-catalog edit recommendation, when the session exposes one.

@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as path from "node:path";
-import { createLspWritethrough } from "@gajae-code/coding-agent/lsp";
-import * as lspClient from "@gajae-code/coding-agent/lsp/client";
-import * as lspConfig from "@gajae-code/coding-agent/lsp/config";
-import type { Diagnostic, LspClient, ServerConfig } from "@gajae-code/coding-agent/lsp/types";
-import { fileToUri } from "@gajae-code/coding-agent/lsp/utils";
-import { type ptree, TempDir } from "@gajae-code/utils";
+import { createLspWritethrough } from "@vib-rato/coding-agent/lsp";
+import * as lspClient from "@vib-rato/coding-agent/lsp/client";
+import * as lspConfig from "@vib-rato/coding-agent/lsp/config";
+import type { Diagnostic, LspClient, ServerConfig } from "@vib-rato/coding-agent/lsp/types";
+import { fileToUri } from "@vib-rato/coding-agent/lsp/utils";
+import { type ptree, TempDir } from "@vib-rato/utils";
 
 const TEST_SERVER: ServerConfig = {
 	command: "test-lsp",
@@ -54,7 +54,7 @@ describe("LSP diagnostics freshness", () => {
 	let tempDir: TempDir;
 
 	beforeEach(() => {
-		tempDir = TempDir.createSync("@gjc-lsp-freshness-");
+		tempDir = TempDir.createSync("@vib-lsp-freshness-");
 	});
 
 	afterEach(() => {

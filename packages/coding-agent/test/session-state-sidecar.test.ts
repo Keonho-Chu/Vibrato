@@ -4,25 +4,14 @@ import * as fsSync from "node:fs";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { postmortem } from "@gajae-code/utils";
+import { postmortem } from "@vib-rato/utils";
 import { FileLockTestHooks } from "../src/config/file-lock";
 import { loadInstallationHostId } from "../src/config/machine-identity";
-import { sessionRuntimeDir } from "../src/gjc-runtime/session-layout";
+import { sessionRuntimeDir } from "../src/vib-runtime/session-layout";
 import {
 	canonicalCoordinatorSidecarPayload,
 	classifyRuntimeToolActivity,
 	eventAffectsCoordinatorRuntimeState,
-	GJC_COORDINATOR_SESSION_BRANCH_ENV,
-	GJC_COORDINATOR_SESSION_ID_ENV,
-	GJC_COORDINATOR_SESSION_LAUNCH_ID_ENV,
-	GJC_COORDINATOR_SESSION_READINESS_FILE_ENV,
-	GJC_COORDINATOR_SESSION_STATE_FILE_ENV,
-	GJC_COORDINATOR_SIDECAR_KEY_ID_ENV,
-	GJC_COORDINATOR_SIDECAR_SIGNATURE_REQUIRED_ENV,
-	GJC_COORDINATOR_SIDECAR_SIGNING_KEY_ENV,
-	GJC_TMUX_OWNER_GENERATION_ENV,
-	GJC_TMUX_OWNER_SERVER_KEY_ENV,
-	GJC_TMUX_OWNER_STATE_DIR_ENV,
 	ownerTerminalContextFromEnvironment,
 	persistCoordinatorRuntimeInputReady,
 	persistCoordinatorRuntimeStateFromEvent,
@@ -31,13 +20,24 @@ import {
 	publicRuntimeToolActivity,
 	readTerminalRuntimeStateMarker,
 	stateForEvent,
-} from "../src/gjc-runtime/session-state-sidecar";
+	VIB_COORDINATOR_SESSION_BRANCH_ENV,
+	VIB_COORDINATOR_SESSION_ID_ENV,
+	VIB_COORDINATOR_SESSION_LAUNCH_ID_ENV,
+	VIB_COORDINATOR_SESSION_READINESS_FILE_ENV,
+	VIB_COORDINATOR_SESSION_STATE_FILE_ENV,
+	VIB_COORDINATOR_SIDECAR_KEY_ID_ENV,
+	VIB_COORDINATOR_SIDECAR_SIGNATURE_REQUIRED_ENV,
+	VIB_COORDINATOR_SIDECAR_SIGNING_KEY_ENV,
+	VIB_TMUX_OWNER_GENERATION_ENV,
+	VIB_TMUX_OWNER_SERVER_KEY_ENV,
+	VIB_TMUX_OWNER_STATE_DIR_ENV,
+} from "../src/vib-runtime/session-state-sidecar";
 import {
 	createOwnerIntent,
 	lifecyclePaths,
 	observeOwnerTerminal,
 	replaceOwnerGeneration,
-} from "../src/gjc-runtime/tmux-owner-isolation";
+} from "../src/vib-runtime/tmux-owner-isolation";
 import { installExactIdentityNatives } from "./helpers/exact-identity-natives";
 import { coordinatorDurabilityAvailable } from "./helpers/issue-4545-gates";
 
@@ -76,21 +76,21 @@ function expectCompactJson(raw: string): RuntimePayload {
 	return JSON.parse(raw) as RuntimePayload;
 }
 
-const ORIGINAL_STATE_FILE = process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV];
-const ORIGINAL_SESSION_ID = process.env[GJC_COORDINATOR_SESSION_ID_ENV];
-const ORIGINAL_BRANCH = process.env[GJC_COORDINATOR_SESSION_BRANCH_ENV];
-const ORIGINAL_LAUNCH_ID = process.env[GJC_COORDINATOR_SESSION_LAUNCH_ID_ENV];
-const ORIGINAL_READINESS_FILE = process.env[GJC_COORDINATOR_SESSION_READINESS_FILE_ENV];
-const ORIGINAL_SIDECAR_SIGNING_KEY = process.env[GJC_COORDINATOR_SIDECAR_SIGNING_KEY_ENV];
-const ORIGINAL_SIDECAR_KEY_ID = process.env[GJC_COORDINATOR_SIDECAR_KEY_ID_ENV];
-const ORIGINAL_SIDECAR_SIGNATURE_REQUIRED = process.env[GJC_COORDINATOR_SIDECAR_SIGNATURE_REQUIRED_ENV];
-const PROMPT_ACCEPTED_ENV = "GJC_SESSION_PROMPT_ACCEPTED_JSON";
-const BASELINE_DIRTY_ENV = "GJC_SESSION_WORKTREE_BASELINE_DIRTY";
+const ORIGINAL_STATE_FILE = process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV];
+const ORIGINAL_SESSION_ID = process.env[VIB_COORDINATOR_SESSION_ID_ENV];
+const ORIGINAL_BRANCH = process.env[VIB_COORDINATOR_SESSION_BRANCH_ENV];
+const ORIGINAL_LAUNCH_ID = process.env[VIB_COORDINATOR_SESSION_LAUNCH_ID_ENV];
+const ORIGINAL_READINESS_FILE = process.env[VIB_COORDINATOR_SESSION_READINESS_FILE_ENV];
+const ORIGINAL_SIDECAR_SIGNING_KEY = process.env[VIB_COORDINATOR_SIDECAR_SIGNING_KEY_ENV];
+const ORIGINAL_SIDECAR_KEY_ID = process.env[VIB_COORDINATOR_SIDECAR_KEY_ID_ENV];
+const ORIGINAL_SIDECAR_SIGNATURE_REQUIRED = process.env[VIB_COORDINATOR_SIDECAR_SIGNATURE_REQUIRED_ENV];
+const PROMPT_ACCEPTED_ENV = "VIB_SESSION_PROMPT_ACCEPTED_JSON";
+const BASELINE_DIRTY_ENV = "VIB_SESSION_WORKTREE_BASELINE_DIRTY";
 const ORIGINAL_PROMPT_ACCEPTED = process.env[PROMPT_ACCEPTED_ENV];
 const ORIGINAL_BASELINE_DIRTY = process.env[BASELINE_DIRTY_ENV];
 
 async function tempRoot(): Promise<string> {
-	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-sidecar-"));
+	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-sidecar-"));
 	tempDirs.push(dir);
 	return dir;
 }
@@ -103,23 +103,23 @@ function git(cwd: string, args: string[]): void {
 afterEach(async () => {
 	FileLockTestHooks.afterParentMkdir = undefined;
 	setSystemTime();
-	if (ORIGINAL_STATE_FILE === undefined) delete process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV];
-	else process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = ORIGINAL_STATE_FILE;
-	if (ORIGINAL_SESSION_ID === undefined) delete process.env[GJC_COORDINATOR_SESSION_ID_ENV];
-	else process.env[GJC_COORDINATOR_SESSION_ID_ENV] = ORIGINAL_SESSION_ID;
-	if (ORIGINAL_BRANCH === undefined) delete process.env[GJC_COORDINATOR_SESSION_BRANCH_ENV];
-	else process.env[GJC_COORDINATOR_SESSION_BRANCH_ENV] = ORIGINAL_BRANCH;
-	if (ORIGINAL_LAUNCH_ID === undefined) delete process.env[GJC_COORDINATOR_SESSION_LAUNCH_ID_ENV];
-	else process.env[GJC_COORDINATOR_SESSION_LAUNCH_ID_ENV] = ORIGINAL_LAUNCH_ID;
-	if (ORIGINAL_READINESS_FILE === undefined) delete process.env[GJC_COORDINATOR_SESSION_READINESS_FILE_ENV];
-	else process.env[GJC_COORDINATOR_SESSION_READINESS_FILE_ENV] = ORIGINAL_READINESS_FILE;
-	if (ORIGINAL_SIDECAR_SIGNING_KEY === undefined) delete process.env[GJC_COORDINATOR_SIDECAR_SIGNING_KEY_ENV];
-	else process.env[GJC_COORDINATOR_SIDECAR_SIGNING_KEY_ENV] = ORIGINAL_SIDECAR_SIGNING_KEY;
-	if (ORIGINAL_SIDECAR_KEY_ID === undefined) delete process.env[GJC_COORDINATOR_SIDECAR_KEY_ID_ENV];
-	else process.env[GJC_COORDINATOR_SIDECAR_KEY_ID_ENV] = ORIGINAL_SIDECAR_KEY_ID;
+	if (ORIGINAL_STATE_FILE === undefined) delete process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV];
+	else process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = ORIGINAL_STATE_FILE;
+	if (ORIGINAL_SESSION_ID === undefined) delete process.env[VIB_COORDINATOR_SESSION_ID_ENV];
+	else process.env[VIB_COORDINATOR_SESSION_ID_ENV] = ORIGINAL_SESSION_ID;
+	if (ORIGINAL_BRANCH === undefined) delete process.env[VIB_COORDINATOR_SESSION_BRANCH_ENV];
+	else process.env[VIB_COORDINATOR_SESSION_BRANCH_ENV] = ORIGINAL_BRANCH;
+	if (ORIGINAL_LAUNCH_ID === undefined) delete process.env[VIB_COORDINATOR_SESSION_LAUNCH_ID_ENV];
+	else process.env[VIB_COORDINATOR_SESSION_LAUNCH_ID_ENV] = ORIGINAL_LAUNCH_ID;
+	if (ORIGINAL_READINESS_FILE === undefined) delete process.env[VIB_COORDINATOR_SESSION_READINESS_FILE_ENV];
+	else process.env[VIB_COORDINATOR_SESSION_READINESS_FILE_ENV] = ORIGINAL_READINESS_FILE;
+	if (ORIGINAL_SIDECAR_SIGNING_KEY === undefined) delete process.env[VIB_COORDINATOR_SIDECAR_SIGNING_KEY_ENV];
+	else process.env[VIB_COORDINATOR_SIDECAR_SIGNING_KEY_ENV] = ORIGINAL_SIDECAR_SIGNING_KEY;
+	if (ORIGINAL_SIDECAR_KEY_ID === undefined) delete process.env[VIB_COORDINATOR_SIDECAR_KEY_ID_ENV];
+	else process.env[VIB_COORDINATOR_SIDECAR_KEY_ID_ENV] = ORIGINAL_SIDECAR_KEY_ID;
 	if (ORIGINAL_SIDECAR_SIGNATURE_REQUIRED === undefined)
-		delete process.env[GJC_COORDINATOR_SIDECAR_SIGNATURE_REQUIRED_ENV];
-	else process.env[GJC_COORDINATOR_SIDECAR_SIGNATURE_REQUIRED_ENV] = ORIGINAL_SIDECAR_SIGNATURE_REQUIRED;
+		delete process.env[VIB_COORDINATOR_SIDECAR_SIGNATURE_REQUIRED_ENV];
+	else process.env[VIB_COORDINATOR_SIDECAR_SIGNATURE_REQUIRED_ENV] = ORIGINAL_SIDECAR_SIGNATURE_REQUIRED;
 	if (ORIGINAL_PROMPT_ACCEPTED === undefined) delete process.env[PROMPT_ACCEPTED_ENV];
 	else process.env[PROMPT_ACCEPTED_ENV] = ORIGINAL_PROMPT_ACCEPTED;
 	if (ORIGINAL_BASELINE_DIRTY === undefined) delete process.env[BASELINE_DIRTY_ENV];
@@ -135,7 +135,7 @@ describe("coordinator runtime state sidecar", () => {
 	it("persists post-publication integration failures with correlation", async () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "state.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
 		await persistCoordinatorRuntimeStateFromEvent(
 			{ type: "agent_start" },
 			{ sessionId: "reconcile", cwd: root, sessionFile: null },
@@ -168,7 +168,7 @@ describe("coordinator runtime state sidecar", () => {
 	it("terminalizes prior running state when terminal persistence fails", async () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "state.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
 		await persistCoordinatorRuntimeStateFromEvent(
 			{ type: "agent_start" },
 			{ sessionId: "terminal-failure", cwd: root, sessionFile: null },
@@ -198,11 +198,11 @@ describe("coordinator runtime state sidecar", () => {
 		const keyId = "155f1a4c155f1a4c155f1a4c155f1a4c155f1a4c155f1a4c155f1a4c155f1a4c";
 		const env = {
 			...process.env,
-			[GJC_COORDINATOR_SESSION_STATE_FILE_ENV]: stateFile,
-			[GJC_COORDINATOR_SESSION_ID_ENV]: "155-FinalA4",
-			[GJC_COORDINATOR_SIDECAR_SIGNATURE_REQUIRED_ENV]: "true",
-			[GJC_COORDINATOR_SIDECAR_KEY_ID_ENV]: keyId,
-			[GJC_COORDINATOR_SIDECAR_SIGNING_KEY_ENV]: privateDer,
+			[VIB_COORDINATOR_SESSION_STATE_FILE_ENV]: stateFile,
+			[VIB_COORDINATOR_SESSION_ID_ENV]: "155-FinalA4",
+			[VIB_COORDINATOR_SIDECAR_SIGNATURE_REQUIRED_ENV]: "true",
+			[VIB_COORDINATOR_SIDECAR_KEY_ID_ENV]: keyId,
+			[VIB_COORDINATOR_SIDECAR_SIGNING_KEY_ENV]: privateDer,
 		};
 		const run = async () => {
 			const child = Bun.spawn([process.execPath, fixture, stateFile], { env, stdout: "pipe", stderr: "pipe" });
@@ -233,9 +233,9 @@ describe("coordinator runtime state sidecar", () => {
 
 	it("ignores a session root removed between postmortem lock parent creation and acquisition", async () => {
 		const root = await tempRoot();
-		const stateFile = path.join(root, ".gjc", "_session-removed", "state", "runtime-state.json");
+		const stateFile = path.join(root, ".vib", "_session-removed", "state", "runtime-state.json");
 		const sessionRoot = path.resolve(path.dirname(stateFile), "..");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
 		let removed = false;
 		FileLockTestHooks.afterParentMkdir = async lockPath => {
 			if (removed || !lockPath.endsWith("mutation.lock.lock")) return;
@@ -255,9 +255,9 @@ describe("coordinator runtime state sidecar", () => {
 	});
 	it("does not suppress a nested state lock failure while the owning session root remains", async () => {
 		const root = await tempRoot();
-		const sessionRoot = path.join(root, ".gjc", "_session-present");
+		const sessionRoot = path.join(root, ".vib", "_session-present");
 		const stateFile = path.join(sessionRoot, "runtime", "nested", "runtime-state.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
 		await fs.mkdir(sessionRoot, { recursive: true });
 		await fs.writeFile(path.join(sessionRoot, "owner.marker"), "present");
 		let removed = false;
@@ -302,10 +302,10 @@ describe("coordinator runtime state sidecar", () => {
 	it("persists explicit standalone tmux state with authority env cleared", async () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "standalone-state.json");
-		delete process.env[GJC_COORDINATOR_SIDECAR_SIGNING_KEY_ENV];
-		delete process.env[GJC_COORDINATOR_SIDECAR_SIGNATURE_REQUIRED_ENV];
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "standalone-tmux";
+		delete process.env[VIB_COORDINATOR_SIDECAR_SIGNING_KEY_ENV];
+		delete process.env[VIB_COORDINATOR_SIDECAR_SIGNATURE_REQUIRED_ENV];
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "standalone-tmux";
 
 		await persistCoordinatorRuntimeStateFromEvent(
 			{ type: "agent_start" },
@@ -318,10 +318,10 @@ describe("coordinator runtime state sidecar", () => {
 	it("requires Coordinator signing material captured at launch and rejects predecessor launch payloads", async () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "coordinator-state.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "coordinator-session";
-		process.env[GJC_COORDINATOR_SIDECAR_SIGNATURE_REQUIRED_ENV] = "true";
-		delete process.env[GJC_COORDINATOR_SIDECAR_SIGNING_KEY_ENV];
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "coordinator-session";
+		process.env[VIB_COORDINATOR_SIDECAR_SIGNATURE_REQUIRED_ENV] = "true";
+		delete process.env[VIB_COORDINATOR_SIDECAR_SIGNING_KEY_ENV];
 
 		await expect(
 			persistCoordinatorRuntimeStateFromEvent(
@@ -333,8 +333,8 @@ describe("coordinator runtime state sidecar", () => {
 
 		// The signer is captured and removed before runtime initialization. Supplying
 		// a predecessor-format secret after module bootstrap must not arm a signer.
-		process.env[GJC_COORDINATOR_SIDECAR_SIGNING_KEY_ENV] = "a".repeat(64);
-		process.env[GJC_COORDINATOR_SIDECAR_KEY_ID_ENV] = "a".repeat(64);
+		process.env[VIB_COORDINATOR_SIDECAR_SIGNING_KEY_ENV] = "a".repeat(64);
+		process.env[VIB_COORDINATOR_SIDECAR_KEY_ID_ENV] = "a".repeat(64);
 		await expect(
 			persistCoordinatorRuntimeStateFromEvent(
 				{ type: "turn_start" },
@@ -347,8 +347,8 @@ describe("coordinator runtime state sidecar", () => {
 	it("skips duplicate same-state running writes within the heartbeat", async () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "state.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "heartbeat-session";
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "heartbeat-session";
 		try {
 			setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
 			await persistCoordinatorRuntimeStateFromEvent(
@@ -375,8 +375,8 @@ describe("coordinator runtime state sidecar", () => {
 	it("refreshes updated_at for duplicate same-state running writes after the heartbeat", async () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "state.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "heartbeat-session";
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "heartbeat-session";
 		try {
 			setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
 			await persistCoordinatorRuntimeStateFromEvent(
@@ -405,8 +405,8 @@ describe("coordinator runtime state sidecar", () => {
 	it("always writes state transitions from running to completed", async () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "state.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "transition-session";
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "transition-session";
 		try {
 			setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
 			await persistCoordinatorRuntimeStateFromEvent(
@@ -434,8 +434,8 @@ describe("coordinator runtime state sidecar", () => {
 	it("always writes terminal final_response events", async () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "state.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "terminal-session";
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "terminal-session";
 		const event = {
 			type: "agent_end",
 			messages: [{ role: "assistant", content: [{ type: "text", text: "Done" }], stopReason: "stop" }],
@@ -462,17 +462,17 @@ describe("coordinator runtime state sidecar", () => {
 		const stateFile = path.join(root, "state.json");
 		const generation = "2b3847de-1cbb-480d-8cad-1f8aa51b891a";
 		const keys = [
-			GJC_TMUX_OWNER_GENERATION_ENV,
-			GJC_TMUX_OWNER_STATE_DIR_ENV,
-			GJC_TMUX_OWNER_SERVER_KEY_ENV,
+			VIB_TMUX_OWNER_GENERATION_ENV,
+			VIB_TMUX_OWNER_STATE_DIR_ENV,
+			VIB_TMUX_OWNER_SERVER_KEY_ENV,
 		] as const;
 		const previous = new Map(keys.map(key => [key, process.env[key]]));
 		try {
-			process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-			process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "managed-terminal-session";
-			process.env[GJC_TMUX_OWNER_GENERATION_ENV] = generation;
-			process.env[GJC_TMUX_OWNER_STATE_DIR_ENV] = root;
-			process.env[GJC_TMUX_OWNER_SERVER_KEY_ENV] = "managed-socket";
+			process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+			process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "managed-terminal-session";
+			process.env[VIB_TMUX_OWNER_GENERATION_ENV] = generation;
+			process.env[VIB_TMUX_OWNER_STATE_DIR_ENV] = root;
+			process.env[VIB_TMUX_OWNER_SERVER_KEY_ENV] = "managed-socket";
 			await persistCoordinatorRuntimeStateFromEvent(assistantEnd("launch failed", "error"), {
 				sessionId: "fallback",
 				cwd: root,
@@ -495,8 +495,8 @@ describe("coordinator runtime state sidecar", () => {
 	it("invalidates the async previous-payload cache after an external state file write", async () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "state.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "external-session";
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "external-session";
 		try {
 			setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
 			await persistCoordinatorRuntimeStateFromEvent(
@@ -538,8 +538,8 @@ describe("coordinator runtime state sidecar", () => {
 	it("treats an absent runtime-state marker as empty state", async () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "missing-state.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "missing-state";
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "missing-state";
 
 		await persistCoordinatorRuntimeStateFromEvent(
 			{ type: "turn_start" },
@@ -553,8 +553,8 @@ describe("coordinator runtime state sidecar", () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "malformed-state.json");
 		const evidence = "{ malformed terminal evidence\n";
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "malformed-state";
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "malformed-state";
 		await Bun.write(stateFile, evidence);
 
 		await expect(
@@ -578,8 +578,8 @@ describe("coordinator runtime state sidecar", () => {
 	it("preserves directory runtime-state evidence and refuses event and postmortem writes", async () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "unreadable-state");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "directory-state";
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "directory-state";
 		await fs.mkdir(stateFile);
 
 		await expect(
@@ -604,8 +604,8 @@ describe("coordinator runtime state sidecar", () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "permission-denied-state.json");
 		const evidence = JSON.stringify({ state: "completed", terminal: "durable" });
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "permission-denied-state";
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "permission-denied-state";
 		await Bun.write(stateFile, evidence);
 		const denied = Object.assign(new Error("permission denied"), { code: "EACCES" });
 		const stat = spyOn(fs, "stat").mockRejectedValue(denied);
@@ -641,8 +641,8 @@ describe("coordinator runtime state sidecar", () => {
 	it("persists final assistant text on agent_end", async () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "state.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "visible-session";
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "visible-session";
 
 		await persistCoordinatorRuntimeStateFromEvent(
 			{
@@ -675,8 +675,8 @@ describe("coordinator runtime state sidecar", () => {
 	it("does not sync-read on the async event path and preserves cached turn state", async () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "state.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "async-session";
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "async-session";
 		await Bun.write(
 			stateFile,
 			JSON.stringify({
@@ -741,8 +741,8 @@ describe("coordinator runtime state sidecar", () => {
 	it("G012 ZERO-SYNC-READ keeps async event path hot and preserves terminal chain", async () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "g012-zero-sync.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "g012-zero-sync";
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "g012-zero-sync";
 		await Bun.write(
 			stateFile,
 			JSON.stringify({
@@ -793,8 +793,8 @@ describe("coordinator runtime state sidecar", () => {
 	it("COORDINATOR-EXTERNAL-WRITE cold-reads coordinator-owned files instead of stale cache", async () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "coordinator-external-write.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "coordinator-external-write";
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "coordinator-external-write";
 		await Bun.write(
 			stateFile,
 			JSON.stringify({
@@ -849,8 +849,8 @@ describe("coordinator runtime state sidecar", () => {
 	it("POSTMORTEM-RACE preserves pending terminal event payload from the in-memory cache", async () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "postmortem-race.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "postmortem-race";
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "postmortem-race";
 		await Bun.write(
 			stateFile,
 			JSON.stringify({
@@ -915,8 +915,8 @@ describe("coordinator runtime state sidecar", () => {
 	it("G012 COLD-READ-RESTART async event honors existing file without sync reads", async () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "g012-cold-restart.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "g012-cold-restart";
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "g012-cold-restart";
 		await Bun.write(
 			stateFile,
 			JSON.stringify({
@@ -957,8 +957,8 @@ describe("coordinator runtime state sidecar", () => {
 	it("G012 CACHE-CONSISTENCY and INTERLEAVE keep file, cached async state, and sync postmortem aligned", async () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "g012-cache-interleave.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "g012-cache-interleave";
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "g012-cache-interleave";
 		await Bun.write(
 			stateFile,
 			JSON.stringify({
@@ -1027,8 +1027,8 @@ describe("coordinator runtime state sidecar", () => {
 	it("G012 TERMINAL-PRESERVATION keeps completed agent_end payload through postmortem", async () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "g012-terminal-preservation.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "g012-terminal-preservation";
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "g012-terminal-preservation";
 		await persistCoordinatorRuntimeStateFromEvent(assistantEnd("terminal payload"), {
 			sessionId: "fallback",
 			cwd: root,
@@ -1054,8 +1054,8 @@ describe("coordinator runtime state sidecar", () => {
 	it("G012 COMPACT-PARSE writes compact JSON accepted by terminal marker consumer", async () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "g012-compact-parse.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "g012-compact-parse";
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "g012-compact-parse";
 		await persistCoordinatorRuntimeStateFromEvent(assistantEnd("compact final"), {
 			sessionId: "fallback",
 			cwd: root,
@@ -1114,7 +1114,7 @@ describe("coordinator runtime state sidecar", () => {
 				state: "completed",
 				cwd: "C:\\Users\\Operator\\Repo",
 				workdir: "C:\\Users\\Operator\\Repo\\.\\",
-				session_file: "C:\\Users\\Operator\\Repo\\.gjc\\session.jsonl",
+				session_file: "C:\\Users\\Operator\\Repo\\.vib\\session.jsonl",
 			}),
 		);
 
@@ -1123,7 +1123,7 @@ describe("coordinator runtime state sidecar", () => {
 				stateFile,
 				sessionId: "windows-session",
 				cwd: "c:\\users\\operator\\repo",
-				sessionFile: "c:\\users\\operator\\repo\\.gjc\\session.jsonl",
+				sessionFile: "c:\\users\\operator\\repo\\.vib\\session.jsonl",
 				platform: "win32",
 			}),
 		).resolves.toEqual({ terminal: true, state: "completed" });
@@ -1132,7 +1132,7 @@ describe("coordinator runtime state sidecar", () => {
 				stateFile,
 				sessionId: "windows-session",
 				cwd: "D:\\Users\\Operator\\Repo",
-				sessionFile: "c:\\users\\operator\\repo\\.gjc\\session.jsonl",
+				sessionFile: "c:\\users\\operator\\repo\\.vib\\session.jsonl",
 				platform: "win32",
 			}),
 		).resolves.toEqual({ terminal: false, reason: "cwd_mismatch" });
@@ -1144,17 +1144,17 @@ describe("coordinator runtime state sidecar", () => {
 		const initialContext = {
 			sessionId: "fallback",
 			cwd: "C:\\Users\\Operator\\Repo",
-			sessionFile: "C:\\Users\\Operator\\Repo\\.gjc\\session.jsonl",
+			sessionFile: "C:\\Users\\Operator\\Repo\\.vib\\session.jsonl",
 			platform: "win32" as const,
 		};
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = sessionId;
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = sessionId;
 
 		await persistCoordinatorRuntimeStateFromEvent({ type: "agent_start" }, initialContext);
 		await persistCoordinatorRuntimeStateFromEvent(assistantEnd("Windows terminal"), {
 			...initialContext,
 			cwd: "c:\\USERS\\OPERATOR\\REPO\\.\\",
-			sessionFile: "c:\\USERS\\OPERATOR\\REPO\\.gjc\\.\\session.jsonl",
+			sessionFile: "c:\\USERS\\OPERATOR\\REPO\\.vib\\.\\session.jsonl",
 		});
 		const terminal = await readPayload(stateFile);
 		expect(terminal).toMatchObject({
@@ -1162,7 +1162,7 @@ describe("coordinator runtime state sidecar", () => {
 			state: "completed",
 			cwd: "c:\\USERS\\OPERATOR\\REPO",
 			workdir: "c:\\USERS\\OPERATOR\\REPO",
-			session_file: "c:\\USERS\\OPERATOR\\REPO\\.gjc\\session.jsonl",
+			session_file: "c:\\USERS\\OPERATOR\\REPO\\.vib\\session.jsonl",
 			final_response: { source: "agent_end", text: "Windows terminal" },
 		});
 
@@ -1174,7 +1174,7 @@ describe("coordinator runtime state sidecar", () => {
 			persistCoordinatorRuntimeStateFromPostmortem(postmortem.Reason.SIGTERM, {
 				...initialContext,
 				cwd: "D:\\Users\\Operator\\Repo",
-				sessionFile: "D:\\Users\\Operator\\Repo\\.gjc\\session.jsonl",
+				sessionFile: "D:\\Users\\Operator\\Repo\\.vib\\session.jsonl",
 			}),
 		).rejects.toThrow("invalid or unreadable");
 		expect(await Bun.file(stateFile).text()).toBe(beforeRejectedWrite);
@@ -1185,8 +1185,8 @@ describe("coordinator runtime state sidecar", () => {
 		const sessionId = "posix-runtime-identity";
 		const cwd = path.join(root, "workspace");
 		const sessionFile = path.join(cwd, "session.jsonl");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = sessionId;
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = sessionId;
 
 		await persistCoordinatorRuntimeStateFromEvent(
 			{ type: "agent_start" },
@@ -1264,9 +1264,9 @@ describe("coordinator runtime state sidecar", () => {
 	it("writes public-safe postmortem exit evidence without transcript payloads", async () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "state.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "postmortem-session";
-		process.env[GJC_COORDINATOR_SESSION_BRANCH_ENV] = "issue-1496";
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "postmortem-session";
+		process.env[VIB_COORDINATOR_SESSION_BRANCH_ENV] = "issue-1496";
 
 		await persistCoordinatorRuntimeStateFromPostmortem(postmortem.Reason.SIGTERM, {
 			sessionId: "fallback",
@@ -1308,8 +1308,8 @@ describe("coordinator runtime state sidecar", () => {
 		git(workspace, ["commit", "-m", "init"]);
 		await Bun.write(path.join(workspace, "README.md"), "base\nrecoverable dirty change\n");
 		const stateFile = path.join(root, "state.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "post-acceptance-session";
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "post-acceptance-session";
 		const promptAccepted = path.join(root, "prompt-accepted.json");
 		await Bun.write(
 			promptAccepted,
@@ -1381,8 +1381,8 @@ describe("coordinator runtime state sidecar", () => {
 			promptAccepted,
 			JSON.stringify({ evidence: "durable_turn_evidence", worktreeBaselineDirty: false }),
 		);
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "no-output-session";
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "no-output-session";
 		process.env[PROMPT_ACCEPTED_ENV] = promptAccepted;
 		process.env[BASELINE_DIRTY_ENV] = "false";
 		await Bun.write(
@@ -1441,8 +1441,8 @@ describe("coordinator runtime state sidecar", () => {
 			promptAccepted,
 			JSON.stringify({ evidence: "durable_turn_evidence", worktreeBaselineDirty: true }),
 		);
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "preexisting-dirty-session";
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "preexisting-dirty-session";
 		process.env[PROMPT_ACCEPTED_ENV] = promptAccepted;
 		process.env[BASELINE_DIRTY_ENV] = "false";
 		await Bun.write(
@@ -1487,8 +1487,8 @@ describe("coordinator runtime state sidecar", () => {
 
 	it("persists raw session runtime state without coordinator env", async () => {
 		const root = await tempRoot();
-		delete process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV];
-		delete process.env[GJC_COORDINATOR_SESSION_ID_ENV];
+		delete process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV];
+		delete process.env[VIB_COORDINATOR_SESSION_ID_ENV];
 		const sessionId = "raw-tmux-session";
 		const stateFile = path.join(sessionRuntimeDir(root, sessionId), "runtime-state.json");
 
@@ -1539,8 +1539,8 @@ describe("coordinator runtime state sidecar", () => {
 			promptAccepted,
 			JSON.stringify({ evidence: "durable_turn_evidence", worktreeBaselineDirty: false }),
 		);
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "current-session";
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "current-session";
 		process.env[PROMPT_ACCEPTED_ENV] = promptAccepted;
 		await Bun.write(
 			stateFile,
@@ -1574,8 +1574,8 @@ describe("coordinator runtime state sidecar", () => {
 	it("refuses terminal payloads with mismatched cwd or session file", async () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "state.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "current-session";
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "current-session";
 		for (const stale of [
 			{ cwd: path.join(root, "other"), session_file: path.join(root, "session.jsonl") },
 			{ cwd: root, session_file: path.join(root, "other-session.jsonl") },
@@ -1606,8 +1606,8 @@ describe("coordinator runtime state sidecar", () => {
 	it("does not overwrite richer terminal agent_end evidence during postmortem", async () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "state.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "preserved-session";
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "preserved-session";
 		await Bun.write(
 			stateFile,
 			JSON.stringify({
@@ -1648,8 +1648,8 @@ describe("coordinator runtime state sidecar", () => {
 			created_at: "2026-01-01T00:00:00.000Z",
 			expires_at: "2099-01-01T00:00:00.000Z",
 		});
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = sessionId;
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = sessionId;
 		await Bun.write(
 			stateFile,
 			JSON.stringify({
@@ -1683,8 +1683,8 @@ describe("coordinator runtime state sidecar", () => {
 	it("does not overwrite richer terminal launch_error evidence during postmortem", async () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "state.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "launch-error-session";
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "launch-error-session";
 		await Bun.write(
 			stateFile,
 			JSON.stringify({
@@ -1713,48 +1713,48 @@ describe("coordinator runtime state sidecar", () => {
 	});
 	it("derives only complete valid managed owner provenance and fails closed otherwise", () => {
 		const keys = [
-			GJC_TMUX_OWNER_GENERATION_ENV,
-			GJC_TMUX_OWNER_STATE_DIR_ENV,
-			GJC_TMUX_OWNER_SERVER_KEY_ENV,
-			"GJC_TMUX_LAUNCHED",
+			VIB_TMUX_OWNER_GENERATION_ENV,
+			VIB_TMUX_OWNER_STATE_DIR_ENV,
+			VIB_TMUX_OWNER_SERVER_KEY_ENV,
+			"VIB_TMUX_LAUNCHED",
 		] as const;
 		const previous = new Map(keys.map(key => [key, process.env[key]]));
 		try {
-			process.env.GJC_TMUX_LAUNCHED = "1";
-			process.env[GJC_TMUX_OWNER_GENERATION_ENV] = "2b3847de-1cbb-480d-8cad-1f8aa51b891a";
-			process.env[GJC_TMUX_OWNER_STATE_DIR_ENV] = "/tmp/gjc-owner-lifecycle";
-			process.env[GJC_TMUX_OWNER_SERVER_KEY_ENV] = "tmux";
+			process.env.VIB_TMUX_LAUNCHED = "1";
+			process.env[VIB_TMUX_OWNER_GENERATION_ENV] = "2b3847de-1cbb-480d-8cad-1f8aa51b891a";
+			process.env[VIB_TMUX_OWNER_STATE_DIR_ENV] = "/tmp/vib-owner-lifecycle";
+			process.env[VIB_TMUX_OWNER_SERVER_KEY_ENV] = "tmux";
 			expect(ownerTerminalContextFromEnvironment()).toEqual({
 				generation: "2b3847de-1cbb-480d-8cad-1f8aa51b891a",
-				stateDir: "/tmp/gjc-owner-lifecycle",
+				stateDir: "/tmp/vib-owner-lifecycle",
 				socketKey: "tmux",
 			});
 			for (const invalid of [
-				{ generation: "not-a-uuid", stateDir: "/tmp/gjc-owner-lifecycle", socketKey: "tmux" },
+				{ generation: "not-a-uuid", stateDir: "/tmp/vib-owner-lifecycle", socketKey: "tmux" },
 				{ generation: "2b3847de-1cbb-480d-8cad-1f8aa51b891a", stateDir: "relative", socketKey: "tmux" },
-				{ generation: "   ", stateDir: "/tmp/gjc-owner-lifecycle", socketKey: "tmux" },
+				{ generation: "   ", stateDir: "/tmp/vib-owner-lifecycle", socketKey: "tmux" },
 				{
 					generation: "2b3847de-1cbb-480d-8cad-1f8aa51b891a",
-					stateDir: "/tmp/gjc-owner-lifecycle",
+					stateDir: "/tmp/vib-owner-lifecycle",
 					socketKey: "tmux\ncontrol",
 				},
 			]) {
-				process.env[GJC_TMUX_OWNER_GENERATION_ENV] = invalid.generation;
-				process.env[GJC_TMUX_OWNER_STATE_DIR_ENV] = invalid.stateDir;
-				process.env[GJC_TMUX_OWNER_SERVER_KEY_ENV] = invalid.socketKey;
+				process.env[VIB_TMUX_OWNER_GENERATION_ENV] = invalid.generation;
+				process.env[VIB_TMUX_OWNER_STATE_DIR_ENV] = invalid.stateDir;
+				process.env[VIB_TMUX_OWNER_SERVER_KEY_ENV] = invalid.socketKey;
 				expect(ownerTerminalContextFromEnvironment()).toBe("invalid");
 			}
-			process.env[GJC_TMUX_OWNER_GENERATION_ENV] = "2b3847de-1cbb-480d-8cad-1f8aa51b891a";
-			process.env[GJC_TMUX_OWNER_STATE_DIR_ENV] = "/tmp/gjc-owner-lifecycle";
-			delete process.env[GJC_TMUX_OWNER_SERVER_KEY_ENV];
+			process.env[VIB_TMUX_OWNER_GENERATION_ENV] = "2b3847de-1cbb-480d-8cad-1f8aa51b891a";
+			process.env[VIB_TMUX_OWNER_STATE_DIR_ENV] = "/tmp/vib-owner-lifecycle";
+			delete process.env[VIB_TMUX_OWNER_SERVER_KEY_ENV];
 			expect(ownerTerminalContextFromEnvironment()).toBe("invalid");
-			delete process.env[GJC_TMUX_OWNER_GENERATION_ENV];
-			delete process.env[GJC_TMUX_OWNER_STATE_DIR_ENV];
+			delete process.env[VIB_TMUX_OWNER_GENERATION_ENV];
+			delete process.env[VIB_TMUX_OWNER_STATE_DIR_ENV];
 			expect(ownerTerminalContextFromEnvironment()).toBe(process.platform === "linux" ? "invalid" : null);
-			delete process.env.GJC_TMUX_LAUNCHED;
-			process.env[GJC_TMUX_OWNER_GENERATION_ENV] = "2b3847de-1cbb-480d-8cad-1f8aa51b891a";
+			delete process.env.VIB_TMUX_LAUNCHED;
+			process.env[VIB_TMUX_OWNER_GENERATION_ENV] = "2b3847de-1cbb-480d-8cad-1f8aa51b891a";
 			expect(ownerTerminalContextFromEnvironment()).toBe("invalid");
-			delete process.env[GJC_TMUX_OWNER_GENERATION_ENV];
+			delete process.env[VIB_TMUX_OWNER_GENERATION_ENV];
 			expect(ownerTerminalContextFromEnvironment()).toBeNull();
 		} finally {
 			for (const key of keys) {
@@ -1779,8 +1779,8 @@ describe("coordinator runtime state sidecar", () => {
 			created_at: "2026-01-01T00:00:00.000Z",
 			expires_at: "2099-01-01T00:00:00.000Z",
 		});
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = sessionId;
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = sessionId;
 		await Bun.write(
 			stateFile,
 			JSON.stringify({
@@ -1800,7 +1800,7 @@ describe("coordinator runtime state sidecar", () => {
 				generation,
 				stateDir: root,
 				socketKey: "opaque-server-key",
-				scope: "gjc-owner.scope",
+				scope: "vib-owner.scope",
 				ownerPid: 123,
 				ownerName: "tmux",
 			},
@@ -1922,8 +1922,8 @@ describe("coordinator runtime state sidecar", () => {
 					}),
 				);
 			const stateFile = path.join(root, `${kind}.json`);
-			process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-			process.env[GJC_COORDINATOR_SESSION_ID_ENV] = sessionId;
+			process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+			process.env[VIB_COORDINATOR_SESSION_ID_ENV] = sessionId;
 			await persistCoordinatorRuntimeStateFromPostmortem(postmortem.Reason.SIGTERM, {
 				sessionId,
 				cwd: root,
@@ -1969,8 +1969,8 @@ describe("coordinator runtime state sidecar", () => {
 			operator_dispatch_id: "dispatch",
 		});
 		const stateFile = path.join(root, "raw-first.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = sessionId;
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = sessionId;
 		await persistCoordinatorRuntimeStateFromPostmortem(postmortem.Reason.SIGTERM, {
 			sessionId,
 			cwd: root,
@@ -2022,8 +2022,8 @@ describe("coordinator runtime state sidecar", () => {
 	it("reclaims orphaned runtime-state locks without inspecting protected payloads", async () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "runtime-state.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "orphaned-runtime-lock";
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "orphaned-runtime-lock";
 		await fs.mkdir(`${stateFile}.lock`);
 		await Bun.write(
 			`${stateFile}.lock/info`,
@@ -2094,7 +2094,7 @@ describe("coordinator runtime state sidecar", () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "serialized-race.json");
 		const sessionId = "serialized-race";
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
 		const context = { sessionId, cwd: root, sessionFile: null };
 
 		await Promise.all([
@@ -2116,10 +2116,10 @@ describe("coordinator runtime state sidecar", () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "state.json");
 		const readinessFile = path.join(root, "runtime-input-ready.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "ready-session";
-		process.env[GJC_COORDINATOR_SESSION_LAUNCH_ID_ENV] = "ready-launch";
-		process.env[GJC_COORDINATOR_SESSION_READINESS_FILE_ENV] = readinessFile;
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "ready-session";
+		process.env[VIB_COORDINATOR_SESSION_LAUNCH_ID_ENV] = "ready-launch";
+		process.env[VIB_COORDINATOR_SESSION_READINESS_FILE_ENV] = readinessFile;
 		setSystemTime(new Date("2026-07-11T12:00:00.000Z"));
 
 		const marker = await persistCoordinatorRuntimeInputReady();
@@ -2131,7 +2131,7 @@ describe("coordinator runtime state sidecar", () => {
 			launch_id: "ready-launch",
 			state: "ready_for_input",
 			event: "interactive_input_ready",
-			source: "gjc_interactive_runtime",
+			source: "vib_interactive_runtime",
 			ready_for_input: true,
 			created_at: "2026-07-11T12:00:00.000Z",
 		});
@@ -2141,10 +2141,10 @@ describe("coordinator runtime state sidecar", () => {
 	});
 
 	it("does not create a readiness marker without every coordinator authority input", async () => {
-		delete process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV];
-		delete process.env[GJC_COORDINATOR_SESSION_ID_ENV];
-		delete process.env[GJC_COORDINATOR_SESSION_LAUNCH_ID_ENV];
-		delete process.env[GJC_COORDINATOR_SESSION_READINESS_FILE_ENV];
+		delete process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV];
+		delete process.env[VIB_COORDINATOR_SESSION_ID_ENV];
+		delete process.env[VIB_COORDINATOR_SESSION_LAUNCH_ID_ENV];
+		delete process.env[VIB_COORDINATOR_SESSION_READINESS_FILE_ENV];
 
 		expect(await persistCoordinatorRuntimeInputReady()).toBeNull();
 	});
@@ -2152,10 +2152,10 @@ describe("coordinator runtime state sidecar", () => {
 	it("returns the original readiness marker without rewriting its timestamp", async () => {
 		const root = await tempRoot();
 		const readinessFile = path.join(root, "runtime-input-ready.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = path.join(root, "state.json");
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "idempotent-session";
-		process.env[GJC_COORDINATOR_SESSION_LAUNCH_ID_ENV] = "idempotent-launch";
-		process.env[GJC_COORDINATOR_SESSION_READINESS_FILE_ENV] = readinessFile;
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = path.join(root, "state.json");
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "idempotent-session";
+		process.env[VIB_COORDINATOR_SESSION_LAUNCH_ID_ENV] = "idempotent-launch";
+		process.env[VIB_COORDINATOR_SESSION_READINESS_FILE_ENV] = readinessFile;
 		setSystemTime(new Date("2026-07-11T12:00:00.000Z"));
 		const first = await persistCoordinatorRuntimeInputReady();
 		const original = await Bun.file(readinessFile).text();
@@ -2171,10 +2171,10 @@ describe("coordinator runtime state sidecar", () => {
 	it("rejects malformed and conflicting readiness markers without overwriting them", async () => {
 		const root = await tempRoot();
 		const readinessFile = path.join(root, "runtime-input-ready.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = path.join(root, "state.json");
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "conflict-session";
-		process.env[GJC_COORDINATOR_SESSION_LAUNCH_ID_ENV] = "conflict-launch";
-		process.env[GJC_COORDINATOR_SESSION_READINESS_FILE_ENV] = readinessFile;
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = path.join(root, "state.json");
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "conflict-session";
+		process.env[VIB_COORDINATOR_SESSION_LAUNCH_ID_ENV] = "conflict-launch";
+		process.env[VIB_COORDINATOR_SESSION_READINESS_FILE_ENV] = readinessFile;
 		await Bun.write(readinessFile, "not json");
 
 		await expect(persistCoordinatorRuntimeInputReady()).rejects.toMatchObject({
@@ -2189,7 +2189,7 @@ describe("coordinator runtime state sidecar", () => {
 				launch_id: "conflict-launch",
 				state: "ready_for_input",
 				event: "interactive_input_ready",
-				source: "gjc_interactive_runtime",
+				source: "vib_interactive_runtime",
 				ready_for_input: true,
 				created_at: "2026-07-11T12:00:00.000Z",
 			}),
@@ -2207,7 +2207,7 @@ describe("coordinator runtime state sidecar", () => {
 				launch_id: "conflict-launch",
 				state: "ready_for_input",
 				event: "interactive_input_ready",
-				source: "gjc_interactive_runtime",
+				source: "vib_interactive_runtime",
 				ready_for_input: true,
 				created_at: "",
 			}),
@@ -2221,10 +2221,10 @@ describe("coordinator runtime state sidecar", () => {
 	it("resolves a same-authority create race to the installed marker and removes temporary files", async () => {
 		const root = await tempRoot();
 		const readinessFile = path.join(root, "runtime-input-ready.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = path.join(root, "state.json");
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "race-session";
-		process.env[GJC_COORDINATOR_SESSION_LAUNCH_ID_ENV] = "race-launch";
-		process.env[GJC_COORDINATOR_SESSION_READINESS_FILE_ENV] = readinessFile;
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = path.join(root, "state.json");
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "race-session";
+		process.env[VIB_COORDINATOR_SESSION_LAUNCH_ID_ENV] = "race-launch";
+		process.env[VIB_COORDINATOR_SESSION_READINESS_FILE_ENV] = readinessFile;
 
 		const [left, right] = await Promise.all([
 			persistCoordinatorRuntimeInputReady(),
@@ -2239,10 +2239,10 @@ describe("coordinator runtime state sidecar", () => {
 	maskingIt("does not let a failing readiness cleanup mask the publication error (#4545)", async () => {
 		const root = await tempRoot();
 		const readinessFile = path.join(root, "runtime-input-ready.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = path.join(root, "state.json");
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "masking-session";
-		process.env[GJC_COORDINATOR_SESSION_LAUNCH_ID_ENV] = "masking-launch";
-		process.env[GJC_COORDINATOR_SESSION_READINESS_FILE_ENV] = readinessFile;
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = path.join(root, "state.json");
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "masking-session";
+		process.env[VIB_COORDINATOR_SESSION_LAUNCH_ID_ENV] = "masking-launch";
+		process.env[VIB_COORDINATOR_SESSION_READINESS_FILE_ENV] = readinessFile;
 		// Primary: the readiness publication (fs.link to the readiness file)
 		// fails with EIO. Secondary: the finally-block temp-file cleanup (fs.rm)
 		// fails with EACCES. Pre-fix (`try { ... } finally { await fs.rm(...) }`)
@@ -2278,10 +2278,10 @@ describe("coordinator runtime state sidecar", () => {
 	maskingIt("does not let a failing close mask the readiness write error (#4545)", async () => {
 		const root = await tempRoot();
 		const readinessFile = path.join(root, "runtime-input-ready.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = path.join(root, "state.json");
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "masking-close-session";
-		process.env[GJC_COORDINATOR_SESSION_LAUNCH_ID_ENV] = "masking-close-launch";
-		process.env[GJC_COORDINATOR_SESSION_READINESS_FILE_ENV] = readinessFile;
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = path.join(root, "state.json");
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "masking-close-session";
+		process.env[VIB_COORDINATOR_SESSION_LAUNCH_ID_ENV] = "masking-close-launch";
+		process.env[VIB_COORDINATOR_SESSION_READINESS_FILE_ENV] = readinessFile;
 		// Primary: the temp-file write fails with EIO. Secondary: handle.close()
 		// fails with EACCES. Pre-fix (`try { write; sync } finally { close }`) the
 		// close error replaced the write error. Post-#4459 both survive.
@@ -2321,10 +2321,10 @@ describe("coordinator runtime state sidecar", () => {
 		async () => {
 			const root = await tempRoot();
 			const readinessFile = path.join(root, "runtime-input-ready.json");
-			process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = path.join(root, "state.json");
-			process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "primary-only-session";
-			process.env[GJC_COORDINATOR_SESSION_LAUNCH_ID_ENV] = "primary-only-launch";
-			process.env[GJC_COORDINATOR_SESSION_READINESS_FILE_ENV] = readinessFile;
+			process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = path.join(root, "state.json");
+			process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "primary-only-session";
+			process.env[VIB_COORDINATOR_SESSION_LAUNCH_ID_ENV] = "primary-only-launch";
+			process.env[VIB_COORDINATOR_SESSION_READINESS_FILE_ENV] = readinessFile;
 			// Publication fails, cleanup succeeds: the primary error must surface
 			// alone (not swallowed, not replaced).
 			const realLink = fs.link;
@@ -2350,17 +2350,17 @@ describe("coordinator runtime state sidecar", () => {
 	it("barriers the parent before returning a same-authority EEXIST race marker", async () => {
 		const root = await tempRoot();
 		const readinessFile = path.join(root, "runtime-input-ready.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = path.join(root, "state.json");
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "barrier-race-session";
-		process.env[GJC_COORDINATOR_SESSION_LAUNCH_ID_ENV] = "barrier-race-launch";
-		process.env[GJC_COORDINATOR_SESSION_READINESS_FILE_ENV] = readinessFile;
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = path.join(root, "state.json");
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "barrier-race-session";
+		process.env[VIB_COORDINATOR_SESSION_LAUNCH_ID_ENV] = "barrier-race-launch";
+		process.env[VIB_COORDINATOR_SESSION_READINESS_FILE_ENV] = readinessFile;
 		const marker = {
 			schema_version: 1,
 			session_id: "barrier-race-session",
 			launch_id: "barrier-race-launch",
 			state: "ready_for_input",
 			event: "interactive_input_ready",
-			source: "gjc_interactive_runtime",
+			source: "vib_interactive_runtime",
 			ready_for_input: true,
 			created_at: "2026-07-11T12:00:00.000Z",
 		} as const;
@@ -2386,10 +2386,10 @@ describe("coordinator runtime state sidecar", () => {
 	it("retries the parent barrier when an already-published marker reports uncertain durability", async () => {
 		const root = await tempRoot();
 		const readinessFile = path.join(root, "runtime-input-ready.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = path.join(root, "state.json");
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "retry-barrier-session";
-		process.env[GJC_COORDINATOR_SESSION_LAUNCH_ID_ENV] = "retry-barrier-launch";
-		process.env[GJC_COORDINATOR_SESSION_READINESS_FILE_ENV] = readinessFile;
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = path.join(root, "state.json");
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "retry-barrier-session";
+		process.env[VIB_COORDINATOR_SESSION_LAUNCH_ID_ENV] = "retry-barrier-launch";
+		process.env[VIB_COORDINATOR_SESSION_READINESS_FILE_ENV] = readinessFile;
 		const realOpen = fs.open;
 		let parentBarrierOpens = 0;
 		const open = spyOn(fs, "open").mockImplementation(async (...args) => {
@@ -2418,10 +2418,10 @@ describe("coordinator runtime state sidecar", () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "state.json");
 		const readinessFile = path.join(root, "runtime-input-ready.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "independent-session";
-		process.env[GJC_COORDINATOR_SESSION_LAUNCH_ID_ENV] = "independent-launch";
-		process.env[GJC_COORDINATOR_SESSION_READINESS_FILE_ENV] = readinessFile;
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "independent-session";
+		process.env[VIB_COORDINATOR_SESSION_LAUNCH_ID_ENV] = "independent-launch";
+		process.env[VIB_COORDINATOR_SESSION_READINESS_FILE_ENV] = readinessFile;
 		const marker = await persistCoordinatorRuntimeInputReady();
 		if (!marker) throw new Error("expected_runtime_readiness_marker");
 
@@ -2439,7 +2439,7 @@ describe("coordinator runtime state sidecar", () => {
 		// lets the exact-match terminal predicate work without heuristic inference.
 		const root = await tempRoot();
 		const stateFile = path.join(root, "coordinator-state.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
 		const sessionId = "broker-session-2549";
 		const coordinatorTurnId = "turn-correlated-2549";
 
@@ -2480,7 +2480,7 @@ describe("coordinator runtime state sidecar", () => {
 		// even when the previous payload lacks cwd/workdir/session_file.
 		const root = await tempRoot();
 		const stateFile = path.join(root, "coordinator-state-foreign.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
 		const foreignSessionId = "different-session";
 		const runtimeSessionId = "runtime-session-2549";
 
@@ -2507,8 +2507,8 @@ describe("coordinator runtime state sidecar", () => {
 	it("issue-4351: completed session reports ready_for_input false with authoritative ended_at", async () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "issue-4351-completed.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "issue-4351-completed";
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "issue-4351-completed";
 		await Bun.write(
 			stateFile,
 			`${JSON.stringify({
@@ -2544,8 +2544,8 @@ describe("coordinator runtime state sidecar", () => {
 	it("issue-4351: errored session reports ready_for_input false", async () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "issue-4351-errored.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "issue-4351-errored";
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "issue-4351-errored";
 		await Bun.write(
 			stateFile,
 			`${JSON.stringify({
@@ -2579,8 +2579,8 @@ describe("coordinator runtime state sidecar", () => {
 	it("issue-4351: validation rejects a stale completed+ready_for_input:true marker", async () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "issue-4351-stale.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "issue-4351-stale";
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "issue-4351-stale";
 		// A pre-fix marker with the contradictory completed + ready_for_input: true.
 		await Bun.write(
 			stateFile,
@@ -2619,7 +2619,7 @@ describe("coordinator runtime tool activity", () => {
 	async function runningSession(name: string): Promise<string> {
 		const root = await tempRoot();
 		const stateFile = path.join(root, `${name}.json`);
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
 		setSystemTime(new Date(T0));
 		await persistCoordinatorRuntimeStateFromEvent(
 			{ type: "turn_start" },
@@ -2915,7 +2915,7 @@ describe("coordinator runtime tool activity", () => {
 	it("does not seed a state file from a tool event alone", async () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "activity-unseeded.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
 
 		await persistCoordinatorRuntimeStateFromEvent(
 			{ type: "tool_execution_start", toolCallId: "call-1" },

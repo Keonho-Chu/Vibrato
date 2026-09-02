@@ -7,8 +7,8 @@
  * code, so a payload that the loaded tool accepted was rejected before the
  * tool ever loaded, with no correction hint to recover from.
  */
-import { INTENT_FIELD } from "@gajae-code/agent-core";
-import type { RawArgumentRejectionDetail, RawArgumentValidationResult } from "@gajae-code/ai/types";
+import { INTENT_FIELD } from "@vib-rato/agent-core";
+import type { RawArgumentRejectionDetail, RawArgumentValidationResult } from "@vib-rato/ai/types";
 
 /**
  * Models reliably reach for `complete`/`completed` because the status an op

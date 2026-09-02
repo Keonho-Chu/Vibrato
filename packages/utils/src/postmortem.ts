@@ -120,13 +120,13 @@ function runCleanup(reason: Reason, options: CleanupOptions = {}): Promise<void>
  * were already routed through Promise.allSettled, so none can become unhandled.
  *
  * The deadline defaults to 5000 ms and can be overridden with
- * `GJC_CLEANUP_DEADLINE_MS` (finite values >= 0; anything else falls back to
+ * `VIB_CLEANUP_DEADLINE_MS` (finite values >= 0; anything else falls back to
  * the default).
  */
 const DEFAULT_CLEANUP_DEADLINE_MS = 5_000;
 
 function resolveCleanupDeadlineMs(): number {
-	const raw = process.env.GJC_CLEANUP_DEADLINE_MS;
+	const raw = process.env.VIB_CLEANUP_DEADLINE_MS;
 	if (raw === undefined || raw.trim() === "") return DEFAULT_CLEANUP_DEADLINE_MS;
 	const parsed = Number(raw);
 	if (!Number.isFinite(parsed) || parsed < 0) return DEFAULT_CLEANUP_DEADLINE_MS;
@@ -448,9 +448,9 @@ function boundCrashRecord(report: string, maxBytes: number = CRASH_RECORD_MAX_BY
 
 /**
  * Append a fatal-crash record to the dedicated, rotation-immune crash log
- * (`~/.gjc/agent/gjc-crash.log`).
+ * (`~/.vib/agent/vib-crash.log`).
  *
- * The daily logger file is gzip-archived at date rollover by every gjc process
+ * The daily logger file is gzip-archived at date rollover by every vib process
  * independently; that shared-archive race can truncate a day's log to an empty
  * `.gz`, destroying the `logger.error` crash record written here. This
  * append-only file is never rotated, so a crash stays diagnosable regardless.

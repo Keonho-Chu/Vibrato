@@ -1,6 +1,6 @@
 /** Protocol-correct direct and managed iTerm2 Pet capability transport. */
-import { isUnderTerminalMultiplexer, parseITerm2CapabilityReply, wrapITerm2RecordForTmux } from "@gajae-code/tui";
-import { resolveGjcTmuxCommand } from "../../gjc-runtime/tmux-common";
+import { isUnderTerminalMultiplexer, parseITerm2CapabilityReply, wrapITerm2RecordForTmux } from "@vib-rato/tui";
+import { resolveVibTmuxCommand } from "../../vib-runtime/tmux-common";
 export const PET_CAPABILITY_DRAIN_MAX_MS = 100;
 export const PET_CAPABILITY_QUIESCENCE_MS = 25;
 export const PET_CAPABILITY_QUERY_TIMEOUT_MS = 1000;
@@ -138,7 +138,7 @@ export function createNativePetTransport(o: {
 }): ItermPetTransport | undefined {
 	const env = o.env ?? Bun.env;
 	const managed = Boolean(
-		env.GJC_TMUX_ACTIVE_SESSION?.trim() && env.TMUX_PANE?.trim() && env.GJC_MANAGED_OWNER_RUN_ID?.trim(),
+		env.VIB_TMUX_ACTIVE_SESSION?.trim() && env.TMUX_PANE?.trim() && env.VIB_MANAGED_OWNER_RUN_ID?.trim(),
 	);
 	if (isUnderTerminalMultiplexer(env) && !managed) return undefined;
 	if (!isItermCandidate(env, o.tty)) return undefined;
@@ -158,7 +158,7 @@ export function createNativePetTransport(o: {
 		notifyLifecycle: e =>
 			o.ui.notifyTerminalLifecycle({ ...e, source: "transport", terminalGeneration: o.ui.terminalGeneration }),
 	};
-	const tmuxCommand = managed ? resolveGjcTmuxCommand(env) : undefined;
+	const tmuxCommand = managed ? resolveVibTmuxCommand(env) : undefined;
 	const tmux: PetTmuxRunner | undefined = managed
 		? async argv => {
 				const p = Bun.spawn([tmuxCommand!, ...argv], { stdout: "pipe", stderr: "pipe" });
@@ -177,7 +177,7 @@ export function createNativePetTransport(o: {
 		output,
 		tmux,
 		paneId: env.TMUX_PANE,
-		sessionTarget: env.GJC_TMUX_ACTIVE_SESSION,
+		sessionTarget: env.VIB_TMUX_ACTIVE_SESSION,
 		topology: o.topology,
 	});
 }

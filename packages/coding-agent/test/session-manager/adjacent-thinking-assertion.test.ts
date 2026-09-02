@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
-import type { AssistantMessage } from "@gajae-code/ai/core";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import * as utils from "@gajae-code/utils";
+import type { AssistantMessage } from "@vib-rato/ai/core";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import * as utils from "@vib-rato/utils";
 
 const usage = {
 	input: 0,

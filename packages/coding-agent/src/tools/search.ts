@@ -1,11 +1,11 @@
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
-import type { AgentTool, AgentToolContext, AgentToolResult, AgentToolUpdateCallback } from "@gajae-code/agent-core";
-import type { GrepMatch, GrepResult, grep as grepFn } from "@gajae-code/natives";
-import type { Component } from "@gajae-code/tui";
-import { Text } from "@gajae-code/tui";
-import { prompt, untilAborted } from "@gajae-code/utils";
+import type { AgentTool, AgentToolContext, AgentToolResult, AgentToolUpdateCallback } from "@vib-rato/agent-core";
+import type { GrepMatch, GrepResult, grep as grepFn } from "@vib-rato/natives";
+import type { Component } from "@vib-rato/tui";
+import { Text } from "@vib-rato/tui";
+import { prompt, untilAborted } from "@vib-rato/utils";
 import * as z from "zod/v4";
 import { getFileReadCache } from "../edit/file-read-cache";
 import type { RenderResultOptions } from "../extensibility/custom-tools/types";
@@ -39,16 +39,16 @@ import { ToolError } from "./tool-errors";
 import { toolResult } from "./tool-result";
 
 let searchNativesLoad:
-	| Promise<{ GrepOutputMode: typeof import("@gajae-code/natives")["GrepOutputMode"]; grep: typeof grepFn }>
+	| Promise<{ GrepOutputMode: typeof import("@vib-rato/natives")["GrepOutputMode"]; grep: typeof grepFn }>
 	| undefined;
 
 async function searchNatives(): Promise<{
-	GrepOutputMode: typeof import("@gajae-code/natives")["GrepOutputMode"];
+	GrepOutputMode: typeof import("@vib-rato/natives")["GrepOutputMode"];
 	grep: typeof grepFn;
 }> {
 	searchNativesLoad ??= Promise.resolve(
-		require("@gajae-code/natives") as {
-			GrepOutputMode: typeof import("@gajae-code/natives")["GrepOutputMode"];
+		require("@vib-rato/natives") as {
+			GrepOutputMode: typeof import("@vib-rato/natives")["GrepOutputMode"];
 			grep: typeof grepFn;
 		},
 	);
@@ -184,7 +184,7 @@ async function resolveArchiveSearchPaths(
 		}
 
 		if (!tempDir) {
-			tempDir = await mkdtemp(path.join(tmpdir(), "gjc-search-archive-"));
+			tempDir = await mkdtemp(path.join(tmpdir(), "vib-search-archive-"));
 		}
 		// Per-entry filename keeps the scratch path unique even when two selectors
 		// resolve to members with the same basename.

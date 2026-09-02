@@ -2,9 +2,9 @@ import { afterEach, describe, expect, test, vi } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { getBundledModel } from "@gajae-code/ai";
-import { NotificationServer } from "@gajae-code/natives";
-import { logger } from "@gajae-code/utils";
+import { getBundledModel } from "@vib-rato/ai";
+import { NotificationServer } from "@vib-rato/natives";
+import { logger } from "@vib-rato/utils";
 import { YAML } from "bun";
 import { withFileLock } from "../src/config/file-lock";
 import {
@@ -432,7 +432,7 @@ describe("notifications config", () => {
 		};
 		const settings = Settings.isolated(globalSettings);
 		const lightweight = createLightweightDaemonSettings({
-			agentDir: "/tmp/gjc-notification-snapshot",
+			agentDir: "/tmp/vib-notification-snapshot",
 			rawConfig: {
 				notifications: {
 					enabled: true,
@@ -484,7 +484,7 @@ describe("notifications config", () => {
 			"notifications.telegram.topics.nameTemplate": "",
 		});
 		const emptyLightweight = createLightweightDaemonSettings({
-			agentDir: "/tmp/gjc-notification-empty-parity",
+			agentDir: "/tmp/vib-notification-empty-parity",
 			rawConfig: {
 				notifications: {
 					telegram: {
@@ -502,7 +502,7 @@ describe("notifications config", () => {
 	test("streaming defaults and malformed values have full and lightweight quarantine parity", () => {
 		const settings = Settings.isolated();
 		const lightweight = createLightweightDaemonSettings({
-			agentDir: "/tmp/gjc-notification-streaming-default",
+			agentDir: "/tmp/vib-notification-streaming-default",
 			rawConfig: {},
 		});
 		expect(settings.getNotificationSettingsSnapshot().telegram.streaming.enabled).toBe(true);
@@ -516,7 +516,7 @@ describe("notifications config", () => {
 			],
 		] as const) {
 			const snapshot = createLightweightDaemonSettings({
-				agentDir: "/tmp/gjc-notification-streaming-invalid",
+				agentDir: "/tmp/vib-notification-streaming-invalid",
 				rawConfig,
 			}).getNotificationSettingsSnapshot();
 			expect(snapshot.telegram.streaming.enabled).toBe(true);
@@ -548,16 +548,16 @@ describe("notifications config", () => {
 		expect(genericNotificationStreamingEnabled({ cfg: inactiveTelegram, env: {} })).toBe(false);
 		expect(genericNotificationStreamingEnabled({ cfg: blockedTelegram, env: {} })).toBe(false);
 		expect(genericNotificationStreamingEnabled({ cfg: genericOnly, env: {} })).toBe(false);
-		expect(genericNotificationStreamingEnabled({ cfg: genericOnly, env: { GJC_NOTIFICATIONS_STREAM: "1" } })).toBe(
+		expect(genericNotificationStreamingEnabled({ cfg: genericOnly, env: { VIB_NOTIFICATIONS_STREAM: "1" } })).toBe(
 			true,
 		);
 		for (const value of ["0", "off", "false"]) {
 			expect(
-				genericNotificationStreamingEnabled({ cfg: activeTelegram, env: { GJC_NOTIFICATIONS_STREAM: value } }),
+				genericNotificationStreamingEnabled({ cfg: activeTelegram, env: { VIB_NOTIFICATIONS_STREAM: value } }),
 			).toBe(false);
 		}
 		expect(
-			genericNotificationStreamingEnabled({ cfg: activeTelegram, env: { GJC_NOTIFICATIONS_STREAM: "unknown" } }),
+			genericNotificationStreamingEnabled({ cfg: activeTelegram, env: { VIB_NOTIFICATIONS_STREAM: "unknown" } }),
 		).toBe(true);
 	});
 	test("full Settings and lightweight daemon share global fail-closed and provider quarantine semantics", () => {
@@ -566,19 +566,19 @@ describe("notifications config", () => {
 			const provider = pathName.split(".")[1];
 			if (provider !== "telegram" && provider !== "discord" && provider !== "slack") {
 				expect(() => Settings.isolated({ [pathName]: value }).getNotificationSettingsSnapshot()).toThrow(
-					"gjc_notify_daemon_invalid_configuration",
+					"vib_notify_daemon_invalid_configuration",
 				);
 				expect(() =>
 					createLightweightDaemonSettings({
-						agentDir: "/tmp/gjc-notification-malformed-parity",
+						agentDir: "/tmp/vib-notification-malformed-parity",
 						rawConfig,
 					}).getNotificationSettingsSnapshot(),
-				).toThrow("gjc_notify_daemon_invalid_configuration");
+				).toThrow("vib_notify_daemon_invalid_configuration");
 				continue;
 			}
 			const full = Settings.isolated({ [pathName]: value }).getNotificationSettingsSnapshot();
 			const lightweight = createLightweightDaemonSettings({
-				agentDir: "/tmp/gjc-notification-malformed-parity",
+				agentDir: "/tmp/vib-notification-malformed-parity",
 				rawConfig,
 			}).getNotificationSettingsSnapshot();
 			expect(full).toEqual(lightweight);
@@ -586,7 +586,7 @@ describe("notifications config", () => {
 		}
 	});
 	test("full Settings loaded from config.yml fails closed globally and quarantines provider-local state", async () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-btw-settings-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-btw-settings-"));
 		tempDirs.push(root);
 		const globalRawConfigs: unknown[] = [
 			true,
@@ -620,10 +620,10 @@ describe("notifications config", () => {
 			fs.writeFileSync(path.join(agentDir, "config.yml"), `${JSON.stringify(rawConfig)}\n`);
 			const settings = await Settings.loadForScope({ cwd: root, agentDir });
 			try {
-				expect(() => settings.getNotificationSettingsSnapshot()).toThrow("gjc_notify_daemon_invalid_configuration");
+				expect(() => settings.getNotificationSettingsSnapshot()).toThrow("vib_notify_daemon_invalid_configuration");
 				expect(() =>
 					createLightweightDaemonSettings({ agentDir, rawConfig }).getNotificationSettingsSnapshot(),
-				).toThrow("gjc_notify_daemon_invalid_configuration");
+				).toThrow("vib_notify_daemon_invalid_configuration");
 				if (index === 0) {
 					let daemonConstructed = false;
 					class UnexpectedDaemon {
@@ -639,7 +639,7 @@ describe("notifications config", () => {
 							loadInstallationHostId: async () => "test-host",
 							DaemonImpl: UnexpectedDaemon,
 						}),
-					).rejects.toThrow("gjc_notify_daemon_invalid_configuration");
+					).rejects.toThrow("vib_notify_daemon_invalid_configuration");
 					expect(daemonConstructed).toBe(false);
 				}
 			} finally {
@@ -667,7 +667,7 @@ describe("notifications config", () => {
 		}
 	}, 30_000);
 	test("Settings keeps malformed notification leaves fail-closed with a relative agent directory", async () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-notification-relative-agent-dir-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-notification-relative-agent-dir-"));
 		tempDirs.push(root);
 		const agentDir = path.join(root, "agent");
 		fs.mkdirSync(agentDir, { recursive: true });
@@ -681,15 +681,15 @@ describe("notifications config", () => {
 			agentDir: path.relative(process.cwd(), agentDir),
 		});
 		try {
-			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("gjc_notify_daemon_invalid_configuration");
+			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("vib_notify_daemon_invalid_configuration");
 			await settings.flush();
-			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("gjc_notify_daemon_invalid_configuration");
+			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("vib_notify_daemon_invalid_configuration");
 		} finally {
 			settings.getStorage()?.close();
 		}
 	});
 	test("Settings revalidates malformed notification config after direct repairs only", async () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-notification-direct-repair-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-notification-direct-repair-"));
 		tempDirs.push(root);
 		const agentDir = path.join(root, "agent");
 		fs.mkdirSync(agentDir, { recursive: true });
@@ -700,13 +700,13 @@ describe("notifications config", () => {
 
 		const settings = await Settings.loadForScope({ cwd: root, agentDir });
 		try {
-			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("gjc_notify_daemon_invalid_configuration");
+			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("vib_notify_daemon_invalid_configuration");
 
 			settings.set("theme.dark", "red-claw");
-			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("gjc_notify_daemon_invalid_configuration");
+			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("vib_notify_daemon_invalid_configuration");
 
 			settings.set("notifications.enabled", true);
-			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("gjc_notify_daemon_invalid_configuration");
+			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("vib_notify_daemon_invalid_configuration");
 
 			settings.unset("notifications.redact");
 			expect(settings.getNotificationSettingsSnapshot()).toMatchObject({ enabled: true, redact: false });
@@ -716,7 +716,7 @@ describe("notifications config", () => {
 		}
 	});
 	test("Settings preserves coercible malformed notification siblings through direct partial repairs", async () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-notification-direct-coercible-repair-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-notification-direct-coercible-repair-"));
 		tempDirs.push(root);
 		const agentDir = path.join(root, "agent");
 		fs.mkdirSync(agentDir, { recursive: true });
@@ -729,7 +729,7 @@ describe("notifications config", () => {
 		const settings = await Settings.loadForScope({ cwd: root, agentDir });
 		try {
 			settings.set("notifications.enabled", true);
-			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("gjc_notify_daemon_invalid_configuration");
+			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("vib_notify_daemon_invalid_configuration");
 			await settings.flush();
 			expect(YAML.parse(fs.readFileSync(configPath, "utf8"))).toMatchObject({
 				notifications: { enabled: true, daemon: { idleTimeoutMs: "60000" } },
@@ -741,7 +741,7 @@ describe("notifications config", () => {
 		const partiallyRepaired = await Settings.loadForScope({ cwd: root, agentDir });
 		try {
 			expect(() => partiallyRepaired.getNotificationSettingsSnapshot()).toThrow(
-				"gjc_notify_daemon_invalid_configuration",
+				"vib_notify_daemon_invalid_configuration",
 			);
 			partiallyRepaired.set("notifications.daemon.idleTimeoutMs", 60_000);
 			expect(partiallyRepaired.getNotificationSettingsSnapshot()).toMatchObject({
@@ -762,7 +762,7 @@ describe("notifications config", () => {
 		}
 	});
 	test("Settings preserves coercible malformed notification siblings through atomic partial repairs", async () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-notification-atomic-coercible-repair-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-notification-atomic-coercible-repair-"));
 		tempDirs.push(root);
 		const agentDir = path.join(root, "agent");
 		fs.mkdirSync(agentDir, { recursive: true });
@@ -775,7 +775,7 @@ describe("notifications config", () => {
 		const settings = await Settings.loadForScope({ cwd: root, agentDir });
 		try {
 			await settings.commitAtomicBatch([{ path: "notifications.enabled", op: "set", value: true }]);
-			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("gjc_notify_daemon_invalid_configuration");
+			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("vib_notify_daemon_invalid_configuration");
 			await settings.flush();
 			expect(YAML.parse(fs.readFileSync(configPath, "utf8"))).toMatchObject({
 				notifications: { enabled: true, daemon: { idleTimeoutMs: "60000" } },
@@ -787,7 +787,7 @@ describe("notifications config", () => {
 		const partiallyRepaired = await Settings.loadForScope({ cwd: root, agentDir });
 		try {
 			expect(() => partiallyRepaired.getNotificationSettingsSnapshot()).toThrow(
-				"gjc_notify_daemon_invalid_configuration",
+				"vib_notify_daemon_invalid_configuration",
 			);
 			await partiallyRepaired.commitAtomicBatch([
 				{ path: "notifications.daemon.idleTimeoutMs", op: "set", value: 60_000 },
@@ -810,7 +810,7 @@ describe("notifications config", () => {
 		}
 	});
 	test("Settings recomputes notification validation after a blocked older save replays a direct repair", async () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-notification-replay-validation-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-notification-replay-validation-"));
 		tempDirs.push(root);
 		const agentDir = path.join(root, "agent");
 		const configPath = path.join(agentDir, "config.yml");
@@ -844,7 +844,7 @@ describe("notifications config", () => {
 		}
 	});
 	test("Settings clears malformed-root gating only after a notification repair", async () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-notification-root-repair-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-notification-root-repair-"));
 		tempDirs.push(root);
 		const agentDir = path.join(root, "agent");
 		fs.mkdirSync(agentDir, { recursive: true });
@@ -852,10 +852,10 @@ describe("notifications config", () => {
 
 		const settings = await Settings.loadForScope({ cwd: root, agentDir });
 		try {
-			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("gjc_notify_daemon_invalid_configuration");
+			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("vib_notify_daemon_invalid_configuration");
 
 			settings.set("theme.dark", "red-claw");
-			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("gjc_notify_daemon_invalid_configuration");
+			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("vib_notify_daemon_invalid_configuration");
 
 			settings.set("notifications.enabled", true);
 			expect(settings.getNotificationSettingsSnapshot().enabled).toBe(true);
@@ -866,7 +866,7 @@ describe("notifications config", () => {
 	});
 
 	test("Settings atomic notification repairs revalidate and restore fail-closed state", async () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-notification-atomic-repair-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-notification-atomic-repair-"));
 		tempDirs.push(root);
 		const agentDir = path.join(root, "agent");
 		fs.mkdirSync(agentDir, { recursive: true });
@@ -877,20 +877,20 @@ describe("notifications config", () => {
 
 		const settings = await Settings.loadForScope({ cwd: root, agentDir });
 		try {
-			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("gjc_notify_daemon_invalid_configuration");
+			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("vib_notify_daemon_invalid_configuration");
 
 			const receipt = await settings.commitAtomicBatch([{ path: "notifications.enabled", op: "set", value: true }]);
 			expect(settings.getNotificationSettingsSnapshot().enabled).toBe(true);
 
 			expect(await receipt.restore()).toMatchObject({ status: "restored" });
-			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("gjc_notify_daemon_invalid_configuration");
+			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("vib_notify_daemon_invalid_configuration");
 		} finally {
 			await settings.flush();
 			settings.getStorage()?.close();
 		}
 	});
 	test("ordinary saves fence notification validation restores after an external different-path repair", async () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-notification-save-fence-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-notification-save-fence-"));
 		tempDirs.push(root);
 		const agentDir = path.join(root, "agent");
 		const configPath = path.join(agentDir, "config.yml");
@@ -915,20 +915,20 @@ describe("notifications config", () => {
 	});
 	test("in-memory atomic repairs restore their prior notification validation state", async () => {
 		const settings = Settings.isolated({ "notifications.enabled": "invalid" });
-		expect(() => settings.getNotificationSettingsSnapshot()).toThrow("gjc_notify_daemon_invalid_configuration");
+		expect(() => settings.getNotificationSettingsSnapshot()).toThrow("vib_notify_daemon_invalid_configuration");
 
 		const receipt = await settings.commitAtomicBatch([{ path: "notifications.enabled", op: "set", value: true }]);
 		expect(settings.getNotificationSettingsSnapshot().enabled).toBe(true);
 
 		expect(await receipt.restore()).toMatchObject({ status: "restored" });
-		expect(() => settings.getNotificationSettingsSnapshot()).toThrow("gjc_notify_daemon_invalid_configuration");
+		expect(() => settings.getNotificationSettingsSnapshot()).toThrow("vib_notify_daemon_invalid_configuration");
 	});
 	test("newer notification mutations reparse instead of restoring a stale receipt state", async () => {
 		const settings = Settings.isolated();
 		const receipt = await settings.commitAtomicBatch([
 			{ path: "notifications.enabled", op: "set", value: "invalid" },
 		]);
-		expect(() => settings.getNotificationSettingsSnapshot()).toThrow("gjc_notify_daemon_invalid_configuration");
+		expect(() => settings.getNotificationSettingsSnapshot()).toThrow("vib_notify_daemon_invalid_configuration");
 
 		settings.set("notifications.redact", true);
 		expect(await receipt.restore()).toMatchObject({ status: "restored" });
@@ -943,7 +943,7 @@ describe("notifications config", () => {
 	});
 
 	test("with-current atomic repairs preserve partial notification validation", async () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-notification-current-repair-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-notification-current-repair-"));
 		tempDirs.push(root);
 		const agentDir = path.join(root, "agent");
 		fs.mkdirSync(agentDir, { recursive: true });
@@ -957,20 +957,20 @@ describe("notifications config", () => {
 			const receipt = await settings.commitAtomicBatchWithCurrent(() => [
 				{ path: "notifications.enabled", op: "set", value: true },
 			]);
-			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("gjc_notify_daemon_invalid_configuration");
+			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("vib_notify_daemon_invalid_configuration");
 
 			settings.unset("notifications.redact");
 			expect(settings.getNotificationSettingsSnapshot()).toMatchObject({ enabled: true, redact: false });
 
 			expect(await receipt.restore()).toMatchObject({ status: "restored" });
-			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("gjc_notify_daemon_invalid_configuration");
+			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("vib_notify_daemon_invalid_configuration");
 		} finally {
 			await settings.flush();
 			settings.getStorage()?.close();
 		}
 	});
 	test("with-current repair does not restore stale validation after a concurrent different notification repair", async () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-notification-current-concurrent-repair-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-notification-current-concurrent-repair-"));
 		tempDirs.push(root);
 		const agentDir = path.join(root, "agent");
 		fs.mkdirSync(agentDir, { recursive: true });
@@ -1002,7 +1002,7 @@ describe("notifications config", () => {
 		}
 	});
 	test("with-current same-value notification mutations still fence validation rollback", async () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-notification-current-same-value-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-notification-current-same-value-"));
 		tempDirs.push(root);
 		const agentDir = path.join(root, "agent");
 		fs.mkdirSync(agentDir, { recursive: true });
@@ -1025,16 +1025,16 @@ describe("notifications config", () => {
 			continueBuilder.resolve();
 
 			const receipt = await pendingReceipt;
-			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("gjc_notify_daemon_invalid_configuration");
+			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("vib_notify_daemon_invalid_configuration");
 			expect(await receipt.restore()).toMatchObject({ status: "restored" });
-			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("gjc_notify_daemon_invalid_configuration");
+			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("vib_notify_daemon_invalid_configuration");
 		} finally {
 			await settings.flush();
 			settings.getStorage()?.close();
 		}
 	});
 	test("with-current atomic notification repair rejects malformed roots without normalizing durable YAML", async () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-notification-current-malformed-root-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-notification-current-malformed-root-"));
 		tempDirs.push(root);
 		const agentDir = path.join(root, "agent");
 		const configPath = path.join(agentDir, "config.yml");
@@ -1054,7 +1054,7 @@ describe("notifications config", () => {
 
 		const reloaded = await Settings.loadForScope({ cwd: root, agentDir });
 		try {
-			expect(() => reloaded.getNotificationSettingsSnapshot()).toThrow("gjc_notify_daemon_invalid_configuration");
+			expect(() => reloaded.getNotificationSettingsSnapshot()).toThrow("vib_notify_daemon_invalid_configuration");
 			expect(fs.readFileSync(configPath, "utf8")).toBe("true\n");
 		} finally {
 			await reloaded.flush();
@@ -1062,7 +1062,7 @@ describe("notifications config", () => {
 		}
 	}, 15_000);
 	test("atomic notification repairs reject externally malformed roots under the file lock", async () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-notification-atomic-external-root-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-notification-atomic-external-root-"));
 		tempDirs.push(root);
 		const agentDir = path.join(root, "agent");
 		const configPath = path.join(agentDir, "config.yml");
@@ -1087,7 +1087,7 @@ describe("notifications config", () => {
 		}
 	});
 	test("atomic notification receipt restore rejects externally malformed roots under the file lock", async () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-notification-restore-external-root-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-notification-restore-external-root-"));
 		tempDirs.push(root);
 		const agentDir = path.join(root, "agent");
 		const configPath = path.join(agentDir, "config.yml");
@@ -1106,7 +1106,7 @@ describe("notifications config", () => {
 		}
 	});
 	test("full Settings recovers defaults from invalid YAML while notifications remain fail-closed", async () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-btw-settings-load-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-btw-settings-load-"));
 		tempDirs.push(root);
 		const agentDir = path.join(root, "invalid-yaml");
 		const configPath = path.join(agentDir, "config.yml");
@@ -1115,16 +1115,16 @@ describe("notifications config", () => {
 		resetSettingsForTest();
 		const initialized = await Settings.init({ cwd: root, agentDir });
 		try {
-			expect(initialized.get("theme.dark")).toBe("red-claw");
-			expect(() => initialized.getNotificationSettingsSnapshot()).toThrow("gjc_notify_daemon_invalid_configuration");
+			expect(initialized.get("theme.dark")).toBe("lig-blue");
+			expect(() => initialized.getNotificationSettingsSnapshot()).toThrow("vib_notify_daemon_invalid_configuration");
 		} finally {
 			resetSettingsForTest();
 		}
 
 		const settings = await Settings.loadForScope({ cwd: root, agentDir });
 		try {
-			expect(settings.get("theme.dark")).toBe("red-claw");
-			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("gjc_notify_daemon_invalid_configuration");
+			expect(settings.get("theme.dark")).toBe("lig-blue");
+			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("vib_notify_daemon_invalid_configuration");
 			await expect(loadLightweightDaemonSettings(agentDir)).rejects.toThrow();
 		} finally {
 			settings.getStorage()?.close();
@@ -1162,7 +1162,7 @@ describe("notifications config", () => {
 		}
 	});
 	test("recovered YAML syntax is read-only until config.yml is repaired", async () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-settings-syntax-recovery-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-settings-syntax-recovery-"));
 		tempDirs.push(root);
 		const agentDir = path.join(root, "agent");
 		const configPath = path.join(agentDir, "config.yml");
@@ -1190,7 +1190,7 @@ describe("notifications config", () => {
 			await expect(
 				settings.commitAtomicBatchWithCurrent(() => [{ path: "theme.dark", op: "set", value: "blue-crab" }]),
 			).rejects.toThrow("Repair config.yml");
-			expect(settings.get("theme.dark")).toBe("red-claw");
+			expect(settings.get("theme.dark")).toBe("lig-blue");
 			await settings.flush();
 			expect(fs.readFileSync(configPath, "utf8")).toBe(malformed);
 
@@ -1210,11 +1210,11 @@ describe("notifications config", () => {
 	});
 
 	test("project notification settings are ignored without leaking credentials", async () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-project-boundary-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-project-boundary-"));
 		tempDirs.push(root);
 		const agentDir = path.join(root, "agent");
 		const projectDir = path.join(root, "project");
-		const projectSettingsPath = path.join(projectDir, ".gjc", "settings.json");
+		const projectSettingsPath = path.join(projectDir, ".vib", "settings.json");
 		const projectToken = "project-secret-token";
 		fs.mkdirSync(path.dirname(projectSettingsPath), { recursive: true });
 		fs.mkdirSync(agentDir, { recursive: true });
@@ -1377,7 +1377,7 @@ describe("notifications config", () => {
 		expect(
 			isGenericNotificationSessionEnabled({
 				cfg: GLOBAL_CFG,
-				env: { GJC_NOTIFICATIONS: "0", GJC_NOTIFICATIONS_TOKEN: "token" },
+				env: { VIB_NOTIFICATIONS: "0", VIB_NOTIFICATIONS_TOKEN: "token" },
 				sessionDisabled: false,
 			}),
 		).toBe(false);
@@ -1385,7 +1385,7 @@ describe("notifications config", () => {
 		expect(
 			isGenericNotificationSessionEnabled({
 				cfg: GLOBAL_CFG,
-				env: { GJC_NOTIFICATIONS: "1" },
+				env: { VIB_NOTIFICATIONS: "1" },
 				sessionDisabled: true,
 			}),
 		).toBe(false);
@@ -1393,14 +1393,14 @@ describe("notifications config", () => {
 		expect(
 			isGenericNotificationSessionEnabled({
 				cfg: BASE_CFG,
-				env: { GJC_NOTIFICATIONS: "1" },
+				env: { VIB_NOTIFICATIONS: "1" },
 				sessionDisabled: false,
 			}),
 		).toBe(true);
 		expect(
 			isGenericNotificationSessionEnabled({
 				cfg: BASE_CFG,
-				env: { GJC_NOTIFICATIONS_TOKEN: "legacy-token" },
+				env: { VIB_NOTIFICATIONS_TOKEN: "legacy-token" },
 				sessionDisabled: false,
 			}),
 		).toBe(true);
@@ -1412,15 +1412,15 @@ describe("notifications config", () => {
 				cfg: PRIMARY_GLOBAL_CFG,
 				env: {},
 				sessionDisabled: false,
-				spawnedByGjc: true,
+				spawnedByVib: true,
 			}),
 		).toBe(false);
 		expect(
 			isGenericNotificationSessionEnabled({
 				cfg: PRIMARY_GLOBAL_CFG,
-				env: { GJC_NOTIFICATIONS: "1" },
+				env: { VIB_NOTIFICATIONS: "1" },
 				sessionDisabled: false,
-				spawnedByGjc: true,
+				spawnedByVib: true,
 			}),
 		).toBe(true);
 	});
@@ -1429,16 +1429,16 @@ describe("notifications config", () => {
 		expect(
 			shouldRegisterGenericNotificationsExtension({
 				cfg: GLOBAL_CFG,
-				env: { GJC_NOTIFICATIONS: "0", GJC_NOTIFICATIONS_TOKEN: "token" },
+				env: { VIB_NOTIFICATIONS: "0", VIB_NOTIFICATIONS_TOKEN: "token" },
 			}),
 		).toBe(false);
-		expect(shouldRegisterGenericNotificationsExtension({ cfg: BASE_CFG, env: { GJC_NOTIFICATIONS: "1" } })).toBe(
+		expect(shouldRegisterGenericNotificationsExtension({ cfg: BASE_CFG, env: { VIB_NOTIFICATIONS: "1" } })).toBe(
 			true,
 		);
 		expect(
 			shouldRegisterGenericNotificationsExtension({
 				cfg: BASE_CFG,
-				env: { GJC_NOTIFICATIONS_TOKEN: "legacy-token" },
+				env: { VIB_NOTIFICATIONS_TOKEN: "legacy-token" },
 			}),
 		).toBe(true);
 		expect(shouldRegisterGenericNotificationsExtension({ cfg: GLOBAL_CFG, env: {} })).toBe(true);
@@ -1447,34 +1447,34 @@ describe("notifications config", () => {
 		expect(
 			shouldRegisterGenericNotificationsExtension({
 				cfg: GLOBAL_CFG,
-				env: { GJC_NOTIFY: "off" },
+				env: { VIB_NOTIFY: "off" },
 			}),
 		).toBe(false);
 		expect(
 			shouldRegisterGenericNotificationsExtension({
 				cfg: BASE_CFG,
-				env: { GJC_NOTIFY: "FALSE", GJC_NOTIFICATIONS: "1", GJC_NOTIFICATIONS_TOKEN: "legacy-token" },
+				env: { VIB_NOTIFY: "FALSE", VIB_NOTIFICATIONS: "1", VIB_NOTIFICATIONS_TOKEN: "legacy-token" },
 			}),
 		).toBe(false);
-		expect(completionNotifyDisabledByEnv({ GJC_NOTIFY: " 0 " })).toBe(true);
+		expect(completionNotifyDisabledByEnv({ VIB_NOTIFY: " 0 " })).toBe(true);
 		expect(
 			shouldRegisterGenericNotificationsExtension({
 				cfg: GLOBAL_CFG,
-				env: { GJC_NOTIFICATIONS: "1", GJC_NOTIFICATIONS_TOKEN: "legacy-token" },
+				env: { VIB_NOTIFICATIONS: "1", VIB_NOTIFICATIONS_TOKEN: "legacy-token" },
 				taskDepth: 1,
 			}),
 		).toBe(false);
 		expect(
 			shouldRegisterGenericNotificationsExtension({
 				cfg: GLOBAL_CFG,
-				env: { GJC_NOTIFICATIONS: "1" },
+				env: { VIB_NOTIFICATIONS: "1" },
 				parentTaskPrefix: "0-Sub",
 			}),
 		).toBe(false);
 		expect(
 			shouldRegisterGenericNotificationsExtension({
 				cfg: GLOBAL_CFG,
-				env: { GJC_NOTIFICATIONS: "1" },
+				env: { VIB_NOTIFICATIONS: "1" },
 				currentAgentType: "executor",
 			}),
 		).toBe(false);
@@ -1482,25 +1482,25 @@ describe("notifications config", () => {
 
 	test("isGenericNotificationHostEligible preserves hard-off, subagent, and primary-scope precedence", () => {
 		const primary = { ...PRIMARY_GLOBAL_CFG, sessionScope: "primary" as const };
-		expect(isGenericNotificationHostEligible({ env: { GJC_NOTIFY: "off", GJC_NOTIFICATIONS: "1" } })).toBe(false);
-		expect(isGenericNotificationHostEligible({ env: { GJC_NOTIFICATIONS: "1" }, taskDepth: 1 })).toBe(false);
-		expect(isGenericNotificationHostEligible({ env: { GJC_NOTIFICATIONS: "0" } })).toBe(false);
+		expect(isGenericNotificationHostEligible({ env: { VIB_NOTIFY: "off", VIB_NOTIFICATIONS: "1" } })).toBe(false);
+		expect(isGenericNotificationHostEligible({ env: { VIB_NOTIFICATIONS: "1" }, taskDepth: 1 })).toBe(false);
+		expect(isGenericNotificationHostEligible({ env: { VIB_NOTIFICATIONS: "0" } })).toBe(false);
 		expect(isGenericNotificationHostEligible({ env: {}, hostModeSupported: false })).toBe(false);
 		expect(
-			isGenericNotificationHostEligible({ env: {}, sessionScope: primary.sessionScope, spawnedByGjc: true }),
+			isGenericNotificationHostEligible({ env: {}, sessionScope: primary.sessionScope, spawnedByVib: true }),
 		).toBe(false);
 		expect(
 			isGenericNotificationHostEligible({
-				env: { GJC_NOTIFICATIONS: "1" },
+				env: { VIB_NOTIFICATIONS: "1" },
 				sessionScope: primary.sessionScope,
-				spawnedByGjc: true,
+				spawnedByVib: true,
 			}),
 		).toBe(true);
 		expect(
 			isGenericNotificationHostEligible({
-				env: { GJC_NOTIFICATIONS_TOKEN: "explicit-token" },
+				env: { VIB_NOTIFICATIONS_TOKEN: "explicit-token" },
 				sessionScope: primary.sessionScope,
-				spawnedByGjc: true,
+				spawnedByVib: true,
 			}),
 		).toBe(true);
 		expect(isGenericNotificationHostEligible({ env: {} })).toBe(true);
@@ -1517,50 +1517,50 @@ describe("notifications config", () => {
 		);
 	});
 
-	test("sessionScope=primary suppresses GJC-spawned children but preserves everything else", () => {
+	test("sessionScope=primary suppresses Vibrato-spawned children but preserves everything else", () => {
 		// Default scope "all": a spawned child still registers (fully behavior-preserving).
-		expect(shouldRegisterGenericNotificationsExtension({ cfg: GLOBAL_CFG, env: {}, spawnedByGjc: true })).toBe(true);
+		expect(shouldRegisterGenericNotificationsExtension({ cfg: GLOBAL_CFG, env: {}, spawnedByVib: true })).toBe(true);
 		// scope "primary": a spawned child is suppressed.
 		expect(
-			shouldRegisterGenericNotificationsExtension({ cfg: PRIMARY_GLOBAL_CFG, env: {}, spawnedByGjc: true }),
+			shouldRegisterGenericNotificationsExtension({ cfg: PRIMARY_GLOBAL_CFG, env: {}, spawnedByVib: true }),
 		).toBe(false);
 		// scope "primary": a user-opened session (no marker) is unaffected.
 		expect(
-			shouldRegisterGenericNotificationsExtension({ cfg: PRIMARY_GLOBAL_CFG, env: {}, spawnedByGjc: false }),
+			shouldRegisterGenericNotificationsExtension({ cfg: PRIMARY_GLOBAL_CFG, env: {}, spawnedByVib: false }),
 		).toBe(true);
 		expect(shouldRegisterGenericNotificationsExtension({ cfg: PRIMARY_GLOBAL_CFG, env: {} })).toBe(true);
 	});
 
 	test("explicit /session_create opt-in outranks sessionScope=primary suppression", () => {
-		// GJC_NOTIFICATIONS=1 is exactly what Telegram /session_create and cold
+		// VIB_NOTIFICATIONS=1 is exactly what Telegram /session_create and cold
 		// /session_resume launch with, so their bidirectional topic survives.
 		expect(
 			shouldRegisterGenericNotificationsExtension({
 				cfg: PRIMARY_GLOBAL_CFG,
-				env: { GJC_NOTIFICATIONS: "1" },
-				spawnedByGjc: true,
+				env: { VIB_NOTIFICATIONS: "1" },
+				spawnedByVib: true,
 			}),
 		).toBe(true);
 		expect(
 			shouldRegisterGenericNotificationsExtension({
 				cfg: PRIMARY_GLOBAL_CFG,
-				env: { GJC_NOTIFICATIONS_TOKEN: "legacy-token" },
-				spawnedByGjc: true,
+				env: { VIB_NOTIFICATIONS_TOKEN: "legacy-token" },
+				spawnedByVib: true,
 			}),
 		).toBe(true);
 		// Hard opt-out and /notify off equivalents still outrank the marker.
 		expect(
 			shouldRegisterGenericNotificationsExtension({
 				cfg: PRIMARY_GLOBAL_CFG,
-				env: { GJC_NOTIFICATIONS: "0" },
-				spawnedByGjc: true,
+				env: { VIB_NOTIFICATIONS: "0" },
+				spawnedByVib: true,
 			}),
 		).toBe(false);
 		expect(
 			shouldRegisterGenericNotificationsExtension({
 				cfg: PRIMARY_GLOBAL_CFG,
-				env: { GJC_NOTIFY: "off" },
-				spawnedByGjc: true,
+				env: { VIB_NOTIFY: "off" },
+				spawnedByVib: true,
 			}),
 		).toBe(false);
 		// A spawned child that is also a subagent stays suppressed regardless.
@@ -1568,20 +1568,20 @@ describe("notifications config", () => {
 			shouldRegisterGenericNotificationsExtension({
 				cfg: PRIMARY_GLOBAL_CFG,
 				env: {},
-				spawnedByGjc: true,
+				spawnedByVib: true,
 				taskDepth: 1,
 			}),
 		).toBe(false);
 		// Without any configured adapter, a marker under primary is still off (no
 		// spurious enable, and global auto-on is never reached).
-		expect(shouldRegisterGenericNotificationsExtension({ cfg: BASE_CFG, env: {}, spawnedByGjc: true })).toBe(false);
+		expect(shouldRegisterGenericNotificationsExtension({ cfg: BASE_CFG, env: {}, spawnedByVib: true })).toBe(false);
 	});
 	test("settings-enabled subagent sessions do not register the notifications extension", async () => {
-		const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-subagent-"));
-		const agentDir = path.join(cwd, ".gjc", "agent");
+		const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-subagent-"));
+		const agentDir = path.join(cwd, ".vib", "agent");
 		const cleanup = await createNotificationFixtureRoot(cwd, agentDir);
-		const previous = process.env.GJC_NOTIFICATIONS;
-		delete process.env.GJC_NOTIFICATIONS;
+		const previous = process.env.VIB_NOTIFICATIONS;
+		delete process.env.VIB_NOTIFICATIONS;
 		const settings = isolatedNotificationSettings(agentDir, {
 			"notifications.enabled": true,
 			"notifications.telegram.botToken": " ",
@@ -1722,25 +1722,25 @@ describe("notifications config", () => {
 			await parentPrefixSubagent.session.extensionRunner?.emit({ type: "session_start" });
 			await agentTypeOnlySubagent.session.extensionRunner?.emit({ type: "session_start" });
 			await explicitExtensionSubagent.session.extensionRunner?.emit({ type: "session_start" });
-			const topLevelEndpoint = path.join(cwd, ".gjc", "state", "sdk", `${topLevel.session.sessionId}.json`);
-			const subagentEndpoint = path.join(cwd, ".gjc", "state", "sdk", `${subagent.session.sessionId}.json`);
+			const topLevelEndpoint = path.join(cwd, ".vib", "state", "sdk", `${topLevel.session.sessionId}.json`);
+			const subagentEndpoint = path.join(cwd, ".vib", "state", "sdk", `${subagent.session.sessionId}.json`);
 			const parentPrefixSubagentEndpoint = path.join(
 				cwd,
-				".gjc",
+				".vib",
 				"state",
 				"sdk",
 				`${parentPrefixSubagent.session.sessionId}.json`,
 			);
 			const agentTypeOnlySubagentEndpoint = path.join(
 				cwd,
-				".gjc",
+				".vib",
 				"state",
 				"sdk",
 				`${agentTypeOnlySubagent.session.sessionId}.json`,
 			);
 			const explicitExtensionSubagentEndpoint = path.join(
 				cwd,
-				".gjc",
+				".vib",
 				"state",
 				"sdk",
 				`${explicitExtensionSubagent.session.sessionId}.json`,
@@ -1754,9 +1754,9 @@ describe("notifications config", () => {
 		} finally {
 			await cleanupFixtureRoot(cleanup);
 			if (previous === undefined) {
-				delete process.env.GJC_NOTIFICATIONS;
+				delete process.env.VIB_NOTIFICATIONS;
 			} else {
-				process.env.GJC_NOTIFICATIONS = previous;
+				process.env.VIB_NOTIFICATIONS = previous;
 			}
 			resetSettingsForTest();
 		}
@@ -1764,8 +1764,8 @@ describe("notifications config", () => {
 
 	test("marks config-eligible sessions as Telegram topic-capable", async () => {
 		const runScenario = async (orchestration: boolean): Promise<boolean[]> => {
-			const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-telegram-topic-capability-"));
-			const agentDir = path.join(cwd, ".gjc", "agent");
+			const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-telegram-topic-capability-"));
+			const agentDir = path.join(cwd, ".vib", "agent");
 			const cleanup = await createNotificationFixtureRoot(cwd, agentDir);
 			const settings = isolatedNotificationSettings(agentDir, {
 				"notifications.enabled": true,
@@ -1800,8 +1800,8 @@ describe("notifications config", () => {
 				frames.push(JSON.parse(frame) as Record<string, unknown>);
 				originalPushFrame.call(this, frame);
 			};
-			const previousNotifications = process.env.GJC_NOTIFICATIONS;
-			process.env.GJC_NOTIFICATIONS = "1";
+			const previousNotifications = process.env.VIB_NOTIFICATIONS;
+			process.env.VIB_NOTIFICATIONS = "1";
 			try {
 				const options = {
 					settings,
@@ -1828,8 +1828,8 @@ describe("notifications config", () => {
 				serverPrototype.pushFrame = originalPushFrame;
 				await cleanupFixtureRoot(cleanup);
 				resetSettingsForTest();
-				if (previousNotifications === undefined) delete process.env.GJC_NOTIFICATIONS;
-				else process.env.GJC_NOTIFICATIONS = previousNotifications;
+				if (previousNotifications === undefined) delete process.env.VIB_NOTIFICATIONS;
+				else process.env.VIB_NOTIFICATIONS = previousNotifications;
 			}
 		};
 
@@ -1848,8 +1848,8 @@ describe("notifications config", () => {
 			});
 
 		test("isolates a safe chat sibling endpoint from a proven foreign Telegram owner", async () => {
-			const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-provider-foreign-telegram-"));
-			const agentDir = path.join(cwd, ".gjc", "agent");
+			const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-provider-foreign-telegram-"));
+			const agentDir = path.join(cwd, ".vib", "agent");
 			const cleanup = await createNotificationFixtureRoot(cwd, agentDir);
 			const settings = isolatedNotificationSettings(agentDir, {
 				"notifications.enabled": true,
@@ -1876,7 +1876,7 @@ describe("notifications config", () => {
 					chatId: "foreign-chat",
 					startedAt: Date.now(),
 					heartbeatAt: Date.now(),
-					roots: [path.join(cwd, ".gjc", "state")],
+					roots: [path.join(cwd, ".vib", "state")],
 					version: DAEMON_VERSION,
 					generation: DAEMON_GENERATION,
 				}),
@@ -1910,8 +1910,8 @@ describe("notifications config", () => {
 			const sessionStart = handlers.get("session_start");
 			const sessionShutdown = handlers.get("session_shutdown");
 			if (!sessionStart || !sessionShutdown) throw new Error("notifications extension handlers were not registered");
-			const standardEndpoint = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
-			const chatEndpoint = path.join(cwd, ".gjc", "state", "chat", "sdk", `${sessionId}.json`);
+			const standardEndpoint = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
+			const chatEndpoint = path.join(cwd, ".vib", "state", "chat", "sdk", `${sessionId}.json`);
 			try {
 				await sessionStart({}, context);
 				// Isolation is decided up front from the durable foreign owner state
@@ -1930,8 +1930,8 @@ describe("notifications config", () => {
 		}, 30_000);
 
 		test("publishes the endpoint even when provider readiness fails (fail-closed to delivery only)", async () => {
-			const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-provider-readiness-failure-"));
-			const agentDir = path.join(cwd, ".gjc", "agent");
+			const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-provider-readiness-failure-"));
+			const agentDir = path.join(cwd, ".vib", "agent");
 			const cleanup = await createNotificationFixtureRoot(cwd, agentDir);
 			const settings = providerSettings(agentDir);
 			let session: Awaited<ReturnType<typeof createAgentSession>>["session"] | undefined;
@@ -1960,7 +1960,7 @@ describe("notifications config", () => {
 				).session;
 				const runner = session.extensionRunner;
 				if (!runner) throw new Error("notifications extension runner was not registered");
-				const endpoint = path.join(cwd, ".gjc", "state", "sdk", `${session.sessionId}.json`);
+				const endpoint = path.join(cwd, ".vib", "state", "sdk", `${session.sessionId}.json`);
 
 				const errors: string[] = [];
 				const unsubscribe = runner.onError(error => errors.push(error.error));
@@ -1979,8 +1979,8 @@ describe("notifications config", () => {
 		}, 30000);
 
 		test("settles lifecycle startup despite a failing provider so /notify on can retry delivery", async () => {
-			const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-provider-readiness-retry-"));
-			const agentDir = path.join(cwd, ".gjc", "agent");
+			const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-provider-readiness-retry-"));
+			const agentDir = path.join(cwd, ".vib", "agent");
 			const cleanup = await createNotificationFixtureRoot(cwd, agentDir);
 			const settings = providerSettings(agentDir);
 			const handlers = new Map<string, (event: unknown, ctx: ExtensionContext) => Promise<void> | void>();
@@ -2008,7 +2008,7 @@ describe("notifications config", () => {
 				},
 				ui: { notify: () => {} },
 			} as unknown as ExtensionCommandContext;
-			const endpoint = path.join(cwd, ".gjc", "state", "sdk", "provider-readiness-retry.json");
+			const endpoint = path.join(cwd, ".vib", "state", "sdk", "provider-readiness-retry.json");
 			createNotificationsExtension(api, {
 				settings,
 				ensureProviderDaemon: async () => {
@@ -2039,8 +2039,8 @@ describe("notifications config", () => {
 		}, 30000);
 
 		test("publishes the embedded session endpoint before background provider readiness settles", async () => {
-			const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-provider-readiness-success-"));
-			const agentDir = path.join(cwd, ".gjc", "agent");
+			const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-provider-readiness-success-"));
+			const agentDir = path.join(cwd, ".vib", "agent");
 			const cleanup = await createNotificationFixtureRoot(cwd, agentDir);
 			const settings = providerSettings(agentDir);
 			let session: Awaited<ReturnType<typeof createAgentSession>>["session"] | undefined;
@@ -2074,7 +2074,7 @@ describe("notifications config", () => {
 				).session;
 				const runner = session.extensionRunner;
 				if (!runner) throw new Error("notifications extension runner was not registered");
-				endpoint = path.join(cwd, ".gjc", "state", "sdk", `${session.sessionId}.json`);
+				endpoint = path.join(cwd, ".vib", "state", "sdk", `${session.sessionId}.json`);
 
 				await runner.emit({ type: "session_start" });
 				expect(fs.existsSync(endpoint)).toBe(true);
@@ -2091,18 +2091,18 @@ describe("notifications config", () => {
 		}, 30000);
 	});
 
-	test("sessionScope=primary keeps a canonical SDK endpoint while suppressing GJC-spawned child delivery", async () => {
-		const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-notif-spawned-"));
-		const agentDir = path.join(cwd, ".gjc", "agent");
+	test("sessionScope=primary keeps a canonical SDK endpoint while suppressing Vibrato-spawned child delivery", async () => {
+		const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-notif-spawned-"));
+		const agentDir = path.join(cwd, ".vib", "agent");
 		const cleanup = await createNotificationFixtureRoot(cwd, agentDir);
-		const previousNotif = process.env.GJC_NOTIFICATIONS;
-		const previousSpawn = process.env.GJC_SPAWNED_BY_SESSION;
-		const previousToken = process.env.GJC_NOTIFICATIONS_TOKEN;
-		const previousCompletionNotify = process.env.GJC_NOTIFY;
-		delete process.env.GJC_NOTIFICATIONS;
-		delete process.env.GJC_SPAWNED_BY_SESSION;
-		delete process.env.GJC_NOTIFICATIONS_TOKEN;
-		delete process.env.GJC_NOTIFY;
+		const previousNotif = process.env.VIB_NOTIFICATIONS;
+		const previousSpawn = process.env.VIB_SPAWNED_BY_SESSION;
+		const previousToken = process.env.VIB_NOTIFICATIONS_TOKEN;
+		const previousCompletionNotify = process.env.VIB_NOTIFY;
+		delete process.env.VIB_NOTIFICATIONS;
+		delete process.env.VIB_SPAWNED_BY_SESSION;
+		delete process.env.VIB_NOTIFICATIONS_TOKEN;
+		delete process.env.VIB_NOTIFY;
 		const adapterSettings = (scope: "all" | "primary"): Settings =>
 			isolatedNotificationSettings(agentDir, {
 				"notifications.enabled": true,
@@ -2131,14 +2131,14 @@ describe("notifications config", () => {
 				enableMCP: false,
 				enableLsp: false,
 			});
-		const endpointFor = (sessionId: string): string => path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+		const endpointFor = (sessionId: string): string => path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 		try {
 			resetSettingsForTest();
 			await Settings.init({ inMemory: true, cwd, agentDir });
 
 			// 1. A spawned child under primary keeps the mandatory SDK endpoint,
 			// while the session-scoped delivery guard above suppresses notifications.
-			process.env.GJC_SPAWNED_BY_SESSION = "parent-abc";
+			process.env.VIB_SPAWNED_BY_SESSION = "parent-abc";
 			const suppressed = await spawn(primarySettings);
 			registerNotificationRuntime(cleanup, {
 				key: "suppressed",
@@ -2147,10 +2147,10 @@ describe("notifications config", () => {
 				},
 				dispose: () => suppressed.session.dispose(),
 			});
-			expect(process.env.GJC_SPAWNED_BY_SESSION).toBeUndefined();
+			expect(process.env.VIB_SPAWNED_BY_SESSION).toBeUndefined();
 
 			// 2. Spawned child under the default "all" scope still registers.
-			process.env.GJC_SPAWNED_BY_SESSION = "parent-abc";
+			process.env.VIB_SPAWNED_BY_SESSION = "parent-abc";
 			const preserved = await spawn(allSettings);
 			registerNotificationRuntime(cleanup, {
 				key: "preserved",
@@ -2161,8 +2161,8 @@ describe("notifications config", () => {
 			});
 
 			// 3. Spawned child under primary WITH explicit opt-in keeps its endpoint.
-			process.env.GJC_SPAWNED_BY_SESSION = "parent-abc";
-			process.env.GJC_NOTIFICATIONS = "1";
+			process.env.VIB_SPAWNED_BY_SESSION = "parent-abc";
+			process.env.VIB_NOTIFICATIONS = "1";
 			const optedIn = await spawn(primarySettings);
 			registerNotificationRuntime(cleanup, {
 				key: "opted-in",
@@ -2171,11 +2171,11 @@ describe("notifications config", () => {
 				},
 				dispose: () => optedIn.session.dispose(),
 			});
-			delete process.env.GJC_NOTIFICATIONS;
+			delete process.env.VIB_NOTIFICATIONS;
 
 			// 4. The legacy explicit token has the same primary-scope override.
-			process.env.GJC_SPAWNED_BY_SESSION = "parent-abc";
-			process.env.GJC_NOTIFICATIONS_TOKEN = "legacy-token";
+			process.env.VIB_SPAWNED_BY_SESSION = "parent-abc";
+			process.env.VIB_NOTIFICATIONS_TOKEN = "legacy-token";
 			const tokenOptedIn = await spawn(primarySettings);
 			registerNotificationRuntime(cleanup, {
 				key: "token-opted-in",
@@ -2184,10 +2184,10 @@ describe("notifications config", () => {
 				},
 				dispose: () => tokenOptedIn.session.dispose(),
 			});
-			delete process.env.GJC_NOTIFICATIONS_TOKEN;
+			delete process.env.VIB_NOTIFICATIONS_TOKEN;
 
 			// 5. Notification hard-offs suppress delivery but keep the canonical SDK endpoint.
-			process.env.GJC_NOTIFY = "off";
+			process.env.VIB_NOTIFY = "off";
 			const completionOptedOut = await spawn(allSettings);
 			registerNotificationRuntime(cleanup, {
 				key: "completion-opted-out",
@@ -2196,8 +2196,8 @@ describe("notifications config", () => {
 				},
 				dispose: () => completionOptedOut.session.dispose(),
 			});
-			delete process.env.GJC_NOTIFY;
-			process.env.GJC_NOTIFICATIONS = "0";
+			delete process.env.VIB_NOTIFY;
+			process.env.VIB_NOTIFICATIONS = "0";
 			const notificationsOptedOut = await spawn(allSettings);
 			registerNotificationRuntime(cleanup, {
 				key: "notifications-opted-out",
@@ -2206,7 +2206,7 @@ describe("notifications config", () => {
 				},
 				dispose: () => notificationsOptedOut.session.dispose(),
 			});
-			delete process.env.GJC_NOTIFICATIONS;
+			delete process.env.VIB_NOTIFICATIONS;
 
 			await suppressed.session.extensionRunner?.emit({ type: "session_start" });
 			await preserved.session.extensionRunner?.emit({ type: "session_start" });
@@ -2223,20 +2223,20 @@ describe("notifications config", () => {
 			expect(fs.existsSync(endpointFor(notificationsOptedOut.session.sessionId))).toBe(true);
 		} finally {
 			await cleanupFixtureRoot(cleanup);
-			if (previousNotif === undefined) delete process.env.GJC_NOTIFICATIONS;
-			else process.env.GJC_NOTIFICATIONS = previousNotif;
-			if (previousSpawn === undefined) delete process.env.GJC_SPAWNED_BY_SESSION;
-			else process.env.GJC_SPAWNED_BY_SESSION = previousSpawn;
-			if (previousToken === undefined) delete process.env.GJC_NOTIFICATIONS_TOKEN;
-			else process.env.GJC_NOTIFICATIONS_TOKEN = previousToken;
-			if (previousCompletionNotify === undefined) delete process.env.GJC_NOTIFY;
-			else process.env.GJC_NOTIFY = previousCompletionNotify;
+			if (previousNotif === undefined) delete process.env.VIB_NOTIFICATIONS;
+			else process.env.VIB_NOTIFICATIONS = previousNotif;
+			if (previousSpawn === undefined) delete process.env.VIB_SPAWNED_BY_SESSION;
+			else process.env.VIB_SPAWNED_BY_SESSION = previousSpawn;
+			if (previousToken === undefined) delete process.env.VIB_NOTIFICATIONS_TOKEN;
+			else process.env.VIB_NOTIFICATIONS_TOKEN = previousToken;
+			if (previousCompletionNotify === undefined) delete process.env.VIB_NOTIFY;
+			else process.env.VIB_NOTIFY = previousCompletionNotify;
 			resetSettingsForTest();
 		}
 	}, 60000);
 	test("never-registered notifications extension captures no command or daemon artifacts", () => {
-		const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-notification-unregistered-"));
-		const agentDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-notification-agent-"));
+		const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-notification-unregistered-"));
+		const agentDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-notification-agent-"));
 		tempDirs.push(cwd, agentDir);
 		const sessionId = "session-unregistered";
 		let notify: { handler(args: string, ctx: ExtensionCommandContext): Promise<void> | void } | undefined;
@@ -2253,12 +2253,12 @@ describe("notifications config", () => {
 		expect(extensionShouldRegister).toBe(false);
 		if (extensionShouldRegister) createNotificationsExtension(api);
 		expect(notify).toBeUndefined();
-		expect(fs.existsSync(path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`))).toBe(false);
+		expect(fs.existsSync(path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`))).toBe(false);
 		expect(fs.existsSync(daemonPaths(agentDir).roots)).toBe(false);
 	});
 	test("captured /notify on ensures provider transport once without registering a session root", async () => {
-		const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-notification-command-"));
-		const agentDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-notification-agent-"));
+		const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-notification-command-"));
+		const agentDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-notification-agent-"));
 		tempDirs.push(cwd, agentDir);
 		const sessionId = "session-command";
 		const settings = new Proxy(
@@ -2329,7 +2329,7 @@ describe("notifications config", () => {
 			}),
 		);
 
-		const endpoint = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+		const endpoint = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 		const roots = daemonPaths(agentDir).roots;
 		const sessionStart = handlers.get("session_start");
 		const sessionShutdown = handlers.get("session_shutdown");

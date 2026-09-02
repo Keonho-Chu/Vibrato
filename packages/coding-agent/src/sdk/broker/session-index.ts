@@ -1,8 +1,8 @@
 import { createHash, randomUUID } from "node:crypto";
 import * as fs from "node:fs/promises";
 import path from "node:path";
-import { logger, resolveEquivalentPath } from "@gajae-code/utils";
-import { nativeProcessBindings } from "@gajae-code/utils/native-process";
+import { logger, resolveEquivalentPath } from "@vib-rato/utils";
+import { nativeProcessBindings } from "@vib-rato/utils/native-process";
 import { withFileLock } from "../../config/file-lock";
 import { processIncarnation } from "./process-incarnation";
 import {
@@ -1466,7 +1466,7 @@ export class SessionIndex {
 				await this.#replayUnderLock();
 				if (this.#corruptSuffix) {
 					// A corrupt suffix used to hard-fail every append until a human ran
-					// `gjc gc --repair-session-index` — but the writers that corrupt the
+					// `vib gc --repair-session-index` — but the writers that corrupt the
 					// log (typically a stale long-lived broker signing events against an
 					// outdated in-memory indexSeq) keep appending, so the operator-run
 					// repair was re-corrupted within minutes and delegated session
@@ -1477,7 +1477,7 @@ export class SessionIndex {
 					const repair = await this.#repairUnderLock();
 					if (this.#corruptSuffix)
 						throw new Error(
-							"Cannot append to corrupt session index log; automatic repair did not converge — run `gjc gc --repair-session-index` to quarantine evidence and retain the valid prefix",
+							"Cannot append to corrupt session index log; automatic repair did not converge — run `vib gc --repair-session-index` to quarantine evidence and retain the valid prefix",
 						);
 					logger.warn(
 						`sdk broker: session index self-repaired before append (${repair.reason ?? "corrupt suffix"}); evidence quarantined at ${repair.quarantinePath ?? "unknown"}`,

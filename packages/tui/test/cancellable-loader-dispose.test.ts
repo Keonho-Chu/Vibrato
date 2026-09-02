@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
-import { CancellableLoader, Container, type TUI } from "@gajae-code/tui";
+import { CancellableLoader, Container, type TUI } from "@vib-rato/tui";
 
 describe("CancellableLoader disposal", () => {
 	afterEach(() => {

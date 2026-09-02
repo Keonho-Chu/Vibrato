@@ -16,11 +16,11 @@ afterEach(async () => {
 });
 
 async function fixture(policy: ConstructorParameters<typeof SessionIndex>[1] = {}) {
-	const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-generation-status-"));
+	const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-generation-status-"));
 	tempDirs.push(agentDir);
 	const index = await new SessionIndex(agentDir, policy).open();
 	const router = new SessionRouter({ agentDir, deps: { createIndex: () => index } });
-	const locator = { repo: agentDir, stateRoot: path.join(agentDir, ".gjc", "state") };
+	const locator = { repo: agentDir, stateRoot: path.join(agentDir, ".vib", "state") };
 	return { agentDir, index, locator, router };
 }
 
@@ -218,9 +218,9 @@ describe("SessionRouter exact generation status", () => {
 	});
 
 	test("revalidates process incarnation after replay before reporting current", async () => {
-		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-generation-pid-reuse-"));
+		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-generation-pid-reuse-"));
 		tempDirs.push(agentDir);
-		const locator = { repo: agentDir, stateRoot: path.join(agentDir, ".gjc", "state") };
+		const locator = { repo: agentDir, stateRoot: path.join(agentDir, ".vib", "state") };
 		let running = true;
 		let observedIncarnation = "linux:100";
 		const index = await new SessionIndex(
@@ -244,9 +244,9 @@ describe("SessionRouter exact generation status", () => {
 	});
 
 	test("retries when the index changes between the observation plan and commit", async () => {
-		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-generation-plan-race-"));
+		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-generation-plan-race-"));
 		tempDirs.push(agentDir);
-		const locator = { repo: agentDir, stateRoot: path.join(agentDir, ".gjc", "state") };
+		const locator = { repo: agentDir, stateRoot: path.join(agentDir, ".vib", "state") };
 		let index: SessionIndex;
 		let raced = false;
 		index = await new SessionIndex(
@@ -279,7 +279,7 @@ describe("SessionRouter exact generation status", () => {
 	});
 
 	test("fails closed without probing when unresolved identity history exceeds the budget", async () => {
-		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-generation-probe-budget-"));
+		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-generation-probe-budget-"));
 		tempDirs.push(agentDir);
 		let probes = 0;
 		const index = await new SessionIndex(

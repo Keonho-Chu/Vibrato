@@ -45,7 +45,7 @@ async function waitUntil(predicate: () => boolean, label: string, timeoutMs = 1_
 
 describe("JS worker VM lifecycle redteam", () => {
 	afterEach(async () => {
-		delete process.env.GAJAE_CODE_JS_EVAL_INLINE_WORKER;
+		delete process.env.VIBRATO_JS_EVAL_INLINE_WORKER;
 		await disposeAllVmContexts();
 	});
 
@@ -329,7 +329,7 @@ describe("JS worker VM lifecycle redteam", () => {
 
 	it("fails closed when inline-worker fallback would be needed in production without the explicit test env", async () => {
 		const OriginalWorker = globalThis.Worker;
-		delete process.env.GAJAE_CODE_JS_EVAL_INLINE_WORKER;
+		delete process.env.VIBRATO_JS_EVAL_INLINE_WORKER;
 		(globalThis as unknown as { Worker: typeof Worker }).Worker = class {
 			constructor() {
 				throw new Error("synthetic worker spawn failure");

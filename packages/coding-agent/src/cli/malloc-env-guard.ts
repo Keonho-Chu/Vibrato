@@ -17,7 +17,7 @@
  * The only way to hand children a clean startup snapshot is to start the primary
  * process with a clean environment. This module re-execs the exact invocation
  * once (darwin-only) with a `filterProcessEnv`-scrubbed environment and a
- * `GJC_MALLOC_ENV_REEXEC` loop guard, before any fast path or subprocess spawn.
+ * `VIB_MALLOC_ENV_REEXEC` loop guard, before any fast path or subprocess spawn.
  * The re-exec'd process — and therefore every downstream lane: `Bun.spawn`
  * defaults, `node:child_process`, the native PTY, the tmux owner, plugin
  * installs, and subagents — starts from a clean snapshot.
@@ -29,14 +29,14 @@
  * `launchctl unsetenv` fix.
  */
 
-import { filterProcessEnv } from "@gajae-code/utils/env";
+import { filterProcessEnv } from "@vib-rato/utils/env";
 import type { Subprocess } from "bun";
 
 /** Env vars that make macOS libmalloc write to a TTY when inherited. */
 export const MACOS_MALLOC_ENV_VARS = ["MallocStackLogging", "MallocStackLoggingNoCompact"] as const;
 
 /** Loop guard set on the scrubbed re-exec so it never re-execs itself again. */
-export const MALLOC_ENV_REEXEC_GUARD = "GJC_MALLOC_ENV_REEXEC";
+export const MALLOC_ENV_REEXEC_GUARD = "VIB_MALLOC_ENV_REEXEC";
 
 /** True when at least one macOS malloc-stack-logging var is present in `env`. */
 export function hasMacOSMallocEnv(env: Record<string, string | undefined>): boolean {
@@ -78,7 +78,7 @@ export function buildMallocReexecArgv(argv: readonly string[], execPath: string)
 /** One-time, human-actionable notice pointing at the permanent environment fix. */
 export function formatMallocEnvNotice(): string {
 	return (
-		"gajae-code: detected macOS malloc-stack-logging environment variables " +
+		"vib-rato: detected macOS malloc-stack-logging environment variables " +
 		"(MallocStackLogging / MallocStackLoggingNoCompact); relaunching once with a " +
 		"scrubbed environment so they do not flood the terminal.\n" +
 		"  Remove them permanently with:\n" +

@@ -11,7 +11,7 @@
  * - Space: Toggle selected item (or master switch)
  * - Esc: Close dashboard (clears search first if active)
  */
-import { Container, matchesKey, Spacer, Text } from "@gajae-code/tui";
+import { Container, matchesKey, Spacer, Text } from "@vib-rato/tui";
 import { Settings } from "../../../config/settings";
 import { DynamicBorder } from "../../../modes/components/dynamic-border";
 import { theme } from "../../../modes/theme/theme";

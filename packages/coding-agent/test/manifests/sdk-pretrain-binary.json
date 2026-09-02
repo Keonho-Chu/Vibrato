@@ -12,11 +12,11 @@
     "packages/coding-agent/src/cli.ts",
     "packages/coding-agent/src/notifications/telegram-daemon-cli.ts"
   ],
-  "artifactPath": "packages/coding-agent/dist/gjc-rollback",
+  "artifactPath": "packages/coding-agent/dist/vib-rollback",
   "artifactPathByPlatform": {
-    "darwin": "packages/coding-agent/dist/gjc-rollback",
-    "linux": "packages/coding-agent/dist/gjc-rollback",
-    "win32": "packages/coding-agent/dist/gjc-rollback.exe"
+    "darwin": "packages/coding-agent/dist/vib-rollback",
+    "linux": "packages/coding-agent/dist/vib-rollback",
+    "win32": "packages/coding-agent/dist/vib-rollback.exe"
   },
   "artifactSha256Scope": "SHA-256 of the freshly compiled, host-signed executable bytes named by artifactPathByPlatform for the host platform in the isolated pinned worktree, verified immediately before each invocation; no executable artifact is committed.",
   "supportedPlatforms": ["darwin", "linux", "win32"],
@@ -26,9 +26,9 @@
     "dependencyInstall": ["bun", "install", "--offline", "--frozen-lockfile"],
     "nativeBuild": ["bun", "--cwd=packages/natives", "run", "build"],
     "nativeEmbed": ["bun", "--cwd=packages/natives", "run", "embed:native"],
-    "compile": ["bun", "build", "--compile", "--minify", "--no-compile-autoload-bunfig", "--no-compile-autoload-dotenv", "--no-compile-autoload-tsconfig", "--no-compile-autoload-package-json", "--keep-names", "--define", "process.env.PI_COMPILED=\"true\"", "--define", "process.env.GJC_BUILD_CHANNEL=\"dev\"", "--root", "../..", "--external", "mupdf", "./src/cli.ts", "./src/notifications/telegram-daemon-cli.ts", "--outfile", "dist/gjc-rollback"],
+    "compile": ["bun", "build", "--compile", "--minify", "--no-compile-autoload-bunfig", "--no-compile-autoload-dotenv", "--no-compile-autoload-tsconfig", "--no-compile-autoload-package-json", "--keep-names", "--define", "process.env.PI_COMPILED=\"true\"", "--define", "process.env.VIB_BUILD_CHANNEL=\"dev\"", "--root", "../..", "--external", "mupdf", "./src/cli.ts", "./src/notifications/telegram-daemon-cli.ts", "--outfile", "dist/vib-rollback"],
     "sign": {
-      "darwin": ["codesign", "--force", "--sign", "-", "dist/gjc-rollback"],
+      "darwin": ["codesign", "--force", "--sign", "-", "dist/vib-rollback"],
       "linux": [],
       "win32": []
     }

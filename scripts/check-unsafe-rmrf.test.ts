@@ -108,7 +108,7 @@ describe("check-unsafe-rmrf scanner", () => {
 
 	test("does not flag bare blocked-command fixture strings", () => {
 		expect(
-			violationsOf(['process.env.HOME = home;', 'const blocked = ["rm -rf .gjc", "echo verdict"];'].join("\n")),
+			violationsOf(['process.env.HOME = home;', 'const blocked = ["rm -rf .vib", "echo verdict"];'].join("\n")),
 		).toEqual([]);
 	});
 

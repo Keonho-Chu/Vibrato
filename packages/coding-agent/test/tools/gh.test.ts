@@ -2,16 +2,16 @@ import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "bun:te
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import type { ToolSession } from "@gajae-code/coding-agent/tools";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import type { ToolSession } from "@vib-rato/coding-agent/tools";
 import {
 	buildSearchDateQualifier,
 	GithubTool,
 	parsePrUnifiedDiff,
 	parseSearchDateBound,
-} from "@gajae-code/coding-agent/tools/gh";
-import * as git from "@gajae-code/coding-agent/utils/git";
-import { getAgentDir, hashPath, setAgentDir } from "@gajae-code/utils";
+} from "@vib-rato/coding-agent/tools/gh";
+import * as git from "@vib-rato/coding-agent/utils/git";
+import { getAgentDir, hashPath, setAgentDir } from "@vib-rato/utils";
 import * as z from "zod/v4";
 import { safeRm } from "../../../../scripts/safe-cleanup";
 
@@ -153,7 +153,7 @@ async function createRemoteFixture(): Promise<RemoteFixture> {
 /**
  * Stub `os.homedir()` AND rebuild the cached `dirs` resolver in pi-utils so
  * `getWorktreesDir()` resolves under an isolated temp home instead of the
- * user's real `~/.gjc/wt`. Returns the temp home and a cleanup hook.
+ * user's real `~/.vib/wt`. Returns the temp home and a cleanup hook.
  */
 async function setupTempHome(): Promise<{ home: string; cleanup: () => Promise<void> }> {
 	const home = await fs.mkdtemp(path.join(os.tmpdir(), "gh-pr-tool-home-"));
@@ -162,7 +162,7 @@ async function setupTempHome(): Promise<{ home: string; cleanup: () => Promise<v
 	// we must rebuild the resolver after the spy is in place. `setAgentDir`
 	// recreates it; we point it at the temp home's default agent dir.
 	const originalAgentDir = getAgentDir();
-	setAgentDir(path.join(home, ".gjc", "agent"));
+	setAgentDir(path.join(home, ".vib", "agent"));
 	return {
 		home,
 		cleanup: async () => {
@@ -181,7 +181,7 @@ async function setupTempHome(): Promise<{ home: string; cleanup: () => Promise<v
 async function expectedWorktreePath(home: string, primaryRoot: string, localBranch: string): Promise<string> {
 	const prNumber = localBranch.replace(/^pr-/, "");
 	const segment = `${prNumber}-${hashPath(primaryRoot)}`;
-	return fs.realpath(path.join(home, ".gjc", "wt", segment));
+	return fs.realpath(path.join(home, ".vib", "wt", segment));
 }
 
 describe("parsePrUnifiedDiff", () => {
@@ -1197,10 +1197,10 @@ describe("github tool", () => {
 			expect(text).toContain(`Worktree: ${wt200}`);
 			expect(runGit(wt100, ["branch", "--show-current"])).toBe("pr-100");
 			expect(runGit(wt200, ["branch", "--show-current"])).toBe("pr-200");
-			expect(runGit(fixture.repoRoot, ["config", "--get", "branch.pr-100.gjcPrUrl"])).toBe(
+			expect(runGit(fixture.repoRoot, ["config", "--get", "branch.pr-100.vibPrUrl"])).toBe(
 				"https://github.com/owner/repo/pull/100",
 			);
-			expect(runGit(fixture.repoRoot, ["config", "--get", "branch.pr-200.gjcPrUrl"])).toBe(
+			expect(runGit(fixture.repoRoot, ["config", "--get", "branch.pr-200.vibPrUrl"])).toBe(
 				"https://github.com/owner/repo/pull/200",
 			);
 

@@ -2,19 +2,19 @@ import { afterEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { RenderResultOptions } from "@gajae-code/agent-core";
-import { LspTool } from "@gajae-code/coding-agent/lsp";
-import * as lspClient from "@gajae-code/coding-agent/lsp/client";
-import * as lspConfig from "@gajae-code/coding-agent/lsp/config";
-import { getServersForFile, loadConfig } from "@gajae-code/coding-agent/lsp/config";
-import { renderCall, renderResult } from "@gajae-code/coding-agent/lsp/render";
+import type { RenderResultOptions } from "@vib-rato/agent-core";
+import { LspTool } from "@vib-rato/coding-agent/lsp";
+import * as lspClient from "@vib-rato/coding-agent/lsp/client";
+import * as lspConfig from "@vib-rato/coding-agent/lsp/config";
+import { getServersForFile, loadConfig } from "@vib-rato/coding-agent/lsp/config";
+import { renderCall, renderResult } from "@vib-rato/coding-agent/lsp/render";
 import type {
 	CodeAction,
 	Diagnostic,
 	LspClient,
 	ServerConfig,
 	SymbolInformation,
-} from "@gajae-code/coding-agent/lsp/types";
+} from "@vib-rato/coding-agent/lsp/types";
 import {
 	applyCodeAction,
 	collectGlobMatches,
@@ -25,12 +25,12 @@ import {
 	hasGlobPattern,
 	resolveDiagnosticTargets,
 	resolveSymbolColumn,
-} from "@gajae-code/coding-agent/lsp/utils";
-import { getThemeByName } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { ToolSession } from "@gajae-code/coding-agent/tools";
-import { clampTimeout } from "@gajae-code/coding-agent/tools/tool-timeouts";
-import * as piUtils from "@gajae-code/utils";
-import { sanitizeText, TempDir } from "@gajae-code/utils";
+} from "@vib-rato/coding-agent/lsp/utils";
+import { getThemeByName } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { ToolSession } from "@vib-rato/coding-agent/tools";
+import { clampTimeout } from "@vib-rato/coding-agent/tools/tool-timeouts";
+import * as piUtils from "@vib-rato/utils";
+import { sanitizeText, TempDir } from "@vib-rato/utils";
 import { registerOwnedDeletionRoot, safeRm } from "../../../../scripts/safe-cleanup";
 
 describe("lsp regressions", () => {
@@ -57,7 +57,7 @@ describe("lsp regressions", () => {
 		const projectMarkers = ["Cargo.toml", "tsconfig.json", "go.mod", "pyproject.toml"];
 
 		for (const marker of projectMarkers) {
-			const tempDir = TempDir.createSync("@gjc-lsp-workspace-diags-");
+			const tempDir = TempDir.createSync("@vib-lsp-workspace-diags-");
 			try {
 				await Bun.write(path.join(tempDir.path(), marker), "");
 				const tool = new LspTool({ cwd: tempDir.path() } as ToolSession);
@@ -79,7 +79,7 @@ describe("lsp regressions", () => {
 	});
 
 	it("limits glob collection to avoid large diagnostic stalls", async () => {
-		const tempDir = TempDir.createSync("@gjc-lsp-glob-");
+		const tempDir = TempDir.createSync("@vib-lsp-glob-");
 		try {
 			await Promise.all([
 				Bun.write(`${tempDir.path()}/a.ts`, "export const a = 1;\n"),
@@ -95,7 +95,7 @@ describe("lsp regressions", () => {
 	});
 
 	it("treats existing bracket paths as literal diagnostic targets", async () => {
-		const tempDir = TempDir.createSync("@gjc-lsp-bracket-path-");
+		const tempDir = TempDir.createSync("@vib-lsp-bracket-path-");
 		try {
 			const filePath = `${tempDir.path()}/apps/frontend/src/app/runs/[runId]/public/opengraph-image.tsx`;
 			await Bun.write(filePath, "export default function OpenGraphImage() {}\n");
@@ -116,7 +116,7 @@ describe("lsp regressions", () => {
 	});
 
 	it("resolves the requested symbol occurrence on a line", async () => {
-		const tempDir = TempDir.createSync("@gjc-lsp-regression-");
+		const tempDir = TempDir.createSync("@vib-lsp-regression-");
 		try {
 			const filePath = `${tempDir.path()}/symbol.ts`;
 			await Bun.write(filePath, "foo(bar(foo));\n");
@@ -129,7 +129,7 @@ describe("lsp regressions", () => {
 	});
 
 	it("throws when symbol does not exist on the target line", async () => {
-		const tempDir = TempDir.createSync("@gjc-lsp-missing-symbol-");
+		const tempDir = TempDir.createSync("@vib-lsp-missing-symbol-");
 		try {
 			const filePath = `${tempDir.path()}/symbol.ts`;
 			await Bun.write(filePath, "winston.info('x');\n");
@@ -143,7 +143,7 @@ describe("lsp regressions", () => {
 	});
 
 	it("throws when occurrence is out of bounds", async () => {
-		const tempDir = TempDir.createSync("@gjc-lsp-occurrence-");
+		const tempDir = TempDir.createSync("@vib-lsp-occurrence-");
 		try {
 			const filePath = `${tempDir.path()}/symbol.ts`;
 			await Bun.write(filePath, "foo();\n");
@@ -319,7 +319,7 @@ describe("lsp regressions", () => {
 	});
 
 	it("does not reuse stale file diagnostics after another URI publishes", async () => {
-		const tempDir = TempDir.createSync("@gjc-lsp-stale-diags-");
+		const tempDir = TempDir.createSync("@vib-lsp-stale-diags-");
 		try {
 			const targetFile = path.join(tempDir.path(), "target.ts");
 			const otherFile = path.join(tempDir.path(), "other.ts");
@@ -404,7 +404,7 @@ describe("lsp regressions", () => {
 	});
 
 	it("does not auto-launch LSP binaries from project node_modules/.bin", async () => {
-		const tempDir = TempDir.createSync("@gjc-lsp-project-bin-");
+		const tempDir = TempDir.createSync("@vib-lsp-project-bin-");
 		const whichSpy = vi.spyOn(piUtils, "$which").mockReturnValue(null);
 
 		try {
@@ -424,9 +424,9 @@ describe("lsp regressions", () => {
 	});
 
 	it("detects tlaplus files for LSP startup and language ids", async () => {
-		const tempDir = TempDir.createSync("@gjc-lsp-tlaplus-");
+		const tempDir = TempDir.createSync("@vib-lsp-tlaplus-");
 		const cwd = path.join(tempDir.path(), "repo");
-		const externalBinDir = path.join(os.homedir(), `.gjc-lsp-tlaplus-${process.pid}-${Date.now()}`);
+		const externalBinDir = path.join(os.homedir(), `.vib-lsp-tlaplus-${process.pid}-${Date.now()}`);
 		const forgetExternalGrant = registerOwnedDeletionRoot(externalBinDir);
 		const specPath = path.join(cwd, "Spec.tla");
 		const aliasPath = path.join(cwd, "Spec.tlaplus");
@@ -455,9 +455,9 @@ describe("lsp regressions", () => {
 	});
 
 	it("detects csharp-ls as the preferred C# LSP when installed", async () => {
-		const tempDir = TempDir.createSync("@gjc-lsp-csharp-ls-");
+		const tempDir = TempDir.createSync("@vib-lsp-csharp-ls-");
 		const cwd = path.join(tempDir.path(), "repo");
-		const externalBinDir = path.join(os.homedir(), `.gjc-lsp-csharp-${process.pid}-${Date.now()}`);
+		const externalBinDir = path.join(os.homedir(), `.vib-lsp-csharp-${process.pid}-${Date.now()}`);
 		const forgetExternalGrant = registerOwnedDeletionRoot(externalBinDir);
 		const csharpLs = path.join(externalBinDir, "csharp-ls");
 		const omnisharp = path.join(externalBinDir, "omnisharp");
@@ -489,9 +489,9 @@ describe("lsp regressions", () => {
 	});
 
 	it("keeps omnisharp as the C# fallback when csharp-ls is unavailable", async () => {
-		const tempDir = TempDir.createSync("@gjc-lsp-omnisharp-fallback-");
+		const tempDir = TempDir.createSync("@vib-lsp-omnisharp-fallback-");
 		const cwd = path.join(tempDir.path(), "repo");
-		const externalBinDir = path.join(os.homedir(), `.gjc-lsp-omnisharp-${process.pid}-${Date.now()}`);
+		const externalBinDir = path.join(os.homedir(), `.vib-lsp-omnisharp-${process.pid}-${Date.now()}`);
 		const forgetExternalGrant = registerOwnedDeletionRoot(externalBinDir);
 		const omnisharp = path.join(externalBinDir, "omnisharp");
 		try {
@@ -514,7 +514,7 @@ describe("lsp regressions", () => {
 		}
 	});
 	it("rename_file applies LSP willRenameFiles edits and renames the file", async () => {
-		const tempDir = TempDir.createSync("@gjc-lsp-rename-file-");
+		const tempDir = TempDir.createSync("@vib-lsp-rename-file-");
 		try {
 			const sourceFile = path.join(tempDir.path(), "src", "old.ts");
 			const destFile = path.join(tempDir.path(), "src", "new.ts");
@@ -621,7 +621,7 @@ describe("lsp regressions", () => {
 	});
 
 	it("rename_file with apply:false previews edits without filesystem changes", async () => {
-		const tempDir = TempDir.createSync("@gjc-lsp-rename-file-preview-");
+		const tempDir = TempDir.createSync("@vib-lsp-rename-file-preview-");
 		try {
 			const sourceFile = path.join(tempDir.path(), "old.ts");
 			const destFile = path.join(tempDir.path(), "new.ts");
@@ -678,7 +678,7 @@ describe("lsp regressions", () => {
 	});
 
 	it("rename_file enumerates every file inside a directory rename", async () => {
-		const tempDir = TempDir.createSync("@gjc-lsp-rename-dir-");
+		const tempDir = TempDir.createSync("@vib-lsp-rename-dir-");
 		try {
 			const srcDir = path.join(tempDir.path(), "old");
 			const dstDir = path.join(tempDir.path(), "new");
@@ -751,7 +751,7 @@ describe("lsp regressions", () => {
 	});
 
 	it("request action sends raw LSP method with auto-built textDocument/position params", async () => {
-		const tempDir = TempDir.createSync("@gjc-lsp-request-");
+		const tempDir = TempDir.createSync("@vib-lsp-request-");
 		try {
 			const filePath = path.join(tempDir.path(), "src", "lib.rs");
 			await Bun.write(filePath, 'fn main() {\n    println!("hi");\n}\n');
@@ -823,7 +823,7 @@ describe("lsp regressions", () => {
 	});
 
 	it("request action forwards explicit JSON payload verbatim", async () => {
-		const tempDir = TempDir.createSync("@gjc-lsp-request-payload-");
+		const tempDir = TempDir.createSync("@vib-lsp-request-payload-");
 		try {
 			const server: ServerConfig = { command: "test-lsp", fileTypes: ["ts"], rootMarkers: [] };
 			const client: LspClient = {
@@ -880,7 +880,7 @@ describe("lsp regressions", () => {
 	});
 
 	it("capabilities action dumps server capabilities", async () => {
-		const tempDir = TempDir.createSync("@gjc-lsp-caps-");
+		const tempDir = TempDir.createSync("@vib-lsp-caps-");
 		try {
 			const server: ServerConfig = { command: "test-lsp", fileTypes: ["ts"], rootMarkers: [] };
 			const client: LspClient = {

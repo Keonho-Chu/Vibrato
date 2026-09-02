@@ -1,8 +1,8 @@
 # Aside sidecar evaluation
 
-This note records the safe first-step boundary for evaluating [Aside](https://aside.com/) with Gajae-Code (`gjc`). The search/context sidecar path is intentionally docs-only: GJC does not ship an Aside adapter, does not auto-discover Aside, and does not enable browser-control behavior by default.
+This note records the safe first-step boundary for evaluating [Aside](https://aside.com/) with Vibrato (`vib`). The search/context sidecar path is intentionally docs-only: Vibrato does not ship an Aside adapter, does not auto-discover Aside, and does not enable browser-control behavior by default.
 
-The one in-tree CLI ergonomics surface is the explicit `/aside` composer slash command. It probes a user-installed Aside CLI and can run `aside exec` / `aside account` when the operator types it. That command does not restore a GJC browser-tool backend and does not turn Aside on for ordinary browser or search tools.
+The one in-tree CLI ergonomics surface is the explicit `/aside` composer slash command. It probes a user-installed Aside CLI and can run `aside exec` / `aside account` when the operator types it. That command does not restore a Vibrato browser-tool backend and does not turn Aside on for ordinary browser or search tools.
 
 ## Current public surface
 
@@ -13,11 +13,11 @@ Official Aside docs currently describe Aside as a browser agent that can run tas
 - `aside mcp` for exposing Aside to another agent or coding tool as an MCP server.
 - `aside repl` for direct browser automation REPL tasks.
 
-Those are useful evaluation hooks, but they are not a narrow GJC-native search API. The documented Aside product surface is broader than search/context retrieval, including browser actions, login-adjacent flows, files, payments, messages, and internal websites. GJC therefore treats Aside as an external, user-owned sidecar until a separate design approves a smaller protocol contract.
+Those are useful evaluation hooks, but they are not a narrow Vibrato-native search API. The documented Aside product surface is broader than search/context retrieval, including browser actions, login-adjacent flows, files, payments, messages, and internal websites. Vibrato therefore treats Aside as an external, user-owned sidecar until a separate design approves a smaller protocol contract.
 
-## Supported GJC boundary
+## Supported Vibrato boundary
 
-Use Aside with GJC only when the user explicitly configures it. The safe default scope is:
+Use Aside with Vibrato only when the user explicitly configures it. The safe default scope is:
 
 - search, source-heavy research, summarization, and context retrieval;
 - read-only inspection prompts where possible;
@@ -31,7 +31,7 @@ Out of scope by default:
 - payments, purchases, subscriptions, billing changes, posts, messages, or destructive actions;
 - internal-tool workflows, customer/admin dashboards, or privileged production data;
 - file writes or local computer control through Aside;
-- automatic import of Aside browser history, cookies, task transcripts, screenshots, or local profile data into GJC.
+- automatic import of Aside browser history, cookies, task transcripts, screenshots, or local profile data into Vibrato.
 
 If a task needs any out-of-scope behavior, stop and require a separate explicit design and approval path. Do not smuggle that behavior through a generic “search” tool name.
 
@@ -40,18 +40,18 @@ If a task needs any out-of-scope behavior, stop and require a separate explicit 
 When the Aside CLI is installed and the operator wants to record the Aside MCP command for repo-local inspection, store the definition explicitly:
 
 ```sh
-gjc mcp add aside aside mcp --project
+vib mcp add aside aside mcp --project
 ```
 
-Use `--project` for repo-local evaluation records. Omit it only when the operator intentionally wants the stored definition in the user-level GJC MCP config; both scopes are consumed by ordinary standalone GJC sessions at startup (conventional autoload) unless disabled or opted out with `--no-mcp`.
+Use `--project` for repo-local evaluation records. Omit it only when the operator intentionally wants the stored definition in the user-level Vibrato MCP config; both scopes are consumed by ordinary standalone Vibrato sessions at startup (conventional autoload) unless disabled or opted out with `--no-mcp`.
 
 After registration, inspect the redacted definition:
 
 ```sh
-gjc mcp list --json
+vib mcp list --json
 ```
 
-`gjc mcp add` makes the stored server definition available to ordinary standalone `gjc`, `gjc --tmux`, and print-mode sessions as runtime tools. Do not paste task transcripts, browser screenshots, cookies, saved credential state, or private Aside profile paths into issues or PRs. If you need to share evidence, summarize the stored definition shape and any benign externally gathered result.
+`vib mcp add` makes the stored server definition available to ordinary standalone `vib`, `vib --tmux`, and print-mode sessions as runtime tools. Do not paste task transcripts, browser screenshots, cookies, saved credential state, or private Aside profile paths into issues or PRs. If you need to share evidence, summarize the stored definition shape and any benign externally gathered result.
 
 
 Recommended prompt boundary for evaluation:
@@ -62,7 +62,7 @@ Use the Aside sidecar only for read-only search/context retrieval. Do not click,
 
 ## Option B: `/aside` composer command
 
-Type `/aside` in the GJC composer to probe and use a locally installed Aside CLI. This is operator-initiated and does not enable GJC browser-control by default.
+Type `/aside` in the Vibrato composer to probe and use a locally installed Aside CLI. This is operator-initiated and does not enable Vibrato browser-control by default.
 
 ```text
 /aside
@@ -76,9 +76,9 @@ Behavior:
 
 - Bare `/aside` prints the resolved CLI path, `aside --version` when available, and usage.
 - `/aside <prompt>` and `/aside exec …` spawn `aside exec` with argv (no shell).
-- `/aside mcp` prints `gjc mcp add aside <resolved-cli> mcp --project`. It does not start `aside mcp` inside GJC, because that command is a stdio server.
-- `/aside repl` is refused inside GJC. Run `aside repl` in a real terminal TTY.
-- If the CLI is missing, GJC prints the searched paths and `curl -fsSL https://releases.aside.com/install.sh | bash`. It never runs the installer.
+- `/aside mcp` prints `vib mcp add aside <resolved-cli> mcp --project`. It does not start `aside mcp` inside Vibrato, because that command is a stdio server.
+- `/aside repl` is refused inside Vibrato. Run `aside repl` in a real terminal TTY.
+- If the CLI is missing, Vibrato prints the searched paths and `curl -fsSL https://releases.aside.com/install.sh | bash`. It never runs the installer.
 - On native Windows, the printed MCP and REPL commands use PowerShell quoting; the documented installer command is for WSL or Git Bash, not PowerShell itself.
 
 Probe order: `~/.local/bin/aside`, then `~/.aside/cli/Aside CLI.app/Contents/MacOS/aside`, then `PATH`.
@@ -92,10 +92,10 @@ If Aside or a wrapper later exposes a narrow search/context MCP endpoint, keep e
 ```sh
 export ASIDE_MCP_URL="https://aside.example.invalid/mcp"
 export ASIDE_API_KEY="..."
-gjc mcp add aside-search --type http --url "$ASIDE_MCP_URL" --header Authorization="Bearer $ASIDE_API_KEY" --project
+vib mcp add aside-search --type http --url "$ASIDE_MCP_URL" --header Authorization="Bearer $ASIDE_API_KEY" --project
 ```
 
-`gjc mcp list` and `gjc mcp remove` redact header/auth values, but operators are still responsible for not echoing secrets in shell history, CI logs, screenshots, or copied terminal output. Prefer environment indirection over literals whenever possible.
+`vib mcp list` and `vib mcp remove` redact header/auth values, but operators are still responsible for not echoing secrets in shell history, CI logs, screenshots, or copied terminal output. Prefer environment indirection over literals whenever possible.
 
 A future Aside search endpoint should be accepted only if it is narrower than browser automation. Minimum shape:
 
@@ -109,35 +109,35 @@ A future Aside search endpoint should be accepted only if it is narrower than br
 
 Use this checklist instead of a live login/payment/internal-site scenario:
 
-1. Register the MCP server definition with `gjc mcp add ... --project`.
-2. Run `gjc mcp list --json` and confirm secrets are redacted.
+1. Register the MCP server definition with `vib mcp add ... --project`.
+2. Run `vib mcp list --json` and confirm secrets are redacted.
 3. Confirm the record is project-scoped or user-scoped as intended.
-4. Confirm the registration is consumed by a normal standalone GJC session in that project (tools appear at startup). To verify without a server, use `--no-mcp` or disable the server (`enabled: false` / `disabledServers`) for that session.
+4. Confirm the registration is consumed by a normal standalone Vibrato session in that project (tools appear at startup). To verify without a server, use `--no-mcp` or disable the server (`enabled: false` / `disabledServers`) for that session.
 5. If evaluating Aside behavior separately, run one public, non-personal query through the Aside-owned surface, for example: `Find the Aside public help page that describes MCP support and summarize the documented command names.`
 6. Confirm any shared evidence includes only public page titles/URLs or short snippets.
 7. Confirm no API key, Authorization header, cookie, browser profile path, screenshot, raw task transcript, or private session payload appears in terminal output, logs, issue comments, or PR text.
 8. Remove the evaluation server if it is no longer needed:
 
 ```sh
-gjc mcp remove aside --project
+vib mcp remove aside --project
 # or
-gjc mcp remove aside-search --project
+vib mcp remove aside-search --project
 ```
 
 ## Troubleshooting
 
 | Symptom | Check |
 | --- | --- |
-| `aside` command not found | Run `/aside` in the GJC composer, or install the Aside CLI from Aside developer settings, then use the concrete CLI path as the MCP `command` if needed. |
+| `aside` command not found | Run `/aside` in the Vibrato composer, or install the Aside CLI from Aside developer settings, then use the concrete CLI path as the MCP `command` if needed. |
 | `/aside` says the CLI was not found | Confirm the installer symlink (`~/.local/bin/aside`) or the `Aside CLI.app` bundle exists and is executable. `/aside` never runs the installer. |
-| `/aside repl` is refused | Expected. GJC cannot attach a TTY to `aside repl`; run that command in a terminal. |
-| MCP server does not appear in `gjc mcp list` | Re-run `gjc mcp list --json`; confirm whether the registration was user-scoped or project-scoped. |
-| Aside tools do not appear in a normal GJC session | Check `gjc mcp list --json`: the server must be `autoload` status (not `enabled: false`, not in `disabledServers`, not `autoload: false`), project scope must not be disabled by an explicit `mcp.enableProjectConfig: false` setting, and the session must not have passed `--no-mcp`. |
-| Auth failure | Rotate or re-enter the Aside-side token/API key. Do not paste it into GJC prompts or issue comments. |
-| Endpoint/network failure | Check the URL, proxy, and TLS path outside GJC with a benign health check; do not dump request headers. |
+| `/aside repl` is refused | Expected. Vibrato cannot attach a TTY to `aside repl`; run that command in a terminal. |
+| MCP server does not appear in `vib mcp list` | Re-run `vib mcp list --json`; confirm whether the registration was user-scoped or project-scoped. |
+| Aside tools do not appear in a normal Vibrato session | Check `vib mcp list --json`: the server must be `autoload` status (not `enabled: false`, not in `disabledServers`, not `autoload: false`), project scope must not be disabled by an explicit `mcp.enableProjectConfig: false` setting, and the session must not have passed `--no-mcp`. |
+| Auth failure | Rotate or re-enter the Aside-side token/API key. Do not paste it into Vibrato prompts or issue comments. |
+| Endpoint/network failure | Check the URL, proxy, and TLS path outside Vibrato with a benign health check; do not dump request headers. |
 | Retrieval misses context | Narrow the query to public sources first. Do not add browser history, cookies, screenshots, or account pages unless a separate approved design covers that data flow. |
-| Stored definition points at browser-action tools | Treat the server as browser automation, not search-only. Keep it as recordkeeping only for default GJC workflows unless a separate approved design covers that broader sidecar for runtime use. |
+| Stored definition points at browser-action tools | Treat the server as browser automation, not search-only. Keep it as recordkeeping only for default Vibrato workflows unless a separate approved design covers that broader sidecar for runtime use. |
 
 ## Decision
 
-Docs-only remains the smallest safe outcome for the search/context sidecar in issue #1097: existing GJC MCP registration can store a user-provided Aside MCP server definition for redacted inspection, and Aside already documents `aside mcp`. `/aside` is the separate CLI-ergonomics path: an explicit composer command that probes and optionally execs the user-installed binary, without adapter glue and without restoring the reverted Aside browser-tool backend. The future-safe boundary is to keep Aside external and opt-in, document read/search/context-only use, and require a separate design before GJC claims runtime support for browser actions, login, payment, internal-tool, or private browser-session workflows.
+Docs-only remains the smallest safe outcome for the search/context sidecar in issue #1097: existing Vibrato MCP registration can store a user-provided Aside MCP server definition for redacted inspection, and Aside already documents `aside mcp`. `/aside` is the separate CLI-ergonomics path: an explicit composer command that probes and optionally execs the user-installed binary, without adapter glue and without restoring the reverted Aside browser-tool backend. The future-safe boundary is to keep Aside external and opt-in, document read/search/context-only use, and require a separate design before Vibrato claims runtime support for browser actions, login, payment, internal-tool, or private browser-session workflows.

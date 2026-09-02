@@ -2,22 +2,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { AsyncJobManager } from "@gajae-code/coding-agent/async";
-import { resetSettingsForTest, Settings } from "@gajae-code/coding-agent/config/settings";
-import {
-	disposeAllShellSessions,
-	executeBash,
-	getShellSessionCount,
-} from "@gajae-code/coding-agent/exec/bash-executor";
-import { ArtifactManager } from "@gajae-code/coding-agent/session/artifacts";
-import { DEFAULT_ARTIFACT_MAX_BYTES, OutputSink } from "@gajae-code/coding-agent/session/streaming-output";
-import type { ToolSession } from "@gajae-code/coding-agent/tools";
-import { BashTool } from "@gajae-code/coding-agent/tools/implementations";
-import type { Shell } from "@gajae-code/natives";
-import * as piNatives from "@gajae-code/natives";
+import { AsyncJobManager } from "@vib-rato/coding-agent/async";
+import { resetSettingsForTest, Settings } from "@vib-rato/coding-agent/config/settings";
+import { disposeAllShellSessions, executeBash, getShellSessionCount } from "@vib-rato/coding-agent/exec/bash-executor";
+import { ArtifactManager } from "@vib-rato/coding-agent/session/artifacts";
+import { DEFAULT_ARTIFACT_MAX_BYTES, OutputSink } from "@vib-rato/coding-agent/session/streaming-output";
+import type { ToolSession } from "@vib-rato/coding-agent/tools";
+import { BashTool } from "@vib-rato/coding-agent/tools/implementations";
+import type { Shell } from "@vib-rato/natives";
+import * as piNatives from "@vib-rato/natives";
 
 function makeTempDir(): string {
-	return fs.mkdtempSync(path.join(os.tmpdir(), "gjc-bash-lifecycle-"));
+	return fs.mkdtempSync(path.join(os.tmpdir(), "vib-bash-lifecycle-"));
 }
 
 function processExists(pid: number): boolean {
@@ -290,7 +286,7 @@ describe("bash resource lifecycle", () => {
 			allocateOutputArtifact: (toolType: string) => artifacts.allocatePath(toolType),
 		} as unknown as ToolSession;
 		const originalText = "x".repeat(DEFAULT_ARTIFACT_MAX_BYTES + 1024);
-		const bashModule = await import("@gajae-code/coding-agent/tools/bash");
+		const bashModule = await import("@vib-rato/coding-agent/tools/bash");
 		const artifactId = await bashModule.saveBashOriginalArtifactForTests(session, originalText);
 
 		expect(artifactId).toBeString();

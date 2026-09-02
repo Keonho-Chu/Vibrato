@@ -481,7 +481,7 @@ export class ChatDaemonRuntime {
 				sessionId,
 				attachment.generation,
 				attachment.authorityId,
-				"GJC session ready.",
+				"Vibrato session ready.",
 				publicationId,
 			);
 			return;

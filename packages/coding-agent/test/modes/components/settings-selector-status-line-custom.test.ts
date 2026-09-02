@@ -2,14 +2,14 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { SettingPath } from "@gajae-code/coding-agent/config/settings";
-import { resetSettingsForTest, Settings, settings } from "@gajae-code/coding-agent/config/settings";
+import type { SettingPath } from "@vib-rato/coding-agent/config/settings";
+import { resetSettingsForTest, Settings, settings } from "@vib-rato/coding-agent/config/settings";
 import {
 	SettingsSelectorComponent,
 	type StatusLinePreviewSettings,
-} from "@gajae-code/coding-agent/modes/components/settings-selector";
-import { getPreset } from "@gajae-code/coding-agent/modes/components/status-line/presets";
-import { initTheme } from "@gajae-code/coding-agent/modes/theme/theme";
+} from "@vib-rato/coding-agent/modes/components/settings-selector";
+import { getPreset } from "@vib-rato/coding-agent/modes/components/status-line/presets";
+import { initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
 
 interface ChangedSetting {
 	path: SettingPath;
@@ -169,14 +169,14 @@ describe("SettingsSelectorComponent status line custom editor", () => {
 		openCustomEditor(component);
 		expect(Bun.stripANSI(component.render(120).join("\n"))).toContain("preset:custom");
 
-		for (let i = 0; i < 3; i++) component.handleInput("\x1b[B"); // Segment: gajae.
+		for (let i = 0; i < 3; i++) component.handleInput("\x1b[B"); // Segment: vibrato.
 		component.handleInput("\n"); // hidden -> left.
-		expect(Bun.stripANSI(component.render(120).join("\n"))).toContain("left:path,git,gajae");
+		expect(Bun.stripANSI(component.render(120).join("\n"))).toContain("left:path,git,vibrato");
 
 		component.handleInput("\x1b"); // Cancel restores the parent preview too.
 		const restored = Bun.stripANSI(component.render(120).join("\n"));
 		expect(restored).toContain("preset:minimal");
-		expect(restored).not.toContain("left:path,git,gajae");
+		expect(restored).not.toContain("left:path,git,vibrato");
 	});
 	it("keeps the description area height stable while navigating custom rows", () => {
 		settings.set("statusLine.preset", "minimal");
@@ -251,7 +251,7 @@ describe("SettingsSelectorComponent status line custom editor", () => {
 		openCustomEditor(component);
 
 		for (let i = 0; i < 3; i++) component.handleInput("\x1b[B");
-		component.handleInput("\n"); // Segment: gajae hidden -> left.
+		component.handleInput("\n"); // Segment: vibrato hidden -> left.
 
 		component.handleInput("\x1b[A"); // Move back to the separator row; selection was preserved after refresh.
 		expect(Bun.stripANSI(component.render(120).join("\n"))).toContain("Separator");
@@ -260,7 +260,7 @@ describe("SettingsSelectorComponent status line custom editor", () => {
 		component.handleInput("\x1b[A");
 		component.handleInput("\n"); // Save.
 
-		expect(settings.get("statusLine.leftSegments")).toEqual([...getPreset("minimal").leftSegments, "gajae"]);
+		expect(settings.get("statusLine.leftSegments")).toEqual([...getPreset("minimal").leftSegments, "vibrato"]);
 	});
 
 	it("edits option rows and restores preview on cancel", () => {
@@ -320,7 +320,7 @@ describe("SettingsSelectorComponent status line custom editor", () => {
 		expect(settings.get("statusLine.separator")).toBe("pipe");
 	});
 	it("persists approved custom settings across settings reload", async () => {
-		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-status-line-settings-"));
+		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-status-line-settings-"));
 		try {
 			resetSettingsForTest();
 			await Settings.init({ agentDir });

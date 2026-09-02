@@ -99,29 +99,29 @@ describe("advisory modules red-team", () => {
 	describe("fork context advisory", () => {
 		it("documents that trigger phrases in code blocks and URLs still activate heuristics", () => {
 			const advisory = adviseForkContextMode({
-				assignment: "```txt\nsee above\n```\nUse https://example.test/.gjc/plans/plan.md for context.",
+				assignment: "```txt\nsee above\n```\nUse https://example.test/.vib/plans/plan.md for context.",
 			});
 
 			expect(advisory.recommendedMode).toBe("last-turn");
-			expect(advisory.reasons).toEqual(["last-turn-reference:see-above", "prior-session-reference:gjc-plans-path"]);
+			expect(advisory.reasons).toEqual(["last-turn-reference:see-above", "prior-session-reference:vib-plans-path"]);
 		});
 
 		it("chooses a deterministic winner for conflicting receipt and last-turn triggers", () => {
 			const advisory = adviseForkContextMode({
-				assignment: "As discussed, use the previous turn and .gjc/specs/context.md.",
+				assignment: "As discussed, use the previous turn and .vib/specs/context.md.",
 			});
 
 			expect(advisory.recommendedMode).toBe("last-turn");
 			expect(advisory.reasons).toEqual([
 				"last-turn-reference:the-previous-turn",
 				"prior-session-reference:as-discussed",
-				"prior-session-reference:gjc-specs-path",
+				"prior-session-reference:vib-specs-path",
 			]);
 		});
 
 		it("respects explicit none even when receipt and last-turn triggers are strong", () => {
 			const advisory = adviseForkContextMode({
-				assignment: "As decided earlier in this session, see above and use .gjc/plans/x.md.",
+				assignment: "As decided earlier in this session, see above and use .vib/plans/x.md.",
 				explicitMode: "none",
 				parentContextTokens: 50_000,
 			});

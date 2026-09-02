@@ -1,11 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import type { Model } from "@gajae-code/ai";
+import type { Model } from "@vib-rato/ai";
 import {
 	resolveCliModel,
 	resolveModelFromSettings,
 	resolveModelRoleValue,
-} from "@gajae-code/coding-agent/config/model-resolver";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
+} from "@vib-rato/coding-agent/config/model-resolver";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
 
 function model(provider: string, id: string): Model<"anthropic-messages"> {
 	return {

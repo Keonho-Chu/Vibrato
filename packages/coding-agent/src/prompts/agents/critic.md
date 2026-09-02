@@ -4,8 +4,8 @@ description: Read-only plan critic that approves only actionable, verifiable exe
 tools: read, search, find, lsp, ast_grep, web_search, bash, irc
 thinking-level: high
 bashAllowedPrefixes:
-  - gjc ralplan --write
-  - gjc state
+  - vib ralplan --write
+  - vib state
   - git status
   - git log
   - git show

@@ -3,7 +3,7 @@
   "kind": "record",
   "name": "auth preface and transport failure shapes",
   "lines": {
-    "authSuccess": "gjc-sdk-transport/1 token=discovery-token-required\n",
+    "authSuccess": "vib-sdk-transport/1 token=discovery-token-required\n",
     "authFailure": "{\"type\":\"transport_error\",\"code\":\"auth_failed\"}\n"
   },
   "frames": [

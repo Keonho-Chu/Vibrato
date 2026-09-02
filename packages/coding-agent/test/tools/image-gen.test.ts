@@ -6,16 +6,16 @@ import * as http from "node:http";
 import * as https from "node:https";
 import * as os from "node:os";
 import { Readable } from "node:stream";
-import type { Model } from "@gajae-code/ai";
-import type { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import type { Settings } from "@gajae-code/coding-agent/config/settings";
-import type { CustomToolContext } from "@gajae-code/coding-agent/extensibility/custom-tools";
-import type { ReadonlySessionManager } from "@gajae-code/coding-agent/session/session-manager";
+import type { Model } from "@vib-rato/ai";
+import type { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import type { Settings } from "@vib-rato/coding-agent/config/settings";
+import type { CustomToolContext } from "@vib-rato/coding-agent/extensibility/custom-tools";
+import type { ReadonlySessionManager } from "@vib-rato/coding-agent/session/session-manager";
 import {
 	getImageGenToolsWithRegistry,
 	imageGenTool,
 	UnsupportedImageProviderError,
-} from "@gajae-code/coding-agent/tools/image-gen";
+} from "@vib-rato/coding-agent/tools/image-gen";
 
 const originalFetch = global.fetch;
 const originalOpenRouterKey = Bun.env.OPENROUTER_API_KEY;

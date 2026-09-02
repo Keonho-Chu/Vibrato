@@ -10,10 +10,10 @@ import {
 	discoverModels,
 	ModelRegistry,
 	SessionManager,
-} from "@gajae-code/coding-agent";
+} from "@vib-rato/coding-agent";
 
-// Default: discoverAuthStorage() uses ~/.gjc/agent/agent.db
-// discoverModels() loads built-in + custom models from ~/.gjc/agent/models.json
+// Default: discoverAuthStorage() uses ~/.vib/agent/agent.db
+// discoverModels() loads built-in + custom models from ~/.vib/agent/models.json
 const authStorage = await discoverAuthStorage();
 const modelRegistry = await discoverModels(authStorage);
 

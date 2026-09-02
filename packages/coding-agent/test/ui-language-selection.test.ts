@@ -5,11 +5,11 @@ import {
 	Settings,
 	settings,
 	validateSettingPatch,
-} from "@gajae-code/coding-agent/config/settings";
-import { SettingsSelectorComponent } from "@gajae-code/coding-agent/modes/components/settings-selector";
-import { initTheme } from "@gajae-code/coding-agent/modes/theme/theme";
-import { parseUiLanguage, resolveUiLanguage, uiString } from "@gajae-code/coding-agent/modes/ui-language";
-import { executeBuiltinSlashCommand } from "@gajae-code/coding-agent/slash-commands/builtin-registry";
+} from "@vib-rato/coding-agent/config/settings";
+import { SettingsSelectorComponent } from "@vib-rato/coding-agent/modes/components/settings-selector";
+import { initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
+import { parseUiLanguage, resolveUiLanguage, uiString } from "@vib-rato/coding-agent/modes/ui-language";
+import { executeBuiltinSlashCommand } from "@vib-rato/coding-agent/slash-commands/builtin-registry";
 
 beforeAll(async () => {
 	await initTheme(false, undefined, undefined, "red-claw", "blue-crab");

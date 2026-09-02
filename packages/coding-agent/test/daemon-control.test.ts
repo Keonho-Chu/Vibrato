@@ -15,7 +15,7 @@ import {
 	ownershipMismatchRecovery,
 	resolveDaemonAction,
 } from "../src/daemon/operator-contract";
-import { resolveGjcRuntimeSpawnInfo } from "../src/daemon/runtime";
+import { resolveVibRuntimeSpawnInfo } from "../src/daemon/runtime";
 import {
 	isProcessIncarnation,
 	parseDarwinProcessIncarnation,
@@ -65,7 +65,7 @@ function testChatProcessReference(signalRoot: (pid: number, value: NodeJS.Signal
 }
 
 function tempAgentDir(): string {
-	return fs.mkdtempSync(path.join(os.tmpdir(), "gjc-daemon-control-test-"));
+	return fs.mkdtempSync(path.join(os.tmpdir(), "vib-daemon-control-test-"));
 }
 
 function setPrivateAgentDir(s: Settings, agentDir: string): Settings {
@@ -178,14 +178,14 @@ async function captureStdout(fn: () => Promise<void>): Promise<string> {
 
 describe("daemon runtime detection", () => {
 	test("source runtime picks up edits; compiled warns", () => {
-		const source = resolveGjcRuntimeSpawnInfo("/usr/local/bin/node");
+		const source = resolveVibRuntimeSpawnInfo("/usr/local/bin/node");
 		expect(source.mode).toBe("source");
 		expect(source.reloadPicksUpSourceEdits).toBe(true);
 		expect(source.warning).toBeUndefined();
 		expect(source.argsPrefix).toHaveLength(1);
-		expect(source.argsPrefix[0]).toEndWith(path.join("packages", "coding-agent", "bin", "gjc.js"));
+		expect(source.argsPrefix[0]).toEndWith(path.join("packages", "coding-agent", "bin", "vib.js"));
 
-		const compiled = resolveGjcRuntimeSpawnInfo("/opt/gjc/gjc");
+		const compiled = resolveVibRuntimeSpawnInfo("/opt/vib/vib");
 		expect(compiled.mode).toBe("compiled");
 		expect(compiled.reloadPicksUpSourceEdits).toBe(false);
 		expect(compiled.warning).toContain("Rebuild");
@@ -206,9 +206,9 @@ describe("daemon runtime detection", () => {
 			kind: "slack",
 			ownerId: "owner-compiled",
 			agentDir: "/tmp/agent",
-			execPath: "/opt/gjc/gjc",
+			execPath: "/opt/vib/vib",
 		});
-		expect(compiled.command).toBe("/opt/gjc/gjc");
+		expect(compiled.command).toBe("/opt/vib/vib");
 		expect(compiled.args[0]).toBe("daemon");
 		expect(compiled.args).toEqual(expect.arrayContaining(["slack-internal", "--agent-dir", "/tmp/agent"]));
 		expect(compiled.runtime.mode).toBe("compiled");
@@ -2891,7 +2891,7 @@ describe("runDaemonCommand", () => {
 });
 
 describe("cli registration", () => {
-	test("gjc daemon is registered in the explicit command registry", () => {
+	test("vib daemon is registered in the explicit command registry", () => {
 		const cliSource = fs.readFileSync(path.join(import.meta.dir, "../src/cli.ts"), "utf8");
 		expect(cliSource).toContain('{ name: "daemon"');
 		expect(cliSource).toContain('import("./commands/daemon")');

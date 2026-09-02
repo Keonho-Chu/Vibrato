@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
-import { hookFetch } from "@gajae-code/utils";
+import { hookFetch } from "@vib-rato/utils";
 import { resetSettingsForTest, Settings } from "../../src/config/settings";
 import type { AuthStorage } from "../../src/session/auth-storage";
 import { runSearchQuery } from "../../src/web/search";

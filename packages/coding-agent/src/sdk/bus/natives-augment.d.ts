@@ -2,14 +2,14 @@
  * Worktree-local module augmentation for the v3 SDK connection lane added to
  * the pi-natives NotificationServer in this branch (onSdkFrame / sendTo /
  * onConnectionClose). Linked sibling checkouts sharing the root node_modules
- * can dedupe `@gajae-code/natives` declarations by package ID to an older
+ * can dedupe `@vib-rato/natives` declarations by package ID to an older
  * generated file; this augmentation guarantees the new members are visible and
  * is a harmless re-declaration when the resolved declarations already have
  * them.
  */
-import "@gajae-code/natives";
+import "@vib-rato/natives";
 
-declare module "@gajae-code/natives" {
+declare module "@vib-rato/natives" {
 	interface SdkFrameEvent {
 		connectionId: string;
 		json: string;

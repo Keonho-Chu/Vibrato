@@ -15,14 +15,14 @@ interface LatencyWorkerResult {
 	stats: { coldRetirementActive: boolean; totalAccountedBytes: number };
 }
 
-const enabled = process.env.GJC_SESSION_MEMORY_LATENCY === "1";
+const enabled = process.env.VIB_SESSION_MEMORY_LATENCY === "1";
 
 describe.skipIf(!enabled)("session memory latency / I-O (AC11)", () => {
 	it("serves cold random, warm cached, parent-children, and 10k branch-switch operations within approved p95 budgets", () => {
 		const worker = path.join(import.meta.dir, "fixtures", "session-memory-latency-worker.ts");
 		const result = Bun.spawnSync({
 			cmd: [process.execPath, worker],
-			env: { ...process.env, GJC_SESSION_MEMORY_SECONDARY_ARTIFACT_MODE: "enabled" },
+			env: { ...process.env, VIB_SESSION_MEMORY_SECONDARY_ARTIFACT_MODE: "enabled" },
 			stdout: "pipe",
 			stderr: "pipe",
 		});
@@ -47,7 +47,7 @@ describe.skipIf(!enabled)("session memory latency / I-O (AC11)", () => {
 
 		// Approved AC11 local-NVMe p95 budgets (stage-02-revision:167):
 		// cold random read ≤ 5 ms and a 10k-cold-entry branch switch ≤ 200 ms.
-		// The gate is opt-in (GJC_SESSION_MEMORY_LATENCY=1) like the RSS suite so
+		// The gate is opt-in (VIB_SESSION_MEMORY_LATENCY=1) like the RSS suite so
 		// unrelated shared-host load cannot make normal CI flaky.
 		expect(measured.coldMs.p95).toBeLessThanOrEqual(5);
 		expect(measured.branchSwitchMs.p95).toBeLessThanOrEqual(200);

@@ -1,6 +1,6 @@
-# macOS + iTerm2 Option/Alt key setup for GJC
+# macOS + iTerm2 Option/Alt key setup for Vibrato
 
-How to make the macOS Option key reach GJC as Alt/Meta input instead of producing composed characters like `œ` or `ˆ`.
+How to make the macOS Option key reach Vibrato as Alt/Meta input instead of producing composed characters like `œ` or `ˆ`.
 
 ## iTerm2 settings
 
@@ -15,7 +15,7 @@ In **Settings → Profiles → Keys → Key Mappings**, remove any `Send Text`, 
 
 ## macOS input source
 
-Switch the active keyboard layout to `ABC` when typing GJC Alt commands. `scripts/verify-option-key.sh` does not merely check that ABC is in the list; it verifies `AppleCurrentKeyboardLayoutInputSourceID = com.apple.keylayout.ABC` together with ABC in the selection list.
+Switch the active keyboard layout to `ABC` when typing Vibrato Alt commands. `scripts/verify-option-key.sh` does not merely check that ABC is in the list; it verifies `AppleCurrentKeyboardLayoutInputSourceID = com.apple.keylayout.ABC` together with ABC in the selection list.
 
 ## Verification
 
@@ -24,8 +24,8 @@ Switch the active keyboard layout to `ABC` when typing GJC Alt commands. `script
 python3 scripts/capture-option-key.py
 ```
 
-The verify script checks the `Default` and `tmux` profiles, both Option keys, Option+Q/I mapping conflicts in both physical-keycode (`Q=12`, `I=34`) and character-code (`q=0x71`, `i=0x69`) form, the active ABC layout, Bun, and the GJC smoke test.
+The verify script checks the `Default` and `tmux` profiles, both Option keys, Option+Q/I mapping conflicts in both physical-keycode (`Q=12`, `I=34`) and character-code (`q=0x71`, `i=0x69`) form, the active ABC layout, Bun, and the Vibrato smoke test.
 
-Use the capture tool in a real TTY. In raw mode, Ctrl-C arrives as `0x03` rather than `KeyboardInterrupt`; the tool detects it, restores the terminal, and exits. Confirm with physical key presses in fresh Default and tmux sessions that `Option+Q` and `Option+I` arrive as `ESC q` and `ESC i` and trigger the GJC commands.
+Use the capture tool in a real TTY. In raw mode, Ctrl-C arrives as `0x03` rather than `KeyboardInterrupt`; the tool detects it, restores the terminal, and exits. Confirm with physical key presses in fresh Default and tmux sessions that `Option+Q` and `Option+I` arrive as `ESC q` and `ESC i` and trigger the Vibrato commands.
 
 Related live and fixture verification evidence is recorded in `artifacts/option-key-verification.json`.

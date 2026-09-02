@@ -54,7 +54,7 @@ const CODING_AGENT_SHARD_ONE_COVERAGE_PATHS = [
 ] as const;
 
 
-// Keys for tasks that compile the @gajae-code/natives addon. They run once in
+// Keys for tasks that compile the @vib-rato/natives addon. They run once in
 // the dedicated dev-ci native-build job (not as matrix shards) and publish the
 // built `.node` files as an artifact the runtime-dependent shards download.
 // Declared here (before the top-level `await main()`) so it is initialized for
@@ -279,7 +279,7 @@ export function planFullTasks(packages: readonly WorkspacePackage[]): Task[] {
 	add(tasks, "test:scripts/run-bun-test-files.test.ts", "Test fresh-process Bun harness", ["bun", "test", "scripts/run-bun-test-files.test.ts"]);
 	add(tasks, "rust-check", "Rust check", ["bun", "run", "check:rs"]);
 	addRustTestTasks(tasks);
-	add(tasks, "cli-smoke", "GJC CLI smoke test", ["bun", "run", "ci:test:smoke"]);
+	add(tasks, "cli-smoke", "Vibrato CLI smoke test", ["bun", "run", "ci:test:smoke"]);
 	add(tasks, "runtime-check", "Runtime checks (needs native addon)", ["bun", "run", "check:runtime"], resolvePackageCwd("packages/coding-agent"));
 	// root-check (ci:check:full) is intentionally omitted: Main CI runs it in the
 	// dedicated native-free `check` job, so emitting it here would double-run it.
@@ -371,7 +371,7 @@ function isNativeProducerTask(task: Task): boolean {
 	return task.capabilities?.nativeProducer ?? isNativeBuildKey(task.key);
 }
 
-// Tasks that load the @gajae-code/natives addon at runtime and therefore need a
+// Tasks that load the @vib-rato/natives addon at runtime and therefore need a
 // prebuilt `.node` present in `packages/natives/native/`. By construction (see
 // planTasks) every such task only appears in a plan that also includes a native
 // build task, so the shard can always download the artifact built once upstream.
@@ -382,7 +382,7 @@ function taskNeedsNative(key: string): boolean {
 		key === "root-test:release" ||
 		key === "release-publish-contract" ||
 		key === "root-check" ||
-		key === "check:@gajae-code/coding-agent" ||
+		key === "check:@vib-rato/coding-agent" ||
 		key === "cli-smoke" ||
 		key === "runtime-check" ||
 		key === "wrapper-version" ||
@@ -480,9 +480,9 @@ export function isWindowsSessionPathRegressionPath(changedPath: string): boolean
 		// identity-bound direct unlink, whose Windows semantics (handle-bound delete,
 		// no quarantine exchange; cross-platform name guards) cannot be exercised on
 		// an Ubuntu shard — route these to the windows-latest job (#4988 review).
-		changedPath === "packages/coding-agent/src/gjc-runtime/session-state-lock.ts" ||
-		changedPath === "packages/coding-agent/src/gjc-runtime/empty-delete-gc.ts" ||
-		changedPath === "packages/coding-agent/src/gjc-runtime/gc-runtime.ts" ||
+		changedPath === "packages/coding-agent/src/vib-runtime/session-state-lock.ts" ||
+		changedPath === "packages/coding-agent/src/vib-runtime/empty-delete-gc.ts" ||
+		changedPath === "packages/coding-agent/src/vib-runtime/gc-runtime.ts" ||
 		changedPath === "packages/coding-agent/test/empty-delete-receipt-latch.test.ts" ||
 		changedPath === "packages/coding-agent/test/helpers/exact-identity-natives.ts" ||
 		// Windows environment names are case-insensitive while the project-dotenv
@@ -590,9 +590,9 @@ async function emitMatrix(): Promise<void> {
 		`plan_digest=${digest}`,
 		`plan_source_sha=${sourceSha}`,
 		`plan_mode=${mode}`,
-		"changed_paths<<__GJC_PATHS_EOF__",
+		"changed_paths<<__VIB_PATHS_EOF__",
 		...paths,
-		"__GJC_PATHS_EOF__",
+		"__VIB_PATHS_EOF__",
 		"",
 	];
 	await fs.appendFile(githubOutput, lines.join("\n"));
@@ -821,8 +821,8 @@ export function planTasks(
 
 	if (deepInterviewOnly) {
 		addNativeBuild(tasks);
-		add(tasks, "deep-interview-definitions", "Deep interview default definition tests", ["bun", "test", "packages/coding-agent/test/default-gjc-definitions.test.ts"]);
-		add(tasks, "deep-interview-runtime", "Deep interview runtime tests", ["bun", "test", "packages/coding-agent/test/gjc-runtime/deep-interview-runtime.test.ts"]);
+		add(tasks, "deep-interview-definitions", "Deep interview default definition tests", ["bun", "test", "packages/coding-agent/test/default-vib-definitions.test.ts"]);
+		add(tasks, "deep-interview-runtime", "Deep interview runtime tests", ["bun", "test", "packages/coding-agent/test/vib-runtime/deep-interview-runtime.test.ts"]);
 		return Array.from(tasks.values());
 	}
 
@@ -856,7 +856,7 @@ export function planTasks(
 		add(tasks, "root-check", "Root TypeScript/tooling check", ["bun", "run", "ci:check:full"]);
 	}
 	if (wrapperChanged) {
-		add(tasks, "wrapper-version", "Unscoped wrapper CLI version smoke", ["bun", "packages/gajae-code/bin/gjc.js", "--version"]);
+		add(tasks, "wrapper-version", "Unscoped wrapper CLI version smoke", ["bun", "packages/vib-rato/bin/vib.js", "--version"]);
 	}
 	if (publishChanged) {
 		addReleasePublishTasks(tasks);
@@ -873,7 +873,7 @@ export function planTasks(
 		add(tasks, "install-methods", "Install method smoke tests", ["bun", "run", "ci:test:install-methods"]);
 	}
 	if (needsNativeRuntime) {
-		add(tasks, "cli-smoke", "GJC CLI smoke test", ["bun", "run", "ci:test:smoke"]);
+		add(tasks, "cli-smoke", "Vibrato CLI smoke test", ["bun", "run", "ci:test:smoke"]);
 	}
 	if (paths.some(isWorkflowOrScriptPath)) {
 		add(tasks, "affected-dry-run", "Affected CI selector self-check", ["bun", "scripts/ci-dev-affected.ts", "--dry-run"]);
@@ -962,7 +962,7 @@ export function planTargetedTasks(
 		if (isReleasePublishPath(changedPath)) {
 			addReleasePublishTasks(tasks);
 			if (isUnscopedWrapperPath(changedPath)) {
-				add(tasks, "wrapper-version", "Unscoped wrapper CLI version smoke", ["bun", "packages/gajae-code/bin/gjc.js", "--version"]);
+				add(tasks, "wrapper-version", "Unscoped wrapper CLI version smoke", ["bun", "packages/vib-rato/bin/vib.js", "--version"]);
 			}
 		}
 		if (isSdkPackageSmokePath(changedPath)) {
@@ -1002,10 +1002,10 @@ export function planTargetedTasks(
 				add(tasks, `check:${owner.name}`, `Check ${owner.name}`, packageScriptCommand("check"), resolvePackageCwd(owner.dir));
 			}
 			if (isCodingAgentRuntimePath(changedPath)) {
-				add(tasks, "cli-smoke", "GJC CLI smoke test", ["bun", "run", "ci:test:smoke"]);
+				add(tasks, "cli-smoke", "Vibrato CLI smoke test", ["bun", "run", "ci:test:smoke"]);
 			}
 			if (isUnscopedWrapperPath(changedPath)) {
-				add(tasks, "wrapper-version", "Unscoped wrapper CLI version smoke", ["bun", "packages/gajae-code/bin/gjc.js", "--version"]);
+				add(tasks, "wrapper-version", "Unscoped wrapper CLI version smoke", ["bun", "packages/vib-rato/bin/vib.js", "--version"]);
 			}
 			continue;
 		}
@@ -1070,7 +1070,7 @@ function addWorkspaceTestTasks(tasks: Map<string, Task>, packages: readonly Work
 }
 
 function addPackageTestTasks(tasks: Map<string, Task>, workspacePackage: WorkspacePackage): void {
-	if (workspacePackage.name === "@gajae-code/ai") {
+	if (workspacePackage.name === "@vib-rato/ai") {
 		add(
 			tasks,
 			`test:${workspacePackage.name}`,
@@ -1086,7 +1086,7 @@ function addPackageTestTasks(tasks: Map<string, Task>, workspacePackage: Workspa
 		);
 		return;
 	}
-	if (workspacePackage.name !== "@gajae-code/coding-agent") {
+	if (workspacePackage.name !== "@vib-rato/coding-agent") {
 		add(tasks, `test:${workspacePackage.name}`, `Test ${workspacePackage.name}`, packageScriptCommand("test"), resolvePackageCwd(workspacePackage.dir));
 		return;
 	}
@@ -1101,8 +1101,8 @@ function addPackageTestTasks(tasks: Map<string, Task>, workspacePackage: Workspa
 function addCodingAgentTestShard(tasks: Map<string, Task>, shard: number, total: number = codingAgentTestShards()): void {
 	add(
 		tasks,
-		`test:@gajae-code/coding-agent:shard-${shard}-of-${total}`,
-		`Test @gajae-code/coding-agent shard ${shard}/${total}`,
+		`test:@vib-rato/coding-agent:shard-${shard}-of-${total}`,
+		`Test @vib-rato/coding-agent shard ${shard}/${total}`,
 		[
 			"bun",
 			"scripts/run-bun-test-files.ts",
@@ -1118,8 +1118,8 @@ function addCodingAgentTestShard(tasks: Map<string, Task>, shard: number, total:
 function addCodingAgentSdkProductionHostTask(tasks: Map<string, Task>): void {
 	add(
 		tasks,
-		"test:@gajae-code/coding-agent:sdk-production-host-isolated",
-		"Test @gajae-code/coding-agent production SDK host in isolation",
+		"test:@vib-rato/coding-agent:sdk-production-host-isolated",
+		"Test @vib-rato/coding-agent production SDK host in isolation",
 		["bun", "../../scripts/run-sdk-production-host-isolated.ts"],
 		resolvePackageCwd("packages/coding-agent"),
 	);
@@ -1175,7 +1175,7 @@ function ensureNativeBuild(tasks: Map<string, Task>): void {
 }
 
 function isDocOrChangelogPath(changedPath: string): boolean {
-	return changedPath.endsWith(".md") || changedPath.startsWith("docs/") || changedPath.startsWith(".gjc/");
+	return changedPath.endsWith(".md") || changedPath.startsWith("docs/") || changedPath.startsWith(".vib/");
 }
 
 /** The generated index embeds every markdown file under `docs/`, so one test gates both sides. */
@@ -1334,10 +1334,10 @@ function isSdkPackageSmokePath(changedPath: string): boolean {
 
 function isDeepInterviewOnly(paths: readonly string[]): boolean {
 	const allowed = new Set([
-		"packages/coding-agent/src/defaults/gjc/skills/deep-interview/SKILL.md",
-		"packages/coding-agent/src/gjc-runtime/deep-interview-runtime.ts",
-		"packages/coding-agent/test/default-gjc-definitions.test.ts",
-		"packages/coding-agent/test/gjc-runtime/deep-interview-runtime.test.ts",
+		"packages/coding-agent/src/defaults/vib/skills/deep-interview/SKILL.md",
+		"packages/coding-agent/src/vib-runtime/deep-interview-runtime.ts",
+		"packages/coding-agent/test/default-vib-definitions.test.ts",
+		"packages/coding-agent/test/vib-runtime/deep-interview-runtime.test.ts",
 	]);
 	return paths.length > 0 && paths.every(changedPath => allowed.has(changedPath));
 }
@@ -1437,7 +1437,7 @@ function assertInventory(inventory: BuildInventory): void {
 
 async function assertTypeScriptInventoryLive(inventory: BuildInventory): Promise<void> {
 	const workspaces = await getWorkspacePackages();
-	const buildable = workspaces.filter(workspacePackage => workspacePackage.name !== "@gajae-code/natives" && workspacePackage.manifest.scripts?.build);
+	const buildable = workspaces.filter(workspacePackage => workspacePackage.name !== "@vib-rato/natives" && workspacePackage.manifest.scripts?.build);
 	const classified = inventory.typescript.filter(unit => !unit.nativeProducer);
 	const buildableNames = new Set(buildable.map(workspacePackage => workspacePackage.name));
 	const classifiedNames = new Set(classified.map(unit => unit.name));
@@ -1606,14 +1606,14 @@ function isReleasePublishPath(changedPath: string): boolean {
 	return (
 		changedPath === "scripts/ci-release-publish.ts" ||
 		changedPath === "scripts/release-evidence.ts" ||
-		changedPath.startsWith("packages/gajae-code/") ||
+		changedPath.startsWith("packages/vib-rato/") ||
 		changedPath.startsWith("packages/natives-") ||
 		changedPath === "packages/natives/package.json"
 	);
 }
 
 function isUnscopedWrapperPath(changedPath: string): boolean {
-	return changedPath.startsWith("packages/gajae-code/");
+	return changedPath.startsWith("packages/vib-rato/");
 }
 
 function isString(value: unknown): value is string {

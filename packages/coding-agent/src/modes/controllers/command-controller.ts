@@ -1,11 +1,11 @@
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { CompactionCancelledError, type CompactionOutcome } from "@gajae-code/agent-core/compaction";
-import { getEnvApiKey, type ToolCall, type UsageLimit, type UsageReport } from "@gajae-code/ai/core";
-import type { ProviderDetails } from "@gajae-code/ai/provider-details";
-import { type Keybinding, Loader, Markdown, padding, Spacer, Text, visibleWidth } from "@gajae-code/tui";
-import { formatBytes, formatDuration, Snowflake, setProjectDir } from "@gajae-code/utils";
+import { CompactionCancelledError, type CompactionOutcome } from "@vib-rato/agent-core/compaction";
+import { getEnvApiKey, type ToolCall, type UsageLimit, type UsageReport } from "@vib-rato/ai/core";
+import type { ProviderDetails } from "@vib-rato/ai/provider-details";
+import { type Keybinding, Loader, Markdown, padding, Spacer, Text, visibleWidth } from "@vib-rato/tui";
+import { formatBytes, formatDuration, Snowflake, setProjectDir } from "@vib-rato/utils";
 import { resolveAppendOnlyMode } from "../../append-only-mode";
 import { jobElapsedMs } from "../../async";
 import { reset as resetCapabilities } from "../../capability";
@@ -160,7 +160,7 @@ export class CommandController {
 		try {
 			let tmpFile: string;
 			try {
-				tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-share-"));
+				tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-share-"));
 				if (process.platform !== "win32") await fs.chmod(tempDir, 0o700);
 				tmpFile = path.join(tempDir, "session.html");
 				const file = await fs.open(tmpFile, "wx", 0o600);
@@ -454,7 +454,7 @@ export class CommandController {
 				stats.sessionId,
 			);
 			const { getProviderDetails } =
-				require("@gajae-code/ai/provider-details") as typeof import("@gajae-code/ai/provider-details");
+				require("@vib-rato/ai/provider-details") as typeof import("@vib-rato/ai/provider-details");
 			const providerDetails = getProviderDetails({
 				model,
 				sessionId: stats.sessionId,
@@ -696,7 +696,7 @@ export class CommandController {
 	}
 
 	handleHelpCommand(): void {
-		showMarkdownPanel(this.ctx, "GJC Help", buildHelpMarkdown(this.ctx.keybindings));
+		showMarkdownPanel(this.ctx, "Vibrato Help", buildHelpMarkdown(this.ctx.keybindings));
 	}
 
 	handleToolsCommand(): void {

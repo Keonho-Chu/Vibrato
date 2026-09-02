@@ -1,15 +1,15 @@
 # Codebase Overview
 
-This document maps the main parts of the `gajae-code` repository. The root README stays intentionally small; this file is the architecture-oriented companion.
+This document maps the main parts of the `vib-rato` repository. The root README stays intentionally small; this file is the architecture-oriented companion.
 
 ## Product shape
 
-Gajae-Code (`gjc`) is centered on `packages/coding-agent/`. The public workflow surface is intentionally fixed at four source-bundled skills and four public role subagents. Runtime state, specs, plans, goals, research missions, and local overrides live under `.gjc/`.
+Vibrato (`vib`) is centered on `packages/coding-agent/`. The public workflow surface is intentionally fixed at four source-bundled skills and four public role subagents. Runtime state, specs, plans, goals, research missions, and local overrides live under `.vib/`.
 
 Default workflow skills are embedded from:
 
 ```text
-packages/coding-agent/src/defaults/gjc/skills/<name>/SKILL.md
+packages/coding-agent/src/defaults/vib/skills/<name>/SKILL.md
 ```
 
 Public role subagent prompts are embedded from:
@@ -18,22 +18,22 @@ Public role subagent prompts are embedded from:
 packages/coding-agent/src/prompts/agents/<role>.md
 ```
 
-The runtime can still discover project/user overrides, but the bundled defaults are loaded from source so a missing project `.gjc` directory does not remove the default workflow surface.
+The runtime can still discover project/user overrides, but the bundled defaults are loaded from source so a missing project `.vib` directory does not remove the default workflow surface.
 
 ## Packages
 
 ### `packages/coding-agent/`
 
-Main `gjc` CLI and product runtime.
+Main `vib` CLI and product runtime.
 
-- `packages/coding-agent/package.json` exposes the `gjc` binary at `src/cli.ts` and the SDK/barrel entrypoint at `src/index.ts`.
+- `packages/coding-agent/package.json` exposes the `vib` binary at `src/cli.ts` and the SDK/barrel entrypoint at `src/index.ts`.
 - `packages/coding-agent/src/cli.ts` is the executable bootstrap. It registers CLI commands such as `setup`, `deep-interview`, `ralplan`, `ultragoal`, `autoresearch`, and the default launch path.
 - `packages/coding-agent/src/main.ts` adapts CLI options into session creation and dispatches interactive, print, and ACP modes; process-isolated clients use the broker-bound session CLI, Coordinator MCP, or managed adapters.
-- `packages/coding-agent/src/sdk/session.ts` assembles settings, model registry, auth, workspace/context discovery, skills, rules, tools, system prompt, and the underlying `@gajae-code/agent-core` agent.
+- `packages/coding-agent/src/sdk/session.ts` assembles settings, model registry, auth, workspace/context discovery, skills, rules, tools, system prompt, and the underlying `@vib-rato/agent-core` agent.
 - `packages/coding-agent/src/tools/index.ts` is the built-in tool registry for file/code/runtime tools such as read, bash, edit, AST tools, eval, find/search, LSP, browser, task/subagent, recipe, IRC, todo, web search, and write. Memory backends are private integrations, not public coding-harness tools.
-- `packages/coding-agent/src/defaults/gjc-defaults.ts` embeds and installs the default workflow skills.
+- `packages/coding-agent/src/defaults/vib-defaults.ts` embeds and installs the default workflow skills.
 - `packages/coding-agent/src/task/agents.ts` embeds bundled task-agent prompts. The public contract is `executor`, `architect`, `planner`, and `critic`; other bundled prompts are internal/runtime utilities.
-- `packages/coding-agent/src/coordinator/contract.ts` defines the transport-neutral third-party coordinator contract used by `gjc mcp-serve coordinator`, `gjc coordinator`, and `gjc setup hermes`.
+- `packages/coding-agent/src/coordinator/contract.ts` defines the transport-neutral third-party coordinator contract used by `vib mcp-serve coordinator`, `vib coordinator`, and `vib setup hermes`.
 - `packages/coding-agent/src/coordinator-mcp/server.ts` implements the outward MCP adapter for bot/coordinator integrations, including session start/register, turn state, question answering, status reports, and artifact reads.
 - `docs/external-control-readiness.md` classifies the public external-control surfaces: broker-bound SDK session CLI, Coordinator MCP, managed adapters, and ACP. `docs/bot-integration.md` is the end-to-end guide for external controller authors.
 
@@ -49,7 +49,7 @@ Provider/model boundary for LLM access.
 
 ### `packages/agent/`
 
-Stateful agent runtime built on `@gajae-code/ai`.
+Stateful agent runtime built on `@vib-rato/ai`.
 
 - `packages/agent/src/index.ts` exports the `Agent`, loop APIs, append-only context, compaction, telemetry, proxy utilities, thinking helpers, and shared types.
 - `packages/agent/src/agent-loop.ts` owns the turn loop: transform context, call the model stream, execute tool calls, append tool results, and emit lifecycle events.
@@ -88,7 +88,7 @@ Shared TypeScript utilities.
 
 Local observability dashboard for session and model usage.
 
-- `packages/stats/src/index.ts` exposes the `gjc-stats` CLI entrypoint and exports aggregation/server APIs.
+- `packages/stats/src/index.ts` exposes the `vib-stats` CLI entrypoint and exports aggregation/server APIs.
 - `packages/stats/src/aggregator.ts` parses session-derived request metrics and writes aggregated data through SQLite.
 - `packages/stats/src/server.ts` serves local dashboard API routes and static SPA assets.
 - `packages/stats/src/types.ts` and `packages/stats/src/shared-types.ts` define dashboard and aggregate metric shapes.
@@ -110,7 +110,7 @@ Process-isolated machine clients use the broker-bound session CLI, Coordinator M
 
 A normal CLI session starts in `packages/coding-agent/src/cli.ts`, routes through command handling, then reaches `packages/coding-agent/src/main.ts`. `main.ts` converts CLI/runtime settings into `CreateAgentSessionOptions` and calls `createAgentSession()` in `packages/coding-agent/src/sdk/session.ts`.
 
-The SDK builds the session context, loads the default skills, creates built-in tools, resolves model/auth state through `@gajae-code/ai`, constructs the system prompt, and instantiates `@gajae-code/agent-core`. The agent loop streams model events, executes tools, records tool results, and hands state back to the selected interactive TUI, print, or ACP mode; process-isolated control remains behind broker-bound or managed SDK-core surfaces.
+The SDK builds the session context, loads the default skills, creates built-in tools, resolves model/auth state through `@vib-rato/ai`, constructs the system prompt, and instantiates `@vib-rato/agent-core`. The agent loop streams model events, executes tools, records tool results, and hands state back to the selected interactive TUI, print, or ACP mode; process-isolated control remains behind broker-bound or managed SDK-core surfaces.
 
 ## Verification and gates
 
@@ -120,7 +120,7 @@ Package-local checks are defined in each `package.json`. For workflow-definition
 bun scripts/check-visible-definitions.ts
 bun scripts/verify-g002-gates.ts
 bun scripts/rebrand-inventory.ts --strict
-bun test packages/coding-agent/test/default-gjc-definitions.test.ts
+bun test packages/coding-agent/test/default-vib-definitions.test.ts
 ```
 
 For broader TypeScript verification, use the root script:

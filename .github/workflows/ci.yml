@@ -25,7 +25,7 @@ permissions:
 concurrency:
    # Real stable and nightly publication share one non-cancelling cross-channel
    # lane so npm dist-tags and closed evidence cannot race each other.
-   group: ${{ (startsWith(github.ref, 'refs/tags/v') || github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.rehearsal == 'nightly-release')) && 'gajae-npm-release' || format('ci-{0}-{1}', github.ref, github.event_name == 'workflow_dispatch' && inputs.rehearsal || 'event') }}
+   group: ${{ (startsWith(github.ref, 'refs/tags/v') || github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.rehearsal == 'nightly-release')) && 'vibrato-npm-release' || format('ci-{0}-{1}', github.ref, github.event_name == 'workflow_dispatch' && inputs.rehearsal || 'event') }}
    cancel-in-progress: ${{ !(startsWith(github.ref, 'refs/tags/v') || github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.rehearsal == 'nightly-release')) }}
 
 jobs:
@@ -384,11 +384,11 @@ jobs:
          fail-fast: false
          matrix:
             include:
-               - { os: ubuntu-22.04, platform: linux, arch: x64, target_id: linux-x64, binary_path: packages/coding-agent/binaries/gjc-linux-x64 }
-               - { os: ubuntu-24.04-arm, platform: linux, arch: arm64, target_id: linux-arm64, binary_path: packages/coding-agent/binaries/gjc-linux-arm64 }
-               - { os: macos-14, platform: darwin, arch: arm64, target_id: darwin-arm64, binary_path: packages/coding-agent/binaries/gjc-darwin-arm64 }
-               - { os: macos-15-intel, platform: darwin, arch: x64, target_id: darwin-x64, binary_path: packages/coding-agent/binaries/gjc-darwin-x64 }
-               - { os: windows-latest, platform: win32, arch: x64, target_id: win32-x64, binary_path: packages/coding-agent/binaries/gjc-windows-x64.exe }
+               - { os: ubuntu-22.04, platform: linux, arch: x64, target_id: linux-x64, binary_path: packages/coding-agent/binaries/vib-linux-x64 }
+               - { os: ubuntu-24.04-arm, platform: linux, arch: arm64, target_id: linux-arm64, binary_path: packages/coding-agent/binaries/vib-linux-arm64 }
+               - { os: macos-14, platform: darwin, arch: arm64, target_id: darwin-arm64, binary_path: packages/coding-agent/binaries/vib-darwin-arm64 }
+               - { os: macos-15-intel, platform: darwin, arch: x64, target_id: darwin-x64, binary_path: packages/coding-agent/binaries/vib-darwin-x64 }
+               - { os: windows-latest, platform: win32, arch: x64, target_id: win32-x64, binary_path: packages/coding-agent/binaries/vib-windows-x64.exe }
       steps:
          - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
          - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4
@@ -447,7 +447,7 @@ jobs:
            if: runner.os == 'Windows'
            shell: pwsh
            run: |
-              $runtimeDir = Join-Path $env:TEMP ("gjc-runtime-" + [System.Guid]::NewGuid().ToString("N"))
+              $runtimeDir = Join-Path $env:TEMP ("vib-runtime-" + [System.Guid]::NewGuid().ToString("N"))
               New-Item -ItemType Directory -Force -Path $runtimeDir | Out-Null
               $env:HOME = Join-Path $runtimeDir "home"
               $env:XDG_DATA_HOME = Join-Path $runtimeDir "xdg"
@@ -456,7 +456,7 @@ jobs:
          - name: Upload release binary artifact
            uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
            with:
-              name: gjc-binary-${{ matrix.target_id }}
+              name: vib-binary-${{ matrix.target_id }}
               path: ${{ matrix.binary_path }}
 
    release_prepare:
@@ -737,7 +737,7 @@ jobs:
            run: |
               set -euo pipefail
               evidence_dir="$RUNNER_TEMP/release-evidence"
-              expected="$evidence_dir/gajae-release-packages-expected-v1.json"
+              expected="$evidence_dir/vibrato-release-packages-expected-v1.json"
               registry="https://registry.npmjs.org/"
               case "$RELEASE_CHANNEL" in
                  stable) npm_tag=latest ;;
@@ -746,7 +746,7 @@ jobs:
               esac
               records="$RUNNER_TEMP/receipt-records.json"
               echo '[]' > "$records"
-              order_file="$evidence_dir/gajae-release-publish-order-v1.json"
+              order_file="$evidence_dir/vibrato-release-publish-order-v1.json"
               # The sealed plan publishes dependencies before dependents; it
               # must cover exactly the expected package set.
               if [ "$(jq -r '.order[]' "$order_file" | sort)" != "$(jq -r '.packages[].name' "$expected" | sort)" ]; then
@@ -810,12 +810,12 @@ jobs:
               done
               jq -n --arg version "$RELEASE_VERSION" --arg channel "$RELEASE_CHANNEL" --slurpfile packages "$records" \
                  '{schema_version: 1, release_version: $version, release_channel: $channel, packages: $packages[0]}' \
-                 > "$evidence_dir/gajae-release-oidc-publish-receipt-v1.json"
+                 > "$evidence_dir/vibrato-release-oidc-publish-receipt-v1.json"
          - name: Persist OIDC publish receipt
            uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
            with:
               name: release-publish-receipt-${{ needs.release_metadata.outputs.version }}
-              path: ${{ runner.temp }}/release-evidence/gajae-release-oidc-publish-receipt-v1.json
+              path: ${{ runner.temp }}/release-evidence/vibrato-release-oidc-publish-receipt-v1.json
               if-no-files-found: error
               retention-days: 30
               overwrite: true
@@ -872,7 +872,7 @@ jobs:
          - name: Download release binaries
            uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4
            with:
-              pattern: gjc-binary-*
+              pattern: vib-binary-*
               path: release-binaries
               merge-multiple: true
          - name: Publish binary checksum manifest
@@ -888,7 +888,7 @@ jobs:
            with:
               tag_name: ${{ needs.release_metadata.outputs.tag_name }}
               target_commitish: ${{ github.sha }}
-              name: ${{ needs.release_metadata.outputs.channel == 'nightly' && format('GJC Nightly {0}', needs.release_metadata.outputs.version) || format('GJC {0}', needs.release_metadata.outputs.version) }}
+              name: ${{ needs.release_metadata.outputs.channel == 'nightly' && format('Vibrato Nightly {0}', needs.release_metadata.outputs.version) || format('Vibrato {0}', needs.release_metadata.outputs.version) }}
               draft: false
               prerelease: ${{ needs.release_metadata.outputs.channel == 'nightly' }}
               make_latest: ${{ needs.release_metadata.outputs.channel != 'nightly' }}
@@ -896,12 +896,12 @@ jobs:
               generate_release_notes: false
               fail_on_unmatched_files: true
               files: |
-                 release-binaries/gjc-*
-                 release-binaries/gajae-release-binaries-v1.json
-                 release-binaries/gajae-release-binaries.sha256
-                 ${{ runner.temp }}/release-evidence/gajae-release-packages-expected-v1.json
-                 ${{ runner.temp }}/release-evidence/gajae-release-packages-v1.json
-                 ${{ runner.temp }}/release-evidence/gajae-release-channel-v1.json
+                 release-binaries/vib-*
+                 release-binaries/vibrato-release-binaries-v1.json
+                 release-binaries/vibrato-release-binaries.sha256
+                 ${{ runner.temp }}/release-evidence/vibrato-release-packages-expected-v1.json
+                 ${{ runner.temp }}/release-evidence/vibrato-release-packages-v1.json
+                 ${{ runner.temp }}/release-evidence/vibrato-release-channel-v1.json
          - name: Verify immutable GitHub Release
            env:
               GH_TOKEN: ${{ github.token }}
@@ -923,9 +923,9 @@ jobs:
                     throw new Error("GitHub Release identity/state does not match the requested release");
                  }
                  const expectedAssets = [
-                    "gjc-linux-x64", "gjc-linux-arm64", "gjc-darwin-arm64", "gjc-darwin-x64", "gjc-windows-x64.exe",
-                    "gajae-release-binaries-v1.json", "gajae-release-binaries.sha256",
-                    "gajae-release-packages-expected-v1.json", "gajae-release-packages-v1.json", "gajae-release-channel-v1.json",
+                    "vib-linux-x64", "vib-linux-arm64", "vib-darwin-arm64", "vib-darwin-x64", "vib-windows-x64.exe",
+                    "vibrato-release-binaries-v1.json", "vibrato-release-binaries.sha256",
+                    "vibrato-release-packages-expected-v1.json", "vibrato-release-packages-v1.json", "vibrato-release-channel-v1.json",
                  ];
                  const assets = new Set(release.assets.map(asset => asset.name));
                  const missing = expectedAssets.filter(name => !assets.has(name));

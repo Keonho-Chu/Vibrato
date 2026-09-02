@@ -11,7 +11,7 @@ function extractEmbeddedAgentFileNames(source: string): string[] {
 	return [...defsBlock[1].matchAll(/fileName: "([^"]+)"/g)].map(match => match[1]).sort();
 }
 
-describe("GJC bundled task agent surface", () => {
+describe("Vibrato bundled task agent surface", () => {
 	it("ships exactly the four canonical role agents", async () => {
 		const source = await Bun.file(agentsEntry).text();
 		expect(extractEmbeddedAgentFileNames(source)).toEqual(["architect.md", "critic.md", "executor.md", "planner.md"]);

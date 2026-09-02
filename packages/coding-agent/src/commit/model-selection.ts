@@ -1,5 +1,5 @@
-import type { ThinkingLevel } from "@gajae-code/agent-core";
-import type { Api, Model } from "@gajae-code/ai/core";
+import type { ThinkingLevel } from "@vib-rato/agent-core";
+import type { Api, Model } from "@vib-rato/ai/core";
 import { type ModelLookupRegistry, resolveModelRoleValue, resolveRoleSelection } from "../config/model-resolver";
 import type { Settings } from "../config/settings";
 

@@ -1,4 +1,4 @@
-// Entrypoint-level proof: `gjc mcp-serve sdk` speaks JSON-RPC over stdio and its
+// Entrypoint-level proof: `vib mcp-serve sdk` speaks JSON-RPC over stdio and its
 // session control reaches a recorded SDK WebSocket (no coordinator paths).
 import { mkdir, mkdtemp, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -70,25 +70,25 @@ try {
 			},
 		},
 	});
-	await mkdir(path.join(repo, ".gjc", "state", "sdk"), { recursive: true });
+	await mkdir(path.join(repo, ".vib", "state", "sdk"), { recursive: true });
 	await writeFile(
-		path.join(repo, ".gjc", "state", "sdk", "s1.json"),
+		path.join(repo, ".vib", "state", "sdk", "s1.json"),
 		JSON.stringify({ sessionId: "s1", pid: process.pid, url: `ws://127.0.0.1:${server.port}`, token: "tok" }),
 	);
-	const endpointMtimeMs = (await stat(path.join(repo, ".gjc", "state", "sdk", "s1.json"))).mtimeMs;
+	const endpointMtimeMs = (await stat(path.join(repo, ".vib", "state", "sdk", "s1.json"))).mtimeMs;
 	const index = await new SessionIndex(agentDir).open();
 	await index.append({
 		type: "host_registered",
 		sessionId: "s1",
-		locator: { repo, stateRoot: path.join(repo, ".gjc", "state") },
+		locator: { repo, stateRoot: path.join(repo, ".vib", "state") },
 		endpointGeneration: 1,
 		pid: process.pid,
 		endpointMtimeMs,
 	});
 
 	// Default: package source under test (CI monorepo with natives).
-	// Override with GJC_MCP_E2E_BIN for local machines lacking matching natives.
-	const explicitBin = process.env.GJC_MCP_E2E_BIN?.trim();
+	// Override with VIB_MCP_E2E_BIN for local machines lacking matching natives.
+	const explicitBin = process.env.VIB_MCP_E2E_BIN?.trim();
 	const spawnCmd =
 		explicitBin && explicitBin.length > 0
 			? [explicitBin, "mcp-serve", "sdk"]
@@ -98,16 +98,16 @@ try {
 		stdin: "pipe",
 		stdout: "pipe",
 		stderr: "pipe",
-		env: { ...process.env, GJC_AGENT_DIR: agentDir, GJC_CODING_AGENT_DIR: agentDir },
+		env: { ...process.env, VIB_AGENT_DIR: agentDir, VIB_CODING_AGENT_DIR: agentDir },
 	});
 	child = proc;
 	proc.stdin.write(`${JSON.stringify({ jsonrpc: "2.0", id: 1, method: "initialize" })}\n`);
 	proc.stdin.write(`${JSON.stringify({ jsonrpc: "2.0", id: 2, method: "tools/list" })}\n`);
 	proc.stdin.write(
-		`${JSON.stringify({ jsonrpc: "2.0", id: 3, method: "tools/call", params: { name: "gjc_session_query", arguments: { sessionId: "s1", query: "session.metadata" } } })}\n`,
+		`${JSON.stringify({ jsonrpc: "2.0", id: 3, method: "tools/call", params: { name: "vib_session_query", arguments: { sessionId: "s1", query: "session.metadata" } } })}\n`,
 	);
 	proc.stdin.write(
-		`${JSON.stringify({ jsonrpc: "2.0", id: 4, method: "tools/call", params: { name: "gjc_session_global", arguments: { operation: "session.get_endpoint" } } })}\n`,
+		`${JSON.stringify({ jsonrpc: "2.0", id: 4, method: "tools/call", params: { name: "vib_session_global", arguments: { operation: "session.get_endpoint" } } })}\n`,
 	);
 	await proc.stdin.end();
 
@@ -141,8 +141,8 @@ try {
 		.filter(Boolean)
 		.map(l => JSON.parse(l));
 	const byId = Object.fromEntries(lines.map(l => [l.id, l]));
-	if (byId[1]?.result?.serverInfo?.name !== "gjc-sdk-mcp") throw new Error(`initialize failed: ${out}`);
-	if (!byId[2]?.result?.tools?.some((t: { name: string }) => t.name === "gjc_session_query"))
+	if (byId[1]?.result?.serverInfo?.name !== "vib-sdk-mcp") throw new Error(`initialize failed: ${out}`);
+	if (!byId[2]?.result?.tools?.some((t: { name: string }) => t.name === "vib_session_query"))
 		throw new Error("tools/list failed");
 	const queryText = JSON.parse(byId[3].result.content[0].text);
 	if (queryText.page?.items?.[0]?.sessionId !== "s1")

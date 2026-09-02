@@ -1,15 +1,15 @@
 /**
  * Bounded Claude Code / Codex MCP import-source adapters.
  *
- * These functions normalize foreign MCP formats to GJC's internal MCP contract
+ * These functions normalize foreign MCP formats to Vibrato's internal MCP contract
  * (`MCPServer`). They are EXPLICIT import sources: a caller (for example the
  * `/extensions` import transaction) reads a Claude `.mcp.json` or Codex
- * `config.toml` file and writes the normalized definitions into GJC's native
- * `.gjc` config. They are never registered as runtime discovery providers, so
+ * `config.toml` file and writes the normalized definitions into Vibrato's native
+ * `.vib` config. They are never registered as runtime discovery providers, so
  * foreign files are never implicit competing runtime authorities, and user-home
  * (`~/.claude`, `~/.codex`) configuration is never scanned.
  */
-import { tryParseJson } from "@gajae-code/utils";
+import { tryParseJson } from "@vib-rato/utils";
 import { type MCPServer, mcpCapability } from "../capability/mcp";
 import type { LoadResult, SourceMeta } from "../capability/types";
 import { createSourceMeta, expandEnvVarsDeep } from "./helpers";
@@ -45,7 +45,7 @@ function compatSource(providerId: string, sourcePath: string, level: "project" |
  * Normalize a Claude Code `.mcp.json` file body into the internal MCP contract.
  *
  * The Claude project format uses the same `{ "mcpServers": { name: {...} } }`
- * JSON shape as GJC's config; `enabled`/`autoload` are preserved so a caller
+ * JSON shape as Vibrato's config; `enabled`/`autoload` are preserved so a caller
  * can decide startup behavior after import. Bounded to the supplied content:
  * no filesystem scanning, no user-home reads.
  */
@@ -227,7 +227,7 @@ export function normalizeCodexMcpToml(
  * Validate a normalized server against the internal MCP contract. Returns an
  * error message, or undefined when the definition is importable. Callers use
  * this to fail closed before writing a malformed/untrusted definition into
- * `.gjc` (mcpCapability.validate is reused so import and runtime share one rule).
+ * `.vib` (mcpCapability.validate is reused so import and runtime share one rule).
  */
 export function validateMCPCompatServer(server: MCPServer): string | undefined {
 	return mcpCapability.validate?.(server);

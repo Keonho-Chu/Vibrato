@@ -1,5 +1,5 @@
-import type { Component } from "@gajae-code/tui";
-import { Container, Text } from "@gajae-code/tui";
+import type { Component } from "@vib-rato/tui";
+import { Container, Text } from "@vib-rato/tui";
 import { InternalUrlRouter } from "../../internal-urls";
 import { getLanguageFromPath, theme } from "../../modes/theme/theme";
 import { splitPathAndSel } from "../../tools/path-utils";

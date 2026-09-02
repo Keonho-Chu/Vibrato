@@ -66,7 +66,7 @@ afterEach(async () => {
 
 describe("LSP lifecycle behavior", () => {
 	it("kill-then-immediately-reacquire evicts the dead cached client before async cleanup", async () => {
-		const cwd = await tempDir("gjc-lsp-reload-");
+		const cwd = await tempDir("vib-lsp-reload-");
 		try {
 			const script = await writeFakeLspServer(cwd);
 			const config = serverConfig(BUN, [script]);
@@ -98,7 +98,7 @@ describe("LSP lifecycle behavior", () => {
 		"EPIPE",
 		"ERR_STREAM_DESTROYED",
 	] as const)("terminalizes and evicts a client when its owned stdin sink reports %s", async code => {
-		const cwd = await tempDir("gjc-lsp-peer-close-");
+		const cwd = await tempDir("vib-lsp-peer-close-");
 		try {
 			const script = await writeFakeLspServer(cwd);
 			const config = serverConfig(BUN, [script]);
@@ -172,7 +172,7 @@ describe("LSP lifecycle behavior", () => {
 	});
 
 	it("lspmux status probe clears its timeout and reaps the probe process when status hangs", async () => {
-		const cwd = await tempDir("gjc-lspmux-timeout-");
+		const cwd = await tempDir("vib-lspmux-timeout-");
 		const binDir = path.join(cwd, "bin");
 		const configHome = path.join(cwd, "config");
 		try {
@@ -189,7 +189,7 @@ describe("LSP lifecycle behavior", () => {
 			);
 			// Hermetic probe: bun test shares one process across test files, so
 			// ambient state left by another file must not reach this probe.
-			// (1) A disable flag in Bun.env (GJC_DISABLE_LSPMUX / PI_DISABLE_LSPMUX)
+			// (1) A disable flag in Bun.env (VIB_DISABLE_LSPMUX / PI_DISABLE_LSPMUX)
 			//     would short-circuit detectLspmux() to available:false.
 			// (2) A drifted process.cwd() (an earlier test that chdir'd into a temp
 			//     dir without restoring) would make the trust root a temp ancestor of
@@ -201,7 +201,7 @@ describe("LSP lifecycle behavior", () => {
 				PATH: ORIGINAL_PATH ? `${binDir}${path.delimiter}${ORIGINAL_PATH}` : binDir,
 				XDG_CONFIG_HOME: configHome,
 			};
-			delete probeEnv.GJC_DISABLE_LSPMUX;
+			delete probeEnv.VIB_DISABLE_LSPMUX;
 			delete probeEnv.PI_DISABLE_LSPMUX;
 			const proc = Bun.spawn([BUN, runner], {
 				cwd: import.meta.dir,
@@ -244,7 +244,7 @@ async function writeBusyThenDyingLspServer(dir: string): Promise<string> {
 
 describe("LSP transport write failures", () => {
 	it("a large pending write to a dying server is terminalized, not an unhandled rejection", async () => {
-		const cwd = await tempDir("gjc-lsp-epipe-");
+		const cwd = await tempDir("vib-lsp-epipe-");
 		const unhandled: unknown[] = [];
 		const onUnhandledRejection = (reason: unknown) => {
 			unhandled.push(reason);
@@ -282,7 +282,7 @@ describe("LSP transport write failures", () => {
 	}, 10_000);
 
 	it("concurrent callers during a slow initialize share the initialized client, never an uninitialized one", async () => {
-		const cwd = await tempDir("gjc-lsp-slow-init-");
+		const cwd = await tempDir("vib-lsp-slow-init-");
 		try {
 			const script = await writeFakeLspServer(cwd, { initDelayMs: 150 });
 			const config = serverConfig(BUN, [script]);
@@ -304,7 +304,7 @@ describe("LSP transport write failures", () => {
 	}, 10_000);
 
 	it("concurrent callers observe the same failure when the server dies during initialize", async () => {
-		const cwd = await tempDir("gjc-lsp-dying-init-");
+		const cwd = await tempDir("vib-lsp-dying-init-");
 		try {
 			// A server that exits immediately, like a broken launcher on PATH
 			// (e.g. a Python LSP stub whose interpreter can no longer import it).
@@ -324,7 +324,7 @@ describe("LSP transport write failures", () => {
 	}, 10_000);
 
 	it("shutdownAll disposes an in-flight initializer and prevents cache resurrection", async () => {
-		const cwd = await tempDir("gjc-lsp-shutdown-init-");
+		const cwd = await tempDir("vib-lsp-shutdown-init-");
 		try {
 			const script = await writeFakeLspServer(cwd, { initDelayMs: 500 });
 			const config = serverConfig(BUN, [script]);

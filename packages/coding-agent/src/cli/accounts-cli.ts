@@ -1,5 +1,5 @@
 /**
- * Handlers for the sole account-management CLI namespace (`gjc accounts`).
+ * Handlers for the sole account-management CLI namespace (`vib accounts`).
  *
  * This surface deliberately consumes AuthStorage's payload-free inventory APIs.
  * Credential payloads are never rendered or copied into settings; persistent pins
@@ -13,8 +13,8 @@ import {
 	OAuthCredentialSelectorError,
 	type OAuthPinTarget,
 	resolveOAuthStorageProvider,
-} from "@gajae-code/ai/core";
-import { getAgentDir } from "@gajae-code/utils";
+} from "@vib-rato/ai/core";
+import { getAgentDir } from "@vib-rato/utils";
 import { ModelRegistry } from "../config/model-registry";
 import { type RawSettings, Settings, type SettingsAtomicPatch } from "../config/settings";
 import { discoverAuthStorage } from "../sdk/session";
@@ -325,7 +325,7 @@ async function runLogout(providerArg: string | undefined, flags: AccountsCommand
 	const startupAuth = await resolveStartupAuthConfig();
 	if (startupAuth.broker) {
 		throw new AccountsCommandError(
-			"`gjc accounts logout` only mutates local credentials. A broker/gateway is configured; run logout on the broker host with `gjc auth-broker` or unset the broker configuration. No credentials were removed.",
+			"`vib accounts logout` only mutates local credentials. A broker/gateway is configured; run logout on the broker host with `vib auth-broker` or unset the broker configuration. No credentials were removed.",
 		);
 	}
 	const storage = await discoverAuthStorage(getAgentDir(), startupAuth);

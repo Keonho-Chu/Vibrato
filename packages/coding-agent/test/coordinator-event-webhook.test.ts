@@ -23,7 +23,7 @@ const script = `
 `;
 
 async function tempRoot(): Promise<string> {
-	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-event-webhook-"));
+	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-event-webhook-"));
 	const canonical = await fs.realpath(dir);
 	tempDirs.push(canonical);
 	return canonical;
@@ -108,54 +108,54 @@ function outboxPath(namespaceDir: string, eventId: string): string {
 describe("parseEventWebhookConfig", () => {
 	it("is disabled by default when no URL is configured", () => {
 		expect(parseEventWebhookConfig({})).toBeNull();
-		expect(parseEventWebhookConfig({ GJC_COORDINATOR_MCP_EVENT_WEBHOOK_URL: "  " })).toBeNull();
+		expect(parseEventWebhookConfig({ VIB_COORDINATOR_MCP_EVENT_WEBHOOK_URL: "  " })).toBeNull();
 	});
 
 	it("accepts https destinations and http loopback, rejects other destinations", () => {
-		expect(parseEventWebhookConfig({ GJC_COORDINATOR_MCP_EVENT_WEBHOOK_URL: "https://sink.example.test" })?.url).toBe(
+		expect(parseEventWebhookConfig({ VIB_COORDINATOR_MCP_EVENT_WEBHOOK_URL: "https://sink.example.test" })?.url).toBe(
 			"https://sink.example.test",
 		);
 		for (const host of ["127.0.0.1", "localhost", "[::1]"]) {
-			expect(parseEventWebhookConfig({ GJC_COORDINATOR_MCP_EVENT_WEBHOOK_URL: `http://${host}:9/hook` })?.url).toBe(
+			expect(parseEventWebhookConfig({ VIB_COORDINATOR_MCP_EVENT_WEBHOOK_URL: `http://${host}:9/hook` })?.url).toBe(
 				`http://${host}:9/hook`,
 			);
 		}
 		expect(() =>
-			parseEventWebhookConfig({ GJC_COORDINATOR_MCP_EVENT_WEBHOOK_URL: "http://sink.example.test" }),
+			parseEventWebhookConfig({ VIB_COORDINATOR_MCP_EVENT_WEBHOOK_URL: "http://sink.example.test" }),
 		).toThrow("coordinator_event_webhook_url_not_allowed");
 		expect(() =>
-			parseEventWebhookConfig({ GJC_COORDINATOR_MCP_EVENT_WEBHOOK_URL: "ftp://sink.example.test" }),
+			parseEventWebhookConfig({ VIB_COORDINATOR_MCP_EVENT_WEBHOOK_URL: "ftp://sink.example.test" }),
 		).toThrow("coordinator_event_webhook_url_not_allowed");
-		expect(() => parseEventWebhookConfig({ GJC_COORDINATOR_MCP_EVENT_WEBHOOK_URL: "not a url" })).toThrow(
+		expect(() => parseEventWebhookConfig({ VIB_COORDINATOR_MCP_EVENT_WEBHOOK_URL: "not a url" })).toThrow(
 			"coordinator_event_webhook_url_invalid",
 		);
 	});
 
 	it("parses session scope, bounds timeout and attempts, and requires an absolute token file", async () => {
 		const scoped = parseEventWebhookConfig({
-			GJC_COORDINATOR_MCP_EVENT_WEBHOOK_URL: "https://sink.example.test",
-			GJC_COORDINATOR_MCP_EVENT_WEBHOOK_SESSION_IDS: "session-a, session-b,,invalid value!",
+			VIB_COORDINATOR_MCP_EVENT_WEBHOOK_URL: "https://sink.example.test",
+			VIB_COORDINATOR_MCP_EVENT_WEBHOOK_SESSION_IDS: "session-a, session-b,,invalid value!",
 		});
 		expect(scoped?.sessionIds).toEqual(new Set(["session-a", "session-b"]));
 
 		const bounded = parseEventWebhookConfig({
-			GJC_COORDINATOR_MCP_EVENT_WEBHOOK_URL: "https://sink.example.test",
-			GJC_COORDINATOR_MCP_EVENT_WEBHOOK_TIMEOUT_MS: "999999",
-			GJC_COORDINATOR_MCP_EVENT_WEBHOOK_MAX_ATTEMPTS: "99",
+			VIB_COORDINATOR_MCP_EVENT_WEBHOOK_URL: "https://sink.example.test",
+			VIB_COORDINATOR_MCP_EVENT_WEBHOOK_TIMEOUT_MS: "999999",
+			VIB_COORDINATOR_MCP_EVENT_WEBHOOK_MAX_ATTEMPTS: "99",
 		});
 		expect(bounded?.timeoutMs).toBe(MAX_EVENT_WEBHOOK_TIMEOUT_MS);
 		expect(bounded?.maxAttempts).toBe(MAX_EVENT_WEBHOOK_MAX_ATTEMPTS);
 
 		const tokenDir = await tempRoot();
 		const withToken = parseEventWebhookConfig({
-			GJC_COORDINATOR_MCP_EVENT_WEBHOOK_URL: "https://sink.example.test",
-			GJC_COORDINATOR_MCP_EVENT_WEBHOOK_TOKEN_FILE: path.join(tokenDir, "token"),
+			VIB_COORDINATOR_MCP_EVENT_WEBHOOK_URL: "https://sink.example.test",
+			VIB_COORDINATOR_MCP_EVENT_WEBHOOK_TOKEN_FILE: path.join(tokenDir, "token"),
 		});
 		expect(withToken?.tokenFile).toBe(path.join(tokenDir, "token"));
 		expect(() =>
 			parseEventWebhookConfig({
-				GJC_COORDINATOR_MCP_EVENT_WEBHOOK_URL: "https://sink.example.test",
-				GJC_COORDINATOR_MCP_EVENT_WEBHOOK_TOKEN_FILE: "relative/token",
+				VIB_COORDINATOR_MCP_EVENT_WEBHOOK_URL: "https://sink.example.test",
+				VIB_COORDINATOR_MCP_EVENT_WEBHOOK_TOKEN_FILE: "relative/token",
 			}),
 		).toThrow("coordinator_event_webhook_token_file_invalid");
 	});
@@ -169,13 +169,13 @@ describe("webhook egress provenance", () => {
 		const projectRoot = await tempRoot();
 		await fs.writeFile(
 			path.join(projectRoot, ".env"),
-			"GJC_COORDINATOR_MCP_EVENT_WEBHOOK_URL=https://project-env-sink.example.test/steal\n",
+			"VIB_COORDINATOR_MCP_EVENT_WEBHOOK_URL=https://project-env-sink.example.test/steal\n",
 			"utf8",
 		);
 		const probe = Bun.spawnSync({
 			cmd: [process.execPath, "--eval", script],
 			cwd: projectRoot,
-			env: { ...process.env, GJC_COORDINATOR_MCP_EVENT_WEBHOOK_URL: undefined },
+			env: { ...process.env, VIB_COORDINATOR_MCP_EVENT_WEBHOOK_URL: undefined },
 			stdout: "pipe",
 			stderr: "pipe",
 		});
@@ -188,7 +188,7 @@ describe("webhook egress provenance", () => {
 		const probe = Bun.spawnSync({
 			cmd: [process.execPath, "--eval", script],
 			cwd: projectRoot,
-			env: { ...process.env, GJC_COORDINATOR_MCP_EVENT_WEBHOOK_URL: "https://trusted.example.test/hook" },
+			env: { ...process.env, VIB_COORDINATOR_MCP_EVENT_WEBHOOK_URL: "https://trusted.example.test/hook" },
 			stdout: "pipe",
 			stderr: "pipe",
 		});

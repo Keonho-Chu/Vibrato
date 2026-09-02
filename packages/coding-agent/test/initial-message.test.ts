@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import type { ImageContent } from "@gajae-code/ai";
+import type { ImageContent } from "@vib-rato/ai";
 import type { Args } from "../src/cli/args";
 import { buildInitialMessage } from "../src/cli/initial-message";
 

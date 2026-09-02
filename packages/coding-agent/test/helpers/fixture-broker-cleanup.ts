@@ -89,8 +89,8 @@ export function createFixtureBrokerEnvironment(root: string, agentDir: string): 
 		HOMEDRIVE: homeDrive,
 		HOMEPATH: homePath,
 		XDG_CONFIG_HOME: path.join(root, "config"),
-		GJC_AGENT_DIR: agentDir,
-		GJC_CODING_AGENT_DIR: agentDir,
+		VIB_AGENT_DIR: agentDir,
+		VIB_CODING_AGENT_DIR: agentDir,
 		PI_CODING_AGENT_DIR: agentDir,
 		// Pin the child temp root inside the owned fixture root so os.tmpdir() writes
 		// stay under the root and are removed by fixture cleanup. Never forward the
@@ -265,13 +265,13 @@ export function cleanupFixtureRoot(root: FixtureRootCleanup, options: FixtureRoo
 
 /** Clears fixture-local broker opt-out state for an async setup and restores it exactly. */
 export async function withFixtureBrokerEnvironment<T>(run: () => Promise<T>): Promise<T> {
-	const prior = process.env.GJC_SDK_DISABLE;
-	delete process.env.GJC_SDK_DISABLE;
+	const prior = process.env.VIB_SDK_DISABLE;
+	delete process.env.VIB_SDK_DISABLE;
 	try {
 		return await run();
 	} finally {
-		if (prior === undefined) delete process.env.GJC_SDK_DISABLE;
-		else process.env.GJC_SDK_DISABLE = prior;
+		if (prior === undefined) delete process.env.VIB_SDK_DISABLE;
+		else process.env.VIB_SDK_DISABLE = prior;
 	}
 }
 

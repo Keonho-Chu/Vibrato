@@ -1,7 +1,7 @@
 # Session Import (Codex and Claude)
 
-GJC can import an external **Codex** or **Claude** session transcript into a new
-GJC session so you can continue the conversation with reconstructed context
+Vibrato can import an external **Codex** or **Claude** session transcript into a new
+Vibrato session so you can continue the conversation with reconstructed context
 instead of copying a long session by hand.
 
 ## CLI surface
@@ -18,7 +18,7 @@ instead of copying a long session by hand.
 - `--provider` narrows detection to one provider and fails closed on a
   mismatch. Without it, the format is detected deterministically from the file
   content.
-- On success, GJC creates a **new** resumable session containing the reconstructed
+- On success, Vibrato creates a **new** resumable session containing the reconstructed
   context and reports its id. The active session is not switched automatically;
   use `/resume` to select the import.
 
@@ -49,7 +49,7 @@ Normalization rules:
 - Records that fail to parse, lack required fields, or use unknown record types
   are **quarantined** — counted and digested (record number, byte length,
   SHA-256) in provenance and the import summary, never silently dropped.
-- A native GJC session file is rejected with `unsupported_format` (use
+- A native Vibrato session file is rejected with `unsupported_format` (use
   resume/fork for those).
 
 ## Provenance and identity
@@ -61,7 +61,7 @@ and byte size of the exact imported source bytes, converter/sanitizer versions,
 mapped/quarantined/redacted/omitted counts, truncation flag, target session id,
 and import timestamp. The reconstructed context lives in a separate
 `custom_message` entry (same `customType`, `display: true`) so imported context
-is visually and structurally distinct from native GJC history, while still
+is visually and structurally distinct from native Vibrato history, while still
 participating in LLM context like a handoff document.
 
 Re-importing the same file is allowed and creates another distinct session;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import type { Message } from "@gajae-code/ai";
+import type { Message } from "@vib-rato/ai";
 import { estimateMessageTokensHeuristic } from "../src/compaction/compaction";
 
 describe("oversized token-count guard (W8 / F22)", () => {

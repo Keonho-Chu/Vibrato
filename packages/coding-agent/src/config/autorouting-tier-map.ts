@@ -8,7 +8,7 @@
  */
 
 import { createHash } from "node:crypto";
-import { getBundledModels, getBundledProviders, type Model } from "@gajae-code/ai/core";
+import { getBundledModels, getBundledProviders, type Model } from "@vib-rato/ai/core";
 import {
 	AUTOROUTING_SELECTOR_PATTERN,
 	AUTOROUTING_TIERS,

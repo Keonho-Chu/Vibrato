@@ -6,7 +6,7 @@ describe("renderThreadedFrame", () => {
 		const send = renderThreadedFrame({
 			type: "identity_header",
 			sessionId: "sess-1",
-			repo: "gajae-code",
+			repo: "vib-rato",
 			branch: "feat/notification-surface",
 			machine: "mac-studio",
 			title: "Rebuild notifications",
@@ -15,7 +15,7 @@ describe("renderThreadedFrame", () => {
 		expect(send?.identity).toBe(true);
 		expect(send?.lane).toBe("finalized");
 		expect(send?.text).toContain("<b>Rebuild notifications</b>");
-		expect(send?.text).toContain("• repo: <code>gajae-code</code>");
+		expect(send?.text).toContain("• repo: <code>vib-rato</code>");
 		expect(send?.text).toContain("• branch: <code>feat/notification-surface</code>");
 		expect(send?.text).toContain("• machine: <code>mac-studio</code>");
 		expect(send?.text).toContain("• session: <code>sess-1</code>");
@@ -78,9 +78,13 @@ describe("renderThreadedFrame", () => {
 		expect(send?.text).toContain("ctx: <code>12k/200k · opus</code>");
 		expect(send?.text).toContain("session: <code>s</code>");
 
-		const withCwd = formatContextUpdate({ type: "context_update", sessionId: "session-full", cwd: "gajae-worktree" });
+		const withCwd = formatContextUpdate({
+			type: "context_update",
+			sessionId: "session-full",
+			cwd: "vibrato-worktree",
+		});
 		expect(withCwd).toContain("session: <code>session-full</code>");
-		expect(withCwd).toContain("cwd: <code>gajae-worktree</code>");
+		expect(withCwd).toContain("cwd: <code>vibrato-worktree</code>");
 	});
 
 	test("image_attachment renders a sendPhoto with caption", () => {

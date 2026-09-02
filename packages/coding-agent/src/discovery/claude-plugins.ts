@@ -1,10 +1,10 @@
 /**
- * GJC Marketplace Plugin Provider
+ * Vibrato Marketplace Plugin Provider
  *
- * Loads plugin roots from GJC plugin registries and explicit plugin-dir roots.
+ * Loads plugin roots from Vibrato plugin registries and explicit plugin-dir roots.
  */
 import * as path from "node:path";
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 import { registerProvider } from "../capability";
 import { readFile } from "../capability/fs";
 import { type Hook, hookCapability } from "../capability/hook";
@@ -13,7 +13,7 @@ import { type Skill, skillCapability } from "../capability/skill";
 import { type SlashCommand, slashCommandCapability } from "../capability/slash-command";
 import { type CustomTool, toolCapability } from "../capability/tool";
 import type { LoadContext, LoadResult } from "../capability/types";
-import { rootContainsGjcManifest } from "../extensibility/gjc-plugins";
+import { rootContainsVibManifest } from "../extensibility/vib-plugins";
 import {
 	type ClaudePluginRoot,
 	createSourceMeta,
@@ -25,7 +25,7 @@ import {
 import { substitutePluginRoot } from "./substitute-plugin-root";
 
 const PROVIDER_ID = "claude-plugins";
-const DISPLAY_NAME = "GJC Marketplace";
+const DISPLAY_NAME = "Vibrato Marketplace";
 const PRIORITY = 70;
 
 interface ClaudePluginManifest {
@@ -92,7 +92,7 @@ async function resolvePluginDir(
 	};
 }
 
-async function listNonGjcPluginRoots(
+async function listNonVibPluginRoots(
 	home: string,
 	cwd: string,
 ): Promise<{ roots: ClaudePluginRoot[]; warnings: string[] }> {
@@ -101,8 +101,8 @@ async function listNonGjcPluginRoots(
 	const filteredWarnings = [...warnings];
 
 	for (const root of roots) {
-		if (await rootContainsGjcManifest(root.path)) {
-			filteredWarnings.push(`[claude-plugins] Skipping gajae-code plugin root (binding-only): ${root.path}`);
+		if (await rootContainsVibManifest(root.path)) {
+			filteredWarnings.push(`[claude-plugins] Skipping vib-rato plugin root (binding-only): ${root.path}`);
 			continue;
 		}
 		filteredRoots.push(root);
@@ -119,7 +119,7 @@ async function loadSkills(ctx: LoadContext): Promise<LoadResult<Skill>> {
 	const items: Skill[] = [];
 	const warnings: string[] = [];
 
-	const { roots, warnings: rootWarnings } = await listNonGjcPluginRoots(ctx.home, ctx.cwd);
+	const { roots, warnings: rootWarnings } = await listNonVibPluginRoots(ctx.home, ctx.cwd);
 	warnings.push(...rootWarnings);
 
 	const results = await Promise.all(
@@ -154,7 +154,7 @@ async function loadSlashCommands(ctx: LoadContext): Promise<LoadResult<SlashComm
 	const items: SlashCommand[] = [];
 	const warnings: string[] = [];
 
-	const { roots, warnings: rootWarnings } = await listNonGjcPluginRoots(ctx.home, ctx.cwd);
+	const { roots, warnings: rootWarnings } = await listNonVibPluginRoots(ctx.home, ctx.cwd);
 	warnings.push(...rootWarnings);
 
 	const results = await Promise.all(
@@ -194,7 +194,7 @@ async function loadHooks(ctx: LoadContext): Promise<LoadResult<Hook>> {
 	const items: Hook[] = [];
 	const warnings: string[] = [];
 
-	const { roots, warnings: rootWarnings } = await listNonGjcPluginRoots(ctx.home, ctx.cwd);
+	const { roots, warnings: rootWarnings } = await listNonVibPluginRoots(ctx.home, ctx.cwd);
 	warnings.push(...rootWarnings);
 
 	const hookTypes = ["pre", "post"] as const;
@@ -241,7 +241,7 @@ async function loadTools(ctx: LoadContext): Promise<LoadResult<CustomTool>> {
 	const items: CustomTool[] = [];
 	const warnings: string[] = [];
 
-	const { roots, warnings: rootWarnings } = await listNonGjcPluginRoots(ctx.home, ctx.cwd);
+	const { roots, warnings: rootWarnings } = await listNonVibPluginRoots(ctx.home, ctx.cwd);
 	warnings.push(...rootWarnings);
 
 	const results = await Promise.all(
@@ -278,7 +278,7 @@ async function loadMCPServers(ctx: LoadContext): Promise<LoadResult<MCPServer>> 
 	const items: MCPServer[] = [];
 	const warnings: string[] = [];
 
-	const { roots, warnings: rootWarnings } = await listNonGjcPluginRoots(ctx.home, ctx.cwd);
+	const { roots, warnings: rootWarnings } = await listNonVibPluginRoots(ctx.home, ctx.cwd);
 	warnings.push(...rootWarnings);
 
 	for (const root of roots) {
@@ -299,7 +299,7 @@ async function loadMCPServers(ctx: LoadContext): Promise<LoadResult<MCPServer>> 
 		const obj = parsed as Record<string, unknown>;
 
 		// Two shapes are supported:
-		//   nested: { "mcpServers": { name: cfg, ... } }   (GJC/Anthropic Code project shape)
+		//   nested: { "mcpServers": { name: cfg, ... } }   (Vibrato/Anthropic Code project shape)
 		//   flat:   { name: cfg, ... }                      (Anthropic model marketplace plugin shape)
 		// If "mcpServers" is present and an object, treat it as the canonical map.
 		// Otherwise, treat the whole object as the server map.
@@ -369,7 +369,7 @@ async function loadMCPServers(ctx: LoadContext): Promise<LoadResult<MCPServer>> 
 registerProvider<Skill>(skillCapability.id, {
 	id: PROVIDER_ID,
 	displayName: DISPLAY_NAME,
-	description: "Load skills from GJC marketplace plugins",
+	description: "Load skills from Vibrato marketplace plugins",
 	priority: PRIORITY,
 	load: loadSkills,
 });
@@ -377,7 +377,7 @@ registerProvider<Skill>(skillCapability.id, {
 registerProvider<SlashCommand>(slashCommandCapability.id, {
 	id: PROVIDER_ID,
 	displayName: DISPLAY_NAME,
-	description: "Load slash commands from GJC marketplace plugins",
+	description: "Load slash commands from Vibrato marketplace plugins",
 	priority: PRIORITY,
 	load: loadSlashCommands,
 });
@@ -385,7 +385,7 @@ registerProvider<SlashCommand>(slashCommandCapability.id, {
 registerProvider<Hook>(hookCapability.id, {
 	id: PROVIDER_ID,
 	displayName: DISPLAY_NAME,
-	description: "Load hooks from GJC marketplace plugins",
+	description: "Load hooks from Vibrato marketplace plugins",
 	priority: PRIORITY,
 	load: loadHooks,
 });
@@ -393,7 +393,7 @@ registerProvider<Hook>(hookCapability.id, {
 registerProvider<CustomTool>(toolCapability.id, {
 	id: PROVIDER_ID,
 	displayName: DISPLAY_NAME,
-	description: "Load custom tools from GJC marketplace plugins",
+	description: "Load custom tools from Vibrato marketplace plugins",
 	priority: PRIORITY,
 	load: loadTools,
 });

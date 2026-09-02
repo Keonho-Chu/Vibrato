@@ -6,13 +6,13 @@
  * entire history into a single summary request. On strict backends (e.g.
  * OpenAI-code/Codex `context_length_exceeded`) that request itself overflowed and
  * threw, so context-overflow recovery could not produce a summary and a
- * non-interactive `gjc -p` run terminated on the very overflow it was meant to
+ * non-interactive `vib -p` run terminated on the very overflow it was meant to
  * absorb. `boundConversationTextForSummary` caps the serialized input so the
  * summary request fits.
  */
 import { afterEach, describe, expect, it, vi } from "bun:test";
-import type { AssistantMessage, Context, Model, Usage } from "@gajae-code/ai";
-import * as ai from "@gajae-code/ai";
+import type { AssistantMessage, Context, Model, Usage } from "@vib-rato/ai";
+import * as ai from "@vib-rato/ai";
 import { boundConversationTextForSummary, generateSummary } from "../src/compaction/compaction";
 import type { AgentMessage } from "../src/types";
 

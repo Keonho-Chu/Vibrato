@@ -6,7 +6,7 @@ import { clearConfigValueCache, resolveConfigValue } from "../src/config/resolve
 
 test("isolates command cache entries by caller scope", async () => {
 	clearConfigValueCache();
-	const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-resolve-config-value-"));
+	const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-resolve-config-value-"));
 	const counterPath = path.join(tempDir, "counter");
 	await Bun.write(counterPath, "0");
 	const command = `!count=$(cat "${counterPath}"); next=$((count + 1)); printf %s "$next" > "${counterPath}"; printf %s "$next"`;

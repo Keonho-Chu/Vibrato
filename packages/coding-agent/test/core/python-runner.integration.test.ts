@@ -1,16 +1,16 @@
 /**
  * End-to-end exercise of the new subprocess-backed Python runner.
  *
- * Gated by `GJC_PYTHON_INTEGRATION=1` (or legacy `PI_PYTHON_INTEGRATION=1`)
+ * Gated by `VIB_PYTHON_INTEGRATION=1` (or legacy `PI_PYTHON_INTEGRATION=1`)
  * so CI without a real Python interpreter (or sandboxes where subprocess
  * spawning is restricted) does not fail. Either truthy name opts the tests in.
  */
 import { afterEach, describe, expect, it } from "bun:test";
 import * as path from "node:path";
-import { disposeAllKernelSessions, executePythonWithKernel } from "@gajae-code/coding-agent/eval/py/executor";
-import { PythonKernel } from "@gajae-code/coding-agent/eval/py/kernel";
-import { resolvePythonIntegrationGate } from "@gajae-code/coding-agent/tools/implementations";
-import { TempDir } from "@gajae-code/utils";
+import { disposeAllKernelSessions, executePythonWithKernel } from "@vib-rato/coding-agent/eval/py/executor";
+import { PythonKernel } from "@vib-rato/coding-agent/eval/py/kernel";
+import { resolvePythonIntegrationGate } from "@vib-rato/coding-agent/tools/implementations";
+import { TempDir } from "@vib-rato/utils";
 
 const SHOULD_RUN = resolvePythonIntegrationGate(Bun.env);
 

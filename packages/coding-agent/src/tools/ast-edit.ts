@@ -1,9 +1,9 @@
 import * as path from "node:path";
-import type { AgentTool, AgentToolContext, AgentToolResult, AgentToolUpdateCallback } from "@gajae-code/agent-core";
-import type { AstReplaceChange, AstReplaceFileChange, astEdit as astEditFn } from "@gajae-code/natives";
-import type { Component } from "@gajae-code/tui";
-import { Text } from "@gajae-code/tui";
-import { $pickenvpos, prompt, untilAborted } from "@gajae-code/utils";
+import type { AgentTool, AgentToolContext, AgentToolResult, AgentToolUpdateCallback } from "@vib-rato/agent-core";
+import type { AstReplaceChange, AstReplaceFileChange, astEdit as astEditFn } from "@vib-rato/natives";
+import type { Component } from "@vib-rato/tui";
+import { Text } from "@vib-rato/tui";
+import { $pickenvpos, prompt, untilAborted } from "@vib-rato/utils";
 import * as z from "zod/v4";
 import type { RenderResultOptions } from "../extensibility/custom-tools/types";
 import { computeLineHash, HL_BODY_SEP } from "../hashline/hash";
@@ -37,7 +37,7 @@ import { toolResult } from "./tool-result";
 let astEditLoad: Promise<typeof astEditFn> | undefined;
 
 async function astEditNative(): Promise<typeof astEditFn> {
-	astEditLoad ??= Promise.resolve((require("@gajae-code/natives") as { astEdit: typeof astEditFn }).astEdit);
+	astEditLoad ??= Promise.resolve((require("@vib-rato/natives") as { astEdit: typeof astEditFn }).astEdit);
 	return await astEditLoad;
 }
 const astEditOpSchema = z.object({
@@ -205,7 +205,7 @@ export class AstEditTool implements AgentTool<typeof astEditSchema, AstEditToolD
 				seenPatterns.add(pat);
 			}
 			const normalizedRewrites = Object.fromEntries(ops);
-			const maxFiles = $pickenvpos(["GJC_MAX_AST_FILES", "PI_MAX_AST_FILES"], 1000);
+			const maxFiles = $pickenvpos(["VIB_MAX_AST_FILES", "PI_MAX_AST_FILES"], 1000);
 
 			const scope = await resolveToolSearchScope({
 				rawPaths: params.paths,

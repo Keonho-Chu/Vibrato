@@ -7,7 +7,7 @@ import { initTheme } from "../src/modes/theme/theme";
 initTheme();
 
 describe("G006 WS6 overlay mouse red team", () => {
-	test("keeps GJC mouse ownership opt-in by default", () => {
+	test("keeps Vibrato mouse ownership opt-in by default", () => {
 		expect(SETTINGS_SCHEMA["mouse.enabled"].default).toBe(false);
 	});
 	test("transcript ignores header, out-of-bounds, and fullscreen clicks", () => {

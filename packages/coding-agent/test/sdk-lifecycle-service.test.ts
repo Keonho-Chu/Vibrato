@@ -510,7 +510,7 @@ describe("SessionLifecycleService", () => {
 		}
 	});
 	it("does not create a plain_dir before lifecycle authority validation", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-sdk-lifecycle-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-sdk-lifecycle-"));
 		const requested = path.join(root, "unauthorized");
 		try {
 			const service = new AgentDirSessionLifecycleService(root);
@@ -605,7 +605,7 @@ describe("SessionLifecycleService", () => {
 					target: {
 						sessionId: olderExact.sessionId,
 						cwd: "/workspace",
-						stateRoot: "/workspace/.gjc/state",
+						stateRoot: "/workspace/.vib/state",
 						sessionPath: olderExact.sessionStateFile,
 					},
 				}),
@@ -658,7 +658,7 @@ describe("SessionLifecycleService", () => {
 		}
 	});
 	it("validates external readiness before setup, normalizes create paths, and maps mkdir failures", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-sdk-lifecycle-external-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-sdk-lifecycle-external-"));
 		const service = new AgentDirSessionLifecycleService(root);
 		const createSpy = spyOn(service, "create").mockResolvedValue({
 			ok: true,
@@ -698,7 +698,7 @@ describe("SessionLifecycleService", () => {
 				}),
 			).resolves.toMatchObject({ ok: true });
 			expect(createSpy.mock.calls[0]?.[0]).toMatchObject({
-				target: { cwd: requested, stateRoot: path.join(requested, ".gjc", "state") },
+				target: { cwd: requested, stateRoot: path.join(requested, ".vib", "state") },
 			});
 			const createRequest = createSpy.mock.calls[0]?.[0];
 			expect(createRequest?.timeoutMs).toBe(
@@ -737,7 +737,7 @@ describe("SessionLifecycleService", () => {
 		const target: SessionReconcileUncertainTarget = {
 			sessionId: "retired-session",
 			cwd: "/tmp/workspace",
-			stateRoot: "/tmp/workspace/.gjc/state",
+			stateRoot: "/tmp/workspace/.vib/state",
 			endpointGeneration: 2,
 			endpointMtimeMs: 1,
 			processIncarnation: "linux:123",
@@ -788,7 +788,7 @@ describe("SessionLifecycleService", () => {
 			target: {
 				sessionId: "retired-session",
 				cwd: "/tmp/workspace",
-				stateRoot: "/tmp/workspace/.gjc/state",
+				stateRoot: "/tmp/workspace/.vib/state",
 				endpointGeneration: 2,
 				endpointMtimeMs: 1,
 				processIncarnation: "linux:123",
@@ -809,7 +809,7 @@ describe("SessionLifecycleService", () => {
 				retired: true,
 				ledgerState: "terminal_error",
 				indexType: "session_closed",
-				stateRoot: "/tmp/workspace/.gjc/state",
+				stateRoot: "/tmp/workspace/.vib/state",
 				endpointGeneration: 2,
 				endpointMtimeMs: 1,
 				processIncarnation: "linux:123",
@@ -825,7 +825,7 @@ describe("SessionLifecycleService", () => {
 			target: {
 				sessionId: "retired.session",
 				cwd: "/tmp/workspace/../workspace",
-				stateRoot: "/tmp/workspace/../workspace/.gjc/state",
+				stateRoot: "/tmp/workspace/../workspace/.vib/state",
 				endpointGeneration: 2,
 				endpointMtimeMs: 1,
 				processIncarnation: "linux:123",
@@ -837,7 +837,7 @@ describe("SessionLifecycleService", () => {
 		expect(result).toMatchObject({ ok: true, result: { sessionId: "retired.session" } });
 		expect(client.calls[0]?.input).toMatchObject({
 			cwd: "/tmp/workspace",
-			stateRoot: "/tmp/workspace/.gjc/state",
+			stateRoot: "/tmp/workspace/.vib/state",
 		});
 	});
 });

@@ -1,8 +1,8 @@
 # SDK
 
-For managed control and notification attachment policy, see [the Gajae-Code SDK](./sdk.md).
+For managed control and notification attachment policy, see [the Vibrato SDK](./sdk.md).
 
-The SDK is the in-process integration surface for `@gajae-code/coding-agent`.
+The SDK is the in-process integration surface for `@vib-rato/coding-agent`.
 Use it when you want direct access to agent state, event streaming, tool wiring, and session control from your own Bun/Node process.
 
 For process-isolated control, use a managed SDK-core adapter backed by `SessionRouter`; raw endpoint discovery and direct WebSocket clients are not public integration surfaces.
@@ -10,13 +10,13 @@ For process-isolated control, use a managed SDK-core adapter backed by `SessionR
 ## Installation
 
 ```bash
-bun add @gajae-code/coding-agent
+bun add @vib-rato/coding-agent
 ```
 
 
 ## Entry points
 
-`@gajae-code/coding-agent/sdk` is the canonical entry point for embedders. The package root exports the same SDK APIs for convenience.
+`@vib-rato/coding-agent/sdk` is the canonical entry point for embedders. The package root exports the same SDK APIs for convenience.
 
 Core exports for embedders:
 
@@ -32,7 +32,7 @@ Core exports for embedders:
 ## Quick start (auto-discovery defaults)
 
 ```ts
-import { createAgentSession } from "@gajae-code/coding-agent";
+import { createAgentSession } from "@vib-rato/coding-agent";
 
 const { session, modelFallbackMessage } = await createAgentSession();
 
@@ -61,7 +61,7 @@ await session.dispose();
 If omitted, it resolves:
 
 - `cwd`: `getProjectDir()`
-- `agentDir`: `~/.gjc/agent` (via `getAgentDir()`)
+- `agentDir`: `~/.vib/agent` (via `getAgentDir()`)
 - `authStorage`: `discoverAuthStorage(agentDir)`
 - `modelRegistry`: `new ModelRegistry(authStorage)` + background `refreshInBackground()` when the registry is not provided
 - `settings`: `await Settings.init({ cwd, agentDir })`
@@ -89,7 +89,7 @@ Typically you must provide only what you want to control:
 ### File-backed (default)
 
 ```ts
-import { createAgentSession, SessionManager } from "@gajae-code/coding-agent";
+import { createAgentSession, SessionManager } from "@vib-rato/coding-agent";
 
 const { session } = await createAgentSession({
   sessionManager: SessionManager.create(process.cwd()),
@@ -105,7 +105,7 @@ console.log(session.sessionFile); // absolute .jsonl path
 ### In-memory
 
 ```ts
-import { createAgentSession, SessionManager } from "@gajae-code/coding-agent";
+import { createAgentSession, SessionManager } from "@vib-rato/coding-agent";
 
 const { session } = await createAgentSession({
   sessionManager: SessionManager.inMemory(),
@@ -121,7 +121,7 @@ console.log(session.sessionFile); // undefined
 ### Resume/open/list helpers
 
 ```ts
-import { SessionManager } from "@gajae-code/coding-agent";
+import { SessionManager } from "@vib-rato/coding-agent";
 
 const recent = await SessionManager.continueRecent(process.cwd());
 const listed = await SessionManager.list(process.cwd());
@@ -140,7 +140,7 @@ import {
   discoverAuthStorage,
   ModelRegistry,
   SessionManager,
-} from "@gajae-code/coding-agent";
+} from "@vib-rato/coding-agent";
 
 const authStorage = await discoverAuthStorage();
 const modelRegistry = new ModelRegistry(authStorage);
@@ -325,7 +325,7 @@ import {
   ModelRegistry,
   SessionManager,
   Settings,
-} from "@gajae-code/coding-agent";
+} from "@vib-rato/coding-agent";
 
 const authStorage = await discoverAuthStorage();
 const modelRegistry = new ModelRegistry(authStorage);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { selectShutdownDraft } from "@gajae-code/coding-agent/modes/interactive-mode";
+import { selectShutdownDraft } from "@vib-rato/coding-agent/modes/interactive-mode";
 
 describe("/btw draft ownership", () => {
 	it("never persists a side-chat composer draft during Ctrl-D shutdown", () => {

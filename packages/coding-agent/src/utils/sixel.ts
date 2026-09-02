@@ -1,10 +1,10 @@
-import { $pickenv, $pickflag } from "@gajae-code/utils";
+import { $pickenv, $pickflag } from "@vib-rato/utils";
 
 const SIXEL_START_REGEX = /\x1bP(?:[0-9;]*)q/u;
 const SIXEL_END_SEQUENCE = "\x1b\\";
 const SIXEL_END_BELL = "\x07";
 const SIXEL_SEQUENCE_REGEX = /\x1bP(?:[0-9;]*)q[\s\S]*?(?:\x1b\\|\x07)/gu;
-const SIXEL_PLACEHOLDER_PREFIX = "__GJC_SIXEL_SEQUENCE_";
+const SIXEL_PLACEHOLDER_PREFIX = "__VIB_SIXEL_SEQUENCE_";
 
 /**
  * Returns whether SIXEL passthrough is explicitly enabled.
@@ -14,8 +14,8 @@ const SIXEL_PLACEHOLDER_PREFIX = "__GJC_SIXEL_SEQUENCE_";
  * - PI_ALLOW_SIXEL_PASSTHROUGH=1
  */
 export function isSixelPassthroughEnabled(): boolean {
-	const forcedProtocol = $pickenv("GJC_FORCE_IMAGE_PROTOCOL", "PI_FORCE_IMAGE_PROTOCOL")?.trim().toLowerCase();
-	return forcedProtocol === "sixel" && $pickflag("GJC_ALLOW_SIXEL_PASSTHROUGH", "PI_ALLOW_SIXEL_PASSTHROUGH");
+	const forcedProtocol = $pickenv("VIB_FORCE_IMAGE_PROTOCOL", "PI_FORCE_IMAGE_PROTOCOL")?.trim().toLowerCase();
+	return forcedProtocol === "sixel" && $pickflag("VIB_ALLOW_SIXEL_PASSTHROUGH", "PI_ALLOW_SIXEL_PASSTHROUGH");
 }
 /** Returns true when the text contains a SIXEL start sequence. */
 export function containsSixelSequence(text: string): boolean {
@@ -62,7 +62,7 @@ export function sanitizeWithOptionalSixelPassthrough(text: string, sanitize: (te
 	});
 
 	const sanitized = sanitize(tokenized);
-	return sanitized.replace(/__GJC_SIXEL_SEQUENCE_(\d+)__/gu, (_, indexText: string) => {
+	return sanitized.replace(/__VIB_SIXEL_SEQUENCE_(\d+)__/gu, (_, indexText: string) => {
 		const index = Number.parseInt(indexText, 10);
 		return preservedSequences[index] ?? "";
 	});

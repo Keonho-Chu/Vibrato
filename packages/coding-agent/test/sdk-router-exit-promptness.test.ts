@@ -9,7 +9,7 @@ const ROUTER_SOURCE = readFileSync(join(import.meta.dir, "../src/sdk/router/sess
 /**
  * How long a pending timer keeps this process from reaching `beforeExit`.
  *
- * A one-shot `gjc sdk` command exits once nothing holds the event loop. Any
+ * A one-shot `vib sdk` command exits once nothing holds the event loop. Any
  * timer that outlives the work it was bounding therefore turns into wall-clock
  * latency the caller pays after the response is already written, which is why
  * these tests measure loop release rather than the settle time of the race.

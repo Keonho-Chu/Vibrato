@@ -1,4 +1,4 @@
-import type { RawArgumentValidationResult } from "@gajae-code/ai/types";
+import type { RawArgumentValidationResult } from "@vib-rato/ai/types";
 import type { ToolSession } from ".";
 import { askSchema, intentContract, intentReview, recoverRoundZeroIntentContract } from "./ask-contract";
 import { validateRawTodoArguments } from "./todo-contract";

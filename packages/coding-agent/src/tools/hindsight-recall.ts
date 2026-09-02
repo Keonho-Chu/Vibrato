@@ -1,5 +1,5 @@
-import type { AgentTool, AgentToolResult } from "@gajae-code/agent-core";
-import { logger, untilAborted } from "@gajae-code/utils";
+import type { AgentTool, AgentToolResult } from "@vib-rato/agent-core";
+import { logger, untilAborted } from "@vib-rato/utils";
 import * as z from "zod/v4";
 import { formatCurrentTime, formatMemories } from "../hindsight/content";
 import recallDescription from "../prompts/tools/recall.md" with { type: "text" };

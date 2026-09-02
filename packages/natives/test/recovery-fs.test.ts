@@ -207,7 +207,7 @@ describe.skipIf(process.platform !== "linux")("native recovery filesystem author
 			code: "cleanup_pending",
 			identity: { dev: replaced.identity.dev, ino: replaced.identity.ino },
 		});
-		expect(cleanup.recoveryPath).toMatch(/^\.gjc-recovery\/\.gjc-managed-remove-/);
+		expect(cleanup.recoveryPath).toMatch(/^\.vib-recovery\/\.vib-managed-remove-/);
 		await expect(fs.access(path.join(root, cleanup.recoveryPath ?? ""))).resolves.toBeNull();
 
 		await expect(fs.access(path.join(root, "receipt"))).rejects.toThrow();
@@ -325,7 +325,7 @@ describe.skipIf(process.platform !== "linux")("native recovery filesystem author
 				rootIno: destinationSnapshot.snapshot.rootIno,
 			},
 		});
-		expect(cleanup.recoveryPath).toMatch(/^\.gjc-recovery\/\.gjc-managed-tree-remove-/);
+		expect(cleanup.recoveryPath).toMatch(/^\.vib-recovery\/\.vib-managed-tree-remove-/);
 		await expect(fs.access(path.join(retained, cleanup.recoveryPath ?? ""))).resolves.toBeNull();
 		await expect(fs.access(path.join(retained, "destination"))).rejects.toThrow();
 		expect(authority.close()).toMatchObject({ ok: true });

@@ -1,10 +1,11 @@
 /**
  * List available models with optional fuzzy search
  */
-import { type Api, getSupportedEfforts, type Model } from "@gajae-code/ai/core";
-import { fuzzyFilter } from "@gajae-code/tui";
-import { formatNumber } from "@gajae-code/utils";
+import { type Api, getSupportedEfforts, type Model } from "@vib-rato/ai/core";
+import { fuzzyFilter } from "@vib-rato/tui";
+import { formatNumber } from "@vib-rato/utils";
 import type { ModelRegistry } from "../config/model-registry";
+import { selectableModels } from "../config/provider-allowlist";
 import {
 	discoverAndLoadExtensions,
 	type ExtensionFactory,
@@ -56,7 +57,7 @@ function renderTable<T extends Record<string, string>>(rows: T[], headers: T): v
  * List available models, optionally filtered by search pattern
  */
 export async function listModels(modelRegistry: ModelRegistry, searchPattern?: string): Promise<void> {
-	const models = modelRegistry.getAvailable();
+	const models = selectableModels(modelRegistry.getAvailable());
 
 	if (models.length === 0) {
 		writeLine("No models available. Set API keys in environment variables.");

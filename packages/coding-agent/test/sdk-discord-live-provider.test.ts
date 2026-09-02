@@ -91,7 +91,7 @@ describe("DiscordLiveProvider protocol", () => {
 			request => request.path === "https://discord.test/api/channels/parent/messages/starter/threads",
 		)!;
 		expect(new Headers(starter.init.headers).get("Authorization")).toBe("Bot discord-secret-token");
-		expect(JSON.parse(String(starter.init.body))).toEqual({ content: "<!-- gjc-thread-nonce:nonce -->" });
+		expect(JSON.parse(String(starter.init.body))).toEqual({ content: "<!-- vib-thread-nonce:nonce -->" });
 		expect(String(starter.init.body)).not.toContain("discord-secret-token");
 		expect(JSON.parse(String(thread.init.body))).toEqual({ name: "Session", auto_archive_duration: 1_440 });
 		expect(String(thread.init.body)).not.toContain('"message"');
@@ -129,7 +129,7 @@ describe("DiscordLiveProvider protocol", () => {
 							? [
 									{
 										id: "starter",
-										content: "<!-- gjc-thread-nonce:nonce -->",
+										content: "<!-- vib-thread-nonce:nonce -->",
 										thread: { id: "public-thread", thread_metadata: { archived: false } },
 									},
 								]
@@ -168,14 +168,14 @@ describe("DiscordLiveProvider protocol", () => {
 			threadId: "thread",
 			content: "Choose",
 			components: [
-				{ type: 1, components: [{ type: 3, customId: "gjc:4:ask", options: [{ label: "Yes", value: "yes" }] }] },
+				{ type: 1, components: [{ type: 3, customId: "vib:4:ask", options: [{ label: "Yes", value: "yes" }] }] },
 			],
 		});
 		const payload = JSON.parse(String(requests[0]?.init.body)) as {
 			components: Array<{ components: Array<{ custom_id: string; options: Array<{ value: string }> }> }>;
 		};
 		expect(payload.components[0]?.components[0]).toMatchObject({
-			custom_id: "gjc:4:ask",
+			custom_id: "vib:4:ask",
 			options: [{ value: "yes" }],
 		});
 		await live.start(async event => {
@@ -194,14 +194,14 @@ describe("DiscordLiveProvider protocol", () => {
 				channel_id: "thread",
 				channel: { parent_id: "parent" },
 				member: { user: { id: "member" } },
-				data: { custom_id: "gjc:4:ask", values: ["yes"] },
+				data: { custom_id: "vib:4:ask", values: ["yes"] },
 			},
 		});
 		await Promise.resolve();
 		expect(events[0]?.interaction).toEqual({
 			id: "interaction",
 			token: "interaction-token",
-			customId: "gjc:4:ask",
+			customId: "vib:4:ask",
 			value: "yes",
 		});
 		await live.stop();
@@ -227,12 +227,12 @@ describe("DiscordLiveProvider protocol", () => {
 		const requests: Array<{ path: string; init: RequestInit }> = [];
 		const sockets: FakeSocket[] = [];
 		const live = provider(requests, sockets);
-		await live.postMessage({ threadId: "thread", content: "durable", nonce: "gjc-stable-nonce" });
+		await live.postMessage({ threadId: "thread", content: "durable", nonce: "vib-stable-nonce" });
 		const post = requests.find(request => request.path === "https://discord.test/api/channels/thread/messages")!;
 		expect(post.init.method).toBe("POST");
 		expect(JSON.parse(String(post.init.body))).toEqual({
 			content: "durable",
-			nonce: "gjc-stable-nonce",
+			nonce: "vib-stable-nonce",
 			enforce_nonce: true,
 		});
 	});
@@ -257,10 +257,10 @@ describe("DiscordLiveProvider protocol", () => {
 			},
 			WebSocketImpl: () => new FakeSocket(),
 		});
-		const first = await live.postMessage({ threadId: "thread", content: "durable", nonce: "gjc-stable-nonce" });
+		const first = await live.postMessage({ threadId: "thread", content: "durable", nonce: "vib-stable-nonce" });
 		for (let index = 0; index < 101; index++)
 			await live.postMessage({ threadId: "thread", content: `churn-${index}` });
-		const retried = await live.postMessage({ threadId: "thread", content: "durable", nonce: "gjc-stable-nonce" });
+		const retried = await live.postMessage({ threadId: "thread", content: "durable", nonce: "vib-stable-nonce" });
 		expect(retried).toEqual(first);
 		expect(created).toBe(102);
 		expect(requests).toHaveLength(103);
@@ -274,11 +274,11 @@ describe("DiscordLiveProvider protocol", () => {
 			apiBaseUrl: "https://discord.test/api",
 			fetchImpl: async (input, init) => {
 				requests.push({ path: String(input), init: init ?? {} });
-				return response([{ id: "accepted-message", nonce: "gjc-nonce" }]);
+				return response([{ id: "accepted-message", nonce: "vib-nonce" }]);
 			},
 			WebSocketImpl: () => new FakeSocket(),
 		});
-		expect(await live.findMessageByNonce({ threadId: "thread", nonce: "gjc-nonce" })).toEqual({
+		expect(await live.findMessageByNonce({ threadId: "thread", nonce: "vib-nonce" })).toEqual({
 			id: "accepted-message",
 		});
 		expect(await live.findMessageByNonce({ threadId: "thread", nonce: "other" })).toBeNull();
@@ -324,7 +324,7 @@ describe("DiscordLiveProvider protocol", () => {
 				channel_id: "thread",
 				channel: { parent_id: "parent" },
 				member: { user: { id: "member" } },
-				data: { custom_id: "gjc:1:ask", value: "yes" },
+				data: { custom_id: "vib:1:ask", value: "yes" },
 			},
 		});
 		await Bun.sleep(10);

@@ -1,4 +1,4 @@
-import type { Model } from "@gajae-code/ai/core";
+import type { Model } from "@vib-rato/ai/core";
 import { splitSelectorThinkingSuffix } from "../thinking";
 import { type AutoroutingEffective, type AutoroutingTier, DEFAULT_AUTOROUTING_TIER } from "./autorouting-contract";
 import { formatModelString } from "./model-resolver";

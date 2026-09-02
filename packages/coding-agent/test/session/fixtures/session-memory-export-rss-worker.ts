@@ -5,7 +5,7 @@ import { exportSessionToHtml } from "../../../src/export/html";
 import { SessionManager } from "../../../src/session/session-manager";
 
 const recordCount = 120_000;
-const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-session-memory-export-rss-"));
+const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-session-memory-export-rss-"));
 const sessionFile = path.join(root, "rss.jsonl");
 const fd = fs.openSync(sessionFile, "w", 0o600);
 const write = (value: unknown): void => {

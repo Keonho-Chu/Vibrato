@@ -1,6 +1,6 @@
-import type { AgentMessage } from "@gajae-code/agent-core";
-import { type CompactionSettings, calculatePromptTokens } from "@gajae-code/agent-core/compaction";
-import type { AssistantMessage, Usage } from "@gajae-code/ai/core";
+import type { AgentMessage } from "@vib-rato/agent-core";
+import { type CompactionSettings, calculatePromptTokens } from "@vib-rato/agent-core/compaction";
+import type { AssistantMessage, Usage } from "@vib-rato/ai/core";
 import { computeContextBreakdown } from "../../modes/utils/context-usage";
 import type { CompactionEntry, SessionEntry } from "../../session/session-manager";
 import type { SlashCommandRuntime } from "../types";

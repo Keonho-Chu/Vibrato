@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
-import { hookFetch } from "@gajae-code/utils";
+import { hookFetch } from "@vib-rato/utils";
 import type { AuthStorage } from "../../src/session/auth-storage";
 import { runSearchQuery } from "../../src/web/search/index";
 import { resolveProviderChain, setPreferredSearchProvider } from "../../src/web/search/provider";
@@ -305,7 +305,7 @@ describe("executeSearch honors the configured preferred provider", () => {
 	});
 });
 
-const RUN_LIVE_DDG_E2E = process.env.GJC_LIVE_DUCKDUCKGO_E2E === "1";
+const RUN_LIVE_DDG_E2E = process.env.VIB_LIVE_DUCKDUCKGO_E2E === "1";
 
 describe.skipIf(!RUN_LIVE_DDG_E2E)("DuckDuckGo live e2e", () => {
 	it("returns real web results without credentials", async () => {

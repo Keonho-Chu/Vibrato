@@ -3,7 +3,7 @@ import * as fs from "node:fs";
 import * as fsPromises from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 
 import { brokerProcessIncarnation, writeBrokerDiscovery } from "../src/sdk/broker/discovery";
 import { SessionIndex } from "../src/sdk/broker/session-index";
@@ -82,10 +82,10 @@ async function routerFixture(
 		indexedRepo?: string;
 	} = {},
 ): Promise<RouterFixture> {
-	const repo = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-router-authority-"));
+	const repo = fs.mkdtempSync(path.join(os.tmpdir(), "vib-router-authority-"));
 	tempDirs.push(repo);
-	const agentDir = path.join(repo, ".gjc", "agent");
-	const stateRoot = path.join(repo, ".gjc", "state");
+	const agentDir = path.join(repo, ".vib", "agent");
+	const stateRoot = path.join(repo, ".vib", "state");
 	const sessionId = "router-session";
 	const endpointDir = path.join(stateRoot, "sdk");
 	const endpointFile = path.join(endpointDir, `${sessionId}.json`);
@@ -261,10 +261,10 @@ interface HungRouterFixture {
 }
 
 function hungRouterFixture(): HungRouterFixture {
-	const repo = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-router-hung-"));
+	const repo = fs.mkdtempSync(path.join(os.tmpdir(), "vib-router-hung-"));
 	tempDirs.push(repo);
-	const agentDir = path.join(repo, ".gjc", "agent");
-	const stateRoot = path.join(repo, ".gjc", "state");
+	const agentDir = path.join(repo, ".vib", "agent");
+	const stateRoot = path.join(repo, ".vib", "state");
 	const endpointDir = path.join(stateRoot, "sdk");
 	fs.mkdirSync(endpointDir, { recursive: true });
 	const indexed = [
@@ -351,11 +351,11 @@ function hungRouterFixture(): HungRouterFixture {
 
 describe("SessionRouter dispatch authority", () => {
 	test("withholds publication for two current state roots until one resolves", async () => {
-		const repo = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-router-ambiguous-"));
+		const repo = fs.mkdtempSync(path.join(os.tmpdir(), "vib-router-ambiguous-"));
 		tempDirs.push(repo);
-		const agentDir = path.join(repo, ".gjc", "agent");
-		const stateRoot = path.join(repo, ".gjc", "state");
-		const alternateStateRoot = path.join(repo, ".gjc", "alternate-state");
+		const agentDir = path.join(repo, ".vib", "agent");
+		const stateRoot = path.join(repo, ".vib", "state");
+		const alternateStateRoot = path.join(repo, ".vib", "alternate-state");
 		const sessionId = "router-ambiguous";
 		const endpointPath = path.join(stateRoot, "sdk", `${sessionId}.json`);
 		fs.mkdirSync(path.dirname(endpointPath), { recursive: true });
@@ -437,12 +437,12 @@ describe("SessionRouter dispatch authority", () => {
 		}
 	});
 	test("publishes the lower-generation root after the higher-generation root terminates", async () => {
-		const repo = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-router-ambiguous-reverse-"));
+		const repo = fs.mkdtempSync(path.join(os.tmpdir(), "vib-router-ambiguous-reverse-"));
 		tempDirs.push(repo);
-		const agentDir = path.join(repo, ".gjc", "agent");
+		const agentDir = path.join(repo, ".vib", "agent");
 		const alternateRepo = path.join(repo, "alternate-worktree");
-		const alternateStateRoot = path.join(alternateRepo, ".gjc", "state");
-		const currentStateRoot = path.join(repo, ".gjc", "state");
+		const alternateStateRoot = path.join(alternateRepo, ".vib", "state");
+		const currentStateRoot = path.join(repo, ".vib", "state");
 		const sessionId = "router-ambiguous-reverse";
 		const endpointPath = path.join(alternateStateRoot, "sdk", `${sessionId}.json`);
 		fs.mkdirSync(path.dirname(endpointPath), { recursive: true });
@@ -521,10 +521,10 @@ describe("SessionRouter dispatch authority", () => {
 		}
 	});
 	test("contains an unreachable indexed endpoint while attaching healthy sessions", async () => {
-		const repo = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-router-reconcile-"));
+		const repo = fs.mkdtempSync(path.join(os.tmpdir(), "vib-router-reconcile-"));
 		tempDirs.push(repo);
-		const agentDir = path.join(repo, ".gjc", "agent");
-		const stateRoot = path.join(repo, ".gjc", "state");
+		const agentDir = path.join(repo, ".vib", "agent");
+		const stateRoot = path.join(repo, ".vib", "state");
 		const endpointDir = path.join(stateRoot, "sdk");
 		fs.mkdirSync(endpointDir, { recursive: true });
 		const indexed = [
@@ -1576,7 +1576,7 @@ describe("SessionRouter dispatch authority", () => {
 		// physical path, because the host derives it from process.cwd(), which
 		// resolves symlinks. A lexical scope test rejects every symlinked cwd and
 		// the attachment can never be published.
-		const linkParent = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-router-symlink-"));
+		const linkParent = fs.mkdtempSync(path.join(os.tmpdir(), "vib-router-symlink-"));
 		tempDirs.push(linkParent);
 		let readyCount = 0;
 		const fixture = await routerFixture({
@@ -1621,7 +1621,7 @@ describe("SessionRouter dispatch authority", () => {
 		});
 		const incarnation = brokerProcessIncarnation(process.pid);
 		if (!incarnation) throw new Error("Test process incarnation is unavailable.");
-		await writeBrokerDiscovery(path.join(fixture.repo, ".gjc", "agent"), {
+		await writeBrokerDiscovery(path.join(fixture.repo, ".vib", "agent"), {
 			version: SDK_STATE_VERSION,
 			protocolVersion: 3,
 			packageGeneration: "router-test",
@@ -1867,10 +1867,10 @@ describe("SessionRouter dispatch authority", () => {
 		// was awaited inside the serialized reconcile tail, so every later tick
 		// froze until the replay budget expired; publications died while leases
 		// and inbound stayed green (#4527).
-		const repo = await fsPromises.mkdtemp(path.join(os.tmpdir(), "gjc-router-4527-"));
+		const repo = await fsPromises.mkdtemp(path.join(os.tmpdir(), "vib-router-4527-"));
 		tempDirs.push(repo);
-		const agentDir = path.join(repo, ".gjc", "agent");
-		const stateRoot = path.join(repo, ".gjc", "state");
+		const agentDir = path.join(repo, ".vib", "agent");
+		const stateRoot = path.join(repo, ".vib", "state");
 		const endpointDir = path.join(stateRoot, "sdk");
 		await fsPromises.mkdir(endpointDir, { recursive: true });
 		const sessionId = "wedge";
@@ -1987,13 +1987,13 @@ describe("SessionRouter dispatch authority", () => {
 		// nothing. On the transport's 10s default this attach-path replay made
 		// start() the sum of every such session's budget -- four 10s timeouts plus
 		// backoff, measured at 40.7s of a 40.9s startup for ONE host -- so
-		// `gjc sdk session list` died on its own 10s startup budget while the other
+		// `vib sdk session list` died on its own 10s startup budget while the other
 		// attachments were already live. `start()` must bound the initial pass and
 		// leave the stragglers to the periodic tick.
-		const repo = await fsPromises.mkdtemp(path.join(os.tmpdir(), "gjc-router-start-wedge-"));
+		const repo = await fsPromises.mkdtemp(path.join(os.tmpdir(), "vib-router-start-wedge-"));
 		tempDirs.push(repo);
-		const agentDir = path.join(repo, ".gjc", "agent");
-		const stateRoot = path.join(repo, ".gjc", "state");
+		const agentDir = path.join(repo, ".vib", "agent");
+		const stateRoot = path.join(repo, ".vib", "state");
 		const endpointDir = path.join(stateRoot, "sdk");
 		await fsPromises.mkdir(endpointDir, { recursive: true });
 		const wedged = "start-wedged";
@@ -2086,10 +2086,10 @@ describe("SessionRouter dispatch authority", () => {
 		// never answered within its budget. The retry ladder used to multiply that
 		// one budget by four against a host that cannot answer any of them. One
 		// attempt fails the barrier; the periodic tick owns the retry.
-		const repo = await fsPromises.mkdtemp(path.join(os.tmpdir(), "gjc-router-replay-nodup-"));
+		const repo = await fsPromises.mkdtemp(path.join(os.tmpdir(), "vib-router-replay-nodup-"));
 		tempDirs.push(repo);
-		const agentDir = path.join(repo, ".gjc", "agent");
-		const stateRoot = path.join(repo, ".gjc", "state");
+		const agentDir = path.join(repo, ".vib", "agent");
+		const stateRoot = path.join(repo, ".vib", "state");
 		const endpointDir = path.join(stateRoot, "sdk");
 		await fsPromises.mkdir(endpointDir, { recursive: true });
 		const sessionId = "replay-unanswered";
@@ -2190,10 +2190,10 @@ describe("SessionRouter dispatch authority", () => {
 		// burning CPU proportional to total index history per live session. The
 		// polling path now goes through refreshIfChanged and must leave open()
 		// untouched across ticks, while prompts keep working.
-		const repo = await fsPromises.mkdtemp(path.join(os.tmpdir(), "gjc-router-4689-"));
+		const repo = await fsPromises.mkdtemp(path.join(os.tmpdir(), "vib-router-4689-"));
 		tempDirs.push(repo);
-		const agentDir = path.join(repo, ".gjc", "agent");
-		const stateRoot = path.join(repo, ".gjc", "state");
+		const agentDir = path.join(repo, ".vib", "agent");
+		const stateRoot = path.join(repo, ".vib", "state");
 		const endpointDir = path.join(stateRoot, "sdk");
 		await fsPromises.mkdir(endpointDir, { recursive: true });
 		const sessionId = "idle-poll";
@@ -2305,10 +2305,10 @@ describe("SessionRouter dispatch authority", () => {
 	test("idle sweep reruns the reconcile body without an index change (#4689)", async () => {
 		// The gate must not park time-driven work forever: with the sweep due,
 		// a tick runs the full body again even though the index is unchanged.
-		const repo = await fsPromises.mkdtemp(path.join(os.tmpdir(), "gjc-router-4689-sweep-"));
+		const repo = await fsPromises.mkdtemp(path.join(os.tmpdir(), "vib-router-4689-sweep-"));
 		tempDirs.push(repo);
-		const agentDir = path.join(repo, ".gjc", "agent");
-		const stateRoot = path.join(repo, ".gjc", "state");
+		const agentDir = path.join(repo, ".vib", "agent");
+		const stateRoot = path.join(repo, ".vib", "state");
 		const endpointDir = path.join(stateRoot, "sdk");
 		await fsPromises.mkdir(endpointDir, { recursive: true });
 		const sessionId = "sweep";
@@ -2387,10 +2387,10 @@ describe("SessionRouter dispatch authority", () => {
 		// endpoint with identical bytes in that window matches url/token/pid at the
 		// commit point, so only the proven inode can reject it. This exercises the
 		// validation-to-publication window specifically.
-		const repo = await fsPromises.mkdtemp(path.join(os.tmpdir(), "gjc-router-4730-publishwin-"));
+		const repo = await fsPromises.mkdtemp(path.join(os.tmpdir(), "vib-router-4730-publishwin-"));
 		tempDirs.push(repo);
-		const agentDir = path.join(repo, ".gjc", "agent");
-		const stateRoot = path.join(repo, ".gjc", "state");
+		const agentDir = path.join(repo, ".vib", "agent");
+		const stateRoot = path.join(repo, ".vib", "state");
 		const endpointDir = path.join(stateRoot, "sdk");
 		await fsPromises.mkdir(endpointDir, { recursive: true });
 		const sessionId = "publish-window";
@@ -2486,10 +2486,10 @@ describe("SessionRouter dispatch authority", () => {
 		// not keep the old attachment authorized: mtime is not a replacement-safe
 		// identity. The inode is, so a rename-replace under the heartbeat has to
 		// fail closed rather than renew a lease against a superseded endpoint.
-		const repo = await fsPromises.mkdtemp(path.join(os.tmpdir(), "gjc-router-4730-hbrepl-"));
+		const repo = await fsPromises.mkdtemp(path.join(os.tmpdir(), "vib-router-4730-hbrepl-"));
 		tempDirs.push(repo);
-		const agentDir = path.join(repo, ".gjc", "agent");
-		const stateRoot = path.join(repo, ".gjc", "state");
+		const agentDir = path.join(repo, ".vib", "agent");
+		const stateRoot = path.join(repo, ".vib", "state");
 		const endpointDir = path.join(stateRoot, "sdk");
 		await fsPromises.mkdir(endpointDir, { recursive: true });
 		const sessionId = "hb-replaced";
@@ -2632,10 +2632,10 @@ describe("SessionRouter dispatch authority", () => {
 		// must actually be retired. Drive dead-PID and not-live transitions on an
 		// otherwise unchanged index and assert the attachment is dropped.
 		for (const transition of ["dead-pid", "not-live"] as const) {
-			const repo = await fsPromises.mkdtemp(path.join(os.tmpdir(), "gjc-router-4689-retire-"));
+			const repo = await fsPromises.mkdtemp(path.join(os.tmpdir(), "vib-router-4689-retire-"));
 			tempDirs.push(repo);
-			const agentDir = path.join(repo, ".gjc", "agent");
-			const stateRoot = path.join(repo, ".gjc", "state");
+			const agentDir = path.join(repo, ".vib", "agent");
+			const stateRoot = path.join(repo, ".vib", "state");
 			const endpointDir = path.join(stateRoot, "sdk");
 			await fsPromises.mkdir(endpointDir, { recursive: true });
 			const sessionId = "retire";
@@ -2715,10 +2715,10 @@ describe("SessionRouter dispatch authority", () => {
 		// tick() queues an unforced timer pass; a request arriving before it
 		// starts must escalate that pass instead of dispatching behind an
 		// idle-gated one.
-		const repo = await fsPromises.mkdtemp(path.join(os.tmpdir(), "gjc-router-4689-force-"));
+		const repo = await fsPromises.mkdtemp(path.join(os.tmpdir(), "vib-router-4689-force-"));
 		tempDirs.push(repo);
-		const agentDir = path.join(repo, ".gjc", "agent");
-		const stateRoot = path.join(repo, ".gjc", "state");
+		const agentDir = path.join(repo, ".vib", "agent");
+		const stateRoot = path.join(repo, ".vib", "state");
 		const endpointDir = path.join(stateRoot, "sdk");
 		await fsPromises.mkdir(endpointDir, { recursive: true });
 		const sessionId = "force-escalation";
@@ -2789,10 +2789,10 @@ describe("SessionRouter dispatch authority", () => {
 		}
 	});
 	test("a live session whose attach failed is retried on the next tick, not the sweep (#4689 review)", async () => {
-		const repo = await fsPromises.mkdtemp(path.join(os.tmpdir(), "gjc-router-4689-retry-"));
+		const repo = await fsPromises.mkdtemp(path.join(os.tmpdir(), "vib-router-4689-retry-"));
 		tempDirs.push(repo);
-		const agentDir = path.join(repo, ".gjc", "agent");
-		const stateRoot = path.join(repo, ".gjc", "state");
+		const agentDir = path.join(repo, ".vib", "agent");
+		const stateRoot = path.join(repo, ".vib", "state");
 		const endpointDir = path.join(stateRoot, "sdk");
 		await fsPromises.mkdir(endpointDir, { recursive: true });
 		const sessionId = "retry-latch";
@@ -2872,10 +2872,10 @@ describe("SessionRouter dispatch authority", () => {
 		}
 	});
 	test("sendMaintenance emits exactly a provider heartbeat without reconciling (#4689 review)", async () => {
-		const repo = await fsPromises.mkdtemp(path.join(os.tmpdir(), "gjc-router-4689-hb-"));
+		const repo = await fsPromises.mkdtemp(path.join(os.tmpdir(), "vib-router-4689-hb-"));
 		tempDirs.push(repo);
-		const agentDir = path.join(repo, ".gjc", "agent");
-		const stateRoot = path.join(repo, ".gjc", "state");
+		const agentDir = path.join(repo, ".vib", "agent");
+		const stateRoot = path.join(repo, ".vib", "state");
 		const endpointDir = path.join(stateRoot, "sdk");
 		await fsPromises.mkdir(endpointDir, { recursive: true });
 		const sessionId = "heartbeat-shape";

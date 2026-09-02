@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as path from "node:path";
-import { createLspWritethrough, writethroughNoop } from "@gajae-code/coding-agent/lsp";
-import * as lspConfig from "@gajae-code/coding-agent/lsp/config";
-import { TempDir } from "@gajae-code/utils";
+import { createLspWritethrough, writethroughNoop } from "@vib-rato/coding-agent/lsp";
+import * as lspConfig from "@vib-rato/coding-agent/lsp/config";
+import { TempDir } from "@vib-rato/utils";
 import type { ServerConfig } from "../../src/lsp/types";
 import * as atomicFileWrite from "../../src/tools/atomic-file-write";
 import { FileWriteNotPublishedError } from "../../src/tools/atomic-file-write";
@@ -11,7 +11,7 @@ describe("createLspWritethrough batching", () => {
 	let tempDir: TempDir;
 
 	beforeEach(() => {
-		tempDir = TempDir.createSync("@gjc-lsp-batch-");
+		tempDir = TempDir.createSync("@vib-lsp-batch-");
 	});
 
 	afterEach(() => {

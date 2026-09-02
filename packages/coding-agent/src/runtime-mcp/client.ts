@@ -7,7 +7,7 @@
  */
 import * as path from "node:path";
 import * as url from "node:url";
-import { getProjectDir, logger, withTimeout } from "@gajae-code/utils";
+import { getProjectDir, logger, withTimeout } from "@vib-rato/utils";
 import {
 	buildXMcpParamHeaders,
 	classifyMcpProbeFailure,
@@ -64,7 +64,7 @@ const MAX_PAGINATION_PAGES = 100,
 
 /** Client info sent during initialization */
 const CLIENT_INFO = {
-	name: "gjc-coding-agent",
+	name: "vib-coding-agent",
 	version: "1.0.0",
 };
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -253,7 +253,7 @@ function buildModernClientContext(options?: { advertiseRoots?: boolean }): MCPMo
 	const capabilities: Record<string, unknown> = {};
 	if (options?.advertiseRoots !== false) {
 		capabilities.roots = { listChanged: true };
-		// Form-mode elicitation is bridged to GJC's structured ask surface (MRTR).
+		// Form-mode elicitation is bridged to Vibrato's structured ask surface (MRTR).
 		capabilities.elicitation = { form: {} };
 	}
 	return {

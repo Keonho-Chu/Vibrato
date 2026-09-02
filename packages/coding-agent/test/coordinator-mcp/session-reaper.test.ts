@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "bun:test";
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 import {
 	createSessionReaper,
 	type ReapableSession,

@@ -1,9 +1,9 @@
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { AgentTool, AgentToolContext, AgentToolResult, AgentToolUpdateCallback } from "@gajae-code/agent-core";
-import type { ImageContent } from "@gajae-code/ai/core";
-import { prompt } from "@gajae-code/utils";
+import type { AgentTool, AgentToolContext, AgentToolResult, AgentToolUpdateCallback } from "@vib-rato/agent-core";
+import type { ImageContent } from "@vib-rato/ai/core";
+import { prompt } from "@vib-rato/utils";
 import * as z from "zod/v4";
 import computerDescription from "../prompts/tools/computer.md" with { type: "text" };
 import { formatDimensionNote, resizeImage } from "../utils/image-resize";
@@ -211,9 +211,9 @@ const NATIVE_ERROR_CODES = new Set([
 ]);
 
 function createNativeComputerController(): NativeController {
-	const natives = require("@gajae-code/natives") as { ComputerController?: new () => NativeController };
+	const natives = require("@vib-rato/natives") as { ComputerController?: new () => NativeController };
 	if (!natives.ComputerController) {
-		throw new ToolError("ComputerController is unavailable in @gajae-code/natives.", {
+		throw new ToolError("ComputerController is unavailable in @vib-rato/natives.", {
 			code: "COMPUTER_UNAVAILABLE",
 		});
 	}
@@ -1058,7 +1058,7 @@ function getScreenshotFallbackDir(session: ToolSession): Promise<string> {
 }
 
 async function createScreenshotFallbackDir(): Promise<string> {
-	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-computer-screenshots-"));
+	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-computer-screenshots-"));
 	await fs.chmod(dir, 0o700);
 	markScreenshotFallbackDirCreatedForGc();
 	return dir;
@@ -1120,7 +1120,7 @@ function mapComputerError(error: unknown, hotkey?: string): { code: string; mess
 		COMPUTER_SUSPENDED: `Stop and wait for the user${hotkey ? ` (kill-switch hotkey: ${hotkey})` : ""}.`,
 		COMPUTER_CANCELLED: `Stop and wait for the user${hotkey ? ` (kill-switch hotkey: ${hotkey})` : ""}.`,
 		COMPUTER_PERMISSION_REQUIRED:
-			"Grant Screen & System Audio Recording or Accessibility to the exact GJC launcher named in the diagnostic, then fully quit and relaunch GJC.",
+			"Grant Screen & System Audio Recording or Accessibility to the exact Vibrato launcher named in the diagnostic, then fully quit and relaunch Vibrato.",
 		COMPUTER_DISABLED:
 			"The computer tool is disabled or unsupported. Do not retry without enabling it on Apple Silicon macOS.",
 		COMPUTER_SCREENSHOT_FAILED:

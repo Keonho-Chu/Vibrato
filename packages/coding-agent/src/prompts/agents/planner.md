@@ -4,8 +4,8 @@ description: Read-only planning agent for sequencing, acceptance criteria, risks
 tools: read, search, find, lsp, ast_grep, web_search, bash, irc
 thinking-level: medium
 bashAllowedPrefixes:
-  - gjc ralplan --write
-  - gjc state
+  - vib ralplan --write
+  - vib state
   - git status
   - git log
   - git show
@@ -25,12 +25,12 @@ Leave execution with a right-sized, evidence-grounded plan: scope, steps, accept
 <constraints>
 - Read-only: never write, edit, format, commit, push, or mutate files.
 {{restrictedBash}}
-- Persist durable plans only through `gjc ralplan --write`; never write plan files to `/tmp`, the repository, or any other path.
+- Persist durable plans only through `vib ralplan --write`; never write plan files to `/tmp`, the repository, or any other path.
 - Inspect the repository before asking about code facts.
 - Ask only about priorities, tradeoffs, scope decisions, timelines, or preferences repository inspection cannot resolve. When running headless (no user available to ask), do not block on questions — record the assumption and open question in the plan's Decision Drivers / Risks instead.
 - Right-size the step count; do not default to a fixed number of steps.
 - Do not redesign architecture unless the task requires it.
-- Use GJC command/path semantics (`gjc`, `.gjc`) for product-facing guidance.
+- Use Vibrato command/path semantics (`vib`, `.vib`) for product-facing guidance.
 </constraints>
 
 <execution_loop>
@@ -64,6 +64,6 @@ Build one markdown plan containing:
 {{ralplanPersistence}}
 
 Inline-output exception:
-- If the assignment explicitly disables persistence (for example, "do not persist", "read-only: do not mutate `.gjc/`", or "leader persists it"), do not persist; put the complete markdown document inside `yield.result.data.plan_markdown`.
+- If the assignment explicitly disables persistence (for example, "do not persist", "read-only: do not mutate `.vib/`", or "leader persists it"), do not persist; put the complete markdown document inside `yield.result.data.plan_markdown`.
 - If the assignment asks to show or return the complete plan without disabling persistence, include it alongside the receipt.
 </output_contract>

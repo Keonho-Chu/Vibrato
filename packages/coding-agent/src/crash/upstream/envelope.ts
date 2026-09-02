@@ -80,7 +80,7 @@ export function newSentryEventId(): string {
 
 /** Build the exact auth header used for the hand-rolled envelope POST. */
 export function sentryAuthHeader(dsn: SentryDsn, clientVersion: string): string {
-	return `Sentry sentry_version=7, sentry_client=gjc.crash-relay/${clientVersion}, sentry_key=${dsn.publicKey}`;
+	return `Sentry sentry_version=7, sentry_client=vib.crash-relay/${clientVersion}, sentry_key=${dsn.publicKey}`;
 }
 
 /**
@@ -118,7 +118,7 @@ export function buildCrashEnvelope(input: BuildCrashEnvelopeInput): BuildCrashEn
 		timestamp: coarseTimestamp,
 		platform: "node",
 		level: input.level ?? "fatal",
-		logger: "gjc.crash",
+		logger: "vib.crash",
 		release: input.release,
 		environment: "production",
 		fingerprint: [input.fingerprint],
@@ -132,13 +132,13 @@ export function buildCrashEnvelope(input: BuildCrashEnvelopeInput): BuildCrashEn
 			],
 		},
 		tags: {
-			"gjc.fingerprint": input.fingerprint,
-			"gjc.fpv": "1",
-			"gjc.platform": input.platform,
+			"vib.fingerprint": input.fingerprint,
+			"vib.fpv": "1",
+			"vib.platform": input.platform,
 			bun: input.bunVersion,
 		},
 		extra: { lifetimeCount: input.lifetimeCount, firstSeen, lastSeen },
-		sdk: { name: "gjc.crash-relay", version: input.release },
+		sdk: { name: "vib.crash-relay", version: input.release },
 	});
 	const itemHeader = JSON.stringify({
 		type: "event",

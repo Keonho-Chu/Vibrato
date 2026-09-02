@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "bun:test";
-import { Agent } from "@gajae-code/agent-core";
-import { agentLoop } from "@gajae-code/agent-core/agent-loop";
+import { Agent } from "@vib-rato/agent-core";
+import { agentLoop } from "@vib-rato/agent-core/agent-loop";
 import type {
 	AgentContext,
 	AgentEvent,
@@ -8,12 +8,12 @@ import type {
 	AgentMessage,
 	AgentTool,
 	ManagedAttemptOutcome,
-} from "@gajae-code/agent-core/types";
-import type { AssistantMessage, Message, ToolCall } from "@gajae-code/ai";
-import { createMockModel } from "@gajae-code/ai/providers/mock";
-import { AssistantMessageEventStream } from "@gajae-code/ai/utils/event-stream";
-import { captureUnicodeEscapeEvidence, collectUnicodeEscapeEvidence } from "@gajae-code/ai/utils/json-parse";
-import * as logger from "@gajae-code/utils/logger";
+} from "@vib-rato/agent-core/types";
+import type { AssistantMessage, Message, ToolCall } from "@vib-rato/ai";
+import { createMockModel } from "@vib-rato/ai/providers/mock";
+import { AssistantMessageEventStream } from "@vib-rato/ai/utils/event-stream";
+import { captureUnicodeEscapeEvidence, collectUnicodeEscapeEvidence } from "@vib-rato/ai/utils/json-parse";
+import * as logger from "@vib-rato/utils/logger";
 import * as z from "zod/v4";
 import { createUserMessage } from "./helpers";
 

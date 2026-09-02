@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { resetSettingsForTest, Settings } from "@gajae-code/coding-agent/config/settings";
+import { resetSettingsForTest, Settings } from "@vib-rato/coding-agent/config/settings";
 import {
 	reconcileSettingsSchema,
 	type SettingPath,
 	validateSettingPatch,
-} from "@gajae-code/coding-agent/config/settings-schema";
-import { EditTool } from "@gajae-code/coding-agent/edit";
-import type { ToolSession } from "@gajae-code/coding-agent/tools";
+} from "@vib-rato/coding-agent/config/settings-schema";
+import { EditTool } from "@vib-rato/coding-agent/edit";
+import type { ToolSession } from "@vib-rato/coding-agent/tools";
 import {
 	DEFAULT_EDIT_MODE,
 	detectModelEditFamily,
@@ -16,23 +16,23 @@ import {
 	resolveEditMode,
 	resolveEditModeDetails,
 	resolveForcedEnvEditMode,
-} from "@gajae-code/coding-agent/utils/edit-mode";
+} from "@vib-rato/coding-agent/utils/edit-mode";
 
 // ─── Env isolation ───────────────────────────────────────────────────────────
 
-let savedGjcVariant: string | undefined;
+let savedVibVariant: string | undefined;
 let savedPiVariant: string | undefined;
 
 beforeEach(() => {
-	savedGjcVariant = Bun.env.GJC_EDIT_VARIANT;
+	savedVibVariant = Bun.env.VIB_EDIT_VARIANT;
 	savedPiVariant = Bun.env.PI_EDIT_VARIANT;
-	delete Bun.env.GJC_EDIT_VARIANT;
+	delete Bun.env.VIB_EDIT_VARIANT;
 	delete Bun.env.PI_EDIT_VARIANT;
 });
 
 afterEach(() => {
-	if (savedGjcVariant === undefined) delete Bun.env.GJC_EDIT_VARIANT;
-	else Bun.env.GJC_EDIT_VARIANT = savedGjcVariant;
+	if (savedVibVariant === undefined) delete Bun.env.VIB_EDIT_VARIANT;
+	else Bun.env.VIB_EDIT_VARIANT = savedVibVariant;
 	if (savedPiVariant === undefined) delete Bun.env.PI_EDIT_VARIANT;
 	else Bun.env.PI_EDIT_VARIANT = savedPiVariant;
 	resetSettingsForTest();
@@ -119,7 +119,7 @@ describe("detectModelEditFamily", () => {
 
 describe("resolveEditModeDetails precedence", () => {
 	test("environment force beats every other source", () => {
-		Bun.env.GJC_EDIT_VARIANT = "vim";
+		Bun.env.VIB_EDIT_VARIANT = "vim";
 		const session = makeSession({
 			editMode: "replace",
 			modelVariants: { "gpt-5.4": "hashline" },
@@ -138,8 +138,8 @@ describe("resolveEditModeDetails precedence", () => {
 		expect(details.source).toBe("environment");
 	});
 
-	test("GJC_EDIT_VARIANT=auto means not forced", () => {
-		Bun.env.GJC_EDIT_VARIANT = "auto";
+	test("VIB_EDIT_VARIANT=auto means not forced", () => {
+		Bun.env.VIB_EDIT_VARIANT = "auto";
 		expect(resolveForcedEnvEditMode()).toBeUndefined();
 		expect(resolveEditMode(makeSession({ model: "openai/gpt-5.4" }))).toBe("apply_patch");
 	});
@@ -208,17 +208,17 @@ describe("resolveEditModeDetails precedence", () => {
 	});
 
 	test("invalid environment value fails fast", () => {
-		Bun.env.GJC_EDIT_VARIANT = "definitely-not-a-mode";
-		expect(() => resolveEditMode(makeSession({ model: "openai/gpt-5.4" }))).toThrow(/Invalid GJC_EDIT_VARIANT/);
+		Bun.env.VIB_EDIT_VARIANT = "definitely-not-a-mode";
+		expect(() => resolveEditMode(makeSession({ model: "openai/gpt-5.4" }))).toThrow(/Invalid VIB_EDIT_VARIANT/);
 	});
 
 	test.each([
 		"toString",
 		"constructor",
 		"__proto__",
-	])("rejects inherited property name %s in GJC_EDIT_VARIANT", value => {
-		Bun.env.GJC_EDIT_VARIANT = value;
-		expect(() => resolveEditMode(makeSession({ model: "openai/gpt-5.4" }))).toThrow(/Invalid GJC_EDIT_VARIANT/);
+	])("rejects inherited property name %s in VIB_EDIT_VARIANT", value => {
+		Bun.env.VIB_EDIT_VARIANT = value;
+		expect(() => resolveEditMode(makeSession({ model: "openai/gpt-5.4" }))).toThrow(/Invalid VIB_EDIT_VARIANT/);
 	});
 
 	test("invalid matched model override fails closed", () => {
@@ -372,7 +372,7 @@ describe("EditTool automatic routing", () => {
 	});
 
 	test("environment force pins the tool across model switches", () => {
-		Bun.env.GJC_EDIT_VARIANT = "hashline";
+		Bun.env.VIB_EDIT_VARIANT = "hashline";
 		let model = "anthropic/claude-sonnet-4-6";
 		const tool = new EditTool(makeToolSession(() => model));
 		expect(tool.mode).toBe("hashline");
@@ -381,7 +381,7 @@ describe("EditTool automatic routing", () => {
 	});
 
 	test("invalid env variant fails fast at construction", () => {
-		Bun.env.GJC_EDIT_VARIANT = "atom";
-		expect(() => new EditTool(makeToolSession(() => undefined))).toThrow(/Invalid GJC_EDIT_VARIANT/);
+		Bun.env.VIB_EDIT_VARIANT = "atom";
+		expect(() => new EditTool(makeToolSession(() => undefined))).toThrow(/Invalid VIB_EDIT_VARIANT/);
 	});
 });

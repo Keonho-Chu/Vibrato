@@ -1,4 +1,4 @@
-import { replaceTabs, truncateToWidth } from "@gajae-code/tui";
+import { replaceTabs, truncateToWidth } from "@vib-rato/tui";
 import {
 	AUTOROUTING_TIERS,
 	type AutoroutingEffective,

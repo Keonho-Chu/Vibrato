@@ -15,13 +15,13 @@ import {
 // none is resolvable, so they never fail Chromium-less CI environments.
 function chromiumAvailable(): boolean {
 	if (process.env.PUPPETEER_EXECUTABLE_PATH) return true;
-	const cache = path.join(os.homedir(), ".gjc", "puppeteer", "chrome");
+	const cache = path.join(os.homedir(), ".vib", "puppeteer", "chrome");
 	let available = false;
 	try {
 		available = fs.existsSync(cache) && fs.readdirSync(cache).length > 0;
 	} catch {}
-	if (!available && process.env.GJC_REQUIRE_CHROMIUM === "1") {
-		throw new Error("GJC_REQUIRE_CHROMIUM=1 requires a resolvable Chromium executable");
+	if (!available && process.env.VIB_REQUIRE_CHROMIUM === "1") {
+		throw new Error("VIB_REQUIRE_CHROMIUM=1 requires a resolvable Chromium executable");
 	}
 	return available;
 }

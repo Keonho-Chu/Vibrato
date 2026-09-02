@@ -1,8 +1,8 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "bun:test";
 import { stripVTControlCharacters } from "node:util";
-import { resetSettingsForTest, Settings, settings } from "@gajae-code/coding-agent/config/settings";
-import { SettingsSelectorComponent } from "@gajae-code/coding-agent/modes/components/settings-selector";
-import { initTheme } from "@gajae-code/coding-agent/modes/theme/theme";
+import { resetSettingsForTest, Settings, settings } from "@vib-rato/coding-agent/config/settings";
+import { SettingsSelectorComponent } from "@vib-rato/coding-agent/modes/components/settings-selector";
+import { initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
 
 beforeAll(async () => {
 	await initTheme();
@@ -45,7 +45,7 @@ function openPetSetting(component: SettingsSelectorComponent): void {
 		}
 		component.handleInput("\x1b[B");
 	}
-	throw new Error("Gajae Pet setting was not reachable");
+	throw new Error("Vibrato Pet setting was not reachable");
 }
 
 describe("SettingsSelectorComponent pet capability", () => {
@@ -62,10 +62,10 @@ describe("SettingsSelectorComponent pet capability", () => {
 
 		openPetSetting(component);
 		const submenu = stripVTControlCharacters(component.render(80).join("\n"));
-		expect(submenu).toContain("RedGajae");
-		expect(submenu).toContain("BlueGajae");
+		expect(submenu).toContain("RedVibrato");
+		expect(submenu).toContain("BlueVibrato");
 		expect(submenu).toContain("Ouroboros");
-		expect(stripVTControlCharacters(component.render(40).join("\n"))).toContain("RedGajae");
+		expect(stripVTControlCharacters(component.render(40).join("\n"))).toContain("RedVibrato");
 
 		component.handleInput("\x1b[B");
 		expect(onPetPreview).toHaveBeenCalledWith("blue");

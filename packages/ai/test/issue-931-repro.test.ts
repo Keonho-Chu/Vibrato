@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import { streamOpenAIResponses } from "@gajae-code/ai/providers/openai-responses";
-import type { Context, Model, OpenAICompat } from "@gajae-code/ai/types";
+import { streamOpenAIResponses } from "@vib-rato/ai/providers/openai-responses";
+import type { Context, Model, OpenAICompat } from "@vib-rato/ai/types";
 
 const testContext: Context = {
 	messages: [{ role: "user", content: "hello", timestamp: 0 }],

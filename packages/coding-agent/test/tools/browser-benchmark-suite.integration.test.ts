@@ -15,7 +15,7 @@ const FIXTURE_URL = pathToFileURL(FIXTURE).href;
 // when no Chromium is resolvable, so it never fails CI environments without one.
 async function chromiumAvailable(): Promise<boolean> {
 	if (process.env.PUPPETEER_EXECUTABLE_PATH) return true;
-	const cache = path.join(os.homedir(), ".gjc", "puppeteer", "chrome");
+	const cache = path.join(os.homedir(), ".vib", "puppeteer", "chrome");
 	try {
 		return fs.existsSync(cache) && fs.readdirSync(cache).length > 0;
 	} catch {

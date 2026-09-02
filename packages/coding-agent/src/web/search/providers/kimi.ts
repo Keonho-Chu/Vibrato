@@ -4,8 +4,8 @@
  * Uses Moonshot Kimi Code search API to retrieve web results.
  * Endpoint: POST https://api.kimi.com/coding/v1/search
  */
-import type { AuthStorage } from "@gajae-code/ai/core";
-import { $credentialEnv } from "@gajae-code/utils";
+import type { AuthStorage } from "@vib-rato/ai/core";
+import { $credentialEnv } from "@vib-rato/utils";
 
 import type { SearchResponse, SearchSource } from "../../../web/search/types";
 import { SearchProviderError } from "../../../web/search/types";
@@ -126,7 +126,7 @@ export async function searchKimi(params: KimiSearchParams): Promise<SearchRespon
 	const apiKey = await findApiKey(params.authStorage, params.sessionId, params.signal);
 	if (!apiKey) {
 		throw new Error(
-			"Kimi search credentials not found. Set MOONSHOT_SEARCH_API_KEY, KIMI_SEARCH_API_KEY, MOONSHOT_API_KEY, or login with 'gjc /login moonshot'.",
+			"Kimi search credentials not found. Set MOONSHOT_SEARCH_API_KEY, KIMI_SEARCH_API_KEY, MOONSHOT_API_KEY, or login with 'vib /login moonshot'.",
 		);
 	}
 

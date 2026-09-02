@@ -1263,8 +1263,8 @@ fn should_skip_env_var(key: &str) -> bool {
 		"BASH_ENV"
 			| "ENV"
 			| "HISTFILE"
-			| "GJC_SESSION_FILE"
-			| "GJC_MANAGED_OWNER_TRANSCRIPT_PATH"
+			| "VIB_SESSION_FILE"
+			| "VIB_MANAGED_OWNER_TRANSCRIPT_PATH"
 			| "HISTTIMEFORMAT"
 			| "HISTCMD"
 			| "PS0"
@@ -2224,7 +2224,7 @@ mod tests {
 		// means a console is attached at all; CREATE_NO_WINDOW keeps a headless
 		// one, DETACHED_PROCESS would not), visible (window shown).
 		let script = concat!(
-			"$w = Add-Type -Namespace GjcProbe -Name Win -PassThru -MemberDefinition @'",
+			"$w = Add-Type -Namespace VibProbe -Name Win -PassThru -MemberDefinition @'",
 			"\n",
 			"[DllImport(\"kernel32\")] public static extern IntPtr GetConsoleWindow();\n",
 			"[DllImport(\"kernel32\")] public static extern uint GetConsoleCP();\n",
@@ -2905,9 +2905,9 @@ mod tests {
 	}
 
 	/// Brush expands `$env:NAME` against the `env` shell variable by default,
-	/// collapsing PowerShell references like `Write-Host $env:GJCCODE` to
-	/// `:GJCCODE`. The session-level fallback below defines `env=$env` so the
-	/// expansion is the literal `$env:GJCCODE`, preserving the PowerShell
+	/// collapsing PowerShell references like `Write-Host $env:VIBCODE` to
+	/// `:VIBCODE`. The session-level fallback below defines `env=$env` so the
+	/// expansion is the literal `$env:VIBCODE`, preserving the PowerShell
 	/// token when the command is forwarded to a child shell.
 	#[cfg(unix)]
 	#[tokio::test(flavor = "multi_thread")]

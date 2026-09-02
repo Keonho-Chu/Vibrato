@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import { convertAnthropicMessages } from "@gajae-code/ai/providers/anthropic";
-import type { AssistantMessage, Model, ToolResultMessage, UserMessage } from "@gajae-code/ai/types";
+import { convertAnthropicMessages } from "@vib-rato/ai/providers/anthropic";
+import type { AssistantMessage, Model, ToolResultMessage, UserMessage } from "@vib-rato/ai/types";
 
 /**
  * Issue #814: Z.AI returns 500
@@ -9,7 +9,7 @@ import type { AssistantMessage, Model, ToolResultMessage, UserMessage } from "@g
  *
  * Z.AI's Python proxy at api.z.ai/api/anthropic deserializes tool_result
  * blocks into a class that accesses `.id`, even though Anthropic's API only
- * carries `tool_use_id`. As a workaround, GJC must include `id` (aliased to
+ * carries `tool_use_id`. As a workaround, Vibrato must include `id` (aliased to
  * `tool_use_id`) on tool_result blocks targeted at z.ai. Standard Anthropic
  * endpoints must remain unchanged (no `id` field).
  */

@@ -1,8 +1,8 @@
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { fuzzyFind as fuzzyFindFn } from "@gajae-code/natives";
-import { getProjectDir } from "@gajae-code/utils";
+import type { fuzzyFind as fuzzyFindFn } from "@vib-rato/natives";
+import { getProjectDir } from "@vib-rato/utils";
 
 type NativeFuzzyFind = typeof fuzzyFindFn;
 let nativeFuzzyFind: NativeFuzzyFind | undefined;
@@ -10,9 +10,7 @@ let nativeFuzzyFindLoad: Promise<NativeFuzzyFind> | undefined;
 
 async function fuzzyFindNative(): Promise<NativeFuzzyFind> {
 	if (nativeFuzzyFind) return nativeFuzzyFind;
-	nativeFuzzyFindLoad ??= Promise.resolve(
-		(require("@gajae-code/natives") as { fuzzyFind: NativeFuzzyFind }).fuzzyFind,
-	);
+	nativeFuzzyFindLoad ??= Promise.resolve((require("@vib-rato/natives") as { fuzzyFind: NativeFuzzyFind }).fuzzyFind);
 	return await nativeFuzzyFindLoad;
 }
 
@@ -287,7 +285,7 @@ export interface SlashCommand {
 	argumentHint?: string;
 	/**
 	 * Higher values surface first in autocomplete, ahead of fuzzy-score ordering.
-	 * Use this to pin first-class commands (e.g. bundled GJC skills) to the top.
+	 * Use this to pin first-class commands (e.g. bundled Vibrato skills) to the top.
 	 */
 	priority?: number;
 	// Function to get argument completions for this command

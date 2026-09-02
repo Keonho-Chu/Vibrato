@@ -174,7 +174,7 @@ test("admission timeout has its own accurate normalized startup reason", () => {
 });
 
 test("broker validates before admission and maps bounded queue waits honestly", async () => {
-	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-startup-admission-"));
+	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-startup-admission-"));
 	const broker = new Broker({ agentDir });
 	const release = Promise.withResolvers<void>();
 	const holderTiming: StartupAdmissionTiming = {
@@ -276,16 +276,16 @@ test("closing after grant but before task execution refuses the admitted startup
 });
 
 async function expectGraceWindowFenceRefusesQueuedStartup(observation: "replaced" | "ambiguous"): Promise<void> {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", `gjc-${observation}-fence-admission-`));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", `vib-${observation}-fence-admission-`));
 	const agentDir = path.join(root, "agent");
-	const previousCommand = process.env.GJC_SDK_SESSION_COMMAND;
+	const previousCommand = process.env.VIB_SDK_SESSION_COMMAND;
 	const broker = new Broker({ agentDir, heartbeatTtlMs: 300 });
 	const release = Promise.withResolvers<void>();
 	const parked: StartupAdmissionTiming = { now: Date.now, sleep: () => Promise.withResolvers<void>().promise };
 	const queuedInAdmission = Promise.withResolvers<void>();
 	let spawnCalls = 0;
 	try {
-		delete process.env.GJC_SDK_SESSION_COMMAND;
+		delete process.env.VIB_SDK_SESSION_COMMAND;
 		await broker.start();
 		if (observation === "ambiguous") setAmbiguityGraceForTest(broker, 60_000);
 		setLifecycleCommandResolverForTest(broker, () => {
@@ -307,7 +307,7 @@ async function expectGraceWindowFenceRefusesQueuedStartup(observation: "replaced
 		});
 		const queued = broker.handleRequest(
 			"session.create",
-			{ cwd: root, stateRoot: path.join(root, ".gjc", "state"), readinessTimeoutMs: 4_000 },
+			{ cwd: root, stateRoot: path.join(root, ".vib", "state"), readinessTimeoutMs: 4_000 },
 			`queued-during-${observation}-fence`,
 		);
 		await queuedInAdmission.promise;
@@ -336,8 +336,8 @@ async function expectGraceWindowFenceRefusesQueuedStartup(observation: "replaced
 		setLifecycleTimingForTest(broker, undefined);
 		setPublicationObservationForTest(broker, undefined);
 		setAmbiguityGraceForTest(broker, undefined);
-		if (previousCommand === undefined) delete process.env.GJC_SDK_SESSION_COMMAND;
-		else process.env.GJC_SDK_SESSION_COMMAND = previousCommand;
+		if (previousCommand === undefined) delete process.env.VIB_SDK_SESSION_COMMAND;
+		else process.env.VIB_SDK_SESSION_COMMAND = previousCommand;
 		release.resolve();
 		await broker.stop().catch(() => undefined);
 		await fs.rm(root, { recursive: true, force: true });
@@ -353,7 +353,7 @@ test("observation-ambiguous fence refuses queued startup before ambiguity grace 
 });
 
 test("publication replacement during heartbeat persistence cannot reopen startup admission", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-heartbeat-reopen-fence-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-heartbeat-reopen-fence-"));
 	const broker = new Broker({ agentDir: path.join(root, "agent") });
 	try {
 		await broker.start();
@@ -372,16 +372,16 @@ test("publication replacement during heartbeat persistence cannot reopen startup
 	}
 });
 test("an admitted startup fenced during ledger persistence cannot reach synchronous spawn", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-admitted-ledger-fence-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-admitted-ledger-fence-"));
 	const agentDir = path.join(root, "agent");
-	const previousCommand = process.env.GJC_SDK_SESSION_COMMAND;
+	const previousCommand = process.env.VIB_SDK_SESSION_COMMAND;
 	const broker = new Broker({ agentDir, heartbeatTtlMs: 300 });
 	const transitionEntered = Promise.withResolvers<void>();
 	const releaseTransition = Promise.withResolvers<void>();
 	let spawnCalls = 0;
 	let paused = false;
 	try {
-		delete process.env.GJC_SDK_SESSION_COMMAND;
+		delete process.env.VIB_SDK_SESSION_COMMAND;
 		await broker.start();
 		const transition = broker.ledger.transition.bind(broker.ledger);
 		const transitionSpy = spyOn(broker.ledger, "transition").mockImplementation(async (identity, state, fields) => {
@@ -399,7 +399,7 @@ test("an admitted startup fenced during ledger persistence cannot reach synchron
 
 		const startup = broker.handleRequest(
 			"session.create",
-			{ cwd: root, stateRoot: path.join(root, ".gjc", "state"), readinessTimeoutMs: 4_000 },
+			{ cwd: root, stateRoot: path.join(root, ".vib", "state"), readinessTimeoutMs: 4_000 },
 			"admitted-before-ledger-fence",
 		);
 		await transitionEntered.promise;
@@ -426,8 +426,8 @@ test("an admitted startup fenced during ledger persistence cannot reach synchron
 	} finally {
 		setLifecycleCommandResolverForTest(broker, undefined);
 		setPublicationObservationForTest(broker, undefined);
-		if (previousCommand === undefined) delete process.env.GJC_SDK_SESSION_COMMAND;
-		else process.env.GJC_SDK_SESSION_COMMAND = previousCommand;
+		if (previousCommand === undefined) delete process.env.VIB_SDK_SESSION_COMMAND;
+		else process.env.VIB_SDK_SESSION_COMMAND = previousCommand;
 		releaseTransition.resolve();
 		await broker.stop().catch(() => undefined);
 		await fs.rm(root, { recursive: true, force: true });
@@ -435,9 +435,9 @@ test("an admitted startup fenced during ledger persistence cannot reach synchron
 });
 
 test("a broker that lost the root refuses queued startups instead of spawning children", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-lost-root-admission-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-lost-root-admission-"));
 	const agentDir = path.join(root, "agent");
-	const previousCommand = process.env.GJC_SDK_SESSION_COMMAND;
+	const previousCommand = process.env.VIB_SDK_SESSION_COMMAND;
 	// A short TTL drives the publication watchdog at `ttl/3`, so the fence lands fast.
 	const broker = new Broker({ agentDir, heartbeatTtlMs: 300 });
 	const release = Promise.withResolvers<void>();
@@ -446,7 +446,7 @@ test("a broker that lost the root refuses queued startups instead of spawning ch
 	let brokerCompleted = false;
 	let spawnPathEnteredAfterCompletion = 0;
 	try {
-		delete process.env.GJC_SDK_SESSION_COMMAND;
+		delete process.env.VIB_SDK_SESSION_COMMAND;
 		await broker.start();
 		setLifecycleCommandResolverForTest(broker, () => {
 			if (brokerCompleted) spawnPathEnteredAfterCompletion += 1;
@@ -469,7 +469,7 @@ test("a broker that lost the root refuses queued startups instead of spawning ch
 		});
 		const queued = broker.handleRequest(
 			"session.create",
-			{ cwd: root, stateRoot: path.join(root, ".gjc", "state"), readinessTimeoutMs: 4_000 },
+			{ cwd: root, stateRoot: path.join(root, ".vib", "state"), readinessTimeoutMs: 4_000 },
 			"queued-behind-lost-root",
 		);
 		await queuedInAdmission.promise;
@@ -497,8 +497,8 @@ test("a broker that lost the root refuses queued startups instead of spawning ch
 		setLifecycleTimingForTest(broker, undefined);
 		setPublicationObservationForTest(broker, undefined);
 		setAmbiguityGraceForTest(broker, undefined);
-		if (previousCommand === undefined) delete process.env.GJC_SDK_SESSION_COMMAND;
-		else process.env.GJC_SDK_SESSION_COMMAND = previousCommand;
+		if (previousCommand === undefined) delete process.env.VIB_SDK_SESSION_COMMAND;
+		else process.env.VIB_SDK_SESSION_COMMAND = previousCommand;
 		release.resolve();
 		await broker.stop().catch(() => undefined);
 		await fs.rm(root, { recursive: true, force: true });
@@ -506,16 +506,16 @@ test("a broker that lost the root refuses queued startups instead of spawning ch
 }, 15_000);
 
 test("a stop that cannot prove it still owns the root drains the queued startups", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-unproven-stop-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-unproven-stop-"));
 	const agentDir = path.join(root, "agent");
-	const previousCommand = process.env.GJC_SDK_SESSION_COMMAND;
+	const previousCommand = process.env.VIB_SDK_SESSION_COMMAND;
 	const broker = new Broker({ agentDir });
 	const release = Promise.withResolvers<void>();
 	const parked: StartupAdmissionTiming = { now: Date.now, sleep: () => Promise.withResolvers<void>().promise };
 	const queuedInAdmission = Promise.withResolvers<void>();
 	let spawnCalls = 0;
 	try {
-		delete process.env.GJC_SDK_SESSION_COMMAND;
+		delete process.env.VIB_SDK_SESSION_COMMAND;
 		await broker.start();
 		setLifecycleCommandResolverForTest(broker, () => {
 			spawnCalls += 1;
@@ -538,7 +538,7 @@ test("a stop that cannot prove it still owns the root drains the queued startups
 		});
 		const queued = broker.handleRequest(
 			"session.create",
-			{ cwd: root, stateRoot: path.join(root, ".gjc", "state"), readinessTimeoutMs: 4_000 },
+			{ cwd: root, stateRoot: path.join(root, ".vib", "state"), readinessTimeoutMs: 4_000 },
 			"queued-behind-replaced-root",
 		);
 		await queuedInAdmission.promise;
@@ -576,8 +576,8 @@ test("a stop that cannot prove it still owns the root drains the queued startups
 		setLifecycleCommandResolverForTest(broker, undefined);
 		setLifecycleTimingForTest(broker, undefined);
 		setPublicationObservationForTest(broker, undefined);
-		if (previousCommand === undefined) delete process.env.GJC_SDK_SESSION_COMMAND;
-		else process.env.GJC_SDK_SESSION_COMMAND = previousCommand;
+		if (previousCommand === undefined) delete process.env.VIB_SDK_SESSION_COMMAND;
+		else process.env.VIB_SDK_SESSION_COMMAND = previousCommand;
 		release.resolve();
 		await broker.stop().catch(() => undefined);
 		await fs.rm(root, { recursive: true, force: true });
@@ -612,7 +612,7 @@ test("the ACP caller deadline covers the admission wait even when readiness is d
 });
 
 test("lost-root completion does not wait indefinitely for model resolver disposal", async () => {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-lost-root-disposal-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-lost-root-disposal-"));
 	const agentDir = path.join(root, "agent");
 	const disposeGate = Promise.withResolvers<void>();
 	const resolveModelPin = Object.assign(async () => ({ ok: true as const, model: null }), {
@@ -642,9 +642,9 @@ test("a default startup admitted late by the production broker stays inside the 
 	const callerDeadlineMs = sdk.timeoutMs;
 	if (callerDeadlineMs === undefined) throw new Error("ACP caller did not bound the default lifecycle request.");
 
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-late-admission-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-late-admission-"));
 	const agentDir = path.join(root, "agent");
-	const previousCommand = process.env.GJC_SDK_SESSION_COMMAND;
+	const previousCommand = process.env.VIB_SDK_SESSION_COMMAND;
 	const broker = new Broker({ agentDir });
 	const release = Promise.withResolvers<void>();
 	const parked: StartupAdmissionTiming = { now: Date.now, sleep: () => Promise.withResolvers<void>().promise };
@@ -654,7 +654,7 @@ test("a default startup admitted late by the production broker stays inside the 
 	let observedQueueWaitMs: number | undefined;
 	let spawnCalls = 0;
 	try {
-		delete process.env.GJC_SDK_SESSION_COMMAND;
+		delete process.env.VIB_SDK_SESSION_COMMAND;
 		await broker.start();
 		setLifecycleCommandResolverForTest(broker, () => {
 			spawnCalls += 1;
@@ -677,7 +677,7 @@ test("a default startup admitted late by the production broker stays inside the 
 		// No `readinessTimeoutMs`: the default request every ACP caller sends.
 		const queued = broker.handleRequest(
 			"session.create",
-			{ cwd: root, stateRoot: path.join(root, ".gjc", "state") },
+			{ cwd: root, stateRoot: path.join(root, ".vib", "state") },
 			"default-late-admission",
 		);
 		await admissionParked.promise;
@@ -704,8 +704,8 @@ test("a default startup admitted late by the production broker stays inside the 
 	} finally {
 		setLifecycleCommandResolverForTest(broker, undefined);
 		setLifecycleTimingForTest(broker, undefined);
-		if (previousCommand === undefined) delete process.env.GJC_SDK_SESSION_COMMAND;
-		else process.env.GJC_SDK_SESSION_COMMAND = previousCommand;
+		if (previousCommand === undefined) delete process.env.VIB_SDK_SESSION_COMMAND;
+		else process.env.VIB_SDK_SESSION_COMMAND = previousCommand;
 		release.resolve();
 		await broker.stop().catch(() => undefined);
 		await fs.rm(root, { recursive: true, force: true });

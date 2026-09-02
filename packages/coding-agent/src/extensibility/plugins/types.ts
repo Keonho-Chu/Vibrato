@@ -1,5 +1,5 @@
 // =============================================================================
-// Plugin Manifest Types (from package.json gjc/pi field)
+// Plugin Manifest Types (from package.json vib/pi field)
 // =============================================================================
 
 /**
@@ -22,7 +22,7 @@ export interface PluginFeature {
 }
 
 /**
- * Plugin manifest from package.json gjc or pi field.
+ * Plugin manifest from package.json vib or pi field.
  */
 export interface PluginManifest {
 	/** Plugin display name (defaults to package name) */
@@ -106,7 +106,7 @@ export interface InstalledPlugin {
 	version: string;
 	/** Absolute path to package directory */
 	path: string;
-	/** Parsed gjc/pi manifest */
+	/** Parsed vib/pi manifest */
 	manifest: PluginManifest;
 	/**
 	 * Enabled features:
@@ -119,7 +119,7 @@ export interface InstalledPlugin {
 }
 
 // =============================================================================
-// Runtime Config Types (stored in gjc-plugins.lock.json)
+// Runtime Config Types (stored in vib-plugins.lock.json)
 // =============================================================================
 
 /**
@@ -135,7 +135,7 @@ export interface PluginRuntimeState {
 }
 
 /**
- * Runtime configuration persisted to gjc-plugins.lock.json.
+ * Runtime configuration persisted to vib-plugins.lock.json.
  * Tracks plugin states and settings across sessions.
  */
 export interface PluginRuntimeConfig {
@@ -150,7 +150,7 @@ export interface PluginRuntimeConfig {
 // =============================================================================
 
 /**
- * Project-local plugin overrides (stored in .gjc/plugin-overrides.json).
+ * Project-local plugin overrides (stored in .vib/plugin-overrides.json).
  * Allows per-project plugin configuration without modifying global state.
  */
 export interface ProjectPluginOverrides {

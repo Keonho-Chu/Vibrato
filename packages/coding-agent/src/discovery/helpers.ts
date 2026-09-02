@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import type { ThinkingLevel } from "@gajae-code/agent-core";
-import type { FileType as FileTypeEnum, glob as globFn } from "@gajae-code/natives";
+import type { ThinkingLevel } from "@vib-rato/agent-core";
+import type { FileType as FileTypeEnum, glob as globFn } from "@vib-rato/natives";
 import {
 	CONFIG_DIR_NAME,
 	getConfigDirName,
@@ -11,7 +11,7 @@ import {
 	logger,
 	parseFrontmatter,
 	tryParseJson,
-} from "@gajae-code/utils";
+} from "@vib-rato/utils";
 import type { ExtensionModule } from "../capability/extension-module";
 import { invalidate as invalidateFsCache, readDirEntries, readFile } from "../capability/fs";
 import { parseRuleConditionAndScope, type Rule, type RuleFrontmatter } from "../capability/rule";
@@ -31,7 +31,7 @@ let discoveryNativeLoad: Promise<DiscoveryNativeModule> | undefined;
 async function discoveryNatives(): Promise<DiscoveryNativeModule> {
 	if (discoveryNativeModule) return discoveryNativeModule;
 	discoveryNativeLoad ??= Promise.resolve(
-		require("@gajae-code/natives") as { FileType: typeof FileTypeEnum; glob: typeof globFn },
+		require("@vib-rato/natives") as { FileType: typeof FileTypeEnum; glob: typeof globFn },
 	).then(mod => {
 		discoveryNativeModule = { FileType: mod.FileType, glob: mod.glob };
 		return discoveryNativeModule;
@@ -597,8 +597,8 @@ async function readExtensionModuleManifest(
 	const content = await readFile(packageJsonPath);
 	if (!content) return null;
 
-	const pkg = tryParseJson<{ gjc?: ExtensionModuleManifest; pi?: ExtensionModuleManifest }>(content);
-	const manifest = pkg?.gjc ?? pkg?.pi;
+	const pkg = tryParseJson<{ vib?: ExtensionModuleManifest; pi?: ExtensionModuleManifest }>(content);
+	const manifest = pkg?.vib ?? pkg?.pi;
 	if (manifest && typeof manifest === "object") {
 		return manifest;
 	}
@@ -611,7 +611,7 @@ async function readExtensionModuleManifest(
  * Discovery rules:
  * 1. Direct files: `extensions/*.ts` or `*.js` → load
  * 2. Subdirectory with index: `extensions/<ext>/index.ts` or `index.js` → load
- * 3. Subdirectory with package.json: `extensions/<ext>/package.json` with "gjc"/"pi" field → load declared paths
+ * 3. Subdirectory with package.json: `extensions/<ext>/package.json` with "vib"/"pi" field → load declared paths
  *
  * No recursion beyond one level. Complex packages must use package.json manifest.
  * Uses native glob for fast filesystem scanning with gitignore support.
@@ -784,18 +784,18 @@ export function parseClaudePluginsRegistry(content: string): ClaudePluginsRegist
  * Resolve the active project registry path by walking up from `cwd`.
  *
  * Walk order:
- * 1. Walk up from `cwd` looking for the nearest directory containing `.gjc/`.
- *    The first match returns `<dir>/.gjc/plugins/installed_plugins.json`.
- * 2. If no `.gjc/` is found, rescan from `cwd` upward looking for `.git`.
- *    The git root is used as an anchor: `<gitRoot>/.gjc/plugins/installed_plugins.json`.
+ * 1. Walk up from `cwd` looking for the nearest directory containing `.vib/`.
+ *    The first match returns `<dir>/.vib/plugins/installed_plugins.json`.
+ * 2. If no `.vib/` is found, rescan from `cwd` upward looking for `.git`.
+ *    The git root is used as an anchor: `<gitRoot>/.vib/plugins/installed_plugins.json`.
  * 3. If neither is found, return `null` — no project context is active.
  *
  * This is the single source of truth for "active project root" used by install,
  * uninstall, list, upgrade, discovery, and doctor. Deterministic for a given `cwd`.
  */
 export async function resolveActiveProjectRegistryPath(cwd: string): Promise<string | null> {
-	// Pass 1: walk up looking for an existing .gjc/ directory (nearest wins).
-	// Stop before the provenance-checked home — ~/.gjc/ is the user-level config dir, not a project root.
+	// Pass 1: walk up looking for an existing .vib/ directory (nearest wins).
+	// Stop before the provenance-checked home — ~/.vib/ is the user-level config dir, not a project root.
 	const homeDir = getTrustedHomeDir();
 	let dir = path.resolve(cwd);
 	while (dir !== homeDir) {
@@ -830,11 +830,11 @@ export async function resolveActiveProjectRegistryPath(cwd: string): Promise<str
 }
 
 /**
- * Like resolveActiveProjectRegistryPath, but falls back to `<cwd>/.gjc/plugins/installed_plugins.json`
- * when no project anchor (.gjc/ or .git/) is found.
+ * Like resolveActiveProjectRegistryPath, but falls back to `<cwd>/.vib/plugins/installed_plugins.json`
+ * when no project anchor (.vib/ or .git/) is found.
  *
  * Use this when the caller accepts an explicit --scope project so that installing into a freshly
- * bootstrapped directory (no .gjc/ or .git/ yet) works: writeInstalledPluginsRegistry auto-creates
+ * bootstrapped directory (no .vib/ or .git/ yet) works: writeInstalledPluginsRegistry auto-creates
  * the directory tree on first write.
  *
  * Returns undefined when cwd is the trusted home — that path is already the user registry and must
@@ -853,7 +853,7 @@ export async function resolveOrDefaultProjectRegistryPath(cwd: string): Promise<
 const pluginRootsCache = new Map<string, { roots: ClaudePluginRoot[]; warnings: string[] }>();
 
 /**
- * List installed GJC plugin roots from the GJC plugin registry and, when present,
+ * List installed Vibrato plugin roots from the Vibrato plugin registry and, when present,
  * the nearest project-scoped registry resolved from `cwd`.
  *
  * Results are cached per `home:resolvedProjectPath` key to avoid repeated parsing.
@@ -872,16 +872,16 @@ export async function listClaudePluginRoots(
 	const warnings: string[] = [];
 	const projectRoots: ClaudePluginRoot[] = [];
 
-	// ── GJC installed plugins registry ───────────────────────────────────────
+	// ── Vibrato installed plugins registry ───────────────────────────────────────
 	// In production `home` is the provenance-checked home, so `getPluginsDir(home)` resolves to the
 	// same XDG-aware path the marketplace writer uses (reads and writes always agree).
 	// Tests pass a temp dir, which short-circuits the resolver for deterministic isolation.
-	const gjcRegistryPath = path.join(getPluginsDir(home), "installed_plugins.json");
-	const gjcContent = await readFile(gjcRegistryPath);
-	if (gjcContent) {
-		const gjcRegistry = parseClaudePluginsRegistry(gjcContent);
-		if (gjcRegistry) {
-			for (const [pluginId, entries] of Object.entries(gjcRegistry.plugins)) {
+	const vibRegistryPath = path.join(getPluginsDir(home), "installed_plugins.json");
+	const vibContent = await readFile(vibRegistryPath);
+	if (vibContent) {
+		const vibRegistry = parseClaudePluginsRegistry(vibContent);
+		if (vibRegistry) {
+			for (const [pluginId, entries] of Object.entries(vibRegistry.plugins)) {
 				if (!Array.isArray(entries) || entries.length === 0) continue;
 
 				const atIndex = pluginId.lastIndexOf("@");
@@ -912,12 +912,12 @@ export async function listClaudePluginRoots(
 				}
 			}
 		} else {
-			warnings.push(`Failed to parse GJC plugin registry: ${gjcRegistryPath}`);
+			warnings.push(`Failed to parse Vibrato plugin registry: ${vibRegistryPath}`);
 		}
 	}
 
-	// ── Project-scoped GJC registry ────────────────────────────────────────
-	// Loaded from the nearest .gjc/plugins/installed_plugins.json relative to cwd.
+	// ── Project-scoped Vibrato registry ────────────────────────────────────────
+	// Loaded from the nearest .vib/plugins/installed_plugins.json relative to cwd.
 	// Project entries take precedence over user entries for the same plugin ID.
 	if (resolvedProjectPath) {
 		const projectContent = await readFile(resolvedProjectPath);

@@ -1,4 +1,4 @@
-import { tryParseJson } from "@gajae-code/utils";
+import { tryParseJson } from "@vib-rato/utils";
 import type { RenderResult, SpecialHandler } from "./types";
 import { buildResult, formatNumber, loadPage, looksLikeHtml } from "./types";
 
@@ -26,7 +26,7 @@ export const handleCratesIo: SpecialHandler = async (
 		const result = await loadPage(apiUrl, {
 			timeout,
 			signal,
-			headers: { "User-Agent": "gjc-web-fetch/1.0 (https://github.com/anthropics)" },
+			headers: { "User-Agent": "vib-web-fetch/1.0 (https://github.com/anthropics)" },
 		});
 
 		if (!result.ok) return null;

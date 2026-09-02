@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
-import { type Component, renderMetrics, TUI } from "@gajae-code/tui";
+import { type Component, renderMetrics, TUI } from "@vib-rato/tui";
 import { makeRecordedSession, runReplay } from "./replay-harness";
 import { VirtualTerminal } from "./virtual-terminal";
 

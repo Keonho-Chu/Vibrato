@@ -1,6 +1,6 @@
-# Gajae-Code Agent Contract
+# Vibrato Agent Contract
 
-Gajae-Code (`gjc`) is a Bun-workspace TypeScript monorepo with Rust natives. This file is the repo-local operating contract: architecture map, dev utilities, and the rules that are not derivable from `docs/`. For deep dives, start at `docs/` (per-topic) and `docs/tools/` (per-tool runtime docs).
+Vibrato (`vib`) is a Bun-workspace TypeScript monorepo with Rust natives. This file is the repo-local operating contract: architecture map, dev utilities, and the rules that are not derivable from `docs/`. For deep dives, start at `docs/` (per-topic) and `docs/tools/` (per-tool runtime docs).
 
 ## Architecture
 
@@ -9,7 +9,7 @@ Runtime is Bun (`bun@<pinned in package.json>`); everything runs from source via
 Dependency direction (roughly bottom-up):
 
 ```
-utils ─┬─▶ ai ─────┬─▶ agent ─▶ coding-agent (gjc CLI, primary product surface)
+utils ─┬─▶ ai ─────┬─▶ agent ─▶ coding-agent (vib CLI, primary product surface)
        ├─▶ tui ────┘               │
        └─▶ natives (napi-rs ◀── crates/pi-natives)
                                    └─▶ stats (dashboard), sdk surfaces
@@ -17,15 +17,15 @@ utils ─┬─▶ ai ─────┬─▶ agent ─▶ coding-agent (gjc CL
 
 | Workspace | Role |
 | --- | --- |
-| `packages/coding-agent` | Main `gjc` CLI. Entry: `src/cli.ts`. Subsystems live in `src/` (tools, tui, session, sdk, workflow, hooks, lsp, daemon, …). Unless stated otherwise, work targets this package. |
+| `packages/coding-agent` | Main `vib` CLI. Entry: `src/cli.ts`. Subsystems live in `src/` (tools, tui, session, sdk, workflow, hooks, lsp, daemon, …). Unless stated otherwise, work targets this package. |
 | `packages/agent` | Agent runtime: tool calling, state, orchestration. |
 | `packages/ai` | Multi-provider LLM client with streaming. `src/models.json` is generated — never edit; regenerate via `bun run generate-models`. |
 | `packages/tui` | Terminal UI library with differential rendering. |
 | `packages/natives` + `packages/natives-<platform>` | napi-rs bindings over `crates/pi-natives` (text/image/grep/shell/pty). See `docs/natives-*.md`. |
-| `packages/stats` | Local observability dashboard (`gjc stats`). |
-| `packages/utils` | Shared utilities (`@gajae-code/pi-utils`): logger, `isCompiledBinary`, path/string helpers. |
+| `packages/stats` | Local observability dashboard (`vib stats`). |
+| `packages/utils` | Shared utilities (`@vib-rato/pi-utils`): logger, `isCompiledBinary`, path/string helpers. |
 | `packages/*-benchmark` | Edit / orchestration-token benchmarks; not shipped. |
-| `crates/` | Rust: `pi-natives`, `pi-shell`/`brush-*` (vendored shell), `pi-ast`, `pi-iso`, `git-daemon`, `gjc-sdk`. Driven via `bun scripts/run-rs-task.ts`. |
+| `crates/` | Rust: `pi-natives`, `pi-shell`/`brush-*` (vendored shell), `pi-ast`, `pi-iso`, `git-daemon`, `vib-sdk`. Driven via `bun scripts/run-rs-task.ts`. |
 
 When the user says "agent" or asks why the agent behaves a certain way, they mean the coding-agent CLI implementation, not the assistant editing the repo.
 
@@ -34,21 +34,21 @@ When the user says "agent" or asks why the agent behaves a certain way, they mea
 Run the CLI from source — no build step needed:
 
 ```sh
-bun run dev                 # run gjc from source (packages/coding-agent/src/cli.ts)
+bun run dev                 # run vib from source (packages/coding-agent/src/cli.ts)
 bun run dev -- <args>       # e.g. bun run dev -- stats --help
-bun run stats               # gjc stats from source
+bun run stats               # vib stats from source
 ```
 
 One-time / environment setup:
 
 ```sh
 bun run install:dev         # bun install + workspace links + dev:link + setup defaults
-bun run dev:link            # symlink `gjc` on PATH to the source CLI (scripts/dev-link.ts)
-bun run dev:doctor          # verify PATH resolution of `gjc` points at this workspace
+bun run dev:link            # symlink `vib` on PATH to the source CLI (scripts/dev-link.ts)
+bun run dev:doctor          # verify PATH resolution of `vib` points at this workspace
 bun run install:defaults    # (re)install bundled default definitions
 ```
 
-Removing build output (never touches sources, `node_modules/`, `.gjc/` state, or `artifacts/` test working space):
+Removing build output (never touches sources, `node_modules/`, `.vib/` state, or `artifacts/` test working space):
 
 ```sh
 bun run clean                # dist/, binaries/, coverage/, stray *.bun-build, *.tsbuildinfo
@@ -56,7 +56,7 @@ bun run clean:native         # also drop compiled .node addons (rebuild via buil
 bun scripts/clean.ts --dry-run  # list targets without deleting
 ```
 
-`clean` removes `packages/coding-agent/dist/`, so a `--binary`-linked `gjc` (see `dev:doctor`) stops resolving until you run `bun run --cwd=packages/coding-agent build` again. Source-linked setups are unaffected.
+`clean` removes `packages/coding-agent/dist/`, so a `--binary`-linked `vib` (see `dev:doctor`) stops resolving until you run `bun run --cwd=packages/coding-agent build` again. Source-linked setups are unaffected.
 
 `artifacts/` policy (issue #4420): The root `artifacts/` directory is untracked test working space. Red-team and QA tests write evidence there and read it back within the same run (`g011`/`g014`/`g015`/`vb001-gen5`). The directory is gitignored at root and is not committed. Deterministic test fixtures that must be tracked belong in `packages/*/test/fixtures/`. The `clean` command deliberately does not touch `artifacts/`.
 
@@ -95,16 +95,16 @@ Required rebrand/default-surface gates after workflow-definition changes:
 - `bun scripts/check-visible-definitions.ts`
 - `bun scripts/verify-g002-gates.ts`
 - `bun scripts/rebrand-inventory.ts --strict`
-- `bun test packages/coding-agent/test/default-gjc-definitions.test.ts`
+- `bun test packages/coding-agent/test/default-vib-definitions.test.ts`
 
 ## Public workflow surface
 
-GJC exposes exactly four default workflow skills (`deep-interview`, `ralplan`, `ultragoal`, `autoresearch`; bundled at `packages/coding-agent/src/defaults/gjc/skills/`) and exactly four role agents (`executor`, `architect`, `planner`, `critic`; bundled at `packages/coding-agent/src/prompts/agents/`). Do not add, document, install, or route to additional defaults without an explicit product decision and gate update.
+Vibrato exposes exactly four default workflow skills (`deep-interview`, `ralplan`, `ultragoal`, `autoresearch`; bundled at `packages/coding-agent/src/defaults/vib/skills/`) and exactly four role agents (`executor`, `architect`, `planner`, `critic`; bundled at `packages/coding-agent/src/prompts/agents/`). Do not add, document, install, or route to additional defaults without an explicit product decision and gate update.
 
-- Do not commit repo-visible `.gjc` default definitions; runtime `.gjc` discovery covers local overrides.
-- Runtime state, plans, specs, and ledgers belong under `.gjc/`.
-- Public commands, paths, and examples must use `gjc` and `.gjc`; preserve upstream attribution in source comments where appropriate.
-- Keep source-bundled skills/agents in sync with tests/gates; do not rely on committed `.gjc` copies.
+- Do not commit repo-visible `.vib` default definitions; runtime `.vib` discovery covers local overrides.
+- Runtime state, plans, specs, and ledgers belong under `.vib/`.
+- Public commands, paths, and examples must use `vib` and `.vib`; preserve upstream attribution in source comments where appropriate.
+- Keep source-bundled skills/agents in sync with tests/gates; do not rely on committed `.vib` copies.
 - Planning workflows (`deep-interview`, `ralplan`) never execute implementation without explicit user approval; artifacts stay `pending approval` until then. `autoresearch` is a research workflow: it produces findings and a verdict, never an implementation.
 - Subagent await timeouts are observation windows, not failure signals; inspect before cancelling.
 
@@ -136,18 +136,18 @@ Use namespace imports for Node modules (`import * as fs from "node:fs/promises"`
 Spawn workers with the compile-safe hybrid pattern:
 
 ```ts
-import { isCompiledBinary } from "@gajae-code/pi-utils";
+import { isCompiledBinary } from "@vib-rato/pi-utils";
 
 const worker = isCompiledBinary()
 	? new Worker("./packages/<pkg>/src/<worker>.ts", { type: "module" })
 	: new Worker(new URL("./<worker>.ts", import.meta.url).href, { type: "module" });
 ```
 
-Every worker entry must also be listed as an extra compile entrypoint in `packages/coding-agent/scripts/build-binary.ts`. Validate new worker paths with the relevant smoke test; `gjc --smoke-test` covers the stats sync worker.
+Every worker entry must also be listed as an extra compile entrypoint in `packages/coding-agent/scripts/build-binary.ts`. Validate new worker paths with the relevant smoke test; `vib --smoke-test` covers the stats sync worker.
 
 ## Logging and TUI safety
 
-No `console.log`/`console.warn`/`console.error` in `packages/coding-agent/` — it corrupts TUI rendering. Use the centralized logger from `@gajae-code/pi-utils`.
+No `console.log`/`console.warn`/`console.error` in `packages/coding-agent/` — it corrupts TUI rendering. Use the centralized logger from `@vib-rato/pi-utils`.
 
 All text in tool renderers must be sanitized: `replaceTabs()`, `truncateToWidth()`/`ui.truncate()` with shared limits, `shortenPath()` for home paths, shared preview constants for previews. Apply to success, error, diff, and streaming render paths alike.
 

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
-import { hookFetch } from "@gajae-code/utils";
+import { hookFetch } from "@vib-rato/utils";
 import type { AuthStorage } from "../../../src/session/auth-storage";
 import { OpenAICompatibleSearchProvider } from "../../../src/web/search/providers/openai-compatible";
 import { type ActiveSearchModelContext, SearchProviderError } from "../../../src/web/search/types";

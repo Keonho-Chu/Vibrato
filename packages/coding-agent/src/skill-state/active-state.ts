@@ -1,13 +1,13 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import * as logger from "@gajae-code/utils/logger";
+import * as logger from "@vib-rato/utils/logger";
 import {
 	activeSnapshotPath,
 	activeStateDir,
-	assertNonEmptyGjcSessionId,
+	assertNonEmptyVibSessionId,
 	modeStatePath,
-} from "../gjc-runtime/session-layout";
-import { resolveGjcSessionForRead, SessionResolutionError } from "../gjc-runtime/session-resolution";
+} from "../vib-runtime/session-layout";
+import { resolveVibSessionForRead, SessionResolutionError } from "../vib-runtime/session-resolution";
 import {
 	type ActiveSessionScope,
 	type GuardedWriteResult,
@@ -16,14 +16,14 @@ import {
 	removeActiveEntry,
 	setActiveStateCacheInvalidator,
 	writeActiveEntry,
-} from "../gjc-runtime/state-writer";
-import { getSkillManifest } from "../gjc-runtime/workflow-manifest";
-import { CANONICAL_GJC_WORKFLOW_SKILLS, type CanonicalGjcWorkflowSkill } from "./canonical-skills";
+} from "../vib-runtime/state-writer";
+import { getSkillManifest } from "../vib-runtime/workflow-manifest";
+import { CANONICAL_VIB_WORKFLOW_SKILLS, type CanonicalVibWorkflowSkill } from "./canonical-skills";
 import type { WorkflowStateReceipt } from "./workflow-state-contract";
 
 export const SKILL_ACTIVE_STATE_FILE = "skill-active-state.json";
 
-export { CANONICAL_GJC_WORKFLOW_SKILLS, type CanonicalGjcWorkflowSkill };
+export { CANONICAL_VIB_WORKFLOW_SKILLS, type CanonicalVibWorkflowSkill };
 export type WorkflowHudSeverity = "info" | "warning" | "blocked" | "error" | "success";
 
 export interface WorkflowHudChip {
@@ -97,7 +97,7 @@ export interface SkillActiveState {
 	session_id?: string;
 	thread_id?: string;
 	turn_id?: string;
-	initialized_mode?: CanonicalGjcWorkflowSkill;
+	initialized_mode?: CanonicalVibWorkflowSkill;
 	initialized_state_path?: string;
 	active_skills?: SkillActiveEntry[];
 	active_subskills?: ActiveSubskillEntry[];
@@ -205,9 +205,9 @@ function normalizeWorkflowStateReceipt(raw: unknown): WorkflowStateReceipt | und
 	const record = raw as Record<string, unknown>;
 	if (record.version !== 1) return undefined;
 	const skill = safeString(record.skill).trim();
-	if (!isCanonicalGjcWorkflowSkill(skill)) return undefined;
+	if (!isCanonicalVibWorkflowSkill(skill)) return undefined;
 	const owner = safeString(record.owner).trim();
-	if (owner !== "gjc-state-cli" && owner !== "gjc-runtime" && owner !== "gjc-hook") return undefined;
+	if (owner !== "vib-state-cli" && owner !== "vib-runtime" && owner !== "vib-hook") return undefined;
 	const command = sanitizeHudString(record.command, 120);
 	const statePath = sanitizeHudString(record.state_path, 240);
 	const storagePath = sanitizeHudString(record.storage_path, 240);
@@ -305,8 +305,8 @@ function unionActiveSubskillEntries(...entrySets: Array<ActiveSubskillEntry[] | 
 function resolveBoundarySessionId(cwd: string, sessionId?: string): Promise<string> {
 	const normalizedSessionId = safeString(sessionId).trim();
 	if (normalizedSessionId) return Promise.resolve(normalizedSessionId);
-	return resolveGjcSessionForRead(cwd, { envSessionId: process.env.GJC_SESSION_ID }).then(
-		context => context.gjcSessionId,
+	return resolveVibSessionForRead(cwd, { envSessionId: process.env.VIB_SESSION_ID }).then(
+		context => context.vibSessionId,
 	);
 }
 
@@ -342,15 +342,15 @@ function normalizeEntry(raw: unknown): SkillActiveEntry | null {
 	};
 }
 
-export function isCanonicalGjcWorkflowSkill(skill: string): skill is CanonicalGjcWorkflowSkill {
-	return (CANONICAL_GJC_WORKFLOW_SKILLS as readonly string[]).includes(skill);
+export function isCanonicalVibWorkflowSkill(skill: string): skill is CanonicalVibWorkflowSkill {
+	return (CANONICAL_VIB_WORKFLOW_SKILLS as readonly string[]).includes(skill);
 }
 
 /**
  * Nonterminal phases that intentionally await workflow-specific integration
  * rather than a generic synthetic compaction continuation.
  */
-const CONTINUATION_INERT_WORKFLOW_PHASES: Readonly<Partial<Record<CanonicalGjcWorkflowSkill, ReadonlySet<string>>>> = {
+const CONTINUATION_INERT_WORKFLOW_PHASES: Readonly<Partial<Record<CanonicalVibWorkflowSkill, ReadonlySet<string>>>> = {
 	autoresearch: new Set(["verdict"]),
 };
 
@@ -365,7 +365,7 @@ const CONTINUATION_INERT_WORKFLOW_PHASES: Readonly<Partial<Record<CanonicalGjcWo
  */
 export function isWorkflowContinuationInert(skill: string, phase: string): boolean {
 	const normalizedPhase = phase.trim().toLowerCase();
-	if (!isCanonicalGjcWorkflowSkill(skill)) return true;
+	if (!isCanonicalVibWorkflowSkill(skill)) return true;
 	const manifest = getSkillManifest(skill);
 	if (manifest.terminalStates.some(terminal => terminal.toLowerCase() === normalizedPhase)) return true;
 	if (CONTINUATION_INERT_WORKFLOW_PHASES[skill]?.has(normalizedPhase)) return true;
@@ -430,7 +430,7 @@ export function normalizeSkillActiveState(raw: unknown): SkillActiveState | null
 
 export function getSkillActiveStatePaths(cwd: string, sessionId?: string): SkillActiveStatePaths {
 	const normalizedSessionId = safeString(sessionId).trim();
-	assertNonEmptyGjcSessionId(normalizedSessionId, "getSkillActiveStatePaths");
+	assertNonEmptyVibSessionId(normalizedSessionId, "getSkillActiveStatePaths");
 	const sessionPath = activeSnapshotPath(cwd, normalizedSessionId);
 	return { rootPath: sessionPath, sessionPath };
 }
@@ -464,7 +464,7 @@ async function readRawActiveStateForHandoff(filePath: string, strict: boolean): 
 	} catch (err) {
 		if (!strict) {
 			logger.warn(
-				`gjc skill-state: invalid skill-active-state at ${filePath}: invalid JSON: ${(err as Error).message}`,
+				`vib skill-state: invalid skill-active-state at ${filePath}: invalid JSON: ${(err as Error).message}`,
 			);
 			return null;
 		}
@@ -507,7 +507,7 @@ function rawActiveEntries(state: SkillActiveState | null): SkillActiveEntry[] {
 async function readModeStatePhase(
 	cwd: string,
 	sessionId: string,
-	skill: CanonicalGjcWorkflowSkill,
+	skill: CanonicalVibWorkflowSkill,
 ): Promise<string | undefined> {
 	const filePath = modeStatePath(cwd, sessionId, skill);
 	try {
@@ -843,7 +843,7 @@ export async function readVisibleSkillActiveState(
 
 function activeStateWriterAudit(verb: string, sessionScope?: ActiveSessionScope | string) {
 	const sessionId = typeof sessionScope === "string" ? sessionScope : sessionScope?.sessionId;
-	return { category: "state" as const, verb, owner: "gjc-runtime" as const, ...(sessionId ? { sessionId } : {}) };
+	return { category: "state" as const, verb, owner: "vib-runtime" as const, ...(sessionId ? { sessionId } : {}) };
 }
 
 async function persistActiveEntry(
@@ -971,7 +971,7 @@ export async function applyHandoffToActiveState(options: ApplyHandoffOptions): P
 	const callerEntry = buildSyncEntry(options.caller, nowIso);
 	const calleeEntry = buildSyncEntry(options.callee, nowIso);
 	const sessionId = options.callee.sessionId ?? options.caller.sessionId;
-	assertNonEmptyGjcSessionId(sessionId, "applyHandoffToActiveState");
+	assertNonEmptyVibSessionId(sessionId, "applyHandoffToActiveState");
 	const { sessionPath } = getSkillActiveStatePaths(options.cwd, sessionId);
 	const readState = (filePath: string) => readRawActiveStateForHandoff(filePath, options.strict === true);
 	await readState(sessionPath);

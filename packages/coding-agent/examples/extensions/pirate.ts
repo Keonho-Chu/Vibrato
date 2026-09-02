@@ -5,11 +5,11 @@
  * modify the system prompt based on extension state.
  *
  * Usage:
- * 1. Copy this file to ~/.gjc/agent/extensions/ (legacy: ~/.pi/agent/extensions/) or your project's .gjc/extensions/
+ * 1. Copy this file to ~/.vib/agent/extensions/ (legacy: ~/.pi/agent/extensions/) or your project's .vib/extensions/
  * 2. Use /pirate to toggle pirate mode
  * 3. When enabled, the agent will respond like a pirate
  */
-import type { ExtensionAPI } from "@gajae-code/coding-agent";
+import type { ExtensionAPI } from "@vib-rato/coding-agent";
 
 export default function pirateExtension(pi: ExtensionAPI) {
 	let pirateMode = false;

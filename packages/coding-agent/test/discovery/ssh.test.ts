@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
-import { getSSHConfigPath, logger, TempDir } from "@gajae-code/utils";
+import { getSSHConfigPath, logger, TempDir } from "@vib-rato/utils";
 import { reset as resetCapabilities } from "../../src/capability";
 import type { SSHHost } from "../../src/capability/ssh";
 import { sshCapability } from "../../src/capability/ssh";
@@ -15,7 +15,7 @@ describe("SSH discovery destination validation", () => {
 	});
 
 	it("omits unsafe project entries and logs a warning", async () => {
-		const tempDir = TempDir.createSync("gjc-ssh-discovery-");
+		const tempDir = TempDir.createSync("vib-ssh-discovery-");
 		tempDirs.push(tempDir);
 		const cwd = tempDir.path();
 		const configPath = getSSHConfigPath("project", cwd);

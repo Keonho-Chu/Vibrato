@@ -1,4 +1,4 @@
-import { getProjectDir, logger, onDefaultTabWidthChange } from "@gajae-code/utils";
+import { getProjectDir, logger, onDefaultTabWidthChange } from "@vib-rato/utils";
 import {
 	type AutocompleteProvider,
 	type AutocompleteSuggestionKind,
@@ -2046,7 +2046,7 @@ export class Editor implements Component, Focusable {
 		// renders — without this, cursor column accounting drifts by
 		// `(NFD cells − NFC cells)` and the visible glyph desyncs from the
 		// hardware cursor. Matches the `Input` component's prior fix; this
-		// is the same fix on the real GJC prompt component (`Editor`).
+		// is the same fix on the real Vibrato prompt component (`Editor`).
 		const cleanText = decodedText.replace(/\r\n?/g, "\n").normalize("NFC");
 
 		// Convert tabs to spaces (4 spaces per tab)

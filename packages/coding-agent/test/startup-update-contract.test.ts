@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "bun:test";
 import * as path from "node:path";
-import { closeModelCache, getBundledModel, type Model } from "@gajae-code/ai";
-import { getAgentDir, hookFetch, postmortem, setAgentDir, TempDir } from "@gajae-code/utils";
+import { closeModelCache, getBundledModel, type Model } from "@vib-rato/ai";
+import { getAgentDir, hookFetch, postmortem, setAgentDir, TempDir } from "@vib-rato/utils";
 import { type Args, parseArgs } from "../src/cli/args";
 import { ModelRegistry, ModelsConfigFile } from "../src/config/model-registry";
 import { resetSettingsForTest, Settings } from "../src/config/settings";
@@ -84,13 +84,13 @@ describe("startup update contract", () => {
 		expect(setting.default).toBe(true);
 		expect(setting.ui.description).toContain("At interactive startup, notify");
 		expect(setting.ui.description).toContain("never install");
-		expect(setting.ui.description).toContain("`gjc update` installs the matching GitHub release binary");
+		expect(setting.ui.description).toContain("`vib update` installs the matching GitHub release binary");
 		expect(setting.ui.description).toContain(
 			"Source, linked, and unrecognized installs stay on their original method",
 		);
 	});
 	it("displays the changelog without rewriting malformed global YAML", async () => {
-		using tempDir = TempDir.createSync("@gjc-malformed-changelog-");
+		using tempDir = TempDir.createSync("@vib-malformed-changelog-");
 		const agentDir = path.join(tempDir.path(), "agent");
 		const malformed = "notifications: [";
 		await Bun.write(path.join(agentDir, "config.yml"), malformed);
@@ -280,7 +280,7 @@ describe("startup update contract", () => {
 		];
 
 		for (const testCase of cases) {
-			using tempDir = TempDir.createSync("@gjc-startup-route-");
+			using tempDir = TempDir.createSync("@vib-startup-route-");
 			const authStorage = await AuthStorage.create(path.join(tempDir.path(), "auth.db"));
 			const originalNoTitle = Bun.env.PI_NO_TITLE;
 			let checks = 0;
@@ -344,7 +344,7 @@ describe("startup update contract", () => {
 	}, 30_000);
 
 	it("forwards CLI model and thinking to SDK-backed ACP startup controls", async () => {
-		using tempDir = TempDir.createSync("@gjc-acp-startup-options-");
+		using tempDir = TempDir.createSync("@vib-acp-startup-options-");
 		const authStorage = await AuthStorage.create(path.join(tempDir.path(), "auth.db"));
 		const originalNoTitle = Bun.env.PI_NO_TITLE;
 		let options: { agentDir?: string; startupOptions?: { modelId?: string; thinkingLevel?: string } } | undefined;
@@ -383,7 +383,7 @@ describe("startup update contract", () => {
 	});
 
 	it("admits a selected literal cache through the normal print root registry", async () => {
-		using tempDir = TempDir.createSync("@gjc-print-cache-startup-");
+		using tempDir = TempDir.createSync("@vib-print-cache-startup-");
 		const agentDir = path.join(tempDir.path(), "agent");
 		const modelsPath = path.join(agentDir, "models.yml");
 		const authPath = path.join(agentDir, "auth.db");
@@ -514,7 +514,7 @@ describe("startup update contract", () => {
 		}
 	});
 	it("forwards CLI --mcp-config as mcpConfigPath to local SDK session startup", async () => {
-		using tempDir = TempDir.createSync("@gjc-mcp-config-startup-options-");
+		using tempDir = TempDir.createSync("@vib-mcp-config-startup-options-");
 		const authStorage = await AuthStorage.create(path.join(tempDir.path(), "auth.db"));
 		const configPath = path.join(tempDir.path(), "explicit-mcp.json");
 		let sessionOptions: CreateAgentSessionOptions | undefined;
@@ -555,7 +555,7 @@ describe("startup update contract", () => {
 	});
 
 	it("preserves print-mode status, cleans up owners, and does not dispose the session twice", async () => {
-		using tempDir = TempDir.createSync("@gjc-print-exit-");
+		using tempDir = TempDir.createSync("@vib-print-exit-");
 		const authStorage = await AuthStorage.create(path.join(tempDir.path(), "auth.db"));
 		const originalNoTitle = Bun.env.PI_NO_TITLE;
 		const originalExitCode = process.exitCode;
@@ -598,7 +598,7 @@ describe("startup update contract", () => {
 		}
 	});
 	it("cleans up noninteractive owners when print mode rejects", async () => {
-		using tempDir = TempDir.createSync("@gjc-print-failure-");
+		using tempDir = TempDir.createSync("@vib-print-failure-");
 		const authStorage = await AuthStorage.create(path.join(tempDir.path(), "auth.db"));
 		const originalNoTitle = Bun.env.PI_NO_TITLE;
 		const printFailure = new Error("print failed");
@@ -631,7 +631,7 @@ describe("startup update contract", () => {
 		}
 	});
 	it("disposes the interactive session before rethrowing a startup failure", async () => {
-		using tempDir = TempDir.createSync("@gjc-interactive-startup-failure-");
+		using tempDir = TempDir.createSync("@vib-interactive-startup-failure-");
 		const authStorage = await AuthStorage.create(path.join(tempDir.path(), "auth.db"));
 		const startupFailure = new Error("interactive startup failed");
 		const sessionResult = fakeSessionResult();
@@ -662,7 +662,7 @@ describe("startup update contract", () => {
 		}
 	});
 	it("disposes the interactive session before PI_TIMING=x exits", async () => {
-		using tempDir = TempDir.createSync("@gjc-interactive-timing-exit-");
+		using tempDir = TempDir.createSync("@vib-interactive-timing-exit-");
 		const authStorage = await AuthStorage.create(path.join(tempDir.path(), "auth.db"));
 		const originalTiming = Bun.env.PI_TIMING;
 		const timingExit = new Error("timing exit");
@@ -704,7 +704,7 @@ describe("startup update contract", () => {
 	});
 
 	it("runs the real root and interactive-mode path without awaiting the version check", async () => {
-		using tempDir = TempDir.createSync("@gjc-startup-interactive-");
+		using tempDir = TempDir.createSync("@vib-startup-interactive-");
 		const authStorage = await AuthStorage.create(path.join(tempDir.path(), "auth.db"));
 		const versionCheck = Promise.withResolvers<string | undefined>();
 		const changelogReached = Promise.withResolvers<void>();
@@ -776,7 +776,7 @@ describe("startup update contract", () => {
 			{ enabled: false, check: async () => "999.0.0" },
 			{ enabled: true, check: async () => await Promise.reject(new Error("registry unavailable")) },
 		]) {
-			using tempDir = TempDir.createSync("@gjc-startup-disabled-");
+			using tempDir = TempDir.createSync("@vib-startup-disabled-");
 			const authStorage = await AuthStorage.create(path.join(tempDir.path(), "auth.db"));
 			const stop = new Error("stop interactive harness");
 			let checks = 0;
@@ -823,7 +823,7 @@ describe("startup update contract", () => {
 		}
 	}, 15_000);
 	it("reaches login recovery before a credentialless default profile can abort startup", async () => {
-		using tempDir = TempDir.createSync("@gjc-auth-bootstrap-");
+		using tempDir = TempDir.createSync("@vib-auth-bootstrap-");
 		const authStorage = await AuthStorage.create(path.join(tempDir.path(), "auth.db"));
 		const stop = new Error("stop auth bootstrap harness");
 		const parsed = parseArgs(["login", "openai-codex"]);
@@ -874,7 +874,7 @@ describe("startup update contract", () => {
 		}
 	});
 	it("keeps credential validation active for noninteractive login-shaped input", async () => {
-		using tempDir = TempDir.createSync("@gjc-auth-bootstrap-text-");
+		using tempDir = TempDir.createSync("@vib-auth-bootstrap-text-");
 		const authStorage = await AuthStorage.create(path.join(tempDir.path(), "auth.db"));
 		const settings = Settings.isolated({
 			"marketplace.autoUpdate": "off",
@@ -927,7 +927,7 @@ describe("startup update contract", () => {
 		const source = await Bun.file(new URL("../src/main.ts", import.meta.url)).text();
 
 		expect(source).not.toMatch(/["']\.\/cli\/update-cli["']/);
-		expect(source).not.toMatch(/["']\.\/defaults\/gjc-defaults["']/);
+		expect(source).not.toMatch(/["']\.\/defaults\/vib-defaults["']/);
 		expect(source).toContain("startupUpdate.startBeforeInteractiveInitialization()");
 		expect(source).toContain("startupUpdate.attachAfterInteractiveInitialization");
 	});
@@ -937,9 +937,9 @@ describe("startup update contract", () => {
 
 		// The channel comes from the config-layer primitives (never the updater
 		// module) and is resolved machine-locally: the global layer only, so a
-		// project `.gjc/config.yml` startup.updateChannel override can never pick
+		// project `.vib/config.yml` startup.updateChannel override can never pick
 		// the release channel, and a nightly notification is always satisfiable
-		// by the default `gjc update` invocation.
+		// by the default `vib update` invocation.
 		expect(source).toContain('from "./config/update-channel"');
 		expect(source).toContain("resolveMachineLocalUpdateChannel(settingsInstance)");
 		expect(source).not.toContain('settingsInstance.get("startup.updateChannel")');

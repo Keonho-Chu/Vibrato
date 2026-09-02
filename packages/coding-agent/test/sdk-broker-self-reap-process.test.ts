@@ -10,7 +10,7 @@ import { startFixtureBrokerCommandWithLeaseForTest } from "./helpers/fixture-bro
 
 const fixture = path.resolve(import.meta.dir, "fixtures/sdk-broker-self-reap-entry.ts");
 const fixtureExecutableSuffix = process.platform === "win32" ? ".exe" : "";
-const compiledFixtureRoot = path.join(process.env.TMPDIR ?? "/tmp", `gjc-broker-compiled-fixtures-${process.pid}`);
+const compiledFixtureRoot = path.join(process.env.TMPDIR ?? "/tmp", `vib-broker-compiled-fixtures-${process.pid}`);
 const compiledBrokerFixture = path.join(compiledFixtureRoot, `sdk-broker-self-reap-fixture${fixtureExecutableSuffix}`);
 const compiledSessionFixture = path.join(
 	compiledFixtureRoot,
@@ -58,7 +58,7 @@ async function assertAuthenticatedFixtureTopology(
 	commandForRoot: FixtureCommandFactory,
 	options: { coalesceExitWithAccept?: boolean } = {},
 ): Promise<void> {
-	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-self-reap-"));
+	const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-self-reap-"));
 	const token = randomBytes(32);
 	const requestId = randomUUID();
 	const markerPath = path.join(root, "non-secret-marker");
@@ -217,7 +217,7 @@ test.serial(
 	"production broker stays warm while owned and self-reaps after durable SDK-root loss",
 	async () => {
 		if (process.platform === "win32") return;
-		const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-owned-root-"));
+		const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-owned-root-"));
 		const agentDir = path.join(root, "agent");
 		const started = await startFixtureBrokerWithLeaseForTest({ agentDir });
 		try {
@@ -275,7 +275,7 @@ test.serial(
 test.serial(
 	"compiled fixture broker fails closed for missing, non-file, and symlink session siblings",
 	async () => {
-		const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-self-reap-"));
+		const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-self-reap-"));
 		const { file: broker } = await compiledFixtureCommand(root);
 		const session = path.join(root, `sdk-session-host-self-exit-fixture${fixtureExecutableSuffix}`);
 		const retainedSession = path.join(root, `retained-session${fixtureExecutableSuffix}`);

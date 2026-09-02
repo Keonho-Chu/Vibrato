@@ -8,8 +8,8 @@ import {
 	type ResumeSessionIdentity,
 	SessionManager,
 	SessionTranscriptOversizedError,
-} from "@gajae-code/coding-agent/session/session-manager";
-import { FileSessionStorage } from "@gajae-code/coding-agent/session/session-storage";
+} from "@vib-rato/coding-agent/session/session-manager";
+import { FileSessionStorage } from "@vib-rato/coding-agent/session/session-storage";
 import { MANAGED_ARTIFACT_MAX_FILE_BYTES } from "../src/session/internal/managed-session-storage";
 
 const tempDirs: string[] = [];
@@ -20,7 +20,7 @@ afterEach(async () => {
 });
 
 function makeTempDir(): string {
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-resume-oversized-"));
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-resume-oversized-"));
 	tempDirs.push(dir);
 	return dir;
 }

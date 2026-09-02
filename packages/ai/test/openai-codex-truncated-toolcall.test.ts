@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "bun:test";
-import { streamOpenAICodexResponses } from "@gajae-code/ai/providers/openai-codex-responses";
-import type { Context, Model, ToolCall } from "@gajae-code/ai/types";
-import { getAgentDir, setAgentDir, TempDir } from "@gajae-code/utils";
+import { streamOpenAICodexResponses } from "@vib-rato/ai/providers/openai-codex-responses";
+import type { Context, Model, ToolCall } from "@vib-rato/ai/types";
+import { getAgentDir, setAgentDir, TempDir } from "@vib-rato/utils";
 
 // The Codex Responses provider has its own stream handlers; the truncated
 // tool-call guard must cover it too. A `function_call` that never receives its

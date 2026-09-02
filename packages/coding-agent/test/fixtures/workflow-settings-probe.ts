@@ -1,10 +1,10 @@
 /**
  * Prints the resolved workflow setting for the current working directory.
  * Directory/env resolution happens at module load, so this must be a child
- * process when HOME/GJC_CONFIG_DIR/GJC_CODING_AGENT_DIR need isolation.
+ * process when HOME/VIB_CONFIG_DIR/VIB_CODING_AGENT_DIR need isolation.
  * Pass `--strict` to resolve with the throw invalid policy (ralplan contract).
  */
-import { resolveWorkflowSetting, type WorkflowSettingKey } from "../../src/gjc-runtime/workflow-settings";
+import { resolveWorkflowSetting, type WorkflowSettingKey } from "../../src/vib-runtime/workflow-settings";
 
 const cwd = process.cwd();
 const key = process.argv[2] as WorkflowSettingKey;

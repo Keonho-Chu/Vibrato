@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import { Effort, getBundledModel } from "@gajae-code/ai";
-import { DEFAULT_MODEL_PER_PROVIDER } from "@gajae-code/ai/provider-models";
+import { Effort, getBundledModel } from "@vib-rato/ai";
+import { DEFAULT_MODEL_PER_PROVIDER } from "@vib-rato/ai/provider-models";
 
 describe("OpenAI Codex defaults", () => {
 	it("pins provider default to GPT-5.5", () => {

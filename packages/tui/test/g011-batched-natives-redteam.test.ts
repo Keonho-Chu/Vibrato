@@ -9,9 +9,9 @@ import {
 	truncateToWidth,
 	visibleWidth,
 	visibleWidths,
-} from "@gajae-code/tui";
-import { ImageProtocol, TERMINAL } from "@gajae-code/tui/terminal-capabilities";
-import { getDefaultTabWidth, setDefaultTabWidth } from "@gajae-code/utils";
+} from "@vib-rato/tui";
+import { ImageProtocol, TERMINAL } from "@vib-rato/tui/terminal-capabilities";
+import { getDefaultTabWidth, setDefaultTabWidth } from "@vib-rato/utils";
 import { VirtualTerminal } from "./virtual-terminal";
 
 const REPORT_PATH = "artifacts/g011-qa-report.json";
@@ -168,8 +168,8 @@ describe("G011 batched text natives red-team", () => {
 	});
 
 	it("FRAME-PARITY and FFI-COUNT: mixed frame emits reference bytes and uses few native calls", async () => {
-		const previousIme = Bun.env.GJC_TUI_IME_CURSOR;
-		Bun.env.GJC_TUI_IME_CURSOR = "0";
+		const previousIme = Bun.env.VIB_TUI_IME_CURSOR;
+		Bun.env.VIB_TUI_IME_CURSOR = "0";
 		const mutable = TERMINAL as unknown as { imageProtocol: ImageProtocol | null };
 		const originalProtocol = mutable.imageProtocol;
 		mutable.imageProtocol = ImageProtocol.Kitty;
@@ -227,8 +227,8 @@ describe("G011 batched text natives red-team", () => {
 		} finally {
 			tui.stop();
 			mutable.imageProtocol = originalProtocol;
-			if (previousIme === undefined) delete Bun.env.GJC_TUI_IME_CURSOR;
-			else Bun.env.GJC_TUI_IME_CURSOR = previousIme;
+			if (previousIme === undefined) delete Bun.env.VIB_TUI_IME_CURSOR;
+			else Bun.env.VIB_TUI_IME_CURSOR = previousIme;
 		}
 	});
 

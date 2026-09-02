@@ -1,11 +1,11 @@
-import { Command, Flags } from "@gajae-code/utils/cli";
+import { Command, Flags } from "@vib-rato/utils/cli";
 import { ensureWorkflowSettingsMigrated } from "../config/settings";
-import { runNativeDeepInterviewCommand } from "../gjc-runtime/deep-interview-runtime";
+import { runNativeDeepInterviewCommand } from "../vib-runtime/deep-interview-runtime";
 
 export default class DeepInterview extends Command {
-	static description = `Run native GJC deep-interview workflow.
+	static description = `Run native Vibrato deep-interview workflow.
 
-All deep-interview state operations go through this command — no gjc state needed:
+All deep-interview state operations go through this command — no vib state needed:
   read                Print the persisted envelope, revision, content sha, and any pending draft
   write               One-shot incremental JSON merge into state (--reset replaces; the locked
                       intent contract survives a reset)
@@ -18,7 +18,7 @@ All deep-interview state operations go through this command — no gjc state nee
 
 Ambiguity is runtime-owned: apply/write derive current_ambiguity from the latest valid scored
 round and clamp it to the deterministic floor. Sessions resolve from --session-id, payload
-session_id, or GJC_SESSION_ID.`;
+session_id, or VIB_SESSION_ID.`;
 	static strict = false;
 	static flags = {
 		quick: Flags.boolean({ description: "Seed a quick deep-interview run" }),
@@ -28,16 +28,18 @@ session_id, or GJC_SESSION_ID.`;
 		threshold: Flags.string({ description: "Override ambiguity threshold for kickoff" }),
 		"threshold-source": Flags.string({ description: "Describe the threshold override source" }),
 		"session-id": Flags.string({
-			description: "Route state/spec handoff through a session-scoped .gjc/_session-{sessionid} directory",
+			description: "Route state/spec handoff through a session-scoped .vib/_session-{sessionid} directory",
 		}),
 		input: Flags.string({ description: "JSON payload (or @file) for the write/stage verbs" }),
 		for: Flags.string({
 			description: "Transition for stage: initialize-context | record-round | update-facts | merge-state",
 		}),
 		reset: Flags.boolean({ description: "With write: replace state instead of incremental merge" }),
-		write: Flags.boolean({ description: "Persist a final deep-interview spec through the sanctioned GJC CLI/API" }),
+		write: Flags.boolean({
+			description: "Persist a final deep-interview spec through the sanctioned Vibrato CLI/API",
+		}),
 		stage: Flags.string({ description: 'Spec stage for --write (currently "final")' }),
-		slug: Flags.string({ description: "Safe slug for .gjc/_session-{sessionid}/specs/deep-interview-<slug>.md" }),
+		slug: Flags.string({ description: "Safe slug for .vib/_session-{sessionid}/specs/deep-interview-<slug>.md" }),
 		spec: Flags.string({ description: "Final spec markdown or a path to the final spec markdown" }),
 		handoff: Flags.string({ description: 'After --write, hand off to a workflow target (currently "ralplan")' }),
 		deliberate: Flags.boolean({
@@ -47,14 +49,14 @@ session_id, or GJC_SESSION_ID.`;
 		json: Flags.boolean({ description: "Output JSON" }),
 	};
 	static examples = [
-		'$ gjc deep-interview --trace --standard "<idea>"',
-		"$ gjc deep-interview read --json",
-		'$ gjc deep-interview write --input \'{"state":{"threshold":0.05}}\' --json',
-		'$ gjc deep-interview stage --for record-round --input \'{"state":{"rounds":[{"round":1,"round_key":"r1"}]}}\' --json',
-		"$ gjc deep-interview check --json",
-		"$ gjc deep-interview apply --json",
-		"$ gjc deep-interview --write --stage final --slug my-feature --spec ./final-spec.md",
-		"$ gjc deep-interview --write --stage final --slug my-feature --spec ./final-spec.md --deliberate",
+		'$ vib deep-interview --trace --standard "<idea>"',
+		"$ vib deep-interview read --json",
+		'$ vib deep-interview write --input \'{"state":{"threshold":0.05}}\' --json',
+		'$ vib deep-interview stage --for record-round --input \'{"state":{"rounds":[{"round":1,"round_key":"r1"}]}}\' --json',
+		"$ vib deep-interview check --json",
+		"$ vib deep-interview apply --json",
+		"$ vib deep-interview --write --stage final --slug my-feature --spec ./final-spec.md",
+		"$ vib deep-interview --write --stage final --slug my-feature --spec ./final-spec.md --deliberate",
 	];
 
 	async run(): Promise<void> {

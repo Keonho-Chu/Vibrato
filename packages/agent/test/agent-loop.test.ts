@@ -5,8 +5,8 @@ import {
 	agentLoopDetailed,
 	INTENT_FIELD,
 	normalizeTools,
-} from "@gajae-code/agent-core/agent-loop";
-import { AppendOnlyContextManager } from "@gajae-code/agent-core/append-only-context";
+} from "@vib-rato/agent-core/agent-loop";
+import { AppendOnlyContextManager } from "@vib-rato/agent-core/append-only-context";
 import type {
 	AgentContext,
 	AgentEvent,
@@ -15,10 +15,10 @@ import type {
 	AgentTool,
 	AgentToolContext,
 	ToolCallContext,
-} from "@gajae-code/agent-core/types";
-import type { AssistantMessage, Context, Message, ToolResultMessage } from "@gajae-code/ai";
-import { createMockModel } from "@gajae-code/ai/providers/mock";
-import { AssistantMessageEventStream } from "@gajae-code/ai/utils/event-stream";
+} from "@vib-rato/agent-core/types";
+import type { AssistantMessage, Context, Message, ToolResultMessage } from "@vib-rato/ai";
+import { createMockModel } from "@vib-rato/ai/providers/mock";
+import { AssistantMessageEventStream } from "@vib-rato/ai/utils/event-stream";
 import * as z from "zod/v4";
 import { createAssistantMessage, createUserMessage } from "./helpers";
 

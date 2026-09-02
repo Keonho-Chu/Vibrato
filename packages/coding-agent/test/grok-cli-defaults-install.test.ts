@@ -1,15 +1,15 @@
 import { describe, expect, it } from "bun:test";
-import { Effort } from "@gajae-code/ai/model-thinking";
+import { Effort } from "@vib-rato/ai/model-thinking";
 import {
 	type GrokCliModelConfig,
 	resolveModels,
 	supportsReasoningEffort,
-} from "../src/defaults/gjc/extensions/grok-cli-vendor/src/models/catalog";
+} from "../src/defaults/vib/extensions/grok-cli-vendor/src/models/catalog";
 import {
 	assertBundledGrokCliDefaults,
 	getBundledGrokBuildExtensionFactory,
 	getBundledGrokCliModelDefaults,
-} from "../src/defaults/gjc-grok-cli";
+} from "../src/defaults/vib-grok-cli";
 import type { ExtensionAPI, ProviderConfig } from "../src/extensibility/extensions";
 
 async function captureGrokBuildProviderConfig(): Promise<ProviderConfig> {
@@ -33,8 +33,8 @@ describe("bundled Grok CLI defaults", () => {
 	});
 
 	it("registers Grok 4.5 with verified model metadata and documented effort cap", async () => {
-		const previousGrokCliModels = process.env.GJC_GROK_CLI_MODELS;
-		delete process.env.GJC_GROK_CLI_MODELS;
+		const previousGrokCliModels = process.env.VIB_GROK_CLI_MODELS;
+		delete process.env.VIB_GROK_CLI_MODELS;
 		try {
 			const model = resolveModels().find(candidate => candidate.id === "grok-4.5");
 
@@ -59,17 +59,17 @@ describe("bundled Grok CLI defaults", () => {
 			});
 		} finally {
 			if (previousGrokCliModels === undefined) {
-				delete process.env.GJC_GROK_CLI_MODELS;
+				delete process.env.VIB_GROK_CLI_MODELS;
 			} else {
-				process.env.GJC_GROK_CLI_MODELS = previousGrokCliModels;
+				process.env.VIB_GROK_CLI_MODELS = previousGrokCliModels;
 			}
 		}
 	});
 
 	it("maps official Grok 4.5 aliases to canonical metadata and effort limits", async () => {
-		const previousGrokCliModels = process.env.GJC_GROK_CLI_MODELS;
+		const previousGrokCliModels = process.env.VIB_GROK_CLI_MODELS;
 		const aliases = ["grok-4.5-latest", "grok-build-latest"];
-		process.env.GJC_GROK_CLI_MODELS = aliases.join(",");
+		process.env.VIB_GROK_CLI_MODELS = aliases.join(",");
 		try {
 			const expectedMetadata = {
 				name: "Grok 4.5",
@@ -103,9 +103,9 @@ describe("bundled Grok CLI defaults", () => {
 			);
 		} finally {
 			if (previousGrokCliModels === undefined) {
-				delete process.env.GJC_GROK_CLI_MODELS;
+				delete process.env.VIB_GROK_CLI_MODELS;
 			} else {
-				process.env.GJC_GROK_CLI_MODELS = previousGrokCliModels;
+				process.env.VIB_GROK_CLI_MODELS = previousGrokCliModels;
 			}
 		}
 	});

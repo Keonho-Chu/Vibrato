@@ -1,4 +1,4 @@
-import { $credentialEnv } from "@gajae-code/utils";
+import { $credentialEnv } from "@vib-rato/utils";
 import type { ModelManagerOptions } from "../model-manager";
 import { Effort } from "../model-thinking";
 import { getBundledModels } from "../models";
@@ -301,7 +301,7 @@ async function fetchOllamaNativeModels(
  * Ollama's cloud catalog reports for stock models.
  */
 const OLLAMA_FALLBACK_CONTEXT_WINDOW = 128_000;
-/** Cap max output tokens at a value that matches GJC's other openai-responses defaults. */
+/** Cap max output tokens at a value that matches Vibrato's other openai-responses defaults. */
 const OLLAMA_DEFAULT_MAX_TOKENS = 8192;
 
 interface OllamaResolvedMetadata {
@@ -2022,7 +2022,7 @@ export function githubCopilotModelManagerOptions(config?: GithubCopilotModelMana
 						const reference = resolveReference(defaults.id);
 						const copilotLimits = extractCopilotLimits(entry);
 						// Copilot exposes token limits under capabilities.limits.*.
-						// max_prompt_tokens is the prompt capacity (what GJC calls contextWindow).
+						// max_prompt_tokens is the prompt capacity (what Vibrato calls contextWindow).
 						// max_context_window_tokens is the total window (prompt + output budget)
 						// and must NOT be used for contextWindow — it inflates the limit and
 						// breaks compaction thresholds, overflow detection, and promotion.
@@ -2514,7 +2514,7 @@ const MODELS_DEV_PROVIDER_DESCRIPTORS_CORE: readonly ModelsDevProviderDescriptor
 		// ids are kept off the catalog until the issue thread asks for them.
 		filterModel: (id, m) => m.tool_call === true && id.startsWith("deepseek-v4"),
 		compat: {
-			// DeepSeek V4 only accepts `high`/`max`; map lower GJC levels upward so
+			// DeepSeek V4 only accepts `high`/`max`; map lower Vibrato levels upward so
 			// subagent "minimal" turns stay in documented thinking mode instead of
 			// sending unsupported effort strings.
 			supportsDeveloperRole: false,

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
-import type { ImageContent } from "@gajae-code/ai";
-import type { ExtensionAPI } from "@gajae-code/coding-agent";
-import type { ExecResult } from "@gajae-code/coding-agent/exec/exec";
+import type { ImageContent } from "@vib-rato/ai";
+import type { ExtensionAPI } from "@vib-rato/coding-agent";
+import type { ExecResult } from "@vib-rato/coding-agent/exec/exec";
 import {
 	createExactPrefixCommandBridge,
 	createOuroborosOooBridge,
@@ -11,7 +11,7 @@ import {
 	type InputEventResult,
 	OOO_BRIDGE_RECURSION_ENV,
 	OOO_BRIDGE_TIMEOUT_ENV,
-} from "@gajae-code/coding-agent/extensibility/extensions";
+} from "@vib-rato/coding-agent/extensibility/extensions";
 import activateOooBridge from "../examples/extensions/ooo-bridge";
 import type { MCPRequestOptions, MCPServerConnection, MCPToolCallResult } from "../src/runtime-mcp";
 import * as runtimeMcpModule from "../src/runtime-mcp";
@@ -297,7 +297,7 @@ describe("ooo bridge extension contract", () => {
 			{
 				type: "stdio",
 				command: "/opt/ouroboros/bin/ouroboros",
-				args: ["mcp", "serve", "--runtime", "gjc"],
+				args: ["mcp", "serve", "--runtime", "vib"],
 				cwd: ctx.cwd,
 			},
 			{ signal: expect.any(AbortSignal) },

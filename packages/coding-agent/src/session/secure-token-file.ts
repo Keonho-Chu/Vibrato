@@ -1,6 +1,6 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { isEnoent } from "@gajae-code/utils";
+import { isEnoent } from "@vib-rato/utils";
 
 function isPosix(): boolean {
 	return process.platform !== "win32";

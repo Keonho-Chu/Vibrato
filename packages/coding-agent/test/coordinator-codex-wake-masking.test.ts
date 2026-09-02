@@ -31,7 +31,7 @@ const maskingIt = coordinatorDurabilityAvailable() ? it : it.skip;
 const tempDirs: string[] = [];
 
 async function tempRoot(): Promise<string> {
-	const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-wake-masking-"));
+	const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-wake-masking-"));
 	tempDirs.push(root);
 	return root;
 }
@@ -42,9 +42,9 @@ async function tempRoot(): Promise<string> {
 // migration input only).
 function namespaceDir(root: string): string {
 	const config = buildCoordinatorMcpConfig({
-		GJC_COORDINATOR_MCP_STATE_ROOT: path.join(root, ".gjc", "coordinator-state"),
-		GJC_COORDINATOR_MCP_PROFILE: "local",
-		GJC_COORDINATOR_MCP_REPO: "repo",
+		VIB_COORDINATOR_MCP_STATE_ROOT: path.join(root, ".vib", "coordinator-state"),
+		VIB_COORDINATOR_MCP_PROFILE: "local",
+		VIB_COORDINATOR_MCP_REPO: "repo",
 	});
 	return path.join(config.stateRoot, "v1", config.namespace.identity, "projections");
 }
@@ -83,10 +83,10 @@ async function createWakeNamespace(root: string, transport: unknown): Promise<st
 	const namespace = namespaceDir(root);
 	createCoordinatorMcpServer({
 		env: {
-			GJC_COORDINATOR_MCP_WORKDIR_ROOTS: root,
-			GJC_COORDINATOR_MCP_STATE_ROOT: path.join(root, ".gjc", "coordinator-state"),
-			GJC_COORDINATOR_MCP_PROFILE: "local",
-			GJC_COORDINATOR_MCP_REPO: "repo",
+			VIB_COORDINATOR_MCP_WORKDIR_ROOTS: root,
+			VIB_COORDINATOR_MCP_STATE_ROOT: path.join(root, ".vib", "coordinator-state"),
+			VIB_COORDINATOR_MCP_PROFILE: "local",
+			VIB_COORDINATOR_MCP_REPO: "repo",
 		},
 		services: transport as never,
 	});

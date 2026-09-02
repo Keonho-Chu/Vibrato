@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
-import { Image } from "@gajae-code/tui/components/image";
+import { Image } from "@vib-rato/tui/components/image";
 import {
 	type CellDimensions,
 	encodeKittyPlacementDelete,
@@ -16,7 +16,7 @@ import {
 	setKittyTransmitWriter,
 	TERMINAL,
 	withTerminalGraphicsFallback,
-} from "@gajae-code/tui/terminal-capabilities";
+} from "@vib-rato/tui/terminal-capabilities";
 
 type MutableTerminalInfo = {
 	imageProtocol: ImageProtocol | null;

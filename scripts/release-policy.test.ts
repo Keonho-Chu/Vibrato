@@ -56,7 +56,7 @@ describe("stable release policy", () => {
 		const ci = await workflow();
 		const concurrency = ci.slice(ci.indexOf("concurrency:\n"), ci.indexOf("\njobs:"));
 
-		expect(concurrency).toContain("gajae-npm-release");
+		expect(concurrency).toContain("vibrato-npm-release");
 		expect(concurrency).toContain("startsWith(github.ref, 'refs/tags/v')");
 		expect(concurrency).toContain("inputs.rehearsal == 'nightly-release'");
 		expect(concurrency).not.toContain("cancel-in-progress: true");
@@ -200,7 +200,7 @@ describe("stable release policy", () => {
 		// The boundary re-verifies the sealed tarball bytes before publishing.
 		expect(publish).toContain("Publish sealed tarballs to npm");
 		expect(publish).toContain("sha512sum --check --strict");
-		expect(publish).toContain("gajae-release-oidc-publish-receipt-v1.json");
+		expect(publish).toContain("vibrato-release-oidc-publish-receipt-v1.json");
 	});
 
 	test("gates the OIDC boundary on the approval environment without changing the publish subject", async () => {
@@ -384,23 +384,23 @@ describe("stable release policy", () => {
 		expect(finalize.indexOf("Assemble final release evidence")).toBeLessThan(finalize.indexOf("Create GitHub Release"));
 		expect(finalize).toContain("prerelease: ${{ needs.release_metadata.outputs.channel == 'nightly' }}");
 		expect(finalize).toContain("make_latest: ${{ needs.release_metadata.outputs.channel != 'nightly' }}");
-		expect(finalize).toContain("gajae-release-packages-expected-v1.json");
-		expect(finalize).toContain("gajae-release-packages-v1.json");
-		expect(finalize).toContain("gajae-release-channel-v1.json");
-		expect(finalize).toContain("gajae-release-binaries-v1.json");
-		expect(finalize).toContain("gajae-release-binaries.sha256");
+		expect(finalize).toContain("vibrato-release-packages-expected-v1.json");
+		expect(finalize).toContain("vibrato-release-packages-v1.json");
+		expect(finalize).toContain("vibrato-release-channel-v1.json");
+		expect(finalize).toContain("vibrato-release-binaries-v1.json");
+		expect(finalize).toContain("vibrato-release-binaries.sha256");
 		expect(finalize).toContain("Publish binary checksum manifest");
 	});
 	test("updates owned Bun lock versions without re-resolving third-party packages", () => {
 		const lock = `{
   "workspaces": {
     "packages/agent": {
-      "name": "@gajae-code/agent-core",
+      "name": "@vib-rato/agent-core",
       "version": "0.12.20",
     },
   },
   "catalog": {
-    "@gajae-code/agent-core": "0.12.20",
+    "@vib-rato/agent-core": "0.12.20",
     "lucide-react": "^1.14.0",
   },
   "packages": {
@@ -411,7 +411,7 @@ describe("stable release policy", () => {
 		const updated = releasedBunLockContent(lock, "0.12.20", "0.12.21");
 
 		expect(updated).toContain('"version": "0.12.21"');
-		expect(updated).toContain('"@gajae-code/agent-core": "0.12.21"');
+		expect(updated).toContain('"@vib-rato/agent-core": "0.12.21"');
 		expect(updated).toContain('"lucide-react@1.28.0"');
 		expect(updated).toContain('"sha512-frozen"');
 	});
@@ -419,12 +419,12 @@ describe("stable release policy", () => {
 	test("fails closed when the Bun lock workspace or catalog versions do not match", () => {
 		const lock = `{
   "workspaces": { "packages/agent": { "version": "0.12.20" } },
-  "catalog": { "@gajae-code/agent-core": "0.12.19" },
+  "catalog": { "@vib-rato/agent-core": "0.12.19" },
   "packages": {}
 }`;
 
 		expect(() => releasedBunLockContent(lock, "0.12.20", "0.12.21")).toThrow(
-			"no @gajae-code catalog versions matching 0.12.20",
+			"no @vib-rato catalog versions matching 0.12.20",
 		);
 		expect(() => releasedBunLockContent(lock, "0.12.18", "0.12.21")).toThrow(
 			"no workspace package versions matching 0.12.18",
@@ -446,7 +446,7 @@ describe("stable release policy", () => {
 	// stale catalog can land with manifests at the new version while the Bun
 	// lock header and root catalog still pin the old one. The release helper's
 	// unit tests above only exercise fixtures, so this test runs the guard
-	// against the real repository state: every @gajae-code root catalog pin
+	// against the real repository state: every @vib-rato root catalog pin
 	// must be mirrored in bun.lock, and every workspace package's recorded lock
 	// version must equal its manifest version.
 	test("the real Bun lock header stays in lockstep with the root catalog and package manifests", async () => {
@@ -454,13 +454,13 @@ describe("stable release policy", () => {
 			workspaces?: { catalog?: Record<string, string> };
 		};
 		const catalog = rootPkg.workspaces?.catalog ?? {};
-		expect(catalog["@gajae-code/coding-agent"]).toBeTypeOf("string");
+		expect(catalog["@vib-rato/coding-agent"]).toBeTypeOf("string");
 
 		const lock = await Bun.file(path.join(repoRoot, "bun.lock")).text();
 		const header = lock.split('\n  "packages": {')[0] ?? lock;
 
 		for (const [name, version] of Object.entries(catalog)) {
-			if (!name.startsWith("@gajae-code/")) continue;
+			if (!name.startsWith("@vib-rato/")) continue;
 			expect(header, `bun.lock must pin ${name} at ${version}`).toContain(`"${name}": "${version}"`);
 		}
 

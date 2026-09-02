@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { appendCrashEvent, computeCrashFingerprint, formatCrashRecordMarker } from "@gajae-code/utils";
+import { appendCrashEvent, computeCrashFingerprint, formatCrashRecordMarker } from "@vib-rato/utils";
 import { type CrashStatePaths, compactCrashIndex, readCrashIndex } from "../src/crash/index-store";
 import {
 	buildPrefillUrl,
@@ -14,10 +14,10 @@ import {
 import type { GhResult, RunGh } from "../src/utils/gh";
 
 const NOW = Date.UTC(2026, 7, 11, 12, 0, 0);
-const ENVIRONMENT = { platform: "Linux", gjcVersion: "0.13.1", bunVersion: "1.3.14" };
+const ENVIRONMENT = { platform: "Linux", vibVersion: "0.13.1", bunVersion: "1.3.14" };
 const STACK = [
 	"Error: shared topic authority unavailable",
-	"    at resolveTopic (/opt/gjc/packages/coding-agent/src/sdk/bus/topics.ts:412:19)",
+	"    at resolveTopic (/opt/vib/packages/coding-agent/src/sdk/bus/topics.ts:412:19)",
 ].join("\n");
 const FINGERPRINT = computeCrashFingerprint({
 	name: "Error",
@@ -35,11 +35,11 @@ interface Harness {
 }
 
 async function harness(options: { withRecord?: boolean } = {}): Promise<Harness> {
-	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-crash-flow-"));
+	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-crash-flow-"));
 	const paths: CrashStatePaths = {
-		index: path.join(dir, "gjc-crash-index.json"),
-		events: path.join(dir, "gjc-crash-events.jsonl"),
-		crashLog: path.join(dir, "gjc-crash.log"),
+		index: path.join(dir, "vib-crash-index.json"),
+		events: path.join(dir, "vib-crash-events.jsonl"),
+		crashLog: path.join(dir, "vib-crash.log"),
 	};
 	appendCrashEvent(
 		{
@@ -273,7 +273,7 @@ describe("runCrashReportFlow — degraded environments", () => {
 		});
 		expect(outcome.status).toBe("manual");
 		if (outcome.status !== "manual") return;
-		expect(await fs.readFile(outcome.snapshotPath, "utf8")).toContain("gjc-crash-fp.v1:");
+		expect(await fs.readFile(outcome.snapshotPath, "utf8")).toContain("vib-crash-fp.v1:");
 		expect(outcome.prefillUrl).toContain(`https://github.com/${CRASH_REPORT_REPO}/issues/new?`);
 		expect(outcome.prefillUrl).not.toContain("topic+authority");
 	});
@@ -350,20 +350,20 @@ describe("report body and URL guards", () => {
 			"## Expected Behavior",
 			"## Error Output",
 			"## Platform",
-			"## gjc version",
+			"## vib version",
 			"## Bun version",
 		]) {
 			expect(body).toContain(heading);
 		}
 		expect(body).toContain("not captured — please fill in");
-		expect(body).toContain(`gjc-crash-fp.v1:${FINGERPRINT}`);
+		expect(body).toContain(`vib-crash-fp.v1:${FINGERPRINT}`);
 		expect(body).not.toContain("pid=4242");
-		expect(body).not.toContain("/opt/gjc/packages");
+		expect(body).not.toContain("/opt/vib/packages");
 	});
 
 	it("validates issue URLs against the canonical repository", () => {
 		expect(isCanonicalIssueUrl(ISSUE_URL)).toBe(true);
-		expect(isCanonicalIssueUrl("https://github.com/evil/gajae-code/issues/1")).toBe(false);
+		expect(isCanonicalIssueUrl("https://github.com/evil/vib-rato/issues/1")).toBe(false);
 		expect(isCanonicalIssueUrl(`https://github.com/${CRASH_REPORT_REPO}/issues/abc`)).toBe(false);
 		expect(isCanonicalIssueUrl("not a url")).toBe(false);
 	});

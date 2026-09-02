@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { Effort, type Model } from "@gajae-code/ai";
+import { Effort, type Model } from "@vib-rato/ai";
 import {
 	expandRoleAlias,
 	findInitialModel,
@@ -15,8 +15,8 @@ import {
 	resolveModelScope,
 	resolveSelector,
 	restoreModelFromSession,
-} from "@gajae-code/coding-agent/config/model-resolver";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
+} from "@vib-rato/coding-agent/config/model-resolver";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
 
 test("rejects Cursor transports from retryable managed fallback chains at resolution", () => {
 	const cursor = { ...mockModels[0], api: "cursor-agent", provider: "cursor" } as Model;

@@ -29,7 +29,7 @@ interface Resolved {
 const tempDirs: string[] = [];
 
 function tempDir(): string {
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-provider-baseurl-trust-"));
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-provider-baseurl-trust-"));
 	tempDirs.push(dir);
 	return dir;
 }

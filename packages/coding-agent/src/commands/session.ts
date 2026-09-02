@@ -1,12 +1,12 @@
-import { Args, Command, Flags } from "@gajae-code/utils/cli";
+import { Args, Command, Flags } from "@vib-rato/utils/cli";
 import {
-	attachGjcTmuxSession,
-	createGjcTmuxSession,
-	forceCloseGjcTmuxSession,
-	listGjcTmuxSessions,
-	removeGjcTmuxSession,
-	statusGjcTmuxSession,
-} from "../gjc-runtime/tmux-sessions";
+	attachVibTmuxSession,
+	createVibTmuxSession,
+	forceCloseVibTmuxSession,
+	listVibTmuxSessions,
+	removeVibTmuxSession,
+	statusVibTmuxSession,
+} from "../vib-runtime/tmux-sessions";
 
 function writeJson(value: unknown): void {
 	process.stdout.write(`${JSON.stringify(value, null, 2)}\n`);
@@ -45,7 +45,7 @@ function sessionJson(session: SessionJsonDto): SessionJsonDto {
 }
 
 export default class Session extends Command {
-	static description = "List, inspect, attach, and remove tagged GJC-managed tmux sessions";
+	static description = "List, inspect, attach, and remove tagged Vibrato-managed tmux sessions";
 	static strict = false;
 
 	static args = {
@@ -62,20 +62,20 @@ export default class Session extends Command {
 	static flags = {
 		json: Flags.boolean({ char: "j", description: "Emit machine-readable JSON", default: false }),
 		"session-id": Flags.string({
-			description: "Expected @gjc-session-id tag for force-close (defense-in-depth match)",
+			description: "Expected @vib-session-id tag for force-close (defense-in-depth match)",
 		}),
 		"state-file": Flags.string({
-			description: "Expected @gjc-session-state-file tag for force-close (defense-in-depth match)",
+			description: "Expected @vib-session-state-file tag for force-close (defense-in-depth match)",
 		}),
 	};
 
 	static examples = [
-		"gjc session list",
-		"gjc session create",
-		"gjc session status <session>",
-		"gjc session attach <session>",
-		"gjc session remove <session>",
-		"gjc session force-close <session> --session-id <id>",
+		"vib session list",
+		"vib session create",
+		"vib session status <session>",
+		"vib session attach <session>",
+		"vib session remove <session>",
+		"vib session force-close <session> --session-id <id>",
 	];
 
 	async run(): Promise<void> {
@@ -85,7 +85,7 @@ export default class Session extends Command {
 		const json = flags.json ?? false;
 		try {
 			if (action === "list") {
-				const sessions = listGjcTmuxSessions();
+				const sessions = listVibTmuxSessions();
 				if (json) {
 					writeJson({ ok: true, sessions: sessions.map(sessionJson) });
 					return;
@@ -106,7 +106,7 @@ export default class Session extends Command {
 			}
 
 			if (action === "create") {
-				const session = createGjcTmuxSession();
+				const session = createVibTmuxSession();
 				if (json) {
 					writeJson({ ok: true, session: sessionJson(session) });
 					return;
@@ -118,7 +118,7 @@ export default class Session extends Command {
 			if (!sessionName) throw new Error("missing_session_name");
 
 			if (action === "status") {
-				const session = statusGjcTmuxSession(sessionName);
+				const session = statusVibTmuxSession(sessionName);
 				if (json) {
 					writeJson({ ok: true, session: sessionJson(session) });
 					return;
@@ -135,7 +135,7 @@ export default class Session extends Command {
 			}
 
 			if (action === "remove" || action === "rm" || action === "delete") {
-				const removed = removeGjcTmuxSession(sessionName);
+				const removed = removeVibTmuxSession(sessionName);
 				if (json) {
 					writeJson({ ok: true, session: sessionJson(removed) });
 					return;
@@ -145,7 +145,7 @@ export default class Session extends Command {
 			}
 
 			if (action === "force-close" || action === "force-remove") {
-				const closed = await forceCloseGjcTmuxSession(
+				const closed = await forceCloseVibTmuxSession(
 					sessionName,
 					process.env,
 					flags["session-id"],
@@ -160,7 +160,7 @@ export default class Session extends Command {
 			}
 
 			if (action === "attach") {
-				attachGjcTmuxSession(sessionName);
+				attachVibTmuxSession(sessionName);
 				return;
 			}
 			throw new Error(`unknown_session_action:${action}`);

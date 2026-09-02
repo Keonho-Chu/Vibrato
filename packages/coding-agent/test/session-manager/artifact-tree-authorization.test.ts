@@ -2,9 +2,9 @@ import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
 
-// Runtime-level regression coverage for gajae-code#3302: the runtime never
+// Runtime-level regression coverage for vib-rato#3302: the runtime never
 // supplied `ToolSession.getAuthorizedArtifactsDirs`, so a same-tree detached
 // subagent that adopted the parent's `ArtifactManager` still resolved zero
 // authorized directories at the `ResolveContext` boundary. These tests exercise

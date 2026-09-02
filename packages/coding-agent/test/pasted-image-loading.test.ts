@@ -16,7 +16,7 @@ describe("loadPastedImageBatch", () => {
 	let testDirectory: string;
 
 	beforeEach(async () => {
-		testDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-pasted-image-loading-"));
+		testDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "vib-pasted-image-loading-"));
 	});
 
 	afterEach(async () => {
@@ -76,7 +76,7 @@ describe("loadPastedImageBatch", () => {
 	});
 
 	it("keeps automatic clipboard paths inside the canonical temp root", async () => {
-		const outsideDirectory = path.join(os.homedir(), `.gjc-pasted-image-outside-${process.pid}-${Date.now()}`);
+		const outsideDirectory = path.join(os.homedir(), `.vib-pasted-image-outside-${process.pid}-${Date.now()}`);
 		const forgetOutsideGrant = registerOwnedDeletionRoot(outsideDirectory);
 		await fs.mkdir(outsideDirectory, { recursive: true });
 		const outsideImage = path.join(outsideDirectory, "clipboard-2026-07-19-123456-Ab3.png");

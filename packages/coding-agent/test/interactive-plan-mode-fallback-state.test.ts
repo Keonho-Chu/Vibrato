@@ -1,10 +1,10 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test, vi } from "bun:test";
-import { Agent } from "@gajae-code/agent-core";
-import type { Model, ProviderSessionState } from "@gajae-code/ai";
-import { resetSettingsForTest, Settings } from "@gajae-code/coding-agent/config/settings";
-import { initTheme } from "@gajae-code/coding-agent/modes/theme/theme";
-import { AgentSession } from "@gajae-code/coding-agent/session/agent-session";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
+import { Agent } from "@vib-rato/agent-core";
+import type { Model, ProviderSessionState } from "@vib-rato/ai";
+import { resetSettingsForTest, Settings } from "@vib-rato/coding-agent/config/settings";
+import { initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
+import { AgentSession } from "@vib-rato/coding-agent/session/agent-session";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
 import { InteractiveMode } from "../src/modes/interactive-mode";
 
 const defaultModel = { provider: "test", id: "default", api: "openai-responses", name: "default" } as Model;

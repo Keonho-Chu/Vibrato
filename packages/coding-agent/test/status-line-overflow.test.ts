@@ -2,8 +2,8 @@ import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { visibleWidth } from "@gajae-code/tui";
-import { getProjectDir, setProjectDir } from "@gajae-code/utils";
+import { visibleWidth } from "@vib-rato/tui";
+import { getProjectDir, setProjectDir } from "@vib-rato/utils";
 import { resetSettingsForTest, Settings } from "../src/config/settings";
 import type { StatusLineSegmentId } from "../src/config/settings-schema";
 import type { SegmentContext } from "../src/modes/components/status-line/segments";
@@ -96,7 +96,7 @@ describe("status line session accent", () => {
 		const component = new StatusLineComponent(createStatusLineSession("Named session"));
 		component.updateSettings({
 			preset: "custom",
-			leftSegments: ["gajae"],
+			leftSegments: ["vibrato"],
 			rightSegments: ["session_name"],
 			separator: "powerline-thin",
 			sessionAccent,
@@ -128,10 +128,10 @@ describe("status line preview highlight", () => {
 		const component = new StatusLineComponent(createStatusLineSession("Highlight session"));
 		component.updateSettings({
 			preset: "custom",
-			leftSegments: ["gajae"],
+			leftSegments: ["vibrato"],
 			rightSegments: [],
 			separator: "powerline-thin",
-			previewHighlightSegment: "gajae",
+			previewHighlightSegment: "vibrato",
 		});
 
 		expect(component.getTopBorder(80).content).toContain("\x1b[7m");
@@ -147,7 +147,7 @@ describe("status line version display", () => {
 		const component = new StatusLineComponent(createStatusLineSession("Version session"), { version: widthVersion });
 		component.updateSettings({
 			preset: "custom",
-			leftSegments: ["gajae"],
+			leftSegments: ["vibrato"],
 			rightSegments: ["model"],
 			separator: "powerline-thin",
 			showSkillHud: false,
@@ -175,7 +175,7 @@ describe("path segment truncation at varying maxLength", () => {
 	let tmpDir: string;
 
 	beforeAll(() => {
-		tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-overflow-very-long-directory-name-for-testing-"));
+		tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-overflow-very-long-directory-name-for-testing-"));
 		setProjectDir(tmpDir);
 	});
 
@@ -211,7 +211,7 @@ describe("overflow: path shrinks before git is dropped", () => {
 
 	beforeAll(() => {
 		// Long dir name guarantees the path segment is wide
-		tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-overflow-a-very-long-worktree-directory-name-here-"));
+		tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-overflow-a-very-long-worktree-directory-name-here-"));
 		setProjectDir(tmpDir);
 	});
 
@@ -316,7 +316,7 @@ describe("overflow: path shrinks before git is dropped", () => {
 
 	it("shrinks a short path when maxLength exceeds actual path length", () => {
 		// Short dir name — rendered path is well under maxLength=80
-		const shortDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-short-"));
+		const shortDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-short-"));
 		setProjectDir(shortDir);
 		try {
 			const ctx = createCtx({ pathMaxLength: 80, branch: "feat/long-branch-name" });
@@ -341,7 +341,7 @@ describe("overflow: path shrinks before git is dropped", () => {
 		}
 	});
 	it("preserves git when overflow is only 1-2 columns", () => {
-		const shortDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-narrow-ovf-"));
+		const shortDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-narrow-ovf-"));
 		setProjectDir(shortDir);
 		try {
 			const ctx = createCtx({ pathMaxLength: 80, branch: "main" });
@@ -376,7 +376,7 @@ describe("status line multi-row wrapping (statusLine.maxRows)", () => {
 		const component = new StatusLineComponent(createStatusLineSession(LONG_NAME));
 		component.updateSettings({
 			preset: "custom",
-			leftSegments: ["gajae", "session"],
+			leftSegments: ["vibrato", "session"],
 			rightSegments: ["session_name", "time"],
 			separator: "pipe",
 			showSkillHud: false,
@@ -477,7 +477,7 @@ describe("status line overflow cue", () => {
 		const component = new StatusLineComponent(createStatusLineSession(sessionName), { version: "9.9.9" });
 		component.updateSettings({
 			preset: "custom",
-			leftSegments: ["gajae", "session"],
+			leftSegments: ["vibrato", "session"],
 			rightSegments: ["session_name", "time"],
 			separator: "pipe",
 			showSkillHud: false,
@@ -594,7 +594,7 @@ describe("status line overflow cue geometry", () => {
 		const component = new StatusLineComponent(createStatusLineSession("GeoSess"), { version: "9.9.9" });
 		component.updateSettings({
 			preset: "custom",
-			leftSegments: ["gajae", "session", "model", "mode"],
+			leftSegments: ["vibrato", "session", "model", "mode"],
 			rightSegments: [
 				"session_name",
 				"time",
@@ -624,7 +624,7 @@ describe("status line overflow cue geometry", () => {
 		const component = new StatusLineComponent(createStatusLineSession("S"), { version: "9.9.9" });
 		component.updateSettings({
 			preset: "custom",
-			leftSegments: ["gajae"],
+			leftSegments: ["vibrato"],
 			rightSegments: Array.from({ length: count }, () => "session_name") as never,
 			separator: "pipe",
 			showSkillHud: false,
@@ -740,7 +740,7 @@ describe("status line overflow cue never relies on defensive truncation", () => 
 		const component = new StatusLineComponent(createStatusLineSession("TruncSess"), { version: "9.9.9" });
 		component.updateSettings({
 			preset: "custom",
-			leftSegments: ["gajae", "session", "model", "mode"],
+			leftSegments: ["vibrato", "session", "model", "mode"],
 			rightSegments: rightSegments as never,
 			separator: "pipe",
 			showSkillHud: false,

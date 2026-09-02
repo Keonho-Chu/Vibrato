@@ -2,7 +2,7 @@ import {
 	type ComposerBashPolicyToolSurface,
 	formatComposerBashPolicyError,
 	isComposerHarnessModel,
-} from "@gajae-code/ai/providers/composer-discipline";
+} from "@vib-rato/ai/providers/composer-discipline";
 
 export const COMPOSER_BASH_POLICY_ERROR = formatComposerBashPolicyError("generic");
 export const CURSOR_COMPOSER_BASH_POLICY_ERROR = formatComposerBashPolicyError("cursor");

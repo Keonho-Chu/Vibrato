@@ -21,7 +21,7 @@ type ProvenanceManifest = {
 	schemaVersion?: number;
 	composer_scenarios_version?: string;
 	capture_mode?: CaptureMode;
-	gjc_version?: string;
+	vib_version?: string;
 	git_sha?: string;
 	tracePath?: string;
 	trace_sha256?: string;
@@ -92,7 +92,7 @@ function metaFromManifest(input: {
 	return {
 		capture_mode: captureMode,
 		composer_scenarios_version: input.manifest?.composer_scenarios_version,
-		gjc_version: input.manifest?.gjc_version,
+		vib_version: input.manifest?.vib_version,
 		git_sha: input.manifest?.git_sha,
 		trace_artifacts: traceArtifacts,
 		trace_sha256: input.manifest?.trace_sha256,

@@ -2,8 +2,8 @@ import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 
-const CRASH_DIAGNOSTICS_ENV = "GJC_CRASH_DIAGNOSTICS";
-const CRASH_DIAGNOSTICS_DIR_ENV = "GJC_CRASH_DIAGNOSTICS_DIR";
+const CRASH_DIAGNOSTICS_ENV = "VIB_CRASH_DIAGNOSTICS";
+const CRASH_DIAGNOSTICS_DIR_ENV = "VIB_CRASH_DIAGNOSTICS_DIR";
 const STDERR_PREVIEW_BYTES = 4096;
 const DIRECTORY_MODE = 0o700;
 const REPORT_FILE_MODE = 0o600;
@@ -65,7 +65,7 @@ export function crashDiagnosticsEnabled(env: NodeJS.ProcessEnv = process.env): b
 }
 
 export function getCrashDiagnosticsDirectory(env: NodeJS.ProcessEnv = process.env): string {
-	return env[CRASH_DIAGNOSTICS_DIR_ENV] ?? path.join(os.tmpdir(), "gjc-crash-diagnostics");
+	return env[CRASH_DIAGNOSTICS_DIR_ENV] ?? path.join(os.tmpdir(), "vib-crash-diagnostics");
 }
 
 export function classifyProcessCrash(input: CrashClassificationInput): CrashClassification {

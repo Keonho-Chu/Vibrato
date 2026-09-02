@@ -17,7 +17,7 @@ secrets:
    - **Environment variables** whose names match common secret patterns (`KEY`, `SECRET`, `TOKEN`, `PASSWORD`, `PASS`, `AUTH`, `CREDENTIAL`, `PRIVATE`, `OAUTH`) with values >= 8 characters
    - **`secrets.yml` files** (see below)
 
-2. Outbound text messages to the LLM have secret values replaced with authenticated, versioned placeholders like `#GJC1_…#`.
+2. Outbound text messages to the LLM have secret values replaced with authenticated, versioned placeholders like `#VIB1_…#`.
 
 3. Session context/tool arguments returned from the model are deep-walked and obfuscation placeholders are restored to original values before display or execution.
 
@@ -25,7 +25,7 @@ Two modes control what happens to each secret:
 
 | Mode                  | Behavior                                        | Reversible                                      |
 | --------------------- | ----------------------------------------------- | ----------------------------------------------- |
-| `obfuscate` (default) | Replaced with authenticated `#GJC1_…#` token    | Yes (deobfuscated in tool args/session context) |
+| `obfuscate` (default) | Replaced with authenticated `#VIB1_…#` token    | Yes (deobfuscated in tool args/session context) |
 | `replace`             | Replaced with deterministic same-length string | No (one-way)                                    |
 
 Authenticated placeholders use a process-local key. Plain-secret tokens remain stable across sessions, reloads, and forks within the running process; after a process restart, earlier tokens intentionally remain opaque.
@@ -38,10 +38,10 @@ Define custom secret entries in YAML. Two locations are checked:
 
 | Level   | Path                       | Purpose                     |
 | ------- | -------------------------- | --------------------------- |
-| Global  | `~/.gjc/agent/secrets.yml` | Plain and regex secrets across all projects |
-| Project | `<cwd>/.gjc/secrets.yml`   | Project-specific plain secrets              |
+| Global  | `~/.vib/agent/secrets.yml` | Plain and regex secrets across all projects |
+| Project | `<cwd>/.vib/secrets.yml`   | Project-specific plain secrets              |
 
-Project plain entries override global plain entries with matching `content`; a global regex with the same `content` remains active. Project-scope regex entries are ignored because workspace-contained files are not trusted to supply executable regex patterns. This project scope includes `<cwd>/.gjc/secrets.yml` and any caller-supplied agent directory whose lexical or canonical path is contained within the workspace.
+Project plain entries override global plain entries with matching `content`; a global regex with the same `content` remains active. Project-scope regex entries are ignored because workspace-contained files are not trusted to supply executable regex patterns. This project scope includes `<cwd>/.vib/secrets.yml` and any caller-supplied agent directory whose lexical or canonical path is contained within the workspace.
 
 ### Schema
 
@@ -73,7 +73,7 @@ Each entry in the array has these fields:
 
 #### Regex secrets
 
-Regex entries are supported only by agent configuration outside the current workspace (normally `~/.gjc/agent/secrets.yml`). Use `type: plain` for workspace-contained configuration.
+Regex entries are supported only by agent configuration outside the current workspace (normally `~/.vib/agent/secrets.yml`). Use `type: plain` for workspace-contained configuration.
 
 ```yaml
 # Obfuscate any AWS-style key

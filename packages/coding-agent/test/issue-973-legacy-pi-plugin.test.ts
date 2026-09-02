@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { loadExtensions } from "@gajae-code/coding-agent/extensibility/extensions/loader";
-import { TempDir } from "@gajae-code/utils";
+import { loadExtensions } from "@vib-rato/coding-agent/extensibility/extensions/loader";
+import { TempDir } from "@vib-rato/utils";
 
-const currentPiCodingAgentPath = Bun.resolveSync("@gajae-code/coding-agent", import.meta.dir);
-const currentPiExtensionsPath = Bun.resolveSync("@gajae-code/coding-agent/extensibility/extensions", import.meta.dir);
+const currentPiCodingAgentPath = Bun.resolveSync("@vib-rato/coding-agent", import.meta.dir);
+const currentPiExtensionsPath = Bun.resolveSync("@vib-rato/coding-agent/extensibility/extensions", import.meta.dir);
 
 describe("issue #973: legacy Pi plugin imports", () => {
 	let projectDir: TempDir;
@@ -29,8 +29,8 @@ describe("issue #973: legacy Pi plugin imports", () => {
 		fs.writeFileSync(
 			extensionPath,
 			[
-				'import { isToolCallEventType as legacyRoot } from "@mariozechner/gajae-code";',
-				'import { isToolCallEventType as legacyExtensions } from "@mariozechner/gajae-code/extensibility/extensions";',
+				'import { isToolCallEventType as legacyRoot } from "@mariozechner/vib-rato";',
+				'import { isToolCallEventType as legacyExtensions } from "@mariozechner/vib-rato/extensibility/extensions";',
 				`import { isToolCallEventType as modernRoot } from ${JSON.stringify(currentPiCodingAgentPath)};`,
 				`import { isToolCallEventType as modernExtensions } from ${JSON.stringify(currentPiExtensionsPath)};`,
 				"",

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { isWorkflowContinuationInert } from "@gajae-code/coding-agent/skill-state/active-state";
+import { isWorkflowContinuationInert } from "@vib-rato/coding-agent/skill-state/active-state";
 
 /**
  * Continuation-inertness policy for compaction auto-continue: manifest-terminal

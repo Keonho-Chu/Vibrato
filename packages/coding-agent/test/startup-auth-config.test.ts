@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { getAgentDbPath } from "@gajae-code/utils";
+import { getAgentDbPath } from "@vib-rato/utils";
 import { Settings } from "../src/config/settings";
 import { validateSettingPatch } from "../src/config/settings-schema";
 import {
@@ -13,9 +13,9 @@ import {
 } from "../src/session/startup-auth-config";
 
 const ENV_KEYS = [
-	"GJC_AUTH_BROKER_URL",
-	"GJC_AUTH_BROKER_TOKEN",
-	"GJC_CREDENTIAL_RANKING_MODE",
+	"VIB_AUTH_BROKER_URL",
+	"VIB_AUTH_BROKER_TOKEN",
+	"VIB_CREDENTIAL_RANKING_MODE",
 	"STARTUP_AUTH_BROKER_URL",
 	"STARTUP_AUTH_BROKER_TOKEN",
 ] as const;
@@ -23,7 +23,7 @@ const savedEnv = new Map<string, string | undefined>();
 const tempDirs: string[] = [];
 
 async function makeAgentDir(config: string): Promise<string> {
-	const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-startup-auth-"));
+	const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-startup-auth-"));
 	tempDirs.push(root);
 	await fs.writeFile(path.join(root, "config.yml"), config);
 	return root;
@@ -71,7 +71,7 @@ afterEach(async () => {
 describe("startup auth config", () => {
 	it("keeps absent and empty config files on the local default authority", async () => {
 		clearAuthEnv();
-		const absentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-startup-auth-absent-"));
+		const absentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-startup-auth-absent-"));
 		tempDirs.push(absentDir);
 		await expect(resolveStartupAuthConfig(absentDir)).resolves.toEqual({
 			broker: null,
@@ -91,7 +91,7 @@ describe("startup auth config", () => {
 
 	it("fails closed with a typed unreadable-config error", async () => {
 		clearAuthEnv();
-		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-startup-auth-unreadable-"));
+		const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-startup-auth-unreadable-"));
 		tempDirs.push(agentDir);
 		await fs.mkdir(path.join(agentDir, "config.yml"));
 		await expectStartupAuthConfigError(resolveStartupAuthConfig(agentDir), "unreadable");
@@ -194,9 +194,9 @@ describe("startup auth config", () => {
 			].join("\n"),
 		);
 		clearAuthEnv();
-		process.env.GJC_AUTH_BROKER_URL = "https://env.example";
-		process.env.GJC_AUTH_BROKER_TOKEN = "env-token";
-		process.env.GJC_CREDENTIAL_RANKING_MODE = "earliest-reset";
+		process.env.VIB_AUTH_BROKER_URL = "https://env.example";
+		process.env.VIB_AUTH_BROKER_TOKEN = "env-token";
+		process.env.VIB_CREDENTIAL_RANKING_MODE = "earliest-reset";
 
 		await expect(resolveStartupAuthConfig(agentDir)).resolves.toMatchObject({
 			broker: { url: "https://env.example", token: "env-token" },
@@ -232,11 +232,11 @@ describe("startup auth config", () => {
 	it("ignores project-scoped pins", async () => {
 		clearAuthEnv();
 		const agentDir = await makeAgentDir("auth:\n  credentialPins:\n    anthropic: id:42\n");
-		const projectDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-startup-auth-project-"));
+		const projectDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-startup-auth-project-"));
 		tempDirs.push(projectDir);
-		await fs.mkdir(path.join(projectDir, ".gjc"), { recursive: true });
+		await fs.mkdir(path.join(projectDir, ".vib"), { recursive: true });
 		await fs.writeFile(
-			path.join(projectDir, ".gjc", "config.yml"),
+			path.join(projectDir, ".vib", "config.yml"),
 			"auth:\n  credentialPins:\n    openai-codex: id:99\n",
 		);
 

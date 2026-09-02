@@ -14,11 +14,11 @@
   --text-secondary: #334155;
   --text-muted: #64748b;
 
-  --accent-pink: #ec4899;
-  --accent-pink-glow: rgba(236, 72, 153, 0.26);
-  --accent-cyan: #0891b2;
-  --accent-cyan-glow: rgba(8, 145, 178, 0.24);
-  --accent-violet: #8b5cf6;
+  --accent-pink: #002f6d;
+  --accent-pink-glow: rgba(0, 47, 109, 0.28);
+  --accent-cyan: #4f6fa3;
+  --accent-cyan-glow: rgba(79, 111, 163, 0.24);
+  --accent-violet: #7a8ca8;
   --accent-green: #16a34a;
   --accent-amber: #d97706;
   --accent-red: #dc2626;
@@ -28,29 +28,37 @@
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
+
+  --brand-blue: #002f6d;
+  --brand-gray: #bcbec0;
+  --brand-gradient: linear-gradient(120deg, #003d96 0%, #002f6d 55%, #002d5c 100%);
+  --font-title: "NanumSquare", "NanumSquareRound", "Nanum Gothic", -apple-system, "Apple SD Gothic Neo",
+    "Malgun Gothic", "Segoe UI", sans-serif;
+  --font-body: "KoPubDotum", "KoPub Dotum", "KoPubWorldDotum", "Nanum Gothic", -apple-system, "Apple SD Gothic Neo",
+    "Malgun Gothic", "Segoe UI", sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
-    --bg-page: #0a0a0f;
-    --bg-surface: #111118;
-    --bg-elevated: #16161e;
+    --bg-page: #0b1220;
+    --bg-surface: #101a2e;
+    --bg-elevated: #16233d;
     --bg-hover: rgba(255, 255, 255, 0.03);
     --bg-active: rgba(255, 255, 255, 0.06);
 
-    --border-subtle: rgba(255, 255, 255, 0.06);
-    --border-default: rgba(255, 255, 255, 0.1);
+    --border-subtle: rgba(127, 166, 230, 0.12);
+    --border-default: rgba(127, 166, 230, 0.2);
 
     --text-primary: #f8fafc;
     --text-secondary: #94a3b8;
     --text-muted: #64748b;
 
-    --accent-pink: #ec4899;
-    --accent-pink-glow: rgba(236, 72, 153, 0.3);
-    --accent-cyan: #22d3ee;
-    --accent-cyan-glow: rgba(34, 211, 238, 0.3);
-    --accent-violet: #a78bfa;
+    --accent-pink: #7fa6e6;
+    --accent-pink-glow: rgba(127, 166, 230, 0.35);
+    --accent-cyan: #8fb3e8;
+    --accent-cyan-glow: rgba(143, 179, 232, 0.3);
+    --accent-violet: #a9b7cc;
     --accent-green: #4ade80;
     --accent-amber: #fbbf24;
     --accent-red: #f87171;
@@ -70,11 +78,15 @@
   }
 
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-family: var(--font-body);
     background: var(--bg-page);
     color: var(--text-primary);
     margin: 0;
     min-height: 100vh;
+  }
+
+  h1, h2, h3, .title {
+    font-family: var(--font-title);
   }
 
   /* Custom scrollbar */
@@ -125,7 +137,7 @@
   }
 
   .btn-primary {
-    background: linear-gradient(135deg, var(--accent-pink) 0%, #db2777 100%);
+    background: var(--brand-gradient);
     color: white;
     box-shadow: 0 0 20px var(--accent-pink-glow);
   }
@@ -208,7 +220,7 @@
   }
 
   .badge-info {
-    background: rgba(34, 211, 238, 0.15);
+    background: rgba(143, 179, 232, 0.15);
     color: var(--accent-cyan);
   }
 

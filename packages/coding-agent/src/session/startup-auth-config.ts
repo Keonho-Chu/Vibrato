@@ -9,8 +9,8 @@
 
 import * as os from "node:os";
 import * as path from "node:path";
-import type { AuthCredentialSelector, CredentialRankingMode } from "@gajae-code/ai/core";
-import { $credentialEnv, getAgentDbPath, getAgentDir, getConfigRootDir, isEnoent, logger } from "@gajae-code/utils";
+import type { AuthCredentialSelector, CredentialRankingMode } from "@vib-rato/ai/core";
+import { $credentialEnv, getAgentDbPath, getAgentDir, getConfigRootDir, isEnoent, logger } from "@vib-rato/utils";
 import { YAML } from "bun";
 import { readSecureTokenFile } from "./secure-token-file";
 
@@ -82,7 +82,7 @@ function startupAuthConfigError(agentDir: string, kind: StartupAuthConfigErrorKi
 	return new StartupAuthConfigError(kind, configPathForAgentDir(agentDir));
 }
 
-/** Path to the local bearer token file. Created on the broker host by `gjc auth-broker token`. */
+/** Path to the local bearer token file. Created on the broker host by `vib auth-broker token`. */
 export function getAuthBrokerTokenFilePath(): string {
 	return path.join(getConfigRootDir(), "auth-broker.token");
 }
@@ -255,8 +255,8 @@ async function readTokenFile(): Promise<string | undefined> {
 export async function resolveStartupAuthConfig(agentDir: string = getAgentDir()): Promise<StartupAuthConfigSnapshot> {
 	const { auth, credentialPinStoreIdentity, credentialPins } = await readGlobalStartupAuthYaml(agentDir);
 	const broker = asRecord(auth?.broker);
-	const envUrl = $credentialEnv("GJC_AUTH_BROKER_URL")?.trim();
-	const envToken = $credentialEnv("GJC_AUTH_BROKER_TOKEN")?.trim();
+	const envUrl = $credentialEnv("VIB_AUTH_BROKER_URL")?.trim();
+	const envToken = $credentialEnv("VIB_AUTH_BROKER_TOKEN")?.trim();
 
 	let url = envUrl || undefined;
 	const nestedUrlRaw = typeof broker?.url === "string" ? broker.url : undefined;
@@ -275,14 +275,14 @@ export async function resolveStartupAuthConfig(agentDir: string = getAgentDir())
 		if (!token) {
 			throw new Error(
 				"An auth broker URL is configured but no bearer token is available. " +
-					`Set GJC_AUTH_BROKER_TOKEN, the nested \`auth.broker.token\` config entry, or place one at ${getAuthBrokerTokenFilePath()}.`,
+					`Set VIB_AUTH_BROKER_TOKEN, the nested \`auth.broker.token\` config entry, or place one at ${getAuthBrokerTokenFilePath()}.`,
 			);
 		}
 		resolvedBroker = { url, token };
 	}
 
 	const rankingMode =
-		resolveRankingMode($credentialEnv("GJC_CREDENTIAL_RANKING_MODE")) ??
+		resolveRankingMode($credentialEnv("VIB_CREDENTIAL_RANKING_MODE")) ??
 		resolveRankingMode(auth?.credentialRankingMode) ??
 		DEFAULT_CREDENTIAL_RANKING_MODE;
 	return {

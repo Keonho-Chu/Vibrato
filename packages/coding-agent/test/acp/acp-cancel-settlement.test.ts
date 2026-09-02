@@ -1,7 +1,7 @@
 import { expect, setDefaultTimeout, test, vi } from "bun:test";
 import * as path from "node:path";
 import type { AgentSideConnection, PromptRequest, SessionNotification } from "@agentclientprotocol/sdk";
-import { logger, TempDir } from "@gajae-code/utils";
+import { logger, TempDir } from "@vib-rato/utils";
 import { AcpAgent } from "../../src/modes/acp/acp-agent";
 import { writeBrokerDiscovery } from "../../src/sdk/broker/discovery";
 import {
@@ -64,15 +64,15 @@ function idlePhaseUpdates(updates: SessionNotification[]): number {
 	return updates.filter(
 		update =>
 			update.update.sessionUpdate === "session_info_update" &&
-			(update.update as { _meta?: { gjcPhase?: string } })._meta?.gjcPhase === "idle",
+			(update.update as { _meta?: { vibPhase?: string } })._meta?.vibPhase === "idle",
 	).length;
 }
 
-function idleWithGjcRunningFalse(updates: SessionNotification[]): number {
+function idleWithVibRunningFalse(updates: SessionNotification[]): number {
 	return updates.filter(
 		update =>
 			update.update.sessionUpdate === "session_info_update" &&
-			(update.update as { _meta?: { gjcRunning?: boolean } })._meta?.gjcRunning === false,
+			(update.update as { _meta?: { vibRunning?: boolean } })._meta?.vibRunning === false,
 	).length;
 }
 
@@ -352,7 +352,7 @@ function prompt(fixture: Fixture, text: string): Promise<{ stopReason: StoppedRe
 // Issue #4324 regression contract: prompt with complete correlation, correlated async/tool
 // activity outstanding, session/cancel ACK'd, terminal suppressed past the cancellation
 // settlement grace, exact-once cancelled settlement, second prompt accepted, late terminal
-// fenced, idle/gjcRunning consistent.
+// fenced, idle/vibRunning consistent.
 test("cancel ACK with a suppressed terminal settles the prompt exactly once as cancelled after grace", async () => {
 	const fixture = await createFixture({ cancelSettlementGraceMs: 25 });
 	try {
@@ -365,13 +365,13 @@ test("cancel ACK with a suppressed terminal settles the prompt exactly once as c
 		// The turn owns correlated async activity; keep a tool call outstanding.
 		fixture.sendToolStart("tool-1");
 		await bounded(fixture.agent.cancel({ sessionId: fixture.sessionId }), "cancel acknowledgement");
-		const idleRunningFalseBeforeSettle = idleWithGjcRunningFalse(fixture.updates);
+		const idleRunningFalseBeforeSettle = idleWithVibRunningFalse(fixture.updates);
 		expect(await bounded(pending, "cancelled settlement")).toEqual({ stopReason: "cancelled" });
 		expect(settleCount).toBe(1);
 		// The cancelled settlement releases the running phase exactly once.
 		await waitFor(
-			() => idleWithGjcRunningFalse(fixture.updates) > idleRunningFalseBeforeSettle,
-			"cancelled-settlement idle with gjcRunning false",
+			() => idleWithVibRunningFalse(fixture.updates) > idleRunningFalseBeforeSettle,
+			"cancelled-settlement idle with vibRunning false",
 		);
 		// The next prompt must be accepted, not refused with `conflict`.
 		const next = prompt(fixture, "prompt after cancel");
@@ -455,13 +455,13 @@ test("a prompt acknowledgement rejected mid-cancel still settles the prompt exac
 		await bounded(fixture.agent.cancel({ sessionId: fixture.sessionId }), "cancel acknowledgement");
 		// The SDK rejects the still-pending turn.prompt control request after the abort.
 		fixture.rejectPendingPromptAcknowledgement();
-		const runningFalseBeforeSettle = idleWithGjcRunningFalse(fixture.updates);
+		const runningFalseBeforeSettle = idleWithVibRunningFalse(fixture.updates);
 		expect(await bounded(pending, "cancelled settlement")).toEqual({ stopReason: "cancelled" });
 		expect(settleCount).toBe(1);
-		// The catch-path cancel must still release the running phase (gjcRunning:false).
+		// The catch-path cancel must still release the running phase (vibRunning:false).
 		await waitFor(
-			() => idleWithGjcRunningFalse(fixture.updates) > runningFalseBeforeSettle,
-			"catch-path cancelled idle with gjcRunning false",
+			() => idleWithVibRunningFalse(fixture.updates) > runningFalseBeforeSettle,
+			"catch-path cancelled idle with vibRunning false",
 		);
 		const next = prompt(fixture, "prompt after rejected ack");
 		await bounded(fixture.promptDelivered, "second prompt delivery");
@@ -493,7 +493,7 @@ test("a wedged ACP transport cannot hold the acknowledged cancel settlement host
 		// Once the client drains again, the released turn is idle and the next prompt
 		// is accepted rather than refused with `conflict`.
 		fixture.releaseSessionUpdates();
-		await waitFor(() => idleWithGjcRunningFalse(fixture.updates) >= 1, "released idle after wedged cancel");
+		await waitFor(() => idleWithVibRunningFalse(fixture.updates) >= 1, "released idle after wedged cancel");
 		const next = prompt(fixture, "prompt after wedged transport");
 		await bounded(fixture.promptDelivered, "second prompt delivery");
 		fixture.sendStopped("end_turn");
@@ -507,17 +507,17 @@ test("idle is emitted exactly once for a cancelled settlement and stays consiste
 	const fixture = await createFixture({ cancelSettlementGraceMs: 25 });
 	try {
 		const idleBefore = idlePhaseUpdates(fixture.updates);
-		const runningFalseBefore = idleWithGjcRunningFalse(fixture.updates);
+		const runningFalseBefore = idleWithVibRunningFalse(fixture.updates);
 		const pending = prompt(fixture, "idle consistency");
 		await bounded(fixture.promptDelivered, "prompt delivery");
 		await bounded(fixture.agent.cancel({ sessionId: fixture.sessionId }), "cancel acknowledgement");
 		expect(await bounded(pending, "cancelled settlement")).toEqual({ stopReason: "cancelled" });
-		await waitFor(() => idleWithGjcRunningFalse(fixture.updates) > runningFalseBefore, "cancelled-settlement idle");
+		await waitFor(() => idleWithVibRunningFalse(fixture.updates) > runningFalseBefore, "cancelled-settlement idle");
 		expect(idlePhaseUpdates(fixture.updates)).toBe(idleBefore + 1);
 		const workingBefore = fixture.updates.filter(
 			update =>
 				update.update.sessionUpdate === "session_info_update" &&
-				(update.update as { _meta?: { gjcPhase?: string } })._meta?.gjcPhase === "working",
+				(update.update as { _meta?: { vibPhase?: string } })._meta?.vibPhase === "working",
 		).length;
 		const next = prompt(fixture, "idle consistency next turn");
 		await bounded(fixture.promptDelivered, "second prompt delivery");
@@ -527,7 +527,7 @@ test("idle is emitted exactly once for a cancelled settlement and stays consiste
 				fixture.updates.filter(
 					update =>
 						update.update.sessionUpdate === "session_info_update" &&
-						(update.update as { _meta?: { gjcPhase?: string } })._meta?.gjcPhase === "working",
+						(update.update as { _meta?: { vibPhase?: string } })._meta?.vibPhase === "working",
 				).length > workingBefore,
 			"next-turn working update",
 		);

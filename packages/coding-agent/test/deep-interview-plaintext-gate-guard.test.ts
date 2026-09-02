@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { detectDeepInterviewPlaintextAskLeak } from "@gajae-code/coding-agent/deep-interview/plaintext-gate-guard";
+import { detectDeepInterviewPlaintextAskLeak } from "@vib-rato/coding-agent/deep-interview/plaintext-gate-guard";
 
 describe("detectDeepInterviewPlaintextAskLeak", () => {
 	it("detects Korean/English screenshot-like Restate gate plaintext with canonical options", () => {
@@ -77,7 +77,7 @@ Selected: Yes, crystallize`;
 	});
 
 	it("does not flag ordinary CLI or documentation help containing an Options section", () => {
-		const text = `Usage: gjc deep-interview [prompt]
+		const text = `Usage: vib deep-interview [prompt]
 
 Options:
   --help     Show help.

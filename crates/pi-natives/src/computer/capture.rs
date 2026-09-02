@@ -110,7 +110,7 @@ impl fmt::Display for CaptureError {
 			Self::PermissionRequired => write!(
 				f,
 				"screen capture was denied because the current process lacks the Screen & System \
-				 Audio Recording permission; grant it for this GJC launcher and relaunch. {}",
+				 Audio Recording permission; grant it for this Vibrato launcher and relaunch. {}",
 				crate::computer::permissions::current_process_diagnostic()
 			),
 			Self::CaptureFailed => {

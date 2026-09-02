@@ -47,9 +47,9 @@ function isTracked(relativePath: string): boolean {
 describe("internal-urls docs index loading", () => {
 	it("does not load the generated docs corpus when importing the barrel", () => {
 		const stdout = runBunEval(`
-			const marker = Symbol.for("gjc.docs-index.generated.loaded");
+			const marker = Symbol.for("vib.docs-index.generated.loaded");
 			Reflect.deleteProperty(globalThis, marker);
-			await import("@gajae-code/coding-agent/internal-urls");
+			await import("@vib-rato/coding-agent/internal-urls");
 			const loaded = Reflect.get(globalThis, marker) === true;
 			console.log(JSON.stringify({ loaded }));
 		`);
@@ -58,10 +58,10 @@ describe("internal-urls docs index loading", () => {
 		expect(result.loaded).toBe(false);
 	});
 
-	it("loads the generated docs corpus when resolving gjc docs", () => {
+	it("loads the generated docs corpus when resolving vib docs", () => {
 		const stdout = runBunEval(`
-			const { InternalUrlRouter } = await import("@gajae-code/coding-agent/internal-urls");
-			const resource = await InternalUrlRouter.instance().resolve("gjc://");
+			const { InternalUrlRouter } = await import("@vib-rato/coding-agent/internal-urls");
+			const resource = await InternalUrlRouter.instance().resolve("vib://");
 			console.log(JSON.stringify({
 				contentType: resource.contentType,
 				contentLength: resource.content.length,

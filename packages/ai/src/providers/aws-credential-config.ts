@@ -1,6 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { $credentialEnv, getTrustedHomeDir } from "@gajae-code/utils";
+import { $credentialEnv, getTrustedHomeDir } from "@vib-rato/utils";
 import type { AwsCredentials } from "./aws-sigv4";
 
 export type AwsIniFile = Record<string, Record<string, string>>;

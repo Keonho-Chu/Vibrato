@@ -1,5 +1,5 @@
 import * as path from "node:path";
-import { nativeProcessBindings } from "@gajae-code/utils/native-process";
+import { nativeProcessBindings } from "@vib-rato/utils/native-process";
 import { $ } from "bun";
 import { isProcessIncarnation } from "../broker/process-incarnation";
 import type { TelegramDaemonFs } from "./telegram-daemon";

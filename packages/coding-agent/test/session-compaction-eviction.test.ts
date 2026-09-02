@@ -2,22 +2,22 @@ import { describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { Agent } from "@gajae-code/agent-core";
-import type { AssistantMessage, TextContent, ToolCall, UserMessage } from "@gajae-code/ai";
-import { getBundledModel } from "@gajae-code/ai";
-import { createAppendOnlyContextManager } from "@gajae-code/coding-agent/append-only-mode";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { AgentSession } from "@gajae-code/coding-agent/session/agent-session";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
+import { Agent } from "@vib-rato/agent-core";
+import type { AssistantMessage, TextContent, ToolCall, UserMessage } from "@vib-rato/ai";
+import { getBundledModel } from "@vib-rato/ai";
+import { createAppendOnlyContextManager } from "@vib-rato/coding-agent/append-only-mode";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { AgentSession } from "@vib-rato/coding-agent/session/agent-session";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
 import {
 	type ColdSpillRef,
 	type CustomMessageEntry,
 	SessionManager,
 	type SessionMessageEntry,
-} from "@gajae-code/coding-agent/session/session-manager";
-import { MemorySessionStorage } from "@gajae-code/coding-agent/session/session-storage";
-import { getBlobsDir } from "@gajae-code/utils";
+} from "@vib-rato/coding-agent/session/session-manager";
+import { MemorySessionStorage } from "@vib-rato/coding-agent/session/session-storage";
+import { getBlobsDir } from "@vib-rato/utils";
 
 const TURN_PAYLOAD_CHARS = 200_000;
 const ONE_MIB_CHARS = 1_048_576;
@@ -138,14 +138,14 @@ function expectAssistantMetadata(message: SessionMessageEntry["message"]): void 
 function coldSpillArgumentsSentinel(value: unknown): { refPath?: unknown; notice?: unknown } {
 	expect(value).toBeObject();
 	const sentinel = value as Record<string, unknown>;
-	expect(sentinel.__gjcColdSpillArguments).toBe(true);
+	expect(sentinel.__vibColdSpillArguments).toBe(true);
 	return sentinel;
 }
 
 function residentTextSentinel(value: unknown): { kind?: unknown; ref?: unknown } {
 	expect(value).toBeObject();
 	const sentinel = value as Record<string, unknown>;
-	expect(sentinel.__gjcResidentBlob).toBe(true);
+	expect(sentinel.__vibResidentBlob).toBe(true);
 	expect(sentinel.kind).toBe("text");
 	return sentinel;
 }
@@ -227,14 +227,14 @@ function expectToolArgumentPayload(entry: SessionMessageEntry, expected: string)
 	expect((args as { payload?: unknown }).payload).toBe(expected);
 }
 function expectNoResidentSentinel(value: unknown): void {
-	expect(JSON.stringify(value)).not.toContain("__gjcResidentBlob");
+	expect(JSON.stringify(value)).not.toContain("__vibResidentBlob");
 }
 
 function expectColdBlobSentinelFree(ref: ColdSpillRef, expected: unknown): void {
 	const blobPath = path.join(getBlobsDir(), ref.sha256);
 	const text = fs.readFileSync(blobPath, "utf8");
 	expect(text).toBe(JSON.stringify(expected));
-	expect(text).not.toContain("__gjcResidentBlob");
+	expect(text).not.toContain("__vibResidentBlob");
 }
 
 function buildMixedResidentAggregateToolArgumentSession(persisted: boolean): {
@@ -416,7 +416,7 @@ describe("SessionManager compacted cold-spill eviction", () => {
 	}
 
 	it("runs real AgentSession compaction post-append path without public materializers", async () => {
-		const tempDir = path.join(os.tmpdir(), `gjc-agent-compaction-eviction-${Date.now()}-${Math.random()}`);
+		const tempDir = path.join(os.tmpdir(), `vib-agent-compaction-eviction-${Date.now()}-${Math.random()}`);
 		fs.mkdirSync(tempDir, { recursive: true });
 		let authStorage: AuthStorage | undefined;
 		try {
@@ -568,7 +568,7 @@ describe("SessionManager compacted cold-spill eviction", () => {
 		const remote = canonical.preserveData?.openaiRemoteCompaction;
 		expect(remote).toBeObject();
 		const replacementHistory = (remote as { replacementHistory?: unknown }).replacementHistory;
-		expect(JSON.stringify(replacementHistory)).toContain("__gjcResidentBlob");
+		expect(JSON.stringify(replacementHistory)).toContain("__vibResidentBlob");
 
 		const context = session.buildSessionContext();
 		const compactionMessage = context.messages.find(message => message.role === "compactionSummary");
@@ -577,7 +577,7 @@ describe("SessionManager compacted cold-spill eviction", () => {
 			throw new Error("Expected compaction summary message");
 		}
 		expect(compactionMessage.summary).toBe(summary);
-		expect(JSON.stringify(compactionMessage.providerPayload)).not.toContain("__gjcResidentBlob");
+		expect(JSON.stringify(compactionMessage.providerPayload)).not.toContain("__vibResidentBlob");
 		expect(compactionMessage.providerPayload?.type).toBe("openaiResponsesHistory");
 		const items = compactionMessage.providerPayload?.items;
 		expect(items).toBeArray();
@@ -603,7 +603,7 @@ describe("SessionManager compacted cold-spill eviction", () => {
 			throw new Error("Expected branch summary message");
 		}
 		expect(branchMessage.summary).toBe(summary);
-		expect(JSON.stringify(context.messages)).not.toContain("__gjcResidentBlob");
+		expect(JSON.stringify(context.messages)).not.toContain("__vibResidentBlob");
 	});
 
 	it("preserves assistant metadata and tool call identity in hot evicted entries", () => {
@@ -829,11 +829,11 @@ describe("SessionManager compacted cold-spill eviction", () => {
 		const context = session.buildSessionContext();
 		const serialized = JSON.stringify(context.messages);
 		expect(serialized).toContain(largeArgument);
-		expect(serialized).not.toContain("__gjcResidentBlob");
+		expect(serialized).not.toContain("__vibResidentBlob");
 	});
 
 	it("rehydrates self-contained cold spills and resident-preserved arguments after persisted close and reopen", async () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-cold-spill-reopen-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-cold-spill-reopen-"));
 		let reopened: SessionManager | undefined;
 		try {
 			const session = SessionManager.create(root, SessionManager.getDefaultSessionDir(root, root));
@@ -922,7 +922,7 @@ describe("SessionManager compacted cold-spill eviction", () => {
 			expect(serialized).toContain("persisted-self-contained-179");
 			expect(serialized).toContain(residentPayload);
 			expect(serialized).not.toContain("cold-spill blob unavailable");
-			expect(serialized).not.toContain("__gjcResidentBlob");
+			expect(serialized).not.toContain("__vibResidentBlob");
 		} finally {
 			await reopened?.close();
 			await fs.promises.rm(root, { recursive: true, force: true });
@@ -930,7 +930,7 @@ describe("SessionManager compacted cold-spill eviction", () => {
 	});
 
 	it("rehydrates mixed resident and self-contained aggregate tool arguments after persisted close and reopen", async () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-cold-spill-mixed-reopen-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-cold-spill-mixed-reopen-"));
 		let reopened: SessionManager | undefined;
 		try {
 			const session = SessionManager.create(root, SessionManager.getDefaultSessionDir(root, root));
@@ -989,7 +989,7 @@ describe("SessionManager compacted cold-spill eviction", () => {
 	});
 
 	it("creates branched sessions from cold-spill refs without truncating rehydrated content", async () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-cold-spill-branch-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-cold-spill-branch-"));
 		let branch: SessionManager | undefined;
 		try {
 			const session = SessionManager.create(root, SessionManager.getDefaultSessionDir(root, root));
@@ -1021,7 +1021,7 @@ describe("SessionManager compacted cold-spill eviction", () => {
 	});
 
 	it("rehydrates cold-spill refs after a session file rename or move", async () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-cold-spill-rename-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-cold-spill-rename-"));
 		let reopened: SessionManager | undefined;
 		try {
 			const session = SessionManager.create(root, SessionManager.getDefaultSessionDir(root, root));
@@ -1053,7 +1053,7 @@ describe("SessionManager compacted cold-spill eviction", () => {
 	});
 
 	it("keeps branch cold-spill refs rehydratable after deleting the source session", async () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-cold-spill-source-delete-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-cold-spill-source-delete-"));
 		let branch: SessionManager | undefined;
 		try {
 			const session = SessionManager.create(root, SessionManager.getDefaultSessionDir(root, root));
@@ -1095,7 +1095,7 @@ describe("SessionManager compacted cold-spill eviction", () => {
 		expect(after).toBeLessThan(before * 0.05);
 	});
 	it("degrades an unrecoverable cold-spilled tool argument to malformed instead of emitting a non-object", async () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-cold-spill-missing-blob-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-cold-spill-missing-blob-"));
 		let reopened: SessionManager | undefined;
 		try {
 			const session = SessionManager.create(root, SessionManager.getDefaultSessionDir(root, root));

@@ -2,8 +2,8 @@ import { afterEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import * as piUtils from "@gajae-code/utils";
-import { TempDir } from "@gajae-code/utils";
+import * as piUtils from "@vib-rato/utils";
+import { TempDir } from "@vib-rato/utils";
 import { registerOwnedDeletionRoot, safeRm, safeRmSync } from "../../../../scripts/safe-cleanup";
 import * as discoveryHelpers from "../../src/discovery/helpers";
 import { createLspWritethrough, LspTool } from "../../src/lsp";
@@ -14,8 +14,8 @@ import { isProjectControlledPath } from "../../src/lsp/path-trust";
 import type { ToolSession } from "../../src/tools";
 
 const ORIGINAL_DISABLE_LSPMUX = Bun.env.PI_DISABLE_LSPMUX;
-const ORIGINAL_GJC_DISABLE_LSPMUX = Bun.env.GJC_DISABLE_LSPMUX;
-const ORIGINAL_CONFIG_DIR = process.env.GJC_CONFIG_DIR;
+const ORIGINAL_VIB_DISABLE_LSPMUX = Bun.env.VIB_DISABLE_LSPMUX;
+const ORIGINAL_CONFIG_DIR = process.env.VIB_CONFIG_DIR;
 
 async function writeCanaryLspServer(directory: string): Promise<string> {
 	const scriptPath = path.join(directory, "canary-lsp.ts");
@@ -92,21 +92,21 @@ afterEach(async () => {
 	} else {
 		Bun.env.PI_DISABLE_LSPMUX = ORIGINAL_DISABLE_LSPMUX;
 	}
-	if (ORIGINAL_GJC_DISABLE_LSPMUX === undefined) {
-		delete Bun.env.GJC_DISABLE_LSPMUX;
+	if (ORIGINAL_VIB_DISABLE_LSPMUX === undefined) {
+		delete Bun.env.VIB_DISABLE_LSPMUX;
 	} else {
-		Bun.env.GJC_DISABLE_LSPMUX = ORIGINAL_GJC_DISABLE_LSPMUX;
+		Bun.env.VIB_DISABLE_LSPMUX = ORIGINAL_VIB_DISABLE_LSPMUX;
 	}
 	if (ORIGINAL_CONFIG_DIR === undefined) {
-		delete process.env.GJC_CONFIG_DIR;
+		delete process.env.VIB_CONFIG_DIR;
 	} else {
-		process.env.GJC_CONFIG_DIR = ORIGINAL_CONFIG_DIR;
+		process.env.VIB_CONFIG_DIR = ORIGINAL_CONFIG_DIR;
 	}
 });
 
 describe("LSP repository command trust", () => {
 	it("does not execute a repository-configured command on the first LSP-backed write", async () => {
-		using tempDir = TempDir.createSync("@gjc-lsp-command-trust-");
+		using tempDir = TempDir.createSync("@vib-lsp-command-trust-");
 		const cwd = tempDir.path();
 		const canaryPath = path.join(cwd, "repository-command-ran");
 		const scriptPath = await writeCanaryLspServer(cwd);
@@ -140,7 +140,7 @@ describe("LSP repository command trust", () => {
 	});
 
 	it("does not add a repository-defined custom server with launch fields", async () => {
-		using tempDir = TempDir.createSync("@gjc-lsp-custom-command-trust-");
+		using tempDir = TempDir.createSync("@vib-lsp-custom-command-trust-");
 		const cwd = tempDir.path();
 		vi.spyOn(piUtils, "$which").mockReturnValue(null);
 
@@ -163,7 +163,7 @@ describe("LSP repository command trust", () => {
 	});
 
 	it("does not trust project-scoped plugin launch fields even when the root claims user scope", async () => {
-		using tempDir = TempDir.createSync("@gjc-lsp-plugin-command-trust-");
+		using tempDir = TempDir.createSync("@vib-lsp-plugin-command-trust-");
 		const cwd = path.join(tempDir.path(), "repo");
 		const projectPlugin = path.join(cwd, "project-plugin");
 		await fs.promises.mkdir(projectPlugin, { recursive: true });
@@ -199,7 +199,7 @@ describe("LSP repository command trust", () => {
 	it("does not execute repository-contained lspmux binaries discovered directly or through a PATH symlink", async () => {
 		if (process.platform === "win32") return;
 
-		using tempDir = TempDir.createSync("@gjc-lspmux-command-trust-");
+		using tempDir = TempDir.createSync("@vib-lspmux-command-trust-");
 		const repositoryRoot = path.join(tempDir.path(), "repo");
 		const cwd = path.join(repositoryRoot, "packages", "nested");
 		const externalBinDir = path.join(tempDir.path(), "bin");
@@ -235,7 +235,7 @@ describe("LSP repository command trust", () => {
 	it("uses the session cwd when the LSP status action probes lspmux", async () => {
 		if (process.platform === "win32") return;
 
-		using tempDir = TempDir.createSync("@gjc-lspmux-status-command-trust-");
+		using tempDir = TempDir.createSync("@vib-lspmux-status-command-trust-");
 		const repositoryRoot = path.join(tempDir.path(), "repo");
 		const sessionCwd = path.join(repositoryRoot, "packages", "nested");
 		const canaryPath = path.join(repositoryRoot, "lspmux-status-ran");
@@ -251,14 +251,14 @@ describe("LSP repository command trust", () => {
 	});
 
 	it("wraps supported servers with an external lspmux and honors both disable variables", async () => {
-		using tempDir = TempDir.createSync("@gjc-lspmux-external-");
+		using tempDir = TempDir.createSync("@vib-lspmux-external-");
 		const cwd = path.join(tempDir.path(), "repo");
 		// Issue #4794: trusted user-scope resolution only honors the REAL home
 		// (resolvers capture os.homedir at import time, so a mock cannot
 		// redirect it). This test therefore still creates its fixture under the
 		// real home, but the deletion is explicitly granted for exactly this
 		// process-created directory and still refuses the home itself.
-		const externalBinDir = path.join(os.homedir(), `.gjc-lspmux-external-${process.pid}-${Date.now()}`);
+		const externalBinDir = path.join(os.homedir(), `.vib-lspmux-external-${process.pid}-${Date.now()}`);
 		const forgetGrant = registerOwnedDeletionRoot(externalBinDir);
 		await fs.promises.mkdir(cwd, { recursive: true });
 		await fs.promises.mkdir(externalBinDir, { recursive: true });
@@ -274,9 +274,9 @@ describe("LSP repository command trust", () => {
 				args: [],
 			});
 
-			Bun.env.GJC_DISABLE_LSPMUX = "1";
+			Bun.env.VIB_DISABLE_LSPMUX = "1";
 			expect((await detectLspmux(cwd)).available).toBe(false);
-			delete Bun.env.GJC_DISABLE_LSPMUX;
+			delete Bun.env.VIB_DISABLE_LSPMUX;
 			resetLspmuxStateForTesting();
 			expect((await detectLspmux(cwd)).available).toBe(true);
 			Bun.env.PI_DISABLE_LSPMUX = "1";
@@ -290,7 +290,7 @@ describe("LSP repository command trust", () => {
 	it("rejects a repository-owned executable symlink while preserving an external symlink", async () => {
 		if (process.platform === "win32") return;
 
-		using tempDir = TempDir.createSync("@gjc-lsp-server-symlink-trust-");
+		using tempDir = TempDir.createSync("@vib-lsp-server-symlink-trust-");
 		const repositoryRoot = path.join(tempDir.path(), "repo");
 		const externalBinDir = path.join(tempDir.path(), "bin");
 		const userBinDir = path.join(tempDir.path(), "user-bin");
@@ -319,7 +319,7 @@ describe("LSP repository command trust", () => {
 	it("finds repository-root executables through a symlinked nested session cwd", async () => {
 		if (process.platform === "win32") return;
 
-		using tempDir = TempDir.createSync("@gjc-lsp-symlinked-cwd-trust-");
+		using tempDir = TempDir.createSync("@vib-lsp-symlinked-cwd-trust-");
 		const repositoryRoot = path.join(tempDir.path(), "repo");
 		const nestedCwd = path.join(repositoryRoot, "packages", "nested");
 		const sessionCwd = path.join(tempDir.path(), "session-cwd");
@@ -343,16 +343,16 @@ describe("LSP repository command trust", () => {
 		expect(fs.existsSync(lspmuxCanary)).toBe(false);
 	});
 
-	it("anchors non-Git nested sessions to the nearest parent .gjc project", async () => {
+	it("anchors non-Git nested sessions to the nearest parent .vib project", async () => {
 		if (process.platform === "win32") return;
 
-		using tempDir = TempDir.createSync("@gjc-lsp-project-config-root-trust-");
+		using tempDir = TempDir.createSync("@vib-lsp-project-config-root-trust-");
 		const projectRoot = path.join(tempDir.path(), "project");
 		const nestedCwd = path.join(projectRoot, "packages", "nested");
 		const symlinkedCwd = path.join(tempDir.path(), "symlinked-session");
 		const serverBinary = path.join(projectRoot, "typescript-language-server");
 		const lspmuxCanary = path.join(projectRoot, "lspmux-status-ran");
-		await fs.promises.mkdir(path.join(projectRoot, ".gjc"), { recursive: true });
+		await fs.promises.mkdir(path.join(projectRoot, ".vib"), { recursive: true });
 		await fs.promises.mkdir(nestedCwd, { recursive: true });
 		await fs.promises.symlink(nestedCwd, symlinkedCwd);
 		await Bun.write(path.join(nestedCwd, "package.json"), "{}\n");
@@ -373,10 +373,10 @@ describe("LSP repository command trust", () => {
 		expect(fs.existsSync(lspmuxCanary)).toBe(false);
 	});
 
-	it("lets a Git root outrank a nearer project .gjc marker", async () => {
+	it("lets a Git root outrank a nearer project .vib marker", async () => {
 		if (process.platform === "win32") return;
 
-		using tempDir = TempDir.createSync("@gjc-lsp-git-root-precedence-");
+		using tempDir = TempDir.createSync("@vib-lsp-git-root-precedence-");
 		const repositoryRoot = path.join(tempDir.path(), "repo");
 		const nestedProject = path.join(repositoryRoot, "packages", "nested-project");
 		const cwd = path.join(nestedProject, "src");
@@ -384,7 +384,7 @@ describe("LSP repository command trust", () => {
 		const lspmuxCanary = path.join(repositoryRoot, "lspmux-status-ran");
 		await fs.promises.mkdir(repositoryRoot, { recursive: true });
 		await Bun.write(path.join(repositoryRoot, ".git"), "gitdir: ../metadata.git\n");
-		await fs.promises.mkdir(path.join(nestedProject, ".gjc"), { recursive: true });
+		await fs.promises.mkdir(path.join(nestedProject, ".vib"), { recursive: true });
 		await fs.promises.mkdir(cwd, { recursive: true });
 		await Bun.write(path.join(cwd, "package.json"), "{}\n");
 		await Bun.write(serverBinary, "");
@@ -403,11 +403,11 @@ describe("LSP repository command trust", () => {
 	it("stops before lexical and canonical home paths when finding project roots", async () => {
 		if (process.platform === "win32") return;
 
-		using tempDir = TempDir.createSync("@gjc-lsp-home-root-guard-");
+		using tempDir = TempDir.createSync("@vib-lsp-home-root-guard-");
 		const canonicalHome = path.join(tempDir.path(), "home");
 		const lexicalHome = path.join(tempDir.path(), "home-link");
 		const cwd = path.join(canonicalHome, "workspace", "nested");
-		const userBinDir = path.join(lexicalHome, ".gjc", "bin");
+		const userBinDir = path.join(lexicalHome, ".vib", "bin");
 		const userServer = path.join(userBinDir, "typescript-language-server");
 		await fs.promises.mkdir(userBinDir.replace(lexicalHome, canonicalHome), { recursive: true });
 		await fs.promises.mkdir(cwd, { recursive: true });
@@ -430,13 +430,13 @@ describe("LSP repository command trust", () => {
 	it("does not treat lexical or canonical home cwd as project authority", async () => {
 		if (process.platform === "win32") return;
 
-		using tempDir = TempDir.createSync("@gjc-lsp-home-cwd-guard-");
+		using tempDir = TempDir.createSync("@vib-lsp-home-cwd-guard-");
 		const canonicalHome = path.join(tempDir.path(), "home");
 		const lexicalHome = path.join(tempDir.path(), "home-link");
-		const userBinDir = path.join(lexicalHome, ".gjc", "bin");
+		const userBinDir = path.join(lexicalHome, ".vib", "bin");
 		const userServer = path.join(userBinDir, "typescript-language-server");
 		await fs.promises.mkdir(path.join(canonicalHome, ".git"), { recursive: true });
-		await fs.promises.mkdir(path.join(canonicalHome, ".gjc", "bin"), { recursive: true });
+		await fs.promises.mkdir(path.join(canonicalHome, ".vib", "bin"), { recursive: true });
 		await fs.promises.symlink(canonicalHome, lexicalHome);
 		await Bun.write(userServer, "");
 		const userLspmux = await writeLspmuxBinary(userBinDir);
@@ -461,7 +461,7 @@ describe("LSP repository command trust", () => {
 	it("treats a repository ..bin child as contained while preserving external executables", async () => {
 		if (process.platform === "win32") return;
 
-		using tempDir = TempDir.createSync("@gjc-lsp-dotdot-child-trust-");
+		using tempDir = TempDir.createSync("@vib-lsp-dotdot-child-trust-");
 		const repositoryRoot = path.join(tempDir.path(), "repo");
 		const repositoryBinDir = path.join(repositoryRoot, "..bin");
 		const externalBinDir = path.join(tempDir.path(), "external-bin");
@@ -499,7 +499,7 @@ describe("LSP repository command trust", () => {
 	it("does not trust a user config symlink that resolves into the repository", async () => {
 		if (process.platform === "win32") return;
 
-		using tempDir = TempDir.createSync("@gjc-lsp-config-symlink-trust-");
+		using tempDir = TempDir.createSync("@vib-lsp-config-symlink-trust-");
 		const cwd = path.join(tempDir.path(), "repo");
 		const home = path.join(tempDir.path(), "home");
 		await fs.promises.mkdir(cwd, { recursive: true });
@@ -528,9 +528,9 @@ describe("LSP repository command trust", () => {
 	});
 
 	it("keeps trusted user launch fields when repository config overrides server behavior", async () => {
-		using tempDir = TempDir.createSync("@gjc-lsp-command-fields-");
+		using tempDir = TempDir.createSync("@vib-lsp-command-fields-");
 		const cwd = tempDir.path();
-		const configDirName = `.gjc-lsp-command-trust-${process.pid}-${Date.now()}`;
+		const configDirName = `.vib-lsp-command-trust-${process.pid}-${Date.now()}`;
 		// Issue #4794: user-scope config resolution goes through the trusted
 		// home resolver, which only honors the REAL home (the os.homedir
 		// binding is captured at import time and cannot be redirected by a
@@ -543,7 +543,7 @@ describe("LSP repository command trust", () => {
 		fs.mkdirSync(userAgentDir, { recursive: true });
 		fs.writeFileSync(trustedServer, "#!/bin/sh\nexit 0\n");
 		fs.chmodSync(trustedServer, 0o755);
-		process.env.GJC_CONFIG_DIR = configDirName;
+		process.env.VIB_CONFIG_DIR = configDirName;
 		await Bun.write(
 			path.join(userAgentDir, "lsp.json"),
 			JSON.stringify({

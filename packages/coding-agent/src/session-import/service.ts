@@ -3,7 +3,7 @@ import * as nodeFs from "node:fs";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { createInterface } from "node:readline";
-import { getAgentDir, getSessionsDir } from "@gajae-code/utils";
+import { getAgentDir, getSessionsDir } from "@vib-rato/utils";
 import {
 	listManagedCandidates,
 	managedRootForScope,
@@ -37,7 +37,7 @@ import {
 
 const TARGET_TRANSCRIPT_MAX_BYTES = 128 * 1024 * 1024;
 const TARGET_LINE_MAX_BYTES = 16 * 1024 * 1024;
-const IMPORT_INTERNAL_DIRECTORY = ".gjc-managed-session-internal";
+const IMPORT_INTERNAL_DIRECTORY = ".vib-managed-session-internal";
 const IMPORT_LOCKS_DIRECTORY = "locks";
 const IMPORT_STAGING_DIRECTORY = "import-staging";
 const IMPORT_RECOVERY_RECEIPT = "artifact-recovery.json";
@@ -278,7 +278,7 @@ async function validateExactV5(file: string, expectedSessionId: string, expected
 				throw new CodexImportError(
 					"content_too_large",
 					"source_event",
-					"Converted GJC transcript contains an oversized entry.",
+					"Converted Vibrato transcript contains an oversized entry.",
 					TARGET_LINE_MAX_BYTES,
 					Buffer.byteLength(line, "utf8"),
 				);
@@ -935,7 +935,7 @@ async function stageConversion(
 				throw new CodexImportError(
 					"content_too_large",
 					"source_event",
-					"Converted GJC transcript exceeds the import limit.",
+					"Converted Vibrato transcript exceeds the import limit.",
 					TARGET_TRANSCRIPT_MAX_BYTES,
 					projectedBytes,
 				);
@@ -1011,7 +1011,7 @@ async function stageConversion(
 		throw new CodexImportError(
 			"content_too_large",
 			"source_event",
-			"Converted GJC transcript exceeds the import limit.",
+			"Converted Vibrato transcript exceeds the import limit.",
 			TARGET_TRANSCRIPT_MAX_BYTES,
 			provenance.transcriptBytes,
 		);
@@ -1034,7 +1034,7 @@ async function stageConversion(
 		throw new CodexImportError(
 			"content_too_large",
 			"source_event",
-			"Converted GJC transcript exceeds the resumable context limit.",
+			"Converted Vibrato transcript exceeds the resumable context limit.",
 			TARGET_TRANSCRIPT_MAX_BYTES,
 			finalWriter.bytes,
 		);
@@ -1256,7 +1256,7 @@ export function formatSessionImportBatch(result: SessionImportBatchResult): stri
  *
  * Pipeline: bounded read-only source load → format detection → provider adapter
  * → normalization + fail-closed redaction → head/tail bounding → persistence
- * into a NEW GJC session through the public SessionManager API.
+ * into a NEW Vibrato session through the public SessionManager API.
  *
  * The source file is never written, moved, or enumerated. The live session is
  * never touched by this module; callers switch sessions explicitly after a

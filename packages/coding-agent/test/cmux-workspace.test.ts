@@ -16,16 +16,16 @@ function cmuxEnv(workspaceId = "workspace-123", extra: Record<string, string> = 
 const LIST_JSON = JSON.stringify({
 	workspaces: [
 		{ id: "AAAA-1111", ref: "workspace:1", title: "Other", has_custom_title: true },
-		{ id: "DF98857C", ref: "workspace:8", title: "GJC: gajae-code", has_custom_title: true },
+		{ id: "DF98857C", ref: "workspace:8", title: "Vibrato: vib-rato", has_custom_title: true },
 		{ id: "CCCC-9999", ref: "workspace:9", title: "~/dev/x", has_custom_title: false },
 	],
 });
 
 describe("cmux workspace title sync", () => {
-	it("builds an explicit workspace rename command with the GJC prefix", () => {
+	it("builds an explicit workspace rename command with the Vibrato prefix", () => {
 		expect(buildCmuxWorkspaceRenameCommand("Investigate Resolver", cmuxEnv())).toEqual({
 			command: "cmux",
-			args: ["workspace", "rename", "workspace-123", "--title", "GJC: Investigate Resolver"],
+			args: ["workspace", "rename", "workspace-123", "--title", "Vibrato: Investigate Resolver"],
 		});
 	});
 
@@ -38,15 +38,15 @@ describe("cmux workspace title sync", () => {
 	});
 
 	it("prefixes cmux workspace titles once", () => {
-		expect(formatCmuxWorkspaceTitle("Investigate Resolver")).toBe("GJC: Investigate Resolver");
-		expect(formatCmuxWorkspaceTitle("GJC: Investigate Resolver")).toBe("GJC: Investigate Resolver");
+		expect(formatCmuxWorkspaceTitle("Investigate Resolver")).toBe("Vibrato: Investigate Resolver");
+		expect(formatCmuxWorkspaceTitle("Vibrato: Investigate Resolver")).toBe("Vibrato: Investigate Resolver");
 	});
 
 	describe("parseCmuxWorkspaceOwnership", () => {
 		it("matches by UUID id case-insensitively", () => {
 			expect(parseCmuxWorkspaceOwnership(LIST_JSON, "df98857c")).toEqual({
 				hasCustomTitle: true,
-				title: "GJC: gajae-code",
+				title: "Vibrato: vib-rato",
 			});
 		});
 
@@ -74,20 +74,20 @@ describe("cmux workspace title sync", () => {
 		});
 
 		it("skips when ownership is unknown (read failed)", () => {
-			expect(shouldRenameCmuxWorkspace(null, "GJC: Desired")).toBe(false);
+			expect(shouldRenameCmuxWorkspace(null, "Vibrato: Desired")).toBe(false);
 		});
 
 		it("skips when the title already matches", () => {
-			expect(shouldRenameCmuxWorkspace(owned({ title: "GJC: Desired" }), "GJC: Desired")).toBe(false);
+			expect(shouldRenameCmuxWorkspace(owned({ title: "Vibrato: Desired" }), "Vibrato: Desired")).toBe(false);
 		});
 
 		it("renames when the workspace still has the default title", () => {
-			expect(shouldRenameCmuxWorkspace(owned({ hasCustomTitle: false }), "GJC: Desired")).toBe(true);
+			expect(shouldRenameCmuxWorkspace(owned({ hasCustomTitle: false }), "Vibrato: Desired")).toBe(true);
 		});
 
 		it("skips a user- or peer-owned custom title", () => {
-			expect(shouldRenameCmuxWorkspace(owned({ title: "My Pinned Name" }), "GJC: Desired")).toBe(false);
-			expect(shouldRenameCmuxWorkspace(owned({ title: "GJC: Session A" }), "GJC: Session B")).toBe(false);
+			expect(shouldRenameCmuxWorkspace(owned({ title: "My Pinned Name" }), "Vibrato: Desired")).toBe(false);
+			expect(shouldRenameCmuxWorkspace(owned({ title: "Vibrato: Session A" }), "Vibrato: Session B")).toBe(false);
 		});
 	});
 
@@ -106,10 +106,10 @@ describe("cmux workspace title sync", () => {
 		expect(spawned).toBe(false);
 	});
 
-	it("does not spawn when GJC_NO_CMUX_RENAME is set", async () => {
+	it("does not spawn when VIB_NO_CMUX_RENAME is set", async () => {
 		let spawned = false;
 		await syncCmuxWorkspaceTitle("Investigate Resolver", {
-			env: cmuxEnv("ws-optout", { GJC_NO_CMUX_RENAME: "1" }),
+			env: cmuxEnv("ws-optout", { VIB_NO_CMUX_RENAME: "1" }),
 			isTty: true,
 			which: () => "/usr/local/bin/cmux",
 			readOwnership: async () => ({ hasCustomTitle: false, title: "default" }),
@@ -138,7 +138,7 @@ describe("cmux workspace title sync", () => {
 		});
 
 		expect(calls).toEqual([
-			["/usr/local/bin/cmux", "workspace", "rename", "ws-default", "--title", "GJC: Investigate Resolver"],
+			["/usr/local/bin/cmux", "workspace", "rename", "ws-default", "--title", "Vibrato: Investigate Resolver"],
 		]);
 		expect(unref).toHaveBeenCalledTimes(1);
 		expect(kill).not.toHaveBeenCalled();
@@ -193,11 +193,11 @@ describe("cmux workspace title sync", () => {
 			env: cmuxEnv("ws-shared"),
 			isTty: true,
 			which: () => "/usr/local/bin/cmux",
-			readOwnership: async () => ({ hasCustomTitle: true, title: "GJC: Session A task" }),
+			readOwnership: async () => ({ hasCustomTitle: true, title: "Vibrato: Session A task" }),
 			spawn,
 		});
 		expect(calls).toEqual([
-			["/usr/local/bin/cmux", "workspace", "rename", "ws-shared", "--title", "GJC: Session A task"],
+			["/usr/local/bin/cmux", "workspace", "rename", "ws-shared", "--title", "Vibrato: Session A task"],
 		]);
 	});
 });

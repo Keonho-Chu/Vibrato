@@ -1,8 +1,8 @@
 import { describe, expect, it, spyOn } from "bun:test";
-import type { Api, Context, Model, SimpleStreamOptions } from "@gajae-code/ai";
-import * as openaiResponses from "@gajae-code/ai/providers/openai-responses";
-import { AssistantMessageEventStream } from "@gajae-code/ai/utils/event-stream";
-import { streamGrokCli } from "../src/defaults/gjc/extensions/grok-cli-vendor/src/provider/stream";
+import type { Api, Context, Model, SimpleStreamOptions } from "@vib-rato/ai";
+import * as openaiResponses from "@vib-rato/ai/providers/openai-responses";
+import { AssistantMessageEventStream } from "@vib-rato/ai/utils/event-stream";
+import { streamGrokCli } from "../src/defaults/vib/extensions/grok-cli-vendor/src/provider/stream";
 
 describe("Grok Build stream wrapper", () => {
 	it("forwards requests through OpenAI responses with Grok Build headers", () => {
@@ -32,7 +32,7 @@ describe("Grok Build stream wrapper", () => {
 			expect(captured.model?.api).toBe("openai-responses");
 			expect((captured.options as { headers?: Record<string, string> } | undefined)?.headers).toMatchObject({
 				"x-test": "ok",
-				"x-grok-client-identifier": "gjc-grok-cli",
+				"x-grok-client-identifier": "vib-grok-cli",
 				"x-grok-client-version": "0.2.33",
 				"x-grok-conv-id": "session-123",
 				"x-grok-model-override": "grok-composer-2.5-fast",

@@ -2811,7 +2811,7 @@ pub(crate) mod platform {
 		impl TempDir {
 			fn new() -> Self {
 				let path = std::env::temp_dir().join(format!(
-					"gjc-caller-fd-authority-{}-{}",
+					"vib-caller-fd-authority-{}-{}",
 					std::process::id(),
 					NEXT_TEMP_ID.fetch_add(1, Ordering::Relaxed),
 				));
@@ -3564,7 +3564,7 @@ pub(crate) mod platform {
 	}
 
 	fn exchange_placeholder_quarantine_name(expected: ExchangePlaceholderIdentity) -> CString {
-		CString::new(format!(".gjc-exact-unlink-placeholder-{:x}-{:x}", expected.dev, expected.ino))
+		CString::new(format!(".vib-exact-unlink-placeholder-{:x}-{:x}", expected.dev, expected.ino))
 			.expect("placeholder quarantine name contains no NUL")
 	}
 	fn remove_exchange_placeholder(
@@ -4336,7 +4336,7 @@ pub(crate) mod platform {
 			directory:       false,
 			detach_only:     false,
 			quarantine_name: Some(format!(
-				".gjc-substitution-cleanup-{:x}-{:x}-{:x}",
+				".vib-substitution-cleanup-{:x}-{:x}-{:x}",
 				current.st_dev,
 				current.st_ino,
 				std::process::id(),
@@ -4707,7 +4707,7 @@ pub(crate) mod platform {
 				Err(code) => return NativeExactUnlinkResult::failure(code),
 			};
 			let private_name = CString::new(format!(
-				".gjc-exact-replace-source-{:x}-{:x}-{:x}",
+				".vib-exact-replace-source-{:x}-{:x}-{:x}",
 				expected_source.dev,
 				expected_source.ino,
 				std::process::id(),
@@ -4759,7 +4759,7 @@ pub(crate) mod platform {
 			source_cleanup_identity.nlink = None;
 			source_cleanup_identity.allow_hard_link = true;
 			source_cleanup_identity.quarantine_name = Some(format!(
-				".gjc-exact-replace-source-cleanup-{:x}-{:x}",
+				".vib-exact-replace-source-cleanup-{:x}-{:x}",
 				expected_source.ino,
 				std::process::id(),
 			));
@@ -4771,7 +4771,7 @@ pub(crate) mod platform {
 			);
 			let mut destination_cleanup_identity = expected_destination.clone();
 			destination_cleanup_identity.quarantine_name = Some(format!(
-				".gjc-exact-replace-destination-{:x}-{:x}",
+				".vib-exact-replace-destination-{:x}-{:x}",
 				expected_destination.ino,
 				std::process::id(),
 			));
@@ -6819,7 +6819,7 @@ mod platform {
 			return NativeExactUnlinkResult::failure("hard_link_unsupported");
 		}
 		let retained_name_string =
-			format!(".gjc-exact-replace-source-{:x}-{:x}", expected_source.dev, expected_source.ino);
+			format!(".vib-exact-replace-source-{:x}-{:x}", expected_source.dev, expected_source.ino);
 		let retained_path = source_path.with_file_name(&retained_name_string);
 		let retained_name: Vec<u16> = retained_name_string.encode_utf16().collect();
 		if let Err(code) = rename_handle(source.target, parent_handle, &retained_name, false) {
@@ -6860,7 +6860,7 @@ mod platform {
 		}
 		let destination_name: Vec<u16> = destination_name.encode_wide().collect();
 		let predecessor_name_string = format!(
-			".gjc-exact-replace-destination-{:x}-{:x}",
+			".vib-exact-replace-destination-{:x}-{:x}",
 			expected_destination.dev, expected_destination.ino
 		);
 		let predecessor_path = destination_path.with_file_name(&predecessor_name_string);
@@ -8552,7 +8552,7 @@ mod owner_only_security_tests {
 	impl TempDir {
 		fn new() -> Self {
 			let path = std::env::temp_dir().join(format!(
-				"gjc-owner-security-{}-{}",
+				"vib-owner-security-{}-{}",
 				std::process::id(),
 				NEXT_TEMP_ID.fetch_add(1, Ordering::Relaxed)
 			));
@@ -8702,7 +8702,7 @@ mod retained_broker_publication_tests {
 	impl TempDir {
 		fn new() -> Self {
 			let path = std::env::temp_dir().join(format!(
-				"gjc-retained-broker-publication-{}-{}",
+				"vib-retained-broker-publication-{}-{}",
 				std::process::id(),
 				NEXT_TEMP_ID.fetch_add(1, Ordering::Relaxed)
 			));
@@ -8867,7 +8867,7 @@ mod rename_no_replace_eintr_tests {
 	impl TempDir {
 		fn new() -> Self {
 			let path = std::env::temp_dir().join(format!(
-				"gjc-rename-no-replace-eintr-{}-{}",
+				"vib-rename-no-replace-eintr-{}-{}",
 				std::process::id(),
 				NEXT_TEMP_ID.fetch_add(1, Ordering::Relaxed)
 			));
@@ -8985,7 +8985,7 @@ mod exact_unlink_placeholder_tests {
 	fn regular_successor_replaces_same_kind_placeholder_and_is_preserved() {
 		let _guard = exchange_hook_test_guard();
 		let root = std::env::temp_dir().join(format!(
-			"gjc-exact-unlink-placeholder-{}-{}",
+			"vib-exact-unlink-placeholder-{}-{}",
 			std::process::id(),
 			SystemTime::now()
 				.duration_since(UNIX_EPOCH)
@@ -9050,7 +9050,7 @@ mod exact_unlink_placeholder_tests {
 	fn preserves_same_kind_successor(target_is_directory: bool) {
 		let _guard = exchange_hook_test_guard();
 		let root = std::env::temp_dir().join(format!(
-			"gjc-exact-unlink-same-kind-successor-{}-{}",
+			"vib-exact-unlink-same-kind-successor-{}-{}",
 			std::process::id(),
 			SystemTime::now()
 				.duration_since(UNIX_EPOCH)
@@ -9127,7 +9127,7 @@ mod exact_unlink_placeholder_tests {
 	fn mismatch_preserves_same_kind_successor_and_stale_recovery(target_is_directory: bool) {
 		let _guard = exchange_hook_test_guard();
 		let root = std::env::temp_dir().join(format!(
-			"gjc-exact-unlink-mismatch-successor-{}-{}",
+			"vib-exact-unlink-mismatch-successor-{}-{}",
 			std::process::id(),
 			SystemTime::now()
 				.duration_since(UNIX_EPOCH)
@@ -9208,7 +9208,7 @@ mod exact_unlink_placeholder_tests {
 	) {
 		let _guard = exchange_hook_test_guard();
 		let root = std::env::temp_dir().join(format!(
-			"gjc-exact-unlink-placeholder-detach-{}-{}",
+			"vib-exact-unlink-placeholder-detach-{}-{}",
 			std::process::id(),
 			SystemTime::now()
 				.duration_since(UNIX_EPOCH)
@@ -9285,7 +9285,7 @@ mod exact_unlink_placeholder_tests {
 	) {
 		let _guard = exchange_hook_test_guard();
 		let root = std::env::temp_dir().join(format!(
-			"gjc-exact-unlink-retained-successor-{}-{}",
+			"vib-exact-unlink-retained-successor-{}-{}",
 			std::process::id(),
 			SystemTime::now()
 				.duration_since(UNIX_EPOCH)
@@ -9369,7 +9369,7 @@ mod exact_unlink_placeholder_tests {
 				path
 					.file_name()
 					.and_then(|name| name.to_str())
-					.is_some_and(|name| name.starts_with(".gjc-exact-unlink-placeholder-"))
+					.is_some_and(|name| name.starts_with(".vib-exact-unlink-placeholder-"))
 			})
 			.expect("find retained poisoned successor");
 		assert_eq!(fs::read(retained).expect("read retained poisoned successor"), b"first");
@@ -9390,7 +9390,7 @@ mod exact_unlink_placeholder_tests {
 	fn exchange_failure_retains_replaced_placeholder_at_detached_path() {
 		let _guard = exchange_hook_test_guard();
 		let root = std::env::temp_dir().join(format!(
-			"gjc-exact-unlink-exchange-failure-placeholder-{}-{}",
+			"vib-exact-unlink-exchange-failure-placeholder-{}-{}",
 			std::process::id(),
 			SystemTime::now()
 				.duration_since(UNIX_EPOCH)
@@ -9439,7 +9439,7 @@ mod exact_unlink_placeholder_tests {
 				path
 					.file_name()
 					.and_then(|name| name.to_str())
-					.is_some_and(|name| name.starts_with(".gjc-exact-unlink-placeholder-"))
+					.is_some_and(|name| name.starts_with(".vib-exact-unlink-placeholder-"))
 			})
 			.expect("find detached placeholder");
 		let replacement = root.join("replacement");
@@ -9474,14 +9474,14 @@ mod exact_unlink_placeholder_tests {
 	fn retained_internal_placeholder_is_not_reported_as_a_successor() {
 		let result = NativeExactUnlinkResult::retained_placeholder_failure(
 			"io_error",
-			"/tmp/.gjc-exact-unlink-placeholder-verified".to_owned(),
+			"/tmp/.vib-exact-unlink-placeholder-verified".to_owned(),
 		);
 		assert!(!result.ok);
 		assert!(result.detached_path.is_none());
 		assert!(result.retained_successor_path.is_none());
 		assert_eq!(
 			result.retained_placeholder_path.as_deref(),
-			Some("/tmp/.gjc-exact-unlink-placeholder-verified")
+			Some("/tmp/.vib-exact-unlink-placeholder-verified")
 		);
 	}
 
@@ -9526,7 +9526,7 @@ mod exact_unlink_placeholder_tests {
 	fn replay_retains_verified_tree(nested: bool) {
 		let _guard = exchange_hook_test_guard();
 		let root = std::env::temp_dir().join(format!(
-			"gjc-tree-replay-{}-{}",
+			"vib-tree-replay-{}-{}",
 			std::process::id(),
 			SystemTime::now()
 				.duration_since(UNIX_EPOCH)
@@ -9580,7 +9580,7 @@ mod exact_unlink_placeholder_tests {
 		let _guard = exchange_hook_test_guard();
 		for fail_on_call in [1, 2] {
 			let root = std::env::temp_dir().join(format!(
-				"gjc-tree-root-fsync-{fail_on_call}-{}-{}",
+				"vib-tree-root-fsync-{fail_on_call}-{}-{}",
 				std::process::id(),
 				SystemTime::now()
 					.duration_since(UNIX_EPOCH)
@@ -9621,7 +9621,7 @@ mod exact_unlink_placeholder_tests {
 	fn tree_scrub_preserves_a_substituted_root_successor_after_validation() {
 		let _guard = exchange_hook_test_guard();
 		let root = std::env::temp_dir().join(format!(
-			"gjc-tree-successor-{}-{}",
+			"vib-tree-successor-{}-{}",
 			std::process::id(),
 			SystemTime::now()
 				.duration_since(UNIX_EPOCH)
@@ -9675,7 +9675,7 @@ mod exact_unlink_placeholder_tests {
 	fn tree_scrub_restores_a_regular_file_root_successor() {
 		let _guard = exchange_hook_test_guard();
 		let root = std::env::temp_dir().join(format!(
-			"gjc-tree-file-successor-{}-{}",
+			"vib-tree-file-successor-{}-{}",
 			std::process::id(),
 			SystemTime::now()
 				.duration_since(UNIX_EPOCH)
@@ -9722,7 +9722,7 @@ mod exact_unlink_placeholder_tests {
 	fn tree_scrub_rejects_a_post_scrub_retained_root_successor() {
 		let _guard = exchange_hook_test_guard();
 		let root = std::env::temp_dir().join(format!(
-			"gjc-tree-post-scrub-successor-{}-{}",
+			"vib-tree-post-scrub-successor-{}-{}",
 			std::process::id(),
 			SystemTime::now()
 				.duration_since(UNIX_EPOCH)
@@ -9778,7 +9778,7 @@ mod exact_unlink_placeholder_tests {
 	fn tree_scrub_rejects_external_hard_links_without_truncation() {
 		let _guard = exchange_hook_test_guard();
 		let root = std::env::temp_dir().join(format!(
-			"gjc-tree-hard-link-{}-{}",
+			"vib-tree-hard-link-{}-{}",
 			std::process::id(),
 			SystemTime::now()
 				.duration_since(UNIX_EPOCH)
@@ -9830,7 +9830,7 @@ mod exact_unlink_placeholder_tests {
 	fn tree_scrub_rechecks_hard_links_at_truncate_boundary() {
 		let _guard = exchange_hook_test_guard();
 		let root = std::env::temp_dir().join(format!(
-			"gjc-tree-late-hard-link-{}-{}",
+			"vib-tree-late-hard-link-{}-{}",
 			std::process::id(),
 			SystemTime::now()
 				.duration_since(UNIX_EPOCH)
@@ -9877,7 +9877,7 @@ mod exact_unlink_placeholder_tests {
 	fn tree_scrub_rechecks_payload_digest_at_truncate_boundary() {
 		let _guard = exchange_hook_test_guard();
 		let root = std::env::temp_dir().join(format!(
-			"gjc-tree-late-payload-{}-{}",
+			"vib-tree-late-payload-{}-{}",
 			std::process::id(),
 			SystemTime::now()
 				.duration_since(UNIX_EPOCH)
@@ -9924,7 +9924,7 @@ mod exact_unlink_placeholder_tests {
 	fn tree_child_revalidation_preserves_same_name_successor() {
 		let _guard = exchange_hook_test_guard();
 		let root = std::env::temp_dir().join(format!(
-			"gjc-tree-child-successor-{}-{}",
+			"vib-tree-child-successor-{}-{}",
 			std::process::id(),
 			SystemTime::now()
 				.duration_since(UNIX_EPOCH)
@@ -9985,7 +9985,7 @@ mod exact_unlink_placeholder_tests {
 	fn aborted_tree_hook_does_not_block_the_next_hook() {
 		let _guard = exchange_hook_test_guard();
 		let root = std::env::temp_dir().join(format!(
-			"gjc-tree-hook-abort-{}-{}",
+			"vib-tree-hook-abort-{}-{}",
 			std::process::id(),
 			SystemTime::now()
 				.duration_since(UNIX_EPOCH)
@@ -10052,7 +10052,7 @@ mod link_no_replace_tests {
 	impl TempDir {
 		fn new() -> Self {
 			let path = std::env::temp_dir().join(format!(
-				"gjc-link-no-replace-{}-{}",
+				"vib-link-no-replace-{}-{}",
 				std::process::id(),
 				NEXT_TEMP_ID.fetch_add(1, Ordering::Relaxed)
 			));
@@ -10168,7 +10168,7 @@ mod exact_replace_path_tests {
 	impl TempDir {
 		fn new() -> Self {
 			let path = std::env::temp_dir().join(format!(
-				"gjc-exact-replace-{}-{}",
+				"vib-exact-replace-{}-{}",
 				std::process::id(),
 				NEXT_TEMP_ID.fetch_add(1, Ordering::Relaxed)
 			));
@@ -10311,7 +10311,7 @@ mod exact_replace_path_tests {
 			.detached_path
 			.as_deref()
 			.expect("retained private predecessor path");
-		assert!(detached.contains(".gjc-exact-replace-source-"));
+		assert!(detached.contains(".vib-exact-replace-source-"));
 		assert_eq!(
 			result.retained_unknown_path.as_deref(),
 			Some(destination.to_string_lossy().as_ref())

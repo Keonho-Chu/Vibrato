@@ -1,8 +1,8 @@
 import * as crypto from "node:crypto";
 import * as fs from "node:fs";
-import type { ToolCall, ToolResultMessage } from "@gajae-code/ai/core";
-import { matchesKey } from "@gajae-code/tui";
-import { formatDuration, formatNumber } from "@gajae-code/utils";
+import type { ToolCall, ToolResultMessage } from "@vib-rato/ai/core";
+import { matchesKey } from "@vib-rato/tui";
+import { formatDuration, formatNumber } from "@vib-rato/utils";
 import type { KeyId } from "../../config/keybindings";
 import { isSilentAbort } from "../../session/messages";
 import type { FileEntry, SessionMessageEntry } from "../../session/session-manager";

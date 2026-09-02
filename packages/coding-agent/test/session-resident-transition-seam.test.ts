@@ -2,27 +2,27 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { AssistantMessage } from "@gajae-code/ai";
-import { EphemeralBlobStore, MemoryBlobStore } from "@gajae-code/coding-agent/session/blob-store";
+import type { AssistantMessage } from "@vib-rato/ai";
+import { EphemeralBlobStore, MemoryBlobStore } from "@vib-rato/coding-agent/session/blob-store";
 import type {
 	MemoryGuardParticipantDescriptorV1,
 	MemoryGuardSessionManagerCheckpointV1,
-} from "@gajae-code/coding-agent/session/memory-guard-checkpoint-participant";
+} from "@vib-rato/coding-agent/session/memory-guard-checkpoint-participant";
 import {
 	CURRENT_SESSION_VERSION,
 	type SessionDestinationInput,
 	SessionManager,
 	SessionManagerTestHooks,
-} from "@gajae-code/coding-agent/session/session-manager";
-import { MemorySessionStorage } from "@gajae-code/coding-agent/session/session-storage";
+} from "@vib-rato/coding-agent/session/session-manager";
+import { MemorySessionStorage } from "@vib-rato/coding-agent/session/session-storage";
 
-import type { RecoveryFsRoot } from "@gajae-code/natives";
-import * as native from "@gajae-code/natives";
-import { getAgentDir, getResidentCacheRootDir, getTerminalSessionsDir, logger, setAgentDir } from "@gajae-code/utils";
+import type { RecoveryFsRoot } from "@vib-rato/natives";
+import * as native from "@vib-rato/natives";
+import { getAgentDir, getResidentCacheRootDir, getTerminalSessionsDir, logger, setAgentDir } from "@vib-rato/utils";
 import { ManagedSessionDescendantStore } from "../src/session/internal/managed-session-storage";
 
 const originalAgentDir = getAgentDir();
-const originalAgentDirOverride = process.env.GJC_CODING_AGENT_DIR;
+const originalAgentDirOverride = process.env.VIB_CODING_AGENT_DIR;
 const originalTmux = process.env.TMUX;
 const originalTmuxPane = process.env.TMUX_PANE;
 const tempDirs: string[] = [];
@@ -33,15 +33,15 @@ const DEMOTION_RECOVERY_PAYLOAD_COUNT = 24;
 
 beforeEach(() => {
 	setAgentDir(path.join(makeTempDir(), "agent"));
-	process.env.TMUX = "/tmp/gjc-resident-transition-tmux,1,0";
+	process.env.TMUX = "/tmp/vib-resident-transition-tmux,1,0";
 	process.env.TMUX_PANE = `%resident-transition-${Date.now()}-${Math.random()}`;
 });
 
 afterEach(async () => {
 	vi.restoreAllMocks();
 	setAgentDir(originalAgentDir);
-	if (originalAgentDirOverride === undefined) delete process.env.GJC_CODING_AGENT_DIR;
-	else process.env.GJC_CODING_AGENT_DIR = originalAgentDirOverride;
+	if (originalAgentDirOverride === undefined) delete process.env.VIB_CODING_AGENT_DIR;
+	else process.env.VIB_CODING_AGENT_DIR = originalAgentDirOverride;
 	if (originalTmux === undefined) delete process.env.TMUX;
 	else process.env.TMUX = originalTmux;
 	if (originalTmuxPane === undefined) delete process.env.TMUX_PANE;
@@ -50,7 +50,7 @@ afterEach(async () => {
 	SessionManagerTestHooks.beforeResidentTransitionIndexBuild = undefined;
 });
 
-function makeTempDir(prefix = "gjc-resident-transition-"): string {
+function makeTempDir(prefix = "vib-resident-transition-"): string {
 	const dir = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
 	tempDirs.push(dir);
 	return dir;
@@ -106,7 +106,7 @@ function activeResidentCacheDir(): string {
 async function createPersistedSession(
 	text: string,
 ): Promise<{ sm: SessionManager; cwd: string; sessionFile: string; cacheDir: string }> {
-	const cwd = makeTempDir("gjc-resident-transition-session-");
+	const cwd = makeTempDir("vib-resident-transition-session-");
 	const sm = SessionManager.create(cwd, path.join(cwd, "sessions"));
 	sm.appendMessage(assistantMessage(text));
 	await sm.ensureOnDisk();
@@ -119,7 +119,7 @@ async function createPersistedSession(
 async function createManagedPersistedSession(
 	text: string,
 ): Promise<{ sm: SessionManager; cwd: string; sessionFile: string; cacheDir: string }> {
-	const cwd = makeTempDir("gjc-resident-transition-managed-session-");
+	const cwd = makeTempDir("vib-resident-transition-managed-session-");
 	const sm = SessionManager.create(cwd);
 	sm.appendMessage(assistantMessage(text));
 	await sm.ensureOnDisk();
@@ -433,7 +433,7 @@ describe("resident-store transition seam", () => {
 	it("B1-T3 rejects a managed session-file switch to a directory outside the managed root", async () => {
 		const managedText = `containment ${"c".repeat(4096)}`;
 		const managed = await createManagedPersistedSession(managedText);
-		const outsideCwd = makeTempDir("gjc-resident-transition-outside-");
+		const outsideCwd = makeTempDir("vib-resident-transition-outside-");
 		const outside = SessionManager.create(outsideCwd, path.join(outsideCwd, "sessions"));
 		outside.appendMessage(assistantMessage(`outside ${"o".repeat(4096)}`));
 		await outside.ensureOnDisk();
@@ -596,7 +596,7 @@ describe("resident-store transition seam", () => {
 	it("T5b rejects a malformed switch candidate without mutating the live predecessor", async () => {
 		const predecessorText = `malformed switch predecessor ${"p".repeat(4096)}`;
 		const predecessor = await createPersistedSession(predecessorText);
-		const corruptFile = path.join(makeTempDir("gjc-resident-transition-corrupt-"), "corrupt.jsonl");
+		const corruptFile = path.join(makeTempDir("vib-resident-transition-corrupt-"), "corrupt.jsonl");
 		fs.writeFileSync(corruptFile, "{ malformed JSONL\n", { mode: 0o600 });
 		const entriesBefore = JSON.stringify(predecessor.sm.getEntries());
 		try {
@@ -615,8 +615,8 @@ describe("resident-store transition seam", () => {
 		const secondText = `symlink-swap second ${"b".repeat(4096)}`;
 		const predecessor = await createPersistedSession(firstText);
 		const cacheRoot = residentCacheRoot();
-		const backup = path.join(makeTempDir("gjc-resident-transition-cache-backup-"), "verified-cache");
-		const attacker = path.join(makeTempDir("gjc-resident-transition-attacker-"), "cache");
+		const backup = path.join(makeTempDir("vib-resident-transition-cache-backup-"), "verified-cache");
+		const attacker = path.join(makeTempDir("vib-resident-transition-attacker-"), "cache");
 		fs.mkdirSync(attacker, { mode: 0o700 });
 		fs.renameSync(cacheRoot, backup);
 		fs.symlinkSync(attacker, cacheRoot, "dir");
@@ -648,8 +648,8 @@ describe("resident-store transition seam", () => {
 		expect(persisted).toContain(payloads.at(-1)!);
 
 		const cacheRoot = residentCacheRoot();
-		const backup = path.join(makeTempDir("gjc-resident-transition-cache-backup-"), "verified-cache");
-		const attacker = path.join(makeTempDir("gjc-resident-transition-attacker-"), "cache");
+		const backup = path.join(makeTempDir("vib-resident-transition-cache-backup-"), "verified-cache");
+		const attacker = path.join(makeTempDir("vib-resident-transition-attacker-"), "cache");
 		fs.mkdirSync(attacker, { mode: 0o700 });
 		fs.renameSync(cacheRoot, backup);
 		fs.symlinkSync(attacker, cacheRoot, "dir");
@@ -747,7 +747,7 @@ describe("resident-store transition seam", () => {
 	});
 
 	it("T5b retains every >4096 unique resident payload in forced memory fallback", async () => {
-		const cwd = makeTempDir("gjc-resident-transition-large-fallback-");
+		const cwd = makeTempDir("vib-resident-transition-large-fallback-");
 		const sessionFile = path.join(cwd, "sessions", "large-fallback.jsonl");
 		writeLargeMemoryFallbackSession(sessionFile, cwd);
 		const root = residentCacheRoot();
@@ -897,7 +897,7 @@ describe("resident-store transition seam", () => {
 			const moveText = `move predecessor ${failure.label} ${"m".repeat(4096)}`;
 			const movePredecessor = await createPersistedSession(moveText);
 			await appendResidentPayloads(movePredecessor.sm, `move ${failure.label}`);
-			const newCwd = makeTempDir("gjc-resident-transition-move-target-");
+			const newCwd = makeTempDir("vib-resident-transition-move-target-");
 			try {
 				await expectResidentTransitionFailure(failure, () => movePredecessor.sm.moveTo(newCwd), 4);
 				expect(movePredecessor.sm.getCwd()).toBe(movePredecessor.cwd);
@@ -927,7 +927,7 @@ describe("resident-store transition seam", () => {
 
 	it("T5d retains recovery staging for every resident write and index-build promotion failure seam", async () => {
 		for (const failure of residentTransitionFailures) {
-			const root = makeTempDir("gjc-resident-transition-promotion-");
+			const root = makeTempDir("vib-resident-transition-promotion-");
 			const texts = Array.from(
 				{ length: 3 },
 				(_, index) => `promotion predecessor ${failure.label} ${index} ${"p".repeat(4096)}`,
@@ -1072,7 +1072,7 @@ describe("resident-store transition seam", () => {
 	});
 
 	it("T6 aborts recovery promotion before staging removal when candidate preparation cannot trust the cache root", async () => {
-		const root = makeTempDir("gjc-resident-transition-recovery-prepare-");
+		const root = makeTempDir("vib-resident-transition-recovery-prepare-");
 		const text = `recovery prepare predecessor ${"m".repeat(4096)}`;
 		const staged = await stageMemoryGuardRecovery(root, path.join(root, "restore"), text);
 		const stagingFile = staged.manager.getSessionFile();
@@ -1098,7 +1098,7 @@ describe("resident-store transition seam", () => {
 	});
 
 	it("T6 disposes a prepared candidate and retains staging state when managed publication collides", async () => {
-		const root = makeTempDir("gjc-resident-transition-recovery-publish-");
+		const root = makeTempDir("vib-resident-transition-recovery-publish-");
 		const cwd = path.join(root, "workspace");
 		fs.mkdirSync(cwd, { recursive: true });
 		const destination = SessionManager.managedDestination(cwd, getAgentDir());

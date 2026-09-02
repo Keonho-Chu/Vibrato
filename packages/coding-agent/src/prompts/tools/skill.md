@@ -8,8 +8,8 @@ Invoke another available skill in the current turn.
 <instruction>
 - `name` is the skill name as it appears in `/skill:<name>` (e.g. `ralplan`, `ultragoal`, `autoresearch`, `deep-interview`)
 - `args` is the free-form argument string the skill would receive after `/skill:<name>` on the command line
-- The tool loads the callee's SKILL.md into the current turn and handles native workflow caller→callee state handoff when the caller is one of the built-in GJC workflows.
-- The chain is refused while a native workflow caller is still mid-flight. `autoresearch` chains from any of its phases (`intake`/`research`/`verdict`) — a research mission is always handoff-ready. `deep-interview` chains once its final spec is persisted (phase `handoff`), and `ralplan` chains from `final` or `handoff`. Only a mid-flight `ralplan` or `ultragoal` needs preparation first: `gjc state <skill> write --input '{"current_phase":"handoff"}' --json`; no other handoff command is needed. Runtime project/user skills do not use `gjc state <skill>`.
+- The tool loads the callee's SKILL.md into the current turn and handles native workflow caller→callee state handoff when the caller is one of the built-in Vibrato workflows.
+- The chain is refused while a native workflow caller is still mid-flight. `autoresearch` chains from any of its phases (`intake`/`research`/`verdict`) — a research mission is always handoff-ready. `deep-interview` chains once its final spec is persisted (phase `handoff`), and `ralplan` chains from `final` or `handoff`. Only a mid-flight `ralplan` or `ultragoal` needs preparation first: `vib state <skill> write --input '{"current_phase":"handoff"}' --json`; no other handoff command is needed. Runtime project/user skills do not use `vib state <skill>`.
 - Call once per chain step. To chain `A → B → C`, A calls `skill(B)`; B's next agent turn calls `skill(C)`.
 </instruction>
 
@@ -22,7 +22,7 @@ Invoke another available skill in the current turn.
 
 <examples>
 # Hand off from ralplan to ultragoal after an approved plan
-{"name": "ultragoal", "args": "track execution of .gjc/plans/ralplan/<run-id>/pending-approval.md"}
+{"name": "ultragoal", "args": "track execution of .vib/plans/ralplan/<run-id>/pending-approval.md"}
 
 # Trigger deep-interview with no arguments
 {"name": "deep-interview"}

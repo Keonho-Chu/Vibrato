@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
-import { __animationSchedulerTestHooks } from "@gajae-code/tui";
-import { Loader } from "@gajae-code/tui/components/loader";
-import type { TUI } from "@gajae-code/tui/tui";
+import { __animationSchedulerTestHooks } from "@vib-rato/tui";
+import { Loader } from "@vib-rato/tui/components/loader";
+import type { TUI } from "@vib-rato/tui/tui";
 
 describe("shared animation scheduler", () => {
 	afterEach(() => {

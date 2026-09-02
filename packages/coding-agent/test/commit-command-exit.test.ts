@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
-import { postmortem } from "@gajae-code/utils";
+import { postmortem } from "@vib-rato/utils";
 import CommitCommand from "../src/commands/commit";
 import * as commitModule from "../src/commit";
 import * as themeModule from "../src/modes/theme/theme";
 
-describe("gjc commit command lifecycle (issue #1041)", () => {
+describe("vib commit command lifecycle (issue #1041)", () => {
 	afterEach(() => {
 		vi.restoreAllMocks();
 	});
@@ -19,7 +19,7 @@ describe("gjc commit command lifecycle (issue #1041)", () => {
 		const quitSpy = vi.spyOn(postmortem, "quit").mockResolvedValue(undefined);
 
 		const command = new CommitCommand([], {
-			bin: "gjc",
+			bin: "vib",
 			version: "0.0.0-test",
 			commands: new Map(),
 		});

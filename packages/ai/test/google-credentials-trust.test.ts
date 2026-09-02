@@ -31,7 +31,7 @@ interface Resolved {
 const tempDirs: string[] = [];
 
 function projectDir(dotenv?: string): string {
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-google-cred-trust-"));
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-google-cred-trust-"));
 	tempDirs.push(dir);
 	if (dotenv !== undefined) fs.writeFileSync(path.join(dir, ".env"), dotenv);
 	return dir;

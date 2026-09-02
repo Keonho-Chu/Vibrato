@@ -1,6 +1,6 @@
 # Alibaba Token Plan Pro profile benchmark
 
-This note records the evidence used to add GJC's opt-in `alibaba-token-plan-pro` profile while preserving `alibaba-token-plan-balanced`. It combines provider documentation, upstream model cards, and small live GJC agent-loop probes. The measurements are descriptive, not statistically significant.
+This note records the evidence used to add Vibrato's opt-in `alibaba-token-plan-pro` profile while preserving `alibaba-token-plan-balanced`. It combines provider documentation, upstream model cards, and small live Vibrato agent-loop probes. The measurements are descriptive, not statistically significant.
 
 ## Decision summary
 
@@ -17,15 +17,15 @@ The Pro profile assigns three model families by role and raises only the high-va
 ## Environment
 
 - Date: 2026-08-02
-- GJC: 0.12.7 installed binary
+- Vibrato: 0.12.7 installed binary
 - Provider: Alibaba Cloud Model Studio Token Plan Personal Edition, Singapore endpoint
 - Models: `qwen3.8-max-preview`, `deepseek-v4-flash-0731`, `glm-5.2`
-- Execution path: GJC CLI only; no direct provider batch script
+- Execution path: Vibrato CLI only; no direct provider batch script
 - Attempts: one per model and task
 - Coding fixture: the same Python Hamilton allocator implementation task, followed by five public and three hidden tests
 - Critic fixture: the same six-candidate defect-selection prompt
 
-## Live GJC observations
+## Live Vibrato observations
 
 | Probe | Qwen 3.8 Max Preview | DeepSeek V4 Flash 0731 | GLM 5.2 |
 |---|---:|---:|---:|
@@ -35,7 +35,7 @@ The Pro profile assigns three model families by role and raises only the high-va
 
 All three models solved the bounded coding and critic fixtures. These runs therefore support role fit and transport viability, not a broad claim that one model is universally better.
 
-Three exploratory long-form critic runs reached an external 184-second benchmark-shell limit. That limit was not GJC's prompt deadline and was not a provider error, so those observations are not counted as model failures. GJC allows a substantially longer prompt window; high-budget delegated roles should not be downgraded solely from that shell cap.
+Three exploratory long-form critic runs reached an external 184-second benchmark-shell limit. That limit was not Vibrato's prompt deadline and was not a provider error, so those observations are not counted as model failures. Vibrato allows a substantially longer prompt window; high-budget delegated roles should not be downgraded solely from that shell cap.
 
 ## External evidence
 
@@ -58,12 +58,12 @@ The card's best agent configuration uses `reasoning_effort=max`, which is why th
 
 ## Reproduction shape
 
-Use normal GJC provider authentication, then select each model through GJC rather than calling the provider directly:
+Use normal Vibrato provider authentication, then select each model through Vibrato rather than calling the provider directly:
 
 ```sh
-gjc --model alibaba-token-plan/qwen3.8-max-preview --thinking medium --no-tools -p "<exact-output prompt>"
-gjc --model alibaba-token-plan/deepseek-v4-flash-0731 --thinking max --tools read,edit -p "<allocator fixture prompt>"
-gjc --model alibaba-token-plan/glm-5.2 --thinking xhigh --no-tools -p "<critic fixture prompt>"
+vib --model alibaba-token-plan/qwen3.8-max-preview --thinking medium --no-tools -p "<exact-output prompt>"
+vib --model alibaba-token-plan/deepseek-v4-flash-0731 --thinking max --tools read,edit -p "<allocator fixture prompt>"
+vib --model alibaba-token-plan/glm-5.2 --thinking xhigh --no-tools -p "<critic fixture prompt>"
 ```
 
 The raw authenticated transcripts are intentionally not committed. They may contain local paths and account-scoped runtime metadata. The table above preserves the aggregate timing, tool-call, and test outcomes used for the profile decision.
@@ -72,7 +72,7 @@ The raw authenticated transcripts are intentionally not committed. They may cont
 
 - One attempt per model and task is not enough to estimate reliability or statistical significance.
 - The allocator and defect-selection probes do not directly measure long-horizon planning or architecture quality.
-- Token Plan credit consumption was not available in GJC telemetry, so this note does not compare per-role credit cost.
+- Token Plan credit consumption was not available in Vibrato telemetry, so this note does not compare per-role credit cost.
 - Preview selectors and provider-side model snapshots can change after publication.
 - The 184-second observations are censored by the benchmark shell and do not reveal eventual completion time.
 

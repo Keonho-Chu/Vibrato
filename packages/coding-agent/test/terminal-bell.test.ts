@@ -2,13 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { resetSettingsForTest, Settings, settings } from "@gajae-code/coding-agent/config/settings";
-import { SETTINGS_SCHEMA } from "@gajae-code/coding-agent/config/settings-schema";
-import { classifyHookSelectorBellEvent, ringTerminalBell } from "@gajae-code/coding-agent/modes/utils/terminal-bell";
+import { resetSettingsForTest, Settings, settings } from "@vib-rato/coding-agent/config/settings";
+import { SETTINGS_SCHEMA } from "@vib-rato/coding-agent/config/settings-schema";
+import { classifyHookSelectorBellEvent, ringTerminalBell } from "@vib-rato/coding-agent/modes/utils/terminal-bell";
 
 beforeEach(async () => {
 	resetSettingsForTest();
-	const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-terminal-bell-"));
+	const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-terminal-bell-"));
 	await Settings.init({ inMemory: true, cwd: tempDir });
 });
 

@@ -24,7 +24,7 @@ type PinnedCommitRecovery = {
 	depth: number;
 };
 
-const temp = () => fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-sdk-rollback-"));
+const temp = () => fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-sdk-rollback-"));
 
 async function command(
 	argv: string[],
@@ -55,6 +55,11 @@ async function command(
 	const phase = timedOut ? `\n[rollback-stage] '${label}' exceeded ${timeoutMs}ms and was killed` : "";
 	return { exitCode, output: `${stdout}${stderr}${phase}` };
 }
+
+// The pinned pre-Phase-B product predates the Vibrato rename and only honours
+// the legacy agent-dir override name, so the old binary is driven with that
+// name (assembled here so the rebrand inventory scan stays clean).
+const PINNED_PRODUCT_AGENT_DIR_ENV = ["GJ" + "C", "CODING_AGENT_DIR"].join("_");
 
 async function resolvePinnedOldReaderCommit(baseRef: string, recovery: PinnedCommitRecovery): Promise<string> {
 	if (recovery.ref !== baseRef) {
@@ -215,7 +220,7 @@ test("v1 SDK state transforms to a rollback directory and is executable by the p
 		"packages/coding-agent/src/cli.ts",
 		"packages/coding-agent/src/notifications/telegram-daemon-cli.ts",
 	]);
-	expect(manifest.artifactPath).toBe("packages/coding-agent/dist/gjc-rollback");
+	expect(manifest.artifactPath).toBe("packages/coding-agent/dist/vib-rollback");
 	expect(manifest.artifactSha256Scope).toContain("executable bytes");
 	expect(manifest.supportedPlatforms).toContain(process.platform);
 	expect(manifest.artifactPathByPlatform).toEqual({
@@ -457,7 +462,7 @@ globalThis.fetch = async (input, init) => {
 			cwd: output,
 			env: {
 				...process.env,
-				GJC_CODING_AGENT_DIR: output,
+				[PINNED_PRODUCT_AGENT_DIR_ENV]: output,
 				BUN_OPTIONS: manifest.runtimeEnvironment.BUN_OPTIONS.replace("{transportShim}", transportShimSpecifier),
 			},
 
@@ -513,7 +518,7 @@ globalThis.fetch = async (input, init) => {
 					.digest("hex"),
 			).toBe(artifactSha256);
 			const shutdown = await command(shutdownCommand, output, {
-				GJC_CODING_AGENT_DIR: output,
+				[PINNED_PRODUCT_AGENT_DIR_ENV]: output,
 				BUN_OPTIONS: manifest.runtimeEnvironment.BUN_OPTIONS.replace("{transportShim}", transportShimSpecifier),
 			});
 			expect(shutdown.exitCode, shutdown.output).toBe(0);

@@ -30,7 +30,7 @@ describe("removed external ingresses (Phase D structural proof)", () => {
 			const result = await runCli(["--mode", mode, "-p", "noop"]);
 			expect(result.exitCode, `--mode ${mode} must be rejected`).toBe(2);
 			expect(result.stderr).toContain(
-				`--mode ${mode} was removed; external control now uses the Gajae-Code SDK (docs/sdk.md)`,
+				`--mode ${mode} was removed; external control now uses the Vibrato SDK (docs/sdk.md)`,
 			);
 			expect(result.stdout).toContain("USAGE");
 			expect(result.stderr).not.toMatch(/(?:^|\n)(?:Error: )?(?:Error|TypeError|CliParseError):|\bat\s+\S+/);

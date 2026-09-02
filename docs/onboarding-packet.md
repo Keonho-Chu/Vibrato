@@ -1,10 +1,10 @@
-# Gajae-Code Onboarding Packet
+# Vibrato Onboarding Packet
 
-This packet is a docs-only, public-safe context seed for the `gajae-code` repository as inspected on 2026-06-01. It is intentionally a no-new-skill artifact: not a new workflow skill, command, agent, configuration surface, issue template, or runtime behavior.
+This packet is a docs-only, public-safe context seed for the `vib-rato` repository as inspected on 2026-06-01. It is intentionally a no-new-skill artifact: not a new workflow skill, command, agent, configuration surface, issue template, or runtime behavior.
 
 ## Purpose in one paragraph
 
-Gajae-Code is the `gjc` coding-agent CLI and supporting monorepo. The product centers on a small public workflow loop: clarify with `deep-interview`, plan with `ralplan`, execute and verify through `ultragoal`, and run goal-directed research missions with `autoresearch`. The main product package is `packages/coding-agent/`; supporting packages provide LLM/provider access, agent runtime, TUI rendering, native helpers, stats, utilities, benchmarks, and SDK machine interfaces.
+Vibrato is the `vib` coding-agent CLI and supporting monorepo. The product centers on a small public workflow loop: clarify with `deep-interview`, plan with `ralplan`, execute and verify through `ultragoal`, and run goal-directed research missions with `autoresearch`. The main product package is `packages/coding-agent/`; supporting packages provide LLM/provider access, agent runtime, TUI rendering, native helpers, stats, utilities, benchmarks, and SDK machine interfaces.
 
 ## Fixed public surface
 
@@ -12,9 +12,9 @@ Keep this invariant front-and-center when onboarding to the repo:
 
 - Default workflow skills: `autoresearch`, `deep-interview`, `ralplan`, `ultragoal`.
 - Public role agents: `executor`, `architect`, `planner`, `critic`.
-- Bundled default workflow skill sources live under `packages/coding-agent/src/defaults/gjc/skills/`.
+- Bundled default workflow skill sources live under `packages/coding-agent/src/defaults/vib/skills/`.
 - Bundled role-agent prompt sources live under `packages/coding-agent/src/prompts/agents/`.
-- Runtime state, specs, plans, goals, research missions, and local overrides belong under `.gjc/` for the product and `.omx/` only for this agent-run orchestration.
+- Runtime state, specs, plans, goals, research missions, and local overrides belong under `.vib/` for the product and `.omx/` only for this agent-run orchestration.
 
 Do not add a fifth default skill, fifth public role agent, new command, new config surface, or feature-intake behavior unless that product decision has already been made and the default-surface gates are updated.
 
@@ -26,14 +26,14 @@ Do not add a fifth default skill, fifth public role agent, new command, new conf
 | Session launch   | `packages/coding-agent/src/main.ts`                  | Converts CLI/runtime settings into agent-session creation and mode dispatch.                      |
 | Agent assembly   | `packages/coding-agent/src/sdk/session.ts`           | Loads settings, default skills, rules, tools, auth/model state, system prompt, and agent runtime. |
 | Built-in tools   | `packages/coding-agent/src/tools/index.ts`           | Registers file, shell, edit, search, browser, task/subagent, and related public coding-harness tools. Memory backends are private integrations, not public tools. |
-| Default skills   | `packages/coding-agent/src/defaults/gjc-defaults.ts` | Embeds and installs the four default workflow skills plus deep-interview fragments.               |
+| Default skills   | `packages/coding-agent/src/defaults/vib-defaults.ts` | Embeds and installs the four default workflow skills plus deep-interview fragments.               |
 | Role agents      | `packages/coding-agent/src/task/agents.ts`           | Embeds bundled task-agent prompts; tests enforce public role-agent expectations.                  |
 | Product overview | `README.md`                                          | Explains installation, product story, fixed workflow surface, and development entry commands.     |
 | Architecture map | `docs/codebase-overview.md`                          | Public package map and runtime-flow reference.                                                    |
 
 ## Package map
 
-- `packages/coding-agent/` — main `gjc` CLI, workflows, session runtime, tool registry, discovery, settings, prompts, and tests.
+- `packages/coding-agent/` — main `vib` CLI, workflows, session runtime, tool registry, discovery, settings, prompts, and tests.
 - `packages/ai/` — provider/model boundary, streaming, auth, model registry, retries, and provider integrations.
 - `packages/agent/` — stateful agent loop and append-only context runtime.
 - `packages/tui/` — terminal UI framework and rendering primitives.
@@ -41,7 +41,7 @@ Do not add a fifth default skill, fifth public role agent, new command, new conf
 - `packages/utils/` — shared TypeScript utilities, logging, formatting, process helpers, JSON/frontmatter, and sanitization.
 - `packages/stats/` — local observability dashboard and session/model usage aggregation.
 - `packages/typescript-edit-benchmark/` — TypeScript edit benchmark tooling.
-- External machine clients use the broker-bound SDK session CLI, Coordinator MCP, or managed adapters documented in `docs/sdk.md`; `--mode rpc`, `--mode rpc-ui`, `--mode bridge`, and `gjc sdk serve` were removed.
+- External machine clients use the broker-bound SDK session CLI, Coordinator MCP, or managed adapters documented in `docs/sdk.md`; `--mode rpc`, `--mode rpc-ui`, `--mode bridge`, and `vib sdk serve` were removed.
 
 ## Build, test, and validation commands
 
@@ -58,13 +58,13 @@ Prefer targeted checks first, then broader checks when code changes justify them
 | `bun scripts/check-visible-definitions.ts`                            | Default surface gate                | Required after workflow-definition changes.                                 |
 | `bun scripts/verify-g002-gates.ts`                                    | Rebrand/default-surface gate        | Required after workflow-definition or public-surface changes.               |
 | `bun scripts/rebrand-inventory.ts --strict`                           | Rebrand inventory gate              | Required after workflow-definition or public-surface changes.               |
-| `bun test packages/coding-agent/test/default-gjc-definitions.test.ts` | Four-skills/four-agents contract    | Required after default workflow/agent surface changes.                      |
+| `bun test packages/coding-agent/test/default-vib-definitions.test.ts` | Four-skills/four-agents contract    | Required after default workflow/agent surface changes.                      |
 
 Repository rule: do not run `tsc` or `npx tsc`; use the Bun scripts above.
 
 ## Danger zones
 
-- **Default surface expansion:** `packages/coding-agent/src/defaults/gjc/skills/`, `packages/coding-agent/src/defaults/gjc-defaults.ts`, `packages/coding-agent/src/prompts/agents/`, and model-assignment tests are contract-heavy. Changes here can accidentally alter the fixed four-skills/four-agents shape.
+- **Default surface expansion:** `packages/coding-agent/src/defaults/vib/skills/`, `packages/coding-agent/src/defaults/vib-defaults.ts`, `packages/coding-agent/src/prompts/agents/`, and model-assignment tests are contract-heavy. Changes here can accidentally alter the fixed four-skills/four-agents shape.
 - **CLI commands:** `packages/coding-agent/src/cli.ts` and `packages/coding-agent/src/commands/` define visible behavior. Adding commands or aliases is a product-surface change.
 - **Runtime/session assembly:** `packages/coding-agent/src/main.ts`, `packages/coding-agent/src/sdk/session.ts`, discovery, settings, tools, and system-prompt paths can affect every session.
 - **TUI/logging:** Avoid `console.log`, `console.warn`, or `console.error` inside `packages/coding-agent/`; use the centralized logger to avoid corrupting TUI rendering.
@@ -74,8 +74,8 @@ Repository rule: do not run `tsc` or `npx tsc`; use the Bun scripts above.
 
 ## Unknowns worth preserving
 
-- Which onboarding packet shape will be most useful for future `gjc` context ingestion is still an experiment, not a product contract.
-- Public issue #158 / `gajae-deep-onboarding` context is summarized only from the user-provided prompt in this run; this packet does not add issue intake or feature workflow behavior.
+- Which onboarding packet shape will be most useful for future `vib` context ingestion is still an experiment, not a product contract.
+- Public issue #158 / `vibrato-deep-onboarding` context is summarized only from the user-provided prompt in this run; this packet does not add issue intake or feature workflow behavior.
 - Full CI may depend on runner/system dependencies and native artifacts; docs-only changes usually do not need the full matrix locally.
 - Some packages contain internal or hidden utility prompts/agents beyond the four public role agents. Public-facing docs should keep the four-role contract clear.
 
@@ -86,7 +86,7 @@ Repository rule: do not run `tsc` or `npx tsc`; use the Bun scripts above.
 3. For docs-only edits, run formatting/check commands that do not mutate runtime behavior.
 4. For default-surface edits, run the four required gates listed in the command table before claiming completion.
 5. For package code edits, start with the nearest package test, then escalate to `bun run check:ts` or `bun run test` as risk increases.
-6. Before changing `packages/coding-agent/src/defaults/gjc/skills/`, `packages/coding-agent/src/prompts/agents/`, `packages/coding-agent/src/commands/`, or config/settings paths, write down whether the change alters public surface area.
+6. Before changing `packages/coding-agent/src/defaults/vib/skills/`, `packages/coding-agent/src/prompts/agents/`, `packages/coding-agent/src/commands/`, or config/settings paths, write down whether the change alters public surface area.
 
 ## Context seed checklist
 

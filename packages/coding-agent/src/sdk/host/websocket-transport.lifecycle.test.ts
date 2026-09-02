@@ -7,7 +7,7 @@ import { SessionSdkSessionRuntime, type SessionSdkTransport } from "./session-ru
 import { createSdkWebSocketTransport, type SdkWebSocketTransportDependencies } from "./websocket-transport";
 
 async function tempStateRoot(): Promise<string> {
-	return await fs.mkdtemp(path.join(os.tmpdir(), "gjc-sdk-transport-"));
+	return await fs.mkdtemp(path.join(os.tmpdir(), "vib-sdk-transport-"));
 }
 
 async function probeWebSocketEndpoint(url: string, token: string): Promise<void> {

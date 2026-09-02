@@ -72,11 +72,11 @@ Committed on `feat/abort-sdk-terminal` (lore `c04-terminal-*`), base `e92a04e3`:
 - `c04-acp-owned-cancel`: the ACP surface issues the C04 terminal abort on `session/cancel`.
   `AcpSdkAdapter.cancel(scope)` sends `turn.abort` `{mode:"terminal", scope}` with a fresh
   bounded idempotency key per call; `AcpAgent.cancel` resolves the scope from
-  `_meta.gjc.abortScope` on the cancel notification (authoritative) then
-  `GJC_ACP_ABORT_SCOPE` (process fallback), **defaulting to `"turn"`** (amended: the initial
+  `_meta.vib.abortScope` on the cancel notification (authoritative) then
+  `VIB_ACP_ABORT_SCOPE` (process fallback), **defaulting to `"turn"`** (amended: the initial
   `"owned"` default was reverted so an ACP client cancel stops only the turn, matching the
   SDK `turn.abort` default and other ACP clients' cancel behavior; owned termination is an
-  explicit opt-in via `_meta.gjc.abortScope: "owned"` or `GJC_ACP_ABORT_SCOPE=owned` —
+  explicit opt-in via `_meta.vib.abortScope: "owned"` or `VIB_ACP_ABORT_SCOPE=owned` —
   Paseo keeps owned cancels through its provider config env without source changes),
   accepts the terminal dispositions (`stopped` / `no_active_turn` /
   `no_effect` / `no_store` / `uncertain`) in addition to the legacy `{aborted:true}`

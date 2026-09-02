@@ -1,8 +1,8 @@
-export { truncate } from "@gajae-code/utils";
+export { truncate } from "@vib-rato/utils";
 
 import * as fs from "node:fs/promises";
 import path from "node:path";
-import { isEnoent } from "@gajae-code/utils";
+import { isEnoent } from "@vib-rato/utils";
 import { type Theme, theme } from "../modes/theme/theme";
 import { formatGroupedFiles } from "../tools/grouped-file-output";
 import { formatPathRelativeToCwd, resolveToCwd } from "../tools/path-utils";

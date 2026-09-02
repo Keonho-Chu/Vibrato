@@ -34,10 +34,10 @@ Do not edit product source, manifests, or dependencies. The harness must use exi
 1. Inspect the target. Read source, identify what to measure, decide on the workload.
 2. Write `autoresearch.sh` only when it is an explicitly approved research artifact; otherwise use an existing benchmark command.
 3. Validate it: invoke `bash autoresearch.sh` through the regular `bash` tool. Confirm it exits 0 and emits at least one `METRIC` line. Iterate on the harness until it does.
-4. Start the mission with `gjc autoresearch` (cold intake: goal, constraints, deliverables, and an explicit mode) or `gjc autoresearch --spec <spec>` (handoff intake). Record the primary metric name and its direction (lower/higher is better) with the mission. The harness baseline is snapshotted at mission start and Phase 2 (the iteration loop) begins.
+4. Start the mission with `vib autoresearch` (cold intake: goal, constraints, deliverables, and an explicit mode) or `vib autoresearch --spec <spec>` (handoff intake). Record the primary metric name and its direction (lower/higher is better) with the mission. The harness baseline is snapshotted at mission start and Phase 2 (the iteration loop) begins.
 
 ### Rules
 
 - Do **not** start the iteration loop yet. The experiment machinery is unavailable until a mission exists.
 - Do **not** treat a compile-only check as a benchmark. The harness must actually execute the workload and emit `METRIC`.
-- Do **not** create `autoresearch.md`, `autoresearch.checks.sh`, `autoresearch.program.md`, `autoresearch.ideas.md`, `autoresearch.jsonl`, `.autoresearch/`, or `autoresearch.config.json`. Mission and run state is tracked for you under `.gjc/_session-{id}/autoresearch/`.
+- Do **not** create `autoresearch.md`, `autoresearch.checks.sh`, `autoresearch.program.md`, `autoresearch.ideas.md`, `autoresearch.jsonl`, `.autoresearch/`, or `autoresearch.config.json`. Mission and run state is tracked for you under `.vib/_session-{id}/autoresearch/`.

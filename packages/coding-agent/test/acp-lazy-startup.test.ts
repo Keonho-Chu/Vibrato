@@ -48,7 +48,7 @@ describe("ACP lazy startup", () => {
 			expect(initializeResponse).toEqual(
 				expect.objectContaining({
 					protocolVersion: 1,
-					agentInfo: expect.objectContaining({ name: "gajae-code" }),
+					agentInfo: expect.objectContaining({ name: "vib-rato" }),
 				}),
 			);
 		} finally {

@@ -14,8 +14,8 @@ import { gunzipSync, gzipSync } from "node:zlib";
 import { $ } from "bun";
 
 export const RELEASE_EVIDENCE_SCHEMA_VERSION = 1;
-export const EXPECTED_EVIDENCE_FILE = "gajae-release-packages-expected-v1.json";
-export const FINAL_EVIDENCE_FILE = "gajae-release-packages-v1.json";
+export const EXPECTED_EVIDENCE_FILE = "vibrato-release-packages-expected-v1.json";
+export const FINAL_EVIDENCE_FILE = "vibrato-release-packages-v1.json";
 
 export interface PublicPackageDefinition {
 	dir: string;
@@ -24,19 +24,19 @@ export interface PublicPackageDefinition {
 
 /** The complete, ordered-by-name public package contract. */
 export const PUBLIC_PACKAGE_DEFINITIONS: readonly PublicPackageDefinition[] = [
-	{ dir: "packages/agent", name: "@gajae-code/agent-core" },
-	{ dir: "packages/ai", name: "@gajae-code/ai" },
-	{ dir: "packages/coding-agent", name: "@gajae-code/coding-agent" },
-	{ dir: "packages/natives", name: "@gajae-code/natives" },
-	{ dir: "packages/natives-darwin-arm64", name: "@gajae-code/natives-darwin-arm64" },
-	{ dir: "packages/natives-darwin-x64", name: "@gajae-code/natives-darwin-x64" },
-	{ dir: "packages/natives-linux-arm64", name: "@gajae-code/natives-linux-arm64" },
-	{ dir: "packages/natives-linux-x64", name: "@gajae-code/natives-linux-x64" },
-	{ dir: "packages/natives-win32-x64", name: "@gajae-code/natives-win32-x64" },
-	{ dir: "packages/stats", name: "@gajae-code/stats" },
-	{ dir: "packages/tui", name: "@gajae-code/tui" },
-	{ dir: "packages/utils", name: "@gajae-code/utils" },
-	{ dir: "packages/gajae-code", name: "gajae-code" },
+	{ dir: "packages/agent", name: "@vib-rato/agent-core" },
+	{ dir: "packages/ai", name: "@vib-rato/ai" },
+	{ dir: "packages/coding-agent", name: "@vib-rato/coding-agent" },
+	{ dir: "packages/natives", name: "@vib-rato/natives" },
+	{ dir: "packages/natives-darwin-arm64", name: "@vib-rato/natives-darwin-arm64" },
+	{ dir: "packages/natives-darwin-x64", name: "@vib-rato/natives-darwin-x64" },
+	{ dir: "packages/natives-linux-arm64", name: "@vib-rato/natives-linux-arm64" },
+	{ dir: "packages/natives-linux-x64", name: "@vib-rato/natives-linux-x64" },
+	{ dir: "packages/natives-win32-x64", name: "@vib-rato/natives-win32-x64" },
+	{ dir: "packages/stats", name: "@vib-rato/stats" },
+	{ dir: "packages/tui", name: "@vib-rato/tui" },
+	{ dir: "packages/utils", name: "@vib-rato/utils" },
+	{ dir: "packages/vib-rato", name: "vib-rato" },
 ] as const;
 
 const dependencyFieldNames = ["dependencies", "devDependencies", "peerDependencies", "optionalDependencies"] as const;
@@ -47,7 +47,7 @@ const releaseVersionPattern = new RegExp(`(?:${stableVersionPattern.source})|(?:
 const sha256Pattern = /^[0-9a-f]{64}$/u;
 const sha512Pattern = /^[0-9a-f]{128}$/u;
 const sourceCommitPattern = /^[0-9a-f]{40}$/u;
-const ownedInternalPackagePrefixes = ["@gajae-code/", "@gajae-code-sync-sandbox/"] as const;
+const ownedInternalPackagePrefixes = ["@vib-rato/", "@vib-rato-sync-sandbox/"] as const;
 
 
 interface JsonObject {
@@ -931,7 +931,7 @@ function createSelfTestTarball(manifest: string): Buffer {
 }
 
 export function selfTest(): void {
-	const rawManifest = "{\r\n  \"name\": \"@gajae-code/ai\",\r\n  \"version\": \"1.2.3\"\r\n}\r\n";
+	const rawManifest = "{\r\n  \"name\": \"@vib-rato/ai\",\r\n  \"version\": \"1.2.3\"\r\n}\r\n";
 	const tarball = createSelfTestTarball(rawManifest);
 	const inspection = inspectPackageTarball(tarball);
 	if (!inspection.manifestBytes.equals(Buffer.from(rawManifest))) fail("self-test lost raw manifest bytes");
@@ -968,8 +968,8 @@ export function createGoldenReleaseEvidence(): GoldenReleaseEvidence {
 		const manifest = JSON.stringify({
 			name: definition.name,
 			version: releaseVersion,
-			...(definition.name === "@gajae-code/coding-agent"
-				? { devDependencies: { "@gajae-code/ai": releaseVersion } }
+			...(definition.name === "@vib-rato/coding-agent"
+				? { devDependencies: { "@vib-rato/ai": releaseVersion } }
 				: {}),
 		});
 		return packageEvidenceFromTarball(definition, createSelfTestTarball(manifest));

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { TempDir } from "@gajae-code/utils";
+import { TempDir } from "@vib-rato/utils";
 import { verifyExpectedFiles } from "../src/verify";
 
 async function createTempDirs(): Promise<{
@@ -56,12 +56,12 @@ describe("verifyExpectedFiles", () => {
 		}
 	});
 
-	it("ignores GJC session runtime metadata created inside the benchmark workspace", async () => {
+	it("ignores Vibrato session runtime metadata created inside the benchmark workspace", async () => {
 		const { expectedDir, actualDir, cleanup } = await createTempDirs();
 		try {
 			await Bun.write(path.join(expectedDir, "index.ts"), "export const value = 1;\n");
 			await Bun.write(path.join(actualDir, "index.ts"), "export const value = 1;\n");
-			await Bun.write(path.join(actualDir, ".gjc", "_session-123", "runtime-state.json"), "{}\n");
+			await Bun.write(path.join(actualDir, ".vib", "_session-123", "runtime-state.json"), "{}\n");
 
 			const result = await verifyExpectedFiles(expectedDir, actualDir);
 
@@ -78,12 +78,12 @@ describe("verifyExpectedFiles", () => {
 		try {
 			await Bun.write(path.join(expectedDir, "index.ts"), "export const value = 1;\n");
 			await Bun.write(path.join(actualDir, "index.ts"), "export const value = 1;\n");
-			await Bun.write(path.join(actualDir, ".gjc\\_session-123\\runtime-state.json"), "{}\n");
+			await Bun.write(path.join(actualDir, ".vib\\_session-123\\runtime-state.json"), "{}\n");
 
 			const result = await verifyExpectedFiles(expectedDir, actualDir);
 
 			expect(result.success).toBe(false);
-			expect(result.error).toContain("Unexpected files: .gjc\\_session-123\\runtime-state.json");
+			expect(result.error).toContain("Unexpected files: .vib\\_session-123\\runtime-state.json");
 		} finally {
 			await cleanup();
 		}
@@ -94,30 +94,30 @@ describe("verifyExpectedFiles", () => {
 		try {
 			await Bun.write(path.join(expectedDir, "index.ts"), "export const value = 1;\n");
 			await Bun.write(path.join(actualDir, "index.ts"), "export const value = 1;\n");
-			await Bun.write(path.join(actualDir, ".gjc", "_session-decoy.json"), "{}\n");
+			await Bun.write(path.join(actualDir, ".vib", "_session-decoy.json"), "{}\n");
 
 			const result = await verifyExpectedFiles(expectedDir, actualDir);
 
 			expect(result.success).toBe(false);
-			expect(result.error).toContain(`Unexpected files: ${path.join(".gjc", "_session-decoy.json")}`);
+			expect(result.error).toContain(`Unexpected files: ${path.join(".vib", "_session-decoy.json")}`);
 		} finally {
 			await cleanup();
 		}
 	});
-	it("reports shared GJC files as unexpected alongside session runtime metadata", async () => {
+	it("reports shared Vibrato files as unexpected alongside session runtime metadata", async () => {
 		const { expectedDir, actualDir, cleanup } = await createTempDirs();
 		try {
 			await Bun.write(path.join(expectedDir, "index.ts"), "export const value = 1;\n");
 			await Bun.write(path.join(actualDir, "index.ts"), "export const value = 1;\n");
-			await Bun.write(path.join(actualDir, ".gjc", "_session-123", "runtime-state.json"), "{}\n");
-			await Bun.write(path.join(actualDir, ".gjc", "agents", "foo.md"), "# Agent\n");
-			await Bun.write(path.join(actualDir, ".gjc", "mcp.json"), "{}\n");
+			await Bun.write(path.join(actualDir, ".vib", "_session-123", "runtime-state.json"), "{}\n");
+			await Bun.write(path.join(actualDir, ".vib", "agents", "foo.md"), "# Agent\n");
+			await Bun.write(path.join(actualDir, ".vib", "mcp.json"), "{}\n");
 
 			const result = await verifyExpectedFiles(expectedDir, actualDir);
 
 			expect(result.success).toBe(false);
 			expect(result.error).toContain(
-				`Unexpected files: ${path.join(".gjc", "agents", "foo.md")}, ${path.join(".gjc", "mcp.json")}`,
+				`Unexpected files: ${path.join(".vib", "agents", "foo.md")}, ${path.join(".vib", "mcp.json")}`,
 			);
 		} finally {
 			await cleanup();

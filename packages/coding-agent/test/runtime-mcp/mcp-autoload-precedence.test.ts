@@ -2,7 +2,7 @@
  * Conventional MCP autoload precedence, filtering, and Claude/Codex
  * normalization (issue #4284).
  *
- * Runtime authority is GJC's native `.gjc` config in both scopes (project +
+ * Runtime authority is Vibrato's native `.vib` config in both scopes (project +
  * user). Claude Code/Codex MCP files are explicit import sources, normalized
  * through the bounded mcp-compat layer; they are never implicit competing
  * runtime authorities, and foreign user-home configuration is never read.
@@ -12,7 +12,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { getMCPConfigPath, setAgentDir } from "@gajae-code/utils";
+import { getMCPConfigPath, setAgentDir } from "@vib-rato/utils";
 import { safeRm } from "../../../../scripts/safe-cleanup";
 import type { MCPServer } from "../../src/capability/mcp";
 import { normalizeClaudeMcpJson, normalizeCodexMcpToml, validateMCPCompatServer } from "../../src/discovery/mcp-compat";
@@ -20,7 +20,7 @@ import { loadAllMCPConfigs } from "../../src/runtime-mcp/config";
 
 let projectDir = "";
 let tempHome = "";
-const originalAgentDir = process.env.GJC_CODING_AGENT_DIR;
+const originalAgentDir = process.env.VIB_CODING_AGENT_DIR;
 
 async function writeProjectConfig(relPath: string, content: unknown): Promise<void> {
 	const filePath = path.join(projectDir, relPath);
@@ -30,30 +30,30 @@ async function writeProjectConfig(relPath: string, content: unknown): Promise<vo
 }
 
 async function writeUserNativeConfig(content: unknown): Promise<string> {
-	const filePath = path.join(tempHome, ".gjc", "agent", "mcp.json");
+	const filePath = path.join(tempHome, ".vib", "agent", "mcp.json");
 	await fs.mkdir(path.dirname(filePath), { recursive: true });
 	await fs.writeFile(filePath, JSON.stringify(content));
 	return filePath;
 }
 
 beforeEach(async () => {
-	projectDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-mcp-precedence-"));
-	tempHome = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-mcp-precedence-home-"));
-	setAgentDir(path.join(tempHome, ".gjc", "agent"));
+	projectDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-mcp-precedence-"));
+	tempHome = await fs.mkdtemp(path.join(os.tmpdir(), "vib-mcp-precedence-home-"));
+	setAgentDir(path.join(tempHome, ".vib", "agent"));
 	vi.spyOn(os, "homedir").mockReturnValue(tempHome);
 });
 
 afterEach(async () => {
 	vi.restoreAllMocks();
 	if (originalAgentDir) setAgentDir(originalAgentDir);
-	else delete process.env.GJC_CODING_AGENT_DIR;
+	else delete process.env.VIB_CODING_AGENT_DIR;
 	await safeRm(projectDir, { recursive: true, force: true });
 	await safeRm(tempHome, { recursive: true, force: true });
 });
 
 describe("conventional MCP precedence", () => {
 	it("native project config wins over native user config for the same server name", async () => {
-		await writeProjectConfig(".gjc/mcp.json", {
+		await writeProjectConfig(".vib/mcp.json", {
 			mcpServers: { shared: { type: "stdio", command: "native-project-bin" } },
 		});
 		await writeUserNativeConfig({
@@ -67,7 +67,7 @@ describe("conventional MCP precedence", () => {
 	});
 
 	it("colliding names across native scopes are deduplicated to a single server", async () => {
-		await writeProjectConfig(".gjc/mcp.json", {
+		await writeProjectConfig(".vib/mcp.json", {
 			mcpServers: { s: { type: "stdio", command: "native-project-bin" } },
 		});
 		await writeUserNativeConfig({
@@ -80,7 +80,7 @@ describe("conventional MCP precedence", () => {
 	});
 
 	it("runtime authority is native-only: foreign and root configs are not runtime sources", async () => {
-		await writeProjectConfig(".gjc/mcp.json", {
+		await writeProjectConfig(".vib/mcp.json", {
 			mcpServers: { native: { type: "stdio", command: "native-bin" } },
 		});
 		await writeProjectConfig(".claude/.mcp.json", {
@@ -91,8 +91,8 @@ describe("conventional MCP precedence", () => {
 			mcpServers: { rootSrv: { type: "stdio", command: "root-bin" } },
 		});
 
-		// Conventional standalone sessions load with nativeOnly: only GJC's own
-		// `.gjc` scopes participate; Claude/Codex/root files stay import sources.
+		// Conventional standalone sessions load with nativeOnly: only Vibrato's own
+		// `.vib` scopes participate; Claude/Codex/root files stay import sources.
 		const loaded = await loadAllMCPConfigs(projectDir, { filterExa: false, nativeOnly: true });
 		expect(Object.keys(loaded.configs)).toEqual(["native"]);
 		expect(loaded.sources.native.provider).toBe("native");
@@ -117,13 +117,13 @@ describe("conventional MCP precedence", () => {
 });
 
 describe("native user scope resolution", () => {
-	// Regression: discovery used to derive the user scope from `<home>/.gjc/agent`
-	// while every writer (`gjc mcp add` user scope, the `/mcp` wizard, the
+	// Regression: discovery used to derive the user scope from `<home>/.vib/agent`
+	// while every writer (`vib mcp add` user scope, the `/mcp` wizard, the
 	// disabledServers denylist) writes `getMCPConfigPath("user")` under the agent
 	// directory. Under an agent-directory profile the two disagreed: the profile's
 	// own registrations never loaded and the default profile's servers loaded in
 	// their place (#4767).
-	it("reads the same user file `gjc mcp add --scope user` writes when the agent directory is a profile", async () => {
+	it("reads the same user file `vib mcp add --scope user` writes when the agent directory is a profile", async () => {
 		const profileAgentDir = path.join(tempHome, "profile-a");
 		await fs.mkdir(profileAgentDir, { recursive: true });
 		setAgentDir(profileAgentDir);
@@ -153,7 +153,7 @@ describe("native user scope resolution", () => {
 		);
 		// The process-wide scope holds a different server that must not leak in.
 		await writeUserNativeConfig({ mcpServers: { globalSrv: { type: "stdio", command: "global-bin" } } });
-		await writeProjectConfig(".gjc/mcp.json", {
+		await writeProjectConfig(".vib/mcp.json", {
 			mcpServers: { deniedProject: { type: "stdio", command: "denied-bin" } },
 		});
 
@@ -172,7 +172,7 @@ describe("native user scope resolution", () => {
 
 describe("conventional MCP filtering", () => {
 	it("honors enabled:false and merged user+project disabledServers lists", async () => {
-		await writeProjectConfig(".gjc/mcp.json", {
+		await writeProjectConfig(".vib/mcp.json", {
 			mcpServers: {
 				kept: { type: "stdio", command: "kept-bin" },
 				disabledFlag: { type: "stdio", command: "disabled-flag-bin", enabled: false },
@@ -190,7 +190,7 @@ describe("conventional MCP filtering", () => {
 	});
 
 	it("autoloadOnly excludes autoload:false servers and keeps unset ones", async () => {
-		await writeProjectConfig(".gjc/mcp.json", {
+		await writeProjectConfig(".vib/mcp.json", {
 			mcpServers: {
 				lazy: { type: "stdio", command: "lazy-bin", autoload: false },
 				eager: { type: "stdio", command: "eager-bin" },
@@ -205,7 +205,7 @@ describe("conventional MCP filtering", () => {
 	});
 
 	it("enableProjectConfig:false drops project-level servers but keeps user ones", async () => {
-		await writeProjectConfig(".gjc/mcp.json", {
+		await writeProjectConfig(".vib/mcp.json", {
 			mcpServers: { projectServer: { type: "stdio", command: "project-bin" } },
 		});
 		await writeUserNativeConfig({
@@ -327,7 +327,7 @@ describe("Claude Code/Codex import-source normalization", () => {
 
 describe("exact-file --mcp-config isolation", () => {
 	it("replaces conventional autoload instead of overlaying it", async () => {
-		await writeProjectConfig(".gjc/mcp.json", {
+		await writeProjectConfig(".vib/mcp.json", {
 			mcpServers: { conventional: { type: "stdio", command: "conventional-bin" } },
 		});
 		const exactPath = path.join(projectDir, "exact.json");

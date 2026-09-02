@@ -2,8 +2,8 @@ import { afterEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { NativeOwnerOnlySecurityResult } from "@gajae-code/natives";
-import * as native from "@gajae-code/natives";
+import type { NativeOwnerOnlySecurityResult } from "@vib-rato/natives";
+import * as native from "@vib-rato/natives";
 import {
 	prepareManagedSessionScopeForWriteSync,
 	resolveManagedScope,
@@ -39,9 +39,9 @@ function mockScopeVerifier(result: NativeOwnerOnlySecurityResult) {
 // Preparing the scope must re-secure the drifted tree in place and recover.
 describe.skipIf(process.platform !== "linux")("managed scope owner-only self-heal", () => {
 	it("re-secures a drifted (group/other-readable) descendant instead of failing closed", () => {
-		const home = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-scope-heal-home-"));
+		const home = fs.mkdtempSync(path.join(os.tmpdir(), "vib-scope-heal-home-"));
 		temporaryDirectories.push(home);
-		const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-scope-heal-cwd-"));
+		const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-scope-heal-cwd-"));
 		temporaryDirectories.push(cwd);
 
 		const agentDir = path.join(home, "agent");
@@ -78,9 +78,9 @@ describe.skipIf(process.platform !== "linux")("managed scope owner-only self-hea
 
 describe("managed scope write resolver", () => {
 	function fixture(): { cwd: string; agentDir: string; sessionsRoot: string } {
-		const home = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-scope-resolver-home-"));
+		const home = fs.mkdtempSync(path.join(os.tmpdir(), "vib-scope-resolver-home-"));
 		temporaryDirectories.push(home);
-		const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-scope-resolver-cwd-"));
+		const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-scope-resolver-cwd-"));
 		temporaryDirectories.push(cwd);
 		const agentDir = path.join(home, "agent");
 		const sessionsRoot = path.join(agentDir, "sessions");

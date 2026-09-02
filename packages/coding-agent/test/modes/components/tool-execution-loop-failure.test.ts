@@ -1,8 +1,8 @@
 import { beforeAll, describe, expect, it } from "bun:test";
-import { resetSettingsForTest, Settings } from "@gajae-code/coding-agent/config/settings";
-import { ToolExecutionComponent } from "@gajae-code/coding-agent/modes/components/tool-execution";
-import * as themeModule from "@gajae-code/coding-agent/modes/theme/theme";
-import type { TUI } from "@gajae-code/tui";
+import { resetSettingsForTest, Settings } from "@vib-rato/coding-agent/config/settings";
+import { ToolExecutionComponent } from "@vib-rato/coding-agent/modes/components/tool-execution";
+import * as themeModule from "@vib-rato/coding-agent/modes/theme/theme";
+import type { TUI } from "@vib-rato/tui";
 
 beforeAll(async () => {
 	resetSettingsForTest();

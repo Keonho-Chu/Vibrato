@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import type { Model } from "@gajae-code/ai";
+import type { Model } from "@vib-rato/ai";
 import { normalizeTierSelector, resolveTaskRouting } from "../src/config/autorouting";
 import {
 	AUTOROUTING_SELECTOR_DESCRIPTION,

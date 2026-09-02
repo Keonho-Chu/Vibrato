@@ -12,7 +12,7 @@ import {
 	unicodeEscapePathTag,
 	unicodeEscapeScalarTag,
 	verifyUnicodeEscapeEvidence,
-} from "@gajae-code/ai/utils/json-parse";
+} from "@vib-rato/ai/utils/json-parse";
 
 describe("JSON repair", () => {
 	it("leaves valid string escapes unchanged", () => {

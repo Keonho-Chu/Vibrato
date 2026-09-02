@@ -1,26 +1,26 @@
 import { afterEach, beforeEach, describe, expect, it, spyOn } from "bun:test";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { Agent, type AgentMessage, type AgentTool } from "@gajae-code/agent-core";
-import { type AssistantMessage, getBundledModel, type TextContent, type ToolCall } from "@gajae-code/ai";
-import { AssistantMessageEventStream } from "@gajae-code/ai/utils/event-stream";
+import { Agent, type AgentMessage, type AgentTool } from "@vib-rato/agent-core";
+import { type AssistantMessage, getBundledModel, type TextContent, type ToolCall } from "@vib-rato/ai";
+import { AssistantMessageEventStream } from "@vib-rato/ai/utils/event-stream";
 import {
 	clearToolChoiceIncapabilityRegistryForTests,
 	configureToolChoiceCapabilityCacheForTests,
 	markToolChoiceIncapability,
-} from "@gajae-code/ai/utils/tool-choice-capability";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { initializeLocalRoot } from "@gajae-code/coding-agent/internal-urls";
-import { AgentSession } from "@gajae-code/coding-agent/session/agent-session";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { convertToLlm } from "@gajae-code/coding-agent/session/messages";
-import { SessionAppendPersistenceError, SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { FileSessionStorage, type SessionStorageWriter } from "@gajae-code/coding-agent/session/session-storage";
-import { buildVolatileProjectContext } from "@gajae-code/coding-agent/system-prompt";
-import type { ToolSession } from "@gajae-code/coding-agent/tools";
-import { TodoWriteTool } from "@gajae-code/coding-agent/tools/implementations";
-import { TempDir } from "@gajae-code/utils";
+} from "@vib-rato/ai/utils/tool-choice-capability";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { initializeLocalRoot } from "@vib-rato/coding-agent/internal-urls";
+import { AgentSession } from "@vib-rato/coding-agent/session/agent-session";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { convertToLlm } from "@vib-rato/coding-agent/session/messages";
+import { SessionAppendPersistenceError, SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { FileSessionStorage, type SessionStorageWriter } from "@vib-rato/coding-agent/session/session-storage";
+import { buildVolatileProjectContext } from "@vib-rato/coding-agent/system-prompt";
+import type { ToolSession } from "@vib-rato/coding-agent/tools";
+import { TodoWriteTool } from "@vib-rato/coding-agent/tools/implementations";
+import { TempDir } from "@vib-rato/utils";
 import * as z from "zod/v4";
 import { ManagedSessionDescendantStore } from "../src/session/internal/managed-session-storage";
 import { createAssistantMessage } from "./helpers/agent-session-setup";

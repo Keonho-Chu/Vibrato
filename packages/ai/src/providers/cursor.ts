@@ -3,7 +3,7 @@ import * as fs from "node:fs/promises";
 import http2 from "node:http2";
 import { create, fromBinary, fromJson, type JsonValue, toBinary, toJson } from "@bufbuild/protobuf";
 import { ValueSchema } from "@bufbuild/protobuf/wkt";
-import { $env, extractHttpStatusFromError, sanitizeText } from "@gajae-code/utils";
+import { $env, extractHttpStatusFromError, sanitizeText } from "@vib-rato/utils";
 import { calculateCost } from "../models";
 import type {
 	Api,
@@ -556,7 +556,7 @@ const CURSOR_INTRINSIC_CODEX_MAX_RE = /^gpt-\d+(?:\.\d+){0,2}-codex-max(?:-fast)
 export function buildCursorRequestContextRules(systemPrompt: readonly string[] | undefined): CursorRule[] {
 	return normalizeSystemPrompts(systemPrompt).map((content, index) =>
 		create(CursorRuleSchema, {
-			fullPath: `/gjc/system-prompt/${index}.mdc`,
+			fullPath: `/vib/system-prompt/${index}.mdc`,
 			content,
 			type: create(CursorRuleTypeSchema, {
 				type: {

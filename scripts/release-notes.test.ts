@@ -16,7 +16,7 @@ import {
 	shippedCoverage,
 } from "./release-notes";
 
-const repo = "Yeachan-Heo/gajae-code";
+const repo = "Keonho-Chu/Vibrato";
 
 function commit(sha: string, subject: string, author = "Yeachan-Heo"): ReleaseCommit {
 	return { sha, subject, author };

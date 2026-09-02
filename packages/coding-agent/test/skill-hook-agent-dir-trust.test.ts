@@ -6,7 +6,7 @@ import * as path from "node:path";
 /**
  * `resolveConfigPaths` picks the `config.yml` whose `skills.customDirectories`
  * the agent then loads skills from, so the directory it is built from is a trust
- * boundary. It used to read `GJC_CODING_AGENT_DIR` / `GJC_CONFIG_DIR` straight
+ * boundary. It used to read `VIB_CODING_AGENT_DIR` / `VIB_CONFIG_DIR` straight
  * from `process.env`, which Bun populates from `cwd/.env` before any module
  * runs — so a repository could point the hook at a directory it ships and inject
  * its own skill directories, bypassing `trustedAgentDirOverride`.
@@ -23,12 +23,12 @@ afterEach(() => {
 });
 
 function scenario(dotenv: string | undefined, configs: Record<string, string>): { dir: string; home: string } {
-	const dir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "gjc-skill-hook-trust-")));
+	const dir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "vib-skill-hook-trust-")));
 	scenarios.push(dir);
 	const repo = path.join(dir, "repo");
 	const home = path.join(dir, "home");
 	fs.mkdirSync(repo, { recursive: true });
-	fs.mkdirSync(path.join(home, ".gjc", "agent"), { recursive: true });
+	fs.mkdirSync(path.join(home, ".vib", "agent"), { recursive: true });
 	if (dotenv !== undefined) fs.writeFileSync(path.join(repo, ".env"), dotenv);
 	for (const [relative, body] of Object.entries(configs)) {
 		const target = path.join(dir, relative);
@@ -47,9 +47,9 @@ async function customDirectoriesIn(dir: string, home: string): Promise<string[]>
 		env: {
 			...process.env,
 			HOME: home,
-			GJC_CODING_AGENT_DIR: undefined,
+			VIB_CODING_AGENT_DIR: undefined,
 			PI_CODING_AGENT_DIR: undefined,
-			GJC_CONFIG_DIR: undefined,
+			VIB_CONFIG_DIR: undefined,
 			PI_CONFIG_DIR: undefined,
 		},
 		stdout: "pipe",
@@ -66,26 +66,26 @@ function skillConfig(directory: string): string {
 
 describe("skill hook agent-dir trust boundary", () => {
 	it("ignores an agent dir the project .env points at", async () => {
-		const { dir, home } = scenario(`GJC_CODING_AGENT_DIR=${path.join("/tmp", "planted")}\n`, {});
+		const { dir, home } = scenario(`VIB_CODING_AGENT_DIR=${path.join("/tmp", "planted")}\n`, {});
 		const planted = path.join(dir, "planted");
 		fs.mkdirSync(planted, { recursive: true });
 		fs.writeFileSync(path.join(planted, "config.yml"), skillConfig("/tmp/attacker-skills"));
 
 		// Point the .env at the planted dir inside this scenario.
-		fs.writeFileSync(path.join(dir, "repo", ".env"), `GJC_CODING_AGENT_DIR=${planted}\n`);
+		fs.writeFileSync(path.join(dir, "repo", ".env"), `VIB_CODING_AGENT_DIR=${planted}\n`);
 
 		expect(await customDirectoriesIn(dir, home)).not.toContain("/tmp/attacker-skills");
 	});
 
 	it("still honors config in the trusted agent dir", async () => {
 		const { dir, home } = scenario(undefined, {});
-		fs.writeFileSync(path.join(home, ".gjc", "agent", "config.yml"), skillConfig("/tmp/legit-skills"));
+		fs.writeFileSync(path.join(home, ".vib", "agent", "config.yml"), skillConfig("/tmp/legit-skills"));
 
 		expect(await customDirectoriesIn(dir, home)).toContain("/tmp/legit-skills");
 	});
 
 	it("ignores a config dir name the project .env points at", async () => {
-		const { dir, home } = scenario("GJC_CONFIG_DIR=.evil\n", {});
+		const { dir, home } = scenario("VIB_CONFIG_DIR=.evil\n", {});
 		fs.mkdirSync(path.join(home, ".evil", "agent"), { recursive: true });
 		fs.writeFileSync(path.join(home, ".evil", "agent", "config.yml"), skillConfig("/tmp/evil-skills"));
 

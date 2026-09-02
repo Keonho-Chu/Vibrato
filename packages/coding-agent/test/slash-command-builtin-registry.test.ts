@@ -1,20 +1,20 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from "bun:test";
-import type { Model } from "@gajae-code/ai";
-import { generateTierChains } from "@gajae-code/coding-agent/config/autorouting-generator";
-import { CURATED_TIER_MAP } from "@gajae-code/coding-agent/config/autorouting-tier-map";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { BUILTIN_SLASH_COMMANDS } from "@gajae-code/coding-agent/extensibility/slash-commands";
-import { getCurrentThemeName, initTheme } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { InteractiveModeContext } from "@gajae-code/coding-agent/modes/types";
-import { ACP_BUILTIN_SLASH_COMMANDS } from "@gajae-code/coding-agent/slash-commands/acp-builtins";
+import type { Model } from "@vib-rato/ai";
+import { generateTierChains } from "@vib-rato/coding-agent/config/autorouting-generator";
+import { CURATED_TIER_MAP } from "@vib-rato/coding-agent/config/autorouting-tier-map";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { BUILTIN_SLASH_COMMANDS } from "@vib-rato/coding-agent/extensibility/slash-commands";
+import { getCurrentThemeName, initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { InteractiveModeContext } from "@vib-rato/coding-agent/modes/types";
+import { ACP_BUILTIN_SLASH_COMMANDS } from "@vib-rato/coding-agent/slash-commands/acp-builtins";
 import {
 	BUILTIN_SLASH_COMMAND_DEFS,
 	BUILTIN_SLASH_COMMANDS_INTERNAL,
 	executeBuiltinSlashCommand,
 	lookupBuiltinSlashCommand,
-} from "@gajae-code/coding-agent/slash-commands/builtin-registry";
-import { buildAutoroutingStatusReport } from "@gajae-code/coding-agent/slash-commands/helpers/autorouting-status";
-import { ImageProtocol, TERMINAL } from "@gajae-code/tui";
+} from "@vib-rato/coding-agent/slash-commands/builtin-registry";
+import { buildAutoroutingStatusReport } from "@vib-rato/coding-agent/slash-commands/helpers/autorouting-status";
+import { ImageProtocol, TERMINAL } from "@vib-rato/tui";
 
 const model = (provider: string, id: string): Model =>
 	({
@@ -76,19 +76,19 @@ function createClearTuiRuntime() {
 }
 
 describe("builtin /pet slash command", () => {
-	it("exposes the named Gajae choices", () => {
+	it("exposes the named Vibrato choices", () => {
 		const petCommand = BUILTIN_SLASH_COMMAND_DEFS.find(command => command.name === "pet");
 
 		expect(petCommand?.subcommands?.map(command => command.name)).toEqual([
 			"off",
-			"RedGajae",
-			"BlueGajae",
+			"RedVibrato",
+			"BlueVibrato",
 			"Ouroboros",
 		]);
-		expect(petCommand?.inlineHint).toBe("[off|RedGajae|BlueGajae|Ouroboros]");
+		expect(petCommand?.inlineHint).toBe("[off|RedVibrato|BlueVibrato|Ouroboros]");
 	});
 
-	it("maps named Gajae commands to their internal modes", async () => {
+	it("maps named Vibrato commands to their internal modes", async () => {
 		mutableTerminal.imageProtocol = ImageProtocol.Kitty;
 		const setPetMode = vi.fn((_mode: string) => true);
 		const setText = vi.fn();
@@ -96,8 +96,8 @@ describe("builtin /pet slash command", () => {
 		const ctx = { setPetMode, showStatus, editor: { setText } } as unknown as InteractiveModeContext;
 		const runtime = { ctx, handleBackgroundCommand: () => undefined };
 
-		expect(await executeBuiltinSlashCommand("/pet redgajae", runtime)).toBe(true);
-		expect(await executeBuiltinSlashCommand("/pet BlueGajae", runtime)).toBe(true);
+		expect(await executeBuiltinSlashCommand("/pet redvibrato", runtime)).toBe(true);
+		expect(await executeBuiltinSlashCommand("/pet BlueVibrato", runtime)).toBe(true);
 		expect(await executeBuiltinSlashCommand("/pet Ouroboros", runtime)).toBe(true);
 
 		expect(setPetMode.mock.calls.map(call => call[0])).toEqual(["red", "blue", "ouroboros"]);
@@ -121,8 +121,8 @@ describe("builtin /pet slash command", () => {
 		const petCommand = BUILTIN_SLASH_COMMAND_DEFS.find(command => command.name === "pet");
 		expect(petCommand?.subcommands?.map(command => command.name)).toEqual([
 			"off",
-			"RedGajae",
-			"BlueGajae",
+			"RedVibrato",
+			"BlueVibrato",
 			"Ouroboros",
 		]);
 
@@ -130,7 +130,7 @@ describe("builtin /pet slash command", () => {
 		expect(await executeBuiltinSlashCommand("/pet purple", { ctx, handleBackgroundCommand: () => undefined })).toBe(
 			true,
 		);
-		expect(showStatus).toHaveBeenLastCalledWith("Usage: /pet [off|RedGajae|BlueGajae|Ouroboros]", { dim: true });
+		expect(showStatus).toHaveBeenLastCalledWith("Usage: /pet [off|RedVibrato|BlueVibrato|Ouroboros]", { dim: true });
 		expect(setPetMode).toHaveBeenCalledTimes(3);
 	});
 
@@ -140,9 +140,9 @@ describe("builtin /pet slash command", () => {
 		const showStatus = vi.fn();
 		const ctx = { setPetMode, showStatus, editor: { setText: vi.fn() } } as unknown as InteractiveModeContext;
 
-		expect(await executeBuiltinSlashCommand("/pet RedGajae", { ctx, handleBackgroundCommand: () => undefined })).toBe(
-			true,
-		);
+		expect(
+			await executeBuiltinSlashCommand("/pet RedVibrato", { ctx, handleBackgroundCommand: () => undefined }),
+		).toBe(true);
 		// The commit policy owns the rejection warning; the handler must not
 		// claim success or bypass the policy with its own capability check.
 		expect(setPetMode).toHaveBeenCalledWith("red");
@@ -154,10 +154,10 @@ describe("builtin /pet slash command", () => {
 
 		for (const prefix of ["r", "R", "ReD"]) {
 			const completions = await petCommand?.getArgumentCompletions?.(prefix);
-			expect(completions?.map(item => item.label)).toEqual(["RedGajae"]);
+			expect(completions?.map(item => item.label)).toEqual(["RedVibrato"]);
 		}
 
-		expect(petCommand?.getInlineHint?.("ReD")).toBe("Gajae");
+		expect(petCommand?.getInlineHint?.("ReD")).toBe("Vibrato");
 	});
 });
 describe("builtin /copy slash command", () => {

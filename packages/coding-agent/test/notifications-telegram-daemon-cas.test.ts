@@ -21,7 +21,7 @@ const durableTestFs: TelegramDaemonFs = {
 	fsyncDirectory: async () => {},
 };
 function authority(): { authority: FilesystemTopicRegistryCasAuthority; file: string } {
-	const directory = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-topic-cas-"));
+	const directory = fs.mkdtempSync(path.join(os.tmpdir(), "vib-topic-cas-"));
 	temporaryDirectories.push(directory);
 	const file = path.join(directory, "telegram-topics.json");
 	return {
@@ -83,7 +83,7 @@ test("machine-local identity parsing is strict and machine IDs are keyed per ins
 });
 
 test("machine identity secret creation falls back when hard links are unavailable", async () => {
-	const directory = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-machine-identity-"));
+	const directory = fs.mkdtempSync(path.join(os.tmpdir(), "vib-machine-identity-"));
 	temporaryDirectories.push(directory);
 	const hostId = await loadInstallationHostId({
 		platform: "linux",
@@ -101,7 +101,7 @@ test("machine identity secret creation falls back when hard links are unavailabl
 });
 
 test("machine identity refuses a symlinked installation secret", async () => {
-	const directory = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-machine-identity-"));
+	const directory = fs.mkdtempSync(path.join(os.tmpdir(), "vib-machine-identity-"));
 	temporaryDirectories.push(directory);
 	const target = path.join(directory, "target");
 	fs.writeFileSync(target, "11".repeat(32));
@@ -272,7 +272,7 @@ test("a later CAS generation cannot be overwritten by an earlier publisher after
 	).toEqual(b);
 });
 test("Windows topic CAS uses exact identity-bound replacement without directory fsync", async () => {
-	const directory = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-topic-cas-durability-"));
+	const directory = fs.mkdtempSync(path.join(os.tmpdir(), "vib-topic-cas-durability-"));
 	temporaryDirectories.push(directory);
 	const file = path.join(directory, "telegram-topics.json");
 	fs.writeFileSync(file, JSON.stringify({ version: 2, registryGeneration: 0, topics: {} }));
@@ -325,7 +325,7 @@ test("Windows topic CAS uses exact identity-bound replacement without directory 
 });
 
 test("refuses Windows exact replacement failure before advancing authority generation", async () => {
-	const directory = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-topic-cas-durability-"));
+	const directory = fs.mkdtempSync(path.join(os.tmpdir(), "vib-topic-cas-durability-"));
 	temporaryDirectories.push(directory);
 	const file = path.join(directory, "telegram-topics.json");
 	fs.writeFileSync(file, JSON.stringify({ version: 2, registryGeneration: 0, topics: {} }));
@@ -353,7 +353,7 @@ test("refuses Windows exact replacement failure before advancing authority gener
 	expect(await registry.read()).toEqual({ version: 2, registryGeneration: 0, topics: {} });
 });
 test("Windows CAS preserves a destination successor substituted after generation validation", async () => {
-	const directory = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-topic-cas-aba-"));
+	const directory = fs.mkdtempSync(path.join(os.tmpdir(), "vib-topic-cas-aba-"));
 	temporaryDirectories.push(directory);
 	const file = path.join(directory, "telegram-topics.json");
 	fs.writeFileSync(file, JSON.stringify({ version: 2, registryGeneration: 0, topics: {} }));
@@ -404,7 +404,7 @@ test("foreign-host locks with locally dead PIDs fail closed instead of permittin
 }, 10_000);
 
 test("reclaims a dead topic lock written with the previous local host identity", async () => {
-	const directory = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-topic-cas-legacy-lock-"));
+	const directory = fs.mkdtempSync(path.join(os.tmpdir(), "vib-topic-cas-legacy-lock-"));
 	temporaryDirectories.push(directory);
 	const file = path.join(directory, "telegram-topics.json");
 	const registry = new FilesystemTopicRegistryCasAuthority(file, {

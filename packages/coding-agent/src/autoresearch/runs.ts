@@ -4,7 +4,7 @@
  * `storage.ts` + `state.ts` without SQLite.
  *
  * Everything lives under the session autoresearch root
- * (`<cwd>/.gjc/_session-{id}/autoresearch/`): `runs.jsonl` holds one JSON
+ * (`<cwd>/.vib/_session-{id}/autoresearch/`): `runs.jsonl` holds one JSON
  * object per run and `experiment.json` holds the metric/session configuration.
  * The legacy global store (a per-project SQLite DB keyed outside the session)
  * is intentionally dead — no code path here resolves or writes it.
@@ -14,14 +14,14 @@
  */
 import * as crypto from "node:crypto";
 import * as path from "node:path";
-import { sessionAutoresearchDir } from "../gjc-runtime/session-layout";
-import { resolveGjcSessionForWrite } from "../gjc-runtime/session-resolution";
+import { sessionAutoresearchDir } from "../vib-runtime/session-layout";
+import { resolveVibSessionForWrite } from "../vib-runtime/session-resolution";
 import {
 	appendJsonl,
 	type StateWriterOptions,
 	withWorkflowStateLock,
 	writeTextAtomic,
-} from "../gjc-runtime/state-writer";
+} from "../vib-runtime/state-writer";
 import { dedupeStrings, inferMetricUnitFromName, isBetter, normalizePathSpec } from "./harness";
 import type { ASIData, ExperimentStatus, MetricDef, MetricDirection, NumericMetricMap } from "./types";
 
@@ -82,7 +82,7 @@ export interface AutoresearchRunsPaths {
 
 export function autoresearchRunsPaths(cwd: string, sessionId?: string | null): AutoresearchRunsPaths {
 	const resolvedSessionId =
-		sessionId?.trim() || resolveGjcSessionForWrite(cwd, { envSessionId: process.env.GJC_SESSION_ID }).gjcSessionId;
+		sessionId?.trim() || resolveVibSessionForWrite(cwd, { envSessionId: process.env.VIB_SESSION_ID }).vibSessionId;
 	const dir = sessionAutoresearchDir(cwd, resolvedSessionId);
 	return {
 		dir,
@@ -102,7 +102,7 @@ function auditFor(
 		audit: {
 			category,
 			verb,
-			owner: "gjc-runtime",
+			owner: "vib-runtime",
 			skill: "autoresearch",
 			sessionId,
 		},
@@ -236,7 +236,7 @@ function normalizeExperimentConfig(value: unknown): AutoresearchExperimentConfig
 
 /**
  * Session-scoped JSONL run store. Reads are served from a cached in-memory
- * snapshot; every mutation routes through the sanctioned `.gjc/**` state-writer
+ * snapshot; every mutation routes through the sanctioned `.vib/**` state-writer
  * primitives (append for new runs, locked rewrite for updates).
  */
 export class AutoresearchRunsStore {
@@ -262,7 +262,7 @@ export class AutoresearchRunsStore {
 
 	static async open(cwd: string, sessionId?: string | null): Promise<AutoresearchRunsStore> {
 		const resolvedSessionId =
-			sessionId?.trim() || resolveGjcSessionForWrite(cwd, { envSessionId: process.env.GJC_SESSION_ID }).gjcSessionId;
+			sessionId?.trim() || resolveVibSessionForWrite(cwd, { envSessionId: process.env.VIB_SESSION_ID }).vibSessionId;
 		const paths = autoresearchRunsPaths(cwd, resolvedSessionId);
 		const config = await readExperimentConfig(paths.configPath);
 		const runs = await readRunRecords(paths.runsPath);

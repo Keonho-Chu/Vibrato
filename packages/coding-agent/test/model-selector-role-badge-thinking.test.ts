@@ -1,17 +1,17 @@
 import { beforeAll, describe, expect, test, vi } from "bun:test";
-import { ThinkingLevel } from "@gajae-code/agent-core";
-import { Effort, getBundledModel, type Model } from "@gajae-code/ai";
-import type { GjcModelAssignmentTargetId, ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { ModelSelectorComponent } from "@gajae-code/coding-agent/modes/components/model-selector";
+import { ThinkingLevel } from "@vib-rato/agent-core";
+import { Effort, getBundledModel, type Model } from "@vib-rato/ai";
+import type { ModelRegistry, VibModelAssignmentTargetId } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { ModelSelectorComponent } from "@vib-rato/coding-agent/modes/components/model-selector";
 import {
 	getThemeByName,
 	setSymbolPreset,
 	setTheme,
 	setThemeInstance,
 	theme,
-} from "@gajae-code/coding-agent/modes/theme/theme";
-import type { TUI } from "@gajae-code/tui";
+} from "@vib-rato/coding-agent/modes/theme/theme";
+import type { TUI } from "@vib-rato/tui";
 
 function normalizeRenderedText(text: string): string {
 	return (
@@ -26,19 +26,19 @@ function normalizeRenderedText(text: string): string {
 
 interface SelectionCapture {
 	model: Model;
-	role: GjcModelAssignmentTargetId | null;
+	role: VibModelAssignmentTargetId | null;
 	thinkingLevel?: ThinkingLevel;
 	selector?: string;
-	roles?: readonly GjcModelAssignmentTargetId[];
+	roles?: readonly VibModelAssignmentTargetId[];
 }
 
 type TestModelSelectorSelection = {
 	kind: "assignment";
 	model: Model;
-	role: GjcModelAssignmentTargetId | null;
+	role: VibModelAssignmentTargetId | null;
 	thinkingLevel?: ThinkingLevel;
 	selector?: string;
-	roles?: readonly GjcModelAssignmentTargetId[];
+	roles?: readonly VibModelAssignmentTargetId[];
 };
 
 interface CreateSelectorOptions {
@@ -154,20 +154,11 @@ function createAnthropicReasoningModel(id: string): Model {
 	} as Model;
 }
 
-function createOllamaCloudModel(id: string): Model {
-	return {
-		id,
-		name: "DeepSeek V4 Pro",
-		api: "ollama-chat",
-		provider: "ollama-cloud",
-		baseUrl: "https://ollama.com",
-		reasoning: true,
-		input: ["text"],
-		cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-		contextWindow: 1_000_000,
-		maxTokens: 8192,
-	};
-}
+/**
+ * A discovery-backed model on a provider whose tab label ("OPENAI CODEX")
+ * differs from its provider id ("openai-codex"), which is what the refresh path
+ * has to get right.
+ */
 let testTheme = await getThemeByName("red-claw");
 
 function installTestTheme(): void {
@@ -185,7 +176,7 @@ describe("ModelSelector canonical model selection", () => {
 		}
 	});
 
-	test("uses canonical GJC assignment actions while hiding legacy roles", async () => {
+	test("uses canonical Vibrato assignment actions while hiding legacy roles", async () => {
 		installTestTheme();
 		const model = getBundledModel("anthropic", "claude-sonnet-4-5");
 		if (!model) throw new Error("Expected bundled model anthropic/claude-sonnet-4-5");
@@ -483,13 +474,13 @@ describe("ModelSelector canonical model selection", () => {
 		expect(selectedAfterEnter.selector).toBe("claude-sonnet:medium");
 	});
 
-	test("refreshes Ollama Cloud using provider id instead of tab label", async () => {
+	test("refreshes a provider tab using provider id instead of tab label", async () => {
 		installTestTheme();
 		const settings = Settings.isolated({});
-		const discoveredModel = createOllamaCloudModel("deepseek-v4-pro");
+		const discoveredModel = createOpenAIModel("openai-codex", "deepseek-v4-pro");
 		let availableModels: Model[] = [];
 		const refreshProvider = vi.fn(async (providerId: string) => {
-			if (providerId === "ollama-cloud") {
+			if (providerId === "openai-codex") {
 				availableModels = [discoveredModel];
 			}
 		});
@@ -500,12 +491,12 @@ describe("ModelSelector canonical model selection", () => {
 			refreshProvider,
 			getError: () => undefined,
 			getAvailable: () => availableModels,
-			getDiscoverableProviders: () => ["ollama-cloud"],
+			getDiscoverableProviders: () => ["openai-codex"],
 			getCanonicalModels: () => [],
 			getCanonicalModelSelections: () => [],
 			resolveCanonicalModel: () => undefined,
 			getProviderDiscoveryState: () => ({
-				provider: "ollama-cloud",
+				provider: "openai-codex",
 				status: "idle",
 				optional: false,
 				stale: false,
@@ -529,14 +520,14 @@ describe("ModelSelector canonical model selection", () => {
 		installTestTheme();
 
 		const initialRendered = normalizeRenderedText(selector.render(220).join("\n"));
-		expect(initialRendered).toContain("OLLAMA CLOUD");
+		expect(initialRendered).toContain("OPENAI CODEX");
 
 		selector.handleInput("\t");
 		selector.handleInput("\t");
 		await Bun.sleep(0);
 		installTestTheme();
 
-		expect(refreshProvider).toHaveBeenCalledWith("ollama-cloud", "online-if-uncached");
+		expect(refreshProvider).toHaveBeenCalledWith("openai-codex", "online-if-uncached");
 		const rendered = normalizeRenderedText(selector.render(220).join("\n"));
 		expect(rendered).toContain("deepseek-v4-pro");
 		expect(rendered).not.toContain("Provider has not been refreshed yet");

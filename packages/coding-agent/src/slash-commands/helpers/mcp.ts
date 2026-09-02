@@ -1,4 +1,4 @@
-import { getMCPConfigPath } from "@gajae-code/utils";
+import { getMCPConfigPath } from "@vib-rato/utils";
 import { listPrompts, listResources, listTools } from "../../runtime-mcp/client";
 import {
 	addMCPServer,
@@ -335,7 +335,7 @@ async function handleSmitherySearchCommand(rest: string, runtime: SlashCommandRu
 		const message = errorMessage(err);
 		if (/401|403|unauthorized|forbidden/i.test(message)) {
 			return usage(
-				"Smithery authentication required. Run /mcp smithery-login in the TUI client or add an API key to ~/.gjc/agent/smithery.json.",
+				"Smithery authentication required. Run /mcp smithery-login in the TUI client or add an API key to ~/.vib/agent/smithery.json.",
 				runtime,
 			);
 		}

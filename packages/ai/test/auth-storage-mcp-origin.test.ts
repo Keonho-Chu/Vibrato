@@ -14,7 +14,7 @@ describe("MCP OAuth credential binding persistence", () => {
 	});
 
 	test("preserves the bound MCP and token endpoints across storage reopen", async () => {
-		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-mcp-oauth-origin-"));
+		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-mcp-oauth-origin-"));
 		const dbPath = path.join(tempDir, "agent.db");
 		const provider = "mcp_oauth_test";
 		const firstStore = await SqliteAuthCredentialStore.open(dbPath);
@@ -62,7 +62,7 @@ describe("MCP OAuth credential binding persistence", () => {
 			).toBe(false);
 		}
 
-		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-mcp-oauth-invalid-binding-"));
+		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-mcp-oauth-invalid-binding-"));
 		const storage = new AuthStorage(await SqliteAuthCredentialStore.open(path.join(tempDir, "agent.db")));
 		await storage.reload();
 		await storage.set("mcp_oauth_invalid", {
@@ -95,7 +95,7 @@ describe("MCP OAuth credential binding persistence", () => {
 				return Response.json({ access_token: "new-access", refresh_token: "new-refresh", expires_in: 3600 });
 			},
 		});
-		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-mcp-oauth-refresh-"));
+		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-mcp-oauth-refresh-"));
 		const dbPath = path.join(tempDir, "agent.db");
 		const provider = "mcp_oauth_local";
 		const binding = {
@@ -155,7 +155,7 @@ describe("MCP OAuth credential binding persistence", () => {
 				});
 			},
 		});
-		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-mcp-oauth-redirect-"));
+		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-mcp-oauth-redirect-"));
 		const provider = "mcp_oauth_redirect";
 		const storage = new AuthStorage(await SqliteAuthCredentialStore.open(path.join(tempDir, "agent.db")));
 		await storage.reload();
@@ -213,7 +213,7 @@ describe("MCP OAuth credential binding persistence", () => {
 			return Response.json({ access_token: "unexpected-access" });
 		};
 		const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(fetchMock as unknown as typeof fetch);
-		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-mcp-oauth-abort-"));
+		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-mcp-oauth-abort-"));
 		const provider = "mcp_oauth_abort";
 		const storage = new AuthStorage(await SqliteAuthCredentialStore.open(path.join(tempDir, "agent.db")));
 		await storage.reload();
@@ -251,7 +251,7 @@ describe("MCP OAuth credential binding persistence", () => {
 		const fetchSpy = vi
 			.spyOn(globalThis, "fetch")
 			.mockImplementation((async () => Response.json(payload)) as unknown as typeof fetch);
-		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-mcp-oauth-invalid-refresh-"));
+		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-mcp-oauth-invalid-refresh-"));
 		const storage = new AuthStorage(await SqliteAuthCredentialStore.open(path.join(tempDir, "agent.db")));
 		await storage.reload();
 		await storage.set("mcp_oauth_invalid_refresh", {
@@ -302,7 +302,7 @@ describe("MCP OAuth credential binding persistence", () => {
 				return Response.json({ access_token: "second-access" });
 			},
 		});
-		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-mcp-oauth-exact-"));
+		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-mcp-oauth-exact-"));
 		const storage = new AuthStorage(await SqliteAuthCredentialStore.open(path.join(tempDir, "agent.db")));
 		await storage.reload();
 		const first = {

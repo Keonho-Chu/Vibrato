@@ -1,5 +1,5 @@
 import * as fs from "node:fs/promises";
-import { getProjectDir, getTrustedHomeDir } from "@gajae-code/utils";
+import { getProjectDir, getTrustedHomeDir } from "@vib-rato/utils";
 import { findRepoRoot } from "../capability/fs";
 import { skillCapability } from "../capability/skill";
 import type { SourceMeta } from "../capability/types";
@@ -8,11 +8,11 @@ import { resolveSkillScopeTrust } from "../config/skill-settings-defaults";
 import { type Skill as CapabilitySkill, getCapability } from "../discovery";
 import { compareSkillOrder, scanSkillsFromDir } from "../discovery/helpers";
 import type { SkillPromptDetails } from "../session/messages";
-import { CANONICAL_GJC_WORKFLOW_SKILLS } from "../skill-state/canonical-skills";
+import { CANONICAL_VIB_WORKFLOW_SKILLS } from "../skill-state/canonical-skills";
 import { expandTilde } from "../tools/path-utils";
-import type { LoadedSubskillActivation } from "./gjc-plugins";
-import { buildSubskillInjection } from "./gjc-plugins/injection";
-import { renderSkillAdvertisement } from "./gjc-plugins/runtime-adapters";
+import type { LoadedSubskillActivation } from "./vib-plugins";
+import { buildSubskillInjection } from "./vib-plugins/injection";
+import { renderSkillAdvertisement } from "./vib-plugins/runtime-adapters";
 /** Metadata-only handle returned by bounded skill discovery. */
 export interface SkillDescriptor {
 	readonly metadata: Omit<Skill, "content" | "loadContent">;
@@ -33,7 +33,7 @@ export interface Skill {
 	hide?: boolean;
 	/** Source metadata for display */
 	_source?: SourceMeta;
-	/** Embedded SKILL.md content for bundled defaults that survive .gjc deletion. */
+	/** Embedded SKILL.md content for bundled defaults that survive .vib deletion. */
 	/** Lazily load the full skill body when prompt injection needs it. */
 	loadContent?: () => Promise<string>;
 	content?: string;
@@ -116,13 +116,13 @@ export interface LoadSkillsOptions extends SkillsSettings {
 }
 
 /**
- * Skill providers loaded into sessions. Only native `.gjc` skills are live
+ * Skill providers loaded into sessions. Only native `.vib` skills are live
  * filesystem skills; Claude/Codex convention skills are explicit import
- * sources into `.gjc` (see skill-management.ts) and are never loaded directly.
+ * sources into `.vib` (see skill-management.ts) and are never loaded directly.
  */
 const LOADABLE_SKILL_PROVIDERS = new Set(["native"]);
 
-const BUILT_IN_SKILL_NAMES = new Set<string>(CANONICAL_GJC_WORKFLOW_SKILLS);
+const BUILT_IN_SKILL_NAMES = new Set<string>(CANONICAL_VIB_WORKFLOW_SKILLS);
 
 /**
  * Load skills from all configured locations.
@@ -148,9 +148,9 @@ export async function loadSkills(options: LoadSkillsOptions = {}): Promise<LoadS
 	const userTrusted = resolveSkillScopeTrust(options, "user");
 
 	// Skill scope trust decides which canonical locations are loaded: project
-	// scope covers `.gjc/skills` (walk-up), user scope covers `~/.gjc/agent/skills`
+	// scope covers `.vib/skills` (walk-up), user scope covers `~/.vib/agent/skills`
 	// and the legacy user roots. Claude/Codex convention skills are import
-	// sources into `.gjc`, never loaded directly.
+	// sources into `.vib`, never loaded directly.
 	function isSourceEnabled(source: SourceMeta): boolean {
 		const { provider, level } = source;
 		if (!LOADABLE_SKILL_PROVIDERS.has(provider)) return false;
@@ -196,7 +196,7 @@ export async function loadSkills(options: LoadSkillsOptions = {}): Promise<LoadS
 	// Apply scope trust and policy filters, then order candidates by documented
 	// precedence. `all` is already in native provider order with project dirs
 	// before user dirs; a stable sort by level lifts every project item above
-	// every user item, giving: project `.gjc/skills` > user roots.
+	// every user item, giving: project `.vib/skills` > user roots.
 	const filteredSkills = result.items
 		.filter(capSkill => {
 			if (!isSourceEnabled(capSkill._source)) return false;
@@ -238,7 +238,7 @@ export async function loadSkills(options: LoadSkillsOptions = {}): Promise<LoadS
 		if (capSkill.level === "project" && BUILT_IN_SKILL_NAMES.has(capSkill.name)) {
 			collisionWarnings.push({
 				skillPath: capSkill.path,
-				message: `name collision: "${capSkill.name}" is a bundled GJC workflow skill; the bundled definition takes precedence in sessions and this project copy is never used`,
+				message: `name collision: "${capSkill.name}" is a bundled Vibrato workflow skill; the bundled definition takes precedence in sessions and this project copy is never used`,
 			});
 		}
 

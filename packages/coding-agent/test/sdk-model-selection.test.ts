@@ -2,13 +2,13 @@ import { afterEach, beforeEach, describe, expect, setDefaultTimeout, test, vi } 
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { closeModelCache, Effort, getBundledModel, type Model } from "@gajae-code/ai";
-import { ModelRegistry, ModelsConfigFile } from "@gajae-code/coding-agent/config/model-registry";
-import { resetSettingsForTest, Settings } from "@gajae-code/coding-agent/config/settings";
-import { createAgentSession } from "@gajae-code/coding-agent/sdk";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { getAgentDbPath, getAgentDir, hookFetch, Snowflake, setAgentDir } from "@gajae-code/utils";
+import { closeModelCache, Effort, getBundledModel, type Model } from "@vib-rato/ai";
+import { ModelRegistry, ModelsConfigFile } from "@vib-rato/coding-agent/config/model-registry";
+import { resetSettingsForTest, Settings } from "@vib-rato/coding-agent/config/settings";
+import { createAgentSession } from "@vib-rato/coding-agent/sdk";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { getAgentDbPath, getAgentDir, hookFetch, Snowflake, setAgentDir } from "@vib-rato/utils";
 
 setDefaultTimeout(20_000);
 
@@ -151,7 +151,7 @@ describe("createAgentSession deferred model pattern resolution", () => {
 		const baseUrl = "https://owned-discovery.example.test/v1";
 		const commandMarker = path.join(root, "command-ran");
 		const originalAgentDir = getAgentDir();
-		const originalGjcAgentDir = process.env.GJC_CODING_AGENT_DIR;
+		const originalVibAgentDir = process.env.VIB_CODING_AGENT_DIR;
 		const originalPiAgentDir = process.env.PI_CODING_AGENT_DIR;
 		const originalRelocate = ModelsConfigFile.relocate.bind(ModelsConfigFile);
 		let restoreModelsConfigRelocate: (() => void) | undefined;
@@ -160,8 +160,8 @@ describe("createAgentSession deferred model pattern resolution", () => {
 
 		const restoreEnvironment = () => {
 			setAgentDir(originalAgentDir);
-			if (originalGjcAgentDir === undefined) delete process.env.GJC_CODING_AGENT_DIR;
-			else process.env.GJC_CODING_AGENT_DIR = originalGjcAgentDir;
+			if (originalVibAgentDir === undefined) delete process.env.VIB_CODING_AGENT_DIR;
+			else process.env.VIB_CODING_AGENT_DIR = originalVibAgentDir;
 			if (originalPiAgentDir === undefined) delete process.env.PI_CODING_AGENT_DIR;
 			else process.env.PI_CODING_AGENT_DIR = originalPiAgentDir;
 		};
@@ -344,7 +344,7 @@ describe("createAgentSession deferred model pattern resolution", () => {
 			"modelRoles:\n  default: runtime-provider/runtime-global-b:high\n",
 		);
 		await Bun.write(
-			path.join(tempDir, ".gjc", "config.yml"),
+			path.join(tempDir, ".vib", "config.yml"),
 			"modelRoles:\n  default: runtime-provider/runtime-policy-c:low\n",
 		);
 		const settings = await Settings.init({ cwd: tempDir, agentDir: tempDir });
@@ -848,7 +848,7 @@ describe("createAgentSession deferred model pattern resolution", () => {
 		const authPath = path.join(tempDir, `env-precedence-${Snowflake.next()}.db`);
 		const auth = await AuthStorage.create(authPath);
 		const originalOpenAiKey = process.env.OPENAI_API_KEY;
-		const siblingEnvName = `GJC_SIBLING_ENV_${Snowflake.next()}`;
+		const siblingEnvName = `VIB_SIBLING_ENV_${Snowflake.next()}`;
 		const originalSiblingEnv = process.env[siblingEnvName];
 		const storedKey = ["fixture", "stored", "selected"].join("-");
 		try {

@@ -5,7 +5,7 @@ import {
 	Markdown,
 	type MarkdownTheme,
 	resetMarkdownHighlightCallCount,
-} from "@gajae-code/tui";
+} from "@vib-rato/tui";
 import { defaultMarkdownTheme } from "./test-themes";
 
 function themeWithHighlight(): MarkdownTheme {

@@ -1,7 +1,7 @@
 # SDK session CLI
 
-`gjc sdk session` is the broker-bound command family for operating live GJC SDK
-sessions from the terminal. It replaces the removed `gjc daemon session` route.
+`vib sdk session` is the broker-bound command family for operating live Vibrato SDK
+sessions from the terminal. It replaces the removed `vib daemon session` route.
 
 The command family has six semantic verbs — `list`, `inspect`,
 `send`, `status`, `tail`, and `retire` — plus the explicit `raw` hatch that dispatches one
@@ -28,7 +28,7 @@ directory).
 
 ### list
 
-`gjc sdk session list` queries the broker `session.list` global and projects
+`vib sdk session list` queries the broker `session.list` global and projects
 every indexed session into the versioned row DTO (`SESSION_ROWS_VERSION`). Each
 row is credential-free and carries:
 
@@ -36,7 +36,7 @@ The list is fully paginated before scope filtering. By default its effective
 scope is `repo`. Select a scope with:
 
 ```sh
-gjc sdk session list --scope repo|cwd|worktree|all [--repo <path>]
+vib sdk session list --scope repo|cwd|worktree|all [--repo <path>]
 ```
 
 `--repo` is the selected workspace path and defaults to the process cwd. The
@@ -74,13 +74,13 @@ The raw global `session.list` route remains unfiltered, and `inspect`, `send`,
 
 ### inspect
 
-`gjc sdk session inspect <sessionId>` renders one indexed row from the broker.
+`vib sdk session inspect <sessionId>` renders one indexed row from the broker.
 It never reads endpoint discovery records directly: a missing or unavailable
 broker fails closed rather than exposing endpoint authority outside SDK core.
 
 ### send
 
-`gjc sdk session send <sessionId> --text <prompt>` submits an ordered
+`vib sdk session send <sessionId> --text <prompt>` submits an ordered
 `turn.prompt` carrying a caller-chosen operation reference (a ULID by default,
 or `--op-ref`). The result envelope reports `accepted` with the receipt and the
 operation reference used for later reconciliation.
@@ -96,7 +96,7 @@ operation reference used for later reconciliation.
 
 ### status
 
-`gjc sdk session status <sessionId> <opRef>` performs a lossless `turn.result`
+`vib sdk session status <sessionId> <opRef>` performs a lossless `turn.result`
 lookup with `kind: "prompt"` for a previously submitted operation reference and
 returns the full reconciliation record plus a `summary.completed` flag.
 See [lossless prompt results](#lossless-prompt-results).
@@ -104,7 +104,7 @@ See [lossless prompt results](#lossless-prompt-results).
 
 ### tail
 
-`gjc sdk session tail <sessionId>` replays the retained transcript from the
+`vib sdk session tail <sessionId>` replays the retained transcript from the
 durable checkpoint and then follows the live event-ring frames, emitting the
 default tail kinds (session lifecycle and turn lifecycle events) plus retained
 transcript entries.
@@ -149,7 +149,7 @@ most recent retained entries.
 
 ### retire
 
-`gjc sdk session retire <sessionId>` is the official semantic wrapper for the
+`vib sdk session retire <sessionId>` is the official semantic wrapper for the
 `session.reconcile_uncertain` broker global. It retires an indexed
 `terminalUncertain` create effect only when exactly one matching uncertain
 create identity exists, the recorded host is proven exited, the endpoint is
@@ -163,7 +163,7 @@ input is read from a `0600` file or stdin when it contains proof material.
 
 ## Raw hatch
 
-`gjc sdk session raw <control|query|global>` dispatches exactly one SDK
+`vib sdk session raw <control|query|global>` dispatches exactly one SDK
 operation and returns the broker/host response:
 
 - `raw control <sessionId> --op <operation>` — one control operation with
@@ -204,15 +204,15 @@ tail continues from the resync position and reports the gap in the envelope.
 
 ## Migration from the removed daemon session route
 
-`gjc daemon session` is removed and no alias is provided. Migrate:
+`vib daemon session` is removed and no alias is provided. Migrate:
 
 | Removed route | Replacement |
 | --- | --- |
-| `gjc daemon session list` | `gjc sdk session list` |
-| `gjc daemon session inspect <sessionId>` | `gjc sdk session inspect <sessionId>` |
-| `gjc daemon session send <sessionId> --text <prompt>` | `gjc sdk session send <sessionId> --text <prompt>` |
-| `gjc daemon session tail <sessionId>` | `gjc sdk session tail <sessionId>` |
-| raw control/query dispatch | `gjc sdk session raw control|query|global` |
+| `vib daemon session list` | `vib sdk session list` |
+| `vib daemon session inspect <sessionId>` | `vib sdk session inspect <sessionId>` |
+| `vib daemon session send <sessionId> --text <prompt>` | `vib sdk session send <sessionId> --text <prompt>` |
+| `vib daemon session tail <sessionId>` | `vib sdk session tail <sessionId>` |
+| raw control/query dispatch | `vib sdk session raw control|query|global` |
 
 The broker-bound surface replaces the daemon-owned routing: sessions are
 resolved through the SDK broker with validated endpoint identity instead of

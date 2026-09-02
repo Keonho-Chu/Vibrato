@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
-import type { AgentEvent } from "@gajae-code/agent-core";
-import type { AssistantMessage } from "@gajae-code/ai";
+import type { AgentEvent } from "@vib-rato/agent-core";
+import type { AssistantMessage } from "@vib-rato/ai";
 import { AsyncJobManager } from "../../src/async/job-manager";
 import { kNoAuth, type ModelRegistry } from "../../src/config/model-registry";
 

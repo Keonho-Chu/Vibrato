@@ -1,12 +1,12 @@
 // Advisory perf baselines: recording only; hard gating deferred to perf-gates.test.ts.
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
-import { __animationSchedulerTestHooks } from "@gajae-code/tui";
-import { __editorPerfCounters, Editor } from "@gajae-code/tui/components/editor";
-import { __loaderPerfCounters, Loader } from "@gajae-code/tui/components/loader";
-import { __markdownPerfCounters, clearRenderCache, Markdown } from "@gajae-code/tui/components/markdown";
-import { renderMetrics } from "@gajae-code/tui/metrics";
-import { __textHelperPerfCounters } from "@gajae-code/tui/utils";
-import { $flag } from "@gajae-code/utils";
+import { __animationSchedulerTestHooks } from "@vib-rato/tui";
+import { __editorPerfCounters, Editor } from "@vib-rato/tui/components/editor";
+import { __loaderPerfCounters, Loader } from "@vib-rato/tui/components/loader";
+import { __markdownPerfCounters, clearRenderCache, Markdown } from "@vib-rato/tui/components/markdown";
+import { renderMetrics } from "@vib-rato/tui/metrics";
+import { __textHelperPerfCounters } from "@vib-rato/tui/utils";
+import { $flag } from "@vib-rato/utils";
 import { makeRecordedSession, type ReplayFixture, runReplay } from "./replay-harness";
 import { defaultEditorTheme, defaultMarkdownTheme } from "./test-themes";
 

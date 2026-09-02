@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { isEnoent, logger, pathIsWithin } from "@gajae-code/utils";
+import { isEnoent, logger, pathIsWithin } from "@vib-rato/utils";
 import { YAML } from "bun";
 import { type SecretEntry, SecretObfuscator } from "./obfuscator";
 import { compileSecretRegex } from "./regex";
@@ -21,7 +21,7 @@ type SecretsFileScope = "global" | "project";
  * Project-local plain entries override global entries with matching content.
  */
 export async function loadSecrets(cwd: string, agentDir: string): Promise<SecretEntry[]> {
-	const projectPath = path.join(cwd, ".gjc", "secrets.yml");
+	const projectPath = path.join(cwd, ".vib", "secrets.yml");
 	const globalPath = path.join(agentDir, "secrets.yml");
 	const agentScope = await classifySecretsFileScope(cwd, agentDir);
 

@@ -25,16 +25,16 @@ describe("renderJsonTreeLines", () => {
 
 	it("wraps long path-like string values as deterministic continuations", async () => {
 		const theme = await testTheme();
-		const target = "../../../gajae-code.gajae-code-worktrees/release-0-5-4-64d49adc/packages/coding-agent";
+		const target = "../../../vib-rato.vib-rato-worktrees/release-0-5-4-64d49adc/packages/coding-agent";
 
 		const tree = renderJsonTreeLines({ target }, theme, 2, 10, 32);
 		const lines = stripLines(tree.lines);
 
 		expect(tree.truncated).toBe(false);
 		expect(lines.length).toBeGreaterThan(1);
-		expect(lines[0]).toContain('target: "../../../gajae-code.gajae-code');
+		expect(lines[0]).toContain('target: "../../../vib-rato.vib-rato');
 		expect(lines[0]).not.toContain(
-			'"../../../gajae-code.gajae-code-worktrees/release-0-5-4-64d49adc/packages/coding-agent"',
+			'"../../../vib-rato.vib-rato-worktrees/release-0-5-4-64d49adc/packages/coding-agent"',
 		);
 		expect(lines.slice(1).every(line => line.includes("↳ "))).toBe(true);
 		expect(lines.at(-1)).toContain('"');
@@ -45,7 +45,7 @@ describe("renderJsonTreeLines", () => {
 	it("marks long string values truncated when continuation lines exhaust the line budget", async () => {
 		const theme = await testTheme();
 		const real =
-			"/Users/example/Documents/Workspace/gajae-code.gajae-code-worktrees/release-0-5-4-64d49adc/packages/coding-agent/src/tools/json-tree.ts";
+			"/Users/example/Documents/Workspace/vib-rato.vib-rato-worktrees/release-0-5-4-64d49adc/packages/coding-agent/src/tools/json-tree.ts";
 
 		const tree = renderJsonTreeLines({ real, isSymbolicLink: true }, theme, 2, 2, 36);
 		const lines = stripLines(tree.lines);
@@ -60,7 +60,7 @@ describe("renderJsonTreeLines", () => {
 
 	it("keeps escaped tabs readable in wrapped string values", async () => {
 		const theme = await testTheme();
-		const value = "node_modules/@gajae-code/coding-agent\tpackages/coding-agent/src/tools/json-tree.ts";
+		const value = "node_modules/@vib-rato/coding-agent\tpackages/coding-agent/src/tools/json-tree.ts";
 
 		const tree = renderJsonTreeLines({ value }, theme, 2, 10, 28);
 		const lines = stripLines(tree.lines);

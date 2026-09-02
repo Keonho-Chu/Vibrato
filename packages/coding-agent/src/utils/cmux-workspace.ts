@@ -1,10 +1,10 @@
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 
 const CMUX_COMMAND = "cmux";
 const CMUX_WORKSPACE_ID_ENV = "CMUX_WORKSPACE_ID";
-const CMUX_NO_RENAME_ENV = "GJC_NO_CMUX_RENAME";
+const CMUX_NO_RENAME_ENV = "VIB_NO_CMUX_RENAME";
 const CONTROL_CHARS = /[\u0000-\u001f\u007f-\u009f]/g;
-const CMUX_WORKSPACE_TITLE_PREFIX = "GJC: ";
+const CMUX_WORKSPACE_TITLE_PREFIX = "Vibrato: ";
 const CMUX_WORKSPACE_RENAME_TIMEOUT_MS = 1500;
 const CMUX_WORKSPACE_LIST_TIMEOUT_MS = 1500;
 
@@ -15,7 +15,7 @@ export interface CmuxWorkspaceRenameCommand {
 
 /** Current ownership state of a cmux workspace, read back from `cmux workspace list`. */
 export interface CmuxWorkspaceOwnership {
-	/** cmux marks a workspace `has_custom_title` once an explicit title is set (by the user or by GJC). */
+	/** cmux marks a workspace `has_custom_title` once an explicit title is set (by the user or by Vibrato). */
 	hasCustomTitle: boolean;
 	/** The workspace's current display title. */
 	title: string;
@@ -114,12 +114,12 @@ export function parseCmuxWorkspaceOwnership(jsonText: string, workspaceId: strin
 	return null;
 }
 
-/** Only rename when GJC owns the name:
+/** Only rename when Vibrato owns the name:
  * - unknown ownership (read failed) → skip (fail safe, never clobber)
  * - already the desired title → skip (no-op)
  * - workspace still on its default title → rename
  * - any custom title (user- or peer-set) → skip
- * This makes GJC name a fresh workspace once and then leave it alone, so it
+ * This makes Vibrato name a fresh workspace once and then leave it alone, so it
  * never overwrites a user-pinned name and multiple sessions sharing one
  * CMUX_WORKSPACE_ID do not thrash the workspace title. */
 export function shouldRenameCmuxWorkspace(ownership: CmuxWorkspaceOwnership | null, desiredTitle: string): boolean {
@@ -157,11 +157,11 @@ async function defaultReadOwnership(
 }
 
 /**
- * Best-effort sync of the containing cmux workspace title to the current GJC
- * session name. Ownership-guarded: GJC reads the current workspace title and
+ * Best-effort sync of the containing cmux workspace title to the current Vibrato
+ * session name. Ownership-guarded: Vibrato reads the current workspace title and
  * only renames a workspace that still has its default title, so it never
  * overwrites a name the user pinned or a name a peer session (sharing the same
- * CMUX_WORKSPACE_ID) set. Opt out with GJC_NO_CMUX_RENAME.
+ * CMUX_WORKSPACE_ID) set. Opt out with VIB_NO_CMUX_RENAME.
  */
 export async function syncCmuxWorkspaceTitle(
 	sessionName: string | undefined,

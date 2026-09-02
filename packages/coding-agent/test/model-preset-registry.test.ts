@@ -31,7 +31,7 @@ const directories: string[] = [];
 const ownedDirectoryDisposers: Array<() => void> = [];
 const testTrustRunners = new Map<string, <T>(operation: () => T) => T>();
 setDefaultTimeout(30_000);
-const manifestUrl = "https://presets.gajae-code.test/latest.json";
+const manifestUrl = "https://presets.vib-rato.test/latest.json";
 
 async function createTrackedDirectory(prefix: string): Promise<string> {
 	const directory = path.join(os.tmpdir(), `${prefix}${crypto.randomUUID()}`);
@@ -70,8 +70,8 @@ function rollbackModelPresetRegistry(options: Parameters<typeof rollbackModelPre
 	const run = options.agentDir ? testTrustRunners.get(options.agentDir) : undefined;
 	return run ? run(() => rollbackModelPresetRegistryImpl(options)) : rollbackModelPresetRegistryImpl(options);
 }
-const productionManifestV1 = `{"schemaVersion":"1.0.0","signature":{"algorithm":"Ed25519","keyId":"registry-root-2026-01","value":"72hjU+GP8jsfCft0XotlRDhBa1sxPGPzySVATT1wwdT/h3Cb+Ylj7DI0ydiiAqSbDtFPhOmZvhFxpLeUQ5jFBw=="},"signed":{"compatibility":{"consumerContract":{"maxVersion":"1.0.0","minVersion":"1.0.0"}},"contents":{"presets":{"bytes":1230434,"count":4271,"path":"revisions/00000001/presets.json","sha256":"a73a9d0876198475902e7b87ac59dce37746025b35711767bd7ba6afe4104d96"},"profiles":{"bytes":19679,"count":58,"path":"revisions/00000001/profiles.json","sha256":"8befc86c52621d18f71ad141cd194329e8299bcfd50772faaf68b7f9c5b379cd"}},"provenance":{"generatedAt":"2026-08-24T09:41:42.000Z","generatedBy":"gajae-code-presets/scripts/import-upstream.mjs@1","sourcePaths":["packages/ai/src/models.json","packages/coding-agent/src/config/model-profiles.ts"],"sourceRepository":"https://github.com/Yeachan-Heo/gajae-code","sourceRevision":"65d0d2fdae36a4512959a6a8c143339b8ec98c58"},"publishedAt":"2026-08-24T09:41:42.000Z","registryRevision":1,"revision":"00000001","snapshot":{"bytes":819,"count":1,"path":"revisions/00000001/snapshot.json","sha256":"3e3e9e8d114be2b29184b83ed9c3321902a48202cda14ec765a73298c383c030"}}}`;
-const productionSnapshotV1 = `{"compatibility":{"consumerContract":{"maxVersion":"1.0.0","minVersion":"1.0.0"}},"contents":{"presets":{"bytes":1230434,"count":4271,"path":"revisions/00000001/presets.json","sha256":"a73a9d0876198475902e7b87ac59dce37746025b35711767bd7ba6afe4104d96"},"profiles":{"bytes":19679,"count":58,"path":"revisions/00000001/profiles.json","sha256":"8befc86c52621d18f71ad141cd194329e8299bcfd50772faaf68b7f9c5b379cd"}},"provenance":{"generatedAt":"2026-08-24T09:41:42.000Z","generatedBy":"gajae-code-presets/scripts/import-upstream.mjs@1","sourcePaths":["packages/ai/src/models.json","packages/coding-agent/src/config/model-profiles.ts"],"sourceRepository":"https://github.com/Yeachan-Heo/gajae-code","sourceRevision":"65d0d2fdae36a4512959a6a8c143339b8ec98c58"},"registryRevision":1,"revision":"00000001","schemaVersion":"1.0.0"}`;
+const productionManifestV1 = `{"schemaVersion":"1.0.0","signature":{"algorithm":"Ed25519","keyId":"registry-root-2026-01","value":"72hjU+GP8jsfCft0XotlRDhBa1sxPGPzySVATT1wwdT/h3Cb+Ylj7DI0ydiiAqSbDtFPhOmZvhFxpLeUQ5jFBw=="},"signed":{"compatibility":{"consumerContract":{"maxVersion":"1.0.0","minVersion":"1.0.0"}},"contents":{"presets":{"bytes":1230434,"count":4271,"path":"revisions/00000001/presets.json","sha256":"a73a9d0876198475902e7b87ac59dce37746025b35711767bd7ba6afe4104d96"},"profiles":{"bytes":19679,"count":58,"path":"revisions/00000001/profiles.json","sha256":"8befc86c52621d18f71ad141cd194329e8299bcfd50772faaf68b7f9c5b379cd"}},"provenance":{"generatedAt":"2026-08-24T09:41:42.000Z","generatedBy":"vib-rato-presets/scripts/import-upstream.mjs@1","sourcePaths":["packages/ai/src/models.json","packages/coding-agent/src/config/model-profiles.ts"],"sourceRepository":"https://github.com/Keonho-Chu/Vibrato","sourceRevision":"65d0d2fdae36a4512959a6a8c143339b8ec98c58"},"publishedAt":"2026-08-24T09:41:42.000Z","registryRevision":1,"revision":"00000001","snapshot":{"bytes":819,"count":1,"path":"revisions/00000001/snapshot.json","sha256":"3e3e9e8d114be2b29184b83ed9c3321902a48202cda14ec765a73298c383c030"}}}`;
+const productionSnapshotV1 = `{"compatibility":{"consumerContract":{"maxVersion":"1.0.0","minVersion":"1.0.0"}},"contents":{"presets":{"bytes":1230434,"count":4271,"path":"revisions/00000001/presets.json","sha256":"a73a9d0876198475902e7b87ac59dce37746025b35711767bd7ba6afe4104d96"},"profiles":{"bytes":19679,"count":58,"path":"revisions/00000001/profiles.json","sha256":"8befc86c52621d18f71ad141cd194329e8299bcfd50772faaf68b7f9c5b379cd"}},"provenance":{"generatedAt":"2026-08-24T09:41:42.000Z","generatedBy":"vib-rato-presets/scripts/import-upstream.mjs@1","sourcePaths":["packages/ai/src/models.json","packages/coding-agent/src/config/model-profiles.ts"],"sourceRepository":"https://github.com/Keonho-Chu/Vibrato","sourceRevision":"65d0d2fdae36a4512959a6a8c143339b8ec98c58"},"registryRevision":1,"revision":"00000001","schemaVersion":"1.0.0"}`;
 
 function sha256(value: string): string {
 	return crypto.createHash("sha256").update(value).digest("hex");
@@ -122,7 +122,7 @@ interface SignedRegistryFixture {
 }
 
 async function fixture(): Promise<RegistryFixture> {
-	const agentDir = await createTrackedDirectory("gjc-preset-registry-");
+	const agentDir = await createTrackedDirectory("vib-preset-registry-");
 	const { publicKey, privateKey } = crypto.generateKeyPairSync("ed25519");
 	const trustedKey: ModelPresetRegistryTrustedKey = {
 		keyId: "test-key",
@@ -163,7 +163,7 @@ function signedRegistry(
 		presets: descriptor(`revisions/${revisionId}/presets.json`, presetsBody, presets.presets.length),
 	};
 	const provenance = {
-		sourceRepository: "https://github.com/Yeachan-Heo/gajae-code" as const,
+		sourceRepository: "https://github.com/Keonho-Chu/Vibrato" as const,
 		sourceRevision: "65d0d2fdae36a4512959a6a8c143339b8ec98c58",
 		sourcePaths: ["packages/coding-agent/src/config/model-profiles.ts"],
 		generatedBy: "test@1",
@@ -243,16 +243,13 @@ afterEach(async () => {
 describe("signed model preset registry", () => {
 	test("does not expose test trust support through package exports", () => {
 		expect(() =>
-			Bun.resolveSync("@gajae-code/coding-agent/config/model-preset-registry-test-support", import.meta.dir),
+			Bun.resolveSync("@vib-rato/coding-agent/config/model-preset-registry-test-support", import.meta.dir),
 		).toThrow();
 		expect(() =>
-			Bun.resolveSync("@gajae-code/coding-agent/config/model-preset-registry-test-state", import.meta.dir),
+			Bun.resolveSync("@vib-rato/coding-agent/config/model-preset-registry-test-state", import.meta.dir),
 		).toThrow();
 		expect(() =>
-			Bun.resolveSync(
-				"@gajae-code/coding-agent/config/internal/model-preset-registry-test-support",
-				import.meta.dir,
-			),
+			Bun.resolveSync("@vib-rato/coding-agent/config/internal/model-preset-registry-test-support", import.meta.dir),
 		).toThrow();
 	});
 
@@ -264,7 +261,7 @@ describe("signed model preset registry", () => {
 	});
 
 	test("accepts the exact producer revision-1 manifest signature and snapshot binding", async () => {
-		const agentDir = await createTrackedDirectory("gjc-preset-production-contract-");
+		const agentDir = await createTrackedDirectory("vib-preset-production-contract-");
 		let calls = 0;
 		const fetchImpl = (async () => {
 			calls++;
@@ -710,8 +707,8 @@ describe("signed model preset registry", () => {
 	test("honors environment disable before reading corrupt control state", async () => {
 		const data = await fixture();
 		await Bun.write(path.join(data.agentDir, "model-presets", "control.json"), "{");
-		const previous = process.env.GJC_MODEL_PRESET_REGISTRY_DISABLED;
-		process.env.GJC_MODEL_PRESET_REGISTRY_DISABLED = "1";
+		const previous = process.env.VIB_MODEL_PRESET_REGISTRY_DISABLED;
+		process.env.VIB_MODEL_PRESET_REGISTRY_DISABLED = "1";
 		try {
 			const accepted = loadAcceptedModelPresetRegistry(data.agentDir, {});
 			expect(accepted).toMatchObject({ disabled: true });
@@ -722,8 +719,8 @@ describe("signed model preset registry", () => {
 				cacheHealth: "empty",
 			});
 		} finally {
-			if (previous === undefined) delete process.env.GJC_MODEL_PRESET_REGISTRY_DISABLED;
-			else process.env.GJC_MODEL_PRESET_REGISTRY_DISABLED = previous;
+			if (previous === undefined) delete process.env.VIB_MODEL_PRESET_REGISTRY_DISABLED;
+			else process.env.VIB_MODEL_PRESET_REGISTRY_DISABLED = previous;
 		}
 	});
 
@@ -1144,7 +1141,7 @@ describe("signed model preset registry", () => {
 		expect(
 			(await Bun.file(path.join(data.agentDir, "model-presets", "state.json")).json()).externalWriterMarker,
 		).toBe("preserve-me");
-		const externalAgentDir = await createTrackedDirectory("gjc-preset-registry-external-");
+		const externalAgentDir = await createTrackedDirectory("vib-preset-registry-external-");
 		const externalRun = <T>(operation: () => T): T =>
 			withModelPresetRegistryTestTrust(externalAgentDir, data.trustedKeys, operation);
 		testTrustRunners.set(externalAgentDir, externalRun);

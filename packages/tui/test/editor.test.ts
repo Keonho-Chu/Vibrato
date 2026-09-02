@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, it } from "bun:test";
 import { stripVTControlCharacters } from "node:util";
-import { CURSOR_MARKER } from "@gajae-code/tui";
-import { type AutocompleteProvider, CombinedAutocompleteProvider } from "@gajae-code/tui/autocomplete";
-import { __editorPerfCounters, Editor } from "@gajae-code/tui/components/editor";
-import { visibleWidth } from "@gajae-code/tui/utils";
-import { getDefaultTabWidth, setDefaultTabWidth } from "@gajae-code/utils";
+import { CURSOR_MARKER } from "@vib-rato/tui";
+import { type AutocompleteProvider, CombinedAutocompleteProvider } from "@vib-rato/tui/autocomplete";
+import { __editorPerfCounters, Editor } from "@vib-rato/tui/components/editor";
+import { visibleWidth } from "@vib-rato/tui/utils";
+import { getDefaultTabWidth, setDefaultTabWidth } from "@vib-rato/utils";
 import { KeybindingsManager, setKeybindings, TUI_KEYBINDINGS } from "../src/keybindings";
 import { defaultEditorTheme } from "./test-themes";
 
@@ -2763,7 +2763,7 @@ describe("Editor component", () => {
 		// terminals render the precomposed syllable at 2 cells, so without
 		// normalization the cursor column drifts past the visible filename
 		// and subsequent input renders into the wrong row. The earlier fix
-		// landed on the legacy `Input` component; GJC's interactive prompt
+		// landed on the legacy `Input` component; Vibrato's interactive prompt
 		// uses `Editor`, so the fix has to live here too.
 
 		it("normalizes NFD Korean bracketed-paste to NFC", () => {

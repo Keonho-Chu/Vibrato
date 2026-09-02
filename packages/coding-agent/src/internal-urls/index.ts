@@ -10,7 +10,6 @@
 
 export * from "./agent-protocol";
 export * from "./artifact-protocol";
-export * from "./gjc-protocol";
 export * from "./issue-pr-protocol";
 export * from "./json-query";
 export * from "./local-protocol";
@@ -19,3 +18,4 @@ export * from "./parse";
 export * from "./router";
 export * from "./rule-protocol";
 export type * from "./types";
+export * from "./vib-protocol";

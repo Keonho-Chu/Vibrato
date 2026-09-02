@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { processResponsesStream } from "@gajae-code/ai/providers/openai-responses-shared";
-import type { AssistantMessage, Model, ToolCall } from "@gajae-code/ai/types";
+import { processResponsesStream } from "@vib-rato/ai/providers/openai-responses-shared";
+import type { AssistantMessage, Model, ToolCall } from "@vib-rato/ai/types";
 import type { ResponseStreamEvent } from "openai/resources/responses/responses";
 
 // Regression coverage for multi-tool-call stream correlation: when a single

@@ -374,7 +374,7 @@ fn exchange_through_link(
 	release_destination_authority: impl FnOnce(),
 ) -> Result<(), &'static str> {
 	let temporary = CString::new(format!(
-		".gjc-managed-exchange-{}-{}",
+		".vib-managed-exchange-{}-{}",
 		std::process::id(),
 		MANAGED_REPLACEMENT_ID.fetch_add(1, Ordering::Relaxed)
 	))
@@ -2389,8 +2389,8 @@ fn recovery_directory(root: &File, external: Option<&File>) -> Result<File, &'st
 	if let Some(external) = external {
 		return external.try_clone().map_err(|_| "io_error");
 	}
-	ensure_managed_directory(root, ".gjc-recovery")?;
-	open_existing_directory(root, ".gjc-recovery")
+	ensure_managed_directory(root, ".vib-recovery")?;
+	open_existing_directory(root, ".vib-recovery")
 }
 
 #[cfg(target_os = "linux")]
@@ -2556,7 +2556,7 @@ fn remove_managed(
 	}
 	let authorized_identity = regular_identity(&authorized)?;
 	let quarantine = CString::new(format!(
-		".gjc-managed-remove-{}-{}",
+		".vib-managed-remove-{}-{}",
 		std::process::id(),
 		MANAGED_REPLACEMENT_ID.fetch_add(1, Ordering::Relaxed)
 	))
@@ -2635,7 +2635,7 @@ fn remove_managed(
 	// Canonical absence is durable, but cleanup is deliberately not replayed:
 	// the verified quarantine is evidence only, not a deletion capability.
 	Ok(RecoveryFsRetainedCleanupResult::retained_file(
-		format!(".gjc-recovery/{quarantined_relative}"),
+		format!(".vib-recovery/{quarantined_relative}"),
 		terminal_identity,
 	))
 }
@@ -2738,7 +2738,7 @@ fn replace_managed(
 	let candidate = (0..16)
 		.find_map(|_| {
 			let name = format!(
-				".gjc-managed-replace-{}-{}",
+				".vib-managed-replace-{}-{}",
 				std::process::id(),
 				MANAGED_REPLACEMENT_ID.fetch_add(1, Ordering::Relaxed)
 			);
@@ -3042,7 +3042,7 @@ fn snapshot_tree_fd(
 	entries.push(tree_entry(relative.to_owned(), &stat, "directory", None));
 	for bytes in tree_names(fd)? {
 		let name = CString::new(bytes).map_err(|_| "io_error")?;
-		if is_authority_root && name.as_bytes() == b".gjc-recovery" {
+		if is_authority_root && name.as_bytes() == b".vib-recovery" {
 			// SAFETY: fd is retained and O_DIRECTORY|O_NOFOLLOW binds only the reserved
 			// recovery namespace.
 			let recovery_fd = unsafe {
@@ -3415,7 +3415,7 @@ fn remove_managed_tree(
 	identity(root)?;
 	let (source_parent, name) = open_parent(root, relative_path)?;
 	let quarantine = CString::new(format!(
-		".gjc-managed-tree-remove-{}-{}",
+		".vib-managed-tree-remove-{}-{}",
 		std::process::id(),
 		MANAGED_REPLACEMENT_ID.fetch_add(1, Ordering::Relaxed)
 	))
@@ -3446,7 +3446,7 @@ fn remove_managed_tree(
 	}
 	// Canonical absence is durable, but cleanup is deliberately not replayed:
 	// the verified quarantine is evidence only, not a deletion capability.
-	Ok(RecoveryFsRetainedCleanupResult::retained_tree(format!(".gjc-recovery/{detached}"), terminal))
+	Ok(RecoveryFsRetainedCleanupResult::retained_tree(format!(".vib-recovery/{detached}"), terminal))
 }
 
 #[cfg(all(test, target_os = "linux"))]
@@ -3916,12 +3916,12 @@ mod tests {
 
 	/// Opt-in check that the `linkat(2)` no-replace fallback is atomic on a real
 	/// filesystem whose `renameat2` rejects `RENAME_NOREPLACE` (e.g. an `NFSv4`
-	/// home directory). Point `GJC_TEST_NFS_DIR` at a writable directory on such
+	/// home directory). Point `VIB_TEST_NFS_DIR` at a writable directory on such
 	/// a mount. Exercises the raw fallback helper directly so it is independent
 	/// of the owner-only ACL probe.
 	#[test]
 	fn linkat_no_replace_is_atomic_on_a_real_filesystem() {
-		let Some(base) = std::env::var_os("GJC_TEST_NFS_DIR") else {
+		let Some(base) = std::env::var_os("VIB_TEST_NFS_DIR") else {
 			return;
 		};
 		let dir = PathBuf::from(base).join(format!(
@@ -3989,7 +3989,7 @@ mod tests {
 	}
 
 	/// Opt-in end-to-end regression for the managed publish path on a filesystem
-	/// whose `renameat2` rejects `RENAME_NOREPLACE`. Point `GJC_TEST_NFS_DIR` at
+	/// whose `renameat2` rejects `RENAME_NOREPLACE`. Point `VIB_TEST_NFS_DIR` at
 	/// a writable directory on such a mount (e.g. an `NFSv4` home directory).
 	///
 	/// Unlike `linkat_no_replace_is_atomic_on_a_real_filesystem`, which
@@ -4002,7 +4002,7 @@ mod tests {
 	/// `rollback_unavailable` — crashing startup on every NFS home.
 	#[test]
 	fn managed_publish_commits_on_a_filesystem_without_rename_flags() {
-		let Some(base) = std::env::var_os("GJC_TEST_NFS_DIR") else {
+		let Some(base) = std::env::var_os("VIB_TEST_NFS_DIR") else {
 			return;
 		};
 		let dir = PathBuf::from(base).join(format!(
@@ -4032,11 +4032,11 @@ mod tests {
 			&CString::new("probe-destination").expect("probe destination name"),
 		)
 		.expect_err(
-			"GJC_TEST_NFS_DIR must point at a filesystem whose renameat2 rejects RENAME_NOREPLACE",
+			"VIB_TEST_NFS_DIR must point at a filesystem whose renameat2 rejects RENAME_NOREPLACE",
 		);
 		assert!(
 			rename_flags_unsupported(probe_error.raw_os_error()),
-			"GJC_TEST_NFS_DIR must point at a filesystem without renameat2 rename flags (errno {:?})",
+			"VIB_TEST_NFS_DIR must point at a filesystem without renameat2 rename flags (errno {:?})",
 			probe_error.raw_os_error()
 		);
 		fs::remove_file(dir.join("probe-source")).expect("remove probe source");
@@ -4090,7 +4090,7 @@ mod tests {
 	/// startup on every launch after the first in a given scope.
 	#[test]
 	fn managed_remove_detaches_on_a_filesystem_without_rename_flags() {
-		let Some(base) = std::env::var_os("GJC_TEST_NFS_DIR") else {
+		let Some(base) = std::env::var_os("VIB_TEST_NFS_DIR") else {
 			return;
 		};
 		let dir = PathBuf::from(base).join(format!(
@@ -4117,11 +4117,11 @@ mod tests {
 			&CString::new("probe-destination").expect("probe destination name"),
 		)
 		.expect_err(
-			"GJC_TEST_NFS_DIR must point at a filesystem whose renameat2 rejects RENAME_NOREPLACE",
+			"VIB_TEST_NFS_DIR must point at a filesystem whose renameat2 rejects RENAME_NOREPLACE",
 		);
 		assert!(
 			rename_flags_unsupported(probe_error.raw_os_error()),
-			"GJC_TEST_NFS_DIR must point at a filesystem without renameat2 rename flags (errno {:?})",
+			"VIB_TEST_NFS_DIR must point at a filesystem without renameat2 rename flags (errno {:?})",
 			probe_error.raw_os_error()
 		);
 		fs::remove_file(dir.join("probe-source")).expect("remove probe source");
@@ -4351,14 +4351,14 @@ mod tests {
 
 			// The exchange leaves the displaced object under the candidate name as
 			// rollback evidence; the fallback must reach the same terminal state.
-			let displaced = fs::read_dir(temporary.0.join(".gjc-recovery"))
+			let displaced = fs::read_dir(temporary.0.join(".vib-recovery"))
 				.expect("recovery directory")
 				.filter_map(Result::ok)
 				.find(|entry| {
 					entry
 						.file_name()
 						.to_string_lossy()
-						.starts_with(".gjc-managed-replace-")
+						.starts_with(".vib-managed-replace-")
 				})
 				.expect("displaced object retained under the candidate name");
 			assert_eq!(
@@ -4376,13 +4376,13 @@ mod tests {
 			// The fallback's temporary name is an implementation detail and must not
 			// survive a successful replacement.
 			assert!(
-				!fs::read_dir(temporary.0.join(".gjc-recovery"))
+				!fs::read_dir(temporary.0.join(".vib-recovery"))
 					.expect("recovery directory")
 					.filter_map(Result::ok)
 					.any(|entry| entry
 						.file_name()
 						.to_string_lossy()
-						.starts_with(".gjc-managed-exchange-")),
+						.starts_with(".vib-managed-exchange-")),
 				"no temporary exchange name may survive"
 			);
 		}
@@ -4410,7 +4410,7 @@ mod tests {
 					entry
 						.file_name()
 						.to_string_lossy()
-						.starts_with(".gjc-managed-exchange-")
+						.starts_with(".vib-managed-exchange-")
 				});
 			let destination =
 				fs::read(temporary.0.join("destination")).expect("destination still present");
@@ -4471,13 +4471,13 @@ mod tests {
 			"nothing may be displaced when the rollback link is not durable"
 		);
 		assert!(
-			!fs::read_dir(temporary.0.join(".gjc-recovery"))
+			!fs::read_dir(temporary.0.join(".vib-recovery"))
 				.expect("recovery directory")
 				.filter_map(Result::ok)
 				.any(|entry| entry
 					.file_name()
 					.to_string_lossy()
-					.starts_with(".gjc-managed-exchange-")),
+					.starts_with(".vib-managed-exchange-")),
 			"the unprovable rollback link must be removed"
 		);
 	}
@@ -4520,7 +4520,7 @@ mod tests {
 				.any(|entry| entry
 					.file_name()
 					.to_string_lossy()
-					.starts_with(".gjc-managed-exchange-")),
+					.starts_with(".vib-managed-exchange-")),
 			"rollback evidence must remain after destination sync failure"
 		);
 
@@ -4570,7 +4570,7 @@ mod tests {
 				.any(|entry| entry
 					.file_name()
 					.to_string_lossy()
-					.starts_with(".gjc-managed-exchange-")),
+					.starts_with(".vib-managed-exchange-")),
 			"a failed replacement must not leave its rollback link behind"
 		);
 	}

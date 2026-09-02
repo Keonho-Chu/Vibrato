@@ -219,8 +219,8 @@ function parseSecondaryArtifacts(value: string | undefined): SecondaryArtifacts 
 function benchmarkEnv(gcStrategy: GcStrategy, secondaryArtifacts: SecondaryArtifacts): NodeJS.ProcessEnv {
 	return {
 		...process.env,
-		GJC_SESSION_MEMORY_GC_STRATEGY: gcStrategy,
-		GJC_SESSION_MEMORY_SECONDARY_ARTIFACT_MODE:
+		VIB_SESSION_MEMORY_GC_STRATEGY: gcStrategy,
+		VIB_SESSION_MEMORY_SECONDARY_ARTIFACT_MODE:
 			secondaryArtifacts === "current" ? "auto" : "disabled",
 	};
 }
@@ -383,7 +383,7 @@ async function runWorker(
 	secondaryArtifacts: SecondaryArtifacts = "current",
 	repetitions = DEFAULT_ITERATIONS,
 ): Promise<WorkerResult> {
-	const root = await fs.mkdtemp(path.join(os.tmpdir(), `gjc-session-gib-stress-${mode}-`));
+	const root = await fs.mkdtemp(path.join(os.tmpdir(), `vib-session-gib-stress-${mode}-`));
 	const sourceFile = path.join(root, "source.jsonl");
 	const destinationDirectory = path.join(root, "forks");
 	await fs.mkdir(destinationDirectory);

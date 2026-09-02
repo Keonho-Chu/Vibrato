@@ -2,9 +2,9 @@ import { afterEach, describe, expect, it } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { BUILTIN_CAPABILITY_CATALOG, createTools, type ToolSession } from "@gajae-code/coding-agent/tools";
-import { summarizeComputerDetails } from "@gajae-code/coding-agent/tools/computer/render";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { BUILTIN_CAPABILITY_CATALOG, createTools, type ToolSession } from "@vib-rato/coding-agent/tools";
+import { summarizeComputerDetails } from "@vib-rato/coding-agent/tools/computer/render";
 import {
 	ComputerTool,
 	computerSchema,
@@ -13,8 +13,8 @@ import {
 	setComputerArchForTests,
 	setComputerControllerFactoryForTests,
 	setComputerPlatformForTests,
-} from "@gajae-code/coding-agent/tools/implementations";
-import { toolRenderers } from "@gajae-code/coding-agent/tools/renderers";
+} from "@vib-rato/coding-agent/tools/implementations";
+import { toolRenderers } from "@vib-rato/coding-agent/tools/renderers";
 import { zlibSync } from "fflate";
 
 function createSession(settings = Settings.isolated(), sessionFile: string | null = null): ToolSession {
@@ -333,7 +333,7 @@ describe("computer tool dispatch", () => {
 			screenshot: () => {
 				throw Object.assign(
 					new Error(
-						"COMPUTER_PERMISSION_REQUIRED: Screen & System Audio Recording is missing. TCC identity: executable=/tmp/gjc, pid=123",
+						"COMPUTER_PERMISSION_REQUIRED: Screen & System Audio Recording is missing. TCC identity: executable=/tmp/vib, pid=123",
 					),
 					{ code: "COMPUTER_PERMISSION_REQUIRED" },
 				);
@@ -345,8 +345,8 @@ describe("computer tool dispatch", () => {
 
 		expect(result.isError).toBe(true);
 		expect(result.details?.code).toBe("COMPUTER_PERMISSION_REQUIRED");
-		expect(textOf(result)).toContain("TCC identity: executable=/tmp/gjc");
-		expect(textOf(result)).toContain("fully quit and relaunch GJC");
+		expect(textOf(result)).toContain("TCC identity: executable=/tmp/vib");
+		expect(textOf(result)).toContain("fully quit and relaunch Vibrato");
 	});
 
 	it("does not invent a display epoch before any screenshot context exists", async () => {
@@ -608,8 +608,8 @@ describe("computer tool dispatch", () => {
 		const secondDir = path.dirname(secondPath);
 
 		try {
-			expect(firstDir).not.toBe(path.join(os.tmpdir(), "gjc-computer-screenshots"));
-			expect(path.basename(firstDir)).toStartWith("gjc-computer-screenshots-");
+			expect(firstDir).not.toBe(path.join(os.tmpdir(), "vib-computer-screenshots"));
+			expect(path.basename(firstDir)).toStartWith("vib-computer-screenshots-");
 			expect(firstDir).not.toBe(secondDir);
 			expect((await fs.stat(firstPath)).mode & 0o777).toBe(0o600);
 			expect((await fs.stat(firstDir)).mode & 0o777).toBe(0o700);

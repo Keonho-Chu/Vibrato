@@ -10,7 +10,7 @@
  * the server only checks a bearer token against an allow-list per request.
  */
 import * as crypto from "node:crypto";
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 import { timingSafeEqual } from "../auth-gateway/http";
 import type { AuthStorage } from "../auth-storage";
 import type { Provider } from "../types";

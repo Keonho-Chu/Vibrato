@@ -548,7 +548,7 @@ function coerceTarget(target: unknown): string | null {
 	return null;
 }
 
-const GUARD_INSTALLED = Symbol.for("gajae-code.safe-cleanup.deletion-guard");
+const GUARD_INSTALLED = Symbol.for("vib-rato.safe-cleanup.deletion-guard");
 
 type SyncRmLike = (target: unknown, options?: fsTypes.RmOptions) => unknown;
 type AsyncRmLike = (target: unknown, options?: fsTypes.RmOptions) => Promise<unknown>;

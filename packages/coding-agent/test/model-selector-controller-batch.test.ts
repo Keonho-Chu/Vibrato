@@ -1,15 +1,15 @@
 import { beforeAll, describe, expect, test, vi } from "bun:test";
-import { ThinkingLevel } from "@gajae-code/agent-core";
-import type { Model } from "@gajae-code/ai";
+import { ThinkingLevel } from "@vib-rato/agent-core";
+import type { Model } from "@vib-rato/ai";
 import {
 	resolveAgentModelPatterns,
 	resolveModelOverride,
 	resolveModelRoleValue,
-} from "@gajae-code/coding-agent/config/model-resolver";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import type { ModelSelectorComponent } from "@gajae-code/coding-agent/modes/components/model-selector";
-import { SelectorController } from "@gajae-code/coding-agent/modes/controllers/selector-controller";
-import { getThemeByName, setThemeInstance } from "@gajae-code/coding-agent/modes/theme/theme";
+} from "@vib-rato/coding-agent/config/model-resolver";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import type { ModelSelectorComponent } from "@vib-rato/coding-agent/modes/components/model-selector";
+import { SelectorController } from "@vib-rato/coding-agent/modes/controllers/selector-controller";
+import { getThemeByName, setThemeInstance } from "@vib-rato/coding-agent/modes/theme/theme";
 
 let testTheme = await getThemeByName("red-claw");
 

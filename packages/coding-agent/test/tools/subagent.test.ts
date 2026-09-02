@@ -2,11 +2,11 @@ import { afterEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { Agent } from "@gajae-code/agent-core";
-import { MANAGED_ATTEMPT_MAX_STAGED_BYTES } from "@gajae-code/agent-core/agent-loop";
-import type { AssistantMessage } from "@gajae-code/ai";
-import { createMockModel } from "@gajae-code/ai/providers/mock";
-import { AssistantMessageEventStream } from "@gajae-code/ai/utils/event-stream";
+import { Agent } from "@vib-rato/agent-core";
+import { MANAGED_ATTEMPT_MAX_STAGED_BYTES } from "@vib-rato/agent-core/agent-loop";
+import type { AssistantMessage } from "@vib-rato/ai";
+import { createMockModel } from "@vib-rato/ai/providers/mock";
+import { AssistantMessageEventStream } from "@vib-rato/ai/utils/event-stream";
 import { AsyncJobManager } from "../../src/async";
 import { kNoAuth } from "../../src/config/model-registry";
 import { Settings } from "../../src/config/settings";
@@ -646,7 +646,7 @@ describe("SubagentTool", () => {
 			"arbitrary-secret",
 			"query-token",
 			"query-key",
-			"#GJC1_opaque_secret#",
+			"#VIB1_opaque_secret#",
 		];
 		const summary = createSetupFailureSummary(
 			new Error(
@@ -657,7 +657,7 @@ describe("SubagentTool", () => {
 					"Authorization: Digest arbitrary-secret",
 					"GET /callback?access_token=query-token&api_key=query-key",
 					"token=[redacted]",
-					"credential=#GJC1_opaque_secret#",
+					"credential=#VIB1_opaque_secret#",
 					"status=401",
 				].join("\n"),
 			),
@@ -693,8 +693,8 @@ describe("SubagentTool", () => {
 					"GITHUB_TOKEN=github-token-secret",
 					"OPENAI_API_KEY=openai-api-key-secret",
 					"GITHUB_TOKEN_BACKUP=backup-token-secret",
-					"failed opening /var/folders/zz/T/gjc/openai-api-key-secret/session.jsonl",
-					"and /opt/gjc/openai-api-key-secret/config.json",
+					"failed opening /var/folders/zz/T/vib/openai-api-key-secret/session.jsonl",
+					"and /opt/vib/openai-api-key-secret/config.json",
 					"plain prose keeps / callback, 1/2, and /single",
 					"GET /callback?access_token=query-token&api_key=query-key",
 				].join("\n"),

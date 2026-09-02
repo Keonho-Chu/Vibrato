@@ -1,7 +1,7 @@
 /**
  * Compacted crash signature index.
  *
- * The index is **advisory, never authority**. It exists so `gjc crash report`
+ * The index is **advisory, never authority**. It exists so `vib crash report`
  * and the startup nudge can say "signature X happened 235 times since Aug 2"
  * without re-parsing a 500 KiB log. It can never authorize, suppress or
  * auto-target anything: a `reportedAt` stamp changes default highlighting, not
@@ -25,7 +25,7 @@ import {
 	isEnoent,
 	parseCrashEventLine,
 	parseCrashRecordMarker,
-} from "@gajae-code/utils";
+} from "@vib-rato/utils";
 import { withFileLock } from "../config/file-lock";
 import { type LoadedCrashRecord, parseRecoverableCrashRecords } from "./record-loader";
 
@@ -647,7 +647,7 @@ export function applyCrashEvent(index: CrashIndex, event: CrashEvent, now: numbe
 	}
 	if (Object.keys(index.signatures).length >= CRASH_INDEX_MAX_SIGNATURES && !evictOne(index)) {
 		// Nothing evictable: stop adding new entries and surface the overflow in
-		// `gjc crash report` rather than dropping an unreported signature.
+		// `vib crash report` rather than dropping an unreported signature.
 		index.overflow = true;
 		return false;
 	}

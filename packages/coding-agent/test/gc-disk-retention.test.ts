@@ -4,6 +4,8 @@ import * as fsp from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 import { getDefault } from "../src/config/settings-schema";
+import { SessionIndex } from "../src/sdk/broker/session-index";
+import { listCanonicalBlobs, removeCanonicalBlob } from "../src/session/blob-store";
 import {
 	collectGcDiskReport,
 	GC_DISK_POLICY_DEFAULTS,
@@ -16,17 +18,15 @@ import {
 	type GcStore,
 	type GcStoreAdapter,
 	resolveGcDiskPolicy,
-	runGjcGcCommand,
-} from "../src/gjc-runtime/gc-runtime";
-import { SessionIndex } from "../src/sdk/broker/session-index";
-import { listCanonicalBlobs, removeCanonicalBlob } from "../src/session/blob-store";
+	runVibGcCommand,
+} from "../src/vib-runtime/gc-runtime";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /**
- * Every test runs against a private state root. `GJC_CODING_AGENT_DIR` pins the
- * agent dir, `GJC_HARNESS_ROOT_REGISTRY_DIR` pins the harness registry and
- * `TMPDIR` pins the `local://` root parent, so nothing here can reach ~/.gjc.
+ * Every test runs against a private state root. `VIB_CODING_AGENT_DIR` pins the
+ * agent dir, `VIB_HARNESS_ROOT_REGISTRY_DIR` pins the harness registry and
+ * `TMPDIR` pins the `local://` root parent, so nothing here can reach ~/.vib.
  */
 interface TestRoot {
 	root: string;
@@ -41,7 +41,7 @@ interface TestRoot {
 async function makeTestRoot(): Promise<TestRoot> {
 	// realpath: the verified-delete authority rejects reparse points anywhere in
 	// the sessions root, and macOS temp dirs live behind /var -> /private/var.
-	const root = await fsp.realpath(await fsp.mkdtemp(path.join(os.tmpdir(), "gjc-gc-disk-")));
+	const root = await fsp.realpath(await fsp.mkdtemp(path.join(os.tmpdir(), "vib-gc-disk-")));
 	const agentDir = path.join(root, "agent");
 	await fsp.mkdir(agentDir, { recursive: true });
 	return {
@@ -52,8 +52,8 @@ async function makeTestRoot(): Promise<TestRoot> {
 		nativesDir: path.join(root, "natives"),
 		backupsDir: path.join(root, "backups"),
 		env: {
-			GJC_CODING_AGENT_DIR: agentDir,
-			GJC_HARNESS_ROOT_REGISTRY_DIR: path.join(root, "harness-roots"),
+			VIB_CODING_AGENT_DIR: agentDir,
+			VIB_HARNESS_ROOT_REGISTRY_DIR: path.join(root, "harness-roots"),
 			TMPDIR: path.join(root, "tmp"),
 		},
 	};
@@ -99,7 +99,7 @@ async function writeSession(
 	return file;
 }
 
-/** GJC's own tool artifacts for a session: `<id>.<tool>.log` payloads and ID claims. */
+/** Vibrato's own tool artifacts for a session: `<id>.<tool>.log` payloads and ID claims. */
 async function writeArtifacts(
 	fixture: TestRoot,
 	project: string,
@@ -133,7 +133,7 @@ async function writeNativesVersion(fixture: TestRoot, version: string): Promise<
 }
 
 async function writeHarnessRegistry(fixture: TestRoot, sessionId: string): Promise<void> {
-	const dir = fixture.env.GJC_HARNESS_ROOT_REGISTRY_DIR!;
+	const dir = fixture.env.VIB_HARNESS_ROOT_REGISTRY_DIR!;
 	await fsp.mkdir(dir, { recursive: true });
 	await Bun.write(
 		path.join(dir, `${sessionId}.json`),
@@ -182,7 +182,7 @@ function policy(overrides: Partial<GcDiskPolicy> = {}): GcDiskPolicy {
 }
 
 async function runDisk(fixture: TestRoot, argv: string[], overrides: Partial<GcDiskPolicy> = {}): Promise<GcReport> {
-	const result = await runGjcGcCommand(argv, fixture.root, fixture.env, [], policy(overrides));
+	const result = await runVibGcCommand(argv, fixture.root, fixture.env, [], policy(overrides));
 	expect(result.stderr).toBe("");
 	return JSON.parse(result.stdout) as GcReport;
 }
@@ -204,7 +204,7 @@ function fakeAdapter(store: GcStore, records: GcRecord[], prune?: () => Promise<
 	};
 }
 
-describe("gjc gc --disk (report only)", () => {
+describe("vib gc --disk (report only)", () => {
 	test("mutates nothing and reports reclaimable bytes per surface", async () => {
 		const fixture = await makeTestRoot();
 		try {
@@ -215,8 +215,8 @@ describe("gjc gc --disk (report only)", () => {
 			await writeNativesVersion(fixture, "0.0.1");
 			await writeNativesVersion(fixture, "0.0.2");
 			await fsp.mkdir(fixture.backupsDir, { recursive: true });
-			await Bun.write(path.join(fixture.backupsDir, "gjc-update-old"), "old backup payload");
-			await backdate(path.join(fixture.backupsDir, "gjc-update-old"), 40);
+			await Bun.write(path.join(fixture.backupsDir, "vib-update-old"), "old backup payload");
+			await backdate(path.join(fixture.backupsDir, "vib-update-old"), 40);
 
 			const before = await snapshotTree(fixture.root);
 			const report = await runDisk(fixture, ["--disk", "--json"], { natives_keep_versions: 1 });
@@ -247,9 +247,9 @@ describe("gjc gc --disk (report only)", () => {
 		const fixture = await makeTestRoot();
 		try {
 			await writeSession(fixture, "repo-a", "stale-session", { ageDays: 90 });
-			const result = await runGjcGcCommand(["--disk"], fixture.root, fixture.env, [], policy());
+			const result = await runVibGcCommand(["--disk"], fixture.root, fixture.env, [], policy());
 			expect(result.status).toBe(0);
-			expect(result.stdout).toContain("gjc gc --disk — report only");
+			expect(result.stdout).toContain("vib gc --disk — report only");
 			expect(result.stdout).toContain("Session transcripts");
 			expect(result.stdout).toContain("Content-addressed blobs");
 			expect(result.stdout).toContain("Cached native versions");
@@ -261,7 +261,7 @@ describe("gjc gc --disk (report only)", () => {
 	});
 });
 
-describe("gjc gc --disk --prune (sessions)", () => {
+describe("vib gc --disk --prune (sessions)", () => {
 	test("reclaims only transcripts passing both the age policy and the reference check", async () => {
 		const fixture = await makeTestRoot();
 		try {
@@ -324,7 +324,7 @@ describe("gjc gc --disk --prune (sessions)", () => {
 			const referenced = requireDisk(await runDisk(fixture, ["--disk", "--json"], { sessions_max_total_bytes: 1 }));
 			expect(referenced.surfaces.sessions.reclaimable).toBe(0);
 
-			await fsp.rm(path.join(fixture.env.GJC_HARNESS_ROOT_REGISTRY_DIR!, "older-recent.json"));
+			await fsp.rm(path.join(fixture.env.VIB_HARNESS_ROOT_REGISTRY_DIR!, "older-recent.json"));
 			const unreferenced = requireDisk(
 				await runDisk(fixture, ["--disk", "--json"], { sessions_max_total_bytes: 1 }),
 			);
@@ -336,7 +336,7 @@ describe("gjc gc --disk --prune (sessions)", () => {
 	});
 });
 
-describe("gjc gc --disk --prune (blob mark and sweep)", () => {
+describe("vib gc --disk --prune (blob mark and sweep)", () => {
 	test("removes only blobs unreferenced by every surviving session", async () => {
 		const fixture = await makeTestRoot();
 		try {
@@ -399,7 +399,7 @@ describe("gjc gc --disk --prune (blob mark and sweep)", () => {
 			await fsp.mkdir(artifacts, { recursive: true });
 			for (let index = 0; index < 6000; index++) await Bun.write(path.join(artifacts, `entry-${index}`), "x");
 
-			const run = runGjcGcCommand(["--disk", "--prune", "--json"], fixture.root, fixture.env, [], policy());
+			const run = runVibGcCommand(["--disk", "--prune", "--json"], fixture.root, fixture.env, [], policy());
 			await Bun.sleep(10);
 			await writeSession(fixture, "repo-b", "late-session", { ageDays: 0, blobRefs: [blob] });
 
@@ -428,7 +428,7 @@ describe("gjc gc --disk --prune (blob mark and sweep)", () => {
 					await Bun.sleep(0);
 				}
 			})();
-			const report = await runGjcGcCommand(["--disk", "--prune", "--json"], fixture.root, fixture.env, [], policy());
+			const report = await runVibGcCommand(["--disk", "--prune", "--json"], fixture.root, fixture.env, [], policy());
 			appending = false;
 			await appender;
 
@@ -690,7 +690,7 @@ describe("gjc gc --disk --prune (blob mark and sweep)", () => {
 					await Bun.sleep(0);
 				}
 			})();
-			const report = await runGjcGcCommand(["--disk", "--prune", "--json"], fixture.root, fixture.env, [], policy());
+			const report = await runVibGcCommand(["--disk", "--prune", "--json"], fixture.root, fixture.env, [], policy());
 			appending = false;
 			await appender;
 
@@ -708,7 +708,7 @@ describe("gjc gc --disk --prune (blob mark and sweep)", () => {
 	}, 30000);
 });
 
-describe("gjc gc --disk --prune (blob sweep on incomplete evidence)", () => {
+describe("vib gc --disk --prune (blob sweep on incomplete evidence)", () => {
 	test("keeps a blob whose only reference lives in an unreadable project directory", async () => {
 		const fixture = await makeTestRoot();
 		const projectDir = path.join(fixture.sessionsRoot, "repo-a");
@@ -771,7 +771,7 @@ describe("gjc gc --disk --prune (blob sweep on incomplete evidence)", () => {
 			await writeSession(fixture, "repo-a", "live-session", { ageDays: 0, blobRefs: [hash] });
 			await fsp.chmod(projectDir, 0o000);
 
-			const result = await runGjcGcCommand(["--disk", "--prune"], fixture.root, fixture.env, [], policy());
+			const result = await runVibGcCommand(["--disk", "--prune"], fixture.root, fixture.env, [], policy());
 			await fsp.chmod(projectDir, 0o700);
 
 			expect(result.stdout).toContain(
@@ -785,7 +785,7 @@ describe("gjc gc --disk --prune (blob sweep on incomplete evidence)", () => {
 	});
 });
 
-describe("gjc gc --disk dry-run parity", () => {
+describe("vib gc --disk dry-run parity", () => {
 	for (const evidence of ["complete", "incomplete"] as const) {
 		test(`--disk reports exactly what --disk --prune removes (${evidence} evidence)`, async () => {
 			// Two identical state roots: one is only reported on, the other pruned.
@@ -907,7 +907,7 @@ describe("gjc gc --disk dry-run parity", () => {
 	});
 });
 
-describe("gjc gc --disk --prune (half-completed retirement)", () => {
+describe("vib gc --disk --prune (half-completed retirement)", () => {
 	test("a session whose artifacts were destroyed is reported as failed, not kept", async () => {
 		const fixture = await makeTestRoot();
 		const transcript = await writeSession(fixture, "repo-a", "old-session", { ageDays: 120 });
@@ -922,7 +922,7 @@ describe("gjc gc --disk --prune (half-completed retirement)", () => {
 			await fsp.chmod(locked, 0o500);
 			await writeSession(fixture, "repo-a", "newest", { ageDays: 0 });
 
-			const result = await runGjcGcCommand(["--disk", "--prune", "--json"], fixture.root, fixture.env, [], policy());
+			const result = await runVibGcCommand(["--disk", "--prune", "--json"], fixture.root, fixture.env, [], policy());
 			await fsp.chmod(locked, 0o700).catch(() => {});
 			const disk = requireDisk(JSON.parse(result.stdout) as GcReport);
 			const record = disk.surfaces.sessions.records.find(entry => entry.id === "old-session");
@@ -940,7 +940,7 @@ describe("gjc gc --disk --prune (half-completed retirement)", () => {
 	});
 });
 
-describe("gjc gc --disk (path containment)", () => {
+describe("vib gc --disk (path containment)", () => {
 	test("never follows a symlinked project directory or transcript out of the state root", async () => {
 		const fixture = await makeTestRoot();
 		try {
@@ -982,7 +982,7 @@ describe("gjc gc --disk (path containment)", () => {
 	});
 });
 
-describe("gjc gc --disk (natives retention)", () => {
+describe("vib gc --disk (natives retention)", () => {
 	test("keeps the running version plus the configured number of predecessors", async () => {
 		const fixture = await makeTestRoot();
 		try {
@@ -1063,7 +1063,7 @@ describe("gjc gc --disk (natives retention)", () => {
 	});
 });
 
-describe("gjc gc --disk (backups retention)", () => {
+describe("vib gc --disk (backups retention)", () => {
 	test("ages out backup roots and *.bak siblings, keeping recent ones", async () => {
 		const fixture = await makeTestRoot();
 		try {
@@ -1072,7 +1072,7 @@ describe("gjc gc --disk (backups retention)", () => {
 			await fsp.mkdir(old, { recursive: true });
 			await Bun.write(path.join(old, "payload.bin"), "x".repeat(64));
 			await backdate(old, 40);
-			const recent = path.join(fixture.backupsDir, "gjc-update-2026-08-01");
+			const recent = path.join(fixture.backupsDir, "vib-update-2026-08-01");
 			await Bun.write(recent, "recent backup");
 			await backdate(recent, 2);
 			const agentBak = path.join(fixture.root, "agent.bak");
@@ -1090,8 +1090,8 @@ describe("gjc gc --disk (backups retention)", () => {
 
 			expect(reasons.get("natives-0.1.0-before-update")).toBe("reclaimed:older_than_max_age(14d)");
 			expect(reasons.get("agent.bak")).toBe("reclaimed:older_than_max_age(14d)");
-			expect(reasons.get("gjc-update-2026-08-01")).toBe("keep:newer_than_max_age(14d)");
-			expect(await fsp.readdir(fixture.backupsDir)).toEqual(["gjc-update-2026-08-01"]);
+			expect(reasons.get("vib-update-2026-08-01")).toBe("keep:newer_than_max_age(14d)");
+			expect(await fsp.readdir(fixture.backupsDir)).toEqual(["vib-update-2026-08-01"]);
 			expect(await Bun.file(path.join(agentBak, "settings.json")).exists()).toBe(false);
 			// The live agent directory is never a backup candidate.
 			expect((await fsp.lstat(fixture.agentDir)).isDirectory()).toBe(true);
@@ -1137,7 +1137,7 @@ describe("gjc gc --disk (backups retention)", () => {
 	test("a fully readable backup is still reclaimed when its size walk skipped a symlink", async () => {
 		const fixture = await makeTestRoot();
 		try {
-			const backup = path.join(fixture.backupsDir, "gjc-update-old");
+			const backup = path.join(fixture.backupsDir, "vib-update-old");
 			await fsp.mkdir(backup, { recursive: true });
 			await Bun.write(path.join(backup, "payload.bin"), "x".repeat(64));
 			// A skipped symlink makes `bytes` a floor, but nothing was unreadable,
@@ -1152,10 +1152,10 @@ describe("gjc gc --disk (backups retention)", () => {
 				prune: true,
 			});
 
-			const record = disk.surfaces.backups.records.find(entry => entry.id === "gjc-update-old");
+			const record = disk.surfaces.backups.records.find(entry => entry.id === "vib-update-old");
 			expect(record?.partial).toBe(true);
 			expect(record?.withheld).toBeUndefined();
-			expect(reasonById(disk, "backups").get("gjc-update-old")).toBe("reclaimed:older_than_max_age(14d)");
+			expect(reasonById(disk, "backups").get("vib-update-old")).toBe("reclaimed:older_than_max_age(14d)");
 			expect(await fsp.readdir(fixture.backupsDir)).toEqual([]);
 		} finally {
 			await fsp.rm(fixture.root, { recursive: true, force: true });
@@ -1167,7 +1167,7 @@ describe("gjc gc --disk (backups retention)", () => {
 		const wet = await makeTestRoot();
 		try {
 			for (const fixture of [dry, wet]) {
-				const backup = path.join(fixture.backupsDir, "gjc-update-old");
+				const backup = path.join(fixture.backupsDir, "vib-update-old");
 				await fsp.mkdir(path.join(backup, "locked"), { recursive: true });
 				await Bun.write(path.join(backup, "payload.bin"), "x".repeat(64));
 				await fsp.chmod(path.join(backup, "locked"), 0o000);
@@ -1190,10 +1190,10 @@ describe("gjc gc --disk (backups retention)", () => {
 			expect(dryDisk.surfaces.backups.reclaimable).toBe(0);
 			expect(wetDisk.surfaces.backups.reclaimed).toBe(dryDisk.surfaces.backups.reclaimable);
 			expect(wetDisk.surfaces.backups.reclaimed_bytes).toBe(dryDisk.surfaces.backups.reclaimable_bytes);
-			expect(await Bun.file(path.join(wet.backupsDir, "gjc-update-old", "payload.bin")).exists()).toBe(true);
+			expect(await Bun.file(path.join(wet.backupsDir, "vib-update-old", "payload.bin")).exists()).toBe(true);
 		} finally {
 			for (const fixture of [dry, wet]) {
-				await fsp.chmod(path.join(fixture.backupsDir, "gjc-update-old", "locked"), 0o700).catch(() => {});
+				await fsp.chmod(path.join(fixture.backupsDir, "vib-update-old", "locked"), 0o700).catch(() => {});
 				await fsp.rm(fixture.root, { recursive: true, force: true });
 			}
 		}
@@ -1201,7 +1201,7 @@ describe("gjc gc --disk (backups retention)", () => {
 
 	test("withholds a backup that goes unreadable between the size walk and the remove", async () => {
 		const fixture = await makeTestRoot();
-		const backup = path.join(fixture.backupsDir, "gjc-update-old");
+		const backup = path.join(fixture.backupsDir, "vib-update-old");
 		const locked = path.join(backup, "locked");
 		const realLstat = fsp.lstat as unknown as (target: PathLike, options?: { bigint?: false }) => Promise<Stats>;
 		// The candidate is lstat'd twice: once to classify it, once to verify it
@@ -1239,10 +1239,10 @@ describe("gjc gc --disk (backups retention)", () => {
 				["locked", "sibling", ...Array.from({ length: 200 }, (_unused, index) => `payload-${index}.bin`)].sort(),
 			);
 			expect((await fsp.readdir(path.join(backup, "sibling"))).length).toBe(200);
-			expect(reasonById(disk, "backups").get("gjc-update-old")).toBe(
+			expect(reasonById(disk, "backups").get("vib-update-old")).toBe(
 				"keep:withheld_evidence_incomplete: tree_unreadable",
 			);
-			expect(disk.surfaces.backups.records.find(record => record.id === "gjc-update-old")?.withheld).toBe(true);
+			expect(disk.surfaces.backups.records.find(record => record.id === "vib-update-old")?.withheld).toBe(true);
 			expect(disk.surfaces.backups.reclaimed).toBe(0);
 			expect(disk.surfaces.backups.failed).toBe(0);
 
@@ -1254,7 +1254,7 @@ describe("gjc gc --disk (backups retention)", () => {
 				policy: policy(),
 				prune: false,
 			});
-			expect(reasonById(dryDisk, "backups").get("gjc-update-old")).toBe(
+			expect(reasonById(dryDisk, "backups").get("vib-update-old")).toBe(
 				"keep:withheld_evidence_incomplete: tree_unreadable",
 			);
 			expect(dryDisk.surfaces.backups.reclaimable).toBe(0);
@@ -1267,7 +1267,7 @@ describe("gjc gc --disk (backups retention)", () => {
 
 	test("does not half-delete a backup that goes unreadable inside recursive removal", async () => {
 		const fixture = await makeTestRoot();
-		const backup = path.join(fixture.backupsDir, "gjc-update-old");
+		const backup = path.join(fixture.backupsDir, "vib-update-old");
 		const locked = path.join(backup, "locked");
 		const realLstat = fsp.lstat as unknown as (target: PathLike, options?: { bigint?: boolean }) => Promise<Stats>;
 		const realRm = fsp.rm;
@@ -1306,10 +1306,10 @@ describe("gjc gc --disk (backups retention)", () => {
 			rmSpy.mockRestore();
 			expect(raceInjected).toBe(true);
 
-			expect(reasonById(disk, "backups").get("gjc-update-old")).toBe(
+			expect(reasonById(disk, "backups").get("vib-update-old")).toBe(
 				"keep:withheld_evidence_incomplete: tree_unreadable",
 			);
-			expect(disk.surfaces.backups.records.find(record => record.id === "gjc-update-old")?.withheld).toBe(true);
+			expect(disk.surfaces.backups.records.find(record => record.id === "vib-update-old")?.withheld).toBe(true);
 			expect(disk.surfaces.backups.reclaimed).toBe(0);
 			expect(disk.surfaces.backups.failed).toBe(0);
 			expect(await Bun.file(path.join(backup, "payload-0.bin")).exists()).toBe(true);
@@ -1354,7 +1354,7 @@ describe("gjc gc --disk (backups retention)", () => {
 		}) as unknown as typeof fsp.readdir);
 		try {
 			for (const fixture of [dry, wet]) {
-				const backup = path.join(fixture.backupsDir, "gjc-update-old");
+				const backup = path.join(fixture.backupsDir, "vib-update-old");
 				roots.add(backup);
 				await fsp.mkdir(path.join(backup, "locked"), { recursive: true });
 				await Bun.write(path.join(backup, "payload-0.bin"), "x".repeat(64));
@@ -1377,23 +1377,23 @@ describe("gjc gc --disk (backups retention)", () => {
 			});
 			spy.mockRestore();
 
-			expect(reasonById(dryDisk, "backups").get("gjc-update-old")).toBe(
+			expect(reasonById(dryDisk, "backups").get("vib-update-old")).toBe(
 				"keep:withheld_evidence_incomplete: tree_unreadable",
 			);
-			expect(reasonById(wetDisk, "backups").get("gjc-update-old")).toBe(
+			expect(reasonById(wetDisk, "backups").get("vib-update-old")).toBe(
 				"keep:withheld_evidence_incomplete: tree_unreadable",
 			);
 			expect(wetDisk.surfaces.backups.reclaimed).toBe(dryDisk.surfaces.backups.reclaimable);
 			expect(wetDisk.surfaces.backups.failed).toBe(0);
-			expect(await Bun.file(path.join(wet.backupsDir, "gjc-update-old", "payload-0.bin")).exists()).toBe(true);
-			expect((await fsp.readdir(path.join(wet.backupsDir, "gjc-update-old"))).sort()).toEqual([
+			expect(await Bun.file(path.join(wet.backupsDir, "vib-update-old", "payload-0.bin")).exists()).toBe(true);
+			expect((await fsp.readdir(path.join(wet.backupsDir, "vib-update-old"))).sort()).toEqual([
 				"locked",
 				"payload-0.bin",
 			]);
 		} finally {
 			spy.mockRestore();
 			for (const fixture of [dry, wet]) {
-				await fsp.chmod(path.join(fixture.backupsDir, "gjc-update-old", "locked"), 0o700).catch(() => {});
+				await fsp.chmod(path.join(fixture.backupsDir, "vib-update-old", "locked"), 0o700).catch(() => {});
 				await fsp.rm(fixture.root, { recursive: true, force: true });
 			}
 		}
@@ -1434,7 +1434,7 @@ describe("gjc gc --disk (backups retention)", () => {
 		}) as unknown as typeof fsp.readdir);
 		try {
 			for (const fixture of [dry, wet]) {
-				const backup = path.join(fixture.backupsDir, "gjc-update-old");
+				const backup = path.join(fixture.backupsDir, "vib-update-old");
 				roots.add(backup);
 				await fsp.mkdir(path.join(backup, "deep"), { recursive: true });
 				await Bun.write(path.join(backup, "payload-0.bin"), "x".repeat(64));
@@ -1456,9 +1456,9 @@ describe("gjc gc --disk (backups retention)", () => {
 			});
 			spy.mockRestore();
 
-			expect(reasonById(dryDisk, "backups").get("gjc-update-old")).toBe("would_reclaim:older_than_max_age(14d)");
-			expect(reasonById(wetDisk, "backups").get("gjc-update-old")).toBe("reclaimed:older_than_max_age(14d)");
-			expect(dryDisk.surfaces.backups.records.find(record => record.id === "gjc-update-old")?.partial).toBe(true);
+			expect(reasonById(dryDisk, "backups").get("vib-update-old")).toBe("would_reclaim:older_than_max_age(14d)");
+			expect(reasonById(wetDisk, "backups").get("vib-update-old")).toBe("reclaimed:older_than_max_age(14d)");
+			expect(dryDisk.surfaces.backups.records.find(record => record.id === "vib-update-old")?.partial).toBe(true);
 			expect(wetDisk.surfaces.backups.reclaimed).toBe(dryDisk.surfaces.backups.reclaimable);
 			expect(wetDisk.surfaces.backups.failed).toBe(0);
 			expect(await fsp.readdir(wet.backupsDir)).toEqual([]);
@@ -1472,7 +1472,7 @@ describe("gjc gc --disk (backups retention)", () => {
 
 	test("reports a symlinked backup that vanishes under the detach as gone, not failed", async () => {
 		const fixture = await makeTestRoot();
-		const backup = path.join(fixture.backupsDir, "gjc-update-old");
+		const backup = path.join(fixture.backupsDir, "vib-update-old");
 		const realLstat = fsp.lstat as unknown as (target: PathLike, options?: { bigint?: boolean }) => Promise<Stats>;
 		let vanished = false;
 		// A tree holding a symlink is detached before it is removed, and the detach
@@ -1501,8 +1501,8 @@ describe("gjc gc --disk (backups retention)", () => {
 			spy.mockRestore();
 
 			expect(vanished).toBe(true);
-			expect(reasonById(disk, "backups").get("gjc-update-old")).toBe("keep:entry_disappeared");
-			expect(disk.surfaces.backups.records.find(record => record.id === "gjc-update-old")?.withheld).toBeUndefined();
+			expect(reasonById(disk, "backups").get("vib-update-old")).toBe("keep:entry_disappeared");
+			expect(disk.surfaces.backups.records.find(record => record.id === "vib-update-old")?.withheld).toBeUndefined();
 			expect(disk.surfaces.backups.failed).toBe(0);
 			expect(disk.surfaces.backups.reclaimed).toBe(0);
 		} finally {
@@ -1512,7 +1512,7 @@ describe("gjc gc --disk (backups retention)", () => {
 	});
 	test("reclaims a backup whose enumerated files vanished under the walk", async () => {
 		const fixture = await makeTestRoot();
-		const backup = path.join(fixture.backupsDir, "gjc-update-old");
+		const backup = path.join(fixture.backupsDir, "vib-update-old");
 		const vanishing = path.join(backup, "many");
 		const realReaddir = fsp.readdir as unknown as (
 			dir: PathLike,
@@ -1548,10 +1548,10 @@ describe("gjc gc --disk (backups retention)", () => {
 			});
 			spy.mockRestore();
 
-			const record = disk.surfaces.backups.records.find(entry => entry.id === "gjc-update-old");
+			const record = disk.surfaces.backups.records.find(entry => entry.id === "vib-update-old");
 			expect(record?.partial).toBe(true);
 			expect(record?.withheld).toBeUndefined();
-			expect(reasonById(disk, "backups").get("gjc-update-old")).toBe("reclaimed:older_than_max_age(14d)");
+			expect(reasonById(disk, "backups").get("vib-update-old")).toBe("reclaimed:older_than_max_age(14d)");
 			expect(disk.surfaces.backups.reclaimed).toBe(1);
 			expect(await fsp.readdir(fixture.backupsDir)).toEqual([]);
 		} finally {
@@ -1561,7 +1561,7 @@ describe("gjc gc --disk (backups retention)", () => {
 	});
 });
 
-describe("gjc gc --disk (session tool artifacts)", () => {
+describe("vib gc --disk (session tool artifacts)", () => {
 	const payload = {
 		"1.bash.log": "b".repeat(100),
 		"2.bash.log": "b".repeat(200),
@@ -1603,7 +1603,7 @@ describe("gjc gc --disk (session tool artifacts)", () => {
 			// used to reclaim these bytes.
 			expect(reasonById(disk, "sessions").get("worked-session")).toBe("keep:newer_than_max_age(30d)");
 
-			const text = await runGjcGcCommand(["--disk"], fixture.root, fixture.env, [], policy());
+			const text = await runVibGcCommand(["--disk"], fixture.root, fixture.env, [], policy());
 			expect(text.stdout).toContain("Session tool artifacts");
 			expect(text.stdout).toContain("family *.bash.log count=2 (300 B)");
 			expect(text.stdout).toContain("family .artifact-id-* count=1 (0 B)");
@@ -1747,7 +1747,7 @@ describe("gjc gc --disk (session tool artifacts)", () => {
 
 	test("reclaims nothing and names the reason when the live-surface scan is incomplete", async () => {
 		const fixture = await makeTestRoot();
-		const localRoots = path.join(fixture.env.TMPDIR!, "gjc-local");
+		const localRoots = path.join(fixture.env.TMPDIR!, "vib-local");
 		try {
 			await writeSession(fixture, "repo-a", "worked-session", { ageDays: 10 });
 			await writeSession(fixture, "repo-a", "newest-session", { ageDays: 0 });
@@ -1828,7 +1828,7 @@ describe("liveness axis is unchanged without --disk", () => {
 			await writeBlob(fixture, "orphan", 30);
 
 			const before = await snapshotTree(fixture.root);
-			const result = await runGjcGcCommand(["--json"], fixture.root, fixture.env, []);
+			const result = await runVibGcCommand(["--json"], fixture.root, fixture.env, []);
 			const report = JSON.parse(result.stdout) as GcReport;
 
 			expect(report.disk).toBeUndefined();
@@ -1836,7 +1836,7 @@ describe("liveness axis is unchanged without --disk", () => {
 			expect(await snapshotTree(fixture.root)).toEqual(before);
 
 			// Even an explicit prune leaves every byte in place without --disk.
-			const pruned = await runGjcGcCommand(["--prune", "--json"], fixture.root, fixture.env, []);
+			const pruned = await runVibGcCommand(["--prune", "--json"], fixture.root, fixture.env, []);
 			expect((JSON.parse(pruned.stdout) as GcReport).disk).toBeUndefined();
 			expect(await snapshotTree(fixture.root)).toEqual(before);
 		} finally {
@@ -1858,12 +1858,12 @@ describe("liveness axis is unchanged without --disk", () => {
 			};
 			const failing = fakeAdapter("file_locks", [record], async () => ({ removed: false, error: "EACCES" }));
 
-			const withoutDisk = await runGjcGcCommand(["--prune", "--json"], fixture.root, fixture.env, [failing]);
+			const withoutDisk = await runVibGcCommand(["--prune", "--json"], fixture.root, fixture.env, [failing]);
 			expect(withoutDisk.status).toBe(1);
 			expect((JSON.parse(withoutDisk.stdout) as GcReport).counts.failed).toBe(1);
 
 			// The disk axis must not mask or change that outcome.
-			const withDisk = await runGjcGcCommand(
+			const withDisk = await runVibGcCommand(
 				["--prune", "--disk", "--json"],
 				fixture.root,
 				fixture.env,
@@ -1883,11 +1883,11 @@ describe("liveness axis is unchanged without --disk", () => {
 			const stale = await writeSession(fixture, "repo-a", "stale-session", { ageDays: 900 });
 			await writeSession(fixture, "repo-a", "recent-session", { ageDays: 1 });
 
-			const result = await runGjcGcCommand(["--disk", "--json"], fixture.root, fixture.env, [], policy());
+			const result = await runVibGcCommand(["--disk", "--json"], fixture.root, fixture.env, [], policy());
 			expect(result.status).toBe(0);
 			expect(await Bun.file(stale).exists()).toBe(true);
 
-			const explicitDryRun = await runGjcGcCommand(
+			const explicitDryRun = await runVibGcCommand(
 				["--disk", "--prune", "--dry-run", "--json"],
 				fixture.root,
 				fixture.env,

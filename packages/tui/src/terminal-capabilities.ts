@@ -1,11 +1,11 @@
-import type { encodeSixel as encodeSixelFn } from "@gajae-code/natives";
-import { $env, $pickenv } from "@gajae-code/utils";
+import type { encodeSixel as encodeSixelFn } from "@vib-rato/natives";
+import { $env, $pickenv } from "@vib-rato/utils";
 
 type NativeEncodeSixel = typeof encodeSixelFn;
 let nativeEncodeSixel: NativeEncodeSixel | undefined;
 
 function encodeSixelNative(bytes: Uint8Array, targetWidthPx: number, targetHeightPx: number): string {
-	nativeEncodeSixel ??= (require("@gajae-code/natives") as { encodeSixel: NativeEncodeSixel }).encodeSixel;
+	nativeEncodeSixel ??= (require("@vib-rato/natives") as { encodeSixel: NativeEncodeSixel }).encodeSixel;
 	return nativeEncodeSixel(bytes, targetWidthPx, targetHeightPx);
 }
 
@@ -93,7 +93,7 @@ export function isUnderTerminalMultiplexer(env: NodeJS.ProcessEnv = Bun.env): bo
 		multiplexerEnvEnabled(env.TMUX_PANE) ||
 		multiplexerEnvEnabled(env.STY) ||
 		multiplexerEnvEnabled(env.ZELLIJ) ||
-		multiplexerEnvEnabled(env.GJC_TMUX_LAUNCHED)
+		multiplexerEnvEnabled(env.VIB_TMUX_LAUNCHED)
 	) {
 		return true;
 	}
@@ -144,7 +144,7 @@ export function isCursorNeutralImagePermittedInFallback(): boolean {
 }
 
 function getForcedImageProtocol(): ImageProtocol | null | undefined {
-	const raw = $pickenv("GJC_FORCE_IMAGE_PROTOCOL", "PI_FORCE_IMAGE_PROTOCOL")?.trim().toLowerCase();
+	const raw = $pickenv("VIB_FORCE_IMAGE_PROTOCOL", "PI_FORCE_IMAGE_PROTOCOL")?.trim().toLowerCase();
 	if (!raw) return undefined;
 	if (raw === "kitty") return ImageProtocol.Kitty;
 	if (raw === "iterm2" || raw === "iterm") return ImageProtocol.Iterm2;
@@ -922,7 +922,7 @@ export function encodeITerm2Multipart(
 	const width = validate(options.width ?? "auto", "width");
 	const height = validate(options.height ?? "auto", "height");
 	const size = Buffer.from(base64Data, "base64").byteLength;
-	const name = Buffer.from("gajae-pet.gif").toString("base64");
+	const name = Buffer.from("vibrato-pet.gif").toString("base64");
 	const records = [
 		`\x1b]1337;MultipartFile=;name=${name};size=${size};width=${width};height=${height};inline=1;preserveAspectRatio=0:\x07`,
 	];

@@ -10,7 +10,7 @@
  * touching the persisted settings file.
  */
 
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 import type { Settings } from "../config/settings";
 
 export type HindsightScoping = "global" | "per-project" | "per-project-tagged";
@@ -147,7 +147,7 @@ export function loadHindsightConfig(settings: Settings, env: NodeJS.ProcessEnv =
 		retainMode: retainModeEnv ?? settingsRetainMode ?? "full-session",
 		retainEveryNTurns: retainEveryNTurnsEnv ?? settings.get("hindsight.retainEveryNTurns"),
 		retainOverlapTurns: settings.get("hindsight.retainOverlapTurns"),
-		retainContext: settings.get("hindsight.retainContext") ?? "gjc",
+		retainContext: settings.get("hindsight.retainContext") ?? "vib",
 
 		recallBudget: recallBudgetEnv ?? settingsRecallBudget ?? "mid",
 		recallMaxTokens: recallMaxTokensEnv ?? settings.get("hindsight.recallMaxTokens"),

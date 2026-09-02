@@ -1,5 +1,5 @@
-# @gajae-code/natives-linux-arm64
+# @vib-rato/natives-linux-arm64
 
-Linux arm64 optional native addon package for `@gajae-code/natives`.
+Linux arm64 optional native addon package for `@vib-rato/natives`.
 
-This package is installed as an optional dependency of `@gajae-code/natives`; users should import `@gajae-code/natives`, not this package directly.
+This package is installed as an optional dependency of `@vib-rato/natives`; users should import `@vib-rato/natives`, not this package directly.

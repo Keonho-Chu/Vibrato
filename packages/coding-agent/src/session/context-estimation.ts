@@ -6,8 +6,8 @@
  * UI surfaces (`modes/utils/context-usage.ts`, status line) import from here
  * as well, so every surface reports the same numbers.
  */
-import { estimateTextTokensHeuristic } from "@gajae-code/agent-core/compaction";
-import { toolWireSchema } from "@gajae-code/ai/utils/schema/wire";
+import { estimateTextTokensHeuristic } from "@vib-rato/agent-core/compaction";
+import { toolWireSchema } from "@vib-rato/ai/utils/schema/wire";
 import type { Skill } from "../extensibility/skills";
 import type { Tool } from "../tools";
 import type { AgentSession } from "./agent-session";

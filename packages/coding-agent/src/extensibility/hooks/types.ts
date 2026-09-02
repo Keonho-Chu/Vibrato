@@ -1,5 +1,5 @@
-import type { ImageContent, Message, Model, TextContent } from "@gajae-code/ai/core";
-import type { Component, TUI } from "@gajae-code/tui";
+import type { ImageContent, Message, Model, TextContent } from "@vib-rato/ai/core";
+import type { Component, TUI } from "@vib-rato/tui";
 import type { ModelRegistry } from "../../config/model-registry";
 import type { EditToolDetails } from "../../edit";
 import type { ExecOptions, ExecResult } from "../../exec/exec";
@@ -570,12 +570,12 @@ export interface HookAPI {
 	exec(command: string, args: string[], options?: ExecOptions): Promise<ExecResult>;
 
 	/** File logger for error/warning/debug messages */
-	logger: typeof import("@gajae-code/utils").logger;
+	logger: typeof import("@vib-rato/utils").logger;
 	/** Injected zod-backed typebox shim (legacy/compat — prefer `zod`). */
 	typebox: typeof import("../typebox");
 	/** Injected zod module for Zod-authored hooks. */
 	zod: typeof import("zod/v4");
-	/** Injected gajae-code exports */
+	/** Injected vib-rato exports */
 	pi: typeof import("../..");
 }
 

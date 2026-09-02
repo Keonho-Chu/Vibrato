@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { type CustomEntry, SessionManager } from "@gajae-code/coding-agent/session/session-manager";
+import { type CustomEntry, SessionManager } from "@vib-rato/coding-agent/session/session-manager";
 import { assistantMsg, userMsg } from "../utilities";
 
 describe("SessionManager append and tree traversal", () => {
@@ -274,7 +274,7 @@ describe("SessionManager append and tree traversal", () => {
 		});
 
 		it("terminates when duplicate ids create a child cycle reachable from roots", async () => {
-			const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gajae-gettree-cycle-"));
+			const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vibrato-gettree-cycle-"));
 			try {
 				const sessionFile = path.join(tempDir, "corrupt.jsonl");
 				const corruptSessionJsonl = `${[

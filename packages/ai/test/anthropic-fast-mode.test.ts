@@ -3,8 +3,8 @@ import {
 	clearAnthropicFastModeFallback,
 	isAnthropicFastModeUnsupportedError,
 	streamAnthropic,
-} from "@gajae-code/ai/providers/anthropic";
-import type { Context, Model, ProviderSessionState, ServiceTier } from "@gajae-code/ai/types";
+} from "@vib-rato/ai/providers/anthropic";
+import type { Context, Model, ProviderSessionState, ServiceTier } from "@vib-rato/ai/types";
 
 function makeAnthropicModel(id: string): Model<"anthropic-messages"> {
 	return {

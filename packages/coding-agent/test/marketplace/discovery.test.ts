@@ -1,13 +1,13 @@
 /**
- * Discovery integration tests for GJC plugin registry reading.
+ * Discovery integration tests for Vibrato plugin registry reading.
  *
  * NOTE: listAnthropic modelPluginRoots() lives in discovery/helpers.ts which imports
- * @gajae-code/natives (native Rust addon via glob). We cannot call it here.
+ * @vib-rato/natives (native Rust addon via glob). We cannot call it here.
  *
  * Instead these tests validate the structural contract that listAnthropic modelPluginRoots
  * depends on:
- *   1. GJC registry lives at path.join(home, ".gjc", "plugins", "installed_plugins.json")
- *      (matches getConfigDirName() == ".gjc")
+ *   1. Vibrato registry lives at path.join(home, ".vib", "plugins", "installed_plugins.json")
+ *      (matches getConfigDirName() == ".vib")
  *   2. The registry format passes the same validator that parseAnthropic modelPluginsRegistry uses
  *   3. readInstalledPluginsRegistry / writeInstalledPluginsRegistry produce files that
  *      satisfy that validator
@@ -19,18 +19,18 @@ import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { InstalledPluginEntry } from "@gajae-code/coding-agent/extensibility/plugins/marketplace";
+import type { InstalledPluginEntry } from "@vib-rato/coding-agent/extensibility/plugins/marketplace";
 import {
 	addInstalledPlugin,
 	buildPluginId,
 	readInstalledPluginsRegistry,
 	writeInstalledPluginsRegistry,
-} from "@gajae-code/coding-agent/extensibility/plugins/marketplace";
+} from "@vib-rato/coding-agent/extensibility/plugins/marketplace";
 
 // ── Inline validator ───────────────────────────────────────────────────────────
 //
 // Mirrors parseAnthropic modelPluginsRegistry() in discovery/helpers.ts exactly.
-// Kept here to avoid importing helpers.ts (which pulls in @gajae-code/natives).
+// Kept here to avoid importing helpers.ts (which pulls in @vib-rato/natives).
 function validateClaudeRegistryFormat(content: string): Record<string, unknown> | null {
 	let data: Record<string, unknown>;
 	try {
@@ -51,10 +51,10 @@ function validateClaudeRegistryFormat(content: string): Record<string, unknown> 
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-// Matches getConfigDirName() — single source of truth is in @gajae-code/utils,
-// but we know the value is ".gjc" and hardcoding it here keeps tests free of
+// Matches getConfigDirName() — single source of truth is in @vib-rato/utils,
+// but we know the value is ".vib" and hardcoding it here keeps tests free of
 // native-addon transitive imports.
-const GJC_CONFIG_DIR = ".gjc";
+const VIB_CONFIG_DIR = ".vib";
 
 function makeEntry(installPath: string, version = "1.0.0"): InstalledPluginEntry {
 	return {
@@ -69,13 +69,13 @@ function makeEntry(installPath: string, version = "1.0.0"): InstalledPluginEntry
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
 let tmpHome: string;
-/** ~/.gjc/plugins/installed_plugins.json inside tmpHome */
-let gjcRegistryPath: string;
+/** ~/.vib/plugins/installed_plugins.json inside tmpHome */
+let vibRegistryPath: string;
 
 beforeEach(() => {
-	tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-discovery-test-"));
-	gjcRegistryPath = path.join(tmpHome, GJC_CONFIG_DIR, "plugins", "installed_plugins.json");
-	fs.mkdirSync(path.dirname(gjcRegistryPath), { recursive: true });
+	tmpHome = fs.mkdtempSync(path.join(os.tmpdir(), "vib-discovery-test-"));
+	vibRegistryPath = path.join(tmpHome, VIB_CONFIG_DIR, "plugins", "installed_plugins.json");
+	fs.mkdirSync(path.dirname(vibRegistryPath), { recursive: true });
 });
 
 afterEach(() => {
@@ -84,29 +84,29 @@ afterEach(() => {
 
 // ── Path contract ─────────────────────────────────────────────────────────────
 
-describe("GJC registry path contract", () => {
-	it("GJC registry lives at home/.gjc/plugins/installed_plugins.json", () => {
+describe("Vibrato registry path contract", () => {
+	it("Vibrato registry lives at home/.vib/plugins/installed_plugins.json", () => {
 		// This is the path that listAnthropic modelPluginRoots reads.
 		// Any change to this path must be reflected in helpers.ts.
-		const expected = path.join(tmpHome, ".gjc", "plugins", "installed_plugins.json");
-		expect(gjcRegistryPath).toBe(expected);
+		const expected = path.join(tmpHome, ".vib", "plugins", "installed_plugins.json");
+		expect(vibRegistryPath).toBe(expected);
 	});
 
-	it("GJC config dir name is .gjc", () => {
+	it("Vibrato config dir name is .vib", () => {
 		// Validate our hardcoded constant matches getConfigDirName().
 		// If getConfigDirName() ever changes, this assertion will fail and
 		// we'll know the path constant here must be updated too.
-		expect(GJC_CONFIG_DIR).toBe(".gjc");
+		expect(VIB_CONFIG_DIR).toBe(".vib");
 	});
 });
 
 // ── Format compatibility ───────────────────────────────────────────────────────
 
-describe("GJC registry format compatibility with Claude parser", () => {
+describe("Vibrato registry format compatibility with Claude parser", () => {
 	it("empty registry written by writeInstalledPluginsRegistry passes validator", async () => {
-		await writeInstalledPluginsRegistry(gjcRegistryPath, { version: 2, plugins: {} });
+		await writeInstalledPluginsRegistry(vibRegistryPath, { version: 2, plugins: {} });
 
-		const content = fs.readFileSync(gjcRegistryPath, "utf8");
+		const content = fs.readFileSync(vibRegistryPath, "utf8");
 		const parsed = validateClaudeRegistryFormat(content);
 		expect(parsed).not.toBeNull();
 		expect((parsed as Record<string, unknown>).version).toBe(2);
@@ -116,11 +116,11 @@ describe("GJC registry format compatibility with Claude parser", () => {
 		const pluginId = buildPluginId("quality-review", "example-marketplace");
 		const entry = makeEntry(path.join(tmpHome, "plugins", "cache", "example-marketplace--quality-review--1.0.0"));
 
-		let reg = await readInstalledPluginsRegistry(gjcRegistryPath);
+		let reg = await readInstalledPluginsRegistry(vibRegistryPath);
 		reg = addInstalledPlugin(reg, pluginId, entry);
-		await writeInstalledPluginsRegistry(gjcRegistryPath, reg);
+		await writeInstalledPluginsRegistry(vibRegistryPath, reg);
 
-		const content = fs.readFileSync(gjcRegistryPath, "utf8");
+		const content = fs.readFileSync(vibRegistryPath, "utf8");
 		const parsed = validateClaudeRegistryFormat(content);
 		expect(parsed).not.toBeNull();
 
@@ -148,16 +148,16 @@ describe("GJC registry format compatibility with Claude parser", () => {
 
 // ── Round-trip ────────────────────────────────────────────────────────────────
 
-describe("GJC registry round-trip", () => {
+describe("Vibrato registry round-trip", () => {
 	it("reads back what was written — single plugin", async () => {
 		const id = buildPluginId("hello-plugin", "test-marketplace");
 		const entry = makeEntry("/tmp/fake-plugin-path");
 
-		let reg = await readInstalledPluginsRegistry(gjcRegistryPath);
+		let reg = await readInstalledPluginsRegistry(vibRegistryPath);
 		reg = addInstalledPlugin(reg, id, entry);
-		await writeInstalledPluginsRegistry(gjcRegistryPath, reg);
+		await writeInstalledPluginsRegistry(vibRegistryPath, reg);
 
-		const readBack = await readInstalledPluginsRegistry(gjcRegistryPath);
+		const readBack = await readInstalledPluginsRegistry(vibRegistryPath);
 		expect(readBack.plugins[id]).toBeDefined();
 		expect(readBack.plugins[id]?.[0]?.installPath).toBe(entry.installPath);
 		expect(readBack.plugins[id]?.[0]?.version).toBe("1.0.0");
@@ -170,12 +170,12 @@ describe("GJC registry round-trip", () => {
 		const entry1 = makeEntry("/tmp/fake-a", "1.0.0");
 		const entry2 = makeEntry("/tmp/fake-b", "2.0.0");
 
-		let reg = await readInstalledPluginsRegistry(gjcRegistryPath);
+		let reg = await readInstalledPluginsRegistry(vibRegistryPath);
 		reg = addInstalledPlugin(reg, id1, entry1);
 		reg = addInstalledPlugin(reg, id2, entry2);
-		await writeInstalledPluginsRegistry(gjcRegistryPath, reg);
+		await writeInstalledPluginsRegistry(vibRegistryPath, reg);
 
-		const readBack = await readInstalledPluginsRegistry(gjcRegistryPath);
+		const readBack = await readInstalledPluginsRegistry(vibRegistryPath);
 		expect(Object.keys(readBack.plugins)).toHaveLength(2);
 		expect(readBack.plugins[id1]?.[0]?.version).toBe("1.0.0");
 		expect(readBack.plugins[id2]?.[0]?.version).toBe("2.0.0");
@@ -191,11 +191,11 @@ describe("GJC registry round-trip", () => {
 			lastUpdated: "2025-01-15T10:30:00.000Z",
 		};
 
-		let reg = await readInstalledPluginsRegistry(gjcRegistryPath);
+		let reg = await readInstalledPluginsRegistry(vibRegistryPath);
 		reg = addInstalledPlugin(reg, id, entry);
-		await writeInstalledPluginsRegistry(gjcRegistryPath, reg);
+		await writeInstalledPluginsRegistry(vibRegistryPath, reg);
 
-		const readBack = await readInstalledPluginsRegistry(gjcRegistryPath);
+		const readBack = await readInstalledPluginsRegistry(vibRegistryPath);
 		expect(readBack.plugins[id]?.[0]?.scope).toBe("project");
 	});
 
@@ -210,20 +210,20 @@ describe("GJC registry round-trip", () => {
 
 // ── Precedence contract (structural) ─────────────────────────────────────────
 //
-// listAnthropic modelPluginRoots must replace Anthropic model entries with GJC entries when the same
+// listAnthropic modelPluginRoots must replace Anthropic model entries with Vibrato entries when the same
 // plugin ID appears in both registries. We cannot call that function here, but we
 // can verify the data shapes that the replacement logic reads are correct.
 
-describe("GJC precedence contract (registry structure)", () => {
-	it("same plugin ID in both registries — GJC entry has required fields for deduplication", () => {
+describe("Vibrato precedence contract (registry structure)", () => {
+	it("same plugin ID in both registries — Vibrato entry has required fields for deduplication", () => {
 		// The replacement logic: roots.filter(r => r.id !== pluginId) keyed by id.
-		// GJC entries must have installPath so they can be added to roots[].
+		// Vibrato entries must have installPath so they can be added to roots[].
 		const id = buildPluginId("shared-plugin", "common-mkt");
-		const gjcEntry = makeEntry("/gjc/cached/path");
+		const vibEntry = makeEntry("/vib/cached/path");
 
-		// GJC registry entry has installPath (required by listAnthropic modelPluginRoots)
-		expect(gjcEntry.installPath).toBeTruthy();
-		expect(typeof gjcEntry.installPath).toBe("string");
+		// Vibrato registry entry has installPath (required by listAnthropic modelPluginRoots)
+		expect(vibEntry.installPath).toBeTruthy();
+		expect(typeof vibEntry.installPath).toBe("string");
 		// ID parses correctly with lastIndexOf("@")
 		const atIndex = id.lastIndexOf("@");
 		expect(atIndex).toBeGreaterThan(0);

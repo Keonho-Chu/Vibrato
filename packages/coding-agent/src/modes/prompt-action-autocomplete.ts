@@ -8,7 +8,7 @@ import {
 	getSlashCommandMatchRank,
 	normalizeFuzzyText,
 	type SlashCommand,
-} from "@gajae-code/tui";
+} from "@vib-rato/tui";
 import type { KeybindingsManager } from "../config/keybindings";
 import { isSettingsInitialized, settings } from "../config/settings";
 import { applyEmojiCompletion, getEmojiSuggestions, isEmojiPrefix, tryEmojiInlineReplace } from "./emoji-autocomplete";

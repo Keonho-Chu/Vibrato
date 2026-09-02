@@ -20,7 +20,7 @@ const dirs: string[] = [];
 // even while the process clock is shifted past the submission TTL.
 const realNow = Date.now.bind(Date);
 const sockets: WebSocket[] = [];
-const isolatedSdkHostTest = process.env.GJC_CI_SDK_HOST_ISOLATED === "1" ? test : test.skip;
+const isolatedSdkHostTest = process.env.VIB_CI_SDK_HOST_ISOLATED === "1" ? test : test.skip;
 
 afterEach(async () => {
 	await Promise.all(sockets.splice(0).map(closeSocket));
@@ -101,7 +101,7 @@ async function connect(
 	cwd: string,
 	sessionId: string,
 ): Promise<{ socket: WebSocket; frames: Record<string, unknown>[] }> {
-	const endpointFile = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointFile = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointFile), "SDK endpoint");
 	const endpoint = JSON.parse(fs.readFileSync(endpointFile, "utf8")) as { url: string; token: string };
 	const frames: Record<string, unknown>[] = [];
@@ -120,7 +120,7 @@ const SUBMISSION_TTL_MS = 5 * 60_000;
 isolatedSdkHostTest(
 	"prompt outliving the submission TTL still publishes exactly one correlated positioned terminal",
 	async () => {
-		const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-prompt-terminal-ttl-"));
+		const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-prompt-terminal-ttl-"));
 		dirs.push(cwd);
 		const sessionId = `sdk-prompt-terminal-ttl-${Date.now()}`;
 		const sessionContext = context(cwd, sessionId);
@@ -191,7 +191,7 @@ isolatedSdkHostTest(
 isolatedSdkHostTest(
 	"cleanup during in-flight terminalization cannot drop the terminal event",
 	async () => {
-		const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-prompt-terminal-ttl-race-"));
+		const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-prompt-terminal-ttl-race-"));
 		dirs.push(cwd);
 		const sessionId = `sdk-prompt-terminal-ttl-race-${Date.now()}`;
 		const sessionContext = context(cwd, sessionId);
@@ -257,7 +257,7 @@ isolatedSdkHostTest(
 isolatedSdkHostTest(
 	"past-TTL terminal is delivered exactly once and the submission registry stays healthy",
 	async () => {
-		const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-prompt-terminal-ttl-once-"));
+		const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-prompt-terminal-ttl-once-"));
 		dirs.push(cwd);
 		const sessionId = `sdk-prompt-terminal-ttl-once-${Date.now()}`;
 		const sessionContext = context(cwd, sessionId);

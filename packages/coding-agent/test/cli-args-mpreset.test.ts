@@ -1,7 +1,7 @@
 import { describe, expect, spyOn, test, vi } from "bun:test";
-import { ThinkingLevel } from "@gajae-code/agent-core";
-import { type Model, THINKING_EFFORTS } from "@gajae-code/ai";
-import { CliParseError } from "@gajae-code/utils/cli";
+import { ThinkingLevel } from "@vib-rato/agent-core";
+import { type Model, THINKING_EFFORTS } from "@vib-rato/ai";
+import { CliParseError } from "@vib-rato/utils/cli";
 import { parseArgs } from "../src/cli/args";
 import type { ModelProfileDefinition } from "../src/config/model-profiles";
 import { Settings } from "../src/config/settings";
@@ -151,8 +151,8 @@ describe("CLI credential selector args", () => {
 
 describe("MCP config CLI args", () => {
 	test("parses absolute config paths in both supported syntaxes", () => {
-		expect(parseArgs(["--mcp-config", "/tmp/gjc-mcp.json"]).mcpConfig).toBe("/tmp/gjc-mcp.json");
-		expect(parseArgs(["--mcp-config=/tmp/gjc-mcp.json"]).mcpConfig).toBe("/tmp/gjc-mcp.json");
+		expect(parseArgs(["--mcp-config", "/tmp/vib-mcp.json"]).mcpConfig).toBe("/tmp/vib-mcp.json");
+		expect(parseArgs(["--mcp-config=/tmp/vib-mcp.json"]).mcpConfig).toBe("/tmp/vib-mcp.json");
 	});
 
 	test("rejects missing or non-absolute config paths", () => {
@@ -168,10 +168,10 @@ describe("MCP config CLI args", () => {
 	});
 	test("rejects repeated config paths in every supported syntax", () => {
 		for (const argv of [
-			["--mcp-config", "/tmp/gjc-mcp.json", "--mcp-config", "/tmp/gjc-mcp.json"],
-			["--mcp-config", "/tmp/gjc-mcp.json", "--mcp-config", "/tmp/other-mcp.json"],
-			["--mcp-config", "/tmp/gjc-mcp.json", "--mcp-config=/tmp/other-mcp.json"],
-			["--mcp-config=/tmp/gjc-mcp.json", "--mcp-config", "/tmp/other-mcp.json"],
+			["--mcp-config", "/tmp/vib-mcp.json", "--mcp-config", "/tmp/vib-mcp.json"],
+			["--mcp-config", "/tmp/vib-mcp.json", "--mcp-config", "/tmp/other-mcp.json"],
+			["--mcp-config", "/tmp/vib-mcp.json", "--mcp-config=/tmp/other-mcp.json"],
+			["--mcp-config=/tmp/vib-mcp.json", "--mcp-config", "/tmp/other-mcp.json"],
 		]) {
 			let thrown: unknown;
 			try {
@@ -186,10 +186,10 @@ describe("MCP config CLI args", () => {
 	});
 
 	test("defers ACP config validation to the ACP startup owner", () => {
-		expect(parseArgs(["--mcp-config", "/tmp/gjc-mcp.json", "--mode", "acp"]).mcpConfig).toBe("/tmp/gjc-mcp.json");
+		expect(parseArgs(["--mcp-config", "/tmp/vib-mcp.json", "--mode", "acp"]).mcpConfig).toBe("/tmp/vib-mcp.json");
 		for (const args of [
-			["--mcp-config", "/tmp/gjc-mcp.json", "--export", "/tmp/session.jsonl"],
-			["--mcp-config", "/tmp/gjc-mcp.json", "--list-models"],
+			["--mcp-config", "/tmp/vib-mcp.json", "--export", "/tmp/session.jsonl"],
+			["--mcp-config", "/tmp/vib-mcp.json", "--list-models"],
 		]) {
 			expect(() => parseArgs(args)).toThrow(CliParseError);
 		}

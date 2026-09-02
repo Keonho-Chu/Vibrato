@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { AuthStorage, type Model } from "@gajae-code/ai";
+import { AuthStorage, type Model } from "@vib-rato/ai";
 import { Settings } from "../src/config/settings";
 import {
 	createSdkHostModelRegistryLoader,
@@ -117,7 +117,7 @@ describe("resolveSdkHostModel", () => {
 	});
 
 	it("binds each registry to its explicit models path", async () => {
-		const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-host-model-paths-"));
+		const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-host-model-paths-"));
 		const firstStorage = await AuthStorage.create(path.join(root, "first-auth.db"));
 		const secondStorage = await AuthStorage.create(path.join(root, "second-auth.db"));
 		const firstModelsPath = path.join(root, "first", "models.yml");
@@ -150,7 +150,7 @@ describe("resolveSdkHostModel", () => {
 	});
 
 	it("binds canonical alias ranking to each registry's provider order", async () => {
-		const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-host-provider-order-"));
+		const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-host-provider-order-"));
 		const firstStorage = await AuthStorage.create(path.join(root, "first-auth.db"));
 		const secondStorage = await AuthStorage.create(path.join(root, "second-auth.db"));
 		const modelsPath = path.join(root, "models.yml");
@@ -203,7 +203,7 @@ describe("resolveSdkHostModel", () => {
 	});
 
 	it("reloads provider order while a broker registry remains alive", async () => {
-		const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-host-provider-order-reload-"));
+		const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-host-provider-order-reload-"));
 		const storage = await AuthStorage.create(path.join(root, "auth.db"));
 		const modelsPath = path.join(root, "models.yml");
 		await fs.writeFile(
@@ -252,7 +252,7 @@ describe("resolveSdkHostModel", () => {
 	});
 
 	it("keeps concurrent workspace validations isolated", async () => {
-		const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-host-provider-order-concurrent-"));
+		const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-host-provider-order-concurrent-"));
 		const storage = await AuthStorage.create(path.join(root, "auth.db"));
 		const modelsPath = path.join(root, "models.yml");
 		await fs.writeFile(

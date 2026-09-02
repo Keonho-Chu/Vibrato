@@ -4,7 +4,7 @@
  * Uses the capability system to load MCP servers from multiple sources.
  */
 
-import { getMCPConfigPath } from "@gajae-code/utils";
+import { getMCPConfigPath } from "@vib-rato/utils";
 import { mcpCapability } from "../capability/mcp";
 import type { SourceMeta } from "../capability/types";
 import type { Settings } from "../config/settings";
@@ -29,10 +29,10 @@ export interface LoadMCPConfigsOptions {
 	/** Only include startup-eligible servers; exact-config sessions always enforce autoload !== false. */
 	autoloadOnly?: boolean;
 	/**
-	 * Restrict discovery to GJC's own native config (`.gjc/` project and
-	 * `~/.gjc/agent/` user scopes). Conventional standalone sessions use this
+	 * Restrict discovery to Vibrato's own native config (`.vib/` project and
+	 * `~/.vib/agent/` user scopes). Conventional standalone sessions use this
 	 * mode: Claude Code/Codex project/global MCP files are explicit import
-	 * sources into `.gjc`, not implicit competing runtime authorities.
+	 * sources into `.vib`, not implicit competing runtime authorities.
 	 */
 	nativeOnly?: boolean;
 	/** Load only this explicit MCP config file. */
@@ -40,7 +40,7 @@ export interface LoadMCPConfigsOptions {
 	/**
 	 * Agent directory that holds the user scope (`<agentDir>/mcp.json`).
 	 * Default: `getAgentDir()`. Sessions created with their own `agentDir` pass it
-	 * so discovery and `gjc mcp add --scope user` read and write the same file.
+	 * so discovery and `vib mcp add --scope user` read and write the same file.
 	 */
 	agentDir?: string;
 }
@@ -144,7 +144,7 @@ export async function loadAllMCPConfigs(cwd: string, options?: LoadMCPConfigsOpt
 		configurationWarning = warnings.length > 0;
 	} else {
 		// Load MCP servers via capability system. Conventional standalone
-		// sessions restrict discovery to GJC's native `.gjc` scopes (nativeOnly),
+		// sessions restrict discovery to Vibrato's native `.vib` scopes (nativeOnly),
 		// keeping Claude Code/Codex files as explicit import sources rather than
 		// implicit runtime authorities.
 		const result = await loadCapability<MCPServer>(mcpCapability.id, {
@@ -156,7 +156,7 @@ export async function loadAllMCPConfigs(cwd: string, options?: LoadMCPConfigsOpt
 		// Filter out project-level configs if disabled
 		servers = enableProjectConfig ? result.items : result.items.filter(server => server._source.level !== "project");
 		// The disabledServers denylist is honored from both native scopes so a
-		// name listed in either GJC config file stays out of runtime loading.
+		// name listed in either Vibrato config file stays out of runtime loading.
 		// Each scope is read independently: a malformed config file in one scope
 		// must not abort discovery of valid servers in the other scope (the
 		// capability loader itself is already per-file tolerant).

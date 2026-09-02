@@ -5,7 +5,7 @@
  *   import { settings } from "./settings";
  *
  *   const enabled = settings.get("compaction.enabled");  // sync read
- *   settings.set("theme.dark", "red-claw");              // sync write, saves in background
+ *   settings.set("theme.dark", "lig-blue");              // sync write, saves in background
  *
  * For tests, `Settings.isolated()` seeds explicit user/global settings:
  *   const isolated = Settings.isolated({ "compaction.enabled": false });
@@ -25,15 +25,14 @@ import {
 	isEnoent,
 	logger,
 	setDefaultTabWidth,
-} from "@gajae-code/utils";
+} from "@vib-rato/utils";
 // Subpath import keeps Settings native-free for the W5b S1/idle module-trace
-// gate: the package barrel's procmgr namespace pulls @gajae-code/natives.
-import { getShellConfig as resolveShellConfig } from "@gajae-code/utils/shell-config";
+// gate: the package barrel's procmgr namespace pulls @vib-rato/natives.
+import { getShellConfig as resolveShellConfig } from "@vib-rato/utils/shell-config";
 import { YAML } from "bun";
 import { type Settings as SettingsCapabilityItem, settingsCapability } from "../capability/settings";
 import type { ModelRole } from "../config/model-registry";
 import { loadCapability } from "../discovery";
-import { extractWorkflowSetting, type WorkflowSettingKey } from "../gjc-runtime/workflow-settings";
 import { isLightTheme, setAutoThemeMapping, setColorBlindMode, setSymbolPreset } from "../modes/theme/theme";
 import {
 	type NotificationSettingsReader,
@@ -42,6 +41,7 @@ import {
 } from "../sdk/bus/config";
 import { AgentStorage } from "../session/agent-storage";
 import { type EditMode, type EditVariantMatch, normalizeEditMode } from "../utils/edit-mode";
+import { extractWorkflowSetting, type WorkflowSettingKey } from "../vib-runtime/workflow-settings";
 import {
 	type AtomicYamlConfigTransaction,
 	AtomicYamlConflictError,
@@ -94,11 +94,11 @@ export interface RawSettings {
 const UNSAFE_EDIT_VARIANT_PATTERNS = new Set(["__proto__", "constructor", "prototype"]);
 
 const CONFIG_ROOT_WORKFLOW_MIGRATION_KEYS: readonly WorkflowSettingKey[] = [
-	"gjc.deepInterview.ambiguityThreshold",
-	"gjc.ralplan.autoHandoff",
-	"gjc.ralplan.maxIterations",
-	"gjc.ralplan.maxReviewPassesPerLane",
-	"gjc.ultragoal.nudgeBudget",
+	"vib.deepInterview.ambiguityThreshold",
+	"vib.ralplan.autoHandoff",
+	"vib.ralplan.maxIterations",
+	"vib.ralplan.maxReviewPassesPerLane",
+	"vib.ultragoal.nudgeBudget",
 ];
 
 type StrictInvalidEvidenceEntry = { key: WorkflowSettingKey; value: unknown };
@@ -108,15 +108,15 @@ type ProjectTargetBeforeState = { present: boolean; value: unknown };
 
 /**
  * Guaranteed-invalid placeholder values persisted into project `config.yml` as
- * fallback strict evidence when the retained `.gjc/settings.json` is malformed
- * or unreadable AND the strict-invalid evidence sidecar (`.gjc/state/`) cannot
+ * fallback strict evidence when the retained `.vib/settings.json` is malformed
+ * or unreadable AND the strict-invalid evidence sidecar (`.vib/state/`) cannot
  * be written. The strict resolver reads config.yml only, so each value keeps
  * the ralplan exit-2 error observable until the user repairs the source.
  */
 const MALFORMED_SOURCE_STRICT_FALLBACK: readonly { key: WorkflowSettingKey; value: unknown }[] = [
-	{ key: "gjc.ralplan.autoHandoff", value: "invalid-autoHandoff" },
-	{ key: "gjc.ralplan.maxIterations", value: -1 },
-	{ key: "gjc.ralplan.maxReviewPassesPerLane", value: -1 },
+	{ key: "vib.ralplan.autoHandoff", value: "invalid-autoHandoff" },
+	{ key: "vib.ralplan.maxIterations", value: -1 },
+	{ key: "vib.ralplan.maxReviewPassesPerLane", value: -1 },
 ];
 
 type StrictInvalidEvidence =
@@ -230,7 +230,7 @@ export interface SettingsOptions {
 	/**
 	 * Read the canonical config.yml from disk but never persist: no DB open,
 	 * no legacy/config-root/project migrations, no file writes, renames, locks,
-	 * or mtime changes. Used by read-only inspection surfaces (`gjc customize
+	 * or mtime changes. Used by read-only inspection surfaces (`vib customize
 	 * doctor`). When true, inMemory must be false so config.yml is still read.
 	 */
 	readonly?: boolean;
@@ -336,8 +336,8 @@ const GLOBAL_ONLY_SETTINGS = new Set<SettingPath>([
 	"telemetry.enabled",
 ]);
 const LEGACY_THEME_NAME_REPLACEMENTS = {
-	dark: "red-claw",
-	light: "blue-crab",
+	dark: "lig-blue",
+	light: "lig-white",
 } as const;
 
 function isLegacyThemeName(name: string): name is keyof typeof LEGACY_THEME_NAME_REPLACEMENTS {
@@ -624,7 +624,7 @@ export class Settings implements NotificationSettingsReader {
 	 * discovers/merges project settings exactly like the durable path, but the
 	 * result is a transient snapshot. Does not affect the global singleton.
 	 *
-	 * Used by `gjc customize doctor` to honor the read-only product contract.
+	 * Used by `vib customize doctor` to honor the read-only product contract.
 	 */
 	static loadReadonly(options: { cwd?: string; agentDir?: string }): Promise<Settings> {
 		const instance = new Settings({ ...options, readonly: true });
@@ -1408,9 +1408,9 @@ export class Settings implements NotificationSettingsReader {
 				await this.#migrateAgentDirAndDatabaseLegacy();
 				// The workflow settings migrations write config.yml directly and must
 				// run BEFORE project discovery: project discovery strips the retired
-				// workflow keys from the retained .gjc/settings.json, so on a first
+				// workflow keys from the retained .vib/settings.json, so on a first
 				// load the migrated config.yml value must already exist when the
-				// project layer is scanned - otherwise settings.get()/gjc config
+				// project layer is scanned - otherwise settings.get()/vib config
 				// get/list return the schema default for one cycle.
 				await this.#migrateConfigRootWorkflowSettings();
 				await this.#migrateProjectWorkflowSettings();
@@ -1426,7 +1426,7 @@ export class Settings implements NotificationSettingsReader {
 				}
 				this.#global = await this.#loadYaml(this.#configPath!);
 			} else if (this.#readonly && this.#configPath) {
-				// Read-only inspection path (e.g. `gjc customize doctor`): read
+				// Read-only inspection path (e.g. `vib customize doctor`): read
 				// config.yml from disk without opening the DB, running legacy/
 				// config-root/project migrations, or writing/renaming anything.
 				// The effective configuration semantics are otherwise identical:
@@ -1516,7 +1516,7 @@ export class Settings implements NotificationSettingsReader {
 			try {
 				parseNotificationSettingsSnapshot(parsedRaw);
 			} catch (error) {
-				if (!(error instanceof Error) || error.message !== "gjc_notify_daemon_invalid_configuration") throw error;
+				if (!(error instanceof Error) || error.message !== "vib_notify_daemon_invalid_configuration") throw error;
 				this.#hasInvalidNotificationGlobal = true;
 			}
 		}
@@ -1569,7 +1569,7 @@ export class Settings implements NotificationSettingsReader {
 				if (item.level !== "project") continue;
 				// Retained project settings.json remains discoverable for non-workflow
 				// settings, but workflow keys durably migrated to config.yml must not be
-				// resurrected after `gjc config unset`. Unowned keys stay visible as the
+				// resurrected after `vib config unset`. Unowned keys stay visible as the
 				// resolver's fallback when migration could not publish ownership.
 				const data = item.path.endsWith(`${path.sep}settings.json`)
 					? await this.#stripRetiredWorkflowKeys(item.path, structuredClone(item.data as RawSettings))
@@ -1781,8 +1781,8 @@ export class Settings implements NotificationSettingsReader {
 
 	/**
 	 * Collect ABSENT-ONLY leaf patches from a legacy settings object against the
-	 * current config.yml root: a nested legacy value (e.g. `gjc.ultragoal.
-	 * nudgeBudget`) must not be skipped wholesale just because a sibling `gjc`
+	 * current config.yml root: a nested legacy value (e.g. `vib.ultragoal.
+	 * nudgeBudget`) must not be skipped wholesale just because a sibling `vib`
 	 * object already exists - each leaf is merged only when absent, so the
 	 * existing values (including the workflow values a migration wrote) are
 	 * never clobbered and every drained setting survives.
@@ -2148,7 +2148,7 @@ export class Settings implements NotificationSettingsReader {
 			// them (the database has no other one-time guard). A persistent drain
 			// failure PROPAGATES instead of being converted into a successful
 			// migration: the stale rows stay eligible for the absent-only merge, so
-			// a later `gjc config unset` of a migrated key would be resurrected on
+			// a later `vib config unset` of a migrated key would be resurrected on
 			// the next load. The migration aborts (the settings load fails loudly)
 			// and the next load retries the drain.
 			await this.#storage?.clearSettings();
@@ -2242,9 +2242,9 @@ export class Settings implements NotificationSettingsReader {
 
 	/**
 	 * One-time migration of the machine-global config-root `settings.json`
-	 * (`<configRoot>/settings.json`, normally `~/.gjc/settings.json`) workflow
+	 * (`<configRoot>/settings.json`, normally `~/.vib/settings.json`) workflow
 	 * keys into the environment-selected global agent `config.yml` — the
-	 * `GJC_CODING_AGENT_DIR` / `PI_CODING_AGENT_DIR` profile when set, else the
+	 * `VIB_CODING_AGENT_DIR` / `PI_CODING_AGENT_DIR` profile when set, else the
 	 * default `<configRoot>/agent/config.yml`. Runs only for the global agent
 	 * scope (an explicitly supplied temporary agentDir such as an SDK session
 	 * must never consume the machine-global source), inside one critical
@@ -2262,7 +2262,7 @@ export class Settings implements NotificationSettingsReader {
 		if (!this.#configPath) return;
 		// Strengthened pairing gate: only the GLOBAL agent scope may consume the
 		// machine-global source. That includes an environment-selected non-default
-		// profile (GJC_CODING_AGENT_DIR / PI_CODING_AGENT_DIR); a custom/temporary
+		// profile (VIB_CODING_AGENT_DIR / PI_CODING_AGENT_DIR); a custom/temporary
 		// agentDir (`Settings.loadForScope` for SDK or tests) must never touch it.
 		if (!this.#isGlobalAgentScope()) return;
 
@@ -2281,9 +2281,9 @@ export class Settings implements NotificationSettingsReader {
 				`Settings: config-root workflow migration source ${source} is the agent-dir settings file with an existing agent config.yml; migrating the workflow keys and retiring the orphan source`,
 			);
 		}
-		// When GJC runs from the config root itself (typically the user's home
-		// with the default `.gjc`), the config-root source IS the project source
-		// (`<cwd>/.gjc/settings.json`): consuming and retiring it would delete the
+		// When Vibrato runs from the config root itself (typically the user's home
+		// with the default `.vib`), the config-root source IS the project source
+		// (`<cwd>/.vib/settings.json`): consuming and retiring it would delete the
 		// project's non-workflow settings from discovery (and could remove a
 		// tracked dotfiles copy). Defer entirely to the project migration, which
 		// keeps the source - but first reconcile the config-root sidecars against
@@ -2432,7 +2432,7 @@ export class Settings implements NotificationSettingsReader {
 						// target - the marker claims them as its repairs. In the
 						// fresh case (backup matches the marker hash) revert only
 						// the values still matching the migration write, preserving
-						// a newer `gjc config set` override.
+						// a newer `vib config set` override.
 						// A deletion during a reconcile transition accepts the
 						// prior-hash backup, but only targets matching a verifiable
 						// migration write (the backup) are reverted: a target the
@@ -2577,7 +2577,7 @@ export class Settings implements NotificationSettingsReader {
 								// The user EDITED the still-active source after the
 								// crash: revert ONLY the marker-owned target values
 								// that still match the migration's write (the backup
-								// copy); a newer `gjc config set` override is
+								// copy); a newer `vib config set` override is
 								// preserved. Remove the backup and the pending marker
 								// so the next load re-runs fresh against the edited
 								// source.
@@ -2793,7 +2793,7 @@ export class Settings implements NotificationSettingsReader {
 					const staleMarkerKey = stalePendingOverride && marker?.migratedKeys.includes(key);
 					const extracted = extractWorkflowSetting(sourceDoc, key);
 					if (extracted.malformedParent) {
-						if (!key.startsWith("gjc.ralplan.")) {
+						if (!key.startsWith("vib.ralplan.")) {
 							// A malformed parent for a TOLERANT workflow key is ignored
 							// like any other invalid tolerant value (the tolerant
 							// runtime falls back); only strict ralplan keys must fail
@@ -2801,7 +2801,7 @@ export class Settings implements NotificationSettingsReader {
 							continue;
 						}
 						// A non-mapping workflow parent in the source (e.g.
-						// `{"gjc":{"ralplan":"broken"}}`) is malformed legacy JSON
+						// `{"vib":{"ralplan":"broken"}}`) is malformed legacy JSON
 						// that strict ralplan must fail on (exit 2); completing the
 						// migration would deactivate the source and silently use
 						// defaults. Under a changed-pending recovery (crash after
@@ -2875,7 +2875,7 @@ export class Settings implements NotificationSettingsReader {
 						// target value, so the deletion is honored. But ownership is
 						// verifiable only against the migration's backup copy: in
 						// the pending no-backup recovery the target value may be a
-						// NEWER `gjc config set` override, so never unset it
+						// NEWER `vib config set` override, so never unset it
 						// blindly - leave it and warn.
 						if (staleMarkerKey && extractWorkflowSetting(targetDoc, key, { flat: false }).present) {
 							if (backupExists) {
@@ -2943,7 +2943,7 @@ export class Settings implements NotificationSettingsReader {
 					const targetValue = extractWorkflowSetting(targetDoc, key, { flat: false });
 					if (targetValue.malformedParent) {
 						// A non-object intermediate in config.yml (e.g.
-						// `gjc: { ralplan: "repair-me" }`) is malformed user data
+						// `vib: { ralplan: "repair-me" }`) is malformed user data
 						// that #loadYaml would report for repair; writing the
 						// migrated value would silently replace it. Abort and leave
 						// everything untouched.
@@ -2978,7 +2978,7 @@ export class Settings implements NotificationSettingsReader {
 						}
 					}
 					// Validate the legacy value BEFORE migrating it. An invalid
-					// tolerant value (e.g. `"gjc.ultragoal.nudgeBudget": "bad"`)
+					// tolerant value (e.g. `"vib.ultragoal.nudgeBudget": "bad"`)
 					// must not be copied into the durable config.yml, where
 					// Settings.load()/config doctor would report it on every
 					// startup (previously the tolerant runtime simply ignored it
@@ -3001,7 +3001,7 @@ export class Settings implements NotificationSettingsReader {
 						// consuming it would silently fall back to defaults instead of
 						// failing loudly (the strict resolver throws exit 2 on the
 						// invalid value). Tolerant keys are simply skipped.
-						if (key.startsWith("gjc.ralplan.")) {
+						if (key.startsWith("vib.ralplan.")) {
 							// If the unset above was queued, apply it so the invalid
 							// legacy source is visible (exit 2) instead of being
 							// shadowed by the stale valid target value.
@@ -3040,7 +3040,7 @@ export class Settings implements NotificationSettingsReader {
 							}
 							invalidStrictKeys.push({ key, value: extracted.value });
 							this.#warnLegacyFallbackMigration(
-								`Settings: config-root workflow migration aborted: invalid strict ralplan value for ${key} in ${source}; keeping the legacy source active so gjc ralplan still fails loudly`,
+								`Settings: config-root workflow migration aborted: invalid strict ralplan value for ${key} in ${source}; keeping the legacy source active so vib ralplan still fails loudly`,
 							);
 							continue;
 						}
@@ -3066,7 +3066,7 @@ export class Settings implements NotificationSettingsReader {
 					patches.push({ path: key, op: "set", value: this.#coerceWorkflowScalar(key, extracted.value) });
 					// Flat keys are checked before nested ones by
 					// extractWorkflowSetting, so an invalid flat key (e.g.
-					// `"gjc.ralplan.maxIterations": bad`) would keep masking the
+					// `"vib.ralplan.maxIterations": bad`) would keep masking the
 					// migrated nested value after the legacy source is moved to .bak.
 					// Remove the flat form verbatim (the patch grammar cannot address
 					// dotted top-level key names).
@@ -3424,8 +3424,8 @@ export class Settings implements NotificationSettingsReader {
 	}
 
 	/**
-	 * One-time copy of the PROJECT `.gjc/settings.json` workflow keys into the
-	 * project `.gjc/config.yml` (absent-only). The workflow resolver reads
+	 * One-time copy of the PROJECT `.vib/settings.json` workflow keys into the
+	 * project `.vib/config.yml` (absent-only). The workflow resolver reads
 	 * config.yml only, so a project that still stores its ralplan/
 	 * deep-interview/ultragoal overrides in the legacy file would silently fall
 	 * back to defaults after the config.yml-only switch without this copy.
@@ -3442,7 +3442,7 @@ export class Settings implements NotificationSettingsReader {
 	 * migrate before any resolver reads config.yml.
 	 */
 	async #migrateProjectWorkflowSettings(): Promise<void> {
-		const projectDir = path.resolve(this.#cwd, ".gjc");
+		const projectDir = path.resolve(this.#cwd, ".vib");
 		const source = path.resolve(projectDir, "settings.json");
 		const target = path.resolve(projectDir, "config.yml");
 
@@ -3511,13 +3511,13 @@ export class Settings implements NotificationSettingsReader {
 		for (const key of CONFIG_ROOT_WORKFLOW_MIGRATION_KEYS) {
 			// A key already recorded as migrated is owned by config.yml: never
 			// re-import it, even when the target key is absent (e.g. after
-			// `gjc config unset`), so removing a migrated override sticks instead
+			// `vib config unset`), so removing a migrated override sticks instead
 			// of the stale legacy value being copied back on the next load.
 			if (migratedKeys.has(key)) continue;
 			const extracted = extractWorkflowSetting(document as Record<string, unknown>, key);
 			if (extracted.malformedParent) {
-				if (!key.startsWith("gjc.ralplan.")) continue;
-				// A non-mapping workflow parent (e.g. `gjc.ralplan: "broken"`) is
+				if (!key.startsWith("vib.ralplan.")) continue;
+				// A non-mapping workflow parent (e.g. `vib.ralplan: "broken"`) is
 				// malformed legacy JSON that strict ralplan must fail on (exit 2);
 				// record malformed evidence so the strict resolver surfaces it
 				// instead of silently defaulting, and abort the migration. A
@@ -3532,7 +3532,7 @@ export class Settings implements NotificationSettingsReader {
 			if (!extracted.present) continue;
 			const value = this.#coerceWorkflowScalar(key, extracted.value);
 			if (!this.#workflowKeyValueIsValid(key, value)) {
-				if (key.startsWith("gjc.ralplan.")) {
+				if (key.startsWith("vib.ralplan.")) {
 					// Strict ralplan keys must fail loudly while the retained legacy
 					// value is invalid (the resolver reads config.yml only): record
 					// project-layer evidence instead of silently skipping, mirroring
@@ -3597,7 +3597,7 @@ export class Settings implements NotificationSettingsReader {
 					return;
 				}
 				// A non-mapping parent in the project config.yml (e.g.
-				// `gjc: "repair-me"` or `gjc: { ralplan: [] }`) is malformed user
+				// `vib: "repair-me"` or `vib: { ralplan: [] }`) is malformed user
 				// data; patching would silently replace it. Abort the migration,
 				// mirroring the config-root guard, instead of treating the malformed
 				// parent as an absent key.
@@ -3646,7 +3646,7 @@ export class Settings implements NotificationSettingsReader {
 					// (no exit 2 while the target wins), but it must still be
 					// recorded as owned: the retained legacy source keeps the file
 					// for non-workflow settings, and without ownership a later
-					// `gjc config unset` of the target value would resurrect the
+					// `vib config unset` of the target value would resurrect the
 					// invalid legacy value and exit 2 (mirroring the config-root
 					// path, where the source is retired so the value is gone).
 					if (shadowed) shadowedInvalidKeys.push(retained.key);
@@ -3720,7 +3720,7 @@ export class Settings implements NotificationSettingsReader {
 					// from an earlier run whose marker was lost): they are owned by
 					// config.yml, so record them AND publish the merged marker under
 					// the lock before returning - an all-present first load must still
-					// create ownership, or a later `gjc config unset` would re-import
+					// create ownership, or a later `vib config unset` would re-import
 					// the stale legacy value.
 					newlyOwned = [...patches.map(patch => patch.path as WorkflowSettingKey), ...shadowedInvalidKeys];
 					const allPresentMarkerOk = await this.#writeProjectMigratedKeys(
@@ -3729,7 +3729,7 @@ export class Settings implements NotificationSettingsReader {
 					);
 					if (!allPresentMarkerOk) {
 						// Ownership could not be durably recorded: without the marker, a
-						// later `gjc config unset` would be undone by the retained
+						// later `vib config unset` would be undone by the retained
 						// source. Nothing was published this run (every key was already
 						// present), so there is nothing to roll back; surface the
 						// failure instead of reporting silent completion - the next
@@ -3915,7 +3915,7 @@ export class Settings implements NotificationSettingsReader {
 		} catch {
 			return true; // already gone: nothing to remove
 		}
-		const tombstone = `${filePath}.gjc-remove-${nodeCrypto.randomUUID()}`;
+		const tombstone = `${filePath}.vib-remove-${nodeCrypto.randomUUID()}`;
 		try {
 			await fs.promises.rename(filePath, tombstone);
 		} catch (error) {
@@ -3949,7 +3949,7 @@ export class Settings implements NotificationSettingsReader {
 
 	/**
 	 * Project strict-invalid evidence lives under the ignored runtime dir
-	 * `.gjc/state/` so running GJC never dirties the user's git worktree; the
+	 * `.vib/state/` so running Vibrato never dirties the user's git worktree; the
 	 * config-root evidence stays next to its machine-global source (outside any
 	 * repository).
 	 */
@@ -3959,7 +3959,7 @@ export class Settings implements NotificationSettingsReader {
 
 	/**
 	 * Record malformed-source strict evidence for the project migration; when the
-	 * evidence sidecar (`.gjc/state/`) cannot be written, fall back to persisting
+	 * evidence sidecar (`.vib/state/`) cannot be written, fall back to persisting
 	 * invalid placeholder values into the project config.yml so the ralplan exit-2
 	 * error stays observable either way.
 	 */
@@ -3971,7 +3971,7 @@ export class Settings implements NotificationSettingsReader {
 		if (!(await this.#sourceStillMalformed(source, null))) return;
 		// When EVERY strict ralplan key is already owned by config.yml (recorded
 		// in the migrated-keys marker), the retained source's corruption is
-		// irrelevant: a deliberate `gjc config unset` of an owned key must keep
+		// irrelevant: a deliberate `vib config unset` of an owned key must keep
 		// falling through to the lower layer/default instead of exiting 2 on a
 		// stale global malformed marker. Partial ownership still publishes the
 		// marker (the unowned strict keys' errors must stay observable).
@@ -3992,7 +3992,7 @@ export class Settings implements NotificationSettingsReader {
 	 */
 	async #allProjectStrictKeysMigrated(source: string): Promise<boolean> {
 		const owned = await this.#readProjectMigratedKeys(source);
-		return CONFIG_ROOT_WORKFLOW_MIGRATION_KEYS.filter(key => key.startsWith("gjc.ralplan.")).every(key =>
+		return CONFIG_ROOT_WORKFLOW_MIGRATION_KEYS.filter(key => key.startsWith("vib.ralplan.")).every(key =>
 			owned.has(key),
 		);
 	}
@@ -4008,7 +4008,7 @@ export class Settings implements NotificationSettingsReader {
 	 * non-mapping strict workflow parent. Used to revalidate a source before
 	 * publishing malformed evidence - a repair must not leave a stale marker,
 	 * but a structurally malformed revision (e.g. `null`, `[]`, or a broken
-	 * `gjc.ralplan` parent) parses as JSON and is NOT a repair.
+	 * `vib.ralplan` parent) parses as JSON and is NOT a repair.
 	 *
 	 * Pass `knownRaw` when the bytes were already read to skip the re-read.
 	 */
@@ -4031,7 +4031,7 @@ export class Settings implements NotificationSettingsReader {
 		}
 		if (!document || typeof document !== "object" || Array.isArray(document)) return true;
 		for (const key of CONFIG_ROOT_WORKFLOW_MIGRATION_KEYS) {
-			if (!key.startsWith("gjc.ralplan.")) continue;
+			if (!key.startsWith("vib.ralplan.")) continue;
 			if (extractWorkflowSetting(document as Record<string, unknown>, key).malformedParent) return true;
 		}
 		return false; // parses to a valid object with well-formed parents
@@ -4041,9 +4041,9 @@ export class Settings implements NotificationSettingsReader {
 	 * Fallback for a malformed or unreadable legacy project source whose strict
 	 * evidence sidecar could not be written: persist guaranteed-invalid placeholder
 	 * values for the strict ralplan keys into the project config.yml (the only
-	 * surface the strict resolver reads) so `gjc ralplan` keeps exiting 2 while
+	 * surface the strict resolver reads) so `vib ralplan` keeps exiting 2 while
 	 * the source is malformed. The fallback is tracked by the fallback-invalid
-	 * marker (writable next to the source even when `.gjc/state/` is not) and is
+	 * marker (writable next to the source even when `.vib/state/` is not) and is
 	 * removed once the source is repaired.
 	 */
 	async #persistProjectMalformedStrictFallback(source: string, target: string): Promise<void> {
@@ -4125,7 +4125,7 @@ export class Settings implements NotificationSettingsReader {
 	/**
 	 * Persist strict-invalid retention evidence: when a migration aborts on an
 	 * invalid STRICT ralplan legacy value (or a malformed source) it keeps the
-	 * source active so `gjc ralplan` can still fail loudly, but the resolver
+	 * source active so `vib ralplan` can still fail loudly, but the resolver
 	 * never reads the retained source. This evidence file is the durable record
 	 * the resolver's strict path throws on, so the retained value is surfaced
 	 * instead of silently falling back to defaults. The file carries the complete
@@ -4351,7 +4351,7 @@ export class Settings implements NotificationSettingsReader {
 	 * Retain strict errors from a retained legacy source when the migration must
 	 * not touch the target (future-schema guard): the resolver reads config.yml
 	 * only, so an invalid strict ralplan value or a malformed source must be
-	 * recorded as evidence to keep `gjc ralplan` exiting 2 instead of silently
+	 * recorded as evidence to keep `vib ralplan` exiting 2 instead of silently
 	 * defaulting. Clears stale evidence when the source holds no strict failure.
 	 */
 	async #retainStrictErrorsFromSource(source: string, evidencePath: string): Promise<boolean> {
@@ -4407,7 +4407,7 @@ export class Settings implements NotificationSettingsReader {
 			}
 			const invalidStrict: StrictInvalidEvidenceEntry[] = [];
 			for (const key of CONFIG_ROOT_WORKFLOW_MIGRATION_KEYS) {
-				if (!key.startsWith("gjc.ralplan.")) continue;
+				if (!key.startsWith("vib.ralplan.")) continue;
 				const extracted = extractWorkflowSetting(document as Record<string, unknown>, key);
 				if (extracted.malformedParent) {
 					// A non-mapping parent for a strict key is a malformed-source
@@ -4449,19 +4449,19 @@ export class Settings implements NotificationSettingsReader {
 	 * The read-only future-schema target cannot receive fallback placeholders and
 	 * the evidence sidecar is unwritable, so the strict error cannot be preserved
 	 * on any durable surface; surface the failure instead of silently letting
-	 * `gjc ralplan` fall through to defaults.
+	 * `vib ralplan` fall through to defaults.
 	 */
 	#warnEvidenceNotPreserved(source: string): void {
 		this.#warnLegacyFallbackMigration(
-			`Settings: strict error could not be preserved for ${source} (evidence unwritable, target read-only); gjc ralplan will use defaults until the source is repaired or the evidence path is writable`,
+			`Settings: strict error could not be preserved for ${source} (evidence unwritable, target read-only); vib ralplan will use defaults until the source is repaired or the evidence path is writable`,
 		);
 	}
 
 	/**
 	 * Read the project workflow migration's per-key completion marker. A key in
 	 * this set is owned by config.yml and is never re-imported from the retained
-	 * `.gjc/settings.json`, so removing a migrated override from config.yml
-	 * sticks. The marker lives under the ignored runtime dir `.gjc/state/` so a
+	 * `.vib/settings.json`, so removing a migrated override from config.yml
+	 * sticks. The marker lives under the ignored runtime dir `.vib/state/` so a
 	 * successful migration never dirties the user's git worktree. A missing or
 	 * malformed marker reads as empty (the migration simply re-copies absent-only
 	 * values and rewrites the marker).
@@ -4499,12 +4499,12 @@ export class Settings implements NotificationSettingsReader {
 
 	/**
 	 * Atomically persist the project workflow migration's per-key completion
-	 * marker under `.gjc/state/` (temp file + rename; the directory is created on
+	 * marker under `.vib/state/` (temp file + rename; the directory is created on
 	 * demand).
 	 */
 	async #writeProjectMigratedKeys(source: string, keys: readonly WorkflowSettingKey[]): Promise<boolean> {
 		const markerPath = path.join(path.dirname(source), "state", "settings.json.migrated-keys");
-		// A UNIQUE staging path: two GJC processes may migrate the same project
+		// A UNIQUE staging path: two Vibrato processes may migrate the same project
 		// concurrently, and a fixed .tmp name could be consumed by one writer's
 		// rename, making the other fail its marker write and roll back a copy
 		// whose ownership the winner recorded.
@@ -4645,7 +4645,7 @@ export class Settings implements NotificationSettingsReader {
 	 * Read the fallback-invalid marker (keys persisted into config.yml as
 	 * fallback evidence when the strict-evidence sidecar could not be written).
 	 * The marker lives next to the legacy source so it stays writable in the
-	 * exact scenario that produced it (.gjc/state/ is read-only or occupied).
+	 * exact scenario that produced it (.vib/state/ is read-only or occupied).
 	 */
 	async #readFallbackInvalidKeys(
 		source: string,
@@ -4908,7 +4908,7 @@ export class Settings implements NotificationSettingsReader {
 
 	#isGlobalAgentScope(): boolean {
 		// The Settings instance is bound to the environment-selected global agent
-		// profile (GJC_CODING_AGENT_DIR / PI_CODING_AGENT_DIR or the default
+		// profile (VIB_CODING_AGENT_DIR / PI_CODING_AGENT_DIR or the default
 		// <configRoot>/agent). An EXPLICITLY supplied temporary agentDir (SDK
 		// loadForScope, tests) differs from getAgentDir() and must never consume
 		// the machine-global config-root source; an environment-selected
@@ -5071,12 +5071,12 @@ export class Settings implements NotificationSettingsReader {
 
 	/**
 	 * True when the config-root source is the SAME physical file as the current
-	 * project's `.gjc/settings.json` (GJC run from the config root itself, e.g.
-	 * the user's home with the default `.gjc`): path identity first, then inode
+	 * project's `.vib/settings.json` (Vibrato run from the config root itself, e.g.
+	 * the user's home with the default `.vib`): path identity first, then inode
 	 * identity for symlink/hardlink aliases.
 	 */
 	async #configRootCollidesWithProjectSource(source: string): Promise<boolean> {
-		const projectSource = path.resolve(this.#cwd, ".gjc", "settings.json");
+		const projectSource = path.resolve(this.#cwd, ".vib", "settings.json");
 		if (path.resolve(source) === projectSource) return true;
 		const [sourceStat, projectStat] = await Promise.all([
 			fs.promises.stat(source).catch(() => null),
@@ -5420,9 +5420,9 @@ export class Settings implements NotificationSettingsReader {
 		if (typeof raw.theme === "string") {
 			const oldTheme = raw.theme;
 			const migratedTheme = this.#migrateLegacyBuiltInThemeName(oldTheme);
-			if (oldTheme === "dark" && migratedTheme === "red-claw") {
+			if (oldTheme === "dark" && migratedTheme === "lig-blue") {
 				raw.theme = { dark: migratedTheme };
-			} else if (oldTheme === "light" && migratedTheme === "blue-crab") {
+			} else if (oldTheme === "light" && migratedTheme === "lig-white") {
 				raw.theme = { light: migratedTheme };
 			} else {
 				const slot = this.#getThemeSlotForName(migratedTheme);
@@ -5534,7 +5534,7 @@ export class Settings implements NotificationSettingsReader {
 					!("bankId" in hindsightObj) &&
 					typeof agentName === "string" &&
 					agentName.trim().length > 0 &&
-					agentName !== "gjc"
+					agentName !== "vib"
 				) {
 					hindsightObj.bankId = agentName;
 				}
@@ -5909,7 +5909,7 @@ export class Settings implements NotificationSettingsReader {
 			this.#hasMalformedConfigRoot = false;
 			this.#hasInvalidNotificationGlobal = false;
 		} catch (error) {
-			if (error instanceof Error && error.message === "gjc_notify_daemon_invalid_configuration") {
+			if (error instanceof Error && error.message === "vib_notify_daemon_invalid_configuration") {
 				this.#hasMalformedConfigRoot = false;
 				this.#hasInvalidNotificationGlobal = true;
 				return;
@@ -5925,7 +5925,7 @@ export class Settings implements NotificationSettingsReader {
 			this.#hasMalformedConfigRoot = false;
 			this.#hasInvalidNotificationGlobal = false;
 		} catch (error) {
-			if (error instanceof Error && error.message === "gjc_notify_daemon_invalid_configuration") {
+			if (error instanceof Error && error.message === "vib_notify_daemon_invalid_configuration") {
 				this.#hasInvalidNotificationGlobal = true;
 				return;
 			}
@@ -6120,8 +6120,8 @@ export function resetSettingsForTest(): void {
 /**
  * Ensure the one-time legacy workflow settings migrations have run for `cwd`
  * before a workflow runtime resolves settings. The direct CLI commands
- * (`gjc ralplan`, `gjc deep-interview`, `gjc ultragoal`) never initialize
- * Settings, so without this the project `.gjc/settings.json` and config-root
+ * (`vib ralplan`, `vib deep-interview`, `vib ultragoal`) never initialize
+ * Settings, so without this the project `.vib/settings.json` and config-root
  * `settings.json` workflow keys would silently fall back to defaults after the
  * resolver stopped reading settings.json. No-op when the global Settings
  * singleton is already initialized (session path). Best-effort: a settings

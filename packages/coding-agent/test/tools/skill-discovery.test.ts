@@ -2,13 +2,13 @@ import { describe, expect, it } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { getSessionSlashCommands } from "@gajae-code/coding-agent/extensibility/extensions/get-commands-handler";
-import type { Skill } from "@gajae-code/coding-agent/extensibility/skills";
-import { buildSystemPrompt } from "@gajae-code/coding-agent/system-prompt";
-import type { ToolSession } from "@gajae-code/coding-agent/tools";
-import { SkillTool } from "@gajae-code/coding-agent/tools/skill";
-import { SkillDiscoveryTool } from "@gajae-code/coding-agent/tools/skill-discovery";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { getSessionSlashCommands } from "@vib-rato/coding-agent/extensibility/extensions/get-commands-handler";
+import type { Skill } from "@vib-rato/coding-agent/extensibility/skills";
+import { buildSystemPrompt } from "@vib-rato/coding-agent/system-prompt";
+import type { ToolSession } from "@vib-rato/coding-agent/tools";
+import { SkillTool } from "@vib-rato/coding-agent/tools/skill";
+import { SkillDiscoveryTool } from "@vib-rato/coding-agent/tools/skill-discovery";
 import { safeRm } from "../../../../scripts/safe-cleanup";
 
 async function makeSkill(
@@ -63,9 +63,9 @@ function runtimeSkillSettings(overrides: Record<string, unknown> = {}): Settings
 }
 
 describe("SkillDiscoveryTool", () => {
-	it("discovers project runtime skills from .gjc/skills", async () => {
-		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-project-skills-"));
-		await makeSkill(path.join(cwd, ".gjc", "skills"), "project-helper", "Project helper skill");
+	it("discovers project runtime skills from .vib/skills", async () => {
+		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "vib-project-skills-"));
+		await makeSkill(path.join(cwd, ".vib", "skills"), "project-helper", "Project helper skill");
 		const settings = runtimeSkillSettings();
 
 		const tool = new SkillDiscoveryTool(createSession(cwd, { settings }));
@@ -80,9 +80,9 @@ describe("SkillDiscoveryTool", () => {
 	});
 
 	it("preserves exact skill-name tokens without broadening unnamed partial matches", async () => {
-		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-exact-name-skill-"));
-		await makeSkill(path.join(cwd, ".gjc", "skills"), "aws", "Cloud operations router");
-		await makeSkill(path.join(cwd, ".gjc", "skills"), "harbor", "Container registry router");
+		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "vib-exact-name-skill-"));
+		await makeSkill(path.join(cwd, ".vib", "skills"), "aws", "Cloud operations router");
+		await makeSkill(path.join(cwd, ".vib", "skills"), "harbor", "Container registry router");
 		const tool = new SkillDiscoveryTool(createSession(cwd, { settings: runtimeSkillSettings() }));
 
 		const exact = await tool.execute("call", { query: "aws" });
@@ -101,11 +101,11 @@ describe("SkillDiscoveryTool", () => {
 		expect(unrelated.details?.candidates).toEqual([]);
 	});
 
-	it("discovers user runtime skills from ~/.gjc/skills", async () => {
-		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-user-skills-cwd-"));
-		const home = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-user-skills-home-"));
+	it("discovers user runtime skills from ~/.vib/skills", async () => {
+		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "vib-user-skills-cwd-"));
+		const home = await fs.mkdtemp(path.join(os.tmpdir(), "vib-user-skills-home-"));
 		try {
-			await makeSkill(path.join(home, ".gjc", "skills"), "user-helper", "User helper skill");
+			await makeSkill(path.join(home, ".vib", "skills"), "user-helper", "User helper skill");
 			const settings = runtimeSkillSettings();
 			const tool = new SkillDiscoveryTool(createSession(cwd, { settings, home }));
 			const result = await tool.execute("call", { source: "user" });
@@ -120,11 +120,11 @@ describe("SkillDiscoveryTool", () => {
 		}
 	});
 
-	it("does not classify home .gjc skills as project skills while walking up", async () => {
-		const home = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-home-skill-boundary-"));
+	it("does not classify home .vib skills as project skills while walking up", async () => {
+		const home = await fs.mkdtemp(path.join(os.tmpdir(), "vib-home-skill-boundary-"));
 		const cwd = path.join(home, "work", "project", "nested");
 		await fs.mkdir(cwd, { recursive: true });
-		await makeSkill(path.join(home, ".gjc", "skills"), "home-helper", "Home helper skill", "Home body.");
+		await makeSkill(path.join(home, ".vib", "skills"), "home-helper", "Home helper skill", "Home body.");
 		try {
 			const projectOnly = runtimeSkillSettings({ "skills.enablePiUser": false });
 			const discovery = await new SkillDiscoveryTool(createSession(cwd, { settings: projectOnly, home })).execute(
@@ -162,10 +162,10 @@ describe("SkillDiscoveryTool", () => {
 	});
 
 	it("does not return bundled built-in skills or grow the core prompt catalog", async () => {
-		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-builtins-suppressed-"));
-		await makeSkill(path.join(cwd, ".gjc", "skills"), "project-helper", "Project helper skill");
+		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "vib-builtins-suppressed-"));
+		await makeSkill(path.join(cwd, ".vib", "skills"), "project-helper", "Project helper skill");
 		await makeSkill(
-			path.join(cwd, ".gjc", "skills"),
+			path.join(cwd, ".vib", "skills"),
 			"ralplan",
 			"On-disk built-in impostor",
 			"Should be suppressed.",
@@ -174,8 +174,8 @@ describe("SkillDiscoveryTool", () => {
 		const builtInSkill: Skill = {
 			name: "ralplan",
 			description: "Built-in planning workflow",
-			filePath: "embedded:gjc/skills/ralplan/SKILL.md",
-			baseDir: "embedded:gjc/skills/ralplan",
+			filePath: "embedded:vib/skills/ralplan/SKILL.md",
+			baseDir: "embedded:vib/skills/ralplan",
 			source: "embedded",
 		};
 
@@ -196,8 +196,8 @@ describe("SkillDiscoveryTool", () => {
 				{
 					name: "project-helper",
 					description: "Project helper skill",
-					filePath: path.join(cwd, ".gjc", "skills", "project-helper", "SKILL.md"),
-					baseDir: path.join(cwd, ".gjc", "skills", "project-helper"),
+					filePath: path.join(cwd, ".vib", "skills", "project-helper", "SKILL.md"),
+					baseDir: path.join(cwd, ".vib", "skills", "project-helper"),
 					source: "runtime:project",
 				},
 			],
@@ -210,8 +210,8 @@ describe("SkillDiscoveryTool", () => {
 	});
 
 	it("loads selected discovered skill content through the skill invocation path", async () => {
-		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-selected-skill-"));
-		await makeSkill(path.join(cwd, ".gjc", "skills"), "project-helper", "Project helper skill", "Loaded narrowly.");
+		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "vib-selected-skill-"));
+		await makeSkill(path.join(cwd, ".vib", "skills"), "project-helper", "Project helper skill", "Loaded narrowly.");
 		const settings = runtimeSkillSettings();
 		const sent: Array<{ content: string; details?: unknown }> = [];
 		const tool = new SkillTool(
@@ -232,8 +232,8 @@ describe("SkillDiscoveryTool", () => {
 	});
 
 	it("does not discover or invoke runtime skills when skills.enabled is false", async () => {
-		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-skills-disabled-"));
-		await makeSkill(path.join(cwd, ".gjc", "skills"), "project-helper", "Project helper skill", "Blocked body.");
+		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "vib-skills-disabled-"));
+		await makeSkill(path.join(cwd, ".vib", "skills"), "project-helper", "Project helper skill", "Blocked body.");
 		const settings = runtimeSkillSettings({ "skills.enabled": false });
 
 		const discovery = await new SkillDiscoveryTool(createSession(cwd, { settings })).execute("call", {});
@@ -255,8 +255,8 @@ describe("SkillDiscoveryTool", () => {
 	});
 
 	it("explains empty results caused by disabled discovery scopes, and stays silent for genuine emptiness", async () => {
-		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-skills-notice-"));
-		await makeSkill(path.join(cwd, ".gjc", "skills"), "project-helper", "Project helper skill");
+		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "vib-skills-notice-"));
+		await makeSkill(path.join(cwd, ".vib", "skills"), "project-helper", "Project helper skill");
 
 		// Requested scope is fully disabled: empty result carries a scope notice.
 		const userOff = runtimeSkillSettings({ "skills.enablePiUser": false });
@@ -291,39 +291,39 @@ describe("SkillDiscoveryTool", () => {
 	});
 
 	it("discovers canonical and legacy user roots in native precedence order", async () => {
-		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-user-root-cwd-"));
-		const home = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-user-root-home-"));
-		const originalGjcConfigDir = process.env.GJC_CONFIG_DIR;
+		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "vib-user-root-cwd-"));
+		const home = await fs.mkdtemp(path.join(os.tmpdir(), "vib-user-root-home-"));
+		const originalVibConfigDir = process.env.VIB_CONFIG_DIR;
 		const originalPiConfigDir = process.env.PI_CONFIG_DIR;
-		const originalCodingAgentDir = process.env.GJC_CODING_AGENT_DIR;
+		const originalCodingAgentDir = process.env.VIB_CODING_AGENT_DIR;
 		const originalPiCodingAgentDir = process.env.PI_CODING_AGENT_DIR;
 		const originalXdgConfigHome = process.env.XDG_CONFIG_HOME;
 
 		try {
-			process.env.GJC_CONFIG_DIR = "/absolute-looking-gjc";
+			process.env.VIB_CONFIG_DIR = "/absolute-looking-vib";
 			process.env.PI_CONFIG_DIR = ".decoy-pi";
-			process.env.GJC_CODING_AGENT_DIR = path.join(home, ".decoy-agent");
+			process.env.VIB_CODING_AGENT_DIR = path.join(home, ".decoy-agent");
 			process.env.PI_CODING_AGENT_DIR = path.join(home, ".decoy-pi-agent");
 			process.env.XDG_CONFIG_HOME = path.join(home, ".xdg-decoy");
 
 			await makeSkill(
-				path.join(home, "/absolute-looking-gjc", "agent", "skills"),
+				path.join(home, "/absolute-looking-vib", "agent", "skills"),
 				"shared",
 				"Canonical user skill",
 				"Canonical body.",
 			);
 			await makeSkill(
-				path.join(home, "/absolute-looking-gjc", "skills"),
+				path.join(home, "/absolute-looking-vib", "skills"),
 				"shared",
 				"Configured legacy user skill",
 				"Legacy body.",
 			);
-			await makeSkill(path.join(home, ".gjc", "skills"), "historical", "Historical legacy user skill");
-			await makeSkill(path.join(cwd, ".gjc", "skills"), "shared", "Project user skill", "Project body.");
+			await makeSkill(path.join(home, ".vib", "skills"), "historical", "Historical legacy user skill");
+			await makeSkill(path.join(cwd, ".vib", "skills"), "shared", "Project user skill", "Project body.");
 
 			await makeSkill(path.join(home, ".decoy-agent", "skills"), "decoy", "Decoy user skill");
 			await makeSkill(path.join(home, ".decoy-pi-agent", "skills"), "pi-decoy", "PI decoy user skill");
-			await makeSkill(path.join(home, ".xdg-decoy", "gjc", "agent", "skills"), "xdg-decoy", "XDG decoy user skill");
+			await makeSkill(path.join(home, ".xdg-decoy", "vib", "agent", "skills"), "xdg-decoy", "XDG decoy user skill");
 
 			const result = await new SkillDiscoveryTool(
 				createSession(cwd, { settings: runtimeSkillSettings(), home }),
@@ -347,12 +347,12 @@ describe("SkillDiscoveryTool", () => {
 				expect.objectContaining({ name: "shared", description: "Project user skill", source: "project" }),
 			]);
 		} finally {
-			if (originalGjcConfigDir === undefined) delete process.env.GJC_CONFIG_DIR;
-			else process.env.GJC_CONFIG_DIR = originalGjcConfigDir;
+			if (originalVibConfigDir === undefined) delete process.env.VIB_CONFIG_DIR;
+			else process.env.VIB_CONFIG_DIR = originalVibConfigDir;
 			if (originalPiConfigDir === undefined) delete process.env.PI_CONFIG_DIR;
 			else process.env.PI_CONFIG_DIR = originalPiConfigDir;
-			if (originalCodingAgentDir === undefined) delete process.env.GJC_CODING_AGENT_DIR;
-			else process.env.GJC_CODING_AGENT_DIR = originalCodingAgentDir;
+			if (originalCodingAgentDir === undefined) delete process.env.VIB_CODING_AGENT_DIR;
+			else process.env.VIB_CODING_AGENT_DIR = originalCodingAgentDir;
 			if (originalPiCodingAgentDir === undefined) delete process.env.PI_CODING_AGENT_DIR;
 			else process.env.PI_CODING_AGENT_DIR = originalPiCodingAgentDir;
 			if (originalXdgConfigHome === undefined) delete process.env.XDG_CONFIG_HOME;
@@ -363,19 +363,19 @@ describe("SkillDiscoveryTool", () => {
 	});
 
 	it("uses the default and PI_CONFIG_DIR canonical user roots", async () => {
-		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-user-canonical-cwd-"));
-		const home = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-user-canonical-home-"));
-		const originalGjcConfigDir = process.env.GJC_CONFIG_DIR;
+		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "vib-user-canonical-cwd-"));
+		const home = await fs.mkdtemp(path.join(os.tmpdir(), "vib-user-canonical-home-"));
+		const originalVibConfigDir = process.env.VIB_CONFIG_DIR;
 		const originalPiConfigDir = process.env.PI_CONFIG_DIR;
 		try {
-			delete process.env.GJC_CONFIG_DIR;
+			delete process.env.VIB_CONFIG_DIR;
 			delete process.env.PI_CONFIG_DIR;
 			await makeSkill(
-				path.join(home, ".gjc", "agent", "skills"),
+				path.join(home, ".vib", "agent", "skills"),
 				"default-canonical",
 				"Default canonical user skill",
 			);
-			await makeSkill(path.join(home, ".gjc", "skills"), "default-canonical", "Default legacy user skill");
+			await makeSkill(path.join(home, ".vib", "skills"), "default-canonical", "Default legacy user skill");
 			let result = await new SkillDiscoveryTool(
 				createSession(cwd, { settings: runtimeSkillSettings(), home }),
 			).execute("call", {
@@ -398,8 +398,8 @@ describe("SkillDiscoveryTool", () => {
 				"pi-canonical",
 			]);
 		} finally {
-			if (originalGjcConfigDir === undefined) delete process.env.GJC_CONFIG_DIR;
-			else process.env.GJC_CONFIG_DIR = originalGjcConfigDir;
+			if (originalVibConfigDir === undefined) delete process.env.VIB_CONFIG_DIR;
+			else process.env.VIB_CONFIG_DIR = originalVibConfigDir;
 			if (originalPiConfigDir === undefined) delete process.env.PI_CONFIG_DIR;
 			else process.env.PI_CONFIG_DIR = originalPiConfigDir;
 			await safeRm(cwd, { recursive: true, force: true });
@@ -408,10 +408,10 @@ describe("SkillDiscoveryTool", () => {
 	});
 
 	it("keeps hidden runtime skills discoverable and exactly invocable", async () => {
-		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-hidden-runtime-skill-"));
+		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "vib-hidden-runtime-skill-"));
 		try {
 			await makeSkill(
-				path.join(cwd, ".gjc", "skills"),
+				path.join(cwd, ".vib", "skills"),
 				"hidden-helper",
 				"Hidden helper skill",
 				"Hidden body.",
@@ -439,8 +439,8 @@ describe("SkillDiscoveryTool", () => {
 			const hiddenSkill: Skill = {
 				name: "hidden-helper",
 				description: "Hidden helper skill",
-				filePath: path.join(cwd, ".gjc", "skills", "hidden-helper", "SKILL.md"),
-				baseDir: path.join(cwd, ".gjc", "skills", "hidden-helper"),
+				filePath: path.join(cwd, ".vib", "skills", "hidden-helper", "SKILL.md"),
+				baseDir: path.join(cwd, ".vib", "skills", "hidden-helper"),
 				source: "runtime:project",
 				hide: true,
 			};
@@ -457,15 +457,15 @@ describe("SkillDiscoveryTool", () => {
 	});
 
 	it("applies policy before realpath/name dedup, then query, sort, and limit", async () => {
-		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-skill-discovery-pipeline-"));
-		const home = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-skill-discovery-pipeline-home-"));
+		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "vib-skill-discovery-pipeline-"));
+		const home = await fs.mkdtemp(path.join(os.tmpdir(), "vib-skill-discovery-pipeline-home-"));
 		try {
-			const skillsDir = path.join(cwd, ".gjc", "skills");
+			const skillsDir = path.join(cwd, ".vib", "skills");
 			const alphaPath = await makeSkill(skillsDir, "alpha", "Sort alpha", "Alpha body.");
 			await fs.symlink(path.dirname(alphaPath), path.join(skillsDir, "zz-alias-alpha"), "dir");
 			await makeSkill(skillsDir, "ralplan", "Sort built-in", "Suppressed body.");
 			const userAlphaPath = await makeSkill(
-				path.join(home, ".gjc", "skills"),
+				path.join(home, ".vib", "skills"),
 				"alpha",
 				"Lower-only user alpha",
 				"User body.",
@@ -497,10 +497,10 @@ describe("SkillDiscoveryTool", () => {
 	});
 
 	it("applies source enable flags and skill filters to discovery and invocation", async () => {
-		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-skills-policy-"));
-		const home = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-skills-policy-home-"));
-		await makeSkill(path.join(cwd, ".gjc", "skills"), "project-helper", "Project helper skill", "Project body.");
-		await makeSkill(path.join(home, ".gjc", "skills"), "user-helper", "User helper skill", "User body.");
+		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "vib-skills-policy-"));
+		const home = await fs.mkdtemp(path.join(os.tmpdir(), "vib-skills-policy-home-"));
+		await makeSkill(path.join(cwd, ".vib", "skills"), "project-helper", "Project helper skill", "Project body.");
+		await makeSkill(path.join(home, ".vib", "skills"), "user-helper", "User helper skill", "User body.");
 		try {
 			const projectDisabled = runtimeSkillSettings({ "skills.enablePiProject": false });
 			let result = await new SkillDiscoveryTool(createSession(cwd, { settings: projectDisabled, home })).execute(
@@ -546,7 +546,7 @@ describe("SkillDiscoveryTool", () => {
 	});
 
 	it("advertises project .claude/skills and .codex/skills as import candidates with zero configuration", async () => {
-		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-convention-skills-"));
+		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "vib-convention-skills-"));
 		await makeSkill(path.join(cwd, ".claude", "skills"), "claude-helper", "Claude convention helper");
 		await makeSkill(path.join(cwd, ".codex", "skills"), "codex-helper", "Codex convention helper");
 
@@ -566,17 +566,17 @@ describe("SkillDiscoveryTool", () => {
 		);
 		expect(importDiagnostics.some(message => message.includes('"claude-helper"'))).toBe(true);
 		expect(importDiagnostics.some(message => message.includes('"codex-helper"'))).toBe(true);
-		expect(importDiagnostics.every(message => message.includes(".gjc/skills/"))).toBe(true);
+		expect(importDiagnostics.every(message => message.includes(".vib/skills/"))).toBe(true);
 	});
 
-	it("applies runtime precedence: project .gjc beats user, convention copies stay import candidates", async () => {
-		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-convention-precedence-"));
-		const home = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-convention-precedence-home-"));
+	it("applies runtime precedence: project .vib beats user, convention copies stay import candidates", async () => {
+		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "vib-convention-precedence-"));
+		const home = await fs.mkdtemp(path.join(os.tmpdir(), "vib-convention-precedence-home-"));
 		try {
-			await makeSkill(path.join(home, ".gjc", "skills"), "shared", "User copy");
+			await makeSkill(path.join(home, ".vib", "skills"), "shared", "User copy");
 			await makeSkill(path.join(cwd, ".codex", "skills"), "shared", "Codex copy");
 			await makeSkill(path.join(cwd, ".claude", "skills"), "shared", "Claude copy");
-			const nativePath = await makeSkill(path.join(cwd, ".gjc", "skills"), "shared", "Native copy");
+			const nativePath = await makeSkill(path.join(cwd, ".vib", "skills"), "shared", "Native copy");
 
 			const result = await new SkillDiscoveryTool(
 				createSession(cwd, { settings: runtimeSkillSettings(), home }),
@@ -596,23 +596,23 @@ describe("SkillDiscoveryTool", () => {
 
 			// Drop the native copy: the user-scope copy wins at runtime while the
 			// convention copies remain import candidates with enablement guidance.
-			await safeRm(path.join(cwd, ".gjc"), { recursive: true, force: true });
+			await safeRm(path.join(cwd, ".vib"), { recursive: true, force: true });
 			const userWins = await new SkillDiscoveryTool(
 				createSession(cwd, { settings: runtimeSkillSettings(), home }),
 			).execute("call", { query: "shared" });
-			expect(userWins.details?.candidates[0]?.path).toContain(path.join(".gjc", "skills", "shared"));
+			expect(userWins.details?.candidates[0]?.path).toContain(path.join(".vib", "skills", "shared"));
 			expect(userWins.details?.candidates[0]?.source).toBe("user");
 		} finally {
 		}
 	});
 
 	it("diagnoses protected-name collisions, ignored, disabled, and include-filtered skills", async () => {
-		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-discovery-diagnostics-"));
-		await makeSkill(path.join(cwd, ".gjc", "skills"), "ralplan", "On-disk built-in impostor");
-		await makeSkill(path.join(cwd, ".gjc", "skills"), "ignored-one", "Ignored helper");
-		await makeSkill(path.join(cwd, ".gjc", "skills"), "disabled-one", "Disabled helper");
-		await makeSkill(path.join(cwd, ".gjc", "skills"), "excluded-one", "Include-filtered helper");
-		await makeSkill(path.join(cwd, ".gjc", "skills"), "visible-one", "Visible helper");
+		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "vib-discovery-diagnostics-"));
+		await makeSkill(path.join(cwd, ".vib", "skills"), "ralplan", "On-disk built-in impostor");
+		await makeSkill(path.join(cwd, ".vib", "skills"), "ignored-one", "Ignored helper");
+		await makeSkill(path.join(cwd, ".vib", "skills"), "disabled-one", "Disabled helper");
+		await makeSkill(path.join(cwd, ".vib", "skills"), "excluded-one", "Include-filtered helper");
+		await makeSkill(path.join(cwd, ".vib", "skills"), "visible-one", "Visible helper");
 
 		const settings = runtimeSkillSettings({
 			"skills.ignoredSkills": ["ignored-*"],
@@ -622,18 +622,18 @@ describe("SkillDiscoveryTool", () => {
 		const result = await new SkillDiscoveryTool(createSession(cwd, { settings })).execute("call", {});
 		expect(result.details?.candidates.map(candidate => candidate.name)).toEqual(["visible-one"]);
 		const diagnostics = result.details?.diagnostics ?? [];
-		expect(diagnostics.some(message => message.includes("bundled GJC workflow skill"))).toBe(true);
+		expect(diagnostics.some(message => message.includes("bundled Vibrato workflow skill"))).toBe(true);
 		expect(diagnostics.some(message => message.includes("skills.ignoredSkills"))).toBe(true);
 		expect(diagnostics.some(message => message.includes("disabledExtensions"))).toBe(true);
 		expect(diagnostics.some(message => message.includes("skills.includeSkills"))).toBe(true);
 	});
 
 	it("diagnoses invalid frontmatter and missing descriptions", async () => {
-		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-invalid-skill-diagnostics-"));
-		const noFrontmatterDir = path.join(cwd, ".gjc", "skills", "no-frontmatter");
+		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "vib-invalid-skill-diagnostics-"));
+		const noFrontmatterDir = path.join(cwd, ".vib", "skills", "no-frontmatter");
 		await fs.mkdir(noFrontmatterDir, { recursive: true });
 		await fs.writeFile(path.join(noFrontmatterDir, "SKILL.md"), "# No Frontmatter\n\nPlain markdown body.\n", "utf8");
-		const noDescriptionDir = path.join(cwd, ".gjc", "skills", "no-description");
+		const noDescriptionDir = path.join(cwd, ".vib", "skills", "no-description");
 		await fs.mkdir(noDescriptionDir, { recursive: true });
 		await fs.writeFile(
 			path.join(noDescriptionDir, "SKILL.md"),
@@ -654,8 +654,8 @@ describe("SkillDiscoveryTool", () => {
 	// discovery skipped it, a configured skill was invocable by exact name and absent
 	// from every search, so it could only be used by someone who already knew it existed.
 	it("discovers skills from skills.customDirectories", async () => {
-		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-customdir-cwd-"));
-		const custom = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-customdir-root-"));
+		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "vib-customdir-cwd-"));
+		const custom = await fs.mkdtemp(path.join(os.tmpdir(), "vib-customdir-root-"));
 		await makeSkill(custom, "vendor-helper", "Vendor helper skill for invoicing");
 		const settings = runtimeSkillSettings({ "skills.customDirectories": [custom] });
 
@@ -672,8 +672,8 @@ describe("SkillDiscoveryTool", () => {
 	});
 
 	it("resolves a skills.customDirectories skill by name", async () => {
-		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-customdir-byname-cwd-"));
-		const custom = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-customdir-byname-root-"));
+		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "vib-customdir-byname-cwd-"));
+		const custom = await fs.mkdtemp(path.join(os.tmpdir(), "vib-customdir-byname-root-"));
 		await makeSkill(custom, "vendor-runbook", "Vendor runbook skill", "Runbook body.");
 		const settings = runtimeSkillSettings({ "skills.customDirectories": [custom] });
 
@@ -696,11 +696,11 @@ describe("SkillDiscoveryTool", () => {
 	// Naming a directory is explicit consent, so custom directories stay visible when
 	// ambient user-scope discovery is switched off. loadSkills applies the same rule.
 	it("keeps custom directories visible when user scope trust is disabled", async () => {
-		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-customdir-untrusted-cwd-"));
-		const home = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-customdir-untrusted-home-"));
-		const custom = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-customdir-untrusted-root-"));
+		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "vib-customdir-untrusted-cwd-"));
+		const home = await fs.mkdtemp(path.join(os.tmpdir(), "vib-customdir-untrusted-home-"));
+		const custom = await fs.mkdtemp(path.join(os.tmpdir(), "vib-customdir-untrusted-root-"));
 		try {
-			await makeSkill(path.join(home, ".gjc", "skills"), "ambient-helper", "Ambient user skill");
+			await makeSkill(path.join(home, ".vib", "skills"), "ambient-helper", "Ambient user skill");
 			await makeSkill(custom, "declared-helper", "Declared custom skill");
 			const settings = runtimeSkillSettings({
 				"skills.trustUserSkills": false,
@@ -717,8 +717,8 @@ describe("SkillDiscoveryTool", () => {
 	});
 
 	it("stops scanning custom directories when skills.enabled is false", async () => {
-		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-customdir-off-cwd-"));
-		const custom = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-customdir-off-root-"));
+		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "vib-customdir-off-cwd-"));
+		const custom = await fs.mkdtemp(path.join(os.tmpdir(), "vib-customdir-off-root-"));
 		await makeSkill(custom, "disabled-helper", "Disabled custom skill");
 		const settings = runtimeSkillSettings({
 			"skills.enabled": false,

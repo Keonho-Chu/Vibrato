@@ -6,7 +6,7 @@
  * Requests per-result summaries via `contents.summary` and synthesizes
  * them into a combined `answer` string on the SearchResponse.
  */
-import { type AuthStorage, getEnvApiKey } from "@gajae-code/ai/core";
+import { type AuthStorage, getEnvApiKey } from "@vib-rato/ai/core";
 import { settings } from "../../../config/settings";
 
 import type { SearchResponse, SearchSource } from "../../../web/search/types";
@@ -133,7 +133,7 @@ async function callExaSearch(apiKey: string, params: ExaSearchParams): Promise<E
 export async function searchExa(params: ExaSearchParams): Promise<SearchResponse> {
 	const apiKey = getEnvApiKey("exa");
 	if (!apiKey) {
-		throw new SearchProviderError("exa", "EXA_API_KEY is required; Exa MCP fallback is disabled in gajae-code.", 401);
+		throw new SearchProviderError("exa", "EXA_API_KEY is required; Exa MCP fallback is disabled in vib-rato.", 401);
 	}
 	const response = await callExaSearch(apiKey, params);
 

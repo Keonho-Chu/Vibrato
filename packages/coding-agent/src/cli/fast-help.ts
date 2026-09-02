@@ -1,12 +1,12 @@
-import { APP_NAME, CONFIG_DIR_NAME } from "@gajae-code/utils/dirs";
+import { APP_NAME, CONFIG_DIR_NAME } from "@vib-rato/utils/dirs";
 
 export function getExtraHelpText(): string {
 	return `Commands:
   ${APP_NAME} [prompt]             - Start an interactive coding session (default launch command)
   ${APP_NAME} launch               - Start an explicit launch/session workflow
-  ${APP_NAME} setup                - Install GJC defaults or optional dependencies
+  ${APP_NAME} setup                - Install Vibrato defaults or optional dependencies
   ${APP_NAME} session              - List, inspect, create, remove, or attach sessions
-  ${APP_NAME} state                - Inspect or manage persisted GJC state
+  ${APP_NAME} state                - Inspect or manage persisted Vibrato state
   ${APP_NAME} auth-broker         - Manage the auth-broker (credential vault)
   ${APP_NAME} accounts             - List, check, pin, and remove stored OAuth accounts
   ${APP_NAME} models presets       - Inspect, refresh, pin, rollback, or disable the signed model preset registry
@@ -26,7 +26,7 @@ export function getExtraHelpText(): string {
   ${APP_NAME} mcp-serve            - Serve the MCP integration endpoint
   ${APP_NAME} contribute-pr        - Prepare contribution/PR workflow artifacts
   ${APP_NAME} migrate              - Run migration helpers
-  ${APP_NAME} update               - Update GJC installation artifacts
+  ${APP_NAME} update               - Update Vibrato installation artifacts
   ${APP_NAME} plugin               - Install, remove, and list plugins
   ${APP_NAME} web-search           - Search the web from the CLI (alias: q)
   ${APP_NAME} codex-native-hook    - Run Codex native hook integration
@@ -78,20 +78,20 @@ Environment Variables:
   ANTHROPIC_SEARCH_API_KEY   - Anthropic search provider
 
   # Configuration
-  GJC_CODING_AGENT_DIR       - Session storage directory (default: ~/${CONFIG_DIR_NAME}/agent)
-  GJC_PACKAGE_DIR            - Override package directory (for Nix/Guix store paths)
-  GJC_SMOL_MODEL              - Override smol/fast model (see --smol)
-  GJC_SLOW_MODEL              - Override slow/reasoning model (see --slow)
-  GJC_PLAN_MODEL              - Override planning model (see --plan)
-  GJC_MODEL_PRESET_REGISTRY_URL - HTTPS latest.json override for the signed preset registry
-  GJC_MODEL_PRESET_REGISTRY_DISABLED - Disable registry fetch/use (1/true/yes/on)
-  GJC_NO_PTY                  - Disable PTY-based interactive bash execution
+  VIB_CODING_AGENT_DIR       - Session storage directory (default: ~/${CONFIG_DIR_NAME}/agent)
+  VIB_PACKAGE_DIR            - Override package directory (for Nix/Guix store paths)
+  VIB_SMOL_MODEL              - Override smol/fast model (see --smol)
+  VIB_SLOW_MODEL              - Override slow/reasoning model (see --slow)
+  VIB_PLAN_MODEL              - Override planning model (see --plan)
+  VIB_MODEL_PRESET_REGISTRY_URL - HTTPS latest.json override for the signed preset registry
+  VIB_MODEL_PRESET_REGISTRY_DISABLED - Disable registry fetch/use (1/true/yes/on)
+  VIB_NO_PTY                  - Disable PTY-based interactive bash execution
   --tmux                       - Launch interactive startup inside a fresh tmux session
-  gjc session                  - List, inspect, create, remove, or attach tagged GJC-managed tmux sessions
-  GJC_LAUNCH_POLICY           - Launch policy for --tmux startup: tmux or direct
-  GJC_TMUX_SESSION            - Explicit tmux session name override for --tmux startup
-  GJC_TMUX_PROFILE            - Apply GJC tmux scroll/mouse/clipboard profile to --tmux sessions (set 0/off to skip)
-  GJC_MOUSE                   - Apply tmux copy-mode mouse capture in --tmux sessions (set 0/off to skip)
+  vib session                  - List, inspect, create, remove, or attach tagged Vibrato-managed tmux sessions
+  VIB_LAUNCH_POLICY           - Launch policy for --tmux startup: tmux or direct
+  VIB_TMUX_SESSION            - Explicit tmux session name override for --tmux startup
+  VIB_TMUX_PROFILE            - Apply Vibrato tmux scroll/mouse/clipboard profile to --tmux sessions (set 0/off to skip)
+  VIB_MOUSE                   - Apply tmux copy-mode mouse capture in --tmux sessions (set 0/off to skip)
 
   For complete environment variable reference, see:
   docs/environment-variables.md

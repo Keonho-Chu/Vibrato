@@ -14,7 +14,7 @@ describe("sanitizeExternalCrashV1 — real corpus shapes", () => {
 		const output = sanitized(
 			[
 				"Error: shared topic authority unavailable",
-				"    at resolveTopic (/home/alice/gjc/packages/coding-agent/src/sdk/bus/topics.ts:412:19)",
+				"    at resolveTopic (/home/alice/vib/packages/coding-agent/src/sdk/bus/topics.ts:412:19)",
 			].join("\n"),
 		);
 		expect(output).toContain("shared topic authority unavailable");
@@ -23,11 +23,11 @@ describe("sanitizeExternalCrashV1 — real corpus shapes", () => {
 	});
 
 	it("marks the caller's own home directory as <home>", () => {
-		expect(sanitized(`read ${path.join(os.homedir(), ".gjc/agent/gjc-crash.log")}`)).toBe("read <home>");
+		expect(sanitized(`read ${path.join(os.homedir(), ".vib/agent/vib-crash.log")}`)).toBe("read <home>");
 	});
 
 	it("keeps errno text of an ENOSPC crash", () => {
-		expect(sanitized("Error: ENOSPC: no space left on device, write '/var/lib/gjc/x'")).toBe(
+		expect(sanitized("Error: ENOSPC: no space left on device, write '/var/lib/vib/x'")).toBe(
 			"Error: ENOSPC: no space left on device, write '<path>'",
 		);
 	});
@@ -44,8 +44,8 @@ describe("sanitizeExternalCrashV1 — real corpus shapes", () => {
 	});
 
 	it("collapses a Windows and a UNC path", () => {
-		expect(sanitized("load failed C:\\Users\\bob\\AppData\\gjc.node")).toBe("load failed <path>");
-		expect(sanitized("load failed \\\\fileserver\\share\\gjc.node")).toBe("load failed <path>");
+		expect(sanitized("load failed C:\\Users\\bob\\AppData\\vib.node")).toBe("load failed <path>");
+		expect(sanitized("load failed \\\\fileserver\\share\\vib.node")).toBe("load failed <path>");
 	});
 });
 

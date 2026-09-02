@@ -1,7 +1,7 @@
-import { INTENT_FIELD, type ThinkingLevel } from "@gajae-code/agent-core";
-import type { Api, Model } from "@gajae-code/ai/core";
-import { Markdown } from "@gajae-code/tui";
-import { prompt } from "@gajae-code/utils";
+import { INTENT_FIELD, type ThinkingLevel } from "@vib-rato/agent-core";
+import type { Api, Model } from "@vib-rato/ai/core";
+import { Markdown } from "@vib-rato/tui";
+import { prompt } from "@vib-rato/utils";
 import chalk from "chalk";
 import typesDescriptionPrompt from "../../commit/prompts/types-description.md" with { type: "text" };
 import type { ModelRegistry } from "../../config/model-registry";

@@ -10,7 +10,7 @@ import {
 	visibleWidth,
 	withTerminalGraphicsFallback,
 	wrapTextWithAnsi,
-} from "@gajae-code/tui";
+} from "@vib-rato/tui";
 import type { IrcObservationLedger, IrcObservationRecord } from "../irc-observation-ledger";
 import { formatIrcMessageBlock, projectIrcText } from "../utils/irc-message";
 
@@ -134,7 +134,7 @@ function semanticProjectionToken(lines: readonly SemanticLine[]): string {
 		if (value !== undefined) hash.update(value, "utf8");
 	};
 
-	hash.update("gjc:irc:sidebar-semantic-projection:v1\0");
+	hash.update("vib:irc:sidebar-semantic-projection:v1\0");
 	length.writeUInt32BE(lines.length);
 	hash.update(length);
 	for (const line of lines) {

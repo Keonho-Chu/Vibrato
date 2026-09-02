@@ -2,7 +2,7 @@
  * Core types for the capability-based config discovery system.
  *
  * This architecture inverts control: instead of callers knowing provider-specific
- * paths like `.gjc`, `.gemini`, or `.vscode`, they simply ask for `load("mcps")`
+ * paths like `.vib`, `.gemini`, or `.vscode`, they simply ask for `load("mcps")`
  * and get back a unified array of MCP servers.
  */
 
@@ -16,9 +16,9 @@ export interface LoadContext {
 	/** User home directory */
 	home: string;
 	/**
-	 * GJC's user-scope config directory: the resolved agent directory
-	 * (`getAgentDir()`), which `--agent-dir`, `GJC_CODING_AGENT_DIR` and
-	 * `setAgentDir()` redirect away from `<home>/.gjc/agent`. `loadCapability`
+	 * Vibrato's user-scope config directory: the resolved agent directory
+	 * (`getAgentDir()`), which `--agent-dir`, `VIB_CODING_AGENT_DIR` and
+	 * `setAgentDir()` redirect away from `<home>/.vib/agent`. `loadCapability`
 	 * always sets it; ad-hoc contexts built for path scanning may omit it, and
 	 * native providers then fall back to the home-relative default
 	 * `<home>/<configDirName>/agent` (see `resolveUserAgentDir` in
@@ -48,19 +48,19 @@ export interface LoadResult<T> {
  * A provider that can load items for a capability.
  */
 export interface Provider<T> {
-	/** Unique provider ID (e.g., "Anthropic model", "gjc", "mcp-json", "agents-md") */
+	/** Unique provider ID (e.g., "Anthropic model", "vib", "mcp-json", "agents-md") */
 	id: string;
 
 	/** Human-readable name for UI display (e.g., "Anthropic Code", "OpenAI code provider") */
 	displayName: string;
 
-	/** Short description for settings UI (e.g., "Load config from .gjc/") */
+	/** Short description for settings UI (e.g., "Load config from .vib/") */
 	description: string;
 
 	/**
 	 * Priority (higher = checked first, wins on conflicts).
 	 * Suggested ranges:
-	 *   100+ : Primary providers (gjc, pi)
+	 *   100+ : Primary providers (vib, pi)
 	 *   50-99: Tool-specific providers (Anthropic model, OpenAI code backend, gemini)
 	 *   1-49 : Shared standards (mcp-json, agents-md)
 	 */

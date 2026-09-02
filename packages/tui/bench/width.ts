@@ -3,8 +3,8 @@
  *
  * Run: bun packages/tui/bench/visible-width.ts
  */
-import { visibleWidth as nativeVisibleWidth } from "@gajae-code/natives";
-import { getDefaultTabWidth } from "@gajae-code/utils";
+import { visibleWidth as nativeVisibleWidth } from "@vib-rato/natives";
+import { getDefaultTabWidth } from "@vib-rato/utils";
 import { visibleWidthRaw as hybridVisibleWidth, replaceTabs } from "../src/utils";
 
 const ITERATIONS = 10_000;

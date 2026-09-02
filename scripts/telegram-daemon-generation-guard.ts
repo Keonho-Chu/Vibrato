@@ -1079,7 +1079,7 @@ export async function run(baseInput: string | undefined, headInput: string | und
 	// declaration digest fails closed here rather than slipping through as a
 	// no-op policy change.
 	await validateCurrentTreeManifest();
-	if (process.env.GJC_DAEMON_GUARD_DEBUG === "1") console.error("daemon-generation-guard: objects verified");
+	if (process.env.VIB_DAEMON_GUARD_DEBUG === "1") console.error("daemon-generation-guard: objects verified");
 	// The base manifest can name declarations removed or moved in head, so fetch it
 	// before loading sources and compare the complete base/head protected-path union.
 	const baseManifestSource = await blob(base, manifestScript);
@@ -1099,14 +1099,14 @@ export async function run(baseInput: string | undefined, headInput: string | und
 		baseFiles.push([file, file === manifestScript ? baseManifestSource : await blob(base, file)]);
 		headFiles.push([file, await blob(head, file)]);
 	}
-	if (process.env.GJC_DAEMON_GUARD_DEBUG === "1") {
+	if (process.env.VIB_DAEMON_GUARD_DEBUG === "1") {
 		for (const [file, source] of headFiles) console.error(`daemon-generation-guard: head ${file} ${source?.length ?? -1}`);
 		console.error(`daemon-generation-guard: base-guard ${baseFiles.find(([file]) => file === guardScript)?.[1]?.length ?? -1}`);
 	}
-	if (process.env.GJC_DAEMON_GUARD_DEBUG === "1") console.error("daemon-generation-guard: blobs loaded");
+	if (process.env.VIB_DAEMON_GUARD_DEBUG === "1") console.error("daemon-generation-guard: blobs loaded");
 	const baseMap = new Map(baseFiles);
 	const decision = evaluate(baseMap, new Map(headFiles), protectedInventory, baseInventory);
-	if (process.env.GJC_DAEMON_GUARD_DEBUG === "1") console.error("daemon-generation-guard: declarations evaluated");
+	if (process.env.VIB_DAEMON_GUARD_DEBUG === "1") console.error("daemon-generation-guard: declarations evaluated");
 	if (baseMap.get(guardScript) !== undefined && decision.guardPolicyChanged && !decision.guardContractBumped)
 		throw new Error(`telegram-daemon-generation-guard: guard policy change requires a strictly higher GUARD_CONTRACT_VERSION`);
 	if (decision.malformedDeclarations.length > 0)

@@ -1,7 +1,7 @@
 /**
  * Test configured local OpenAI-compatible providers.
  */
-import { Args, Command, Flags } from "@gajae-code/utils/cli";
+import { Args, Command, Flags } from "@vib-rato/utils/cli";
 import {
 	runLocalProviderDiscoverCommand,
 	runLocalProviderSmokeCommand,

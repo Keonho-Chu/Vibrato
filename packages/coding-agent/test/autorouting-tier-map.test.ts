@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import type { Model } from "@gajae-code/ai";
+import type { Model } from "@vib-rato/ai";
 import { AUTOROUTING_SELECTOR_PATTERN, type AutoroutingTier } from "../src/config/autorouting-contract";
 import {
 	CURATED_TIER_LABELS,

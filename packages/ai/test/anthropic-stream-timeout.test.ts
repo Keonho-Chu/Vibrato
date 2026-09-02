@@ -504,7 +504,7 @@ describe("anthropic first-event timeouts", () => {
 		// before `continue`, so the earlier providerRetryAttempt-based accounting
 		// reported the full two-attempt ceiling after two uploads had already
 		// happened — licensing a third upload of the corrected request. Use this
-		// route rather than strict-tool fallback because GJC_NO_STRICT/PI_NO_STRICT
+		// route rather than strict-tool fallback because VIB_NO_STRICT/PI_NO_STRICT
 		// intentionally removes strict markers before the request is sent.
 		let attempts = 0;
 		const create = ((_body: unknown, requestOptions?: { signal?: AbortSignal }) => {

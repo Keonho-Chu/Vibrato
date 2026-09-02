@@ -54,7 +54,7 @@ async function main(): Promise<void> {
 	const selfCheck = args.includes("--self-check");
 	const suppliedCwd = args.find(argument => argument !== "--self-check");
 	const temporaryRepo =
-		suppliedCwd === undefined ? await fs.mkdtemp(path.join(tmpdir(), "gjc-sdk-python-")) : undefined;
+		suppliedCwd === undefined ? await fs.mkdtemp(path.join(tmpdir(), "vib-sdk-python-")) : undefined;
 	const repo = suppliedCwd ?? temporaryRepo!;
 	let host: Host | undefined;
 	let stopped = false;

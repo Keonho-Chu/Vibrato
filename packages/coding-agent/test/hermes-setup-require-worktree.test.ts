@@ -17,11 +17,11 @@ async function render(flags: Parameters<typeof runHermesSetup>[0] = {}) {
 	return await runHermesSetup({ root: [ROOT], profile: "test", repo: "repo", json: true, ...flags });
 }
 
-describe("gjc setup hermes --require-worktree", () => {
+describe("vib setup hermes --require-worktree", () => {
 	it("renders the requirement into the coordinator config", async () => {
 		const result = await render({ requireWorktree: true });
 
-		expect(renderedConfig(result)).toContain('GJC_COORDINATOR_MCP_REQUIRE_WORKTREE: "true"');
+		expect(renderedConfig(result)).toContain('VIB_COORDINATOR_MCP_REQUIRE_WORKTREE: "true"');
 	});
 
 	it("leaves the requirement out by default", async () => {
@@ -29,13 +29,13 @@ describe("gjc setup hermes --require-worktree", () => {
 
 		// Turning this on for every generated setup would refuse creations from
 		// existing controllers that do not name a worktree yet.
-		expect(renderedConfig(result)).not.toContain("GJC_COORDINATOR_MCP_REQUIRE_WORKTREE");
+		expect(renderedConfig(result)).not.toContain("VIB_COORDINATOR_MCP_REQUIRE_WORKTREE");
 	});
 
 	it("still selects worktree mode so the requirement is satisfiable", async () => {
 		const result = await render({ requireWorktree: true });
 
-		expect(renderedConfig(result)).toContain("GJC_COORDINATOR_MCP_SESSION_COMMAND: gjc --worktree");
+		expect(renderedConfig(result)).toContain("VIB_COORDINATOR_MCP_SESSION_COMMAND: vib --worktree");
 	});
 
 	it("refuses the contradictory combination with --no-worktree", async () => {
@@ -45,7 +45,7 @@ describe("gjc setup hermes --require-worktree", () => {
 	});
 
 	it("refuses to mix the requirement with an explicit session command", async () => {
-		await expect(render({ requireWorktree: true, sessionCommand: "gjc --worktree pinned" })).rejects.toThrow(
+		await expect(render({ requireWorktree: true, sessionCommand: "vib --worktree pinned" })).rejects.toThrow(
 			/session-command/,
 		);
 	});

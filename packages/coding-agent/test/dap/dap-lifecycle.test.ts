@@ -206,7 +206,7 @@ describe("DAP lifecycle behavior", () => {
 	});
 
 	it("socket-mode startup timeout disposes the adapter process", async () => {
-		const cwd = await tempDir("gjc-dap-socket-timeout-");
+		const cwd = await tempDir("vib-dap-socket-timeout-");
 		try {
 			const script = path.join(cwd, "adapter.ts");
 			await Bun.write(script, "setInterval(() => {}, 1000);\n");
@@ -226,7 +226,7 @@ describe("DAP lifecycle behavior", () => {
 	}, 15_000);
 
 	it.skipIf(process.platform !== "linux")("socket-mode Unix startup failure unlinks the temporary .sock", async () => {
-		const cwd = await tempDir("gjc-dap-unix-socket-timeout-");
+		const cwd = await tempDir("vib-dap-unix-socket-timeout-");
 		try {
 			const script = path.join(cwd, "adapter.ts");
 			const socketPathMarker = path.join(cwd, "socket-path");
@@ -253,7 +253,7 @@ describe("DAP lifecycle behavior", () => {
 	it.skipIf(process.platform === "win32")(
 		"dispose reaps adapter child process groups through owned lifecycle",
 		async () => {
-			const cwd = await tempDir("gjc-dap-dispose-owner-");
+			const cwd = await tempDir("vib-dap-dispose-owner-");
 			try {
 				const marker = path.join(cwd, "child-ready");
 				const script = path.join(cwd, "adapter.ts");
@@ -277,7 +277,7 @@ describe("DAP lifecycle behavior", () => {
 	it.skipIf(process.platform === "win32")(
 		"tracks runInTerminal debuggees as owned processes and reaps only the session child on dispose",
 		async () => {
-			const cwd = await tempDir("gjc-dap-runterminal-");
+			const cwd = await tempDir("vib-dap-runterminal-");
 			const unrelated = spawnOwnedProcess([BUN, "-e", "setInterval(() => {}, 1000)"], {
 				name: "dap-test:unrelated",
 			});

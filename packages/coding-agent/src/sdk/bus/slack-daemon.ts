@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 import { SdkClientError } from "../client/client";
 import { type SessionAttachment, SessionRouterError } from "../router";
 

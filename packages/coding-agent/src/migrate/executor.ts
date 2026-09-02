@@ -16,7 +16,7 @@ function trustedSkillDestinationBase(destination: string): string {
 	const skillDir = path.dirname(path.resolve(destination));
 	const skillsRoot = path.dirname(skillDir);
 	const scopeRoot = path.dirname(skillsRoot);
-	return path.basename(scopeRoot) === ".gjc" ? path.dirname(scopeRoot) : scopeRoot;
+	return path.basename(scopeRoot) === ".vib" ? path.dirname(scopeRoot) : scopeRoot;
 }
 
 async function ensureRealDirectoryPathNoFollow(directory: string, trustedBase: string): Promise<void> {

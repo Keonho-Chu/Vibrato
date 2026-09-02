@@ -21,7 +21,7 @@ async function tempDir(prefix: string): Promise<string> {
 
 describe("perf change-set adversarial probes", () => {
 	it("keeps a valid snapshot across a crash-window log truncation and concurrent stale reader", async () => {
-		const dir = await tempDir("gjc-perf-index-");
+		const dir = await tempDir("vib-perf-index-");
 		try {
 			const writer = await new SessionIndex(dir).open();
 			const reader = await new SessionIndex(dir).open();
@@ -39,7 +39,7 @@ describe("perf change-set adversarial probes", () => {
 	});
 
 	it("self-repairs an append after a corrupt suffix so durable events remain replayable", async () => {
-		const dir = await tempDir("gjc-perf-corrupt-");
+		const dir = await tempDir("vib-perf-corrupt-");
 		try {
 			const index = await new SessionIndex(dir).open();
 			await index.append(event("prefix"));
@@ -71,7 +71,7 @@ describe("perf change-set adversarial probes", () => {
 	});
 
 	it("preserves UTF-8 and lone-surrogate byte ranges through a spilled >4MiB revision", async () => {
-		const dir = await tempDir("gjc-perf-revision-");
+		const dir = await tempDir("vib-perf-revision-");
 		try {
 			const text = `${"漢🙂".repeat(350_000)}\ud800${"中🚀".repeat(350_000)}\udc00tail`;
 			const store = new RevisionStore("s", Date.now, { storageDir: dir });

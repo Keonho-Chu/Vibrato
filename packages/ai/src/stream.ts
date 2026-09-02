@@ -6,7 +6,7 @@ import {
 	$pickCredentialEnv,
 	extractHttpStatusFromError,
 	getTrustedHomeDir,
-} from "@gajae-code/utils";
+} from "@vib-rato/utils";
 import {
 	copyProviderSafetyStopAdapterInvocation,
 	isProviderSafetyStopModelTrusted,
@@ -198,7 +198,7 @@ const serviceProviderMap: Record<string, KeyResolver> = {
  * Get API key for provider from known environment variables, e.g. OPENAI_API_KEY.
  *
  * Provider authentication intentionally excludes cwd/.env values. Project dotenv files are
- * loaded into $env for app/tool execution, but must not silently fund GJC model requests.
+ * loaded into $env for app/tool execution, but must not silently fund Vibrato model requests.
  */
 export function getEnvApiKey(provider: string): string | undefined {
 	const resolver = serviceProviderMap[provider];
@@ -210,7 +210,7 @@ export function getEnvApiKey(provider: string): string | undefined {
 
 /**
  * Enumerate every provider that has an env-var fallback for `getEnvApiKey`.
- * Used by `gjc auth-broker migrate --include-env` to discover env-sourced keys
+ * Used by `vib auth-broker migrate --include-env` to discover env-sourced keys
  * that should be uploaded to the broker.
  */
 export function listProvidersWithEnvKey(): string[] {
@@ -228,10 +228,10 @@ const API_KEY_LOGIN_PROVIDERS = new Set(["commandcode-goat"]);
 /**
  * Provider-specific credential guidance appended to "no credential" errors.
  *
- * Headless GJC has no interactive `/login` TUI, so a bare "No API key" /
+ * Headless Vibrato has no interactive `/login` TUI, so a bare "No API key" /
  * "No credentials" error left users — OpenCode Go subscribers especially
- * (#755) — unsure what signal GJC actually reads. OpenCode subscriptions are
- * themselves API keys, so this names the env var GJC reads for the provider,
+ * (#755) — unsure what signal Vibrato actually reads. OpenCode subscriptions are
+ * themselves API keys, so this names the env var Vibrato reads for the provider,
  * warns that a project `.env` is intentionally ignored for provider
  * credentials, and points OpenCode users at one-time interactive CLI credential capture.
  *
@@ -259,13 +259,13 @@ export function formatProviderCredentialHint(provider: string): string {
 	}
 	if (envVar) {
 		parts.push(
-			`Headless GJC reads this provider's key from ${envVar} (exported in your shell or set in ~/.gjc/.env).`,
+			`Headless Vibrato reads this provider's key from ${envVar} (exported in your shell or set in ~/.vib/.env).`,
 		);
 		parts.push("A value set only in a project .env is intentionally ignored for provider credentials.");
 	}
 	if (isOpenCodeSubscription) {
 		parts.push(
-			`Or run \`gjc auth-broker login ${provider}\` once before headless/print mode to store the key interactively.`,
+			`Or run \`vib auth-broker login ${provider}\` once before headless/print mode to store the key interactively.`,
 		);
 	}
 	return parts.join(" ");

@@ -1,5 +1,5 @@
-import type { AgentTool, AgentToolContext, AgentToolResult, AgentToolUpdateCallback } from "@gajae-code/agent-core";
-import { logger, prompt } from "@gajae-code/utils";
+import type { AgentTool, AgentToolContext, AgentToolResult, AgentToolUpdateCallback } from "@vib-rato/agent-core";
+import { logger, prompt } from "@vib-rato/utils";
 import * as z from "zod/v4";
 import { AsyncJobManager, isBackgroundJobSupportEnabled } from "../async";
 import monitorDescription from "../prompts/tools/monitor.md" with { type: "text" };

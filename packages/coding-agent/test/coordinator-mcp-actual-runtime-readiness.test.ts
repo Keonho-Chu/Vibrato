@@ -3,22 +3,22 @@ import * as fs from "node:fs";
 import * as fsp from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { Agent } from "@gajae-code/agent-core";
-import { getBundledModel } from "@gajae-code/ai";
-import { AssistantMessageEventStream } from "@gajae-code/ai/utils/event-stream";
+import { Agent } from "@vib-rato/agent-core";
+import { getBundledModel } from "@vib-rato/ai";
+import { AssistantMessageEventStream } from "@vib-rato/ai/utils/event-stream";
 import { ModelRegistry } from "../src/config/model-registry";
 import { Settings } from "../src/config/settings";
 import {
 	boundedRuntimePromptAckTimeoutMs,
 	COORDINATOR_RUNTIME_PROMPT_ACK_TIMEOUT_MAX_MS,
 } from "../src/coordinator-mcp/server";
-import {
-	GJC_COORDINATOR_SESSION_ID_ENV,
-	GJC_COORDINATOR_SESSION_STATE_FILE_ENV,
-} from "../src/gjc-runtime/session-state-sidecar";
 import { AgentSession } from "../src/session/agent-session";
 import { AuthStorage } from "../src/session/auth-storage";
 import { SessionManager } from "../src/session/session-manager";
+import {
+	VIB_COORDINATOR_SESSION_ID_ENV,
+	VIB_COORDINATOR_SESSION_STATE_FILE_ENV,
+} from "../src/vib-runtime/session-state-sidecar";
 import { createAssistantMessage } from "./helpers/agent-session-setup";
 import { installExactIdentityNatives } from "./helpers/exact-identity-natives";
 
@@ -44,7 +44,7 @@ describe("Coordinator MCP runtime readiness", () => {
 	});
 
 	it("does not publish terminal runtime state until prompt and event-handler cleanup settle", async () => {
-		const cwd = await fsp.mkdtemp(path.join(os.tmpdir(), "gjc-coordinator-runtime-idle-"));
+		const cwd = await fsp.mkdtemp(path.join(os.tmpdir(), "vib-coordinator-runtime-idle-"));
 		const stateFile = path.join(cwd, "runtime-state.json");
 		const authStorage = await AuthStorage.create(path.join(cwd, "auth.db"));
 		const model = getBundledModel("anthropic", "claude-sonnet-4-5");
@@ -84,10 +84,10 @@ describe("Coordinator MCP runtime readiness", () => {
 			modelRegistry: new ModelRegistry(authStorage, path.join(cwd, "models.yml")),
 			extensionRunner: extensionRunner as never,
 		});
-		const previousStateFile = process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV];
-		const previousSessionId = process.env[GJC_COORDINATOR_SESSION_ID_ENV];
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = session.sessionId;
+		const previousStateFile = process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV];
+		const previousSessionId = process.env[VIB_COORDINATOR_SESSION_ID_ENV];
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = session.sessionId;
 		try {
 			const prompt = session.prompt("hold open");
 			await waitFor(() => session.isStreaming && fs.existsSync(stateFile), "running runtime state");
@@ -116,10 +116,10 @@ describe("Coordinator MCP runtime readiness", () => {
 			}, "terminal runtime state");
 		} finally {
 			messageEndBarrier.resolve();
-			if (previousStateFile === undefined) delete process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV];
-			else process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = previousStateFile;
-			if (previousSessionId === undefined) delete process.env[GJC_COORDINATOR_SESSION_ID_ENV];
-			else process.env[GJC_COORDINATOR_SESSION_ID_ENV] = previousSessionId;
+			if (previousStateFile === undefined) delete process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV];
+			else process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = previousStateFile;
+			if (previousSessionId === undefined) delete process.env[VIB_COORDINATOR_SESSION_ID_ENV];
+			else process.env[VIB_COORDINATOR_SESSION_ID_ENV] = previousSessionId;
 			await session.dispose();
 			authStorage.close();
 			await fsp.rm(cwd, { recursive: true, force: true });

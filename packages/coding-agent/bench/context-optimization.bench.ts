@@ -14,15 +14,15 @@
  * improvement invariants so regressions are provable.
  */
 
-import { estimateMessageTokensHeuristic } from "@gajae-code/agent-core/compaction/compaction";
-import type { SessionEntry } from "@gajae-code/agent-core/compaction/entries";
+import { estimateMessageTokensHeuristic } from "@vib-rato/agent-core/compaction/compaction";
+import type { SessionEntry } from "@vib-rato/agent-core/compaction/entries";
 import {
 	commitToolOutputPrune,
 	DEFAULT_PRUNE_CONFIG,
 	planToolOutputPrune,
 	type PruneConfig,
-} from "@gajae-code/agent-core/compaction/pruning";
-import type { AgentMessage } from "@gajae-code/agent-core/types";
+} from "@vib-rato/agent-core/compaction/pruning";
+import type { AgentMessage } from "@vib-rato/agent-core/types";
 import { buildPhaseRollupReceipt } from "../src/harness-control-plane/phase-rollup";
 import { ingestReceipts, RECEIPT_DIGEST_MAX_CHARS } from "../src/harness-control-plane/receipt-ingest";
 import {
@@ -394,10 +394,10 @@ function benchSessionState(): SessionState {
 		schemaVersion: 1,
 		sessionId: "bench-session",
 		lifecycle: "finalizing",
-		harness: "gajae-code",
+		harness: "vib-rato",
 		handle: {
 			sessionId: "bench-session",
-			harness: "gajae-code",
+			harness: "vib-rato",
 			mode: "implement",
 			repo: "/repo",
 			workspace: "/ws",

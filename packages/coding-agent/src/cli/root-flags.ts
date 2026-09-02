@@ -1,13 +1,13 @@
-import { type FlagDescriptor, Flags } from "@gajae-code/utils/cli";
+import { type FlagDescriptor, Flags } from "@vib-rato/utils/cli";
 
 const ROOT_THINKING_EFFORTS = ["minimal", "low", "medium", "high", "xhigh", "max"] as const;
 
 /** Public launch flags shared by root help, completion, and the launch command. */
 export const ROOT_LAUNCH_FLAGS = {
 	model: Flags.string({ description: 'Model to use (fuzzy match: "opus", "gpt-5.2", or "openai/gpt-5.2")' }),
-	smol: Flags.string({ description: "Smol/fast model for lightweight tasks (or GJC_SMOL_MODEL env)" }),
-	slow: Flags.string({ description: "Slow/reasoning model for thorough analysis (or GJC_SLOW_MODEL env)" }),
-	plan: Flags.string({ description: "Plan model for architectural planning (or GJC_PLAN_MODEL env)" }),
+	smol: Flags.string({ description: "Smol/fast model for lightweight tasks (or VIB_SMOL_MODEL env)" }),
+	slow: Flags.string({ description: "Slow/reasoning model for thorough analysis (or VIB_SLOW_MODEL env)" }),
+	plan: Flags.string({ description: "Plan model for architectural planning (or VIB_PLAN_MODEL env)" }),
 	mpreset: Flags.string({ description: "Model profile preset to activate for this session" }),
 	default: Flags.boolean({ description: "Persist --mpreset as the default model profile" }),
 	provider: Flags.string({ description: "Provider to use (legacy; prefer --model)" }),
@@ -25,7 +25,7 @@ export const ROOT_LAUNCH_FLAGS = {
 	"mcp-config": Flags.string({ description: "Tools-only MCP config file (absolute path)" }),
 	"no-mcp": Flags.boolean({
 		description:
-			"Disable conventional MCP autoload (native user ~/.gjc/agent/mcp.json and project .gjc/mcp.json registrations)",
+			"Disable conventional MCP autoload (native user ~/.vib/agent/mcp.json and project .vib/mcp.json registrations)",
 	}),
 	"clipboard-transport": Flags.string({
 		description: "Clipboard transport: auto (default), native, osc52, or ssh",

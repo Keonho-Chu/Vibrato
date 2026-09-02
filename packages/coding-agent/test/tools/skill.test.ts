@@ -3,13 +3,13 @@ import * as fs from "node:fs/promises";
 import { mkdtemp, writeFile } from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { Model } from "@gajae-code/ai";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import type { Skill } from "@gajae-code/coding-agent/extensibility/skills";
-import { SKILL_PROMPT_MESSAGE_TYPE } from "@gajae-code/coding-agent/session/messages";
-import type { ToolSession } from "@gajae-code/coding-agent/tools";
-import { SkillTool } from "@gajae-code/coding-agent/tools/skill";
-import { ToolError } from "@gajae-code/coding-agent/tools/tool-errors";
+import type { Model } from "@vib-rato/ai";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import type { Skill } from "@vib-rato/coding-agent/extensibility/skills";
+import { SKILL_PROMPT_MESSAGE_TYPE } from "@vib-rato/coding-agent/session/messages";
+import type { ToolSession } from "@vib-rato/coding-agent/tools";
+import { SkillTool } from "@vib-rato/coding-agent/tools/skill";
+import { ToolError } from "@vib-rato/coding-agent/tools/tool-errors";
 import { safeRm } from "../../../../scripts/safe-cleanup";
 
 async function makeSkill(name: string, content: string): Promise<Skill> {
@@ -67,8 +67,8 @@ function encodeSessionSegment(value: string): string {
 }
 
 function stateBaseDir(cwd: string, sessionId?: string): string {
-	if (!sessionId) return path.join(cwd, ".gjc", "_session-test", "state");
-	return path.join(cwd, ".gjc", `_session-${encodeSessionSegment(sessionId)}`, "state");
+	if (!sessionId) return path.join(cwd, ".vib", "_session-test", "state");
+	return path.join(cwd, ".vib", `_session-${encodeSessionSegment(sessionId)}`, "state");
 }
 
 async function writeCallerModeState(
@@ -214,15 +214,15 @@ describe("SkillTool", () => {
 	it("uses runtime fallback through createIf while session skills retain name precedence", async () => {
 		const cwd = await makeTempCwd();
 		const home = await fs.mkdtemp(path.join(os.tmpdir(), "skill-tool-runtime-home-"));
-		const originalGjcConfigDir = process.env.GJC_CONFIG_DIR;
+		const originalVibConfigDir = process.env.VIB_CONFIG_DIR;
 		const originalPiConfigDir = process.env.PI_CONFIG_DIR;
 		let unrelated: Skill | undefined;
 		let preloaded: Skill | undefined;
 		try {
-			process.env.GJC_CONFIG_DIR = ".gjc";
+			process.env.VIB_CONFIG_DIR = ".vib";
 			delete process.env.PI_CONFIG_DIR;
 			const runtimePath = await makeRuntimeSkill(
-				path.join(home, ".gjc", "agent", "skills"),
+				path.join(home, ".vib", "agent", "skills"),
 				"runtime-helper",
 				"Runtime helper",
 				"Runtime fallback body.",
@@ -250,8 +250,8 @@ describe("SkillTool", () => {
 			expect(preloadedCaptured[0]?.message.content).not.toContain("Runtime fallback body.");
 			expect(preloadedResult.details?.path).toBe(preloaded.filePath);
 		} finally {
-			if (originalGjcConfigDir === undefined) delete process.env.GJC_CONFIG_DIR;
-			else process.env.GJC_CONFIG_DIR = originalGjcConfigDir;
+			if (originalVibConfigDir === undefined) delete process.env.VIB_CONFIG_DIR;
+			else process.env.VIB_CONFIG_DIR = originalVibConfigDir;
 			if (originalPiConfigDir === undefined) delete process.env.PI_CONFIG_DIR;
 			else process.env.PI_CONFIG_DIR = originalPiConfigDir;
 			if (unrelated) await safeRm(unrelated.baseDir, { recursive: true, force: true });
@@ -264,23 +264,23 @@ describe("SkillTool", () => {
 	it("uses exact runtime fallback precedence across project, canonical, configured, and historical roots", async () => {
 		const cwd = await makeTempCwd();
 		const home = await fs.mkdtemp(path.join(os.tmpdir(), "skill-tool-runtime-precedence-home-"));
-		const originalGjcConfigDir = process.env.GJC_CONFIG_DIR;
+		const originalVibConfigDir = process.env.VIB_CONFIG_DIR;
 		const originalPiConfigDir = process.env.PI_CONFIG_DIR;
-		const originalCodingAgentDir = process.env.GJC_CODING_AGENT_DIR;
+		const originalCodingAgentDir = process.env.VIB_CODING_AGENT_DIR;
 		const originalPiCodingAgentDir = process.env.PI_CODING_AGENT_DIR;
 		const originalXdgConfigHome = process.env.XDG_CONFIG_HOME;
 		let loaded: Skill | undefined;
 		try {
-			delete process.env.GJC_CONFIG_DIR;
+			delete process.env.VIB_CONFIG_DIR;
 			delete process.env.PI_CONFIG_DIR;
-			const gjcAgentDecoyDir = path.join(home, "gjc-agent-decoy");
+			const vibAgentDecoyDir = path.join(home, "vib-agent-decoy");
 			const piAgentDecoyDir = path.join(home, "pi-agent-decoy");
 			const xdgConfigHome = path.join(home, "xdg-decoy");
-			process.env.GJC_CODING_AGENT_DIR = gjcAgentDecoyDir;
+			process.env.VIB_CODING_AGENT_DIR = vibAgentDecoyDir;
 			process.env.PI_CODING_AGENT_DIR = piAgentDecoyDir;
 			process.env.XDG_CONFIG_HOME = xdgConfigHome;
 			const defaultCanonicalPath = await makeRuntimeSkill(
-				path.join(home, ".gjc", "agent", "skills"),
+				path.join(home, ".vib", "agent", "skills"),
 				"default-canonical",
 				"Default canonical",
 				"Default canonical body.",
@@ -294,9 +294,9 @@ describe("SkillTool", () => {
 			expect(captured.at(-1)?.message.content).toContain("Default canonical body.");
 			expect(defaultResult.details?.path).toBe(defaultCanonicalPath);
 
-			process.env.GJC_CONFIG_DIR = ".configured-gjc";
+			process.env.VIB_CONFIG_DIR = ".configured-vib";
 			process.env.PI_CONFIG_DIR = ".configured-pi";
-			const configuredRoot = path.join(home, ".configured-gjc");
+			const configuredRoot = path.join(home, ".configured-vib");
 			const canonicalPath = await makeRuntimeSkill(
 				path.join(configuredRoot, "agent", "skills"),
 				"canonical-only",
@@ -310,13 +310,13 @@ describe("SkillTool", () => {
 				"Configured legacy body.",
 			);
 			const historicalPath = await makeRuntimeSkill(
-				path.join(home, ".gjc", "skills"),
+				path.join(home, ".vib", "skills"),
 				"historical-only",
 				"Historical legacy",
 				"Historical body.",
 			);
 			const projectPath = await makeRuntimeSkill(
-				path.join(cwd, ".gjc", "skills"),
+				path.join(cwd, ".vib", "skills"),
 				"winner",
 				"Project",
 				"Project body.",
@@ -328,7 +328,7 @@ describe("SkillTool", () => {
 				"Canonical winner body.",
 			);
 			await makeRuntimeSkill(path.join(configuredRoot, "skills"), "winner", "Configured", "Configured winner body.");
-			await makeRuntimeSkill(path.join(home, ".gjc", "skills"), "winner", "Historical", "Historical winner body.");
+			await makeRuntimeSkill(path.join(home, ".vib", "skills"), "winner", "Historical", "Historical winner body.");
 			const canonicalDuplicatePath = await makeRuntimeSkill(
 				path.join(configuredRoot, "agent", "skills"),
 				"canonical-configured-historical",
@@ -342,7 +342,7 @@ describe("SkillTool", () => {
 				"Configured duplicate body.",
 			);
 			await makeRuntimeSkill(
-				path.join(home, ".gjc", "skills"),
+				path.join(home, ".vib", "skills"),
 				"canonical-configured-historical",
 				"Historical duplicate",
 				"Historical duplicate body.",
@@ -354,15 +354,15 @@ describe("SkillTool", () => {
 				"Configured duplicate body.",
 			);
 			await makeRuntimeSkill(
-				path.join(home, ".gjc", "skills"),
+				path.join(home, ".vib", "skills"),
 				"configured-historical",
 				"Historical duplicate",
 				"Historical duplicate body.",
 			);
-			const gjcDecoyPath = await makeRuntimeSkill(
-				path.join(gjcAgentDecoyDir, "skills"),
-				"gjc-direct-decoy",
-				"GJC direct decoy",
+			const vibDecoyPath = await makeRuntimeSkill(
+				path.join(vibAgentDecoyDir, "skills"),
+				"vib-direct-decoy",
+				"Vibrato direct decoy",
 				"Decoy.",
 			);
 			const piDecoyPath = await makeRuntimeSkill(
@@ -372,7 +372,7 @@ describe("SkillTool", () => {
 				"Decoy.",
 			);
 			const xdgDecoyPath = await makeRuntimeSkill(
-				path.join(xdgConfigHome, "gjc", "agent", "skills"),
+				path.join(xdgConfigHome, "vib", "agent", "skills"),
 				"xdg-decoy",
 				"XDG decoy",
 				"Decoy.",
@@ -389,7 +389,7 @@ describe("SkillTool", () => {
 				expect(captured.at(-1)?.message.content).toContain(body);
 				expect(result.details?.path).toBe(expectedPath);
 			}
-			delete process.env.GJC_CONFIG_DIR;
+			delete process.env.VIB_CONFIG_DIR;
 			const piCanonicalPath = await makeRuntimeSkill(
 				path.join(home, ".configured-pi", "agent", "skills"),
 				"pi-canonical",
@@ -400,18 +400,18 @@ describe("SkillTool", () => {
 			expect(captured.at(-1)?.message.content).toContain("PI canonical body.");
 			expect(piResult.details?.path).toBe(piCanonicalPath);
 			const capturedBeforeDecoys = captured.length;
-			for (const name of ["gjc-direct-decoy", "pi-direct-decoy", "xdg-decoy"]) {
+			for (const name of ["vib-direct-decoy", "pi-direct-decoy", "xdg-decoy"]) {
 				await expect(tool.execute(`call-${name}`, { name })).rejects.toThrow(/unknown skill/);
 			}
 			expect(captured).toHaveLength(capturedBeforeDecoys);
-			expect([gjcDecoyPath, piDecoyPath, xdgDecoyPath]).not.toContain(piResult.details?.path);
+			expect([vibDecoyPath, piDecoyPath, xdgDecoyPath]).not.toContain(piResult.details?.path);
 		} finally {
-			if (originalGjcConfigDir === undefined) delete process.env.GJC_CONFIG_DIR;
-			else process.env.GJC_CONFIG_DIR = originalGjcConfigDir;
+			if (originalVibConfigDir === undefined) delete process.env.VIB_CONFIG_DIR;
+			else process.env.VIB_CONFIG_DIR = originalVibConfigDir;
 			if (originalPiConfigDir === undefined) delete process.env.PI_CONFIG_DIR;
 			else process.env.PI_CONFIG_DIR = originalPiConfigDir;
-			if (originalCodingAgentDir === undefined) delete process.env.GJC_CODING_AGENT_DIR;
-			else process.env.GJC_CODING_AGENT_DIR = originalCodingAgentDir;
+			if (originalCodingAgentDir === undefined) delete process.env.VIB_CODING_AGENT_DIR;
+			else process.env.VIB_CODING_AGENT_DIR = originalCodingAgentDir;
 			if (originalPiCodingAgentDir === undefined) delete process.env.PI_CODING_AGENT_DIR;
 			else process.env.PI_CODING_AGENT_DIR = originalPiCodingAgentDir;
 			if (originalXdgConfigHome === undefined) delete process.env.XDG_CONFIG_HOME;

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { Effort } from "@gajae-code/ai";
+import { Effort } from "@vib-rato/ai";
 import { parseAgentFields } from "../../src/discovery/helpers";
 
 describe("parseAgentFields", () => {
@@ -113,10 +113,10 @@ describe("parseAgentFields", () => {
 		const fields = parseAgentFields({
 			name: "reviewer",
 			description: "desc",
-			bashAllowedPrefixes: ["gjc ralplan --write", " gjc state "],
+			bashAllowedPrefixes: ["vib ralplan --write", " vib state "],
 		});
 
 		expect(fields).toBeDefined();
-		expect(fields?.bashAllowedPrefixes).toEqual(["gjc ralplan --write", "gjc state"]);
+		expect(fields?.bashAllowedPrefixes).toEqual(["vib ralplan --write", "vib state"]);
 	});
 });

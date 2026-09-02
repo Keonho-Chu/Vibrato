@@ -1,8 +1,8 @@
-import type { AgentTool, AgentToolContext, AgentToolResult, AgentToolUpdateCallback } from "@gajae-code/agent-core";
-import type { ImageContent } from "@gajae-code/ai/core";
-import type { Component } from "@gajae-code/tui";
-import { Markdown, Text } from "@gajae-code/tui";
-import { prompt } from "@gajae-code/utils";
+import type { AgentTool, AgentToolContext, AgentToolResult, AgentToolUpdateCallback } from "@vib-rato/agent-core";
+import type { ImageContent } from "@vib-rato/ai/core";
+import type { Component } from "@vib-rato/tui";
+import { Markdown, Text } from "@vib-rato/tui";
+import { prompt } from "@vib-rato/utils";
 import * as z from "zod/v4";
 import { jsBackend, pythonBackend } from "../eval";
 import type { ExecutorBackend } from "../eval/backend";

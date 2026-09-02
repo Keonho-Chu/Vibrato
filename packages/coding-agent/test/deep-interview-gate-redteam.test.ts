@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { askSchema } from "@gajae-code/coding-agent/tools/ask";
+import { askSchema } from "@vib-rato/coding-agent/tools/ask";
 import {
 	type AskGateQuestion,
 	DeepInterviewGateError,

@@ -1,17 +1,17 @@
 /**
- * Core types for the gajae-code-native coding-harness operations control plane (v1).
+ * Core types for the vib-rato-native coding-harness operations control plane (v1).
  *
  * See the approved consensus plan at
- * `.gjc/plans/ralplan/2026-06-02-0853-3e33/stage-02-revision.md` and the spec at
- * `.gjc/specs/deep-interview-harness-control-plane.md`.
+ * `.vib/plans/ralplan/2026-06-02-0853-3e33/stage-02-revision.md` and the spec at
+ * `.vib/specs/deep-interview-harness-control-plane.md`.
  *
- * v1 implements the gajae-code adapter only. omx/codex/remote/auth are deferred seams.
+ * v1 implements the vib-rato adapter only. omx/codex/remote/auth are deferred seams.
  */
 
 import type { AgentWireObservedSignal } from "../modes/shared/agent-wire/event-contract";
 
-/** Harnesses the control plane can operate. v1 implements `gajae-code` only. */
-export type Harness = "gajae-code" | "codex" | "omx";
+/** Harnesses the control plane can operate. v1 implements `vib-rato` only. */
+export type Harness = "vib-rato" | "codex" | "omx";
 
 /** Operating mode of a session. `implement` builds/changes code; `review` produces a read-only verdict. */
 export type SessionMode = "implement" | "review";
@@ -98,7 +98,7 @@ export type ReceiptFamily =
 	| "review-failure"
 	| "phase-rollup";
 
-/** The CLI verbs / primitives exposed by `gjc harness <verb>`. */
+/** The CLI verbs / primitives exposed by `vib harness <verb>`. */
 export type HarnessVerb =
 	| "start"
 	| "submit"

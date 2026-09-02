@@ -2,11 +2,11 @@ import { describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { createUltragoalPlan, startNextUltragoalGoal } from "@gajae-code/coding-agent/gjc-runtime/ultragoal-runtime";
-import { GoalRuntime } from "@gajae-code/coding-agent/goals/runtime";
-import type { Goal, GoalModeState, GoalTokenUsage } from "@gajae-code/coding-agent/goals/state";
-import { GoalTool } from "@gajae-code/coding-agent/goals/tools/goal-tool";
-import type { ToolSession } from "@gajae-code/coding-agent/tools";
+import { GoalRuntime } from "@vib-rato/coding-agent/goals/runtime";
+import type { Goal, GoalModeState, GoalTokenUsage } from "@vib-rato/coding-agent/goals/state";
+import { GoalTool } from "@vib-rato/coding-agent/goals/tools/goal-tool";
+import type { ToolSession } from "@vib-rato/coding-agent/tools";
+import { createUltragoalPlan, startNextUltragoalGoal } from "@vib-rato/coding-agent/vib-runtime/ultragoal-runtime";
 
 function createUsage(overrides: Partial<GoalTokenUsage> = {}): GoalTokenUsage {
 	return {
@@ -253,22 +253,22 @@ describe("GoalTool", () => {
 	});
 
 	it("blocks direct unified goal completion for active ultragoal objectives without verification receipt", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-goal-ultragoal-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-goal-ultragoal-"));
 		try {
 			const sessionId = "goal-tool-ultragoal-test";
 			const plan = await createUltragoalPlan({ cwd: root, brief: "Ship verified ultragoal", sessionId });
 			// Isolate the receipt gate: disable the pre-gate try-harder nudge (covered
 			// separately in ultragoal-nudge-guard.test.ts).
-			await fs.mkdir(path.join(root, ".gjc"), { recursive: true });
+			await fs.mkdir(path.join(root, ".vib"), { recursive: true });
 			await fs.writeFile(
-				path.join(root, ".gjc", "settings.json"),
-				JSON.stringify({ "gjc.ultragoal.nudgeBudget": 0 }),
+				path.join(root, ".vib", "settings.json"),
+				JSON.stringify({ "vib.ultragoal.nudgeBudget": 0 }),
 			);
 			await startNextUltragoalGoal({ cwd: root, sessionId });
 			const harness = createRuntimeHarness({
 				enabled: true,
 				mode: "active",
-				goal: createGoal({ objective: plan.gjcObjective }),
+				goal: createGoal({ objective: plan.vibObjective }),
 			});
 			const tool = new GoalTool(
 				createToolSession({
@@ -280,7 +280,7 @@ describe("GoalTool", () => {
 			);
 
 			await expect(tool.execute("call-complete", { op: "complete" })).rejects.toThrow(
-				"gjc ultragoal checkpoint --status complete --quality-gate-json <file>",
+				"vib ultragoal checkpoint --status complete --quality-gate-json <file>",
 			);
 			expect(harness.getState()?.goal.status).toBe("active");
 		} finally {

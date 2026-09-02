@@ -7,8 +7,8 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import type { AgentToolResult } from "@gajae-code/agent-core";
-import { isEnoent } from "@gajae-code/utils";
+import type { AgentToolResult } from "@vib-rato/agent-core";
+import { isEnoent } from "@vib-rato/utils";
 import * as z from "zod/v4";
 import {
 	type FileDiagnosticsResult,

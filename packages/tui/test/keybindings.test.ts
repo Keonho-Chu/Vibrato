@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import { detectDefaultKeyCollisions, KeybindingsManager, TUI_KEYBINDINGS } from "@gajae-code/tui/keybindings";
-import { isKeyId } from "@gajae-code/tui/keys";
+import { detectDefaultKeyCollisions, KeybindingsManager, TUI_KEYBINDINGS } from "@vib-rato/tui/keybindings";
+import { isKeyId } from "@vib-rato/tui/keys";
 
 describe("KeybindingsManager", () => {
 	it("does not evict selector confirm when input submit is rebound", () => {

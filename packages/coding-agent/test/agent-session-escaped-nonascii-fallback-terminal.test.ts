@@ -1,19 +1,19 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
 import * as path from "node:path";
-import { Agent, type AgentMessage, type AgentTool } from "@gajae-code/agent-core";
-import { ESCAPED_NONASCII_RECOVERY_PROMPT } from "@gajae-code/agent-core/agent-loop";
-import { getBundledModel, type Message, type Model } from "@gajae-code/ai";
-import { createMockModel } from "@gajae-code/ai/providers/mock";
-import type { OpenAIResponsesHistoryPayload } from "@gajae-code/ai/types";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { AgentSession } from "@gajae-code/coding-agent/session/agent-session";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { TempDir } from "@gajae-code/utils";
+import { Agent, type AgentMessage, type AgentTool } from "@vib-rato/agent-core";
+import { ESCAPED_NONASCII_RECOVERY_PROMPT } from "@vib-rato/agent-core/agent-loop";
+import { getBundledModel, type Message, type Model } from "@vib-rato/ai";
+import { createMockModel } from "@vib-rato/ai/providers/mock";
+import type { OpenAIResponsesHistoryPayload } from "@vib-rato/ai/types";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { AgentSession } from "@vib-rato/coding-agent/session/agent-session";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { TempDir } from "@vib-rato/utils";
 import * as z from "zod/v4";
 
-const QUESTION = "C:\\Users\\최재필\\.gjc\\session.json";
+const QUESTION = "C:\\Users\\최재필\\.vib\\session.json";
 
 function identityConverter(messages: AgentMessage[]): Message[] {
 	return messages.filter(
@@ -81,7 +81,7 @@ describe("AgentSession escaped non-ASCII fallback terminal (#4880)", () => {
 	});
 
 	it("fails closed without fallback re-entry on deterministic escaped non-ASCII exhaustion", async () => {
-		tempDir = TempDir.createSync("@gjc-escaped-fallback-terminal-4880-");
+		tempDir = TempDir.createSync("@vib-escaped-fallback-terminal-4880-");
 		authStorage = await AuthStorage.create(path.join(tempDir.path(), "auth.db"));
 		authStorage.setRuntimeApiKey("anthropic", "test-key");
 
@@ -215,7 +215,7 @@ describe("AgentSession escaped non-ASCII fallback terminal (#4880)", () => {
 	});
 
 	it("recovers on the next model after the first model exhausts escaped retries", async () => {
-		tempDir = TempDir.createSync("@gjc-escaped-fallback-advance-4880-");
+		tempDir = TempDir.createSync("@vib-escaped-fallback-advance-4880-");
 		authStorage = await AuthStorage.create(path.join(tempDir.path(), "auth.db"));
 		authStorage.setRuntimeApiKey("anthropic", "test-key");
 
@@ -294,7 +294,7 @@ describe("AgentSession escaped non-ASCII fallback terminal (#4880)", () => {
 	});
 
 	it("starts a fresh escaped retry budget after an ordinary fallback advance", async () => {
-		tempDir = TempDir.createSync("@gjc-escaped-fallback-mixed-4880-");
+		tempDir = TempDir.createSync("@vib-escaped-fallback-mixed-4880-");
 		authStorage = await AuthStorage.create(path.join(tempDir.path(), "auth.db"));
 		authStorage.setRuntimeApiKey("anthropic", "test-key");
 		authStorage.setRuntimeApiKey("openai", "test-key");
@@ -359,7 +359,7 @@ describe("AgentSession escaped non-ASCII fallback terminal (#4880)", () => {
 	});
 
 	it("skips duplicate concrete models after escaped recovery exhaustion", async () => {
-		tempDir = TempDir.createSync("@gjc-escaped-fallback-duplicate-4880-");
+		tempDir = TempDir.createSync("@vib-escaped-fallback-duplicate-4880-");
 		authStorage = await AuthStorage.create(path.join(tempDir.path(), "auth.db"));
 		authStorage.setRuntimeApiKey("anthropic", "test-key");
 		authStorage.setRuntimeApiKey("openai", "test-key");
@@ -413,7 +413,7 @@ describe("AgentSession escaped non-ASCII fallback terminal (#4880)", () => {
 	});
 
 	it("does not switch models after abort interrupts fallback credential resolution", async () => {
-		tempDir = TempDir.createSync("@gjc-escaped-fallback-abort-4880-");
+		tempDir = TempDir.createSync("@vib-escaped-fallback-abort-4880-");
 		authStorage = await AuthStorage.create(path.join(tempDir.path(), "auth.db"));
 		authStorage.setRuntimeApiKey("anthropic", "test-key");
 		authStorage.setRuntimeApiKey("openai", "test-key");
@@ -486,7 +486,7 @@ describe("AgentSession escaped non-ASCII fallback terminal (#4880)", () => {
 	});
 
 	it("rolls back a fallback switch when cancellation arrives before continuation invocation", async () => {
-		tempDir = TempDir.createSync("@gjc-escaped-fallback-post-switch-abort-4880-");
+		tempDir = TempDir.createSync("@vib-escaped-fallback-post-switch-abort-4880-");
 		authStorage = await AuthStorage.create(path.join(tempDir.path(), "auth.db"));
 		authStorage.setRuntimeApiKey("anthropic", "test-key");
 

@@ -1,23 +1,23 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { Agent, type AgentContext } from "@gajae-code/agent-core";
-import type { AssistantMessage, Model, ProviderSessionState, Usage } from "@gajae-code/ai";
-import { AssistantMessageEventStream } from "@gajae-code/ai/utils/event-stream";
-import { createAppendOnlyContextManager } from "@gajae-code/coding-agent/append-only-mode";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { loadExtensions } from "@gajae-code/coding-agent/extensibility/extensions/loader";
-import { ExtensionRunner } from "@gajae-code/coding-agent/extensibility/extensions/runner";
-import { AgentSession } from "@gajae-code/coding-agent/session/agent-session";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
+import { Agent, type AgentContext } from "@vib-rato/agent-core";
+import type { AssistantMessage, Model, ProviderSessionState, Usage } from "@vib-rato/ai";
+import { AssistantMessageEventStream } from "@vib-rato/ai/utils/event-stream";
+import { createAppendOnlyContextManager } from "@vib-rato/coding-agent/append-only-mode";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { loadExtensions } from "@vib-rato/coding-agent/extensibility/extensions/loader";
+import { ExtensionRunner } from "@vib-rato/coding-agent/extensibility/extensions/runner";
+import { AgentSession } from "@vib-rato/coding-agent/session/agent-session";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
 import {
 	getLatestCompactionEntry,
 	loadEntriesFromFile,
 	SessionManager,
 	SessionManagerTestHooks,
-} from "@gajae-code/coding-agent/session/session-manager";
-import { getProjectAgentDir, TempDir } from "@gajae-code/utils";
+} from "@vib-rato/coding-agent/session/session-manager";
+import { getProjectAgentDir, TempDir } from "@vib-rato/utils";
 
 /**
  * Outcome-contract coverage for cooperative mid-run context maintenance

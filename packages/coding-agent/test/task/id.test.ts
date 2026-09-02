@@ -108,7 +108,7 @@ describe("task id validation", () => {
 	});
 
 	it("prevents allocated id path traversal before artifact writes", async () => {
-		const artifactsDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-task-id-artifacts-"));
+		const artifactsDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-task-id-artifacts-"));
 		tempDirs.push(artifactsDir);
 		const outsidePath = path.join(path.dirname(artifactsDir), "escape.md");
 		await fs.rm(outsidePath, { force: true });

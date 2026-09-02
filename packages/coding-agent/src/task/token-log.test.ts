@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test";
 import { appendFile, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { GJC_SESSION_ACTIVITY_FILE, sessionRoot } from "../gjc-runtime/session-layout";
+import { sessionRoot, VIB_SESSION_ACTIVITY_FILE } from "../vib-runtime/session-layout";
 import {
 	computeCacheHitRate,
 	persistTaskTokenLog,
@@ -13,7 +13,7 @@ import {
 } from "./token-log";
 
 async function withTempDir<T>(fn: (dir: string) => Promise<T>): Promise<T> {
-	const dir = await mkdtemp(join(tmpdir(), "gjc-token-log-"));
+	const dir = await mkdtemp(join(tmpdir(), "vib-token-log-"));
 	try {
 		return await fn(dir);
 	} finally {
@@ -102,7 +102,7 @@ describe("task token log", () => {
 				[currentSessionId, "2026-01-01T00:00:00.000Z"],
 				[staleSessionId, "2026-01-01T00:00:10.000Z"],
 			] as const) {
-				const markerPath = join(sessionRoot(cwd, sessionId), GJC_SESSION_ACTIVITY_FILE);
+				const markerPath = join(sessionRoot(cwd, sessionId), VIB_SESSION_ACTIVITY_FILE);
 				await mkdir(join(markerPath, ".."), { recursive: true });
 				await writeFile(
 					markerPath,

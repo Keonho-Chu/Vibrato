@@ -10,7 +10,7 @@ import { createHash } from "node:crypto";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { canContinuePersistedHistory } from "@gajae-code/agent-core";
+import { canContinuePersistedHistory } from "@vib-rato/agent-core";
 import { SessionManager } from "../src/session/session-manager";
 import { parseImportSessionArgs } from "../src/session-import/command";
 import { detectSessionImportFormat } from "../src/session-import/detect";
@@ -217,7 +217,7 @@ const CLAUDE_EXPORT = JSON.stringify([
 const tempDirs: string[] = [];
 
 function makeTempDir(): string {
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-session-import-"));
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-session-import-"));
 	tempDirs.push(dir);
 	return dir;
 }
@@ -261,10 +261,10 @@ describe("session import format detection", () => {
 		});
 	});
 
-	it("rejects a native GJC session transcript with an actionable error", () => {
-		const gjcSession = `${JSON.stringify({ type: "session", version: 5, id: "abc", timestamp: "2026-07-30T10:00:00.000Z", cwd: "/tmp" })}\n`;
+	it("rejects a native Vibrato session transcript with an actionable error", () => {
+		const vibSession = `${JSON.stringify({ type: "session", version: 5, id: "abc", timestamp: "2026-07-30T10:00:00.000Z", cwd: "/tmp" })}\n`;
 		try {
-			detectSessionImportFormat(gjcSession, undefined);
+			detectSessionImportFormat(vibSession, undefined);
 			expect.unreachable();
 		} catch (error) {
 			expectImportError(error, "unsupported_format");
@@ -569,7 +569,7 @@ describe("import bounds and malformed input", () => {
 });
 
 describe("session import materialization", () => {
-	it("creates a provenance-marked GJC session that reopens continuable", async () => {
+	it("creates a provenance-marked Vibrato session that reopens continuable", async () => {
 		const dir = makeTempDir();
 		const destination = path.join(dir, "sessions");
 		const source = writeSource(dir, "rollout.jsonl", CODEX_ROLLOUT);

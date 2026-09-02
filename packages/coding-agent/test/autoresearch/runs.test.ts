@@ -12,22 +12,22 @@ import {
 	findBaselineMetric,
 	findBestKeptMetric,
 } from "../../src/autoresearch/runs";
-import { sessionAutoresearchDir } from "../../src/gjc-runtime/session-layout";
+import { sessionAutoresearchDir } from "../../src/vib-runtime/session-layout";
 
 const TEST_SESSION_ID = "runs-test-session";
 const tempRoots: string[] = [];
-let previousGjcSessionId: string | undefined;
+let previousVibSessionId: string | undefined;
 
 beforeAll(() => {
-	previousGjcSessionId = process.env.GJC_SESSION_ID;
-	process.env.GJC_SESSION_ID = TEST_SESSION_ID;
+	previousVibSessionId = process.env.VIB_SESSION_ID;
+	process.env.VIB_SESSION_ID = TEST_SESSION_ID;
 });
 
 afterAll(() => {
-	if (previousGjcSessionId === undefined) {
-		delete process.env.GJC_SESSION_ID;
+	if (previousVibSessionId === undefined) {
+		delete process.env.VIB_SESSION_ID;
 	} else {
-		process.env.GJC_SESSION_ID = previousGjcSessionId;
+		process.env.VIB_SESSION_ID = previousVibSessionId;
 	}
 });
 
@@ -36,7 +36,7 @@ afterEach(async () => {
 });
 
 async function tempDir(): Promise<string> {
-	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-autoresearch-runs-"));
+	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-autoresearch-runs-"));
 	tempRoots.push(dir);
 	return dir;
 }

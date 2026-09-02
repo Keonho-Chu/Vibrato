@@ -1,17 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import * as path from "node:path";
-import { Agent } from "@gajae-code/agent-core";
-import type { Model } from "@gajae-code/ai";
+import { Agent } from "@vib-rato/agent-core";
+import type { Model } from "@vib-rato/ai";
 import {
 	applyPreparedModelProfileActivation,
 	prepareModelProfileActivation,
-} from "@gajae-code/coding-agent/config/model-profile-activation";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { AgentSession } from "@gajae-code/coding-agent/session/agent-session";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { TempDir } from "@gajae-code/utils";
+} from "@vib-rato/coding-agent/config/model-profile-activation";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { AgentSession } from "@vib-rato/coding-agent/session/agent-session";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { TempDir } from "@vib-rato/utils";
 
 // Regression coverage for the combo-preset resume bug: activating a model
 // profile (e.g. opus-codex) whose main model differs from the startup base

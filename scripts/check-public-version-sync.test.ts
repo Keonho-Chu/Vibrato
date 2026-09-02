@@ -9,7 +9,7 @@ import { canonicalJsonBytes, createExpectedEvidence, createFinalEvidence, expect
 const tempRoots: string[] = [];
 
 async function createRepo(files: Record<string, string>): Promise<string> {
-	const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-public-version-sync-"));
+	const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-public-version-sync-"));
 	tempRoots.push(root);
 	for (const [relativePath, content] of Object.entries(files)) {
 		const filePath = path.join(root, relativePath);
@@ -24,8 +24,8 @@ function rootPackage(version = "1.2.3"): string {
 		{
 			workspaces: {
 				catalog: {
-					"@gajae-code/coding-agent": version,
-					"gajae-code": version,
+					"@vib-rato/coding-agent": version,
+					"vib-rato": version,
 				},
 			},
 		},
@@ -34,7 +34,7 @@ function rootPackage(version = "1.2.3"): string {
 	);
 }
 
-function packageJson(name: string, version = "1.2.3", homepage = "https://gajae-code.com"): string {
+function packageJson(name: string, version = "1.2.3", homepage = "https://vib-rato.com"): string {
 	return JSON.stringify({ name, version, homepage }, null, "\t");
 }
 
@@ -45,17 +45,17 @@ async function addGeneratedDocsIndex(root: string): Promise<void> {
 }
 const SOURCE_SHA = "a".repeat(40);
 const DIFFERENT_SOURCE_SHA = "e".repeat(40);
-const GIT_API = "https://api.github.com/repos/Yeachan-Heo/gajae-code/git";
+const GIT_API = "https://api.github.com/repos/Keonho-Chu/Vibrato/git";
 
-const LATEST_RELEASE_API = "https://api.github.com/repos/Yeachan-Heo/gajae-code/releases/latest";
-const RELEASE_LIST_API = "https://api.github.com/repos/Yeachan-Heo/gajae-code/releases?per_page=100";
-const RELEASE_LIST_PAGE_TWO_API = "https://api.github.com/repos/Yeachan-Heo/gajae-code/releases?per_page=100&page=2";
+const LATEST_RELEASE_API = "https://api.github.com/repos/Keonho-Chu/Vibrato/releases/latest";
+const RELEASE_LIST_API = "https://api.github.com/repos/Keonho-Chu/Vibrato/releases?per_page=100";
+const RELEASE_LIST_PAGE_TWO_API = "https://api.github.com/repos/Keonho-Chu/Vibrato/releases?per_page=100&page=2";
 const TAG_API = `${GIT_API}/ref/tags/v1.2.3`;
 
-const RELEASE_STATE_URL = "https://gajae-code.com/release-sync.json";
-const RELEASE_URL = "https://github.com/Yeachan-Heo/gajae-code/releases/tag/v1.2.3";
-const EXPECTED_ASSET_URL = "https://assets.example/gajae-release-packages-expected-v1.json";
-const FINAL_ASSET_URL = "https://assets.example/gajae-release-packages-v1.json";
+const RELEASE_STATE_URL = "https://vib-rato.com/release-sync.json";
+const RELEASE_URL = "https://github.com/Keonho-Chu/Vibrato/releases/tag/v1.2.3";
+const EXPECTED_ASSET_URL = "https://assets.example/vibrato-release-packages-expected-v1.json";
+const FINAL_ASSET_URL = "https://assets.example/vibrato-release-packages-v1.json";
 
 type MockFetchResponse = Response | string | Record<string, unknown> | unknown[];
 
@@ -68,13 +68,13 @@ function stableRelease(assets?: Array<{ name: string; browser_download_url: stri
 		published_at: "2026-07-12T04:00:25.000Z",
 		html_url: RELEASE_URL,
 		assets: assets ?? [
-			{ name: "gjc-linux-x64", browser_download_url: "https://assets.example/gjc-linux-x64" },
-			{ name: "gjc-linux-arm64", browser_download_url: "https://assets.example/gjc-linux-arm64" },
-			{ name: "gjc-darwin-arm64", browser_download_url: "https://assets.example/gjc-darwin-arm64" },
-			{ name: "gjc-darwin-x64", browser_download_url: "https://assets.example/gjc-darwin-x64" },
-			{ name: "gjc-windows-x64.exe", browser_download_url: "https://assets.example/gjc-windows-x64.exe" },
-			{ name: "gajae-release-packages-expected-v1.json", browser_download_url: EXPECTED_ASSET_URL },
-			{ name: "gajae-release-packages-v1.json", browser_download_url: FINAL_ASSET_URL },
+			{ name: "vib-linux-x64", browser_download_url: "https://assets.example/vib-linux-x64" },
+			{ name: "vib-linux-arm64", browser_download_url: "https://assets.example/vib-linux-arm64" },
+			{ name: "vib-darwin-arm64", browser_download_url: "https://assets.example/vib-darwin-arm64" },
+			{ name: "vib-darwin-x64", browser_download_url: "https://assets.example/vib-darwin-x64" },
+			{ name: "vib-windows-x64.exe", browser_download_url: "https://assets.example/vib-windows-x64.exe" },
+			{ name: "vibrato-release-packages-expected-v1.json", browser_download_url: EXPECTED_ASSET_URL },
+			{ name: "vibrato-release-packages-v1.json", browser_download_url: FINAL_ASSET_URL },
 		],
 	};
 }
@@ -87,14 +87,14 @@ function releaseState(version = "1.2.3", changelogPath = "packages/coding-agent/
 				id: 123,
 				published_at: "2026-07-12T04:00:25Z",
 				tag: `v${version}`,
-				url: `https://github.com/Yeachan-Heo/gajae-code/releases/tag/v${version}`,
+				url: `https://github.com/Keonho-Chu/Vibrato/releases/tag/v${version}`,
 				version,
 			},
 			schema_version: 1,
 			source: {
 				changelog_path: changelogPath,
 				commit_sha: sourceCommit,
-				repository: "Yeachan-Heo/gajae-code",
+				repository: "Keonho-Chu/Vibrato",
 			},
 		},
 		null,
@@ -175,9 +175,9 @@ describe("public docs/site/version sync guard", () => {
 	test("passes when package versions, homepage metadata, marketing docs, and generated docs index match", async () => {
 		const root = await createRepo({
 			"package.json": rootPackage(),
-			"packages/coding-agent/package.json": packageJson("@gajae-code/coding-agent"),
-			"packages/gajae-code/package.json": packageJson("gajae-code"),
-			"README.md": "# Gajae-Code\n\n## Recent highlights\n",
+			"packages/coding-agent/package.json": packageJson("@vib-rato/coding-agent"),
+			"packages/vib-rato/package.json": packageJson("vib-rato"),
+			"README.md": "# Vibrato\n\n## Recent highlights\n",
 			"docs/sdk.md": "# SDK\n\nCurrent docs.\n",
 		});
 		await addGeneratedDocsIndex(root);
@@ -197,17 +197,17 @@ describe("public docs/site/version sync guard", () => {
 	test("fails on package, catalog, homepage, stale marketing, and generated docs drift", async () => {
 		const root = await createRepo({
 			"package.json": rootPackage("1.2.3"),
-			"packages/coding-agent/package.json": packageJson("@gajae-code/coding-agent", "1.2.3"),
-			"packages/gajae-code/package.json": packageJson("gajae-code", "1.2.2", "https://example.invalid"),
-			"README.md": "# Gajae-Code\n\n## New in 1.2.2\n",
+			"packages/coding-agent/package.json": packageJson("@vib-rato/coding-agent", "1.2.3"),
+			"packages/vib-rato/package.json": packageJson("vib-rato", "1.2.2", "https://example.invalid"),
+			"README.md": "# Vibrato\n\n## New in 1.2.2\n",
 			"docs/sdk.md": "# SDK\n",
 			"packages/coding-agent/src/internal-urls/docs-index.generated.ts": "stale\n",
 		});
 
 		const violations = await checkPublicVersionSync(root);
-		expect(violations.some(violation => violation.path === "packages/gajae-code/package.json" && violation.message.includes("version 1.2.2"))).toBe(true);
-		expect(violations.some(violation => violation.path === "packages/gajae-code/package.json" && violation.message.includes("homepage"))).toBe(true);
-		expect(violations.some(violation => violation.path === "package.json" && violation.message.includes("catalog gajae-code"))).toBe(true);
+		expect(violations.some(violation => violation.path === "packages/vib-rato/package.json" && violation.message.includes("version 1.2.2"))).toBe(true);
+		expect(violations.some(violation => violation.path === "packages/vib-rato/package.json" && violation.message.includes("homepage"))).toBe(true);
+		expect(violations.some(violation => violation.path === "package.json" && violation.message.includes("catalog vib-rato"))).toBe(true);
 		expect(violations.some(violation => violation.path === "README.md" && violation.message.includes("Visible marketing version 1.2.2"))).toBe(true);
 		expect(violations.some(violation => violation.path.includes("docs-index.generated.ts") && violation.message.includes("stale"))).toBe(true);
 	});
@@ -217,9 +217,9 @@ describe("public docs/site/version sync guard", () => {
 		// restores the unmergeable one-line-per-doc artifact to the index.
 		const root = await createRepo({
 			"package.json": rootPackage(),
-			"packages/coding-agent/package.json": packageJson("@gajae-code/coding-agent"),
-			"packages/gajae-code/package.json": packageJson("gajae-code"),
-			"README.md": "# Gajae-Code\n",
+			"packages/coding-agent/package.json": packageJson("@vib-rato/coding-agent"),
+			"packages/vib-rato/package.json": packageJson("vib-rato"),
+			"README.md": "# Vibrato\n",
 			"docs/sdk.md": "# SDK\n\nCurrent docs.\n",
 			".gitignore": "packages/coding-agent/src/internal-urls/docs-index.generated.ts\n",
 		});
@@ -246,9 +246,9 @@ describe("public docs/site/version sync guard", () => {
 		// rather than fail on a missing git or a non-repo directory.
 		const root = await createRepo({
 			"package.json": rootPackage(),
-			"packages/coding-agent/package.json": packageJson("@gajae-code/coding-agent"),
-			"packages/gajae-code/package.json": packageJson("gajae-code"),
-			"README.md": "# Gajae-Code\n",
+			"packages/coding-agent/package.json": packageJson("@vib-rato/coding-agent"),
+			"packages/vib-rato/package.json": packageJson("vib-rato"),
+			"README.md": "# Vibrato\n",
 			"docs/sdk.md": "# SDK\n\nCurrent docs.\n",
 		});
 		await addGeneratedDocsIndex(root);
@@ -260,7 +260,7 @@ describe("public docs/site/version sync guard", () => {
 		const workspaces = Object.entries(workspaceVersions)
 			.map(
 				([dir, version]) =>
-					`    "packages/${dir}": {\n      "name": "@gajae-code/${dir}",\n      "version": "${version}",\n    },`,
+					`    "packages/${dir}": {\n      "name": "@vib-rato/${dir}",\n      "version": "${version}",\n    },`,
 			)
 			.join("\n");
 		const catalog = Object.entries(catalogVersions)
@@ -275,10 +275,10 @@ describe("public docs/site/version sync guard", () => {
 	test("fails when the Bun lock workspace versions trail the package manifests", async () => {
 		const root = await createRepo({
 			"package.json": rootPackage(),
-			"packages/coding-agent/package.json": packageJson("@gajae-code/coding-agent"),
-			"packages/gajae-code/package.json": packageJson("gajae-code"),
-			"bun.lock": bunLock({ "coding-agent": "1.2.2" }, { "@gajae-code/coding-agent": "1.2.3" }),
-			"README.md": "# Gajae-Code\n",
+			"packages/coding-agent/package.json": packageJson("@vib-rato/coding-agent"),
+			"packages/vib-rato/package.json": packageJson("vib-rato"),
+			"bun.lock": bunLock({ "coding-agent": "1.2.2" }, { "@vib-rato/coding-agent": "1.2.3" }),
+			"README.md": "# Vibrato\n",
 			"docs/sdk.md": "# SDK\n",
 		});
 		await addGeneratedDocsIndex(root);
@@ -288,7 +288,7 @@ describe("public docs/site/version sync guard", () => {
 			violations.some(
 				violation =>
 					violation.path === "bun.lock" &&
-					violation.message.includes("Lock workspace @gajae-code/coding-agent version 1.2.2") &&
+					violation.message.includes("Lock workspace @vib-rato/coding-agent version 1.2.2") &&
 					violation.message.includes("does not match packages/coding-agent/package.json version 1.2.3"),
 			),
 		).toBe(true);
@@ -297,10 +297,10 @@ describe("public docs/site/version sync guard", () => {
 	test("fails when the Bun lock catalog trails the root catalog", async () => {
 		const root = await createRepo({
 			"package.json": rootPackage(),
-			"packages/coding-agent/package.json": packageJson("@gajae-code/coding-agent"),
-			"packages/gajae-code/package.json": packageJson("gajae-code"),
-			"bun.lock": bunLock({ "coding-agent": "1.2.3" }, { "@gajae-code/coding-agent": "1.2.2" }),
-			"README.md": "# Gajae-Code\n",
+			"packages/coding-agent/package.json": packageJson("@vib-rato/coding-agent"),
+			"packages/vib-rato/package.json": packageJson("vib-rato"),
+			"bun.lock": bunLock({ "coding-agent": "1.2.3" }, { "@vib-rato/coding-agent": "1.2.2" }),
+			"README.md": "# Vibrato\n",
 			"docs/sdk.md": "# SDK\n",
 		});
 		await addGeneratedDocsIndex(root);
@@ -310,7 +310,7 @@ describe("public docs/site/version sync guard", () => {
 			violations.some(
 				violation =>
 					violation.path === "bun.lock" &&
-					violation.message.includes("Lock catalog @gajae-code/coding-agent version 1.2.2") &&
+					violation.message.includes("Lock catalog @vib-rato/coding-agent version 1.2.2") &&
 					violation.message.includes("does not match root catalog version 1.2.3"),
 			),
 		).toBe(true);
@@ -319,10 +319,10 @@ describe("public docs/site/version sync guard", () => {
 	test("fails when a root catalog pin is missing from the Bun lock catalog", async () => {
 		const root = await createRepo({
 			"package.json": rootPackage(),
-			"packages/coding-agent/package.json": packageJson("@gajae-code/coding-agent"),
-			"packages/gajae-code/package.json": packageJson("gajae-code"),
+			"packages/coding-agent/package.json": packageJson("@vib-rato/coding-agent"),
+			"packages/vib-rato/package.json": packageJson("vib-rato"),
 			"bun.lock": bunLock({ "coding-agent": "1.2.3" }, {}),
-			"README.md": "# Gajae-Code\n",
+			"README.md": "# Vibrato\n",
 			"docs/sdk.md": "# SDK\n",
 		});
 		await addGeneratedDocsIndex(root);
@@ -332,7 +332,7 @@ describe("public docs/site/version sync guard", () => {
 			violations.some(
 				violation =>
 					violation.path === "bun.lock" &&
-					violation.message.includes("Root catalog @gajae-code/coding-agent version 1.2.3 is missing from the Bun lockfile catalog"),
+					violation.message.includes("Root catalog @vib-rato/coding-agent version 1.2.3 is missing from the Bun lockfile catalog"),
 			),
 		).toBe(true);
 	});
@@ -480,19 +480,19 @@ describe("public docs/site/version sync guard", () => {
 
 	test("live check rejects a stable release without final package evidence before reading deployed state", async () => {
 		const incompleteAssets = [
-			{ name: "gjc-linux-x64", browser_download_url: "https://assets.example/gjc-linux-x64" },
-			{ name: "gjc-linux-arm64", browser_download_url: "https://assets.example/gjc-linux-arm64" },
-			{ name: "gjc-darwin-arm64", browser_download_url: "https://assets.example/gjc-darwin-arm64" },
-			{ name: "gjc-darwin-x64", browser_download_url: "https://assets.example/gjc-darwin-x64" },
-			{ name: "gjc-windows-x64.exe", browser_download_url: "https://assets.example/gjc-windows-x64.exe" },
-			{ name: "gajae-release-packages-expected-v1.json", browser_download_url: EXPECTED_ASSET_URL },
+			{ name: "vib-linux-x64", browser_download_url: "https://assets.example/vib-linux-x64" },
+			{ name: "vib-linux-arm64", browser_download_url: "https://assets.example/vib-linux-arm64" },
+			{ name: "vib-darwin-arm64", browser_download_url: "https://assets.example/vib-darwin-arm64" },
+			{ name: "vib-darwin-x64", browser_download_url: "https://assets.example/vib-darwin-x64" },
+			{ name: "vib-windows-x64.exe", browser_download_url: "https://assets.example/vib-windows-x64.exe" },
+			{ name: "vibrato-release-packages-expected-v1.json", browser_download_url: EXPECTED_ASSET_URL },
 		];
 		const responses = liveResponses(stableRelease(incompleteAssets), releaseState());
 
 		await expect(checkLivePublicVersionSync("unused", mockFetch(responses), 50)).resolves.toEqual([
 			{
 				path: LATEST_RELEASE_API,
-				message: "Published release v1.2.3 is incomplete: missing gajae-release-packages-v1.json.",
+				message: "Published release v1.2.3 is incomplete: missing vibrato-release-packages-v1.json.",
 			},
 		]);
 	});

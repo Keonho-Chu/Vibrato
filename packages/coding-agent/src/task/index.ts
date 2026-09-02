@@ -2,9 +2,9 @@
  * Task tool - Delegate tasks to specialized agents.
  *
  * Discovers agent definitions from:
- *   - Bundled agents (shipped with gjc-coding-agent)
- *   - ~/.gjc/agent/agents/*.md (user-level)
- *   - .gjc/agents/*.md (project-level)
+ *   - Bundled agents (shipped with vib-coding-agent)
+ *   - ~/.vib/agent/agents/*.md (user-level)
+ *   - .vib/agents/*.md (project-level)
  *
  * Supports:
  *   - Single agent execution
@@ -16,15 +16,15 @@ import { createHash, randomUUID } from "node:crypto";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import path from "node:path";
-import type { AgentTool, AgentToolResult, AgentToolUpdateCallback } from "@gajae-code/agent-core";
-import type { Model, Usage } from "@gajae-code/ai/core";
+import type { AgentTool, AgentToolResult, AgentToolUpdateCallback } from "@vib-rato/agent-core";
+import type { Model, Usage } from "@vib-rato/ai/core";
 import {
 	AsyncJobManager,
 	OwnerSubagentShutdownError,
 	type ResumeRunner,
 	type SubagentRunOutcome,
-} from "@gajae-code/coding-agent/async";
-import { $pickenv, prompt, Snowflake } from "@gajae-code/utils";
+} from "@vib-rato/coding-agent/async";
+import { $pickenv, prompt, Snowflake } from "@vib-rato/utils";
 import type { ToolSession } from "..";
 import { normalizeTierSelector, type RoutingOutcome, resolveTaskRouting } from "../config/autorouting";
 import { AUTOROUTING_SELECTOR_MAX_LENGTH, type AutoroutingReasonCode } from "../config/autorouting-contract";
@@ -55,6 +55,11 @@ import {
 
 // Import review tools for side effects (registers subagent tool handlers)
 import "../tools/review";
+import { initializeLocalRoot, type LocalProtocolOptions, resolveLocalUrlToPath } from "../internal-urls";
+import { ArtifactManager } from "../session/artifacts";
+import { registerOwnedIfLineaged } from "../session/terminal-abort";
+import { generateCommitMessage } from "../utils/commit-message-generator";
+import * as git from "../utils/git";
 import {
 	assertExecutionRootMatchesRepositoryBinding,
 	assertPathUnderRepositoryBinding,
@@ -63,12 +68,7 @@ import {
 	type RepositoryBinding,
 	RepositoryBindingError,
 	resolveTaskRepositoryBinding,
-} from "../gjc-runtime/repository-binding";
-import { initializeLocalRoot, type LocalProtocolOptions, resolveLocalUrlToPath } from "../internal-urls";
-import { ArtifactManager } from "../session/artifacts";
-import { registerOwnedIfLineaged } from "../session/terminal-abort";
-import { generateCommitMessage } from "../utils/commit-message-generator";
-import * as git from "../utils/git";
+} from "../vib-runtime/repository-binding";
 import { loadBundledAgents } from "./agents";
 import { discoverAgents, filterVisibleAgents, getAgent } from "./discovery";
 import {
@@ -631,7 +631,7 @@ export class TaskTool implements AgentTool<TaskToolSchemaInstance, TaskToolDetai
 		discoveredAgents: AgentDefinition[],
 		sessionRepositoryBinding: RepositoryBinding,
 	) {
-		this.#blockedAgent = $pickenv("GJC_BLOCKED_AGENT", "PI_BLOCKED_AGENT");
+		this.#blockedAgent = $pickenv("VIB_BLOCKED_AGENT", "PI_BLOCKED_AGENT");
 		this.#discoveredAgents = discoveredAgents;
 		this.#sessionRepositoryBinding = sessionRepositoryBinding;
 	}
@@ -697,7 +697,7 @@ export class TaskTool implements AgentTool<TaskToolSchemaInstance, TaskToolDetai
 	async #allocateSessionLifetimeArtifacts(state: SessionLifetimeArtifactsState): Promise<string | null> {
 		let dir: string;
 		try {
-			dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-task-session-"));
+			dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-task-session-"));
 		} catch {
 			state.dir = undefined;
 			state.manager = undefined;
@@ -2463,7 +2463,7 @@ export class TaskTool implements AgentTool<TaskToolSchemaInstance, TaskToolDetai
 							};
 						} catch (mergeErr) {
 							// Agent succeeded but branch commit failed — clean up stale branch
-							const branchName = `gjc/task/${task.id}`;
+							const branchName = `vib/task/${task.id}`;
 							await git.branch.tryDelete(repoRoot, branchName);
 							const msg = mergeErr instanceof Error ? mergeErr.message : String(mergeErr);
 							capturedResult = { ...capturedResult, error: `Merge failed: ${msg}` };

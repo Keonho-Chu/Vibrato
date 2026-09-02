@@ -8,8 +8,8 @@ import {
 	runLocalProviderDiscoverCommand,
 	runLocalProviderSmoke,
 	runLocalProviderStatus,
-} from "@gajae-code/coding-agent/cli/local-provider-smoke";
-import { hookFetch } from "@gajae-code/utils/hook-fetch";
+} from "@vib-rato/coding-agent/cli/local-provider-smoke";
+import { hookFetch } from "@vib-rato/utils/hook-fetch";
 import { LOCAL_PROVIDER_ACTIONS, LOCAL_PROVIDER_DEFAULT_ACTION } from "../src/commands/local-provider";
 
 describe("local provider streaming smoke", () => {
@@ -17,7 +17,7 @@ describe("local provider streaming smoke", () => {
 	let modelsPath: string;
 
 	beforeEach(() => {
-		tempDir = path.join(os.tmpdir(), `gjc-local-provider-smoke-${crypto.randomUUID()}`);
+		tempDir = path.join(os.tmpdir(), `vib-local-provider-smoke-${crypto.randomUUID()}`);
 		fs.mkdirSync(tempDir, { recursive: true });
 		modelsPath = path.join(tempDir, "models.json");
 	});

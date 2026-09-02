@@ -2,9 +2,9 @@ import { describe, expect, it } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { AgentToolContext } from "@gajae-code/agent-core";
-import { resetSettingsForTest, Settings } from "@gajae-code/coding-agent/config/settings";
-import { runInteractiveBashPty } from "@gajae-code/coding-agent/tools/bash-interactive";
+import type { AgentToolContext } from "@vib-rato/agent-core";
+import { resetSettingsForTest, Settings } from "@vib-rato/coding-agent/config/settings";
+import { runInteractiveBashPty } from "@vib-rato/coding-agent/tools/bash-interactive";
 
 interface DisposableComponent {
 	dispose?: () => void;
@@ -47,7 +47,7 @@ describe("interactive Bash PTY tail retention", () => {
 			await previous;
 			let tempDir: string | undefined;
 			try {
-				tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-bash-pty-tail-"));
+				tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-bash-pty-tail-"));
 				resetSettingsForTest();
 				await run(tempDir);
 			} finally {

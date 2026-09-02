@@ -1,8 +1,8 @@
 # UI design and visual QA workflow
 
-This is the repo-owned contract for future Gajae-Code UI, web, dashboard, terminal, and TUI visual work. It adapts the useful OMO design-reference and visual-QA workflow without vendoring any third-party design corpus.
+This is the repo-owned contract for future Vibrato UI, web, dashboard, terminal, and TUI visual work. It adapts the useful OMO design-reference and visual-QA workflow without vendoring any third-party design corpus.
 
-It is not a fifth bundled workflow skill. Gajae-Code's public workflow surface remains `deep-interview`, `ralplan`, `ultragoal`, and `autoresearch`; use this document as planning/review guidance inside those workflows or direct implementation.
+It is not a fifth bundled workflow skill. Vibrato's public workflow surface remains `deep-interview`, `ralplan`, `ultragoal`, and `autoresearch`; use this document as planning/review guidance inside those workflows or direct implementation.
 
 ## Required branch before implementation
 
@@ -55,7 +55,7 @@ Required evidence:
 
 ## Terminal and TUI evidence
 
-Terminal/TUI visual work must preserve terminal semantics in future helper flows. Until Gajae-Code has a dedicated helper, terminal visual-QA evidence must document the exact helper requirements and avoid flattening away the data needed for review.
+Terminal/TUI visual work must preserve terminal semantics in future helper flows. Until Vibrato has a dedicated helper, terminal visual-QA evidence must document the exact helper requirements and avoid flattening away the data needed for review.
 
 A terminal/TUI evidence helper must produce, at minimum:
 
@@ -73,7 +73,7 @@ Do not vendor raw third-party design corpora, screenshots, brand guides, prompt 
 
 Allowed in a first PR:
 
-- first-party `DESIGN.md` guidance written for Gajae-Code;
+- first-party `DESIGN.md` guidance written for Vibrato;
 - a small hand-written reference index that names public sources and records why they were consulted;
 - pinned links, citations, or manifests that do not copy raw third-party corpus content.
 

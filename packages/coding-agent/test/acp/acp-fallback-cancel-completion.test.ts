@@ -13,9 +13,9 @@ import {
 	type RequestPermissionResponse,
 	type SessionNotification,
 } from "@agentclientprotocol/sdk";
-import { AcpAgent, acpRequestFailure } from "@gajae-code/coding-agent/modes/acp/acp-agent";
-import { createAcpConnection } from "@gajae-code/coding-agent/modes/acp/acp-mode";
-import { TempDir } from "@gajae-code/utils";
+import { AcpAgent, acpRequestFailure } from "@vib-rato/coding-agent/modes/acp/acp-agent";
+import { createAcpConnection } from "@vib-rato/coding-agent/modes/acp/acp-mode";
+import { TempDir } from "@vib-rato/utils";
 import { AcpSdkAdapterError } from "../../src/sdk/acp";
 import { writeBrokerDiscovery } from "../../src/sdk/broker/discovery";
 import {

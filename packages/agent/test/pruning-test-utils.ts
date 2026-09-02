@@ -1,4 +1,4 @@
-import type { ToolCall, ToolResultMessage } from "@gajae-code/ai/types";
+import type { ToolCall, ToolResultMessage } from "@vib-rato/ai/types";
 import { estimateEntryTokens } from "../src/compaction/compaction";
 import type { SessionEntry, SessionMessageEntry } from "../src/compaction/entries";
 import {

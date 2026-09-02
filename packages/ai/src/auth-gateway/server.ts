@@ -1,12 +1,12 @@
 /**
- * gjc auth-gateway HTTP server.
+ * vib auth-gateway HTTP server.
  *
  * Accepts a provider-scoped provider-format request (OpenAI chat-completions, Anthropic
  * messages, OpenAI Responses) and dispatches through pi-ai's `streamSimple()`
  * — which handles credential injection, anthropic-beta headers, OpenAI code backend
  * websocket transport, and all the per-provider intricacies. The gateway is
- * pure protocol translation: foreign wire → gjc Context → pi-ai stream() →
- * gjc events → foreign wire.
+ * pure protocol translation: foreign wire → vib Context → pi-ai stream() →
+ * vib events → foreign wire.
  *
  * Endpoints:
  *   GET  /healthz                          → unauth; ok + version
@@ -18,7 +18,7 @@
  *   POST /v1/responses                     → OpenAI Responses in/out
  */
 
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 import { cleanReason } from "../auth-broker/redact";
 import type { AuthStorage } from "../auth-storage";
 import { Effort } from "../model-thinking";
@@ -376,7 +376,7 @@ function deriveSessionId(modelId: string, context: Context): string {
 	const first = context.messages?.[0];
 	if (first) {
 		// Strip timestamp / provider metadata so the hash is stable across turns
-		// of the same conversation (gjc re-stamps every parsed Message). role +
+		// of the same conversation (vib re-stamps every parsed Message). role +
 		// content is what's actually on the wire.
 		parts.push(JSON.stringify({ role: first.role, content: first.content }));
 	}
@@ -736,7 +736,7 @@ async function handleFormatEndpoint(
 		return route.module.formatError(404, "invalid_request_error", `Unknown model: ${modelId}`);
 	}
 
-	// Parse + validate against the strict format schema, rebuild as gjc's
+	// Parse + validate against the strict format schema, rebuild as vib's
 	// canonical Context, dispatch through pi-ai's streamSimple, encode the
 	// canonical event stream back to the inbound format. There is no
 	// passthrough fast-path — every request flows through pi-ai so that

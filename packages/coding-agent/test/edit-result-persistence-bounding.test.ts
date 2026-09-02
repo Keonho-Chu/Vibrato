@@ -66,7 +66,7 @@ function makeEditToolSessionWithMode(cwd: string, mode: string): Record<string, 
 
 describe("edit-result persistence bounding (#4566)", () => {
 	it("keeps transcript growth bounded independently of file size across repeated apply_patch results", async () => {
-		const root = makeTempDir("gjc-4566-bounding-");
+		const root = makeTempDir("vib-4566-bounding-");
 		const cwd = path.join(root, "proj");
 		const agentDir = path.join(root, "agent");
 		fs.mkdirSync(cwd, { recursive: true });
@@ -77,7 +77,7 @@ describe("edit-result persistence bounding (#4566)", () => {
 		const fileSize = fs.statSync(path.join(cwd, "big.ts")).size;
 		expect(fileSize).toBeGreaterThan(64 * 1024);
 
-		process.env.GJC_EDIT_VARIANT = "apply_patch";
+		process.env.VIB_EDIT_VARIANT = "apply_patch";
 		const { EditTool } = await import("../src/edit");
 		const editTool = new EditTool(makeEditToolSession(cwd) as never);
 
@@ -161,13 +161,13 @@ describe("edit-result persistence bounding (#4566)", () => {
 				expect(typeof details.firstChangedLine).toBe("number");
 			}
 		} finally {
-			delete process.env.GJC_EDIT_VARIANT;
+			delete process.env.VIB_EDIT_VARIANT;
 			await manager.close();
 		}
 	});
 
 	it("computes snapshot receipts before generic 500k persistence truncation", async () => {
-		const root = makeTempDir("gjc-4566-exact-digest-");
+		const root = makeTempDir("vib-4566-exact-digest-");
 		const cwd = path.join(root, "proj");
 		const agentDir = path.join(root, "agent");
 		fs.mkdirSync(cwd, { recursive: true });
@@ -234,7 +234,7 @@ describe("edit-result persistence bounding (#4566)", () => {
 	});
 
 	it("persists small edit snapshots inline without receipts", async () => {
-		const root = makeTempDir("gjc-4566-inline-");
+		const root = makeTempDir("vib-4566-inline-");
 		const cwd = path.join(root, "proj");
 		const agentDir = path.join(root, "agent");
 		fs.mkdirSync(cwd, { recursive: true });
@@ -296,7 +296,7 @@ describe("edit-result persistence bounding (#4566)", () => {
 	});
 
 	it("bounds per-file copies in multi-file apply_patch results", async () => {
-		const root = makeTempDir("gjc-4566-multifile-");
+		const root = makeTempDir("vib-4566-multifile-");
 		const cwd = path.join(root, "proj");
 		const agentDir = path.join(root, "agent");
 		fs.mkdirSync(cwd, { recursive: true });
@@ -373,7 +373,7 @@ describe("edit-result persistence bounding (#4566)", () => {
 				expect(typeof file.path).toBe("string");
 			}
 		} finally {
-			delete process.env.GJC_EDIT_VARIANT;
+			delete process.env.VIB_EDIT_VARIANT;
 			await manager.close();
 		}
 	});
@@ -381,7 +381,7 @@ describe("edit-result persistence bounding (#4566)", () => {
 
 describe("near-limit edit append after committed mutation (#4566)", () => {
 	it("recovers the append via full rewrite, keeps the committed edit durable, and states the recovery path", async () => {
-		const root = makeTempDir("gjc-4566-nearlimit-");
+		const root = makeTempDir("vib-4566-nearlimit-");
 		const cwd = path.join(root, "workspace");
 		const agentDir = path.join(root, "agent");
 		fs.mkdirSync(cwd, { recursive: true });
@@ -389,7 +389,7 @@ describe("near-limit edit append after committed mutation (#4566)", () => {
 
 		const { lineAt } = writeBigFile(cwd, 6400);
 
-		process.env.GJC_EDIT_VARIANT = "apply_patch";
+		process.env.VIB_EDIT_VARIANT = "apply_patch";
 		const { EditTool } = await import("../src/edit");
 		const editTool = new EditTool(makeEditToolSession(cwd) as never);
 
@@ -478,12 +478,12 @@ describe("near-limit edit append after committed mutation (#4566)", () => {
 			await manager.flush();
 			expect(fs.readFileSync(sessionFile, "utf8")).toContain("continue");
 		} finally {
-			delete process.env.GJC_EDIT_VARIANT;
+			delete process.env.VIB_EDIT_VARIANT;
 			await manager.close();
 		}
 	});
 	it("surfaces the typed near-limit outcome when even the rewrite cannot hold the entry", async () => {
-		const root = makeTempDir("gjc-4566-typed-");
+		const root = makeTempDir("vib-4566-typed-");
 		const cwd = path.join(root, "workspace");
 		const agentDir = path.join(root, "agent");
 		fs.mkdirSync(cwd, { recursive: true });
@@ -491,7 +491,7 @@ describe("near-limit edit append after committed mutation (#4566)", () => {
 
 		const { lineAt } = writeBigFile(cwd, 6400);
 
-		process.env.GJC_EDIT_VARIANT = "apply_patch";
+		process.env.VIB_EDIT_VARIANT = "apply_patch";
 		const { EditTool } = await import("../src/edit");
 		const { SessionNearLimitAppendError: SessionNearLimitAppendErrorValue } = await import(
 			"../src/session/session-manager"
@@ -585,7 +585,7 @@ describe("near-limit edit append after committed mutation (#4566)", () => {
 			expect(typed.entryBytes).toBeGreaterThan(0);
 			expect(typed.entryRetained).toBe(true);
 			expect(typed.message).toContain("compact");
-			expect(typed.message).toContain("gjc export");
+			expect(typed.message).toContain("vib export");
 			// The committed edit is still in memory; the next successful persist
 			// (after compaction) records it — the effect/receipt gap is stated,
 			// not silent.
@@ -597,7 +597,7 @@ describe("near-limit edit append after committed mutation (#4566)", () => {
 			).toBe(true);
 			expect(appendCalls).toBeGreaterThanOrEqual(1);
 		} finally {
-			delete process.env.GJC_EDIT_VARIANT;
+			delete process.env.VIB_EDIT_VARIANT;
 			await manager.close();
 		}
 	});

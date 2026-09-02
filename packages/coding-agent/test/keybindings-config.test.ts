@@ -11,7 +11,7 @@ afterEach(async () => {
 
 describe("keybindings config", () => {
 	it("does not write back a malformed config", async () => {
-		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-keybindings-"));
+		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-keybindings-"));
 		const file = path.join(tempDir, "keybindings.json");
 		const malformed = "{ not valid json";
 		await fs.writeFile(file, malformed);
@@ -20,7 +20,7 @@ describe("keybindings config", () => {
 		expect(await Bun.file(`${file}.bak`).exists()).toBe(false);
 	});
 	it("rejects invalid overrides atomically and retains defaults", async () => {
-		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-keybindings-"));
+		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-keybindings-"));
 		await fs.writeFile(
 			path.join(tempDir, "keybindings.json"),
 			JSON.stringify({
@@ -36,7 +36,7 @@ describe("keybindings config", () => {
 		expect(keybindings.getKeys("app.commandPalette.open")).toEqual(["ctrl+p"]);
 	});
 	it("normalizes Option and Command aliases in user bindings", async () => {
-		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-keybindings-"));
+		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-keybindings-"));
 		await fs.writeFile(
 			path.join(tempDir, "keybindings.json"),
 			JSON.stringify({
@@ -51,7 +51,7 @@ describe("keybindings config", () => {
 	});
 
 	it("accepts literal plus as a configured base key", async () => {
-		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-keybindings-"));
+		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-keybindings-"));
 		await fs.writeFile(path.join(tempDir, "keybindings.json"), JSON.stringify({ "app.clear": "ctrl++" }));
 
 		expect(KeybindingsManager.create(tempDir).getKeys("app.clear")).toEqual(["ctrl++"]);

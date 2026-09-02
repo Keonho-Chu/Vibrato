@@ -2,7 +2,7 @@ import type * as nodeFs from "node:fs";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { getAgentDir } from "@gajae-code/utils";
+import { getAgentDir } from "@vib-rato/utils";
 import { withFileLock } from "../config/file-lock";
 import { prepareExternalSessionImport, type SessionImportSourceIdentity } from "../session-import/provider-service";
 
@@ -543,14 +543,14 @@ const PROFILE_TEXT: Record<string, OnboardingProfileText> = {
 			configuration: "Provider and project configuration",
 			general: "General coding assistance",
 		},
-		mapping: "use GJC's matching commands, tools, and review flow",
+		mapping: "use Vibrato's matching commands, tools, and review flow",
 		missing: "source unavailable",
 		unsupported: "source is present but unsupported",
 		stale: "source is stale",
 		unavailable: "analysis unavailable",
 		partial: "session files were safely omitted",
-		manualMigration: "Map my existing workflow to GJC",
-		manualCommands: "Open the GJC command guide",
+		manualMigration: "Map my existing workflow to Vibrato",
+		manualCommands: "Open the Vibrato command guide",
 	},
 	ko: {
 		categories: {
@@ -562,14 +562,14 @@ const PROFILE_TEXT: Record<string, OnboardingProfileText> = {
 			configuration: "프로바이더 및 프로젝트 설정",
 			general: "일반 코딩 지원",
 		},
-		mapping: "GJC의 관련 명령, 도구 및 리뷰 흐름 사용",
+		mapping: "Vibrato의 관련 명령, 도구 및 리뷰 흐름 사용",
 		missing: "소스를 찾을 수 없음",
 		unsupported: "소스가 있지만 지원되지 않음",
 		stale: "소스가 오래됨",
 		unavailable: "분석할 수 없음",
 		partial: "세션 파일을 안전하게 제외함",
-		manualMigration: "기존 워크플로를 GJC에 매핑",
-		manualCommands: "GJC 명령 안내 열기",
+		manualMigration: "기존 워크플로를 Vibrato에 매핑",
+		manualCommands: "Vibrato 명령 안내 열기",
 	},
 	ja: {
 		categories: {
@@ -581,14 +581,14 @@ const PROFILE_TEXT: Record<string, OnboardingProfileText> = {
 			configuration: "プロバイダーとプロジェクト設定",
 			general: "一般的なコーディング支援",
 		},
-		mapping: "対応するGJCコマンド、ツール、レビューフローを使う",
+		mapping: "対応するVibratoコマンド、ツール、レビューフローを使う",
 		missing: "ソースがありません",
 		unsupported: "ソースは存在しますが未対応です",
 		stale: "ソースが古すぎます",
 		unavailable: "分析できません",
 		partial: "セッションファイルを安全に除外しました",
-		manualMigration: "既存ワークフローをGJCに対応付ける",
-		manualCommands: "GJCコマンドガイドを開く",
+		manualMigration: "既存ワークフローをVibratoに対応付ける",
+		manualCommands: "Vibratoコマンドガイドを開く",
 	},
 	zh: {
 		categories: {
@@ -600,14 +600,14 @@ const PROFILE_TEXT: Record<string, OnboardingProfileText> = {
 			configuration: "提供商与项目配置",
 			general: "通用编码协助",
 		},
-		mapping: "使用 GJC 中对应的命令、工具和审查流程",
+		mapping: "使用 Vibrato 中对应的命令、工具和审查流程",
 		missing: "来源不可用",
 		unsupported: "来源存在但不受支持",
 		stale: "来源已过期",
 		unavailable: "无法分析",
 		partial: "已安全省略会话文件",
-		manualMigration: "将现有工作流映射到 GJC",
-		manualCommands: "打开 GJC 命令指南",
+		manualMigration: "将现有工作流映射到 Vibrato",
+		manualCommands: "打开 Vibrato 命令指南",
 	},
 	es: {
 		categories: {
@@ -619,14 +619,14 @@ const PROFILE_TEXT: Record<string, OnboardingProfileText> = {
 			configuration: "Configuración de proveedores y proyectos",
 			general: "Asistencia general de código",
 		},
-		mapping: "usar los comandos, herramientas y revisiones equivalentes de GJC",
+		mapping: "usar los comandos, herramientas y revisiones equivalentes de Vibrato",
 		missing: "fuente no disponible",
 		unsupported: "fuente presente pero no compatible",
 		stale: "fuente obsoleta",
 		unavailable: "análisis no disponible",
 		partial: "archivos de sesión omitidos de forma segura",
-		manualMigration: "Adaptar mi flujo existente a GJC",
-		manualCommands: "Abrir la guía de comandos de GJC",
+		manualMigration: "Adaptar mi flujo existente a Vibrato",
+		manualCommands: "Abrir la guía de comandos de Vibrato",
 	},
 	fr: {
 		categories: {
@@ -638,14 +638,14 @@ const PROFILE_TEXT: Record<string, OnboardingProfileText> = {
 			configuration: "Configuration des fournisseurs et projets",
 			general: "Assistance générale au code",
 		},
-		mapping: "utiliser les commandes, outils et revues GJC correspondants",
+		mapping: "utiliser les commandes, outils et revues Vibrato correspondants",
 		missing: "source indisponible",
 		unsupported: "source présente mais non prise en charge",
 		stale: "source trop ancienne",
 		unavailable: "analyse indisponible",
 		partial: "fichiers de session omis en toute sécurité",
-		manualMigration: "Adapter mon workflow existant à GJC",
-		manualCommands: "Ouvrir le guide des commandes GJC",
+		manualMigration: "Adapter mon workflow existant à Vibrato",
+		manualCommands: "Ouvrir le guide des commandes Vibrato",
 	},
 	de: {
 		categories: {
@@ -657,14 +657,14 @@ const PROFILE_TEXT: Record<string, OnboardingProfileText> = {
 			configuration: "Provider- und Projektkonfiguration",
 			general: "Allgemeine Coding-Unterstützung",
 		},
-		mapping: "passende GJC-Befehle, Werkzeuge und Review-Abläufe nutzen",
+		mapping: "passende Vibrato-Befehle, Werkzeuge und Review-Abläufe nutzen",
 		missing: "Quelle nicht verfügbar",
 		unsupported: "Quelle vorhanden, aber nicht unterstützt",
 		stale: "Quelle ist veraltet",
 		unavailable: "Analyse nicht verfügbar",
 		partial: "Sitzungsdateien sicher ausgelassen",
-		manualMigration: "Meinen bestehenden Workflow auf GJC abbilden",
-		manualCommands: "GJC-Befehlsübersicht öffnen",
+		manualMigration: "Meinen bestehenden Workflow auf Vibrato abbilden",
+		manualCommands: "Vibrato-Befehlsübersicht öffnen",
 	},
 };
 

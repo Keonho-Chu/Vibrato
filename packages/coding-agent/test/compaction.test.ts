@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as path from "node:path";
-import type { AgentMessage } from "@gajae-code/agent-core";
+import type { AgentMessage } from "@vib-rato/agent-core";
 import {
 	type CompactionSettings,
 	calculateContextTokens,
@@ -14,12 +14,12 @@ import {
 	type RemoteCompactionFallbackHealthHooks,
 	resolveThresholdTokens,
 	shouldCompact,
-} from "@gajae-code/agent-core/compaction/compaction";
-import * as ai from "@gajae-code/ai";
-import { getBundledModel } from "@gajae-code/ai/models";
-import { encodeTextSignatureV1 } from "@gajae-code/ai/providers/openai-responses-shared";
-import type { AssistantMessage, Model, ProviderPayload, ToolResultMessage, Usage } from "@gajae-code/ai/types";
-import { hookFetch } from "@gajae-code/utils";
+} from "@vib-rato/agent-core/compaction/compaction";
+import * as ai from "@vib-rato/ai";
+import { getBundledModel } from "@vib-rato/ai/models";
+import { encodeTextSignatureV1 } from "@vib-rato/ai/providers/openai-responses-shared";
+import type { AssistantMessage, Model, ProviderPayload, ToolResultMessage, Usage } from "@vib-rato/ai/types";
+import { hookFetch } from "@vib-rato/utils";
 import {
 	buildSessionContext,
 	type CompactionEntry,

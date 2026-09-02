@@ -8,7 +8,7 @@ const repoRoot = path.join(import.meta.dir, "..");
 const defaultReceiptPath = path.join(repoRoot, ".ci-dev-darwin-arm64-receipt.json");
 const sha256 = /^[a-f0-9]{64}$/;
 const gitSha = /^[a-f0-9]{40}$/;
-const canonicalSmokeArgv = ["packages/coding-agent/dist/gjc", "--smoke-test"] as const;
+const canonicalSmokeArgv = ["packages/coding-agent/dist/vib", "--smoke-test"] as const;
 const smokeEnvironmentKeys = ["HOME", "XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME"] as const;
 
 type SmokeEnvironment = Record<(typeof smokeEnvironmentKeys)[number], string>;
@@ -34,8 +34,8 @@ interface NativePackageJson {
 
 async function loadNativeIdentity(): Promise<{ packageVersion: string; versionSentinelExport: string }> {
 	const nativePackage = await Bun.file(path.join(repoRoot, "packages/natives/package.json")).json() as NativePackageJson;
-	if (nativePackage.name !== "@gajae-code/natives" || !isString(nativePackage.version) || nativePackage.version.trim().length === 0) {
-		throw new Error("darwin-receipt-invalid: @gajae-code/natives package version is unavailable");
+	if (nativePackage.name !== "@vib-rato/natives" || !isString(nativePackage.version) || nativePackage.version.trim().length === 0) {
+		throw new Error("darwin-receipt-invalid: @vib-rato/natives package version is unavailable");
 	}
 	const versionSentinelExport = `__piNativesV${nativePackage.version.replace(/[^A-Za-z0-9]/g, "_")}`;
 	const nativeIndex = await Bun.file(path.join(repoRoot, "packages/natives/native/index.js")).text();
@@ -57,7 +57,7 @@ function assertReceipt(value: unknown, expectedSourceSha: string, nativeIdentity
 	for (const key of ["binarySha256", "nativeAddonSha256"] as const) {
 		if (!isString(value[key]) || !sha256.test(value[key])) throw new Error(`darwin-receipt-invalid: invalid ${key}`);
 	}
-	if (value.nativePackageVersion !== nativeIdentity.packageVersion) throw new Error("darwin-receipt-invalid: native package version does not match @gajae-code/natives");
+	if (value.nativePackageVersion !== nativeIdentity.packageVersion) throw new Error("darwin-receipt-invalid: native package version does not match @vib-rato/natives");
 	if (value.versionSentinelExport !== nativeIdentity.versionSentinelExport) throw new Error("darwin-receipt-invalid: native version sentinel does not match the loader");
 	if (!isString(value.bunVersion) || value.bunVersion.trim().length === 0) throw new Error("darwin-receipt-invalid: missing bunVersion");
 	if (value.runnerOs !== "darwin" || value.runnerArch !== "arm64") throw new Error("darwin-receipt-invalid: wrong runner platform");

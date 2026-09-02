@@ -6,8 +6,8 @@ import * as path from "node:path";
 /**
  * Two operator overrides are spawned directly:
  *
- * - `GJC_SDK_SESSION_COMMAND` becomes the broker's session-host `spawn(file, args)`
- * - `GJC_HARNESS_PROCESS_START_COMMAND` becomes the harness `Bun.spawnSync([...command, pid])`
+ * - `VIB_SDK_SESSION_COMMAND` becomes the broker's session-host `spawn(file, args)`
+ * - `VIB_HARNESS_PROCESS_START_COMMAND` becomes the harness `Bun.spawnSync([...command, pid])`
  *
  * `Bun.env === process.env`, and the env module merges the caller's `cwd/.env`
  * into it, so without a trust boundary a repository could plant `.env` and pick
@@ -18,7 +18,7 @@ import * as path from "node:path";
  */
 
 const PROBE = path.join(import.meta.dir, "fixtures", "spawn-command-env-probe.ts");
-const COMMAND_KEYS = ["GJC_SDK_SESSION_COMMAND", "GJC_HARNESS_PROCESS_START_COMMAND"] as const;
+const COMMAND_KEYS = ["VIB_SDK_SESSION_COMMAND", "VIB_HARNESS_PROCESS_START_COMMAND"] as const;
 
 interface Resolved {
 	sdkSessionCommand: { file: string; args: string[] } | null;
@@ -28,7 +28,7 @@ interface Resolved {
 const tempDirs: string[] = [];
 
 function projectDir(dotenv?: string): string {
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-spawn-command-trust-"));
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-spawn-command-trust-"));
 	tempDirs.push(dir);
 	if (dotenv !== undefined) fs.writeFileSync(path.join(dir, ".env"), dotenv);
 	return dir;
@@ -62,33 +62,33 @@ describe("spawn command env trust boundary", () => {
 	});
 
 	it("ignores an SDK session command planted by the project .env", async () => {
-		const cwd = projectDir("GJC_SDK_SESSION_COMMAND=/tmp/attacker-host --take-over\n");
+		const cwd = projectDir("VIB_SDK_SESSION_COMMAND=/tmp/attacker-host --take-over\n");
 		expect((await resolveIn(cwd)).sdkSessionCommand).toBeNull();
 	});
 
 	it("ignores a harness process-start command planted by the project .env", async () => {
-		const cwd = projectDir('GJC_HARNESS_PROCESS_START_COMMAND=["/tmp/attacker-probe"]\n');
+		const cwd = projectDir('VIB_HARNESS_PROCESS_START_COMMAND=["/tmp/attacker-probe"]\n');
 		expect((await resolveIn(cwd)).processStartCommand).toEqual({ kind: "none" });
 	});
 
 	it("still honors overrides inherited from the launching shell", async () => {
 		const resolved = await resolveIn(projectDir(), {
-			GJC_SDK_SESSION_COMMAND: "/opt/gjc/session-host --flag",
-			GJC_HARNESS_PROCESS_START_COMMAND: '["ps","-o","lstart=","-p"]',
+			VIB_SDK_SESSION_COMMAND: "/opt/vib/session-host --flag",
+			VIB_HARNESS_PROCESS_START_COMMAND: '["ps","-o","lstart=","-p"]',
 		});
-		expect(resolved.sdkSessionCommand).toEqual({ file: "/opt/gjc/session-host", args: ["--flag"] });
+		expect(resolved.sdkSessionCommand).toEqual({ file: "/opt/vib/session-host", args: ["--flag"] });
 		expect(resolved.processStartCommand).toEqual({ kind: "command", command: ["ps", "-o", "lstart=", "-p"] });
 	});
 
 	it("keeps a malformed inherited harness override fatal rather than falling back", async () => {
-		const resolved = await resolveIn(projectDir(), { GJC_HARNESS_PROCESS_START_COMMAND: "not json" });
+		const resolved = await resolveIn(projectDir(), { VIB_HARNESS_PROCESS_START_COMMAND: "not json" });
 		expect(resolved.processStartCommand).toEqual({ kind: "invalid" });
 	});
 
 	it("does not let the project .env override inherited values", async () => {
-		const cwd = projectDir("GJC_SDK_SESSION_COMMAND=/tmp/attacker-host\n");
-		expect((await resolveIn(cwd, { GJC_SDK_SESSION_COMMAND: "/opt/gjc/session-host" })).sdkSessionCommand).toEqual({
-			file: "/opt/gjc/session-host",
+		const cwd = projectDir("VIB_SDK_SESSION_COMMAND=/tmp/attacker-host\n");
+		expect((await resolveIn(cwd, { VIB_SDK_SESSION_COMMAND: "/opt/vib/session-host" })).sdkSessionCommand).toEqual({
+			file: "/opt/vib/session-host",
 			args: [],
 		});
 	});

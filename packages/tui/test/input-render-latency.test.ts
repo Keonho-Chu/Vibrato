@@ -1,8 +1,8 @@
-// MUST be first: pins terminal-capability env before @gajae-code/tui evaluates.
+// MUST be first: pins terminal-capability env before @vib-rato/tui evaluates.
 import "./render-goldens-env";
 import { describe, expect, it } from "bun:test";
-import { Editor, Text, TUI } from "@gajae-code/tui";
-import { $flag } from "@gajae-code/utils";
+import { Editor, Text, TUI } from "@vib-rato/tui";
+import { $flag } from "@vib-rato/utils";
 import { defaultEditorTheme } from "./test-themes";
 import { VirtualTerminal } from "./virtual-terminal";
 

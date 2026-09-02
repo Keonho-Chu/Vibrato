@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { toolWireSchema } from "@gajae-code/ai/utils/schema";
+import { toolWireSchema } from "@vib-rato/ai/utils/schema";
 import { DEFAULT_SPAWN_THRESHOLD, evaluateSpawnGate, type SpawnPlanReceipt } from "../../src/task/spawn-gate";
 import { getTaskSchema } from "../../src/task/types";
 

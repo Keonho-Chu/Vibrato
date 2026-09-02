@@ -322,7 +322,7 @@ export class ArtifactManager {
 				// Capture only root names outside retained authority so foreign sibling
 				// placeholders cannot make rollback fail before exact removal runs.
 				for (const basename of await fs.readdir(this.#store.dir)) {
-					const nativeResidue = /^\.gjc-/u.test(basename);
+					const nativeResidue = /^\.vib-/u.test(basename);
 					const ownQuarantine = basename === `${filename}.removing` || basename.startsWith(`${filename}.`);
 					if (beforePaths.has(basename) || (!nativeResidue && !ownQuarantine)) continue;
 					const residuePath = path.join(this.#store.dir, basename);
@@ -588,7 +588,7 @@ export class ArtifactManager {
 						if (
 							entry.kind !== "file" ||
 							beforePaths.has(entry.relativePath) ||
-							!/^\\.gjc-(?:exact-unlink-placeholder|remove)-/u.test(path.posix.basename(entry.relativePath))
+							!/^\\.vib-(?:exact-unlink-placeholder|remove)-/u.test(path.posix.basename(entry.relativePath))
 						)
 							continue;
 						const relative = path.posix.join(parentCleanupPath, entry.relativePath);

@@ -18,12 +18,12 @@
 - [ ] `regression-risk` — fix with material regression risk; requires one assigned independent domain reviewer whose authenticated exact-head `APPROVED` review the gate verifies (`extra:independent:<login>`; the token alone never suffices).
 - [ ] `high-risk` — large refactor, feature, or materially high-risk change (security/auth/install/remove/public API/destructive lifecycle/architecture); requires one assigned independent domain reviewer with an authenticated exact-head `APPROVED` review (`extra:independent:<login>`).
 
-## GJC verdict
+## Vibrato verdict
 
 <!-- Paste one exact-head verdict. reviewer-id is the reviewer's GitHub login. merge-approved requires an authenticated exact-head APPROVED review from an identity distinct from the PR author — the author can never reach it. The repository owner may instead use merge-self-approved, the explicitly named solo force path for a low-risk change with a valid risk-record comment; its name records that no independent human reviewed. Otherwise write needs-human and stop. -->
 
 ```text
-gajae.pr-review-verdict.v1 <merge-approved|merge-self-approved|merge-blocked|needs-human> sha256:<exact-base...head-diff-hash> reviewer:<architect|critic|human> reviewer-id:<identity> evidence:<ci-run-url-or-local-command>
+vibrato.pr-review-verdict.v1 <merge-approved|merge-self-approved|merge-blocked|needs-human> sha256:<exact-base...head-diff-hash> reviewer:<architect|critic|human> reviewer-id:<identity> evidence:<ci-run-url-or-local-command>
 ```
 
 ---

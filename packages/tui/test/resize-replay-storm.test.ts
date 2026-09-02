@@ -214,13 +214,13 @@ describe("multiplexer resize replay storm regression", () => {
 			origTmuxPane = Bun.env.TMUX_PANE;
 			origSty = Bun.env.STY;
 			origZellij = Bun.env.ZELLIJ;
-			origLaunched = Bun.env.GJC_TMUX_LAUNCHED;
+			origLaunched = Bun.env.VIB_TMUX_LAUNCHED;
 			Bun.env.WT_SESSION = "test-windows-terminal-session";
 			delete Bun.env.TMUX;
 			delete Bun.env.TMUX_PANE;
 			delete Bun.env.STY;
 			delete Bun.env.ZELLIJ;
-			delete Bun.env.GJC_TMUX_LAUNCHED;
+			delete Bun.env.VIB_TMUX_LAUNCHED;
 		});
 
 		afterEach(() => {
@@ -236,8 +236,8 @@ describe("multiplexer resize replay storm regression", () => {
 			else Bun.env.STY = origSty;
 			if (origZellij === undefined) delete Bun.env.ZELLIJ;
 			else Bun.env.ZELLIJ = origZellij;
-			if (origLaunched === undefined) delete Bun.env.GJC_TMUX_LAUNCHED;
-			else Bun.env.GJC_TMUX_LAUNCHED = origLaunched;
+			if (origLaunched === undefined) delete Bun.env.VIB_TMUX_LAUNCHED;
+			else Bun.env.VIB_TMUX_LAUNCHED = origLaunched;
 		});
 
 		it("requestRender(true) repaints only the viewport without clearing scrollback", async () => {
@@ -279,7 +279,7 @@ describe("multiplexer resize replay storm regression", () => {
 		});
 	});
 
-	describe("in a GJC-launched psmux pane without TMUX env", () => {
+	describe("in a Vibrato-launched psmux pane without TMUX env", () => {
 		let origTmux: string | undefined;
 		let origTmuxPane: string | undefined;
 		let origLaunched: string | undefined;
@@ -287,10 +287,10 @@ describe("multiplexer resize replay storm regression", () => {
 		beforeEach(() => {
 			origTmux = process.env.TMUX;
 			origTmuxPane = process.env.TMUX_PANE;
-			origLaunched = process.env.GJC_TMUX_LAUNCHED;
+			origLaunched = process.env.VIB_TMUX_LAUNCHED;
 			delete process.env.TMUX;
 			delete process.env.TMUX_PANE;
-			process.env.GJC_TMUX_LAUNCHED = "1";
+			process.env.VIB_TMUX_LAUNCHED = "1";
 		});
 
 		afterEach(() => {
@@ -298,8 +298,8 @@ describe("multiplexer resize replay storm regression", () => {
 			else process.env.TMUX = origTmux;
 			if (origTmuxPane === undefined) delete process.env.TMUX_PANE;
 			else process.env.TMUX_PANE = origTmuxPane;
-			if (origLaunched === undefined) delete process.env.GJC_TMUX_LAUNCHED;
-			else process.env.GJC_TMUX_LAUNCHED = origLaunched;
+			if (origLaunched === undefined) delete process.env.VIB_TMUX_LAUNCHED;
+			else process.env.VIB_TMUX_LAUNCHED = origLaunched;
 		});
 
 		it("treats the launched pane as a multiplexer for forced redraws", async () => {
@@ -336,13 +336,13 @@ describe("multiplexer resize replay storm regression", () => {
 			origTmuxPane = process.env.TMUX_PANE;
 			origSty = process.env.STY;
 			origZellij = process.env.ZELLIJ;
-			origLaunched = process.env.GJC_TMUX_LAUNCHED;
+			origLaunched = process.env.VIB_TMUX_LAUNCHED;
 			process.env.TERMUX_VERSION = "1";
 			delete process.env.TMUX;
 			delete process.env.TMUX_PANE;
 			delete process.env.STY;
 			delete process.env.ZELLIJ;
-			delete process.env.GJC_TMUX_LAUNCHED;
+			delete process.env.VIB_TMUX_LAUNCHED;
 		});
 
 		afterEach(() => {
@@ -356,8 +356,8 @@ describe("multiplexer resize replay storm regression", () => {
 			else process.env.STY = origSty;
 			if (origZellij === undefined) delete process.env.ZELLIJ;
 			else process.env.ZELLIJ = origZellij;
-			if (origLaunched === undefined) delete process.env.GJC_TMUX_LAUNCHED;
-			else process.env.GJC_TMUX_LAUNCHED = origLaunched;
+			if (origLaunched === undefined) delete process.env.VIB_TMUX_LAUNCHED;
+			else process.env.VIB_TMUX_LAUNCHED = origLaunched;
 		});
 
 		it("does not full-clear or replay the transcript on a height-only resize", async () => {
@@ -411,7 +411,7 @@ describe("multiplexer resize replay storm regression", () => {
 			origTmuxPane = process.env.TMUX_PANE;
 			origSty = process.env.STY;
 			origZellij = process.env.ZELLIJ;
-			origLaunched = process.env.GJC_TMUX_LAUNCHED;
+			origLaunched = process.env.VIB_TMUX_LAUNCHED;
 			origTerm = process.env.TERM;
 			origWtSession = process.env.WT_SESSION;
 			origTermProgram = process.env.TERM_PROGRAM;
@@ -419,7 +419,7 @@ describe("multiplexer resize replay storm regression", () => {
 			delete process.env.TMUX_PANE;
 			delete process.env.STY;
 			delete process.env.ZELLIJ;
-			delete process.env.GJC_TMUX_LAUNCHED;
+			delete process.env.VIB_TMUX_LAUNCHED;
 			delete process.env.WT_SESSION;
 			delete process.env.TERM_PROGRAM;
 			process.env.TERM = "xterm-256color";
@@ -434,8 +434,8 @@ describe("multiplexer resize replay storm regression", () => {
 			else process.env.STY = origSty;
 			if (origZellij === undefined) delete process.env.ZELLIJ;
 			else process.env.ZELLIJ = origZellij;
-			if (origLaunched === undefined) delete process.env.GJC_TMUX_LAUNCHED;
-			else process.env.GJC_TMUX_LAUNCHED = origLaunched;
+			if (origLaunched === undefined) delete process.env.VIB_TMUX_LAUNCHED;
+			else process.env.VIB_TMUX_LAUNCHED = origLaunched;
 			if (origTerm === undefined) delete process.env.TERM;
 			else process.env.TERM = origTerm;
 			if (origWtSession === undefined) delete process.env.WT_SESSION;
@@ -496,16 +496,16 @@ describe("multiplexer resize replay storm regression", () => {
 describe("synchronized output compatibility framing", () => {
 	const begin = "\x1b[?2026h";
 	const end = "\x1b[?2026l";
-	const original = Bun.env.GJC_TUI_SYNCHRONIZED_OUTPUT;
+	const original = Bun.env.VIB_TUI_SYNCHRONIZED_OUTPUT;
 
 	afterEach(() => {
-		if (original === undefined) delete Bun.env.GJC_TUI_SYNCHRONIZED_OUTPUT;
-		else Bun.env.GJC_TUI_SYNCHRONIZED_OUTPUT = original;
+		if (original === undefined) delete Bun.env.VIB_TUI_SYNCHRONIZED_OUTPUT;
+		else Bun.env.VIB_TUI_SYNCHRONIZED_OUTPUT = original;
 	});
 
 	async function capture(value: string | undefined): Promise<{ writes: string[]; steps: Record<string, string[]> }> {
-		if (value === undefined) delete Bun.env.GJC_TUI_SYNCHRONIZED_OUTPUT;
-		else Bun.env.GJC_TUI_SYNCHRONIZED_OUTPUT = value;
+		if (value === undefined) delete Bun.env.VIB_TUI_SYNCHRONIZED_OUTPUT;
+		else Bun.env.VIB_TUI_SYNCHRONIZED_OUTPUT = value;
 
 		const term = new VirtualTerminal(40, 8, { isProcessTerminal: true });
 		const tui = new TUI(term, true, { widthSettleMs: 0 });
@@ -575,20 +575,20 @@ describe("synchronized output compatibility framing", () => {
 	});
 
 	it("samples the opt-out once when the TUI is constructed", async () => {
-		delete Bun.env.GJC_TUI_SYNCHRONIZED_OUTPUT;
+		delete Bun.env.VIB_TUI_SYNCHRONIZED_OUTPUT;
 		const enabledTerm = new VirtualTerminal(40, 8);
 		const enabledTui = new TUI(enabledTerm, true, { widthSettleMs: 0 });
-		Bun.env.GJC_TUI_SYNCHRONIZED_OUTPUT = "0";
+		Bun.env.VIB_TUI_SYNCHRONIZED_OUTPUT = "0";
 		enabledTui.addChild(new Text("enabled", 1, 0));
 		enabledTui.start();
 		await enabledTerm.waitForRender();
 		expect(enabledTerm.getWriteLog().some(write => write.includes(begin))).toBe(true);
 		enabledTui.stop();
 
-		Bun.env.GJC_TUI_SYNCHRONIZED_OUTPUT = "0";
+		Bun.env.VIB_TUI_SYNCHRONIZED_OUTPUT = "0";
 		const disabledTerm = new VirtualTerminal(40, 8);
 		const disabledTui = new TUI(disabledTerm, true, { widthSettleMs: 0 });
-		delete Bun.env.GJC_TUI_SYNCHRONIZED_OUTPUT;
+		delete Bun.env.VIB_TUI_SYNCHRONIZED_OUTPUT;
 		disabledTui.addChild(new Text("disabled", 1, 0));
 		disabledTui.start();
 		await disabledTerm.waitForRender();

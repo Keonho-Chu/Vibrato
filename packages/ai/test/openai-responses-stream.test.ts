@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { classifyFallbackTrigger, transportFailureFacts } from "@gajae-code/ai";
-import { streamOpenAIResponses } from "@gajae-code/ai/providers/openai-responses";
-import { processResponsesStream } from "@gajae-code/ai/providers/openai-responses-shared";
-import type { AssistantMessage, Model } from "@gajae-code/ai/types";
-import type { AssistantMessageEventStream } from "@gajae-code/ai/utils/event-stream";
+import { classifyFallbackTrigger, transportFailureFacts } from "@vib-rato/ai";
+import { streamOpenAIResponses } from "@vib-rato/ai/providers/openai-responses";
+import { processResponsesStream } from "@vib-rato/ai/providers/openai-responses-shared";
+import type { AssistantMessage, Model } from "@vib-rato/ai/types";
+import type { AssistantMessageEventStream } from "@vib-rato/ai/utils/event-stream";
 import type { ResponseStreamEvent } from "openai/resources/responses/responses";
 
 // A generic Responses failure arrives inside an HTTP 200 stream — as a

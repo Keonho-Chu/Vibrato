@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import type { SessionEntry, SessionMessageEntry } from "@gajae-code/agent-core/compaction/entries";
-import { estimateToolOutputPruneSavings, type PruneConfig } from "@gajae-code/agent-core/compaction/pruning";
-import type { ToolResultMessage } from "@gajae-code/ai/types";
+import type { SessionEntry, SessionMessageEntry } from "@vib-rato/agent-core/compaction/entries";
+import { estimateToolOutputPruneSavings, type PruneConfig } from "@vib-rato/agent-core/compaction/pruning";
+import type { ToolResultMessage } from "@vib-rato/ai/types";
 import { applyToolOutputPrune as pruneToolOutputs } from "./pruning-test-utils";
 
 let sequence = 0;

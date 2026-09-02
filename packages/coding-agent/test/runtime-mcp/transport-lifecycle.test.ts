@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test, vi } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 import { disposeAllOwnedProcesses, liveOwnedProcessCount } from "../../src/runtime/process-lifecycle";
 import { HttpTransport } from "../../src/runtime-mcp/transports/http";
 import { StdioTransport } from "../../src/runtime-mcp/transports/stdio";
@@ -83,7 +83,7 @@ async function waitForPid(childPidFile: string, rootPidFile: string): Promise<nu
 }
 
 const servers: Bun.Server<unknown>[] = [];
-const STDIO_LIFECYCLE_ISOLATION = "GJC_TEST_MCP_STDIO_LIFECYCLE_ISOLATED";
+const STDIO_LIFECYCLE_ISOLATION = "VIB_TEST_MCP_STDIO_LIFECYCLE_ISOLATED";
 
 async function runIsolatedStdioLifecycleTest(): Promise<void> {
 	const child = Bun.spawn(
@@ -156,7 +156,7 @@ describe("MCP stdio transport lifecycle", () => {
 			return;
 		}
 		const before = liveOwnedProcessCount();
-		const base = `/tmp/gjc-mcp-stdio-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+		const base = `/tmp/vib-mcp-stdio-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 		const rootPidFile = `${base}.root.pid`;
 		const childPidFile = `${base}.child.pid`;
 		// The fixture root runs on the already-resident Bun runtime and reports

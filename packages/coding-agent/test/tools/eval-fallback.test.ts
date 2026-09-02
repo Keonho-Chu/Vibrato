@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
 
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import * as evalIndex from "@gajae-code/coding-agent/eval";
-import * as pyKernel from "@gajae-code/coding-agent/eval/py/kernel";
-import type { ToolSession } from "@gajae-code/coding-agent/tools";
-import { EvalTool } from "@gajae-code/coding-agent/tools/eval";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import * as evalIndex from "@vib-rato/coding-agent/eval";
+import * as pyKernel from "@vib-rato/coding-agent/eval/py/kernel";
+import type { ToolSession } from "@vib-rato/coding-agent/tools";
+import { EvalTool } from "@vib-rato/coding-agent/tools/eval";
 
 function makeSession(settings = Settings.isolated()): ToolSession {
 	return {
@@ -29,7 +29,7 @@ const mockResult = {
 	displayOutputs: [],
 };
 
-const ENV_KEYS = ["GJC_PY", "PI_PY", "PI_JS"] as const;
+const ENV_KEYS = ["VIB_PY", "PI_PY", "PI_JS"] as const;
 
 function snapshotEnv(): Map<string, string | undefined> {
 	return new Map(ENV_KEYS.map(key => [key, Bun.env[key]]));
@@ -59,14 +59,14 @@ describe("EvalTool language dispatch", () => {
 		restoreEnv(previousEnv);
 		vi.restoreAllMocks();
 	});
-	it("restores a pre-existing GJC_PY value after cleanup", () => {
+	it("restores a pre-existing VIB_PY value after cleanup", () => {
 		const suiteEnv = snapshotEnv();
 		try {
-			Bun.env.GJC_PY = "hostile-value";
+			Bun.env.VIB_PY = "hostile-value";
 			const testEnv = snapshotEnv();
-			delete Bun.env.GJC_PY;
+			delete Bun.env.VIB_PY;
 			restoreEnv(testEnv);
-			expect(String(Bun.env.GJC_PY)).toBe("hostile-value");
+			expect(String(Bun.env.VIB_PY)).toBe("hostile-value");
 		} finally {
 			restoreEnv(suiteEnv);
 		}
@@ -128,8 +128,8 @@ describe("EvalTool language dispatch", () => {
 		).rejects.toThrow(/eval\.py = false/);
 	});
 
-	it("rejects py cells when GJC_PY selects JavaScript only", async () => {
-		Bun.env.GJC_PY = "js";
+	it("rejects py cells when VIB_PY selects JavaScript only", async () => {
+		Bun.env.VIB_PY = "js";
 		const tool = new EvalTool(makeSession());
 		await expect(
 			tool.execute("call-py-env-disabled", {
@@ -149,8 +149,8 @@ describe("EvalTool language dispatch", () => {
 		).rejects.toThrow(/eval\.js = false/);
 	});
 
-	it("rejects js cells when GJC_PY selects Python only", async () => {
-		Bun.env.GJC_PY = "py";
+	it("rejects js cells when VIB_PY selects Python only", async () => {
+		Bun.env.VIB_PY = "py";
 		const tool = new EvalTool(makeSession());
 		await expect(
 			tool.execute("call-js-env-disabled", {

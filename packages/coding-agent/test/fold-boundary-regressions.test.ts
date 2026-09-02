@@ -4,11 +4,11 @@
  * time each defect landed.
  */
 import { describe, expect, test } from "bun:test";
-import { Agent } from "@gajae-code/agent-core";
-import { getBundledModel } from "@gajae-code/ai";
-import { createMockModel } from "@gajae-code/ai/providers/mock";
-import type { AsyncJob } from "@gajae-code/coding-agent/async";
-import { type FoldAdapter, FoldCoordinator } from "@gajae-code/coding-agent/session/fold-coordinator";
+import { Agent } from "@vib-rato/agent-core";
+import { getBundledModel } from "@vib-rato/ai";
+import { createMockModel } from "@vib-rato/ai/providers/mock";
+import type { AsyncJob } from "@vib-rato/coding-agent/async";
+import { type FoldAdapter, FoldCoordinator } from "@vib-rato/coding-agent/session/fold-coordinator";
 
 function fakeJob(id: string, generation: string): AsyncJob {
 	return {

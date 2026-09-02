@@ -3,7 +3,6 @@ import { createHash } from "node:crypto";
 import { chmod, mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
-import { harnessStateRoot } from "../../src/gjc-runtime/session-layout";
 import {
 	appendEvent,
 	assertSafeSessionId,
@@ -27,27 +26,28 @@ import {
 	type SessionHandle,
 	type SessionState,
 } from "../../src/harness-control-plane/types";
+import { harnessStateRoot } from "../../src/vib-runtime/session-layout";
 
 let root: string;
 let registryRoot: string;
 let registryEnv: NodeJS.ProcessEnv;
-let originalGjcSessionId: string | undefined;
+let originalVibSessionId: string | undefined;
 
 beforeEach(async () => {
 	root = await mkdtemp(path.join(tmpdir(), "harness-store-"));
 	registryRoot = await mkdtemp(path.join(tmpdir(), "harness-root-registry-"));
-	registryEnv = { ...process.env, GJC_HARNESS_ROOT_REGISTRY_DIR: registryRoot };
-	originalGjcSessionId = process.env.GJC_SESSION_ID;
-	process.env.GJC_SESSION_ID = "test-session";
+	registryEnv = { ...process.env, VIB_HARNESS_ROOT_REGISTRY_DIR: registryRoot };
+	originalVibSessionId = process.env.VIB_SESSION_ID;
+	process.env.VIB_SESSION_ID = "test-session";
 });
 
 afterEach(async () => {
 	await rm(root, { recursive: true, force: true });
 	await rm(registryRoot, { recursive: true, force: true });
-	if (originalGjcSessionId === undefined) {
-		delete process.env.GJC_SESSION_ID;
+	if (originalVibSessionId === undefined) {
+		delete process.env.VIB_SESSION_ID;
 	} else {
-		process.env.GJC_SESSION_ID = originalGjcSessionId;
+		process.env.VIB_SESSION_ID = originalVibSessionId;
 	}
 });
 
@@ -57,8 +57,8 @@ function state(sessionId: string): SessionState {
 		schemaVersion: SESSION_SCHEMA_VERSION,
 		sessionId,
 		lifecycle: "started",
-		harness: "gajae-code",
-		handle: { sessionId, harness: "gajae-code", workspace: "." } as SessionHandle,
+		harness: "vib-rato",
+		handle: { sessionId, harness: "vib-rato", workspace: "." } as SessionHandle,
 		retries: {},
 		blockers: [],
 		createdAt: now,
@@ -73,7 +73,7 @@ function envelope(cursor: number): EventEnvelope {
 		createdAt: new Date().toISOString(),
 		severity: "info",
 		kind: "test",
-		state: { sessionId: "h-1", lifecycle: "started", harness: "gajae-code", ownerLive: false, blockers: [] },
+		state: { sessionId: "h-1", lifecycle: "started", harness: "vib-rato", ownerLive: false, blockers: [] },
 		evidence: {},
 		nextAllowedActions: [],
 		writer: { ownerId: "owner-1", leaseEpoch: 1 },
@@ -130,12 +130,12 @@ describe("harness storage", () => {
 		expect(tail.map(e => e.cursor)).toEqual([2, 3]);
 	});
 
-	it("resolveHarnessRoot honors GJC_HARNESS_STATE_ROOT then cwd default", () => {
+	it("resolveHarnessRoot honors VIB_HARNESS_STATE_ROOT then cwd default", () => {
 		expect(resolveHarnessRoot({ root: "/x/y" })).toBe(path.resolve("/x/y"));
-		expect(resolveHarnessRoot({ env: { GJC_HARNESS_STATE_ROOT: "/z" } as NodeJS.ProcessEnv })).toBe(
+		expect(resolveHarnessRoot({ env: { VIB_HARNESS_STATE_ROOT: "/z" } as NodeJS.ProcessEnv })).toBe(
 			path.resolve("/z"),
 		);
-		expect(resolveHarnessRoot({ cwd: "/repo", env: { GJC_SESSION_ID: "test-session" } as NodeJS.ProcessEnv })).toBe(
+		expect(resolveHarnessRoot({ cwd: "/repo", env: { VIB_SESSION_ID: "test-session" } as NodeJS.ProcessEnv })).toBe(
 			harnessStateRoot("/repo", "test-session"),
 		);
 	});
@@ -147,8 +147,8 @@ describe("harness storage", () => {
 	it("controlSocketPath is stable, short, and records metadata", async () => {
 		const id = "h-socket";
 		const socketDir = await mkdtemp(path.join(tmpdir(), "h-"));
-		const first = controlSocketPath(root, id, { GJC_HARNESS_SOCKET_DIR: socketDir } as NodeJS.ProcessEnv);
-		const second = controlSocketPath(root, id, { GJC_HARNESS_SOCKET_DIR: socketDir } as NodeJS.ProcessEnv);
+		const first = controlSocketPath(root, id, { VIB_HARNESS_SOCKET_DIR: socketDir } as NodeJS.ProcessEnv);
+		const second = controlSocketPath(root, id, { VIB_HARNESS_SOCKET_DIR: socketDir } as NodeJS.ProcessEnv);
 		expect(first).toBe(second);
 		expect(Buffer.byteLength(first)).toBeLessThanOrEqual(MAX_UNIX_SOCKET_PATH_BYTES);
 		expect(first.startsWith(socketDir)).toBe(true);
@@ -157,9 +157,9 @@ describe("harness storage", () => {
 		expect(metadata).toEqual({ root, sessionId: id });
 	});
 
-	it("controlSocketPath uses GJC_HARNESS_SOCKET_DIR when set", async () => {
+	it("controlSocketPath uses VIB_HARNESS_SOCKET_DIR when set", async () => {
 		const socketDir = await mkdtemp(path.join(tmpdir(), "e-"));
-		const socketPath = controlSocketPath(root, "h-env", { GJC_HARNESS_SOCKET_DIR: socketDir } as NodeJS.ProcessEnv);
+		const socketPath = controlSocketPath(root, "h-env", { VIB_HARNESS_SOCKET_DIR: socketDir } as NodeJS.ProcessEnv);
 		expect(socketPath.startsWith(socketDir)).toBe(true);
 	});
 
@@ -169,10 +169,10 @@ describe("harness storage", () => {
 		try {
 			const longDir = path.join(root, "x".repeat(80));
 			const socketPath = controlSocketPath(root, "h-fallback", {
-				GJC_HARNESS_SOCKET_DIR: longDir,
+				VIB_HARNESS_SOCKET_DIR: longDir,
 			} as NodeJS.ProcessEnv);
 			expect(socketPath.startsWith(longDir)).toBe(false);
-			expect(socketPath.includes("gjch")).toBe(true);
+			expect(socketPath.includes("vibh")).toBe(true);
 			expect(Buffer.byteLength(socketPath)).toBeLessThanOrEqual(MAX_UNIX_SOCKET_PATH_BYTES);
 		} finally {
 			if (oldTmpdir === undefined) delete process.env.TMPDIR;
@@ -186,7 +186,7 @@ describe("harness storage", () => {
 		try {
 			expect(() =>
 				controlSocketPath(root, "h-too-long", {
-					GJC_HARNESS_SOCKET_DIR: path.join(root, "o".repeat(80)),
+					VIB_HARNESS_SOCKET_DIR: path.join(root, "o".repeat(80)),
 				} as NodeJS.ProcessEnv),
 			).toThrow(/socket_path_too_long/);
 		} finally {
@@ -204,7 +204,7 @@ describe("harness storage", () => {
 			path.join(socketDir, `c-${digest.slice(0, 16)}.json`),
 			`${JSON.stringify({ root: "other", sessionId: id })}\n`,
 		);
-		const socketPath = controlSocketPath(root, id, { GJC_HARNESS_SOCKET_DIR: socketDir } as NodeJS.ProcessEnv);
+		const socketPath = controlSocketPath(root, id, { VIB_HARNESS_SOCKET_DIR: socketDir } as NodeJS.ProcessEnv);
 		expect(path.basename(socketPath)).toBe(`c-${digest.slice(0, 24)}.sock`);
 	});
 

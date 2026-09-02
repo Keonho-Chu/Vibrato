@@ -47,9 +47,9 @@ export const JSON_SCHEMA_OUTPUTS = [
 function createConfigJsonSchema(): JsonSchemaObject {
 	const root: JsonSchemaObject = {
 		$schema: DRAFT_2020_12,
-		$id: "https://gajae.ai/schemas/config.schema.json",
-		title: "GJC config.yml",
-		description: "User and project settings for GJC. Generated from packages/coding-agent/src/config/settings-schema.ts.",
+		$id: "https://vibrato.ai/schemas/config.schema.json",
+		title: "Vibrato config.yml",
+		description: "User and project settings for Vibrato. Generated from packages/coding-agent/src/config/settings-schema.ts.",
 		type: "object",
 		properties: {},
 		additionalProperties: false,
@@ -69,9 +69,9 @@ function createConfigJsonSchema(): JsonSchemaObject {
 function createModelsJsonSchema(): JsonSchemaObject {
 	const schema: JsonSchemaObject = {
 		$schema: DRAFT_2020_12,
-		$id: "https://gajae.ai/schemas/models.schema.json",
-		title: "GJC models.yml",
-		description: "Custom provider and model configuration for GJC. Generated from packages/coding-agent/src/config/models-config-schema.ts.",
+		$id: "https://vibrato.ai/schemas/models.schema.json",
+		title: "Vibrato models.yml",
+		description: "Custom provider and model configuration for Vibrato. Generated from packages/coding-agent/src/config/models-config-schema.ts.",
 		...zodToWireSchema(ModelsConfigSchema),
 	};
 	// The shared wire walker strips `maximum: SAFE_INTEGER_MAX` as zod `.int()`
@@ -130,7 +130,7 @@ function settingDefinitionToJsonSchema(settingPath: string, definition: SettingD
 	const description = settingDescription(definition);
 	if (description) schema.description = description;
 	if ("default" in definition && definition.default !== undefined) schema.default = definition.default;
-	if (settingPath === "gjc.deepInterview.ambiguityThreshold") {
+	if (settingPath === "vib.deepInterview.ambiguityThreshold") {
 		schema.exclusiveMinimum = 0;
 		schema.maximum = 1;
 	}
@@ -139,16 +139,16 @@ function settingDefinitionToJsonSchema(settingPath: string, definition: SettingD
 		schema.minimum = 60_000;
 		schema.maximum = 86_400_000;
 	}
-	if (settingPath === "gjc.ultragoal.nudgeBudget") {
+	if (settingPath === "vib.ultragoal.nudgeBudget") {
 		schema.type = "integer";
 		schema.minimum = 0;
 	}
-	if (settingPath === "gjc.ralplan.maxIterations") {
+	if (settingPath === "vib.ralplan.maxIterations") {
 		schema.type = "integer";
 		schema.minimum = 1;
 		schema.maximum = 20;
 	}
-	if (settingPath === "gjc.ralplan.maxReviewPassesPerLane") {
+	if (settingPath === "vib.ralplan.maxReviewPassesPerLane") {
 		schema.type = "integer";
 		schema.minimum = 1;
 		schema.maximum = 10;

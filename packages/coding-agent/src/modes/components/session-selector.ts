@@ -10,8 +10,8 @@ import {
 	Text,
 	truncateToWidth,
 	visibleWidth,
-} from "@gajae-code/tui";
-import { formatBytes } from "@gajae-code/utils";
+} from "@vib-rato/tui";
+import { formatBytes } from "@vib-rato/utils";
 import { theme } from "../../modes/theme/theme";
 import { matchesAppInterrupt } from "../../modes/utils/keybinding-matchers";
 import type { ResumeSessionIdentity, ResumeTailInspection, SessionInfo } from "../../session/session-manager";

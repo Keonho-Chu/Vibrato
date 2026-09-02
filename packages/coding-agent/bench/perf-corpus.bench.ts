@@ -278,15 +278,15 @@ function reproductionInvocation(
 	memorySurfaceOrder: readonly MemorySurface[],
 ): { command: string; argv: string[]; environment: Record<string, string> } {
 	const environment: Record<string, string> = {
-		GJC_MEMORY_PROFILE: profile,
-		GJC_MEMORY_ITERATIONS: String(iterationsTarget),
-		GJC_MEMORY_SURFACE_ORDER: memorySurfaceOrder.join(","),
+		VIB_MEMORY_PROFILE: profile,
+		VIB_MEMORY_ITERATIONS: String(iterationsTarget),
+		VIB_MEMORY_SURFACE_ORDER: memorySurfaceOrder.join(","),
 	};
-	if (profile === "soak") environment.GJC_MEMORY_DURATION_MS = String(durationTargetMs);
+	if (profile === "soak") environment.VIB_MEMORY_DURATION_MS = String(durationTargetMs);
 	const argv = ["bun", ...runnerExecArgv, LOGICAL_RUNNER_SCRIPT];
 	return { command: argv.join(" "), argv, environment };
 }
-const MEMORY_CHILD_ARGUMENT = "--gjc-memory-child";
+const MEMORY_CHILD_ARGUMENT = "--vib-memory-child";
 function memorySample(startedAt: number): MemoryUsageSample {
 	const usage = process.memoryUsage();
 	return {
@@ -378,7 +378,7 @@ export function normalizeProcessTreeRss(
 
 function surfaceOrdinal(surface: MemorySurface): number {
 	const configured = process.argv.includes(MEMORY_CHILD_ARGUMENT)
-		? Number(process.env.GJC_MEMORY_SURFACE_ORDINAL)
+		? Number(process.env.VIB_MEMORY_SURFACE_ORDINAL)
 		: Number.NaN;
 	if (Number.isSafeInteger(configured) && configured >= 0 && configured < REQUIRED_MEMORY_SURFACES.length) {
 		return configured;
@@ -539,12 +539,12 @@ function isMemorySurface(value: string | undefined): value is MemorySurface {
 }
 function resolveMemorySurfaceOrder(isolatedMemory: boolean): MemorySurface[] {
 	if (!isolatedMemory) return [...REQUIRED_MEMORY_SURFACES];
-	const configured = process.env.GJC_MEMORY_SURFACE_ORDER;
+	const configured = process.env.VIB_MEMORY_SURFACE_ORDER;
 	if (configured === undefined) return [...REQUIRED_MEMORY_SURFACES];
 	const order = configured.split(",");
 	if (!isExactMemorySurfaceOrder(order)) {
 		throw new Error(
-			`GJC_MEMORY_SURFACE_ORDER must be an exact comma-separated permutation of: ${REQUIRED_MEMORY_SURFACES.join(",")}`,
+			`VIB_MEMORY_SURFACE_ORDER must be an exact comma-separated permutation of: ${REQUIRED_MEMORY_SURFACES.join(",")}`,
 		);
 	}
 	return order;
@@ -569,10 +569,10 @@ function buildIsolatedMemoryFixtures(
 		const result = Bun.spawnSync([process.execPath, "--smol", "--expose-gc", isolatedMemoryEntry(surface), MEMORY_CHILD_ARGUMENT], {
 			env: {
 				...process.env,
-				GJC_MEMORY_CHILD_SURFACE: surface,
-				GJC_MEMORY_PROFILE: profile,
-				GJC_MEMORY_DURATION_MS: String(targetDurationMs),
-				GJC_MEMORY_SURFACE_ORDINAL: String(ordinal),
+				VIB_MEMORY_CHILD_SURFACE: surface,
+				VIB_MEMORY_PROFILE: profile,
+				VIB_MEMORY_DURATION_MS: String(targetDurationMs),
+				VIB_MEMORY_SURFACE_ORDINAL: String(ordinal),
 			},
 		});
 		if (result.exitCode !== 0) {
@@ -645,8 +645,8 @@ function computePerfCorpusBenchmark(
 	runnerExecArgv: readonly string[],
 	options: { isolatedMemory?: boolean } = {},
 ): PerfCorpusReport {
-	const profile: MemoryWorkloadProfile = process.env.GJC_MEMORY_PROFILE === "soak" ? "soak" : "short";
-	const configuredDurationMs = Number(process.env.GJC_MEMORY_DURATION_MS);
+	const profile: MemoryWorkloadProfile = process.env.VIB_MEMORY_PROFILE === "soak" ? "soak" : "short";
+	const configuredDurationMs = Number(process.env.VIB_MEMORY_DURATION_MS);
 	const durationTargetMs =
 		profile === "soak"
 			? Number.isSafeInteger(configuredDurationMs) && configuredDurationMs >= 250 && configuredDurationMs <= 60_000
@@ -729,10 +729,10 @@ export function runPerfCorpusBenchmark(options: { isolatedMemory?: boolean } = {
 }
 
 if (CANONICAL_RUNNER_MODULE_MAIN) {
-	const childSurface = process.argv.includes(MEMORY_CHILD_ARGUMENT) ? process.env.GJC_MEMORY_CHILD_SURFACE : undefined;
+	const childSurface = process.argv.includes(MEMORY_CHILD_ARGUMENT) ? process.env.VIB_MEMORY_CHILD_SURFACE : undefined;
 	if (isMemorySurface(childSurface)) {
-		const profile: MemoryWorkloadProfile = process.env.GJC_MEMORY_PROFILE === "soak" ? "soak" : "short";
-		const durationTargetMs = Number(process.env.GJC_MEMORY_DURATION_MS) || 0;
+		const profile: MemoryWorkloadProfile = process.env.VIB_MEMORY_PROFILE === "soak" ? "soak" : "short";
+		const durationTargetMs = Number(process.env.VIB_MEMORY_DURATION_MS) || 0;
 		const workload = createMemoryBaselineWorkloads().find(candidate => candidate.surface === childSurface);
 		if (!workload) throw new Error(`memory baseline workload unavailable for ${childSurface}`);
 		process.stdout.write(`${JSON.stringify(buildMemoryFixture(workload, profile, durationTargetMs))}\n`);

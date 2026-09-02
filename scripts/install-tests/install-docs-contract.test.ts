@@ -3,7 +3,7 @@ import * as path from "node:path";
 
 const repoRoot = path.join(import.meta.dir, "..", "..");
 const BINARY_FIRST_INSTALLER_REF = "v0.15.3";
-const TAGGED_INSTALLER_URL = /https:\/\/raw\.githubusercontent\.com\/Yeachan-Heo\/gajae-code\/(v[^/]+)\/scripts\/install\.(?:sh|ps1)/g;
+const TAGGED_INSTALLER_URL = /https:\/\/raw\.githubusercontent\.com\/Yeachan-Heo\/vib-rato\/(v[^/]+)\/scripts\/install\.(?:sh|ps1)/g;
 const STALE_INSTALLER_URL = "/v0.15.0/scripts/install.";
 
 const coreInstallerDocs = [

@@ -641,8 +641,8 @@ function secondaryArtifactsFromArg(value: string | undefined): SecondaryArtifact
 function benchmarkEnv(gcStrategy: GcStrategy, secondaryArtifacts: SecondaryArtifacts): NodeJS.ProcessEnv {
 	return {
 		...process.env,
-		GJC_SESSION_MEMORY_GC_STRATEGY: gcStrategy,
-		GJC_SESSION_MEMORY_SECONDARY_ARTIFACT_MODE:
+		VIB_SESSION_MEMORY_GC_STRATEGY: gcStrategy,
+		VIB_SESSION_MEMORY_SECONDARY_ARTIFACT_MODE:
 			secondaryArtifacts === "current" ? "auto" : "disabled",
 	};
 }
@@ -817,7 +817,7 @@ async function runWorker(
 	repetitions = DEFAULT_REPETITIONS,
 	openConcurrency = 1,
 ): Promise<WorkerResult> {
-	const root = await fs.mkdtemp(path.join(os.tmpdir(), `gjc-session-matrix-${scenario}-${targetMiB}-`));
+	const root = await fs.mkdtemp(path.join(os.tmpdir(), `vib-session-matrix-${scenario}-${targetMiB}-`));
 	const fileCount = scenarioFileCount(scenario);
 	const targets = partitionBytes(targetMiB * MIB, fileCount);
 	const generated: Array<GeneratedTranscript & { entryCount: number }> = [];

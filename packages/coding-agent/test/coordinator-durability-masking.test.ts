@@ -97,7 +97,7 @@ function expectMaskedAggregate(error: unknown, primaryCode: string, secondaryCod
 }
 
 async function withTempRoot<T>(run: (root: string) => Promise<T>): Promise<T> {
-	const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-durability-masking-"));
+	const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-durability-masking-"));
 	try {
 		return await run(root);
 	} finally {

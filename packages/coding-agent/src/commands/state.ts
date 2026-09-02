@@ -1,19 +1,19 @@
-import { Command } from "@gajae-code/utils/cli";
-import { runNativeStateCommand } from "../gjc-runtime/state-runtime";
+import { Command } from "@vib-rato/utils/cli";
+import { runNativeStateCommand } from "../vib-runtime/state-runtime";
 
 export default class State extends Command {
 	static description =
-		"Read or update current-session GJC workflow state receipts under .gjc/_session-{sessionid}/state";
+		"Read or update current-session Vibrato workflow state receipts under .vib/_session-{sessionid}/state";
 	static strict = false;
 	static examples = [
-		'$ gjc state read --input \'{"mode":"deep-interview"}\' --json',
-		'$ gjc state write --input \'{"state":{"interview_id":"abc"}}\' --mode deep-interview --json',
-		"$ gjc state clear --mode deep-interview",
-		"$ gjc state deep-interview read --json",
-		'$ gjc state ralplan write --input \'{"phase":"planner","active":true}\' --json',
-		"$ gjc state autoresearch contract",
-		"$ gjc state deep-interview handoff --to ralplan --json",
-		"$ gjc state doctor --skill ralplan --json",
+		'$ vib state read --input \'{"mode":"deep-interview"}\' --json',
+		'$ vib state write --input \'{"state":{"interview_id":"abc"}}\' --mode deep-interview --json',
+		"$ vib state clear --mode deep-interview",
+		"$ vib state deep-interview read --json",
+		'$ vib state ralplan write --input \'{"phase":"planner","active":true}\' --json',
+		"$ vib state autoresearch contract",
+		"$ vib state deep-interview handoff --to ralplan --json",
+		"$ vib state doctor --skill ralplan --json",
 	];
 
 	async run(): Promise<void> {

@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test";
 import * as path from "node:path";
 
 /**
- * `docs/ai-schema-normalize.md` documents `GJC_NO_STRICT` as "the global bypass"
+ * `docs/ai-schema-normalize.md` documents `VIB_NO_STRICT` as "the global bypass"
  * consulted by `adaptSchemaForStrict`. Only the legacy `PI_NO_STRICT` was read,
  * so an operator hitting a provider that rejects strict schemas set the
  * documented name and nothing happened.
@@ -12,7 +12,7 @@ import * as path from "node:path";
  */
 
 const PROBE = path.join(import.meta.dir, "fixtures", "no-strict-probe.ts");
-const KEYS = ["GJC_NO_STRICT", "PI_NO_STRICT"] as const;
+const KEYS = ["VIB_NO_STRICT", "PI_NO_STRICT"] as const;
 
 async function resolveWith(overrides: Record<string, string>): Promise<boolean> {
 	const env: Record<string, string> = {};
@@ -34,8 +34,8 @@ describe("strict-mode bypass env names", () => {
 		expect(await resolveWith({})).toBe(false);
 	});
 
-	it("honors the documented GJC_NO_STRICT", async () => {
-		expect(await resolveWith({ GJC_NO_STRICT: "1" })).toBe(true);
+	it("honors the documented VIB_NO_STRICT", async () => {
+		expect(await resolveWith({ VIB_NO_STRICT: "1" })).toBe(true);
 	});
 
 	it("still honors the legacy PI_NO_STRICT", async () => {
@@ -43,17 +43,17 @@ describe("strict-mode bypass env names", () => {
 	});
 
 	it("accepts the documented boolean spellings case-insensitively", async () => {
-		expect(await resolveWith({ GJC_NO_STRICT: "true" })).toBe(true);
-		expect(await resolveWith({ GJC_NO_STRICT: "YES" })).toBe(true);
-		expect(await resolveWith({ GJC_NO_STRICT: "on" })).toBe(true);
+		expect(await resolveWith({ VIB_NO_STRICT: "true" })).toBe(true);
+		expect(await resolveWith({ VIB_NO_STRICT: "YES" })).toBe(true);
+		expect(await resolveWith({ VIB_NO_STRICT: "on" })).toBe(true);
 	});
 
 	it("treats an explicit falsey documented value as off", async () => {
-		expect(await resolveWith({ GJC_NO_STRICT: "0" })).toBe(false);
+		expect(await resolveWith({ VIB_NO_STRICT: "0" })).toBe(false);
 	});
 
-	it("lets an explicit falsey GJC value win over a truthy legacy value", async () => {
+	it("lets an explicit falsey Vibrato value win over a truthy legacy value", async () => {
 		// $pickflag takes the first non-empty key, so the canonical name decides.
-		expect(await resolveWith({ GJC_NO_STRICT: "0", PI_NO_STRICT: "1" })).toBe(false);
+		expect(await resolveWith({ VIB_NO_STRICT: "0", PI_NO_STRICT: "1" })).toBe(false);
 	});
 });

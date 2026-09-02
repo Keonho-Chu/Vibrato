@@ -1,5 +1,5 @@
 /**
- * `gjc auth-broker` command handlers.
+ * `vib auth-broker` command handlers.
  *
  * Sub-verbs:
  *   - `serve [--bind=…]` — boots the broker against the local SQLite store.
@@ -18,7 +18,7 @@ import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 import * as readline from "node:readline";
-import { cleanReason } from "@gajae-code/ai/auth-broker/redact";
+import { cleanReason } from "@vib-rato/ai/auth-broker/redact";
 import {
 	AuthBrokerClient,
 	type AuthCredential,
@@ -26,17 +26,17 @@ import {
 	type CredentialDisabledEvent,
 	DEFAULT_AUTH_BROKER_BIND,
 	getEnvApiKey,
-	getOAuthProviders,
 	listProvidersWithEnvKey,
 	type OAuthCredential,
 	type OAuthProvider,
 	resolveOAuthStorageProvider,
 	SqliteAuthCredentialStore,
 	startAuthBroker,
-} from "@gajae-code/ai/core";
-import { $which, APP_NAME, getAgentDbPath, getConfigRootDir, logger, VERSION } from "@gajae-code/utils";
+} from "@vib-rato/ai/core";
+import { $which, APP_NAME, getAgentDbPath, getConfigRootDir, logger, VERSION } from "@vib-rato/utils";
 import { $ } from "bun";
 import chalk from "chalk";
+import { getSelectableOAuthProviders } from "../config/provider-allowlist";
 import {
 	createSecureTokenFileExclusive,
 	readSecureTokenFile,
@@ -156,7 +156,7 @@ async function ensureToken(): Promise<string> {
 async function runServe(flags: AuthBrokerCommandArgs["flags"]): Promise<void> {
 	// The broker is a long-running headless service: route structured logs to
 	// stdout so a process supervisor (pm2, journald, k8s) captures them, and
-	// skip the rotating ~/.gjc/logs/ file the TUI default would have used.
+	// skip the rotating ~/.vib/logs/ file the TUI default would have used.
 	logger.setTransports({ console: true, file: false });
 
 	const bind = flags.bind ?? DEFAULT_AUTH_BROKER_BIND;
@@ -214,9 +214,9 @@ async function runToken(flags: AuthBrokerCommandArgs["flags"]): Promise<void> {
 async function runLogin(flags: AuthBrokerCommandArgs["flags"]): Promise<void> {
 	const providerArg = flags.provider;
 	if (!providerArg) {
-		throw new Error("Usage: gjc auth-broker login <provider> [--via=user@host]");
+		throw new Error("Usage: vib auth-broker login <provider> [--via=user@host]");
 	}
-	const oauthProviders = new Set<string>(getOAuthProviders().map(p => p.id));
+	const oauthProviders = new Set<string>(getSelectableOAuthProviders().map(p => p.id));
 	if (!oauthProviders.has(providerArg)) {
 		throw new Error(`Unknown OAuth provider '${providerArg}'. Known: ${[...oauthProviders].sort().join(", ")}`);
 	}
@@ -236,13 +236,13 @@ function promptForLogin(rl: readline.Interface, question: string): Promise<strin
 async function runLocalLogin(provider: OAuthProvider): Promise<void> {
 	// Drive AuthStorage.login() in-process against the local SQLite store the
 	// broker uses. Previously this spawned a child process resolved via
-	// `import.meta.resolve("@gajae-code/ai/cli")`, which requires an on-disk
+	// `import.meta.resolve("@vib-rato/ai/cli")`, which requires an on-disk
 	// `node_modules` package resolution — present in a source/dev checkout but
 	// absent inside a compiled `bun build --compile` binary's `$bunfs`, so the
 	// standalone binary failed with a module-resolution error (issue #5064).
 	// `AuthStorage` is already a normal, statically-traceable import from
-	// `@gajae-code/ai/core` (see the top of this file), so it bundles cleanly
-	// into the compiled binary the same way every other `@gajae-code/ai/core`
+	// `@vib-rato/ai/core` (see the top of this file), so it bundles cleanly
+	// into the compiled binary the same way every other `@vib-rato/ai/core`
 	// export used elsewhere in this file already does.
 	const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 	const store = await SqliteAuthCredentialStore.open(getAgentDbPath());
@@ -308,7 +308,7 @@ async function runRemoteLogin(provider: string, via: string, dryRun: boolean): P
 async function runLogout(flags: AuthBrokerCommandArgs["flags"]): Promise<void> {
 	const providerArg = flags.provider;
 	if (!providerArg) {
-		throw new Error("Usage: gjc auth-broker logout <provider>");
+		throw new Error("Usage: vib auth-broker logout <provider>");
 	}
 	const provider = resolveOAuthStorageProvider(providerArg);
 	const store = await SqliteAuthCredentialStore.open(getAgentDbPath());
@@ -323,7 +323,7 @@ async function runLogout(flags: AuthBrokerCommandArgs["flags"]): Promise<void> {
 // ─── CLIProxyAPI import ─────────────────────────────────────────────────
 
 /**
- * Maps the `type` field of a CLIProxyAPI credential JSON to the gjc provider id.
+ * Maps the `type` field of a CLIProxyAPI credential JSON to the vib provider id.
  * The filename also encodes the type (e.g. `Anthropic model-foo@bar.json`), but the
  * in-file `type` is authoritative — we only fall back to filename if absent.
  */
@@ -419,7 +419,7 @@ async function loadImportPlan(
 		if (!provider) {
 			skipped.push({
 				file,
-				reason: `cannot determine gjc provider from type=${json.type ?? "?"} (pass --provider to override)`,
+				reason: `cannot determine vib provider from type=${json.type ?? "?"} (pass --provider to override)`,
 			});
 			continue;
 		}
@@ -465,7 +465,7 @@ function describeImportEntry(entry: ImportPlanEntry): string {
 async function runImport(flags: AuthBrokerCommandArgs["flags"]): Promise<void> {
 	const target = flags.source;
 	if (!target) {
-		throw new Error("Usage: gjc auth-broker import <file|dir> [--provider=<id>] [--include-disabled] [--dry-run]");
+		throw new Error("Usage: vib auth-broker import <file|dir> [--provider=<id>] [--include-disabled] [--dry-run]");
 	}
 	const resolvedTarget = path.resolve(target.startsWith("~") ? target.replace(/^~/, os.homedir()) : target);
 	const { entries, skipped } = await loadImportPlan(resolvedTarget, flags.provider, flags.includeDisabled === true);
@@ -612,12 +612,12 @@ async function runMigrate(flags: AuthBrokerCommandArgs["flags"]): Promise<void> 
 	const brokerConfig = (await resolveStartupAuthConfig()).broker;
 	if (!brokerConfig) {
 		throw new Error(
-			"GJC_AUTH_BROKER_URL must be set (or `auth.broker.url` in config.yml). `migrate` uploads local credentials to a configured broker.",
+			"VIB_AUTH_BROKER_URL must be set (or `auth.broker.url` in config.yml). `migrate` uploads local credentials to a configured broker.",
 		);
 	}
 	if (flags.fromLocal !== true) {
 		throw new Error(
-			"`gjc auth-broker migrate` requires an explicit source. Pass `--from-local` to migrate from the local SQLite store and env vars.",
+			"`vib auth-broker migrate` requires an explicit source. Pass `--from-local` to migrate from the local SQLite store and env vars.",
 		);
 	}
 
@@ -771,7 +771,7 @@ async function runMigrate(flags: AuthBrokerCommandArgs["flags"]): Promise<void> 
 async function runStatus(flags: AuthBrokerCommandArgs["flags"]): Promise<void> {
 	const cfg = (await resolveStartupAuthConfig()).broker;
 	if (!cfg) {
-		const message = "No auth-broker configured (set GJC_AUTH_BROKER_URL to enable).";
+		const message = "No auth-broker configured (set VIB_AUTH_BROKER_URL to enable).";
 		if (flags.json)
 			process.stdout.write(
 				`${JSON.stringify({ ok: false, error: { code: "broker_not_configured", message: "Auth broker is not configured." } })}\n`,

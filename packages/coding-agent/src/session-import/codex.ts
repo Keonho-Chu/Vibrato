@@ -8,7 +8,7 @@ import {
 	type RecoveryFsFile,
 	type RecoveryFsIdentity,
 	type RecoveryFsRoot,
-} from "@gajae-code/natives";
+} from "@vib-rato/natives";
 
 export const CODEX_PROVIDER_ID = "openai-codex";
 export const CODEX_CONVERTER_VERSION = 1;

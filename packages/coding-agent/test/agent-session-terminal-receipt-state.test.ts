@@ -1,22 +1,22 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
 import * as path from "node:path";
-import { Agent } from "@gajae-code/agent-core";
-import { getBundledModel } from "@gajae-code/ai";
-import { createMockModel } from "@gajae-code/ai/providers/mock";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import * as sidecar from "@gajae-code/coding-agent/gjc-runtime/session-state-sidecar";
+import { Agent } from "@vib-rato/agent-core";
+import { getBundledModel } from "@vib-rato/ai";
+import { createMockModel } from "@vib-rato/ai/providers/mock";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { AgentSession } from "@vib-rato/coding-agent/session/agent-session";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import * as sidecar from "@vib-rato/coding-agent/vib-runtime/session-state-sidecar";
 import {
-	GJC_COORDINATOR_SESSION_ID_ENV,
-	GJC_COORDINATOR_SESSION_STATE_FILE_ENV,
-} from "@gajae-code/coding-agent/gjc-runtime/session-state-sidecar";
-import { AgentSession } from "@gajae-code/coding-agent/session/agent-session";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { TempDir } from "@gajae-code/utils";
+	VIB_COORDINATOR_SESSION_ID_ENV,
+	VIB_COORDINATOR_SESSION_STATE_FILE_ENV,
+} from "@vib-rato/coding-agent/vib-runtime/session-state-sidecar";
+import { TempDir } from "@vib-rato/utils";
 
-const originalStateFile = process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV];
-const originalSessionId = process.env[GJC_COORDINATOR_SESSION_ID_ENV];
+const originalStateFile = process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV];
+const originalSessionId = process.env[VIB_COORDINATOR_SESSION_ID_ENV];
 let session: AgentSession | undefined;
 let authStorage: AuthStorage | undefined;
 let tempDir: TempDir | undefined;
@@ -29,17 +29,17 @@ afterEach(async () => {
 	authStorage = undefined;
 	tempDir?.removeSync();
 	tempDir = undefined;
-	if (originalStateFile === undefined) delete process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV];
-	else process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = originalStateFile;
-	if (originalSessionId === undefined) delete process.env[GJC_COORDINATOR_SESSION_ID_ENV];
-	else process.env[GJC_COORDINATOR_SESSION_ID_ENV] = originalSessionId;
+	if (originalStateFile === undefined) delete process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV];
+	else process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = originalStateFile;
+	if (originalSessionId === undefined) delete process.env[VIB_COORDINATOR_SESSION_ID_ENV];
+	else process.env[VIB_COORDINATOR_SESSION_ID_ENV] = originalSessionId;
 });
 
 async function runResponse(content: string) {
-	tempDir = TempDir.createSync("@gjc-terminal-receipt-");
+	tempDir = TempDir.createSync("@vib-terminal-receipt-");
 	const stateFile = path.join(tempDir.path(), "runtime-state.json");
-	process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-	process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "terminal-receipt-session";
+	process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+	process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "terminal-receipt-session";
 	authStorage = await AuthStorage.create(path.join(tempDir.path(), "auth.db"));
 	authStorage.setRuntimeApiKey("anthropic", "test-key");
 	const modelRegistry = new ModelRegistry(authStorage);
@@ -74,7 +74,7 @@ async function runResponse(content: string) {
 
 describe("AgentSession terminal receipt state", () => {
 	it("publishes agent_end when terminal sidecar persistence fails", async () => {
-		tempDir = TempDir.createSync("@gjc-terminal-persistence-failure-");
+		tempDir = TempDir.createSync("@vib-terminal-persistence-failure-");
 		authStorage = await AuthStorage.create(path.join(tempDir.path(), "auth.db"));
 		authStorage.setRuntimeApiKey("anthropic", "test-key");
 		const modelRegistry = new ModelRegistry(authStorage);
@@ -105,7 +105,7 @@ describe("AgentSession terminal receipt state", () => {
 	});
 
 	it("publishes agent_end while terminal sidecar persistence remains pending", async () => {
-		tempDir = TempDir.createSync("@gjc-terminal-persistence-pending-");
+		tempDir = TempDir.createSync("@vib-terminal-persistence-pending-");
 		authStorage = await AuthStorage.create(path.join(tempDir.path(), "auth.db"));
 		authStorage.setRuntimeApiKey("anthropic", "test-key");
 		const modelRegistry = new ModelRegistry(authStorage);

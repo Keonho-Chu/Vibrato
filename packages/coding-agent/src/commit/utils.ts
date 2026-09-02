@@ -1,4 +1,4 @@
-import type { AssistantMessage, ToolCall } from "@gajae-code/ai/core";
+import type { AssistantMessage, ToolCall } from "@vib-rato/ai/core";
 import type { ChangelogCategory, ConventionalAnalysis, ConventionalDetail } from "./types";
 
 export function extractToolCall(message: AssistantMessage, name: string): ToolCall | undefined {

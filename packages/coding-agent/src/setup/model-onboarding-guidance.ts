@@ -1,16 +1,16 @@
-import { formatProviderCredentialHint } from "@gajae-code/ai/stream";
+import { formatProviderCredentialHint } from "@vib-rato/ai/stream";
 
 export const MODEL_ONBOARDING_API_PROVIDER_COMMAND =
 	"/provider add --compat <openai|anthropic> --provider <id> --base-url <url> --api-key-env <ENV> --model <model>";
 export const MODEL_ONBOARDING_PROVIDER_PRESET_COMMAND = "/provider add --preset <id>";
 
-export const MODEL_ONBOARDING_SETUP_COMMAND = "gjc setup provider";
+export const MODEL_ONBOARDING_SETUP_COMMAND = "vib setup provider";
 export const MODEL_ONBOARDING_OAUTH_COMMAND = "/provider login [provider-id] or /login [provider-id]";
 
 export function formatModelOnboardingGuidance(): string {
 	return [
 		"Model selection only shows configured providers.",
-		"Assignment targets are DEFAULT plus the GJC role agents: EXECUTOR, ARCHITECT, PLANNER, and CRITIC.",
+		"Assignment targets are DEFAULT plus the Vibrato role agents: EXECUTOR, ARCHITECT, PLANNER, and CRITIC.",
 		"Legacy model-role aliases are compatibility-only and are not shown as assignment targets.",
 		`Provider presets: ${MODEL_ONBOARDING_PROVIDER_PRESET_COMMAND} (or ${MODEL_ONBOARDING_SETUP_COMMAND} --preset <preset>).`,
 		`API-compatible custom providers: ${MODEL_ONBOARDING_API_PROVIDER_COMMAND}.`,

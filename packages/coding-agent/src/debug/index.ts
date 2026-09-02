@@ -6,18 +6,18 @@
 
 import * as fs from "node:fs/promises";
 import * as url from "node:url";
-import type { getWorkProfile as getWorkProfileFn } from "@gajae-code/natives";
+import type { getWorkProfile as getWorkProfileFn } from "@vib-rato/natives";
 
 let nativeGetWorkProfile: typeof getWorkProfileFn | undefined;
 
 function getWorkProfileNative(...args: Parameters<typeof getWorkProfileFn>): ReturnType<typeof getWorkProfileFn> {
-	nativeGetWorkProfile ??= (require("@gajae-code/natives") as { getWorkProfile: typeof getWorkProfileFn })
+	nativeGetWorkProfile ??= (require("@vib-rato/natives") as { getWorkProfile: typeof getWorkProfileFn })
 		.getWorkProfile;
 	return nativeGetWorkProfile(...args);
 }
 
-import { Container, Loader, type SelectItem, SelectList, Spacer, Text } from "@gajae-code/tui";
-import { getSessionsDir } from "@gajae-code/utils";
+import { Container, Loader, type SelectItem, SelectList, Spacer, Text } from "@vib-rato/tui";
+import { getSessionsDir } from "@vib-rato/utils";
 import { DynamicBorder } from "../modes/components/dynamic-border";
 import { getSelectListTheme, getSymbolTheme, theme } from "../modes/theme/theme";
 import type { InteractiveModeContext } from "../modes/types";

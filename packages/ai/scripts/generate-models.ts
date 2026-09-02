@@ -10,7 +10,7 @@ const COPILOT_PREMIUM_MULTIPLIERS: Record<string, number> = {
 };
 
 import * as path from "node:path";
-import { $env } from "@gajae-code/utils";
+import { $env } from "@vib-rato/utils";
 import { AuthStorage, type OAuthAccess, SqliteAuthCredentialStore } from "../src/auth-storage";
 import { createModelManager } from "../src/model-manager";
 import { RETIRED_MODEL_KEYS } from "../src/model-retirements";
@@ -190,7 +190,7 @@ export function injectMuseSparkModels(models: Model[]): void {
 		provider: "openrouter",
 		baseUrl: "https://openrouter.ai/api/v1",
 		reasoning: true,
-		// GJC's current Model.input contract represents only text/image. Meta and
+		// Vibrato's current Model.input contract represents only text/image. Meta and
 		// OpenRouter also accept video, audio, and PDF/file inputs for this model;
 		// those modalities remain intentionally unadvertised until the shared model
 		// contract and request pipelines can represent them end to end.
@@ -234,7 +234,7 @@ export function injectMuseSparkModels(models: Model[]): void {
  * Claude and GPT are verified end to end against the live gateway. Gemini and
  * Grok are listed from the same authoritative source but their transports are
  * not implemented here, so they are intentionally NOT bundled — shipping a
- * catalog entry GJC cannot dispatch would fail at request time instead of being
+ * catalog entry Vibrato cannot dispatch would fail at request time instead of being
  * absent from `/model`.
  *
  * `contextWindow` and `maxTokens` are the gateway's enforced ceilings, probed

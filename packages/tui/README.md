@@ -1,4 +1,4 @@
-# @gajae-code/tui
+# @vib-rato/tui
 
 Minimal terminal UI framework with differential rendering and synchronized output for flicker-free interactive CLI applications.
 
@@ -16,7 +16,7 @@ Minimal terminal UI framework with differential rendering and synchronized outpu
 ## Quick Start
 
 ```typescript
-import { TUI, Text, Editor, ProcessTerminal } from "@gajae-code/tui";
+import { TUI, Text, Editor, ProcessTerminal } from "@vib-rato/tui";
 
 // Create terminal
 const terminal = new ProcessTerminal();
@@ -467,8 +467,8 @@ Supported formats: PNG, JPEG, GIF, WebP. Dimensions are parsed from the image he
 Supports both slash commands and file paths.
 
 ```typescript
-import { CombinedAutocompleteProvider } from "@gajae-code/tui";
-import { getProjectDir } from "@gajae-code/utils";
+import { CombinedAutocompleteProvider } from "@vib-rato/tui";
+import { getProjectDir } from "@vib-rato/utils";
 
 const provider = new CombinedAutocompleteProvider(
 	[
@@ -523,7 +523,7 @@ import {
 	isHome,
 	isEnd,
 	// ... and more
-} from "@gajae-code/tui";
+} from "@vib-rato/tui";
 
 if (isCtrlC(data)) {
 	process.exit(0);
@@ -568,7 +568,7 @@ interface Terminal {
 ## Utilities
 
 ```typescript
-import { Ellipsis, visibleWidth, truncateToWidth, wrapTextWithAnsi } from "@gajae-code/tui";
+import { Ellipsis, visibleWidth, truncateToWidth, wrapTextWithAnsi } from "@vib-rato/tui";
 
 // Get visible width of string (ignoring ANSI codes, uses Bun.stringWidth)
 const width = visibleWidth("\x1b[31mHello\x1b[0m"); // 5
@@ -593,8 +593,8 @@ When creating custom components, **each line returned by `render()` must not exc
 Use the key detection utilities to handle keyboard input:
 
 ```typescript
-import { isEnter, isEscape, isArrowUp, isArrowDown, isCtrlC, isTab, isBackspace } from "@gajae-code/tui";
-import type { Component } from "@gajae-code/tui";
+import { isEnter, isEscape, isArrowUp, isArrowDown, isCtrlC, isTab, isBackspace } from "@vib-rato/tui";
+import type { Component } from "@vib-rato/tui";
 
 class MyInteractiveComponent implements Component {
 	private selectedIndex = 0;
@@ -629,8 +629,8 @@ class MyInteractiveComponent implements Component {
 Use the provided utilities to ensure lines fit:
 
 ```typescript
-import { visibleWidth, truncateToWidth } from "@gajae-code/tui";
-import type { Component } from "@gajae-code/tui";
+import { visibleWidth, truncateToWidth } from "@vib-rato/tui";
+import type { Component } from "@vib-rato/tui";
 
 class MyComponent implements Component {
 	private text: string;

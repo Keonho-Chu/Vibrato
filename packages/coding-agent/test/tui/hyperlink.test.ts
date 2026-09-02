@@ -1,9 +1,9 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "bun:test";
-import { resetSettingsForTest, Settings, settings } from "@gajae-code/coding-agent/config/settings";
-import { LocalProtocolHandler } from "@gajae-code/coding-agent/internal-urls";
-import { AgentRegistry } from "@gajae-code/coding-agent/registry/agent-registry";
-import { fileHyperlink, isHyperlinkEnabled, tryResolveInternalUrlSync } from "@gajae-code/coding-agent/tui/hyperlink";
-import * as terminalCaps from "@gajae-code/tui";
+import { resetSettingsForTest, Settings, settings } from "@vib-rato/coding-agent/config/settings";
+import { LocalProtocolHandler } from "@vib-rato/coding-agent/internal-urls";
+import { AgentRegistry } from "@vib-rato/coding-agent/registry/agent-registry";
+import { fileHyperlink, isHyperlinkEnabled, tryResolveInternalUrlSync } from "@vib-rato/coding-agent/tui/hyperlink";
+import * as terminalCaps from "@vib-rato/tui";
 
 // OSC 8 sequence markers
 const OSC = "\x1b]";
@@ -188,7 +188,7 @@ describe("tryResolveInternalUrlSync", () => {
 		expect(tryResolveInternalUrlSync("artifact://123")).toBeUndefined();
 		expect(tryResolveInternalUrlSync("agent://abc")).toBeUndefined();
 		expect(tryResolveInternalUrlSync("skill://foo")).toBeUndefined();
-		expect(tryResolveInternalUrlSync("gjc://docs.md")).toBeUndefined();
+		expect(tryResolveInternalUrlSync("vib://docs.md")).toBeUndefined();
 	});
 
 	it("returns undefined when local:// resolution has no session options", () => {

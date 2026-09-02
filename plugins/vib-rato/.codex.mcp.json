@@ -1,0 +1,14 @@
+{
+  "vib-coordinator": {
+    "command": "vib",
+    "args": [
+      "mcp-serve",
+      "coordinator"
+    ],
+    "env": {
+      "VIB_COORDINATOR_MCP_WORKDIR_ROOTS": "${PWD}",
+      "VIB_COORDINATOR_MCP_REPO": "vib-rato-plugin",
+      "VIB_COORDINATOR_MCP_SESSION_COMMAND": "vib --worktree"
+    }
+  }
+}

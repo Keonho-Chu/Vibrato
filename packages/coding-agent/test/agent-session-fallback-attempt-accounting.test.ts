@@ -1,11 +1,11 @@
 import { describe, expect, it } from "bun:test";
-import { classifyFallbackTrigger } from "@gajae-code/ai";
+import { classifyFallbackTrigger } from "@vib-rato/ai";
 import {
 	type ConfiguredFallbackChain,
 	cappedExponentialWithFullJitter,
 	effectiveFallbackDelay,
 	FallbackChainController,
-} from "@gajae-code/coding-agent/session/fallback-chain-controller";
+} from "@vib-rato/coding-agent/session/fallback-chain-controller";
 
 function chain(entries: string[]): ConfiguredFallbackChain {
 	return { role: "default", entries, origin: "model_selection", explicitHead: true };

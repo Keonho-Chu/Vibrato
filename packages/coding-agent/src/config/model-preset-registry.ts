@@ -2,9 +2,9 @@ import * as crypto from "node:crypto";
 import * as fsSync from "node:fs";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import type { Api, Model } from "@gajae-code/ai/core";
-import type { NativeExactFileIdentity, NativeExactUnlinkResult } from "@gajae-code/natives";
-import { getAgentDir, isEnoent } from "@gajae-code/utils";
+import type { Api, Model } from "@vib-rato/ai/core";
+import type { NativeExactFileIdentity, NativeExactUnlinkResult } from "@vib-rato/natives";
+import { getAgentDir, isEnoent } from "@vib-rato/utils";
 import * as z from "zod/v4";
 import { splitSelectorThinkingSuffix } from "../thinking";
 import { withFileLock } from "./file-lock";
@@ -29,14 +29,14 @@ function exactReplacePathNative(
 	expectedSource: NativeExactFileIdentity,
 	expectedDestination: NativeExactFileIdentity,
 ): NativeExactUnlinkResult {
-	nativeExactReplacePath ??= (require("@gajae-code/natives") as { exactReplacePath: NativeExactReplacePath })
+	nativeExactReplacePath ??= (require("@vib-rato/natives") as { exactReplacePath: NativeExactReplacePath })
 		.exactReplacePath;
 	return nativeExactReplacePath(sourcePath, destinationPath, expectedSource, expectedDestination);
 }
 
 export const MODEL_PRESET_REGISTRY_CONTRACT_VERSION = "1.0.0";
 export const DEFAULT_MODEL_PRESET_REGISTRY_URL =
-	"https://raw.githubusercontent.com/Yeachan-Heo/gajae-code-presets/dev/latest.json";
+	"https://raw.githubusercontent.com/Keonho-Chu/Vibrato-presets/dev/latest.json";
 export const MODEL_PRESET_REGISTRY_REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1000;
 export const MODEL_PRESET_REGISTRY_STARTUP_DELAY_MS = 30_000;
 export const MODEL_PRESET_REGISTRY_MAX_MANIFEST_BYTES = 64 * 1024;
@@ -69,9 +69,9 @@ function decodeCanonicalEd25519Signature(value: string): Buffer {
 	return Buffer.from(value, "base64");
 }
 const DESCRIPTOR_PATH_PATTERN = /^revisions\/[0-9]{8}\/[a-z]+\.json$/;
-const SOURCE_REPOSITORY = "https://github.com/Yeachan-Heo/gajae-code";
-const REGISTRY_RAW_PATH_PREFIX = "/Yeachan-Heo/gajae-code-presets/";
-const RESERVED_IDENTITY_PREFIXES = ["gjc-", "gajae-", "system-", "internal-", "__"];
+const SOURCE_REPOSITORY = "https://github.com/Keonho-Chu/Vibrato";
+const REGISTRY_RAW_PATH_PREFIX = "/Keonho-Chu/Vibrato-presets/";
+const RESERVED_IDENTITY_PREFIXES = ["vib-", "vibrato-", "system-", "internal-", "__"];
 const IDENTITY_HOMOGLYPHS = new Map(
 	Object.entries({
 		а: "a",
@@ -733,7 +733,7 @@ function assertCompatible(compatibility: z.infer<typeof CompatibilitySchema>): v
 		compareSemver(MODEL_PRESET_REGISTRY_CONTRACT_VERSION, minVersion) < 0 ||
 		compareSemver(MODEL_PRESET_REGISTRY_CONTRACT_VERSION, maxVersion) > 0
 	)
-		throw new Error("Registry manifest is incompatible with this GJC preset contract.");
+		throw new Error("Registry manifest is incompatible with this Vibrato preset contract.");
 }
 
 function verifyManifest(
@@ -1388,10 +1388,10 @@ function effectiveTrustedKeys(
 	return getModelPresetRegistryTestTrustedKeys(agentDir) ?? MODEL_PRESET_REGISTRY_TRUSTED_KEYS;
 }
 function effectiveManifestUrl(dependencies: ModelPresetRegistryDependencies): string {
-	return dependencies.manifestUrl ?? process.env.GJC_MODEL_PRESET_REGISTRY_URL ?? DEFAULT_MODEL_PRESET_REGISTRY_URL;
+	return dependencies.manifestUrl ?? process.env.VIB_MODEL_PRESET_REGISTRY_URL ?? DEFAULT_MODEL_PRESET_REGISTRY_URL;
 }
 function environmentDisabled(): boolean {
-	return /^(?:1|true|yes|on)$/i.test(process.env.GJC_MODEL_PRESET_REGISTRY_DISABLED ?? "");
+	return /^(?:1|true|yes|on)$/i.test(process.env.VIB_MODEL_PRESET_REGISTRY_DISABLED ?? "");
 }
 function assertHttpsUrl(raw: string, description: string): URL {
 	let url: URL;

@@ -1,8 +1,8 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { isEnoent, logger } from "@gajae-code/utils";
-import { getAgentDir } from "@gajae-code/utils/dirs";
-import { $credentialEnv } from "@gajae-code/utils/env";
+import { isEnoent, logger } from "@vib-rato/utils";
+import { getAgentDir } from "@vib-rato/utils/dirs";
+import { $credentialEnv } from "@vib-rato/utils/env";
 
 const SMITHERY_AUTH_FILENAME = "smithery.json";
 /**

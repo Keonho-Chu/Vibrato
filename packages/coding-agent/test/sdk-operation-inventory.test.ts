@@ -170,12 +170,12 @@ describe("SDK operation inventory", () => {
 	});
 
 	it("rejects a generated matrix with a dropped row", async () => {
-		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-sdk-inventory-"));
+		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "vib-sdk-inventory-"));
 		tempDirs.push(directory);
 		const copy = path.join(directory, "operation-inventory.generated.json");
 		const records: unknown[] = await Bun.file(inventory).json();
 		await Bun.write(copy, `${JSON.stringify(records.slice(1), null, "\t")}\n`);
-		const result = run(["--check"], { GJC_SDK_OPERATION_INVENTORY: copy });
+		const result = run(["--check"], { VIB_SDK_OPERATION_INVENTORY: copy });
 		expect(result.exitCode, output(result)).toBe(1);
 		expect(output(result)).toContain("Unreviewed addition: registry:C01");
 	});
@@ -355,10 +355,10 @@ describe("SDK operation inventory", () => {
 	});
 
 	it("rejects an unmapped action seam found in a fixture scan root", async () => {
-		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-sdk-seam-"));
+		const directory = await fs.mkdtemp(path.join(os.tmpdir(), "vib-sdk-seam-"));
 		tempDirs.push(directory);
 		await Bun.write(path.join(directory, "fixture.ts"), 'switch (action) { case "unmapped_action": break; }');
-		const result = run(["--check"], { GJC_SDK_SEAM_SCAN_ROOT: directory });
+		const result = run(["--check"], { VIB_SDK_SEAM_SCAN_ROOT: directory });
 		expect(result.exitCode, output(result)).toBe(1);
 		expect(output(result)).toContain("Pending review source seam: controller:fixture.ts:unmapped_action");
 	});

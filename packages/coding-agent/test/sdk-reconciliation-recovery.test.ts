@@ -33,7 +33,7 @@ function stubFs(overrides: Partial<ReconciliationStoreFs>): ReconciliationStoreF
 
 function store(fs: ReconciliationStoreFs) {
 	return createReconciliationStore({
-		sessionFile: "/tmp/gjc-recovery/session.jsonl",
+		sessionFile: "/tmp/vib-recovery/session.jsonl",
 		sessionId: SESSION,
 		fs,
 		now: () => 100,

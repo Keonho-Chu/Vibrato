@@ -1,5 +1,5 @@
 /**
- * Regression for https://github.com/Yeachan-Heo/gajae-code/issues/2900
+ * Regression for https://github.com/Keonho-Chu/Vibrato/issues/2900
  *
  * Concurrent disjoint applyPatch calls must not silently drop a successful edit.
  */
@@ -93,7 +93,7 @@ describe("concurrent path mutation (#2900)", () => {
 	});
 
 	it("serializes real-filesystem concurrent writes so both disjoint edits survive", async () => {
-		const root = await fsp.mkdtemp(path.join(os.tmpdir(), "gjc-concurrent-edit-"));
+		const root = await fsp.mkdtemp(path.join(os.tmpdir(), "vib-concurrent-edit-"));
 		temporaryDirectories.push(root);
 		const filePath = path.join(root, "file.txt");
 		await fsp.writeFile(filePath, "a\nb\nc\n", "utf8");
@@ -113,7 +113,7 @@ describe("concurrent path mutation (#2900)", () => {
 		const events: string[] = [];
 		await Promise.all([
 			withEditPathMutation(
-				["/tmp/gjc-edit-lock-a"],
+				["/tmp/vib-edit-lock-a"],
 				async () => {
 					events.push("a-start");
 					await Bun.sleep(20);
@@ -122,7 +122,7 @@ describe("concurrent path mutation (#2900)", () => {
 				{ crossProcess: false },
 			),
 			withEditPathMutation(
-				["/tmp/gjc-edit-lock-a"],
+				["/tmp/vib-edit-lock-a"],
 				async () => {
 					events.push("b-start");
 					await Bun.sleep(5);
@@ -142,7 +142,7 @@ describe("concurrent path mutation (#2900)", () => {
 	 * opted in explicitly for that path (#2900 review).
 	 */
 	it("disk-backed non-default FileSystem still serializes across processes when crossProcessLock is true", async () => {
-		const root = await fsp.mkdtemp(path.join(os.tmpdir(), "gjc-concurrent-edit-lsp-"));
+		const root = await fsp.mkdtemp(path.join(os.tmpdir(), "vib-concurrent-edit-lsp-"));
 		temporaryDirectories.push(root);
 		const filePath = path.join(root, "file.txt");
 		await fsp.writeFile(filePath, "a\nb\nc\n", "utf8");
@@ -208,7 +208,7 @@ await applyPatch(
 	});
 
 	it("previewPatch stays read-only: succeeds under a non-writable parent without creating .lock", async () => {
-		const root = await fsp.mkdtemp(path.join(os.tmpdir(), "gjc-preview-readonly-"));
+		const root = await fsp.mkdtemp(path.join(os.tmpdir(), "vib-preview-readonly-"));
 		temporaryDirectories.push(root);
 		const parent = path.join(root, "ro-parent");
 		await fsp.mkdir(parent);

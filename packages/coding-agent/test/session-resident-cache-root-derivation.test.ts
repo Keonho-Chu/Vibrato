@@ -2,14 +2,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { getAgentDir, getResidentCacheRootDir, setAgentDir } from "@gajae-code/utils";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { getAgentDir, getResidentCacheRootDir, setAgentDir } from "@vib-rato/utils";
 import { ManagedSessionDescendantStore } from "../src/session/internal/managed-session-storage";
 
 const originalAgentDir = getAgentDir();
 const environmentKeys = [
-	"GJC_CODING_AGENT_DIR",
-	"GJC_CONFIG_DIR",
+	"VIB_CODING_AGENT_DIR",
+	"VIB_CONFIG_DIR",
 	"PI_CONFIG_DIR",
 	"XDG_CACHE_HOME",
 	"XDG_DATA_HOME",
@@ -26,15 +26,15 @@ afterEach(async () => {
 	vi.restoreAllMocks();
 	restoreEnvironment();
 	setAgentDir(originalAgentDir);
-	const originalAgentDirOverride = originalEnvironment.get("GJC_CODING_AGENT_DIR");
-	if (originalAgentDirOverride === undefined) delete process.env.GJC_CODING_AGENT_DIR;
-	else process.env.GJC_CODING_AGENT_DIR = originalAgentDirOverride;
+	const originalAgentDirOverride = originalEnvironment.get("VIB_CODING_AGENT_DIR");
+	if (originalAgentDirOverride === undefined) delete process.env.VIB_CODING_AGENT_DIR;
+	else process.env.VIB_CODING_AGENT_DIR = originalAgentDirOverride;
 	await Promise.all(
 		temporaryDirectories.splice(0).map(directory => fs.promises.rm(directory, { recursive: true, force: true })),
 	);
 });
 
-function makeTempDir(prefix = "gjc-resident-root-derivation-"): string {
+function makeTempDir(prefix = "vib-resident-root-derivation-"): string {
 	const directory = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
 	temporaryDirectories.push(directory);
 	return directory;
@@ -84,17 +84,17 @@ describe.skipIf(process.platform === "win32")("resident cache root derivation", 
 		const root = makeTempDir();
 		const xdgCacheHome = path.join(root, "xdg-cache");
 		const xdgDataHome = path.join(root, "xdg-data");
-		const xdgCacheRoot = path.join(xdgCacheHome, "gjc");
-		const xdgDataRoot = path.join(xdgDataHome, "gjc");
+		const xdgCacheRoot = path.join(xdgCacheHome, "vib");
+		const xdgDataRoot = path.join(xdgDataHome, "vib");
 		ensurePrivateDirectory(xdgCacheRoot);
 		ensurePrivateDirectory(xdgDataRoot);
 		process.env.XDG_CACHE_HOME = xdgCacheHome;
 		process.env.XDG_DATA_HOME = xdgDataHome;
-		delete process.env.GJC_CONFIG_DIR;
+		delete process.env.VIB_CONFIG_DIR;
 		delete process.env.PI_CONFIG_DIR;
-		delete process.env.GJC_CODING_AGENT_DIR;
+		delete process.env.VIB_CODING_AGENT_DIR;
 
-		const defaultAgentDir = path.join(os.homedir(), ".gjc", "agent");
+		const defaultAgentDir = path.join(os.homedir(), ".vib", "agent");
 		setAgentDir(defaultAgentDir);
 		const cwd = path.join(root, "workspace");
 		ensurePrivateDirectory(cwd);

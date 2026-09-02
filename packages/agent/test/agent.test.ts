@@ -1,8 +1,8 @@
 import { describe, expect, it } from "bun:test";
-import { Agent, type AgentTool, ThinkingLevel } from "@gajae-code/agent-core";
-import type { ImageContent, SimpleStreamOptions } from "@gajae-code/ai";
-import { z } from "@gajae-code/ai";
-import { createMockModel } from "@gajae-code/ai/providers/mock";
+import { Agent, type AgentTool, ThinkingLevel } from "@vib-rato/agent-core";
+import type { ImageContent, SimpleStreamOptions } from "@vib-rato/ai";
+import { z } from "@vib-rato/ai";
+import { createMockModel } from "@vib-rato/ai/providers/mock";
 import { createAssistantMessage } from "./helpers";
 
 describe("Agent", () => {

@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
 
 const tempDirs: string[] = [];
 
@@ -11,7 +11,7 @@ afterEach(async () => {
 });
 
 function makeTempDir(): string {
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-resident-image-cache-"));
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-resident-image-cache-"));
 	tempDirs.push(dir);
 	return dir;
 }
@@ -50,7 +50,7 @@ describe("SessionManager resident image materialized-entry cache", () => {
 			expect(first).toContain(image);
 			expect(second).toContain(image);
 			expect(first).not.toContain("blob:sha256:");
-			expect(first).not.toContain("__gjcResidentBlob");
+			expect(first).not.toContain("__vibResidentBlob");
 			expect(afterFirst.materializedEntriesCachePopulateCount).toBe(
 				before.materializedEntriesCachePopulateCount + 1,
 			);

@@ -1,7 +1,7 @@
 /**
  * Shared notification service contract.
  *
- * Transport-agnostic, secret-safe operations consumed by BOTH the `gjc notify`
+ * Transport-agnostic, secret-safe operations consumed by BOTH the `vib notify`
  * CLI and the cross-mode `/notify` slash command (TUI + ACP). Every result is
  * free of raw secrets: bot tokens are only ever shown masked (`maskToken`) or
  * as a non-reversible fingerprint (`tokenFingerprint`).
@@ -16,8 +16,8 @@ import * as fsSync from "node:fs";
 import * as fsPromises from "node:fs/promises";
 import * as path from "node:path";
 
-type NativeExactUnlinkBinding = typeof import("@gajae-code/natives")["exactUnlink"];
-type NativeNotificationBindings = typeof import("@gajae-code/natives") & {
+type NativeExactUnlinkBinding = typeof import("@vib-rato/natives")["exactUnlink"];
+type NativeNotificationBindings = typeof import("@vib-rato/natives") & {
 	exactUnlinkDirect: NativeExactUnlinkBinding;
 };
 
@@ -25,7 +25,7 @@ let nativeNotificationBindings: NativeNotificationBindings | undefined;
 
 function nativeNotification(): NativeNotificationBindings {
 	if (!nativeNotificationBindings)
-		nativeNotificationBindings = require("@gajae-code/natives") as NativeNotificationBindings;
+		nativeNotificationBindings = require("@vib-rato/natives") as NativeNotificationBindings;
 	return nativeNotificationBindings;
 }
 
@@ -255,7 +255,7 @@ function exactUnlinkNotificationDebrisFile(
 	file: string,
 	identity: NotificationEndpointFileIdentity,
 ): NotificationExactUnlinkResult {
-	return exactUnlinkNotificationFileAtBoundary(file, identity, `.gjc-direct-unlink-${crypto.randomUUID()}`, true);
+	return exactUnlinkNotificationFileAtBoundary(file, identity, `.vib-direct-unlink-${crypto.randomUUID()}`, true);
 }
 
 /** Minimal filesystem surface the service needs; injectable for tests. */
@@ -276,7 +276,7 @@ const nodeServiceFs: NotificationServiceFs = {
 	readFile: (file, encoding) => fsPromises.readFile(file, encoding),
 	readEndpointFile: readNotificationEndpointFile,
 	exactUnlink: async (file, identity) =>
-		exactUnlinkNotificationFile(file, identity, `.gjc-delete-notification-endpoint-${crypto.randomUUID()}.json`),
+		exactUnlinkNotificationFile(file, identity, `.vib-delete-notification-endpoint-${crypto.randomUUID()}.json`),
 	unlinkExact: async (file, identity) => exactUnlinkNotificationDebrisFile(file, identity),
 	unlink: file => fsPromises.unlink(file),
 	writeFile: (file, data, opts) => fsPromises.writeFile(file, data, opts),
@@ -307,7 +307,7 @@ function defaultPidAlive(pid: number): boolean {
 }
 
 function defaultStateRoot(): string {
-	return path.join(process.cwd(), ".gjc", "state");
+	return path.join(process.cwd(), ".vib", "state");
 }
 
 function endpointDir(stateRoot: string): string {
@@ -618,8 +618,8 @@ function isSharedSdkArtifact(name: string): boolean {
 // --- native exchange debris patterns ---------------------------------------
 //
 // The native exact-unlink exchange always detaches a target into a fresh
-// quarantine destination (e.g. `.gjc-delete-notification-endpoint-<uuid>.json`)
-// and, on the durable-failure paths, leaves `.gjc-exact-unlink-placeholder-*`
+// quarantine destination (e.g. `.vib-delete-notification-endpoint-<uuid>.json`)
+// and, on the durable-failure paths, leaves `.vib-exact-unlink-placeholder-*`
 // retained records behind. These names are DEBRIS owned by the exact-unlink
 // exchange's cleanup, never live notification publications, and must never be
 // routed back through the exchange (each exchange pass manufactures fresh
@@ -631,9 +631,9 @@ const UUID_PATTERN = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{1
 /** Quarantine target of a detached daemon transition marker (telegram-daemon exact unlink). */
 const DEBRIS_TRANSITION_QUARANTINE = new RegExp(`^transition-${UUID_PATTERN}$`);
 /** Quarantine target of a detached notification endpoint file. */
-const DEBRIS_ENDPOINT_QUARANTINE = new RegExp(`^\\.gjc-delete-notification-endpoint-${UUID_PATTERN}\\.json$`);
+const DEBRIS_ENDPOINT_QUARANTINE = new RegExp(`^\\.vib-delete-notification-endpoint-${UUID_PATTERN}\\.json$`);
 /** Native exact-unlink exchange placeholder left behind by a failed verified cleanup. */
-const DEBRIS_UNLINK_PLACEHOLDER = /^\.gjc-exact-unlink-placeholder-/;
+const DEBRIS_UNLINK_PLACEHOLDER = /^\.vib-exact-unlink-placeholder-/;
 /** Atomic-write staging file: `<canonical>.<pid>.<epochMs>.<random>.tmp`. */
 const DEBRIS_STAGING_TMP = /\.([0-9]{1,10})\.[0-9]{1,16}\.[a-z0-9]{1,24}\.tmp$/;
 
@@ -1030,7 +1030,7 @@ export async function checkNotificationHealth(opts: HealthOptions): Promise<Noti
 				name: "local_endpoint",
 				level: "warn",
 				detail:
-					"No local notification endpoint for this working directory. In this GJC terminal run /notify on; if it does not report notifications enabled, start a new local GJC session. Do not re-pair Telegram.",
+					"No local notification endpoint for this working directory. In this Vibrato terminal run /notify on; if it does not report notifications enabled, start a new local Vibrato session. Do not re-pair Telegram.",
 			});
 		}
 		// Endpoint files are registrations, not deliveries: a live owner that
@@ -1164,7 +1164,7 @@ export async function sendNotificationTest(opts: TestOptions): Promise<Notificat
 	}
 	if (opts.signal?.aborted)
 		return { ok: false, adapter: provider, detail: `${provider} notification test cancelled.` };
-	const text = opts.text ?? "GJC notifications test message. If you can read this, delivery works.";
+	const text = opts.text ?? "Vibrato notifications test message. If you can read this, delivery works.";
 	if (provider === "telegram" && isTelegramComplete(cfg)) {
 		const fetchImpl = deps.fetchImpl ?? globalThis.fetch;
 		const apiBase = (deps.apiBase ?? DEFAULT_API_BASE).replace(/\/$/, "");
@@ -1970,7 +1970,7 @@ export async function recoverNotifications(opts: RecoveryOptions): Promise<Notif
 			ownerId: state.ownerId,
 			pid: state.pid,
 			...(blockingReason
-				? { blockingReason, markerAgeMs, forceCommand: "gjc notify recovery --force-daemon-lock" }
+				? { blockingReason, markerAgeMs, forceCommand: "vib notify recovery --force-daemon-lock" }
 				: {}),
 		};
 	} else {

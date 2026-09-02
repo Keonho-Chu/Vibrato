@@ -17,7 +17,7 @@
  * - pid and exact timestamps are never included (coarse dates only)
  * - per-field and whole-body byte caps
  */
-import { redactCrashSecrets, replaceAbsolutePaths } from "@gajae-code/utils";
+import { redactCrashSecrets, replaceAbsolutePaths } from "@vib-rato/utils";
 
 /** High-entropy identifiers: account/session/request ids carry no triage value. */
 const UUID_PATTERN = /\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b/g;

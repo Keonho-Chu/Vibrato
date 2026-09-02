@@ -11,7 +11,7 @@
  * throw instead of pretending a shallow fetch succeeded.
  */
 
-import type { AuthStorage } from "@gajae-code/ai/core";
+import type { AuthStorage } from "@vib-rato/ai/core";
 
 import type { SearchResponse, SearchSource } from "../../../web/search/types";
 import { SearchProviderError } from "../../../web/search/types";
@@ -27,7 +27,7 @@ const PUBLIC_ROUTE_TIMEOUT_MS = 15_000;
 const DISCOVERY_LIMIT = 8;
 const MAX_PUBLIC_ROUTE_RESPONSE_BYTES = 1024 * 1024;
 
-const USER_AGENT = "Gajae-Code insane-search safe-public-routes/1.0 (+https://github.com/Yeachan-Heo/gajae-code)";
+const USER_AGENT = "Vibrato insane-search safe-public-routes/1.0 (+https://github.com/Keonho-Chu/Vibrato)";
 
 const BLOCK_MARKERS = [
 	"access denied",

@@ -21,7 +21,7 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { $env, getTrustedHomeDir, isEnoent, logger } from "@gajae-code/utils";
+import { $env, getTrustedHomeDir, isEnoent, logger } from "@vib-rato/utils";
 import {
 	type AwsIniFile,
 	classifyAwsProfileCapability,

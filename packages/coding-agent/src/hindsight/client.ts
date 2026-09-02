@@ -10,7 +10,7 @@
 
 import type { HindsightConfig } from "./config";
 
-const USER_AGENT = "oh-my-gajae-code";
+const USER_AGENT = "oh-my-vib-rato";
 const DEFAULT_USER_AGENT = USER_AGENT;
 const REQUEST_TIMEOUT_MS = 30_000;
 const RESPONSE_MAX_BYTES = 8 * 1024 * 1024;

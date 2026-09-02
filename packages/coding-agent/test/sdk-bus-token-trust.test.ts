@@ -10,7 +10,7 @@ import * as path from "node:path";
  * - `notificationsEnabled()` decides whether the session control/answer channel
  *   opens at all. Its siblings in `config.ts` and `session-control.ts` already
  *   read an injected env record, so this direct read was the outlier.
- * - the Telegram reference client falls back to `GJC_TG_BOT_TOKEN`, which selects
+ * - the Telegram reference client falls back to `VIB_TG_BOT_TOKEN`, which selects
  *   the bot that receives the session's notifications and the operator's replies.
  *   That client is normally run from inside a repository.
  *
@@ -19,7 +19,7 @@ import * as path from "node:path";
  */
 
 const PROBE = path.join(import.meta.dir, "fixtures", "sdk-bus-token-probe.ts");
-const KEYS = ["GJC_NOTIFICATIONS", "GJC_NOTIFICATIONS_TOKEN", "GJC_TG_BOT_TOKEN"] as const;
+const KEYS = ["VIB_NOTIFICATIONS", "VIB_NOTIFICATIONS_TOKEN", "VIB_TG_BOT_TOKEN"] as const;
 
 interface Resolved {
 	enabled: boolean;
@@ -29,7 +29,7 @@ interface Resolved {
 const tempDirs: string[] = [];
 
 function tempDir(): string {
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-sdk-bus-trust-"));
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-sdk-bus-trust-"));
 	tempDirs.push(dir);
 	return dir;
 }
@@ -50,10 +50,10 @@ async function resolveIn(cwd: string, overrides: Record<string, string> = {}): P
 		if (value !== undefined) env[key] = value;
 	}
 	for (const key of KEYS) delete env[key];
-	// `$credentialEnv` also consults the agent `.env`, the GJC config `.env`,
+	// `$credentialEnv` also consults the agent `.env`, the Vibrato config `.env`,
 	// `~/.env` and the login shell rc files; keep all of them neutral.
 	env.HOME = tempDir();
-	env.GJC_CODING_AGENT_DIR = tempDir();
+	env.VIB_CODING_AGENT_DIR = tempDir();
 	Object.assign(env, overrides);
 
 	const proc = Bun.spawn([process.execPath, PROBE], { cwd, env, stdout: "pipe", stderr: "pipe" });
@@ -71,29 +71,29 @@ describe("SDK bus token trust boundary", () => {
 	});
 
 	it("does not let the project .env enable the notifications channel", async () => {
-		expect((await resolveIn(projectDir("GJC_NOTIFICATIONS_TOKEN=attacker-token\n"))).enabled).toBe(false);
+		expect((await resolveIn(projectDir("VIB_NOTIFICATIONS_TOKEN=attacker-token\n"))).enabled).toBe(false);
 	});
 
 	it("does not let the project .env enable it through the flag either", async () => {
-		expect((await resolveIn(projectDir("GJC_NOTIFICATIONS=1\n"))).enabled).toBe(false);
+		expect((await resolveIn(projectDir("VIB_NOTIFICATIONS=1\n"))).enabled).toBe(false);
 	});
 
 	it("ignores a Telegram bot token planted by the project .env", async () => {
-		expect((await resolveIn(projectDir("GJC_TG_BOT_TOKEN=attacker-bot\n"))).botToken).toBeNull();
+		expect((await resolveIn(projectDir("VIB_TG_BOT_TOKEN=attacker-bot\n"))).botToken).toBeNull();
 	});
 
 	it("still honors inherited notification settings", async () => {
 		const resolved = await resolveIn(projectDir(), {
-			GJC_NOTIFICATIONS_TOKEN: "operator-token",
-			GJC_TG_BOT_TOKEN: "operator-bot",
+			VIB_NOTIFICATIONS_TOKEN: "operator-token",
+			VIB_TG_BOT_TOKEN: "operator-bot",
 		});
 		expect(resolved.enabled).toBe(true);
 		expect(resolved.botToken).toBe("operator-bot");
 	});
 
 	it("does not let the project .env override inherited settings", async () => {
-		const resolved = await resolveIn(projectDir("GJC_TG_BOT_TOKEN=attacker-bot\n"), {
-			GJC_TG_BOT_TOKEN: "operator-bot",
+		const resolved = await resolveIn(projectDir("VIB_TG_BOT_TOKEN=attacker-bot\n"), {
+			VIB_TG_BOT_TOKEN: "operator-bot",
 		});
 		expect(resolved.botToken).toBe("operator-bot");
 	});

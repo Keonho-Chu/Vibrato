@@ -2,9 +2,9 @@ import { afterEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { Agent } from "@gajae-code/agent-core";
-import { getBundledModel, type Message } from "@gajae-code/ai";
-import { getAgentDir, Snowflake, setAgentDir } from "@gajae-code/utils";
+import { Agent } from "@vib-rato/agent-core";
+import { getBundledModel, type Message } from "@vib-rato/ai";
+import { getAgentDir, Snowflake, setAgentDir } from "@vib-rato/utils";
 import { AsyncJobManager } from "../../src/async";
 import { ModelRegistry } from "../../src/config/model-registry";
 import { Settings } from "../../src/config/settings";
@@ -211,7 +211,7 @@ describe("task no-session output refs", () => {
 		const artifactsDir = session.getArtifactsDir?.();
 		expect(artifactsDir).toBeTruthy();
 		expect(path.dirname(artifactsDir!)).toBe(path.resolve(os.tmpdir()));
-		expect(path.basename(artifactsDir!)).toStartWith("gjc-task-session-");
+		expect(path.basename(artifactsDir!)).toStartWith("vib-task-session-");
 		expect(artifactsDir).not.toContain(sessionId);
 
 		const outputPath = path.join(artifactsDir!, `${outputId}.md`);
@@ -243,7 +243,7 @@ describe("task no-session output refs", () => {
 			createSessionResult(createYieldingSession(grandchildOutput)),
 		);
 
-		const parentRoot = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-task-parent-root-"));
+		const parentRoot = await fs.mkdtemp(path.join(os.tmpdir(), "vib-task-parent-root-"));
 		const parentManager = new ArtifactManager(parentRoot);
 		// A subagent session file lives inside the parent artifact root, and its
 		// SessionManager adopts the parent manager instead of exposing its own dir.
@@ -285,7 +285,7 @@ describe("task no-session output refs", () => {
 		});
 
 		const session = createSession(null, sessionId);
-		const priorAuthorizedRoot = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-task-prior-authorized-"));
+		const priorAuthorizedRoot = await fs.mkdtemp(path.join(os.tmpdir(), "vib-task-prior-authorized-"));
 		await Bun.write(path.join(priorAuthorizedRoot, "0-Historical.md"), "historical output");
 		session.getAuthorizedArtifactsDirs = () => [priorAuthorizedRoot];
 		const firstTool = await TaskTool.create(session);
@@ -324,7 +324,7 @@ describe("task no-session output refs", () => {
 		expect(await Bun.file(path.join(artifactsDir!, `${firstUriMatch![1]!}.md`)).text()).toContain(firstOutput);
 		expect(await Bun.file(path.join(artifactsDir!, `${secondUriMatch![1]!}.md`)).text()).toContain(secondOutput);
 
-		const foreignRoot = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-task-foreign-"));
+		const foreignRoot = await fs.mkdtemp(path.join(os.tmpdir(), "vib-task-foreign-"));
 		try {
 			await expect(
 				InternalUrlRouter.instance().resolve(firstUri, {
@@ -346,7 +346,7 @@ describe("task no-session output refs", () => {
 		vi.spyOn(sdkModule, "createAgentSession").mockResolvedValue(
 			createSessionResult(createYieldingSession("owned manager output")),
 		);
-		const foreignRoot = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-task-foreign-manager-"));
+		const foreignRoot = await fs.mkdtemp(path.join(os.tmpdir(), "vib-task-foreign-manager-"));
 		const foreignManager = new ArtifactManager(foreignRoot);
 		const session = createSession(null, `foreign-manager-${Snowflake.next()}`);
 		session.getArtifactManager = () => foreignManager;
@@ -563,7 +563,7 @@ describe("task no-session output refs", () => {
 	});
 
 	it("keeps SessionManager ephemeral artifacts readable when resume rolls back after adoption", async () => {
-		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-ephemeral-resume-rollback-"));
+		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "vib-ephemeral-resume-rollback-"));
 		const authStorage = await AuthStorage.create(path.join(cwd, "auth.db"));
 		let runtime: AgentSession | undefined;
 		try {
@@ -635,7 +635,7 @@ describe("task no-session output refs", () => {
 	});
 
 	it("stages task fallback authority for managed legacy-local resume and restores it on rollback", async () => {
-		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-managed-task-first-resume-"));
+		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "vib-managed-task-first-resume-"));
 		const agentDir = path.join(cwd, "agent");
 		const originalAgentDir = getAgentDir();
 		setAgentDir(agentDir);
@@ -679,7 +679,7 @@ describe("task no-session output refs", () => {
 				settings: Settings.isolated(),
 				modelRegistry: new ModelRegistry(authStorage, path.join(cwd, "models.yml")),
 			});
-			const fallbackRoot = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-managed-task-fallback-"));
+			const fallbackRoot = await fs.mkdtemp(path.join(os.tmpdir(), "vib-managed-task-fallback-"));
 			const fallbackManager = new ArtifactManager(fallbackRoot);
 			expect(await fallbackManager.save("fallback predecessor", "task")).toBe("0");
 			owner.adoptArtifactManager(fallbackManager);
@@ -698,7 +698,7 @@ describe("task no-session output refs", () => {
 			expect(owner.isArtifactManagerAuthorized(fallbackManager)).toBe(true);
 			expect(await fallbackManager.getPath("0")).toBe(path.join(fallbackRoot, "0.task.log"));
 			expect(await Bun.file((await fallbackManager.getPath("0"))!).text()).toBe("fallback predecessor");
-			expect(await pathExists(path.join(targetLocalRoot, ".gjc-local-legacy-migrated-v1"))).toBe(false);
+			expect(await pathExists(path.join(targetLocalRoot, ".vib-local-legacy-migrated-v1"))).toBe(false);
 
 			expect(await runtime.switchSession(targetFile)).toBe(true);
 			expect(await pathExists(fallbackRoot)).toBe(false);
@@ -712,7 +712,7 @@ describe("task no-session output refs", () => {
 			expect(await Bun.file(localPath).text()).toBe("managed legacy payload");
 			expect(path.dirname(localPath)).toBe(targetLocalRoot);
 			const migrationMarker = await Bun.file(
-				path.join(path.dirname(localPath), ".gjc-local-legacy-migrated-v1"),
+				path.join(path.dirname(localPath), ".vib-local-legacy-migrated-v1"),
 			).text();
 			expect(["verified\n", "cleanup_pending\n"]).toContain(migrationMarker);
 			expect(migrationMarker).not.toBe("absent\n");
@@ -726,7 +726,7 @@ describe("task no-session output refs", () => {
 	});
 
 	it("settles a live detached task before resume retires its captured artifact root", async () => {
-		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-detached-task-resume-"));
+		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "vib-detached-task-resume-"));
 		const authStorage = await AuthStorage.create(path.join(cwd, "auth.db"));
 		const asyncManager = new AsyncJobManager({ onJobComplete: async () => {} });
 		AsyncJobManager.setInstance(asyncManager);
@@ -824,7 +824,7 @@ describe("task no-session output refs", () => {
 		vi.spyOn(sdkModule, "createAgentSession").mockResolvedValue(
 			createSessionResult(createYieldingSession("task-first resume output")),
 		);
-		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-task-first-resume-"));
+		const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "vib-task-first-resume-"));
 		const authStorage = await AuthStorage.create(path.join(cwd, "auth.db"));
 		let runtime: AgentSession | undefined;
 		try {
@@ -977,7 +977,7 @@ describe("task no-session output refs", () => {
 		vi.spyOn(sdkModule, "createAgentSession").mockResolvedValue(
 			createSessionResult(createYieldingSession("foreign manager rejection output")),
 		);
-		const foreignRoot = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-task-lexical-foreign-"));
+		const foreignRoot = await fs.mkdtemp(path.join(os.tmpdir(), "vib-task-lexical-foreign-"));
 		const foreignManager = new ArtifactManager(foreignRoot);
 		const sessionFile = path.join(foreignRoot, "0-Child.jsonl");
 		const session = createSession(sessionFile, `lexical-foreign-${Snowflake.next()}`);

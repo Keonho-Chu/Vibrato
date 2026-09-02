@@ -15,8 +15,8 @@
  *   - Questions may time out and auto-select the recommended option (configurable, disabled in plan mode)
  */
 
-import type { AgentTool, AgentToolContext, AgentToolResult, AgentToolUpdateCallback } from "@gajae-code/agent-core";
-import type { RawArgumentValidationResult } from "@gajae-code/ai/types";
+import type { AgentTool, AgentToolContext, AgentToolResult, AgentToolUpdateCallback } from "@vib-rato/agent-core";
+import type { RawArgumentValidationResult } from "@vib-rato/ai/types";
 import {
 	type Component,
 	Container,
@@ -26,30 +26,29 @@ import {
 	Text,
 	visibleWidth,
 	wrapTextWithAnsi,
-} from "@gajae-code/tui";
-import { logger, prompt, untilAborted } from "@gajae-code/utils";
+} from "@vib-rato/tui";
+import { logger, prompt, untilAborted } from "@vib-rato/utils";
 import {
 	formatDeepInterviewSelectorPrompt,
 	isDeepInterviewAskQuestion,
 	renderDeepInterviewAskQuestion,
 } from "../deep-interview/render-middleware";
 import type { RenderResultOptions } from "../extensibility/custom-tools/types";
-import { appendOrMergeDeepInterviewRound, syncDeepInterviewRecorderHud } from "../gjc-runtime/deep-interview-recorder";
-import { deepInterviewStatePath } from "../gjc-runtime/deep-interview-runtime";
-import {
-	assertDeepInterviewInputWithinLimit,
-	assertDeepInterviewStructuredResponseWithinLimit,
-	MAX_USER_RESPONSE_LENGTH,
-} from "../gjc-runtime/deep-interview-state";
 import {
 	type AskGateQuestion,
 	gateAnswerToResult,
 	questionToGate,
 } from "../modes/shared/agent-wire/deep-interview-gate";
-
 import { getMarkdownTheme, type Theme, theme } from "../modes/theme/theme";
 import askDescription from "../prompts/tools/ask.md" with { type: "text" };
 import { renderStatusLine } from "../tui";
+import { appendOrMergeDeepInterviewRound, syncDeepInterviewRecorderHud } from "../vib-runtime/deep-interview-recorder";
+import { deepInterviewStatePath } from "../vib-runtime/deep-interview-runtime";
+import {
+	assertDeepInterviewInputWithinLimit,
+	assertDeepInterviewStructuredResponseWithinLimit,
+	MAX_USER_RESPONSE_LENGTH,
+} from "../vib-runtime/deep-interview-state";
 import type {
 	AskAnswerRequest,
 	AskRemoteControl,
@@ -59,7 +58,7 @@ import type {
 	AskSettlementResult,
 	ToolSession,
 } from ".";
-import { GJC_ASK_TIMEOUT_CODE } from "./ask-answer-registry";
+import { VIB_ASK_TIMEOUT_CODE } from "./ask-answer-registry";
 
 import {
 	type AskParametersSchema,
@@ -126,7 +125,7 @@ function nonEmptyCustomInput(value: string | undefined): string | undefined {
 }
 
 function isAskTimeoutError(error: unknown): boolean {
-	return typeof error === "object" && error !== null && (error as { code?: unknown }).code === GJC_ASK_TIMEOUT_CODE;
+	return typeof error === "object" && error !== null && (error as { code?: unknown }).code === VIB_ASK_TIMEOUT_CODE;
 }
 
 async function awaitDeepInterviewRecorderPersistence(persistence: Promise<void>, required: boolean): Promise<void> {

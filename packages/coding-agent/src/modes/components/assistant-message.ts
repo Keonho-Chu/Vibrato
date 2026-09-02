@@ -1,4 +1,4 @@
-import type { AssistantMessage, ImageContent, Usage } from "@gajae-code/ai/core";
+import type { AssistantMessage, ImageContent, Usage } from "@vib-rato/ai/core";
 import {
 	type Component,
 	Container,
@@ -10,8 +10,8 @@ import {
 	TERMINAL,
 	Text,
 	type ViewportAnchorSource,
-} from "@gajae-code/tui";
-import { formatNumber } from "@gajae-code/utils";
+} from "@vib-rato/tui";
+import { formatNumber } from "@vib-rato/utils";
 import { settings } from "../../config/settings";
 import { renderDeepInterviewAssistantText } from "../../deep-interview/render-middleware";
 import { getMarkdownTheme, theme } from "../../modes/theme/theme";
@@ -93,7 +93,7 @@ export class AssistantMessageComponent extends Container {
 	#kittyConversionsInFlight = new Map<string, string>();
 	#toolImageGenerations = new Map<string, number>();
 
-	#responseHeader = new Text(theme.bold(theme.fg("statusLineModel", "gajae")), 1, 0);
+	#responseHeader = new Text(theme.bold(theme.fg("statusLineModel", "vibrato")), 1, 0);
 	#contentBlocksCache = new WeakMap<object, { source: string; component: Component }>();
 	#lastStreaming = false;
 	#childComponents = new Map<string, Component>();

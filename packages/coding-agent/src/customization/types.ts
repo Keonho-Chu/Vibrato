@@ -2,9 +2,9 @@
  * Core types and scope resolution for the `/extensions` umbrella local
  * customization surface (issue #4291, parent #4283).
  *
- * `.gjc` is the canonical persisted authority at two scopes:
- * - project-local: `<project>/.gjc/`
- * - user-global:   `~/.gjc/agent/`
+ * `.vib` is the canonical persisted authority at two scopes:
+ * - project-local: `<project>/.vib/`
+ * - user-global:   `~/.vib/agent/`
  *
  * Claude Code and Codex layouts are import sources only — never a parallel
  * runtime authority. This module defines the narrow contract types the UI
@@ -12,7 +12,7 @@
  * or to the provider/extension-module ExtensionDashboard.
  */
 import * as path from "node:path";
-import { getAgentDir, getMCPConfigPath, getProjectAgentDir } from "@gajae-code/utils";
+import { getAgentDir, getMCPConfigPath, getProjectAgentDir } from "@vib-rato/utils";
 import type { MigrateSource } from "../migrate/types";
 import type { MCPServerConfig } from "../runtime-mcp/types";
 
@@ -20,11 +20,11 @@ import type { MCPServerConfig } from "../runtime-mcp/types";
 // Scope
 // ---------------------------------------------------------------------------
 
-export type GjcScope = "project" | "global";
+export type VibScope = "project" | "global";
 
-export interface GjcScopePaths {
-	scope: GjcScope;
-	/** Root directory: `<project>/.gjc` or `~/.gjc/agent` */
+export interface VibScopePaths {
+	scope: VibScope;
+	/** Root directory: `<project>/.vib` or `~/.vib/agent` */
 	root: string;
 	/** MCP config: `<root>/mcp.json` */
 	mcpConfigPath: string;
@@ -34,7 +34,7 @@ export interface GjcScopePaths {
 	hooksDir: string;
 }
 
-export function resolveScopePaths(scope: GjcScope, projectCwd: string): GjcScopePaths {
+export function resolveScopePaths(scope: VibScope, projectCwd: string): VibScopePaths {
 	if (scope === "project") {
 		const root = getProjectAgentDir(projectCwd);
 		return {
@@ -55,8 +55,8 @@ export function resolveScopePaths(scope: GjcScope, projectCwd: string): GjcScope
 	};
 }
 
-export function scopeLabel(scope: GjcScope): string {
-	return scope === "project" ? "Project .gjc" : "Global .gjc";
+export function scopeLabel(scope: VibScope): string {
+	return scope === "project" ? "Project .vib" : "Global .vib";
 }
 
 // ---------------------------------------------------------------------------
@@ -141,8 +141,8 @@ export interface InventoryRow {
 	provenance: string;
 	/** Absolute discovered path — the exact identity mutations act on */
 	path: string;
-	/** Scope that persists this row (project `.gjc` or global `.gjc`) */
-	scope: GjcScope;
+	/** Scope that persists this row (project `.vib` or global `.vib`) */
+	scope: VibScope;
 	/** Short description (no secrets) */
 	description?: string;
 	/** Diagnostics/remediation detail for invalid/conflicted rows */
@@ -163,7 +163,7 @@ export interface ImportPreviewEntry {
 	surface: CustomizationSurface;
 	/** Source name in the foreign layout */
 	sourceName: string;
-	/** Destination name in `.gjc` (may differ under rename policy) */
+	/** Destination name in `.vib` (may differ under rename policy) */
 	destinationName: string;
 	status: ImportEntryStatus;
 	/** Source path category (file, section, etc.) */
@@ -183,7 +183,7 @@ export interface NormalizedPayload {
 export interface ImportPreview {
 	product: ImportProduct;
 	sourceScope: ImportSourceScope;
-	destinationScope: GjcScope;
+	destinationScope: VibScope;
 	surfaces: CustomizationSurface[];
 	entries: ImportPreviewEntry[];
 	/** Aggregate warnings across all entries */

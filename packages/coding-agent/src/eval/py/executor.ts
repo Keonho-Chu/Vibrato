@@ -1,4 +1,4 @@
-import { getProjectDir, logger } from "@gajae-code/utils";
+import { getProjectDir, logger } from "@vib-rato/utils";
 import { Settings } from "../../config/settings";
 import { formatCrashDiagnosticNotice, writeCrashReport } from "../../debug/crash-diagnostics";
 import { registerResourceOwner } from "../../runtime/process-lifecycle";

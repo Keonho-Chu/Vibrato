@@ -7,11 +7,11 @@
  * (`prompt.md`) drives the iterate loop. Every reference to the deleted
  * `/autoresearch` slash command, the old `init_experiment` /
  * `run_experiment` / `log_experiment` / `update_notes` tool names, and the old
- * `~/.gjc/autoresearch` state locations has been scrubbed — the prompts speak
+ * `~/.vib/autoresearch` state locations has been scrubbed — the prompts speak
  * to the native command, the session-owned mission-free `python` tool, and the session-scoped
- * state under `.gjc/_session-{id}/autoresearch/`.
+ * state under `.vib/_session-{id}/autoresearch/`.
  */
-import { prompt } from "@gajae-code/utils";
+import { prompt } from "@vib-rato/utils";
 import iteratePromptTemplate from "./prompts/prompt.md" with { type: "text" };
 import setupPromptTemplate from "./prompts/prompt-setup.md" with { type: "text" };
 

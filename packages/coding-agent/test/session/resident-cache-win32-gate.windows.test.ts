@@ -3,9 +3,9 @@ import * as fs from "node:fs";
 import * as fsp from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { EphemeralBlobStore, MemoryBlobStore } from "@gajae-code/coding-agent/session/blob-store";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { getAgentDir, getResidentCacheRootDir, setAgentDir } from "@gajae-code/utils";
+import { EphemeralBlobStore, MemoryBlobStore } from "@vib-rato/coding-agent/session/blob-store";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { getAgentDir, getResidentCacheRootDir, setAgentDir } from "@vib-rato/utils";
 
 const originalAgentDir = getAgentDir();
 const temporaryDirectories: string[] = [];
@@ -25,7 +25,7 @@ function isWithin(root: string, candidate: string): boolean {
 
 describe.skipIf(process.platform !== "win32")("Windows resident-cache disk gate", () => {
 	it("uses MemoryBlobStore and never creates a resident cache directory", async () => {
-		const root = await fsp.mkdtemp(path.join(os.tmpdir(), "gjc-resident-cache-win32-"));
+		const root = await fsp.mkdtemp(path.join(os.tmpdir(), "vib-resident-cache-win32-"));
 		temporaryDirectories.push(root);
 		const cwd = path.join(root, "workspace");
 		const agentDir = path.join(root, "agent");

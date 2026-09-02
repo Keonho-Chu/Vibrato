@@ -2,16 +2,17 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { isProviderSelectable } from "@vib-rato/coding-agent/config/provider-allowlist";
 import {
 	buildProviderSelectionCatalog,
 	createProviderSelectionPolicy,
 	type EffectiveProviderAuth,
 	projectCatalogProviderOrder,
 	projectProviderOrder,
-} from "@gajae-code/coding-agent/config/provider-selection-policy";
-import { resetSettingsForTest, settings } from "@gajae-code/coding-agent/config/settings";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
+} from "@vib-rato/coding-agent/config/provider-selection-policy";
+import { resetSettingsForTest, settings } from "@vib-rato/coding-agent/config/settings";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
 
 describe("projectProviderOrder", () => {
 	test("puts the explicit order first and appends catalog order after it", () => {
@@ -91,6 +92,19 @@ describe("buildProviderSelectionCatalog feeds the projection", () => {
 		expect(catalogProviders).toEqual(["customrouter", "anthropic"]);
 		expect(projectProviderOrder([], catalogProviders)).toEqual(["customrouter", "anthropic"]);
 	});
+
+	test("skips providers the allowlist hides so autorouting can never pick them", () => {
+		const { catalogProviders, catalogModels } = buildProviderSelectionCatalog([
+			{ provider: "minimax-code", id: "m1" },
+			{ provider: "anthropic", id: "m2" },
+			{ provider: "cursor", id: "m3" },
+			// A user-authored endpoint id is not a built-in, so it stays selectable.
+			{ provider: "my-gpu-box", id: "m4" },
+			{ provider: "vllm", id: "m5" },
+		] as never);
+		expect(catalogProviders).toEqual(["anthropic", "my-gpu-box", "vllm"]);
+		expect(catalogModels).toEqual(["anthropic/m2", "my-gpu-box/m4", "vllm/m5"]);
+	});
 });
 
 describe("projectCatalogProviderOrder (the accessor's own implementation)", () => {
@@ -163,7 +177,7 @@ describe("ModelRegistry.autoroutingProviderOrder (real instance)", () => {
 	});
 
 	async function registry(): Promise<ModelRegistry> {
-		const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-autorouting-order-"));
+		const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-autorouting-order-"));
 		const authStorage = await AuthStorage.create(path.join(tempDir, "auth.db"), {
 			configValueResolver: async () => undefined,
 		});
@@ -185,12 +199,19 @@ describe("ModelRegistry.autoroutingProviderOrder (real instance)", () => {
 		for (const provider of order) expect(catalogProviders.has(provider)).toBe(true);
 	});
 
-	test("returns each provider once, in catalog first-wins order", async () => {
+	test("returns each selectable provider once, in catalog first-wins order", async () => {
 		const instance = await registry();
 		const order = instance.autoroutingProviderOrder();
 		expect(new Set(order).size).toBe(order.length);
-		const catalogOrder = [...new Set(instance.getAll().map(model => model.provider))];
-		expect(order).toEqual(catalogOrder);
+		// The registry catalog still carries every built-in provider; the selection
+		// catalog skips the ones the product allowlist hides, so autorouting walks
+		// only those, in the catalog's own first-wins order.
+		const catalogProviders = [...new Set(instance.getAll().map(model => model.provider))];
+		expect(order).toEqual(catalogProviders.filter(provider => isProviderSelectable(provider)));
+
+		const hidden = catalogProviders.filter(provider => !isProviderSelectable(provider));
+		expect(hidden.length).toBeGreaterThan(0);
+		for (const provider of hidden) expect(order).not.toContain(provider);
 	});
 
 	test("is unchanged by stored credentials", async () => {

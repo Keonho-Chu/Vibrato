@@ -2,7 +2,7 @@ import type { ClientCapabilities } from "@agentclientprotocol/sdk";
 
 export type AcpPermissionMode = "auto" | "prompt" | "always-allow";
 
-const ACP_PERMISSION_MODE_ENV = "GJC_ACP_PERMISSION_MODE";
+const ACP_PERMISSION_MODE_ENV = "VIB_ACP_PERMISSION_MODE";
 
 function parseAcpPermissionMode(value: unknown): AcpPermissionMode {
 	if (value === "auto" || value === "prompt" || value === "always-allow") return value;
@@ -16,9 +16,9 @@ export function resolveAcpPermissionMode(
 ): AcpPermissionMode {
 	const meta = clientCapabilities?._meta;
 	if (typeof meta === "object" && meta !== null) {
-		const gjc = (meta as { gjc?: unknown }).gjc;
-		if (typeof gjc === "object" && gjc !== null && "permissionHandling" in gjc) {
-			return parseAcpPermissionMode((gjc as { permissionHandling?: unknown }).permissionHandling);
+		const vib = (meta as { vib?: unknown }).vib;
+		if (typeof vib === "object" && vib !== null && "permissionHandling" in vib) {
+			return parseAcpPermissionMode((vib as { permissionHandling?: unknown }).permissionHandling);
 		}
 	}
 	return parseAcpPermissionMode(env[ACP_PERMISSION_MODE_ENV]);

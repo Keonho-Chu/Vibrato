@@ -4,19 +4,19 @@
  * Uses Anthropic's built-in web_search_20250305 tool to search the web.
  * Returns synthesized answers with citations and source metadata.
  */
-import type { AuthStorage } from "@gajae-code/ai/core";
+import type { AuthStorage } from "@vib-rato/ai/core";
 import {
 	type AnthropicSystemBlock,
 	buildAnthropicSystemBlocks,
 	stripClaudeToolPrefix,
-} from "@gajae-code/ai/providers/anthropic";
-import type { AnthropicAuthConfig } from "@gajae-code/ai/utils/anthropic-auth";
+} from "@vib-rato/ai/providers/anthropic";
+import type { AnthropicAuthConfig } from "@vib-rato/ai/utils/anthropic-auth";
 import {
 	buildAnthropicAuthConfig,
 	buildAnthropicSearchHeaders,
 	buildAnthropicUrl,
-} from "@gajae-code/ai/utils/anthropic-auth";
-import { $credentialEnv, $env } from "@gajae-code/utils";
+} from "@vib-rato/ai/utils/anthropic-auth";
+import { $credentialEnv, $env } from "@vib-rato/utils";
 import type {
 	ActiveSearchModelCredentials,
 	AnthropicApiResponse,

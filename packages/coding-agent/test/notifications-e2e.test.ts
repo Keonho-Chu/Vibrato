@@ -2,7 +2,7 @@
 
 import { expect, test } from "bun:test";
 // Import the workspace-local built napi bindings directly: in this shared-node_modules
-// worktree, `@gajae-code/natives` resolves to a sibling checkout that may predate the
+// worktree, `@vib-rato/natives` resolves to a sibling checkout that may predate the
 // freshly-built NotificationServer. The relative path targets this workspace's own
 // built `packages/natives/native` (which CI rebuilds), so the e2e exercises the real core.
 import { NotificationServer } from "../../natives/native/index.js";

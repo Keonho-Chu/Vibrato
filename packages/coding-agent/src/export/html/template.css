@@ -6,10 +6,17 @@
       --sidebar-min-width: 240px;
       --sidebar-max-width: 840px;
       --sidebar-resizer-width: 6px;
+      /* LIG CI: fixed corporate identity for the export chrome; transcript colours stay theme-driven. */
+      --brand-blue: #002F6D;
+      --brand-gray: #BCBEC0;
+      --brand-gradient: linear-gradient(120deg, #003D96 0%, #002F6D 55%, #002D5C 100%);
+      --font-title: "NanumSquare", "NanumSquareRound", "Nanum Gothic", -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", "Segoe UI", sans-serif;
+      --font-body: "KoPubDotum", "KoPub Dotum", "KoPubWorldDotum", "Nanum Gothic", -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", "Segoe UI", sans-serif;
+      --font-mono: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
     }
 
     body {
-      font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+      font-family: var(--font-mono);
       font-size: 12px;
       line-height: var(--line-height);
       color: var(--text);
@@ -260,28 +267,58 @@
       margin-bottom: var(--line-height);
     }
 
-    /* Header */
+    /* Header: LIG CI band. White type on LIG Innovative Blue per the background-colour rule. */
     .header {
-      background: var(--container-bg);
+      background: var(--brand-gradient);
+      color: #fff;
       border-radius: 4px;
       padding: var(--line-height);
       margin-bottom: var(--line-height);
+      font-family: var(--font-body);
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--line-height);
+      margin-bottom: 4px;
     }
 
     .brand-kicker {
-      color: var(--accent);
+      color: var(--brand-gray);
+      font-family: var(--font-title);
       font-size: 10px;
       font-weight: bold;
       letter-spacing: 0.08em;
-      margin-bottom: 4px;
       text-transform: uppercase;
     }
 
+    /* Logotype clear space: the PNG already carries the guide's minimum margin (one logotype height). */
+    .brand-logo {
+      height: 44px;
+      width: auto;
+      flex: none;
+    }
+
     .header h1 {
-      font-size: 12px;
+      font-family: var(--font-title);
+      font-size: 14px;
       font-weight: bold;
-      color: var(--borderAccent);
+      color: #fff;
       margin-bottom: var(--line-height);
+    }
+
+    .header .help-bar {
+      color: var(--brand-gray);
+    }
+
+    .header .info-item {
+      color: var(--brand-gray);
+    }
+
+    .header .info-value {
+      color: #fff;
     }
 
     .header-info {

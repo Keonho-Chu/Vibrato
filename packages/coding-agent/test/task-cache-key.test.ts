@@ -2,9 +2,9 @@ import { afterEach, describe, expect, it } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { getBundledModel } from "@gajae-code/ai/models";
-import type { Message, ProviderSessionState } from "@gajae-code/ai/types";
-import { resolveEquivalentPath, Snowflake } from "@gajae-code/utils";
+import { getBundledModel } from "@vib-rato/ai/models";
+import type { Message, ProviderSessionState } from "@vib-rato/ai/types";
+import { resolveEquivalentPath, Snowflake } from "@vib-rato/utils";
 import { AsyncJobManager, asyncJobEndpointId } from "../src/async";
 import { Settings } from "../src/config/settings";
 import { createAgentSession } from "../src/sdk";
@@ -72,17 +72,17 @@ async function createSession(
 	return { session: result.session, authStorage };
 }
 async function withLifecycleIdentity<T>(sessionId: string, run: () => Promise<T>): Promise<T> {
-	const previousRequestId = process.env.GJC_LIFECYCLE_REQUEST_ID;
-	const previousSessionId = process.env.GJC_SESSION_ID;
+	const previousRequestId = process.env.VIB_LIFECYCLE_REQUEST_ID;
+	const previousSessionId = process.env.VIB_SESSION_ID;
 	try {
-		process.env.GJC_LIFECYCLE_REQUEST_ID = "task-provider-identity-test";
-		process.env.GJC_SESSION_ID = sessionId;
+		process.env.VIB_LIFECYCLE_REQUEST_ID = "task-provider-identity-test";
+		process.env.VIB_SESSION_ID = sessionId;
 		return await run();
 	} finally {
-		if (previousRequestId === undefined) delete process.env.GJC_LIFECYCLE_REQUEST_ID;
-		else process.env.GJC_LIFECYCLE_REQUEST_ID = previousRequestId;
-		if (previousSessionId === undefined) delete process.env.GJC_SESSION_ID;
-		else process.env.GJC_SESSION_ID = previousSessionId;
+		if (previousRequestId === undefined) delete process.env.VIB_LIFECYCLE_REQUEST_ID;
+		else process.env.VIB_LIFECYCLE_REQUEST_ID = previousRequestId;
+		if (previousSessionId === undefined) delete process.env.VIB_SESSION_ID;
+		else process.env.VIB_SESSION_ID = previousSessionId;
 	}
 }
 

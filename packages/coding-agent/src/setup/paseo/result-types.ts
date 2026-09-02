@@ -1,5 +1,5 @@
 /**
- * Result unions for `gjc setup paseo`.
+ * Result unions for `vib setup paseo`.
  *
  * `SetupCheckResult` is deliberately four-valued. Parse failures, conflicts,
  * missing executables, and partial-operation evidence are all `drift` carrying

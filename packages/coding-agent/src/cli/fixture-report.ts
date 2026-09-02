@@ -1,12 +1,12 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import type { GjcSessionContext } from "../gjc-runtime/session-layout";
-import { resolveGjcSessionForRead, SessionResolutionError } from "../gjc-runtime/session-resolution";
 import { computeTaskTokenMetrics, readTaskTokenLogs } from "../task/token-log";
 import type { TaskTokenLog } from "../task/types";
+import type { VibSessionContext } from "../vib-runtime/session-layout";
+import { resolveVibSessionForRead, SessionResolutionError } from "../vib-runtime/session-resolution";
 
 const LIVE_RUNNER_SCHEMA_VERSION = 1;
-const BINARY_ID = "gjc";
+const BINARY_ID = "vib";
 
 function deterministicLog(
 	input: number,
@@ -125,10 +125,10 @@ export async function runFixtureReport(fixtureId: string): Promise<number> {
 		return 1;
 	}
 	if (resolved.kind === "unknown") {
-		// Neither a known deterministic fixture nor a resolvable GJC session. Emit a
+		// Neither a known deterministic fixture nor a resolvable Vibrato session. Emit a
 		// bounded error on stderr with a non-zero exit rather than a schema-valid
 		// all-zero report, which a before/after benchmark would misread as "0 tokens".
-		process.stderr.write(`unknown fixture id and no matching GJC session: ${fixtureId}\n`);
+		process.stderr.write(`unknown fixture id and no matching Vibrato session: ${fixtureId}\n`);
 		return 1;
 	}
 	process.stdout.write(JSON.stringify(buildFixtureReport(fixtureId, resolved.logs)));
@@ -142,17 +142,17 @@ type ResolvedFixtureLogs =
 async function resolveFixtureLogs(fixtureId: string): Promise<ResolvedFixtureLogs> {
 	const deterministic = DETERMINISTIC_FIXTURES[fixtureId] ?? DEFAULT_REDUCTION_FIXTURE_LOGS[fixtureId];
 	if (deterministic) return { kind: "logs", logs: deterministic };
-	let session: GjcSessionContext;
+	let session: VibSessionContext;
 	try {
-		session = await resolveGjcSessionForRead(process.cwd(), {
+		session = await resolveVibSessionForRead(process.cwd(), {
 			flagValue: fixtureId,
-			envSessionId: process.env.GJC_SESSION_ID,
+			envSessionId: process.env.VIB_SESSION_ID,
 		});
 	} catch (error) {
 		if (error instanceof SessionResolutionError) return { kind: "unknown" };
 		throw error;
 	}
-	// resolveGjcSessionForRead accepts any explicit flagValue as a session id
+	// resolveVibSessionForRead accepts any explicit flagValue as a session id
 	// without checking the dir exists, so a typo would otherwise yield a
 	// schema-valid all-zero report. Require the session root to exist; a real
 	// session with no turns yet still reads as a legitimate empty log set.

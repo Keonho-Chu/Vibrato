@@ -28,7 +28,7 @@ import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import numpy as np
 
-DB_PATH = Path.home() / ".gjc" / "stats.db"
+DB_PATH = Path.home() / ".vib" / "stats.db"
 OUT_DIR = Path(__file__).resolve().parent / "out"
 DAY_MS = 86_400_000
 

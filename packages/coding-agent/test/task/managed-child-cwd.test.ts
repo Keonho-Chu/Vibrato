@@ -17,7 +17,7 @@ afterEach(async () => {
 
 describe.skipIf(process.platform !== "linux")("managed isolated child persistence", () => {
 	it("binds fresh and resumed child session headers to the execution worktree", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-managed-child-cwd-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-managed-child-cwd-"));
 		cleanupRoots.push(root);
 		const artifactsDir = path.join(root, "artifacts");
 		const firstWorktree = path.join(root, "first-worktree");

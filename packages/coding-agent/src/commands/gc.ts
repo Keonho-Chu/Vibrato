@@ -1,6 +1,6 @@
-import { Command, Flags } from "@gajae-code/utils/cli";
+import { Command, Flags } from "@vib-rato/utils/cli";
 import { isSettingsInitialized, settings } from "../config/settings";
-import { type GcDiskPolicy, runGjcGcCommand } from "../gjc-runtime/gc-runtime";
+import { type GcDiskPolicy, runVibGcCommand } from "../vib-runtime/gc-runtime";
 
 /**
  * Resolve the `gc.*` retention knobs from settings. When settings are not
@@ -18,7 +18,7 @@ function resolveDiskPolicyFromSettings(): Partial<GcDiskPolicy> | undefined {
 }
 
 export default class Gc extends Command {
-	static description = "Garbage-collect stale GJC session/PID records (dry-run by default)";
+	static description = "Garbage-collect stale Vibrato session/PID records (dry-run by default)";
 	static strict = false;
 	// The hand parser in gc-runtime owns the real syntax (repeatable space-form
 	// operands, dash-prefix rejection, orphan-operand rules); delegate help so the
@@ -39,7 +39,7 @@ export default class Gc extends Command {
 			default: false,
 		}),
 		"empty-delete-receipts": Flags.boolean({
-			description: "Report (and with --prune, prune) empty .gjc-delete-* receipts under --root/--manifest",
+			description: "Report (and with --prune, prune) empty .vib-delete-* receipts under --root/--manifest",
 			default: false,
 		}),
 		root: Flags.string({
@@ -53,20 +53,20 @@ export default class Gc extends Command {
 	};
 
 	static examples = [
-		"gjc gc",
-		"gjc gc --json",
-		"gjc gc --prune",
-		"gjc gc --prune --json",
-		"gjc gc --disk",
-		"gjc gc --disk --json",
-		"gjc gc --disk --prune",
-		"gjc gc --repair-session-index --json",
-		"gjc gc --empty-delete-receipts --root ~/.gjc/agent/session-states",
-		"gjc gc --empty-delete-receipts --manifest receipts-manifest.json --prune --json",
+		"vib gc",
+		"vib gc --json",
+		"vib gc --prune",
+		"vib gc --prune --json",
+		"vib gc --disk",
+		"vib gc --disk --json",
+		"vib gc --disk --prune",
+		"vib gc --repair-session-index --json",
+		"vib gc --empty-delete-receipts --root ~/.vib/agent/session-states",
+		"vib gc --empty-delete-receipts --manifest receipts-manifest.json --prune --json",
 	];
 
 	async run(): Promise<void> {
-		const result = await runGjcGcCommand(
+		const result = await runVibGcCommand(
 			this.argv,
 			process.cwd(),
 			process.env,

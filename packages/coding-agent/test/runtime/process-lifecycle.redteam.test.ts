@@ -8,7 +8,7 @@ import {
 	registerResourceOwner,
 	resourceOwnerCount,
 	spawnOwnedProcess,
-} from "@gajae-code/coding-agent/runtime/process-lifecycle";
+} from "@vib-rato/coding-agent/runtime/process-lifecycle";
 
 const isPosix = process.platform !== "win32";
 
@@ -113,7 +113,7 @@ describe("process-lifecycle adversarial owned-process invariants", () => {
 		"dispose terminates without burning the grace window when only zombie members remain",
 		async () => {
 			const before = liveOwnedProcessCount();
-			const base = `/tmp/gjc-process-lifecycle-zombie-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+			const base = `/tmp/vib-process-lifecycle-zombie-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 			const pidsFile = `${base}.pids`;
 			const helperFile = `${base}.helper`;
 			const scriptFile = `${base}.py`;
@@ -246,7 +246,7 @@ time.sleep(100)
 
 	test("double and concurrent dispose share one settled result and issue one terminating signal", async () => {
 		const before = liveOwnedProcessCount();
-		const tmp = `/tmp/gjc-process-lifecycle-${process.pid}-${Date.now()}`;
+		const tmp = `/tmp/vib-process-lifecycle-${process.pid}-${Date.now()}`;
 		const owner = spawnOwnedProcess(
 			// `sh` runs a TERM trap only after the current foreground command returns, so the
 			// polling interval must stay well under `gracefulMs` or SIGKILL beats the handler.

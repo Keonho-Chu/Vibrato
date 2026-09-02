@@ -2,20 +2,20 @@ import { afterEach, beforeAll, describe, expect, it, mock } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { AuthStorage, SqliteAuthCredentialStore } from "@gajae-code/ai";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
+import { AuthStorage, SqliteAuthCredentialStore } from "@vib-rato/ai";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
 import {
 	CustomProviderWizardComponent,
 	type CustomProviderWizardSubmit,
-} from "@gajae-code/coding-agent/modes/components/custom-provider-wizard";
+} from "@vib-rato/coding-agent/modes/components/custom-provider-wizard";
 import {
 	type ProviderOnboardingAction,
 	ProviderOnboardingSelectorComponent,
-} from "@gajae-code/coding-agent/modes/components/provider-onboarding-selector";
-import { SelectorController } from "@gajae-code/coding-agent/modes/controllers/selector-controller";
-import { initTheme } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { InteractiveModeContext } from "@gajae-code/coding-agent/modes/types";
-import { getAgentDir, setAgentDir } from "@gajae-code/utils";
+} from "@vib-rato/coding-agent/modes/components/provider-onboarding-selector";
+import { SelectorController } from "@vib-rato/coding-agent/modes/controllers/selector-controller";
+import { initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { InteractiveModeContext } from "@vib-rato/coding-agent/modes/types";
+import { getAgentDir, setAgentDir } from "@vib-rato/utils";
 
 const originalAgentDir = getAgentDir();
 let tempAgentDir: string | undefined;
@@ -40,6 +40,10 @@ function typeText(component: { handleInput(input: string): void }, text: string)
 	for (const char of text) component.handleInput(char);
 }
 
+function clearInput(component: { handleInput(input: string): void }, length: number): void {
+	for (let i = 0; i < length; i++) component.handleInput("\x7f");
+}
+
 function driveEnvWizard(
 	component: CustomProviderWizardComponent,
 	options?: { providerId?: string; model?: string },
@@ -57,7 +61,7 @@ function driveEnvWizard(
 }
 
 describe("provider onboarding wizard", () => {
-	it("shows Add custom provider as the first /login onboarding option", () => {
+	it("shows the endpoint options first, ahead of the custom provider and OAuth entries", () => {
 		const actions: ProviderOnboardingAction[] = [];
 		const selector = new ProviderOnboardingSelectorComponent(
 			action => actions.push(action),
@@ -65,11 +69,99 @@ describe("provider onboarding wizard", () => {
 		);
 
 		const rendered = visibleText(selector);
+		expect(rendered.indexOf("Connect a vLLM endpoint")).toBeLessThan(rendered.indexOf("Connect an SGLang endpoint"));
+		expect(rendered.indexOf("Connect an SGLang endpoint")).toBeLessThan(rendered.indexOf("Add custom provider"));
 		expect(rendered.indexOf("Add custom provider")).toBeLessThan(rendered.indexOf("Login with OAuth/subscription"));
 		expect(rendered).toContain("Add API-compatible provider");
 
 		selector.handleInput("\n");
-		expect(actions).toEqual(["custom-provider-wizard"]);
+		expect(actions).toEqual(["vllm-endpoint"]);
+
+		selector.handleInput("\x1b[B");
+		selector.handleInput("\n");
+		expect(actions).toEqual(["vllm-endpoint", "sglang-endpoint"]);
+
+		selector.handleInput("\x1b[B");
+		selector.handleInput("\n");
+		expect(actions).toEqual(["vllm-endpoint", "sglang-endpoint", "custom-provider-wizard"]);
+	});
+
+	it("collapses the vLLM preset wizard to base URL, key, confirm", () => {
+		const submissions: CustomProviderWizardSubmit[] = [];
+		const wizard = new CustomProviderWizardComponent(
+			input => submissions.push(input),
+			() => undefined,
+			() => undefined,
+			{ preset: "vllm" },
+		);
+
+		// Step 1 is the server URL: there is no compatibility or provider-id step.
+		expect(visibleText(wizard)).toContain("Connect a vLLM endpoint");
+		expect(visibleText(wizard)).toContain("Step 1: Server URL");
+		// The field is pre-filled with the loopback default; clear it before typing.
+		clearInput(wizard, "http://127.0.0.1:8000/v1".length);
+		typeText(wizard, "http://10.0.0.5:8000/v1");
+		wizard.handleInput("\n");
+
+		expect(visibleText(wizard)).toContain("Step 2: API key");
+		typeText(wizard, "sk-vllm-secret");
+		expect(visibleText(wizard)).not.toContain("sk-vllm-secret");
+		wizard.handleInput("\n");
+
+		const confirm = visibleText(wizard);
+		expect(confirm).toContain("Confirm custom provider");
+		expect(confirm).toContain("Provider: vllm");
+		expect(confirm).toContain("Base URL: http://10.0.0.5:8000/v1");
+		expect(confirm).toContain("Models: discovered from the server");
+		wizard.handleInput("\n");
+
+		expect(submissions).toEqual([
+			{ preset: "vllm", baseUrl: "http://10.0.0.5:8000/v1", apiKey: "sk-vllm-secret", force: false },
+		]);
+	});
+
+	it("stores the vllm-local token when the vLLM key is left empty", () => {
+		const submissions: CustomProviderWizardSubmit[] = [];
+		const wizard = new CustomProviderWizardComponent(
+			input => submissions.push(input),
+			() => undefined,
+			() => undefined,
+			{ preset: "vllm" },
+		);
+
+		wizard.handleInput("\n"); // accept the default server URL
+		expect(visibleText(wizard)).toContain("Leave empty for an unauthenticated local server.");
+		wizard.handleInput("\n"); // empty key
+
+		expect(visibleText(wizard)).toContain("Credential: none (unauthenticated local server)");
+		wizard.handleInput("\n");
+
+		expect(submissions).toEqual([
+			{ preset: "vllm", baseUrl: "http://127.0.0.1:8000/v1", apiKey: "vllm-local", force: false },
+		]);
+	});
+
+	it("requires a key for the SGLang preset, which has no local fallback token", () => {
+		const submissions: CustomProviderWizardSubmit[] = [];
+		const wizard = new CustomProviderWizardComponent(
+			input => submissions.push(input),
+			() => undefined,
+			() => undefined,
+			{ preset: "sglang" },
+		);
+
+		expect(visibleText(wizard)).toContain("Connect an SGLang endpoint");
+		wizard.handleInput("\n"); // accept the default server URL
+		expect(visibleText(wizard)).not.toContain("Leave empty for an unauthenticated local server.");
+		wizard.handleInput("\n"); // empty key is refused, so the step stays put
+		expect(visibleText(wizard)).toContain("Step 2: API key");
+
+		typeText(wizard, "sk-sglang-secret");
+		wizard.handleInput("\n");
+		wizard.handleInput("\n");
+		expect(submissions).toEqual([
+			{ preset: "sglang", baseUrl: "http://127.0.0.1:30000/v1", apiKey: "sk-sglang-secret", force: false },
+		]);
 	});
 
 	it("emits the expected addApiCompatibleProvider input", () => {
@@ -173,7 +265,7 @@ describe("provider onboarding wizard", () => {
 	});
 
 	it("refreshes offline after success and exposes the provider in model selector data without restart", async () => {
-		tempAgentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-provider-wizard-"));
+		tempAgentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-provider-wizard-"));
 		setAgentDir(tempAgentDir);
 		const store = await SqliteAuthCredentialStore.open(path.join(tempAgentDir, "agent.db"));
 		try {
@@ -228,14 +320,14 @@ describe("provider onboarding wizard", () => {
 
 		controller.showProviderOnboarding();
 		let selector = ctx.ui.focused as ProviderOnboardingSelectorComponent;
-		selector.handleInput("\x1b[B");
+		// vLLM, SGLang, Add custom provider, then Login with OAuth/subscription.
+		for (let i = 0; i < 3; i++) selector.handleInput("\x1b[B");
 		selector.handleInput("\n");
 		expect(showOAuth).toHaveBeenCalledWith("login");
 
 		controller.showProviderOnboarding();
 		selector = ctx.ui.focused as ProviderOnboardingSelectorComponent;
-		selector.handleInput("\x1b[B");
-		selector.handleInput("\x1b[B");
+		for (let i = 0; i < 4; i++) selector.handleInput("\x1b[B");
 		selector.handleInput("\n");
 		expect(ctx.statuses.join("\n")).toContain("Custom API-compatible provider setup:");
 	});

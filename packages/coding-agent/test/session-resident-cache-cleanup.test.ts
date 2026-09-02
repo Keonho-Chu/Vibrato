@@ -21,7 +21,7 @@ const PROBE = path.join(import.meta.dir, "fixtures", "resident-cache-probe.ts");
 const roots: string[] = [];
 
 function probeDir(): string {
-	const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-resident-cache-test-"));
+	const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-resident-cache-test-"));
 	roots.push(root);
 	return path.join(root, "session", "resident-cache", "s-1234-1");
 }

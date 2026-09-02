@@ -2,15 +2,15 @@ import { beforeAll, describe, expect, test, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { ThinkingLevel } from "@gajae-code/agent-core";
-import { Effort, type Model } from "@gajae-code/ai";
-import { type GjcModelAssignmentTargetId, ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { ModelSelectorComponent } from "@gajae-code/coding-agent/modes/components/model-selector";
-import { getThemeByName, setThemeInstance } from "@gajae-code/coding-agent/modes/theme/theme";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import type { TUI } from "@gajae-code/tui";
-import { hookFetch } from "@gajae-code/utils";
+import { ThinkingLevel } from "@vib-rato/agent-core";
+import { Effort, type Model } from "@vib-rato/ai";
+import { ModelRegistry, type VibModelAssignmentTargetId } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { ModelSelectorComponent } from "@vib-rato/coding-agent/modes/components/model-selector";
+import { getThemeByName, setThemeInstance } from "@vib-rato/coding-agent/modes/theme/theme";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import type { TUI } from "@vib-rato/tui";
+import { hookFetch } from "@vib-rato/utils";
 
 const DOWN = "\x1b[B";
 
@@ -23,19 +23,19 @@ function normalizeRenderedText(text: string): string {
 
 interface SelectionCapture {
 	model: Model;
-	role: GjcModelAssignmentTargetId | null;
+	role: VibModelAssignmentTargetId | null;
 	thinkingLevel?: ThinkingLevel;
 	selector?: string;
-	roles?: readonly GjcModelAssignmentTargetId[];
+	roles?: readonly VibModelAssignmentTargetId[];
 }
 
 type TestModelSelectorSelection = {
 	kind: "assignment";
 	model: Model;
-	role: GjcModelAssignmentTargetId | null;
+	role: VibModelAssignmentTargetId | null;
 	thinkingLevel?: ThinkingLevel;
 	selector?: string;
-	roles?: readonly GjcModelAssignmentTargetId[];
+	roles?: readonly VibModelAssignmentTargetId[];
 };
 
 function createSelector(
@@ -312,7 +312,7 @@ describe("ModelSelector batch assignment thinking menu", () => {
 
 test("updates the rendered catalog when an in-flight registry refresh completes", async () => {
 	installTestTheme();
-	const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-model-selector-catalog-"));
+	const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-model-selector-catalog-"));
 	const modelsPath = path.join(tempDir, "models.json");
 	const authStorage = await AuthStorage.create(path.join(tempDir, "auth.db"));
 	let selector: ModelSelectorComponent | undefined;

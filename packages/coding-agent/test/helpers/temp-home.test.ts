@@ -23,7 +23,7 @@ describe("withTempHome", () => {
 			expect(os.homedir()).toBe(home);
 			// The override is asserted in-effect: strictly inside the canonical temp root.
 			expect(fs.realpathSync(home).startsWith(fs.realpathSync(os.tmpdir()))).toBe(true);
-			fs.mkdirSync(path.join(home, ".gjc", "skills"), { recursive: true });
+			fs.mkdirSync(path.join(home, ".vib", "skills"), { recursive: true });
 		});
 		expect(process.env.HOME).toBe(originalHome);
 		expect(os.homedir()).toBe(originalHome ?? os.homedir());

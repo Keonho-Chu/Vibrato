@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import type { AssistantMessageEvent, Model } from "@gajae-code/ai";
+import type { AssistantMessageEvent, Model } from "@vib-rato/ai";
 import { streamProxy } from "../src/proxy";
 
 type EventType = AssistantMessageEvent["type"];

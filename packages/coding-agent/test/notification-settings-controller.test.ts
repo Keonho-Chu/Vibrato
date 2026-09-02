@@ -2,8 +2,8 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { CasReceipt } from "@gajae-code/coding-agent/config/atomic-yaml-patch";
-import { resetSettingsForTest, Settings } from "@gajae-code/coding-agent/config/settings";
+import type { CasReceipt } from "@vib-rato/coding-agent/config/atomic-yaml-patch";
+import { resetSettingsForTest, Settings } from "@vib-rato/coding-agent/config/settings";
 import type {
 	NotificationsEditorOperations,
 	NotificationsEditorPreferences,
@@ -12,32 +12,32 @@ import type {
 	NotificationsPreflightResult,
 	NotificationsProviderSetupInput,
 	PreparedNotificationProviderConfiguration,
-} from "@gajae-code/coding-agent/modes/components/notifications-settings-editor";
-import { SettingsSelectorComponent } from "@gajae-code/coding-agent/modes/components/settings-selector";
+} from "@vib-rato/coding-agent/modes/components/notifications-settings-editor";
+import { SettingsSelectorComponent } from "@vib-rato/coding-agent/modes/components/settings-selector";
 import {
 	createNotificationsEditorOperations,
 	type NotificationsEditorAdapterContext,
 	type NotificationsEditorOperationDependencies,
-} from "@gajae-code/coding-agent/modes/controllers/selector-controller";
-import { initTheme } from "@gajae-code/coding-agent/modes/theme/theme";
+} from "@vib-rato/coding-agent/modes/controllers/selector-controller";
+import { initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
 import {
 	getNotificationConfig,
 	type NotificationProvider,
 	type NotificationSettingsSnapshot,
-} from "@gajae-code/coding-agent/sdk/bus/config";
+} from "@vib-rato/coding-agent/sdk/bus/config";
 import {
 	createTelegramActivationMarker,
 	telegramActivationIdentity,
-} from "@gajae-code/coding-agent/sdk/bus/notification-orchestration";
+} from "@vib-rato/coding-agent/sdk/bus/notification-orchestration";
 import type {
 	NotificationHealthReport,
 	NotificationRecoveryReport,
 	NotificationStatusReport,
-} from "@gajae-code/coding-agent/sdk/bus/notification-service";
+} from "@vib-rato/coding-agent/sdk/bus/notification-service";
 import type {
 	NotificationSessionReconcileResult,
 	NotificationSessionStatus,
-} from "@gajae-code/coding-agent/sdk/bus/session-control";
+} from "@vib-rato/coding-agent/sdk/bus/session-control";
 
 const TOKEN = "1234567890:ABCDEFghijkLmnOpQrsTuvWxYz012345678";
 
@@ -325,7 +325,7 @@ describe("notification settings controller adapter", () => {
 			return receipt();
 		};
 		const settings = {
-			getAgentDir: () => "/tmp/gjc-settings-controller",
+			getAgentDir: () => "/tmp/vib-settings-controller",
 			getNotificationSettingsSnapshot: () => structuredClone(currentSnapshot),
 			commitAtomicBatch,
 			commitAtomicBatchWithCurrent: async (
@@ -368,7 +368,7 @@ describe("notification settings controller adapter", () => {
 			},
 			recoverNotifications: async input => {
 				serviceCalls.push("recover");
-				expect(input).toMatchObject({ settings, stateRoot: path.join("/workspace/current", ".gjc", "state") });
+				expect(input).toMatchObject({ settings, stateRoot: path.join("/workspace/current", ".vib", "state") });
 				return recovery();
 			},
 			stopTelegramDaemon: async input => {
@@ -442,7 +442,7 @@ describe("notification settings controller adapter", () => {
 			expect.objectContaining({ sessionManager: ctx.sessionManager }),
 		);
 		expect(healthCalls).toContainEqual(
-			expect.objectContaining({ stateRoot: path.join("/workspace/current", ".gjc", "state"), probe: true, signal }),
+			expect.objectContaining({ stateRoot: path.join("/workspace/current", ".vib", "state"), probe: true, signal }),
 		);
 		expect(serviceCalls).toEqual(["status", "test", "recover"]);
 
@@ -643,7 +643,7 @@ describe("notification settings controller adapter", () => {
 	it("restarts the fenced daemon when a tool activity disable commit fails", async () => {
 		const events: string[] = [];
 		const settings = {
-			getAgentDir: () => "/tmp/gjc-settings-controller",
+			getAgentDir: () => "/tmp/vib-settings-controller",
 			getNotificationSettingsSnapshot: () => snapshot(),
 			commitAtomicBatch: async () => {
 				events.push("commit");
@@ -687,7 +687,7 @@ describe("notification settings controller adapter", () => {
 
 	it("reports both commit and daemon restart failure after fencing", async () => {
 		const settings = {
-			getAgentDir: () => "/tmp/gjc-settings-controller",
+			getAgentDir: () => "/tmp/vib-settings-controller",
 			getNotificationSettingsSnapshot: () => snapshot(),
 			commitAtomicBatch: async () => {
 				throw new Error("commit failed");
@@ -737,7 +737,7 @@ describe("notification settings controller adapter", () => {
 		});
 		let commits = 0;
 		const settings = {
-			getAgentDir: () => "/tmp/gjc-settings-controller-marker",
+			getAgentDir: () => "/tmp/vib-settings-controller-marker",
 			getNotificationSettingsSnapshot: () => structuredClone(currentSnapshot),
 			commitAtomicBatch: async () => {
 				commits++;
@@ -775,7 +775,7 @@ describe("notification settings controller adapter", () => {
 			return receipt();
 		};
 		const settings = {
-			getAgentDir: () => "/tmp/gjc-settings-controller",
+			getAgentDir: () => "/tmp/vib-settings-controller",
 			getNotificationSettingsSnapshot: () => snapshot(),
 			commitAtomicBatch,
 			commitAtomicBatchWithCurrent: async (
@@ -831,7 +831,7 @@ describe("notification settings controller adapter", () => {
 		expect(events).toEqual(["commit", "ensure", "enter-blocked", "commit", "notify"]);
 	});
 	it("stops the Telegram supervisor before removing its configuration", async () => {
-		const agentDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-settings-remove-"));
+		const agentDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-settings-remove-"));
 		const currentSnapshot = snapshot();
 		const events: string[] = [];
 		const settings = {

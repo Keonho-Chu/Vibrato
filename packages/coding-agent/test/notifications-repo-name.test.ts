@@ -7,7 +7,7 @@ import { readGitRepoName } from "../src/sdk/bus/index";
 const tmpRoots: string[] = [];
 
 function mkdtemp(): string {
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-reponame-"));
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-reponame-"));
 	tmpRoots.push(dir);
 	return dir;
 }
@@ -18,14 +18,14 @@ afterAll(() => {
 
 test("readGitRepoName returns the repo dir for a normal checkout", () => {
 	const root = mkdtemp();
-	const repo = path.join(root, "gajae-code");
+	const repo = path.join(root, "vib-rato");
 	fs.mkdirSync(path.join(repo, ".git"), { recursive: true });
-	expect(readGitRepoName(repo)).toBe("gajae-code");
+	expect(readGitRepoName(repo)).toBe("vib-rato");
 });
 
 test("readGitRepoName resolves the main repo for a linked worktree (not the worktree dir)", () => {
 	const root = mkdtemp();
-	const repo = path.join(root, "gajae-code");
+	const repo = path.join(root, "vib-rato");
 	const mainGit = path.join(repo, ".git");
 	const wtGit = path.join(mainGit, "worktrees", "feat-foo-01047f11");
 	fs.mkdirSync(wtGit, { recursive: true });
@@ -37,7 +37,7 @@ test("readGitRepoName resolves the main repo for a linked worktree (not the work
 	fs.writeFileSync(path.join(worktree, ".git"), `gitdir: ${wtGit}\n`);
 
 	expect(path.basename(worktree)).toBe("feat-foo-01047f11");
-	expect(readGitRepoName(worktree)).toBe("gajae-code");
+	expect(readGitRepoName(worktree)).toBe("vib-rato");
 });
 
 test("readGitRepoName returns undefined outside a git repo", () => {

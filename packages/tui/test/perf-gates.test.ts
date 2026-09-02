@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { $flag } from "@gajae-code/utils";
+import { $flag } from "@vib-rato/utils";
 import { loadFixture, makeRecordedSession, measureIdleCpuFraction, runReplay } from "./replay-harness";
 
 /**

@@ -2,9 +2,9 @@ import * as nodeCrypto from "node:crypto";
 import * as fsSync from "node:fs";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import type { NativeExactFileIdentity, NativeExactUnlinkResult, NativeNoReplaceResult } from "@gajae-code/natives";
-import { exactReplacePath, exactUnlink } from "@gajae-code/natives";
-import { isCompiledBinary } from "@gajae-code/utils/env";
+import type { NativeExactFileIdentity, NativeExactUnlinkResult, NativeNoReplaceResult } from "@vib-rato/natives";
+import { exactReplacePath, exactUnlink } from "@vib-rato/natives";
+import { isCompiledBinary } from "@vib-rato/utils/env";
 import { YAML } from "bun";
 import type { AtomicYamlNativeWorkerRequest, AtomicYamlNativeWorkerResponse } from "./atomic-yaml-patch-worker";
 import { withFileLock } from "./file-lock";
@@ -150,7 +150,7 @@ const WINDOWS_SHARING_VIOLATION_CODES = new Set(["EPERM", "EACCES", "EBUSY"]);
 function canonicalConfigPath(configPath: string): string {
 	const resolved = path.normalize(path.resolve(configPath));
 	try {
-		// Follow a symlinked config (e.g. `.gjc/config.yml` -> `../shared/config.yml`)
+		// Follow a symlinked config (e.g. `.vib/config.yml` -> `../shared/config.yml`)
 		// so read, identity capture, and the native exact exchange all operate on the
 		// real target consistently: the native replacement opens the destination with
 		// no-follow semantics and would reject the symlink entry itself. An absent or
@@ -164,7 +164,7 @@ function canonicalConfigPath(configPath: string): string {
 
 /**
  * Reject a symlink retarget right before publication: the lexical config path
- * (e.g. `.gjc/config.yml`) must still resolve to the canonical target this
+ * (e.g. `.vib/config.yml`) must still resolve to the canonical target this
  * operation read, or the write would modify an unrelated prior target and
  * report success while the now-active configuration is unchanged. The native
  * identity check protects only the previously resolved destination, so this
@@ -950,7 +950,7 @@ export interface AtomicYamlConfigTransaction {
 	applyPatches(patches: readonly AtomicYamlPatch[], options?: AtomicYamlPatchOptions): Promise<CasReceipt>;
 	/**
 	 * Delete top-level keys verbatim, including dotted key names (e.g. a flat
-	 * `"gjc.ralplan.maxIterations"` key that the patch grammar would otherwise
+	 * `"vib.ralplan.maxIterations"` key that the patch grammar would otherwise
 	 * interpret as a nested path). Writes atomically under the same lock.
 	 */
 	removeTopLevelKeys(keys: readonly string[], options?: AtomicYamlPatchOptions): Promise<CasReceipt>;

@@ -13,7 +13,7 @@
 //! in [`InputController`] over an [`EventSink`] trait. Unit tests drive a
 //! [`RecordingSink`] to assert exact sequences without posting real OS events.
 //! Only [`MacEventSink`] performs `CGEvent` FFI; its live behavior is verified
-//! in a granted `gjc` session, not from a non-TCC-trusted test binary.
+//! in a granted `vib` session, not from a non-TCC-trusted test binary.
 
 use super::coords::{CoordError, LogicalPoint, NormalizedDisplay};
 
@@ -330,7 +330,7 @@ pub use mac::{MacCursorHooks, MacEventSink, current_cursor_position, guarded_con
 #[cfg(target_os = "macos")]
 mod mac {
 	//! Real CGEvent-backed [`EventSink`] (macOS). Live behavior is verified in a
-	//! granted `gjc` session; construction is gated on Accessibility.
+	//! granted `vib` session; construction is gated on Accessibility.
 
 	use std::ffi::c_void;
 
@@ -837,12 +837,12 @@ mod live_tests {
 
 	/// Durable output directory for G005 live-acceptance artifacts. Override
 	/// with `COMPUTER_USE_ACCEPTANCE_DIR`; defaults to
-	/// `<repo-root>/.gjc/ultragoal/artifacts/g005`.
+	/// `<repo-root>/.vib/ultragoal/artifacts/g005`.
 	fn acceptance_artifacts_dir() -> std::path::PathBuf {
 		if let Ok(dir) = std::env::var("COMPUTER_USE_ACCEPTANCE_DIR") {
 			return std::path::PathBuf::from(dir);
 		}
-		std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../.gjc/ultragoal/artifacts/g005")
+		std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../.vib/ultragoal/artifacts/g005")
 	}
 
 	/// G005 acceptance drill: drives all nine primitives through the gated
@@ -895,7 +895,7 @@ mod live_tests {
 
 		act(InputAction::Move { x: cx, y: cy }); // 2 move
 		act(InputAction::Click { x: cx, y: cy, button: MouseButton::Left }); // 3 click (focus body)
-		act(InputAction::Type { text: "COMPUTER_USE_E2E gajae ".to_string() }); // 4 type
+		act(InputAction::Type { text: "COMPUTER_USE_E2E vibrato ".to_string() }); // 4 type
 		act(InputAction::Keypress { keys: vec!["return".to_string()] }); // 5 keypress
 		act(InputAction::Type { text: "line two alpha beta gamma delta epsilon".to_string() });
 		act(InputAction::DoubleClick { x: cx, y: cy, button: MouseButton::Left }); // 6 double_click

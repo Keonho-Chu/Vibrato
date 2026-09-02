@@ -1,6 +1,6 @@
 # Natives Shell, PTY, Process, and Key Internals
 
-This document covers the execution/process/terminal primitives in `@gajae-code/natives`: `shell`, `pty`, `ps`, and `keys`, using the architecture terms from `docs/natives-architecture.md`.
+This document covers the execution/process/terminal primitives in `@vib-rato/natives`: `shell`, `pty`, `ps`, and `keys`, using the architecture terms from `docs/natives-architecture.md`.
 
 ## Implementation files
 

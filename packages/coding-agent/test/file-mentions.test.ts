@@ -2,11 +2,11 @@ import { afterEach, describe, expect, test } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { resolveReadPath } from "@gajae-code/coding-agent/tools/path-utils";
+import { resolveReadPath } from "@vib-rato/coding-agent/tools/path-utils";
 import {
 	DEFAULT_FILE_MENTION_INLINE_BYTES,
 	generateFileMentionMessages,
-} from "@gajae-code/coding-agent/utils/file-mentions";
+} from "@vib-rato/coding-agent/utils/file-mentions";
 
 const tempDirs: string[] = [];
 

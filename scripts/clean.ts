@@ -2,7 +2,7 @@
 
 /**
  * Remove build output from this checkout. Regenerating everything it deletes is a
- * documented `bun run` away, so it never touches sources, dependencies, `.gjc/`
+ * documented `bun run` away, so it never touches sources, dependencies, `.vib/`
  * runtime state, or `artifacts/` evidence.
  *
  * Usage:

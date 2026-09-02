@@ -32,7 +32,7 @@ export interface HermesSetupFlags {
 	mutation?: string[];
 	artifactByteCap?: string;
 	serverKey?: string;
-	gjcCommand?: string;
+	vibCommand?: string;
 	target?: string;
 	profileDir?: string;
 	timeout?: string;
@@ -45,7 +45,7 @@ export interface CoordinatorSetupSpec {
 	serverKey: string;
 	serverName: typeof COORDINATOR_MCP_SERVER_NAME;
 	protocolVersion: typeof COORDINATOR_MCP_PROTOCOL_VERSION;
-	gjcCommand: string;
+	vibCommand: string;
 	args: string[];
 	roots: string[];
 	namespace: {
@@ -61,7 +61,7 @@ export interface CoordinatorSetupSpec {
 		required: boolean;
 	};
 	stateRoot?: string;
-	/** Agent-directory override (GJC_CODING_AGENT_DIR). Distinct from the coordinator state root. */
+	/** Agent-directory override (VIB_CODING_AGENT_DIR). Distinct from the coordinator state root. */
 	codingAgentDir?: string;
 	mutationPolicy: {
 		classes: HermesMutationClass[];
@@ -113,10 +113,10 @@ class HermesSetupError extends Error {
 }
 
 const MUTATION_CLASSES: HermesMutationClass[] = ["sessions", "questions", "reports"];
-const MANAGED_BY = "gjc";
+const MANAGED_BY = "vib";
 const SETUP_SCHEMA_VERSION = "1";
-const DEFAULT_SERVER_KEY = "gjc_coordinator";
-const DEFAULT_GJC_COMMAND = "gjc";
+const DEFAULT_SERVER_KEY = "vib_coordinator";
+const DEFAULT_VIB_COMMAND = "vib";
 const DEFAULT_TIMEOUT = 180;
 const DEFAULT_CONNECT_TIMEOUT = 60;
 const MIN_TIMEOUT_SECONDS = 1;
@@ -235,14 +235,14 @@ interface HermesTimeouts {
 function blockHasManagedMarkers(block: unknown): block is Record<string, unknown> {
 	if (!isRecord(block) || !isRecord(block.env)) return false;
 	return (
-		block.env.GJC_COORDINATOR_MCP_SETUP_MANAGED_BY === MANAGED_BY &&
-		block.env.GJC_COORDINATOR_MCP_SETUP_SCHEMA_VERSION === SETUP_SCHEMA_VERSION
+		block.env.VIB_COORDINATOR_MCP_SETUP_MANAGED_BY === MANAGED_BY &&
+		block.env.VIB_COORDINATOR_MCP_SETUP_SCHEMA_VERSION === SETUP_SCHEMA_VERSION
 	);
 }
 
 /**
  * Read one preserved operator timeout from an existing block. Only a
- * GJC-marked block's values are preserved; anything unpreservable (absent,
+ * Vibrato-marked block's values are preserved; anything unpreservable (absent,
  * non-numeric, out of range) falls back with a warning instead of being
  * silently propagated.
  */
@@ -262,7 +262,7 @@ function preservedTimeoutSeconds(
 		value <= MAX_TIMEOUT_SECONDS;
 	if (!preservable) {
 		warnings.push(
-			`Ignoring existing ${field} ${JSON.stringify(value)} in the GJC-managed block (not whole seconds between ${MIN_TIMEOUT_SECONDS} and ${MAX_TIMEOUT_SECONDS}); pass ${flag} to set it explicitly.`,
+			`Ignoring existing ${field} ${JSON.stringify(value)} in the Vibrato-managed block (not whole seconds between ${MIN_TIMEOUT_SECONDS} and ${MAX_TIMEOUT_SECONDS}); pass ${flag} to set it explicitly.`,
 		);
 		return undefined;
 	}
@@ -271,9 +271,9 @@ function preservedTimeoutSeconds(
 
 /**
  * Resolve the timeout pair written into a rendered block: an explicit flag
- * wins, then a preserved value from the installed GJC-managed block, then the
+ * wins, then a preserved value from the installed Vibrato-managed block, then the
  * 180/60 defaults. These are the host MCP client's call/connect budgets, not
- * GJC turn deadlines and not the coordinator await_turn/watch_events per-call
+ * Vibrato turn deadlines and not the coordinator await_turn/watch_events per-call
  * caps.
  */
 function resolveHermesTimeouts(
@@ -317,9 +317,9 @@ function resolveHermesWorktree(flags: HermesSetupFlags): CoordinatorSetupSpec["w
 
 function validateHermesSessionCommand(command: string): void {
 	const [executable, ...args] = command.trim().split(/\s+/);
-	if (executable !== DEFAULT_GJC_COMMAND) {
+	if (executable !== DEFAULT_VIB_COMMAND) {
 		throw new HermesSetupError(
-			"GJC_COORDINATOR_MCP_SESSION_COMMAND must be exactly gjc with an optional --worktree [name] selector.",
+			"VIB_COORDINATOR_MCP_SESSION_COMMAND must be exactly vib with an optional --worktree [name] selector.",
 			2,
 		);
 	}
@@ -330,7 +330,7 @@ function validateHermesSessionCommand(command: string): void {
 			(args[1] !== undefined && (args[1].length === 0 || args[1].startsWith("-"))))
 	) {
 		throw new HermesSetupError(
-			"GJC_COORDINATOR_MCP_SESSION_COMMAND supports only gjc or gjc --worktree [name] under SDK lifecycle control.",
+			"VIB_COORDINATOR_MCP_SESSION_COMMAND supports only vib or vib --worktree [name] under SDK lifecycle control.",
 			2,
 		);
 	}
@@ -341,7 +341,7 @@ function resolveHermesSessionCommand(flags: HermesSetupFlags): string {
 	if (flags.sessionCommand !== undefined) {
 		if (!explicit) {
 			throw new HermesSetupError(
-				"GJC_COORDINATOR_MCP_SESSION_COMMAND must be exactly gjc with an optional --worktree [name] selector.",
+				"VIB_COORDINATOR_MCP_SESSION_COMMAND must be exactly vib with an optional --worktree [name] selector.",
 				2,
 			);
 		}
@@ -355,11 +355,11 @@ function resolveHermesSessionCommand(flags: HermesSetupFlags): string {
 		return explicit;
 	}
 	const worktree = resolveHermesWorktree(flags);
-	if (!worktree.enabled) return DEFAULT_GJC_COMMAND;
-	return worktree.name ? `${DEFAULT_GJC_COMMAND} --worktree ${worktree.name}` : `${DEFAULT_GJC_COMMAND} --worktree`;
+	if (!worktree.enabled) return DEFAULT_VIB_COMMAND;
+	return worktree.name ? `${DEFAULT_VIB_COMMAND} --worktree ${worktree.name}` : `${DEFAULT_VIB_COMMAND} --worktree`;
 }
 /**
- * Quote-aware argv tokenizer for `--gjc-command`. Mirrors the SDK
+ * Quote-aware argv tokenizer for `--vib-command`. Mirrors the SDK
  * lifecycle-command tokenizer: single/double quotes group one token and
  * backslash escapes `\\`, quotes, and whitespace. Returns undefined for an
  * unbalanced quote. The value is never evaluated by a shell.
@@ -408,10 +408,10 @@ function parseHermesCommandTokens(value: string): string[] | undefined {
 }
 
 /**
- * `--gjc-command` accepts the full command the controller execs (#4877):
- * - omitted → the default `gjc` + GJC-owned `mcp-serve coordinator` args;
- * - a single token → executable-only substitute for `gjc` (`/opt/gjc`), still
- *   followed by GJC-owned `mcp-serve coordinator` args (byte-identical to the
+ * `--vib-command` accepts the full command the controller execs (#4877):
+ * - omitted → the default `vib` + Vibrato-owned `mcp-serve coordinator` args;
+ * - a single token → executable-only substitute for `vib` (`/opt/vib`), still
+ *   followed by Vibrato-owned `mcp-serve coordinator` args (byte-identical to the
  *   historical render);
  * - multiple tokens → the full server command, split quote-aware into
  *   controller argv and rendered verbatim with nothing appended, so a wrapper
@@ -419,14 +419,14 @@ function parseHermesCommandTokens(value: string): string[] | undefined {
  * The value is tokenized, never evaluated by a shell.
  */
 function resolveHermesLaunchCommand(flags: HermesSetupFlags): { command: string; args: string[] } {
-	const explicit = optionalTrim(flags.gjcCommand);
-	if (!explicit) return { command: DEFAULT_GJC_COMMAND, args: ["mcp-serve", "coordinator"] };
+	const explicit = optionalTrim(flags.vibCommand);
+	if (!explicit) return { command: DEFAULT_VIB_COMMAND, args: ["mcp-serve", "coordinator"] };
 	const tokens = parseHermesCommandTokens(explicit);
 	if (!tokens) {
-		throw new HermesSetupError("--gjc-command has an unbalanced quote; it is tokenized, never shell-evaluated.", 2);
+		throw new HermesSetupError("--vib-command has an unbalanced quote; it is tokenized, never shell-evaluated.", 2);
 	}
 	if (tokens[0] === "") {
-		throw new HermesSetupError("--gjc-command must name a non-empty executable.", 2);
+		throw new HermesSetupError("--vib-command must name a non-empty executable.", 2);
 	}
 	if (tokens.length === 1) return { command: tokens[0]!, args: ["mcp-serve", "coordinator"] };
 	return { command: tokens[0]!, args: tokens.slice(1) };
@@ -454,7 +454,7 @@ export function buildHermesSetupSpec(flags: HermesSetupFlags): CoordinatorSetupS
 		serverKey: optionalTrim(flags.serverKey) ?? DEFAULT_SERVER_KEY,
 		serverName: COORDINATOR_MCP_SERVER_NAME,
 		protocolVersion: COORDINATOR_MCP_PROTOCOL_VERSION,
-		gjcCommand: launch.command,
+		vibCommand: launch.command,
 		args: launch.args,
 		roots,
 		namespace: {
@@ -503,7 +503,7 @@ function digest(value: unknown): string {
 
 function serverBlockDigest(block: Record<string, unknown>, options?: { includeTimeoutFields?: boolean }): string {
 	const env = isRecord(block.env) ? { ...block.env } : {};
-	delete env.GJC_COORDINATOR_MCP_SETUP_SIGNATURE;
+	delete env.VIB_COORDINATOR_MCP_SETUP_SIGNATURE;
 	const unsigned: Record<string, unknown> = { ...block, env };
 	// The timeout knobs stay out of the signature (#4878) so operators can
 	// hand-tune them without the block losing managed status. The
@@ -525,21 +525,21 @@ function renderHermesServerBlockWithoutSignature(
 ): Record<string, unknown> {
 	const resolved = timeouts ?? resolveHermesTimeouts(spec, undefined);
 	const env: Record<string, string> = {
-		GJC_COORDINATOR_MCP_WORKDIR_ROOTS: spec.roots.join(path.delimiter),
-		GJC_COORDINATOR_MCP_SETUP_MANAGED_BY: MANAGED_BY,
-		GJC_COORDINATOR_MCP_SETUP_SCHEMA_VERSION: SETUP_SCHEMA_VERSION,
+		VIB_COORDINATOR_MCP_WORKDIR_ROOTS: spec.roots.join(path.delimiter),
+		VIB_COORDINATOR_MCP_SETUP_MANAGED_BY: MANAGED_BY,
+		VIB_COORDINATOR_MCP_SETUP_SCHEMA_VERSION: SETUP_SCHEMA_VERSION,
 	};
-	if (spec.namespace.profile) env.GJC_COORDINATOR_MCP_PROFILE = spec.namespace.profile;
-	if (spec.namespace.repo) env.GJC_COORDINATOR_MCP_REPO = spec.namespace.repo;
-	if (spec.stateRoot) env.GJC_COORDINATOR_MCP_STATE_ROOT = spec.stateRoot;
-	if (spec.codingAgentDir) env.GJC_CODING_AGENT_DIR = spec.codingAgentDir;
+	if (spec.namespace.profile) env.VIB_COORDINATOR_MCP_PROFILE = spec.namespace.profile;
+	if (spec.namespace.repo) env.VIB_COORDINATOR_MCP_REPO = spec.namespace.repo;
+	if (spec.stateRoot) env.VIB_COORDINATOR_MCP_STATE_ROOT = spec.stateRoot;
+	if (spec.codingAgentDir) env.VIB_CODING_AGENT_DIR = spec.codingAgentDir;
 	if (spec.mutationPolicy.classes.length > 0)
-		env.GJC_COORDINATOR_MCP_MUTATIONS = spec.mutationPolicy.classes.join(",");
-	if (spec.artifactByteCap !== undefined) env.GJC_COORDINATOR_MCP_ARTIFACT_BYTE_CAP = String(spec.artifactByteCap);
-	if (spec.sessionCommand) env.GJC_COORDINATOR_MCP_SESSION_COMMAND = spec.sessionCommand;
-	if (spec.worktree.required) env.GJC_COORDINATOR_MCP_REQUIRE_WORKTREE = "true";
+		env.VIB_COORDINATOR_MCP_MUTATIONS = spec.mutationPolicy.classes.join(",");
+	if (spec.artifactByteCap !== undefined) env.VIB_COORDINATOR_MCP_ARTIFACT_BYTE_CAP = String(spec.artifactByteCap);
+	if (spec.sessionCommand) env.VIB_COORDINATOR_MCP_SESSION_COMMAND = spec.sessionCommand;
+	if (spec.worktree.required) env.VIB_COORDINATOR_MCP_REQUIRE_WORKTREE = "true";
 	return {
-		command: spec.gjcCommand,
+		command: spec.vibCommand,
 		args: spec.args,
 		env,
 		timeout: resolved.timeout,
@@ -554,7 +554,7 @@ export function renderHermesServerBlock(
 ): Record<string, unknown> {
 	const block = renderHermesServerBlockWithoutSignature(spec, timeouts);
 	const env = block.env as Record<string, string>;
-	env.GJC_COORDINATOR_MCP_SETUP_SIGNATURE = serverBlockDigest(block);
+	env.VIB_COORDINATOR_MCP_SETUP_SIGNATURE = serverBlockDigest(block);
 	return block;
 }
 
@@ -562,9 +562,9 @@ function renderConfigYaml(spec: CoordinatorSetupSpec): string {
 	return YAML.stringify({ mcp_servers: { [spec.serverKey]: renderHermesServerBlock(spec) } }, null, 2);
 }
 
-const OPERATOR_DIGEST_MARKER = /<!-- GJC Hermes operator instructions digest v(\d+): ([a-f0-9]{64}) -->/;
+const OPERATOR_DIGEST_MARKER = /<!-- Vibrato Hermes operator instructions digest v(\d+): ([a-f0-9]{64}) -->/;
 const OPERATOR_DIGEST_MARKER_SLOT =
-	/<!-- GJC Hermes operator instructions digest v\d+: (?:[a-f0-9]{64}|\{\{OPERATOR_INSTRUCTIONS_DIGEST\}\}|) -->/;
+	/<!-- Vibrato Hermes operator instructions digest v\d+: (?:[a-f0-9]{64}|\{\{OPERATOR_INSTRUCTIONS_DIGEST\}\}|) -->/;
 
 function operatorInstructionsDigest(content: string): string {
 	return crypto.createHash("sha256").update(content.replace(OPERATOR_DIGEST_MARKER_SLOT, "")).digest("hex");
@@ -573,7 +573,7 @@ function operatorInstructionsDigest(content: string): string {
 function renderOperatorTemplate(spec: CoordinatorSetupSpec): string {
 	const rendered = operatorInstructionsTemplate
 		.replaceAll("{{SERVER_KEY}}", spec.serverKey)
-		.replaceAll("{{TOOL_PREFIX}}", "gjc_coordinator")
+		.replaceAll("{{TOOL_PREFIX}}", "vib_coordinator")
 		.replaceAll("{{TEMPLATE_VERSION}}", String(spec.operatorTemplateVersion));
 	return rendered.replaceAll("{{OPERATOR_INSTRUCTIONS_DIGEST}}", operatorInstructionsDigest(rendered));
 }
@@ -582,11 +582,11 @@ function serverBlockIsManaged(block: unknown): boolean {
 	if (!isRecord(block) || !isRecord(block.env)) return false;
 	const env = block.env;
 	return (
-		env.GJC_COORDINATOR_MCP_SETUP_MANAGED_BY === MANAGED_BY &&
-		env.GJC_COORDINATOR_MCP_SETUP_SCHEMA_VERSION === SETUP_SCHEMA_VERSION &&
-		typeof env.GJC_COORDINATOR_MCP_SETUP_SIGNATURE === "string" &&
-		(env.GJC_COORDINATOR_MCP_SETUP_SIGNATURE === serverBlockDigest(block) ||
-			env.GJC_COORDINATOR_MCP_SETUP_SIGNATURE === serverBlockDigest(block, { includeTimeoutFields: true }))
+		env.VIB_COORDINATOR_MCP_SETUP_MANAGED_BY === MANAGED_BY &&
+		env.VIB_COORDINATOR_MCP_SETUP_SCHEMA_VERSION === SETUP_SCHEMA_VERSION &&
+		typeof env.VIB_COORDINATOR_MCP_SETUP_SIGNATURE === "string" &&
+		(env.VIB_COORDINATOR_MCP_SETUP_SIGNATURE === serverBlockDigest(block) ||
+			env.VIB_COORDINATOR_MCP_SETUP_SIGNATURE === serverBlockDigest(block, { includeTimeoutFields: true }))
 	);
 }
 
@@ -633,16 +633,19 @@ function mergeHermesConfig(
 			// Distinguish it from a foreign block so the operator knows --force
 			// is the adoption path and that the tuned timeouts survive it.
 			throw new HermesSetupError(
-				`Hermes MCP server '${spec.serverKey}' has GJC managed markers but its setup signature does not match (it was hand-edited or written by an older GJC). Re-run with --force to adopt the managed block; installed numeric timeout/connect_timeout values are preserved unless --timeout/--connect-timeout is passed.`,
+				`Hermes MCP server '${spec.serverKey}' has Vibrato managed markers but its setup signature does not match (it was hand-edited or written by an older Vibrato). Re-run with --force to adopt the managed block; installed numeric timeout/connect_timeout values are preserved unless --timeout/--connect-timeout is passed.`,
 				3,
 			);
 		}
-		throw new HermesSetupError(`Hermes MCP server '${spec.serverKey}' already exists and is not managed by GJC.`, 3);
+		throw new HermesSetupError(
+			`Hermes MCP server '${spec.serverKey}' already exists and is not managed by Vibrato.`,
+			3,
+		);
 	}
-	// An operator-set GJC_CODING_AGENT_DIR in a managed block survives re-install
+	// An operator-set VIB_CODING_AGENT_DIR in a managed block survives re-install
 	// unless --coding-agent-dir explicitly overrides it (issue #4879). The value
 	// stays out of the spec so the rendered signature remains flags-derived.
-	// Preserve is scoped to GJC-managed blocks: a value we signed ourselves. An
+	// Preserve is scoped to Vibrato-managed blocks: a value we signed ourselves. An
 	// unmanaged block (--force) or a tampered one re-renders from flags alone.
 	const preservedCodingAgentDir =
 		spec.codingAgentDir || !serverBlockIsManaged(existingBlock)
@@ -650,7 +653,7 @@ function mergeHermesConfig(
 			: readManagedCodingAgentDir(existingBlock);
 	const effectiveSpec = preservedCodingAgentDir ? { ...spec, codingAgentDir: preservedCodingAgentDir } : spec;
 	// Explicit flags win; otherwise keep the installed operator-tuned values
-	// from the existing GJC-marked block instead of resetting to 180/60.
+	// from the existing Vibrato-marked block instead of resetting to 180/60.
 	const timeouts = resolveHermesTimeouts(effectiveSpec, existingBlock);
 	return {
 		config: {
@@ -665,13 +668,13 @@ function mergeHermesConfig(
 }
 
 /**
- * Read the GJC_CODING_AGENT_DIR a managed block carries. Callers gate on
- * serverBlockIsManaged first, so only values GJC itself signed can be
+ * Read the VIB_CODING_AGENT_DIR a managed block carries. Callers gate on
+ * serverBlockIsManaged first, so only values Vibrato itself signed can be
  * preserved; unmanaged or tampered blocks re-render from flags alone.
  */
 function readManagedCodingAgentDir(existingBlock: unknown): string | undefined {
 	if (!isRecord(existingBlock) || !isRecord(existingBlock.env)) return undefined;
-	const value = existingBlock.env.GJC_CODING_AGENT_DIR;
+	const value = existingBlock.env.VIB_CODING_AGENT_DIR;
 	if (typeof value !== "string" || !value.trim()) return undefined;
 	return value;
 }
@@ -684,7 +687,7 @@ function configPathForTarget(spec: CoordinatorSetupSpec): string | null {
 
 function operatorPathForTarget(spec: CoordinatorSetupSpec): string | null {
 	if (spec.installTarget?.kind !== "profile-dir") return null;
-	return path.join(spec.installTarget.path, "skills", "autonomous-ai-agents", "gajae-code", "SKILL.md");
+	return path.join(spec.installTarget.path, "skills", "autonomous-ai-agents", "vib-rato", "SKILL.md");
 }
 
 type StagedFile = { path: string; stagedPath: string };
@@ -732,7 +735,7 @@ async function installConfig(
 		const current = await Bun.file(operatorPath).text();
 		if (!operatorInstructionsAreManaged(current, spec)) {
 			throw new HermesSetupError(
-				`Operator instruction target already exists and is not managed by GJC: ${operatorPath}`,
+				`Operator instruction target already exists and is not managed by Vibrato: ${operatorPath}`,
 				3,
 			);
 		}
@@ -778,7 +781,7 @@ async function checkInstalledHermesSetup(spec: CoordinatorSetupSpec): Promise<No
 			else if (!isRecord(block) || !serverBlockIsManaged(block))
 				mismatches.push({ path: configPath, kind: "invalid" });
 			else if (
-				(block.env as Record<string, unknown>).GJC_COORDINATOR_MCP_SETUP_SIGNATURE !==
+				(block.env as Record<string, unknown>).VIB_COORDINATOR_MCP_SETUP_SIGNATURE !==
 				computeHermesSetupSignature(spec)
 			) {
 				mismatches.push({ path: configPath, kind: "signature" });
@@ -843,10 +846,10 @@ export async function runHermesSetup(flags: HermesSetupFlags): Promise<HermesSet
 	}
 	const warnings = [
 		spec.sessionCommandSource === "explicit"
-			? "Using explicit GJC_COORDINATOR_MCP_SESSION_COMMAND validated as a supported GJC lifecycle selector."
+			? "Using explicit VIB_COORDINATOR_MCP_SESSION_COMMAND validated as a supported Vibrato lifecycle selector."
 			: spec.worktree.enabled
-				? `GJC_COORDINATOR_MCP_SESSION_COMMAND defaults to '${spec.sessionCommand}' so GJC owns worktree creation and resume identity.`
-				: "GJC_COORDINATOR_MCP_SESSION_COMMAND defaults to 'gjc' with worktree isolation disabled by user request.",
+				? `VIB_COORDINATOR_MCP_SESSION_COMMAND defaults to '${spec.sessionCommand}' so Vibrato owns worktree creation and resume identity.`
+				: "VIB_COORDINATOR_MCP_SESSION_COMMAND defaults to 'vib' with worktree isolation disabled by user request.",
 		...install.warnings,
 	];
 	return {

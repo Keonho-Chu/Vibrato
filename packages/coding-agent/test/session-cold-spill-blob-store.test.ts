@@ -7,12 +7,12 @@ import {
 	BlobStore,
 	EphemeralBlobStore,
 	MemoryBlobStore,
-} from "@gajae-code/coding-agent/session/blob-store";
+} from "@vib-rato/coding-agent/session/blob-store";
 
 const tempDirs: string[] = [];
 
 function makeTempDir(): string {
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-blob-store-"));
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-blob-store-"));
 	tempDirs.push(dir);
 	return dir;
 }

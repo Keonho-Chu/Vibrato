@@ -48,7 +48,7 @@ export function readRoleValue(preferences: Record<string, unknown>, key: string)
  *
  * `shouldDelete` gates each key on provenance, so a role the user reassigned
  * after install is left alone. The `providers` object itself is removed only
- * when it becomes empty, so a file GJC fully seeded returns to its prior shape.
+ * when it becomes empty, so a file Vibrato fully seeded returns to its prior shape.
  */
 export function removeSeededRoles(
 	draft: Record<string, unknown>,

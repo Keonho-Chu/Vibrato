@@ -1,7 +1,7 @@
 /**
  * Show what the read tool will return for a given path.
  */
-import { Args, Command, Flags } from "@gajae-code/utils/cli";
+import { Args, Command, Flags } from "@vib-rato/utils/cli";
 import { type ReadCommandArgs, runReadCommand } from "../cli/read-cli";
 import { initTheme } from "../modes/theme/theme";
 
@@ -23,13 +23,13 @@ export default class Read extends Command {
 	};
 
 	static examples = [
-		"gjc read src/foo.ts",
-		"gjc read src/foo.ts --truncation head",
-		"gjc read src/foo.ts:50-100",
-		"gjc read src/foo.ts:raw",
-		"gjc read https://example.com",
-		"gjc read path/to/archive.zip:dir/file.ts",
-		"gjc read path/to/db.sqlite:users:42",
+		"vib read src/foo.ts",
+		"vib read src/foo.ts --truncation head",
+		"vib read src/foo.ts:50-100",
+		"vib read src/foo.ts:raw",
+		"vib read https://example.com",
+		"vib read path/to/archive.zip:dir/file.ts",
+		"vib read path/to/db.sqlite:users:42",
 	];
 
 	async run(): Promise<void> {

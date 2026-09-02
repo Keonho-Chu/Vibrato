@@ -1,4 +1,4 @@
-import { $credentialEnv, extractHttpStatusFromError, logger, structuredCloneJSON } from "@gajae-code/utils";
+import { $credentialEnv, extractHttpStatusFromError, logger, structuredCloneJSON } from "@vib-rato/utils";
 import OpenAI, { APIConnectionTimeoutError } from "openai";
 import type {
 	Tool as OpenAITool,
@@ -616,7 +616,7 @@ function createClient(
 		headers.session_id ??= sessionId;
 		headers["x-client-request-id"] ??= sessionId;
 	}
-	headers = applyOpenAIRequestTransformHeaders(headers, model.requestTransform, `Gajae-Code/${packageJson.version}`);
+	headers = applyOpenAIRequestTransformHeaders(headers, model.requestTransform, `Vibrato/${packageJson.version}`);
 	const { baseUrl: clientBaseUrl, query: endpointQuery } = splitBaseUrlQuery(baseUrl);
 	const baseFetch = fetchOverride ?? fetch;
 	const queryFetch = Object.assign(
@@ -629,7 +629,7 @@ function createClient(
 	const transformedFetch = wrapFetchForOpenAIRequestTransform(
 		boundedFetch,
 		model.requestTransform,
-		`Gajae-Code/${packageJson.version}`,
+		`Vibrato/${packageJson.version}`,
 	);
 	// Bound HTTP request timeout to the first-event window so a stalled-before-headers
 	// fetch cannot wait the SDK's 10-minute default before the transport watchdog arms.

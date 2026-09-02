@@ -13,13 +13,13 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "bun:
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { AssistantMessage } from "@gajae-code/ai";
-import { resetSettingsForTest, Settings, settings } from "@gajae-code/coding-agent/config/settings";
-import { EventController } from "@gajae-code/coding-agent/modes/controllers/event-controller";
-import { initTheme } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { InteractiveModeContext } from "@gajae-code/coding-agent/modes/types";
-import type { AgentSessionEvent } from "@gajae-code/coding-agent/session/agent-session";
-import { TERMINAL } from "@gajae-code/tui";
+import type { AssistantMessage } from "@vib-rato/ai";
+import { resetSettingsForTest, Settings, settings } from "@vib-rato/coding-agent/config/settings";
+import { EventController } from "@vib-rato/coding-agent/modes/controllers/event-controller";
+import { initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { InteractiveModeContext } from "@vib-rato/coding-agent/modes/types";
+import type { AgentSessionEvent } from "@vib-rato/coding-agent/session/agent-session";
+import { TERMINAL } from "@vib-rato/tui";
 
 beforeAll(() => {
 	initTheme();
@@ -27,7 +27,7 @@ beforeAll(() => {
 
 beforeEach(async () => {
 	resetSettingsForTest();
-	const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-abortguard-"));
+	const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-abortguard-"));
 	await Settings.init({ inMemory: true, cwd: tempDir });
 });
 
@@ -176,10 +176,10 @@ describe("EventController.sendCompletionNotification — abort guard", () => {
 		];
 		expect(cmd).toContain("notify-test");
 		expect(options.cwd).toBe(process.cwd());
-		expect(options.env?.GJC_NOTIFICATION_TYPE).toBe("agent-turn-complete");
-		expect(options.env?.GJC_NOTIFICATION_TITLE).toBe("test-session: Complete");
-		expect(options.env?.GJC_NOTIFICATION_BODY).toBe("hello");
-		expect(options.env?.GJC_NOTIFICATION_SESSION_ID).toBe("session-test");
+		expect(options.env?.VIB_NOTIFICATION_TYPE).toBe("agent-turn-complete");
+		expect(options.env?.VIB_NOTIFICATION_TITLE).toBe("test-session: Complete");
+		expect(options.env?.VIB_NOTIFICATION_BODY).toBe("hello");
+		expect(options.env?.VIB_NOTIFICATION_SESSION_ID).toBe("session-test");
 	});
 
 	it("runs the user-level completion notify command even when foreground", () => {

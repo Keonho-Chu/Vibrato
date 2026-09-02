@@ -8,6 +8,13 @@
  * `runInActiveSpan` → `finishChatSpan` / `failChatSpan`).
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
+import { SpanStatusCode } from "@opentelemetry/api";
+import {
+	BasicTracerProvider,
+	InMemorySpanExporter,
+	type ReadableSpan,
+	SimpleSpanProcessor,
+} from "@opentelemetry/sdk-trace-base";
 import {
 	type CompactionPreparation,
 	compact,
@@ -16,24 +23,17 @@ import {
 	generateBranchSummary,
 	generateHandoff,
 	generateSummary,
-} from "@gajae-code/agent-core/compaction";
+} from "@vib-rato/agent-core/compaction";
 import {
 	type AgentTelemetryConfig,
 	GenAIAttr,
 	GenAIOperation,
 	PiGenAIAttr,
 	resolveTelemetry,
-} from "@gajae-code/agent-core/telemetry";
-import type { AgentMessage } from "@gajae-code/agent-core/types";
-import type { AssistantMessage, Model, Usage } from "@gajae-code/ai";
-import * as ai from "@gajae-code/ai";
-import { SpanStatusCode } from "@opentelemetry/api";
-import {
-	BasicTracerProvider,
-	InMemorySpanExporter,
-	type ReadableSpan,
-	SimpleSpanProcessor,
-} from "@opentelemetry/sdk-trace-base";
+} from "@vib-rato/agent-core/telemetry";
+import type { AgentMessage } from "@vib-rato/agent-core/types";
+import type { AssistantMessage, Model, Usage } from "@vib-rato/ai";
+import * as ai from "@vib-rato/ai";
 
 const MODEL: Model = {
 	id: "mock-model",

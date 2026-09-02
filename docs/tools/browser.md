@@ -55,7 +55,7 @@
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
 | `all` | `boolean` | No | Close every known tab. Omitted closes only `name`. |
-| `kill` | `boolean` | No | When a tab release drops a spawned-app browser handle to refcount 0, also terminate its process tree. For Chrome profile mode this kills only a profile browser process launched by GJC; externally-owned profile CDP and `app.cdp_url` are disconnect-only. Has no effect on headless shutdown. |
+| `kill` | `boolean` | No | When a tab release drops a spawned-app browser handle to refcount 0, also terminate its process tree. For Chrome profile mode this kills only a profile browser process launched by Vibrato; externally-owned profile CDP and `app.cdp_url` are disconnect-only. Has no effect on headless shutdown. |
 
 ### `action: "run"`
 
@@ -102,7 +102,7 @@ The tool returns one result per call; no streaming partial output is emitted fro
    - headless launches via `launchHeadlessBrowser()`;
    - `connected` waits for `${cdpUrl}/json/version`, then `puppeteer.connect()`;
    - `spawned` first tries `findReusableCdp()`, else kills same-path processes, allocates a free loopback port, spawns the executable with `--remote-debugging-port=<port>`, waits for CDP, then connects.
-   - `chrome-profile` checks same-executable processes for matching `--user-data-dir` and `--profile-directory`; if the matching process already exposes a responding `127.0.0.1` CDP port it reuses and later only disconnects, if it is running without attachable CDP it refuses without killing or relaunching, and if it is not running GJC launches Chrome with `--remote-debugging-address=127.0.0.1`, an ephemeral or configured `--remote-debugging-port`, `--user-data-dir`, `--profile-directory`, and `--no-startup-window` when `background` or `no_focus` is set. Only this GJC-launched process is eligible for `kill` cleanup.
+   - `chrome-profile` checks same-executable processes for matching `--user-data-dir` and `--profile-directory`; if the matching process already exposes a responding `127.0.0.1` CDP port it reuses and later only disconnects, if it is running without attachable CDP it refuses without killing or relaunching, and if it is not running Vibrato launches Chrome with `--remote-debugging-address=127.0.0.1`, an ephemeral or configured `--remote-debugging-port`, `--user-data-dir`, `--profile-directory`, and `--no-startup-window` when `background` or `no_focus` is set. Only this Vibrato-launched process is eligible for `kill` cleanup.
 5. `open` acquires a tab through `acquireTab()` (`packages/coding-agent/src/tools/browser/tab-supervisor.ts`):
    - same-name + same-browser + alive tab is reused unless `dialogs` changed;
    - same-name but different browser handle, dead state, or changed dialog policy forces release and recreation;
@@ -116,7 +116,7 @@ The tool returns one result per call; no streaming partial output is emitted fro
 
 ### Existing non-default Chrome profile mode
 
-Use this mode for a dedicated, persistent Chrome data root that already contains the automation profile and login state. Chrome 136+ rejects remote debugging against the browser's default data root, so do not point this mode at the daily Chrome root. Create and sign in to a separate root first, close that Chrome instance, then let GJC reopen it with the guarded CDP lifecycle:
+Use this mode for a dedicated, persistent Chrome data root that already contains the automation profile and login state. Chrome 136+ rejects remote debugging against the browser's default data root, so do not point this mode at the daily Chrome root. Create and sign in to a separate root first, close that Chrome instance, then let Vibrato reopen it with the guarded CDP lifecycle:
 
 ```json
 {
@@ -124,7 +124,7 @@ Use this mode for a dedicated, persistent Chrome data root that already contains
   "name": "work-browser",
   "app": {
     "browser": "chrome",
-    "user_data_dir": "~/Library/Application Support/GJC/Chrome Automation",
+    "user_data_dir": "~/Library/Application Support/Vibrato/Chrome Automation",
     "profile_directory": "Default",
     "background": true,
     "no_focus": true,
@@ -139,9 +139,9 @@ Security and lifecycle rules:
 - `user_data_dir` must be a separate non-default data root. Platform Stable/Beta/Dev/Canary/Chromium defaults, Linux environment/Flatpak/Snap defaults, and aliases to them are rejected before launch. Use `app.cdp_url` only for an already-authorized endpoint that you intentionally started and control.
 - Saved-profile and attached-CDP automation can read and act with that profile's cookies and authenticated accounts. Use it only when that credentialed access is intentional.
 - Never use generic `app.path` spawning for a daily Chrome profile: it may kill stale same-path processes. Use explicit `app.browser: "chrome"` profile mode, which applies the ownership guards below.
-- A matching already-running profile is reused only when its localhost CDP endpoint responds. A matching profile running normally without CDP is refused with remediation text; GJC does not kill or relaunch it.
+- A matching already-running profile is reused only when its localhost CDP endpoint responds. A matching profile running normally without CDP is refused with remediation text; Vibrato does not kill or relaunch it.
 - `background` and `no_focus` add Chromium's `--no-startup-window` launch guard. Focus avoidance is best-effort and platform-dependent; already-visible Chrome windows can still be selected by `target` but are not OS-keyboard/mouse driven.
-- Cleanup disconnects externally-owned CDP endpoints. `kill: true` terminates only the Chrome profile process that GJC launched for this mode.
+- Cleanup disconnects externally-owned CDP endpoints. `kill: true` terminates only the Chrome profile process that Vibrato launched for this mode.
 10. `run` requires non-empty `code`; `act` requires non-empty `actions`, validates and compiles them into injection-safe JSON-parsed code, then both delegate to `runInTab()`.
 11. `runInTabWithSnapshot()` rejects dead tabs and concurrent runs (`Tab ... is busy`), captures session cwd plus optional `browser.screenshotDir`, registers an abort hook, sends a `run` message to the worker, and races the result against `timeoutMs + 750` ms. Timeouts force-kill the tab worker and, for headless tabs, close the orphaned page target.
 12. `WorkerCore.#run()` creates a VM context, exposes the raw Puppeteer `page`/`browser` plus a synthetic `tab` API, and executes `(async () => { ...code... })()` via `vm.runInContext()`.
@@ -217,7 +217,7 @@ Security and lifecycle rules:
 - Subprocesses / native bindings
   - Headless mode launches Chromium through Puppeteer.
   - `app.path` mode may spawn the target executable via `Bun.spawn()`.
-  - `killExistingByPath()` / `gracefulKillTreeOnce()` use `@gajae-code/natives` process inspection/termination.
+  - `killExistingByPath()` / `gracefulKillTreeOnce()` use `@vib-rato/natives` process inspection/termination.
   - Worker mode uses Bun `Worker`; fallback mode does not.
 - Session state (transcript, memory, jobs, checkpoints, registries)
   - Browser handles are cached in a process-global `Map` keyed by browser kind in `packages/coding-agent/src/tools/browser/registry.ts`.

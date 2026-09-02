@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import * as natives from "@gajae-code/natives";
+import * as natives from "@vib-rato/natives";
 import {
 	applyNestedPatches,
 	captureBaseline,
@@ -38,7 +38,7 @@ async function runGit(repo: string, args: string[]): Promise<string> {
 }
 
 async function createGitRepo(): Promise<{ baseBranch: string; repo: string }> {
-	const repo = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-worktree-"));
+	const repo = await fs.mkdtemp(path.join(os.tmpdir(), "vib-worktree-"));
 	tempDirs.push(repo);
 	await runGit(repo, ["init"]);
 	await runGit(repo, ["config", "user.email", "test@example.com"]);

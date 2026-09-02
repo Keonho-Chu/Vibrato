@@ -1187,7 +1187,7 @@ export interface VercelGatewayRouting {
 // Model interface for the unified model system
 
 export interface ModelRequestTransform {
-	/** Named request-shaping preset. `openai-proxy` removes OpenAI SDK telemetry headers and uses a generic Gajae-Code User-Agent. */
+	/** Named request-shaping preset. `openai-proxy` removes OpenAI SDK telemetry headers and uses a generic Vibrato User-Agent. */
 	profile?: "openai-proxy";
 	/** Header names to remove from the final outbound request. Case-insensitive. */
 	stripHeaders?: string[];
@@ -1243,11 +1243,11 @@ export interface Model<TApi extends Api = any> {
 	 * Streaming transport override. When `"pi-native"`, `streamSimple` routes
 	 * the request to the model's `baseUrl` via the auth-gateway's
 	 * `POST /v1/pi/stream` endpoint instead of dispatching the per-API
-	 * provider client. The `baseUrl` must point at an `gjc auth-gateway`
+	 * provider client. The `baseUrl` must point at an `vib auth-gateway`
 	 * (or compatible) host; `headers.Authorization` (or `apiKey` resolved by
 	 * the registry) carries the gateway bearer.
 	 *
-	 * Used by containerized GJC installs to route every LLM call through a
+	 * Used by containerized Vibrato installs to route every LLM call through a
 	 * sidecar gateway that holds the real provider credentials. The model's other
 	 * metadata (pricing, context window, thinking config, …) still resolves locally; only the streaming
 	 * dispatch is redirected.

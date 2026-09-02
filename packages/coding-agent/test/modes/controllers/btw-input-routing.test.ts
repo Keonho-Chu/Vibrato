@@ -1,9 +1,9 @@
 import { beforeAll, describe, expect, it, vi } from "bun:test";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { CustomEditor } from "@gajae-code/coding-agent/modes/components/custom-editor";
-import { InputController } from "@gajae-code/coding-agent/modes/controllers/input-controller";
-import { getEditorTheme, initTheme } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { InteractiveModeContext } from "@gajae-code/coding-agent/modes/types";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { CustomEditor } from "@vib-rato/coding-agent/modes/components/custom-editor";
+import { InputController } from "@vib-rato/coding-agent/modes/controllers/input-controller";
+import { getEditorTheme, initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { InteractiveModeContext } from "@vib-rato/coding-agent/modes/types";
 
 beforeAll(async () => {
 	await Settings.init({ inMemory: true, cwd: process.cwd() });

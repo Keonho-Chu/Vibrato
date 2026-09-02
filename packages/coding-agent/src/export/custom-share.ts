@@ -1,12 +1,12 @@
 /**
  * Custom share script loader.
  *
- * Allows users to define a custom share handler at ~/.gjc/agent/share.ts
+ * Allows users to define a custom share handler at ~/.vib/agent/share.ts
  * that will be used instead of the default GitHub Gist sharing.
  */
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { getAgentDir } from "@gajae-code/utils";
+import { getAgentDir } from "@vib-rato/utils";
 
 export interface CustomShareResult {
 	/** URL to display/open (optional - script may handle everything itself) */

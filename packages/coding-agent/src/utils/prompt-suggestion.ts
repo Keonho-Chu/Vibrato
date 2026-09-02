@@ -1,12 +1,12 @@
 /**
  * Predict the user's likely next prompt after an agent turn using a smol,
- * fast model. Native GJC port of the ghost-text prompt-suggestion behavior
+ * fast model. Native Vibrato port of the ghost-text prompt-suggestion behavior
  * from Claude Code: the prediction renders as dim ghost text in the empty
  * composer and Tab accepts it.
  */
-import type { AgentMessage } from "@gajae-code/agent-core";
-import { type Api, type AssistantMessage, completeSimple, type Model } from "@gajae-code/ai/core";
-import { logger, prompt } from "@gajae-code/utils";
+import type { AgentMessage } from "@vib-rato/agent-core";
+import { type Api, type AssistantMessage, completeSimple, type Model } from "@vib-rato/ai/core";
+import { logger, prompt } from "@vib-rato/utils";
 import type { ModelRegistry } from "../config/model-registry";
 import { resolveRoleSelection } from "../config/model-resolver";
 import type { Settings } from "../config/settings";

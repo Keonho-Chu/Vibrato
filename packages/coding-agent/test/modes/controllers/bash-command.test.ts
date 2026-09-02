@@ -4,14 +4,14 @@
  * the chat transcript on completion, exactly like the idle path.
  */
 import { beforeAll, describe, expect, it } from "bun:test";
-import { BashExecutionComponent } from "@gajae-code/coding-agent/modes/components/bash-execution";
-import type { EvalExecutionComponent } from "@gajae-code/coding-agent/modes/components/eval-execution";
-import { CommandController } from "@gajae-code/coding-agent/modes/controllers/command-controller";
-import { getThemeByName, setThemeInstance } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { InteractiveModeContext } from "@gajae-code/coding-agent/modes/types";
-import { UiHelpers } from "@gajae-code/coding-agent/modes/utils/ui-helpers";
-import type { SessionContext } from "@gajae-code/coding-agent/session/session-manager";
-import { Container, type TUI } from "@gajae-code/tui";
+import { BashExecutionComponent } from "@vib-rato/coding-agent/modes/components/bash-execution";
+import type { EvalExecutionComponent } from "@vib-rato/coding-agent/modes/components/eval-execution";
+import { CommandController } from "@vib-rato/coding-agent/modes/controllers/command-controller";
+import { getThemeByName, setThemeInstance } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { InteractiveModeContext } from "@vib-rato/coding-agent/modes/types";
+import { UiHelpers } from "@vib-rato/coding-agent/modes/utils/ui-helpers";
+import type { SessionContext } from "@vib-rato/coding-agent/session/session-manager";
+import { Container, type TUI } from "@vib-rato/tui";
 
 beforeAll(async () => {
 	const theme = await getThemeByName("red-claw");

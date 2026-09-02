@@ -2,14 +2,14 @@ import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { SelectList } from "@gajae-code/tui/components/select-list";
-import { SettingsList } from "@gajae-code/tui/components/settings-list";
+import { SelectList } from "@vib-rato/tui/components/select-list";
+import { SettingsList } from "@vib-rato/tui/components/settings-list";
 import {
 	setKeybindings,
 	TUI_KEYBINDINGS,
 	KeybindingsManager as TuiKeybindingsManager,
-} from "@gajae-code/tui/keybindings";
-import { getConfigRootDir, setAgentDir } from "@gajae-code/utils";
+} from "@vib-rato/tui/keybindings";
+import { getConfigRootDir, setAgentDir } from "@vib-rato/utils";
 import { inspectConfigFile } from "../src/cli/config-cli";
 import { parseNotifyArgs } from "../src/cli/notify-cli";
 import { KeybindingsManager } from "../src/config/keybindings";
@@ -45,7 +45,7 @@ const selectTheme = {
 } as never;
 
 beforeEach(async () => {
-	root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-ux-adversarial-"));
+	root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-ux-adversarial-"));
 	setAgentDir(path.join(root, "agent"));
 	resetSettingsForTest();
 	setKeybindings(new TuiKeybindingsManager(TUI_KEYBINDINGS));

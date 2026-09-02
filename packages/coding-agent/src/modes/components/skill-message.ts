@@ -1,15 +1,6 @@
-import type { TextContent } from "@gajae-code/ai/core";
-import type { Component } from "@gajae-code/tui";
-import {
-	Box,
-	Container,
-	Markdown,
-	replaceTabs,
-	Spacer,
-	Text,
-	truncateToWidth,
-	wrapTextWithAnsi,
-} from "@gajae-code/tui";
+import type { TextContent } from "@vib-rato/ai/core";
+import type { Component } from "@vib-rato/tui";
+import { Box, Container, Markdown, replaceTabs, Spacer, Text, truncateToWidth, wrapTextWithAnsi } from "@vib-rato/tui";
 import { getMarkdownTheme, theme } from "../../modes/theme/theme";
 import type { CustomMessage, SkillPromptDetails } from "../../session/messages";
 

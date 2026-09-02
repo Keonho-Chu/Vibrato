@@ -1,4 +1,4 @@
-import { ThinkingLevel } from "@gajae-code/agent-core";
+import { ThinkingLevel } from "@vib-rato/agent-core";
 import {
 	type Api,
 	type Effort,
@@ -10,7 +10,7 @@ import {
 	type ThinkingControlMode,
 	UNK_CONTEXT_WINDOW,
 	UNK_MAX_TOKENS,
-} from "@gajae-code/ai/core";
+} from "@vib-rato/ai/core";
 import { formatModelProfileDisplayLabel, type ModelProfileDefinition } from "../config/model-profiles";
 import { SYNTHETIC_PROVIDER_ID } from "./model-profile-model";
 
@@ -78,7 +78,7 @@ export interface Q10ModelProjectionInput {
 	resolveSupportedEfforts?: (model: Model<Api>) => readonly Effort[];
 	/**
 	 * Logical model-profile facade inputs. When supplied, deterministic,
-	 * availability-filtered synthetic rows (`gajae-code/<profile>`) are
+	 * availability-filtered synthetic rows (`vib-rato/<profile>`) are
 	 * appended after the real rows; the underlying `Model` registry entries
 	 * are never touched.
 	 */

@@ -12,10 +12,10 @@ import {
 	setTerminalImageProtocol,
 	TERMINAL,
 	TUI,
-} from "@gajae-code/tui";
-import type { Terminal, TerminalAppearance } from "@gajae-code/tui/terminal";
-import { visibleWidth } from "@gajae-code/tui/utils";
-import { getDefaultTabWidth, setDefaultTabWidth } from "@gajae-code/utils";
+} from "@vib-rato/tui";
+import type { Terminal, TerminalAppearance } from "@vib-rato/tui/terminal";
+import { visibleWidth } from "@vib-rato/tui/utils";
+import { getDefaultTabWidth, setDefaultTabWidth } from "@vib-rato/utils";
 import { VirtualTerminal } from "./virtual-terminal";
 
 class MutableLinesComponent implements Component {
@@ -414,7 +414,7 @@ describe("TUI terminal-state regressions", () => {
 		"TMUX_PANE",
 		"STY",
 		"ZELLIJ",
-		"GJC_TMUX_LAUNCHED",
+		"VIB_TMUX_LAUNCHED",
 		"TERMUX_VERSION",
 		"PI_TUI_LEGACY_MULTIPLEXER_FULL_RENDER",
 		"PI_TUI_VIRTUAL_VIEWPORT",

@@ -1,8 +1,8 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "bun:test";
-import type { SettingPath } from "@gajae-code/coding-agent/config/settings";
-import { resetSettingsForTest, Settings, settings } from "@gajae-code/coding-agent/config/settings";
-import { SettingsSelectorComponent } from "@gajae-code/coding-agent/modes/components/settings-selector";
-import { initTheme, previewTheme, restoreThemePreview, theme } from "@gajae-code/coding-agent/modes/theme/theme";
+import type { SettingPath } from "@vib-rato/coding-agent/config/settings";
+import { resetSettingsForTest, Settings, settings } from "@vib-rato/coding-agent/config/settings";
+import { SettingsSelectorComponent } from "@vib-rato/coding-agent/modes/components/settings-selector";
+import { initTheme, previewTheme, restoreThemePreview, theme } from "@vib-rato/coding-agent/modes/theme/theme";
 
 const THEMES = ["red-claw", "blue-crab"];
 const ORIGINAL_COLORTERM = Bun.env.COLORTERM;

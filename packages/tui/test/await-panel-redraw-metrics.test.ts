@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
-import { type Component, TUI } from "@gajae-code/tui";
-import { renderMetrics } from "@gajae-code/tui/metrics";
+import { type Component, TUI } from "@vib-rato/tui";
+import { renderMetrics } from "@vib-rato/tui/metrics";
 import { VirtualTerminal } from "./virtual-terminal";
 
 /**

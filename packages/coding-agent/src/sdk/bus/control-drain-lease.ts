@@ -47,7 +47,7 @@ export function isNativeControlDrainAvailable(): boolean {
 		// Keep the addon lazy: importing the bus must continue to work without a
 		// compiled native artifact (tests and source distributions do that often).
 		// eslint-disable-next-line @typescript-eslint/no-require-imports
-		const natives = require("@gajae-code/natives") as {
+		const natives = require("@vib-rato/natives") as {
 			NotificationServer?: {
 				prototype?: Record<string, unknown>;
 			};

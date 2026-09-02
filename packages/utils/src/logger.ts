@@ -1,12 +1,12 @@
 /**
- * Centralized logger for gajae-code.
+ * Centralized logger for vib-rato.
  *
- * Default: rotating `~/.gjc/logs/gjc.<DATE>.log`, no console output (writing
+ * Default: rotating `~/.vib/logs/vib.<DATE>.log`, no console output (writing
  * to stdout/stderr would corrupt the TUI). Long-running headless services
  * (the auth broker, etc.) call {@link setTransports} to swap in a console
  * transport so a process supervisor (pm2, journald, k8s) captures the logs.
  *
- * Each entry includes `process.pid` so concurrent gjc instances stay
+ * Each entry includes `process.pid` so concurrent vib instances stay
  * traceable.
  */
 import { AsyncLocalStorage } from "node:async_hooks";
@@ -77,7 +77,7 @@ function makeLogFormat(winston: WinstonModule): winston.Logform.Format {
 function makeFileTransport(DailyRotateFile: DailyRotateFileCtor, dir?: string): Transport {
 	return new DailyRotateFile({
 		dirname: ensureDir(dir ?? getLogsDir()),
-		filename: "gjc.%DATE%.log",
+		filename: "vib.%DATE%.log",
 		datePattern: "YYYY-MM-DD",
 		maxSize: "10m",
 		maxFiles: 5,
@@ -410,10 +410,10 @@ function printModuleLoadSummary(loads: Span[], depth: number, lines: string[]): 
 	}
 	const wall = unionEnd > unionStart ? unionEnd - unionStart : 0;
 	lines.push(`${childIndent}(modules): ${loads.length} loaded, wall ${fmtMs(wall)}, sum ${fmtMs(totalSelf)}`);
-	// Resolve GJC-first with PI fallback inline (no ./env import) so this
+	// Resolve Vibrato-first with PI fallback inline (no ./env import) so this
 	// foundational logger stays off the env module's dependency graph, which the
 	// tab-worker native-free runtime contract (issue-2598-repro) walks.
-	const showAll = (process.env.GJC_TIMING?.trim() || process.env.PI_TIMING?.trim()) === "full";
+	const showAll = (process.env.VIB_TIMING?.trim() || process.env.PI_TIMING?.trim()) === "full";
 	const sorted = [...loads].sort((a, b) => durationOf(b) - durationOf(a));
 	const visible = showAll ? sorted : sorted.slice(0, MODULE_LOAD_VERBOSE_TOP);
 	for (const span of visible) {

@@ -1,10 +1,10 @@
 /**
  * Web search CLI command handlers.
  *
- * Handles `gjc q`/`gjc web-search` subcommands for testing web search providers.
+ * Handles `vib q`/`vib web-search` subcommands for testing web search providers.
  */
 
-import { APP_NAME } from "@gajae-code/utils";
+import { APP_NAME } from "@vib-rato/utils";
 import chalk from "chalk";
 import { Settings } from "../config/settings";
 import { initTheme, theme } from "../modes/theme/theme";

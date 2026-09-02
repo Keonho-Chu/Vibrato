@@ -4,7 +4,7 @@
  * A prepared session holds discoverable endpoint authority while its readiness
  * stays withheld; activation is the one request that asks it to publish that
  * readiness. Every caller shares this exchange whatever proved the endpoint
- * authority beforehand: the `gjc notify activate-thread` CLI resolves it from
+ * authority beforehand: the `vib notify activate-thread` CLI resolves it from
  * the local session index, and the Coordinator resolves it from the broker's
  * incarnation-bound binding.
  *

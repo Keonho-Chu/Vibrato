@@ -2,8 +2,8 @@ import { describe, expect, it } from "bun:test";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { sessionRoot } from "../gjc-runtime/session-layout";
 import type { TaskTokenLog } from "../task/types";
+import { sessionRoot } from "../vib-runtime/session-layout";
 import { buildFixtureReport, type LiveRunReportShape, runFixtureReport } from "./fixture-report";
 
 function expectParseReportCompatible(report: LiveRunReportShape, fixtureId: string): void {
@@ -196,7 +196,7 @@ describe("runFixtureReport CLI degradation", () => {
 
 async function withTempCwd(fn: (cwd: string) => Promise<void>): Promise<void> {
 	const originalCwd = process.cwd();
-	const dir = await mkdtemp(join(tmpdir(), "gjc-fixture-report-"));
+	const dir = await mkdtemp(join(tmpdir(), "vib-fixture-report-"));
 	process.chdir(dir);
 	try {
 		await fn(dir);

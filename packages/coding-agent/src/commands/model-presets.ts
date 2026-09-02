@@ -1,4 +1,4 @@
-import { Args, Command, Flags } from "@gajae-code/utils/cli";
+import { Args, Command, Flags } from "@vib-rato/utils/cli";
 import { MODEL_PRESETS_ACTIONS, type ModelPresetsAction, runModelPresetsCommand } from "../cli/model-presets-cli";
 
 export default class ModelPresets extends Command {

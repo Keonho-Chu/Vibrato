@@ -1,4 +1,4 @@
-import { $which, logger } from "@gajae-code/utils";
+import { $which, logger } from "@vib-rato/utils";
 import { $ } from "bun";
 import { getRecorderInstallHint } from "./setup";
 import { resolvePython } from "./transcriber";

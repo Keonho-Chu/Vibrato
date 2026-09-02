@@ -1,4 +1,4 @@
-import type { Terminal, TerminalAppearance } from "@gajae-code/tui/terminal";
+import type { Terminal, TerminalAppearance } from "@vib-rato/tui/terminal";
 import type { Terminal as XtermTerminalType } from "@xterm/headless";
 import xterm from "@xterm/headless";
 

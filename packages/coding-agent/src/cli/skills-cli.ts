@@ -1,13 +1,13 @@
 /**
- * Handles `gjc skills` for inspecting bundled workflow skills and
+ * Handles `vib skills` for inspecting bundled workflow skills and
  * filesystem-discovered custom skills.
  */
 import { Settings } from "../config/settings";
 import {
-	DEFAULT_GJC_DEFINITION_NAMES,
-	type EmbeddedDefaultGjcSkill,
-	getEmbeddedDefaultGjcSkills,
-} from "../defaults/gjc-defaults";
+	DEFAULT_VIB_DEFINITION_NAMES,
+	type EmbeddedDefaultVibSkill,
+	getEmbeddedDefaultVibSkills,
+} from "../defaults/vib-defaults";
 import { discoverRuntimeSkills, type RuntimeSkillDiscoveryCandidate } from "../extensibility/runtime-skill-discovery";
 
 export type SkillsAction = "list" | "read" | "discover";
@@ -32,12 +32,12 @@ interface SkillsReadEntry extends SkillsListEntry {
 	content: string;
 }
 
-function getEmbeddedSkill(name: string): EmbeddedDefaultGjcSkill | undefined {
-	return getEmbeddedDefaultGjcSkills().find(skill => skill.name === name);
+function getEmbeddedSkill(name: string): EmbeddedDefaultVibSkill | undefined {
+	return getEmbeddedDefaultVibSkills().find(skill => skill.name === name);
 }
 
 function listEmbeddedSkills(): SkillsListEntry[] {
-	return getEmbeddedDefaultGjcSkills().map(skill => ({
+	return getEmbeddedDefaultVibSkills().map(skill => ({
 		name: skill.name,
 		description: skill.description,
 		path: skill.filePath,
@@ -100,14 +100,14 @@ export async function runSkillsCommand(cmd: SkillsCommandArgs): Promise<void> {
 
 	const name = cmd.name?.trim();
 	if (!name) {
-		process.stderr.write(`error: skill name is required for read (${DEFAULT_GJC_DEFINITION_NAMES.join(", ")})\n`);
+		process.stderr.write(`error: skill name is required for read (${DEFAULT_VIB_DEFINITION_NAMES.join(", ")})\n`);
 		process.exitCode = 1;
 		return;
 	}
 
 	const skill = getEmbeddedSkill(name);
 	if (!skill) {
-		process.stderr.write(`error: unknown embedded skill "${name}" (${DEFAULT_GJC_DEFINITION_NAMES.join(", ")})\n`);
+		process.stderr.write(`error: unknown embedded skill "${name}" (${DEFAULT_VIB_DEFINITION_NAMES.join(", ")})\n`);
 		process.exitCode = 1;
 		return;
 	}

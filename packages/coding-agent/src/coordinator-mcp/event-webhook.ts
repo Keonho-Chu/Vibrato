@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { $credentialEnv } from "@gajae-code/utils/env";
+import { $credentialEnv } from "@vib-rato/utils/env";
 import { withFileLock } from "../config/file-lock";
 import { writeCoordinatorAtomic } from "./durability";
 
@@ -105,7 +105,7 @@ const LOOPBACK_HOSTS = new Set(["127.0.0.1", "::1", "localhost"]);
  * and the token-file path must never come from the caller's cwd `.env` overlay:
  * Bun loads that overlay into `process.env`, so a raw `process.env` read would
  * let any repository select where coordinator journal rows are POSTed.
- * `$credentialEnv` consults only the inherited environment and GJC/user-owned
+ * `$credentialEnv` consults only the inherited environment and Vibrato/user-owned
  * env files, exactly like the crash relay's DSN. Callers that own a fully
  * controlled environment (tests, rendered hermes blocks) pass `explicitEnv`;
  * production entry points must omit it and resolve through the trusted source.
@@ -117,7 +117,7 @@ function webhookEnvValue(explicitEnv: NodeJS.ProcessEnv | undefined, name: strin
 }
 
 export function parseEventWebhookConfig(explicitEnv?: NodeJS.ProcessEnv): EventWebhookConfig | null {
-	const rawUrl = webhookEnvValue(explicitEnv, "GJC_COORDINATOR_MCP_EVENT_WEBHOOK_URL");
+	const rawUrl = webhookEnvValue(explicitEnv, "VIB_COORDINATOR_MCP_EVENT_WEBHOOK_URL");
 	if (!rawUrl) return null;
 	let parsed: URL;
 	try {
@@ -128,7 +128,7 @@ export function parseEventWebhookConfig(explicitEnv?: NodeJS.ProcessEnv): EventW
 	const hostname = parsed.hostname.replace(/^\[|\]$/g, "").toLowerCase();
 	if (parsed.protocol !== "https:" && !(parsed.protocol === "http:" && LOOPBACK_HOSTS.has(hostname)))
 		throw new Error("coordinator_event_webhook_url_not_allowed");
-	const rawSessions = webhookEnvValue(explicitEnv, "GJC_COORDINATOR_MCP_EVENT_WEBHOOK_SESSION_IDS");
+	const rawSessions = webhookEnvValue(explicitEnv, "VIB_COORDINATOR_MCP_EVENT_WEBHOOK_SESSION_IDS");
 	const sessionIds = rawSessions
 		? new Set(
 				rawSessions
@@ -137,10 +137,10 @@ export function parseEventWebhookConfig(explicitEnv?: NodeJS.ProcessEnv): EventW
 					.filter(value => /^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}$/.test(value)),
 			)
 		: null;
-	const tokenFile = webhookEnvValue(explicitEnv, "GJC_COORDINATOR_MCP_EVENT_WEBHOOK_TOKEN_FILE") ?? "";
+	const tokenFile = webhookEnvValue(explicitEnv, "VIB_COORDINATOR_MCP_EVENT_WEBHOOK_TOKEN_FILE") ?? "";
 	if (tokenFile !== "" && !path.isAbsolute(tokenFile)) throw new Error("coordinator_event_webhook_token_file_invalid");
 	const timeoutRaw = Number.parseInt(
-		webhookEnvValue(explicitEnv, "GJC_COORDINATOR_MCP_EVENT_WEBHOOK_TIMEOUT_MS") ?? "",
+		webhookEnvValue(explicitEnv, "VIB_COORDINATOR_MCP_EVENT_WEBHOOK_TIMEOUT_MS") ?? "",
 		10,
 	);
 	const timeoutMs =
@@ -148,7 +148,7 @@ export function parseEventWebhookConfig(explicitEnv?: NodeJS.ProcessEnv): EventW
 			? Math.min(timeoutRaw, MAX_EVENT_WEBHOOK_TIMEOUT_MS)
 			: DEFAULT_EVENT_WEBHOOK_TIMEOUT_MS;
 	const attemptsRaw = Number.parseInt(
-		webhookEnvValue(explicitEnv, "GJC_COORDINATOR_MCP_EVENT_WEBHOOK_MAX_ATTEMPTS") ?? "",
+		webhookEnvValue(explicitEnv, "VIB_COORDINATOR_MCP_EVENT_WEBHOOK_MAX_ATTEMPTS") ?? "",
 		10,
 	);
 	const maxAttempts =

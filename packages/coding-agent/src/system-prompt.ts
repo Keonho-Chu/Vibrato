@@ -3,8 +3,8 @@
  */
 
 import * as os from "node:os";
-import type { AgentTool } from "@gajae-code/agent-core";
-import { $env, getGpuCachePath, getProjectDir, hasFsCode, isEnoent, logger, prompt } from "@gajae-code/utils";
+import type { AgentTool } from "@vib-rato/agent-core";
+import { $env, getGpuCachePath, getProjectDir, hasFsCode, isEnoent, logger, prompt } from "@vib-rato/utils";
 import { $ } from "bun";
 import { contextFileCapability } from "./capability/context-file";
 import { systemPromptCapability } from "./capability/system-prompt";
@@ -256,10 +256,10 @@ export interface ProjectContextFilesResult {
 /**
  * Load all context files using the capability API.
  * Returns {path, content, depth} entries for all discovered context files.
- * Native user-global files (`~/.gjc/agent/AGENTS.md`) come first, then project
+ * Native user-global files (`~/.vib/agent/AGENTS.md`) come first, then project
  * files sorted by depth (descending) so files closer to cwd appear last/more
  * prominent. User-home files from foreign providers (`~/.claude/CLAUDE.md`,
- * `~/.codex/AGENTS.md`, …) stay excluded — only gjc's own user config applies.
+ * `~/.codex/AGENTS.md`, …) stay excluded — only vib's own user config applies.
  */
 export async function loadProjectContextFilesResult(
 	options: LoadContextFilesOptions = {},
@@ -364,7 +364,7 @@ export interface BuildSystemPromptOptions {
 	toolNames?: string[];
 	/** Text to append to system prompt. */
 	appendSystemPrompt?: string;
-	/** Rendered GJC plugin system-appendix blocks (lower-authority, appended last). */
+	/** Rendered Vibrato plugin system-appendix blocks (lower-authority, appended last). */
 	pluginAppendices?: string;
 	/** Repeat full tool descriptions in system prompt. Default: false */
 	repeatToolDescriptions?: boolean;
@@ -392,7 +392,7 @@ export interface BuildSystemPromptOptions {
 	workspaceTree?: WorkspaceTree | Promise<WorkspaceTree>;
 	/**
 	 * Render a trimmed role-agent base prompt for subagent sessions: omits the
-	 * workflow-surface/routing/self-awareness (`<gjc-runtime>`) and `<soul>` blocks
+	 * workflow-surface/routing/self-awareness (`<vib-runtime>`) and `<soul>` blocks
 	 * that only apply to the top-level interactive/print agent. Tool safety, repo
 	 * safety, and the completion contract are retained. Default: false.
 	 */

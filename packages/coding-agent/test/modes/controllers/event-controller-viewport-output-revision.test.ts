@@ -1,16 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from "bun:test";
-import type { AssistantMessage } from "@gajae-code/ai";
-import { resetSettingsForTest, Settings } from "@gajae-code/coding-agent/config/settings";
-import { EDIT_MODE_STRATEGIES, type PerFileDiffPreview } from "@gajae-code/coding-agent/edit";
-import { AssistantMessageComponent } from "@gajae-code/coding-agent/modes/components/assistant-message";
+import type { AssistantMessage } from "@vib-rato/ai";
+import { resetSettingsForTest, Settings } from "@vib-rato/coding-agent/config/settings";
+import { EDIT_MODE_STRATEGIES, type PerFileDiffPreview } from "@vib-rato/coding-agent/edit";
+import { AssistantMessageComponent } from "@vib-rato/coding-agent/modes/components/assistant-message";
 import type {
 	ToolExecutionComponent,
 	ToolExecutionHandle,
-} from "@gajae-code/coding-agent/modes/components/tool-execution";
-import { EventController } from "@gajae-code/coding-agent/modes/controllers/event-controller";
-import { initTheme } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { InteractiveModeContext } from "@gajae-code/coding-agent/modes/types";
-import { type Component, Container, Text } from "@gajae-code/tui";
+} from "@vib-rato/coding-agent/modes/components/tool-execution";
+import { EventController } from "@vib-rato/coding-agent/modes/controllers/event-controller";
+import { initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { InteractiveModeContext } from "@vib-rato/coding-agent/modes/types";
+import { type Component, Container, Text } from "@vib-rato/tui";
 
 function createContext(handle: ToolExecutionHandle): {
 	ctx: InteractiveModeContext;

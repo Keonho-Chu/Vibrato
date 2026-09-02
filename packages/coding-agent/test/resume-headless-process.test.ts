@@ -74,7 +74,7 @@ describe("headless bare resume", () => {
 		for (const versionFlag of ["--version", "-v"]) {
 			const version = await runHeadlessBareResume(["--resume", versionFlag]);
 			expect(version.exitCode).toBe(0);
-			expect(version.stdout).toMatch(/^gjc\/\d+\.\d+\.\d+\n$/);
+			expect(version.stdout).toMatch(/^vib\/\d+\.\d+\.\d+\n$/);
 			expect(version.stderr).toBe("");
 		}
 
@@ -85,7 +85,7 @@ describe("headless bare resume", () => {
 	}, 15_000);
 
 	it("preserves export routing and reports a missing export input", async () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-resume-export-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-resume-export-"));
 		const missing = path.join(root, "missing.jsonl");
 		const output = path.join(root, "export.html");
 		try {

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { getLanguageFromPath } from "@gajae-code/coding-agent/utils/lang-from-path";
+import { getLanguageFromPath } from "@vib-rato/coding-agent/utils/lang-from-path";
 
 describe("getLanguageFromPath", () => {
 	test("prioritizes special filenames over generic extensions", () => {

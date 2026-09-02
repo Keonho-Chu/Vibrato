@@ -7,7 +7,7 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { scheduler } from "node:timers/promises";
-import { $pickCredentialEnv, getAgentDir, isEnoent, sanitizeHeaderComponent } from "@gajae-code/utils";
+import { $pickCredentialEnv, getAgentDir, isEnoent, sanitizeHeaderComponent } from "@vib-rato/utils";
 import packageJson from "../../../package.json" with { type: "json" };
 import type { OAuthController, OAuthCredentials } from "./types";
 
@@ -46,7 +46,7 @@ interface TokenResponse {
  * whatever can set it can collect the user's Kimi credentials. `$env` merges the
  * caller's `cwd/.env`, so reading it there would let repository content redirect
  * the login flow. Resolve it the same way the credentials themselves are:
- * launching shell plus GJC/user-owned `.env` files, never the project `.env`.
+ * launching shell plus Vibrato/user-owned `.env` files, never the project `.env`.
  */
 function resolveOAuthHost(): string {
 	return $pickCredentialEnv("KIMI_CODE_OAUTH_HOST", "KIMI_OAUTH_HOST") || DEFAULT_OAUTH_HOST;

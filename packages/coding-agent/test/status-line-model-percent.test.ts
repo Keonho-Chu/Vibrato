@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
-import { ThinkingLevel } from "@gajae-code/agent-core";
+import { ThinkingLevel } from "@vib-rato/agent-core";
 import { resetSettingsForTest, Settings } from "../src/config/settings";
 import { renderSegment, type SegmentContext } from "../src/modes/components/status-line/segments";
 import { EMPTY_JOBS_SNAPSHOT } from "../src/modes/jobs-observer";

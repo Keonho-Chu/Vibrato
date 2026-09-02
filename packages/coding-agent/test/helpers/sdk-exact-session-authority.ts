@@ -30,7 +30,7 @@ export async function prepareExactSessionAuthority(
 	options: ExactSessionAuthorityOptions,
 ): Promise<ExactSessionAuthorityFixture> {
 	const endpointGeneration = options.endpointGeneration ?? 1;
-	const endpointFile = path.join(options.cwd, ".gjc", "state", "sdk", `${options.sessionId}.json`);
+	const endpointFile = path.join(options.cwd, ".vib", "state", "sdk", `${options.sessionId}.json`);
 	await fs.mkdir(path.dirname(endpointFile), { recursive: true });
 	const endpoint = {
 		sessionId: options.sessionId,
@@ -52,7 +52,7 @@ export async function publishExactSessionAuthority(
 	options: ExactSessionAuthorityOptions,
 	authority: ExactSessionAuthorityFixture,
 ): Promise<void> {
-	const stateRoot = path.join(options.cwd, ".gjc", "state");
+	const stateRoot = path.join(options.cwd, ".vib", "state");
 	const indexDirectory = path.join(options.agentDir, "sdk", "sessions");
 	await fs.mkdir(indexDirectory, { recursive: true });
 	// SessionIndex.append() stamps the OS incarnation on every host registration it

@@ -14,7 +14,7 @@ type IsolatedSuite = (typeof sdkProductionHostIsolatedSuites)[number];
 async function runSuite(suite: IsolatedSuite): Promise<number> {
 	const child = Bun.spawn([process.execPath, "test", suite.file, "-t", suite.pattern], {
 		cwd: codingAgentDir,
-		env: { ...process.env, GJC_CI_SDK_HOST_ISOLATED: "1" },
+		env: { ...process.env, VIB_CI_SDK_HOST_ISOLATED: "1" },
 		stdin: "inherit",
 		stdout: "inherit",
 		stderr: "inherit",

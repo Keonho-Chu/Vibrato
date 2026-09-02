@@ -4,37 +4,37 @@ import * as os from "node:os";
 import * as path from "node:path";
 import * as url from "node:url";
 import * as zlib from "node:zlib";
-import type { AgentToolContext } from "@gajae-code/agent-core";
-import { AsyncJobManager } from "@gajae-code/coding-agent/async";
-import { DEFAULT_BASH_INTERCEPTOR_RULES, Settings } from "@gajae-code/coding-agent/config/settings";
-import { EditTool } from "@gajae-code/coding-agent/edit";
-import { saveAgentBashOriginalArtifact } from "@gajae-code/coding-agent/session/agent-session";
-import { ArtifactManager } from "@gajae-code/coding-agent/session/artifacts";
-import type { FoldAdapter } from "@gajae-code/coding-agent/session/fold-coordinator";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
+import type { AgentToolContext } from "@vib-rato/agent-core";
+import { AsyncJobManager } from "@vib-rato/coding-agent/async";
+import { DEFAULT_BASH_INTERCEPTOR_RULES, Settings } from "@vib-rato/coding-agent/config/settings";
+import { EditTool } from "@vib-rato/coding-agent/edit";
+import { saveAgentBashOriginalArtifact } from "@vib-rato/coding-agent/session/agent-session";
+import { ArtifactManager } from "@vib-rato/coding-agent/session/artifacts";
+import type { FoldAdapter } from "@vib-rato/coding-agent/session/fold-coordinator";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
 import {
 	DEFAULT_ARTIFACT_MAX_BYTES,
 	OutputSink,
 	truncateHeadBytes,
-} from "@gajae-code/coding-agent/session/streaming-output";
-import type { ToolSession } from "@gajae-code/coding-agent/tools";
+} from "@vib-rato/coding-agent/session/streaming-output";
+import type { ToolSession } from "@vib-rato/coding-agent/tools";
 import {
 	type BashOriginalArtifactSaveResult,
 	BashTool,
 	saveBashOriginalArtifactForTests,
-} from "@gajae-code/coding-agent/tools/bash";
-import { FindTool } from "@gajae-code/coding-agent/tools/find";
-import { JobTool } from "@gajae-code/coding-agent/tools/job";
+} from "@vib-rato/coding-agent/tools/bash";
+import { FindTool } from "@vib-rato/coding-agent/tools/find";
+import { JobTool } from "@vib-rato/coding-agent/tools/job";
 import {
 	formatArtifactReference,
 	formatOutputNotice,
 	outputMeta,
 	wrapToolWithMetaNotice,
-} from "@gajae-code/coding-agent/tools/output-meta";
-import { ReadTool } from "@gajae-code/coding-agent/tools/read";
-import { DEFAULT_FILE_LIMIT, MULTI_FILE_PER_FILE_MATCHES, SearchTool } from "@gajae-code/coding-agent/tools/search";
-import { WriteTool } from "@gajae-code/coding-agent/tools/write";
-import { $which, Snowflake } from "@gajae-code/utils";
+} from "@vib-rato/coding-agent/tools/output-meta";
+import { ReadTool } from "@vib-rato/coding-agent/tools/read";
+import { DEFAULT_FILE_LIMIT, MULTI_FILE_PER_FILE_MATCHES, SearchTool } from "@vib-rato/coding-agent/tools/search";
+import { WriteTool } from "@vib-rato/coding-agent/tools/write";
+import { $which, Snowflake } from "@vib-rato/utils";
 import { unzipSync } from "fflate";
 
 // Helper to extract text from content blocks

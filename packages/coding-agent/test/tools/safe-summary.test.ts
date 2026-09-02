@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { summarizeEditToolActivity } from "@gajae-code/coding-agent/edit";
-import { summarizeBashToolActivity } from "@gajae-code/coding-agent/tools/bash";
-import { summarizeReadToolActivity } from "@gajae-code/coding-agent/tools/read";
+import { summarizeEditToolActivity } from "@vib-rato/coding-agent/edit";
+import { summarizeBashToolActivity } from "@vib-rato/coding-agent/tools/bash";
+import { summarizeReadToolActivity } from "@vib-rato/coding-agent/tools/read";
 
 describe("built-in tool safe summaries", () => {
 	test("bash projects only the executable and output size", () => {

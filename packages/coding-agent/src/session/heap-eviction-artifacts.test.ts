@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { ToolResultMessage } from "@gajae-code/ai/core";
+import type { ToolResultMessage } from "@vib-rato/ai/core";
 import { ArtifactProtocolHandler } from "../internal-urls/artifact-protocol";
 import { parseInternalUrl } from "../internal-urls/parse";
 import type { EvictedToolOutputHandle } from "../tools/output-meta";
@@ -60,7 +60,7 @@ function handle(id: string, version: 1 | 2 = 1): EvictedToolOutputHandle {
 }
 
 async function withTempDir<T>(fn: (dir: string) => Promise<T>): Promise<T> {
-	const dir = await mkdtemp(path.join(os.tmpdir(), "gjc-w4-artifacts-"));
+	const dir = await mkdtemp(path.join(os.tmpdir(), "vib-w4-artifacts-"));
 	try {
 		return await fn(dir);
 	} finally {

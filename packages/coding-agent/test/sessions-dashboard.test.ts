@@ -6,12 +6,12 @@ import {
 	dashboardSessions,
 	SessionsDashboardComponent,
 	sessionLivenessFromPresence,
-} from "@gajae-code/coding-agent/modes/components/sessions-dashboard";
-import { SelectorController } from "@gajae-code/coding-agent/modes/controllers/selector-controller";
-import { initTheme } from "@gajae-code/coding-agent/modes/theme/theme";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { MemorySessionStorage, type SessionStorageWriter } from "@gajae-code/coding-agent/session/session-storage";
-import { getAgentDir, setAgentDir } from "@gajae-code/utils";
+} from "@vib-rato/coding-agent/modes/components/sessions-dashboard";
+import { SelectorController } from "@vib-rato/coding-agent/modes/controllers/selector-controller";
+import { initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { MemorySessionStorage, type SessionStorageWriter } from "@vib-rato/coding-agent/session/session-storage";
+import { getAgentDir, setAgentDir } from "@vib-rato/utils";
 
 initTheme();
 class WriteTrackingStorage extends MemorySessionStorage {

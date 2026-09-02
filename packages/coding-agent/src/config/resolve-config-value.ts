@@ -4,13 +4,13 @@
  * Note: command execution is async to avoid blocking the TUI.
  */
 
-import type { executeShell as executeShellFn } from "@gajae-code/natives";
+import type { executeShell as executeShellFn } from "@vib-rato/natives";
 
 let executeShellLoad: Promise<typeof executeShellFn> | undefined;
 
 async function executeShellNative(): Promise<typeof executeShellFn> {
 	executeShellLoad ??= Promise.resolve(
-		(require("@gajae-code/natives") as { executeShell: typeof executeShellFn }).executeShell,
+		(require("@vib-rato/natives") as { executeShell: typeof executeShellFn }).executeShell,
 	);
 	return await executeShellLoad;
 }

@@ -1,5 +1,5 @@
 import * as path from "node:path";
-import type { AuthStorage } from "@gajae-code/ai/core";
+import type { AuthStorage } from "@vib-rato/ai/core";
 import { ModelRegistry } from "../../config/model-registry";
 import {
 	formatModelSelectorValue,

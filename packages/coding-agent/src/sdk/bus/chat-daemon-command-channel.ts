@@ -39,7 +39,7 @@
 import * as crypto from "node:crypto";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { isEnoent } from "@gajae-code/utils";
+import { isEnoent } from "@vib-rato/utils";
 import { type ChatDaemonKind, chatDaemonPaths } from "./chat-daemon-control";
 
 export const CHAT_DAEMON_COMMAND_VERSION = 1;

@@ -1,9 +1,9 @@
 import { describe, expect, it } from "bun:test";
-import { type Context, getBundledModel, type Model, validateToolArguments } from "@gajae-code/ai";
-import { streamOpenAICompletions } from "@gajae-code/ai/providers/openai-completions";
-import { isJsonSchemaValueValid, toolWireSchema } from "@gajae-code/ai/utils/schema";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { createTools, type ToolSession } from "@gajae-code/coding-agent/tools";
+import { type Context, getBundledModel, type Model, validateToolArguments } from "@vib-rato/ai";
+import { streamOpenAICompletions } from "@vib-rato/ai/providers/openai-completions";
+import { isJsonSchemaValueValid, toolWireSchema } from "@vib-rato/ai/utils/schema";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { createTools, type ToolSession } from "@vib-rato/coding-agent/tools";
 
 type JsonObject = Record<string, unknown>;
 

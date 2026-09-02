@@ -147,7 +147,7 @@ export function formatIdentityHeader(frame: {
 	sessionId?: unknown;
 	title?: unknown;
 }): string {
-	const title = str(frame.title) ?? "GJC session";
+	const title = str(frame.title) ?? "Vibrato session";
 	const bullets = [
 		`• repo: ${code(str(frame.repo) ?? "?")}`,
 		`• branch: ${code(str(frame.branch) ?? "?")}`,

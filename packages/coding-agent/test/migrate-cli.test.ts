@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { setAgentDir } from "@gajae-code/utils";
+import { setAgentDir } from "@vib-rato/utils";
 import { MigrateArgsError, resolveSources, runMigrate } from "../src/cli/migrate-cli";
 
 let home: string;
@@ -63,8 +63,8 @@ describe("runMigrate", () => {
 		});
 		expect(report.dryRun).toBe(true);
 		expect(report.actions.length).toBeGreaterThan(0);
-		expect(await exists(path.join(cwd, ".gjc", "mcp.json"))).toBe(false);
-		expect(await exists(path.join(cwd, ".gjc", "skills"))).toBe(false);
+		expect(await exists(path.join(cwd, ".vib", "mcp.json"))).toBe(false);
+		expect(await exists(path.join(cwd, ".vib", "skills"))).toBe(false);
 	});
 
 	test("--json report carries taxonomy counts by total/type/source", async () => {
@@ -83,7 +83,7 @@ describe("runMigrate", () => {
 		expect(report.summary.bySource).toHaveProperty("claude-code");
 	});
 
-	test("--project writes under cwd/.gjc", async () => {
+	test("--project writes under cwd/.vib", async () => {
 		await runMigrate({
 			from: ["claude-code"],
 			project: true,
@@ -93,8 +93,8 @@ describe("runMigrate", () => {
 			homeDir: home,
 			cwd,
 		});
-		expect(await exists(path.join(cwd, ".gjc", "mcp.json"))).toBe(true);
-		expect(await exists(path.join(cwd, ".gjc", "skills", "alpha", "SKILL.md"))).toBe(true);
+		expect(await exists(path.join(cwd, ".vib", "mcp.json"))).toBe(true);
+		expect(await exists(path.join(cwd, ".vib", "skills", "alpha", "SKILL.md"))).toBe(true);
 	});
 
 	test("user scope writes under the agent dir", async () => {

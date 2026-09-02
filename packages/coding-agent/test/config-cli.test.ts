@@ -2,19 +2,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { getConfigRootDir, setAgentDir } from "@gajae-code/utils";
+import { getConfigRootDir, setAgentDir } from "@vib-rato/utils";
 import { YAML } from "bun";
 import { inspectConfigFile, runConfigCommand } from "../src/cli/config-cli";
 import { FileLockTestHooks } from "../src/config/file-lock";
 import { resetSettingsForTest, settings } from "../src/config/settings";
 
 let testAgentDir = "";
-const originalAgentDir = process.env.GJC_CODING_AGENT_DIR;
+const originalAgentDir = process.env.VIB_CODING_AGENT_DIR;
 const fallbackAgentDir = path.join(getConfigRootDir(), "agent");
 
 beforeEach(async () => {
 	resetSettingsForTest();
-	testAgentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-config-cli-"));
+	testAgentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-config-cli-"));
 	setAgentDir(testAgentDir);
 });
 
@@ -25,7 +25,7 @@ afterEach(async () => {
 		setAgentDir(originalAgentDir);
 	} else {
 		setAgentDir(fallbackAgentDir);
-		delete process.env.GJC_CODING_AGENT_DIR;
+		delete process.env.VIB_CODING_AGENT_DIR;
 	}
 	await fs.rm(testAgentDir, { recursive: true, force: true });
 });
@@ -113,16 +113,16 @@ describe("config CLI schema coverage", () => {
 
 		await runConfigCommand({
 			action: "set",
-			key: "gjc.deepInterview.ambiguityThreshold",
+			key: "vib.deepInterview.ambiguityThreshold",
 			value: "0.2",
 			flags: { json: true },
 		});
-		await runConfigCommand({ action: "get", key: "gjc.deepInterview.ambiguityThreshold", flags: { json: true } });
+		await runConfigCommand({ action: "get", key: "vib.deepInterview.ambiguityThreshold", flags: { json: true } });
 
 		const payload = logSpy.mock.calls.at(-1)?.[0];
 		expect(typeof payload).toBe("string");
 		expect(JSON.parse(String(payload))).toMatchObject({
-			key: "gjc.deepInterview.ambiguityThreshold",
+			key: "vib.deepInterview.ambiguityThreshold",
 			type: "number",
 			value: 0.2,
 		});

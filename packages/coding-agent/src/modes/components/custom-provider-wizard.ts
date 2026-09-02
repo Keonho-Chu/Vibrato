@@ -1,4 +1,4 @@
-import { Container, Input, matchesKey, SecretInput, Spacer, Text, TruncatedText } from "@gajae-code/tui";
+import { Container, Input, matchesKey, SecretInput, Spacer, Text, TruncatedText } from "@vib-rato/tui";
 import type { ProviderCompatibility, ProviderSetupInput } from "../../setup/provider-onboarding";
 import { theme } from "../theme/theme";
 import { matchesAppInterrupt } from "../utils/keybinding-matchers";
@@ -27,6 +27,38 @@ interface WizardState {
 
 export type CustomProviderWizardSubmit = ProviderSetupInput;
 
+/** Endpoint presets that collapse the wizard to "base URL + API key". */
+export type CustomProviderWizardPreset = "vllm" | "sglang";
+
+interface WizardPresetSpec {
+	providerId: string;
+	title: string;
+	subtitle: string;
+	defaultBaseUrl: string;
+	/** Token stored when the user leaves the key empty for an unauthenticated local server. */
+	localToken?: string;
+}
+
+const WIZARD_PRESETS: Record<CustomProviderWizardPreset, WizardPresetSpec> = {
+	vllm: {
+		providerId: "vllm",
+		title: "Connect a vLLM endpoint",
+		subtitle: "  Enter the vLLM server URL and API key. Models are discovered from the server.",
+		defaultBaseUrl: "http://127.0.0.1:8000/v1",
+		localToken: "vllm-local",
+	},
+	sglang: {
+		providerId: "sglang",
+		title: "Connect an SGLang endpoint",
+		subtitle: "  Enter the SGLang server URL and API key. Models are discovered from the server.",
+		defaultBaseUrl: "http://127.0.0.1:30000/v1",
+	},
+};
+
+export interface CustomProviderWizardOptions {
+	preset?: CustomProviderWizardPreset;
+}
+
 export class CustomProviderWizardComponent extends Container {
 	#contentContainer: Container;
 	#input: Input | SecretInput | null = null;
@@ -45,22 +77,42 @@ export class CustomProviderWizardComponent extends Container {
 	#onSubmit: (input: CustomProviderWizardSubmit) => void;
 	#onCancel: () => void;
 	#onRender: () => void;
+	#preset: WizardPresetSpec | null = null;
+	#presetId: CustomProviderWizardPreset | null = null;
 
 	constructor(
 		onSubmit: (input: CustomProviderWizardSubmit) => void,
 		onCancel: () => void,
 		onRender: () => void = () => {},
+		options: CustomProviderWizardOptions = {},
 	) {
 		super();
 		this.#onSubmit = onSubmit;
 		this.#onCancel = onCancel;
 		this.#onRender = onRender;
+		if (options.preset) {
+			this.#presetId = options.preset;
+			this.#preset = WIZARD_PRESETS[options.preset];
+			this.#state = {
+				compatibility: "openai",
+				providerId: this.#preset.providerId,
+				baseUrl: this.#preset.defaultBaseUrl,
+				credentialSource: "literal",
+				credential: "",
+				models: "",
+			};
+			this.#step = "base-url";
+		}
 
 		this.addChild(new DynamicBorder());
 		this.addChild(new Spacer(1));
-		this.addChild(new TruncatedText(theme.bold("Add custom provider")));
+		this.addChild(new TruncatedText(theme.bold(this.#preset?.title ?? "Add custom provider")));
 		this.addChild(
-			new TruncatedText(theme.fg("muted", "  Configure an OpenAI- or Anthropic-compatible API provider."), 0, 0),
+			new TruncatedText(
+				theme.fg("muted", this.#preset?.subtitle ?? "  Configure an OpenAI- or Anthropic-compatible API provider."),
+				0,
+				0,
+			),
 		);
 		this.addChild(new Spacer(1));
 		this.#contentContainer = new Container();
@@ -82,7 +134,7 @@ export class CustomProviderWizardComponent extends Container {
 
 	handleInput(keyData: string): void {
 		if (matchesAppInterrupt(keyData)) {
-			if (this.#step === "compatibility") {
+			if (this.#step === "compatibility" || (this.#preset && this.#step === "base-url")) {
 				this.#clearLiteralCredential();
 				this.#onCancel();
 				return;
@@ -134,10 +186,12 @@ export class CustomProviderWizardComponent extends Container {
 				break;
 			case "base-url":
 				this.#renderInputStep(
-					"Step 3: Base URL",
-					"Enter the API base URL:",
+					this.#preset ? "Step 1: Server URL" : "Step 3: Base URL",
+					this.#preset ? `Enter the ${this.#preset.providerId} server base URL:` : "Enter the API base URL:",
 					this.#state.baseUrl,
-					"e.g. https://api.example.com/v1",
+					this.#preset
+						? "http:// is accepted for localhost and private-network hosts; use https:// elsewhere."
+						: "e.g. https://api.example.com/v1",
 				);
 				break;
 			case "credential-source":
@@ -205,16 +259,19 @@ export class CustomProviderWizardComponent extends Container {
 	}
 
 	#renderSecretInputStep(): void {
-		this.#contentContainer.addChild(new Text(theme.fg("accent", "Step 5: Credential")));
+		const preset = this.#preset;
+		this.#contentContainer.addChild(new Text(theme.fg("accent", preset ? "Step 2: API key" : "Step 5: Credential")));
 		this.#contentContainer.addChild(new Spacer(1));
 		this.#contentContainer.addChild(new Text("Paste the API key:", 0, 0));
 		this.#contentContainer.addChild(new Spacer(1));
 		const input = new SecretInput();
 		input.onSubmit = secret => {
 			const credential = secret.consume().trim();
-			if (!credential) return;
-			this.#state.credential = credential;
-			this.#step = "models";
+			if (!credential && !preset?.localToken) return;
+			this.#state.credential = credential || (preset?.localToken ?? "");
+			this.#step = preset ? "confirm" : "models";
+			this.#selectedIndex = 0;
+			this.#lastSubmitError = null;
 			this.#renderStep();
 			this.#onRender();
 		};
@@ -222,6 +279,7 @@ export class CustomProviderWizardComponent extends Container {
 		this.#contentContainer.addChild(input);
 		this.#contentContainer.addChild(new Spacer(1));
 		this.#addHelp("The key will be stored securely and redacted in output.");
+		if (preset?.localToken) this.#addHelp("Leave empty for an unauthenticated local server.");
 		this.#addHelp("[Enter to continue, Esc to go back]");
 	}
 
@@ -237,14 +295,16 @@ export class CustomProviderWizardComponent extends Container {
 		this.#contentContainer.addChild(new Text(`Compatibility: ${this.#state.compatibility}`, 0, 0));
 		this.#contentContainer.addChild(new Text(`Provider: ${this.#state.providerId}`, 0, 0));
 		this.#contentContainer.addChild(new Text(`Base URL: ${this.#state.baseUrl}`, 0, 0));
+		const credentialLabel =
+			this.#state.credentialSource === "env"
+				? this.#state.credential
+				: this.#preset?.localToken && this.#state.credential === this.#preset.localToken
+					? "none (unauthenticated local server)"
+					: "pasted API key";
+		this.#contentContainer.addChild(new Text(`Credential: ${credentialLabel}`, 0, 0));
 		this.#contentContainer.addChild(
-			new Text(
-				`Credential: ${this.#state.credentialSource === "env" ? this.#state.credential : "pasted API key"}`,
-				0,
-				0,
-			),
+			new Text(`Models: ${this.#preset ? "discovered from the server" : this.#state.models}`, 0, 0),
 		);
-		this.#contentContainer.addChild(new Text(`Models: ${this.#state.models}`, 0, 0));
 		this.#contentContainer.addChild(new Spacer(1));
 		this.#addOption(0, force ? "Replace existing provider" : "Add provider");
 		this.#addOption(1, "Go back");
@@ -270,7 +330,7 @@ export class CustomProviderWizardComponent extends Container {
 			this.#step = "base-url";
 		} else if (this.#step === "base-url") {
 			this.#state.baseUrl = value;
-			this.#step = "credential-source";
+			this.#step = this.#preset ? "credential" : "credential-source";
 			this.#selectedIndex = 0;
 		} else if (this.#step === "credential") {
 			this.#state.credential = value;
@@ -329,6 +389,14 @@ export class CustomProviderWizardComponent extends Container {
 	}
 
 	#buildInput(force: boolean): CustomProviderWizardSubmit {
+		if (this.#presetId) {
+			return {
+				preset: this.#presetId,
+				baseUrl: this.#state.baseUrl,
+				apiKey: this.#state.credential,
+				force,
+			};
+		}
 		const input = {
 			compatibility: this.#state.compatibility,
 			providerId: this.#state.providerId,
@@ -367,6 +435,14 @@ export class CustomProviderWizardComponent extends Container {
 	}
 
 	#goBack(): void {
+		if (this.#preset) {
+			if (this.#step === "credential") this.#step = "base-url";
+			else if (this.#step === "confirm" || this.#step === "force-confirm") this.#step = "credential";
+			this.#selectedIndex = 0;
+			this.#renderStep();
+			this.#onRender();
+			return;
+		}
 		if (this.#step === "provider-id") this.#step = "compatibility";
 		else if (this.#step === "base-url") this.#step = "provider-id";
 		else if (this.#step === "credential-source") this.#step = "base-url";

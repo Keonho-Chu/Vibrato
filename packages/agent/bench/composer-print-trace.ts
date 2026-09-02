@@ -15,7 +15,7 @@ export async function readSessionJsonl(sessionFile: string): Promise<JsonObject[
 		.map(line => JSON.parse(line) as JsonObject);
 }
 
-/** Convert persisted GJC session JSONL into classifier events (tool_call / tool_execution_end / scenario_result). */
+/** Convert persisted Vibrato session JSONL into classifier events (tool_call / tool_execution_end / scenario_result). */
 export function sessionLinesToTraceEvents(lines: JsonObject[], exitCode: number): JsonObject[] {
 	const events: JsonObject[] = [];
 	for (const line of lines) {

@@ -1,17 +1,17 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as path from "node:path";
-import { Agent } from "@gajae-code/agent-core";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { resetSettingsForTest, Settings } from "@gajae-code/coding-agent/config/settings";
-import type { ExtensionRunner } from "@gajae-code/coding-agent/extensibility/extensions";
-import { GoalTool } from "@gajae-code/coding-agent/goals/tools/goal-tool";
-import { InteractiveMode } from "@gajae-code/coding-agent/modes/interactive-mode";
-import { initTheme } from "@gajae-code/coding-agent/modes/theme/theme";
-import { AgentSession } from "@gajae-code/coding-agent/session/agent-session";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { createTools, type Tool, type ToolSession } from "@gajae-code/coding-agent/tools";
-import { TempDir } from "@gajae-code/utils";
+import { Agent } from "@vib-rato/agent-core";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { resetSettingsForTest, Settings } from "@vib-rato/coding-agent/config/settings";
+import type { ExtensionRunner } from "@vib-rato/coding-agent/extensibility/extensions";
+import { GoalTool } from "@vib-rato/coding-agent/goals/tools/goal-tool";
+import { InteractiveMode } from "@vib-rato/coding-agent/modes/interactive-mode";
+import { initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
+import { AgentSession } from "@vib-rato/coding-agent/session/agent-session";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { createTools, type Tool, type ToolSession } from "@vib-rato/coding-agent/tools";
+import { TempDir } from "@vib-rato/utils";
 
 function createToolSession(cwd: string, settings: Settings, overrides: Partial<ToolSession> = {}): ToolSession {
 	return {
@@ -224,14 +224,14 @@ describe("InteractiveMode goal mode integration", () => {
 		expect(await toolNamesFor(harness)).toContain("goal");
 	});
 
-	it("arms the active goal tool after gjc ultragoal create-goals succeeds", async () => {
+	it("arms the active goal tool after vib ultragoal create-goals succeeds", async () => {
 		const cliPath = path.resolve(import.meta.dir, "..", "..", "src", "cli.ts");
 		const result = await harness.session.executeBash(
 			`bun ${JSON.stringify(cliPath)} ultragoal create-goals --brief "Complete ultragoal regression"`,
 		);
 
 		expect(result.exitCode).toBe(0);
-		expect(harness.session.getGoalModeState()?.goal.objective).toContain(".gjc/ultragoal/goals.json");
+		expect(harness.session.getGoalModeState()?.goal.objective).toContain(".vib/ultragoal/goals.json");
 		expect(harness.session.getActiveToolNames()).toContain("goal");
 	}, 15_000);
 

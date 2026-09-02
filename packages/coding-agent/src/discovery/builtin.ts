@@ -1,10 +1,10 @@
 /**
- * Builtin Provider (.gjc)
+ * Builtin Provider (.vib)
  *
- * Primary provider for GJC native configs. Supports all capabilities.
+ * Primary provider for Vibrato native configs. Supports all capabilities.
  */
 import * as path from "node:path";
-import { logger, parseFrontmatter, tryParseJson } from "@gajae-code/utils";
+import { logger, parseFrontmatter, tryParseJson } from "@vib-rato/utils";
 import { YAML } from "bun";
 import { registerProvider } from "../capability";
 import { type ContextFile, contextFileCapability } from "../capability/context-file";
@@ -35,8 +35,8 @@ import {
 } from "./helpers";
 
 const PROVIDER_ID = "native";
-const DISPLAY_NAME = "GJC";
-const DESCRIPTION = "Native GJC configuration from ~/.gjc and .gjc/";
+const DISPLAY_NAME = "Vibrato";
+const DESCRIPTION = "Native Vibrato configuration from ~/.vib and .vib/";
 const PRIORITY = 100;
 
 const PATHS = SOURCE_PATHS.native;
@@ -46,12 +46,12 @@ function getUserAgentDirs(): string[] {
 }
 
 /**
- * GJC's user-scope config directory.
+ * Vibrato's user-scope config directory.
  *
- * Home-relative `<home>/.gjc/agent` is only its default location: an agent
- * directory profile (`--agent-dir`, `GJC_CODING_AGENT_DIR`, `setAgentDir()`)
+ * Home-relative `<home>/.vib/agent` is only its default location: an agent
+ * directory profile (`--agent-dir`, `VIB_CODING_AGENT_DIR`, `setAgentDir()`)
  * moves the whole user scope, and the writers (`getMCPConfigPath("user")` and
- * everything `gjc mcp add` reaches) already follow it. Resolving from the home
+ * everything `vib mcp add` reaches) already follow it. Resolving from the home
  * default instead would hide a profile's own registrations and load the default
  * profile's servers into it.
  */
@@ -320,7 +320,7 @@ registerProvider<SystemPrompt>(systemPromptCapability.id, {
 
 // Skills
 async function loadSkills(ctx: LoadContext): Promise<LoadResult<Skill>> {
-	// Walk up from cwd finding .gjc/skills/ in ancestors (closest first)
+	// Walk up from cwd finding .vib/skills/ in ancestors (closest first)
 	const ancestors = getAncestorDirs(ctx.cwd, ctx.repoRoot ?? ctx.home);
 	const projectScans = ancestors.flatMap(({ dir }) =>
 		getProjectConfigDirs().map(projectConfigDir =>
@@ -410,8 +410,8 @@ async function loadRules(ctx: LoadContext): Promise<LoadResult<Rule>> {
 	// Top-level RULES.md is a sticky always-apply rule. The context-file
 	// discovery contract treats it as the file "re-injected near the current
 	// turn so they keep hold across long conversations".
-	// User scope:    ~/.gjc/agent/RULES.md
-	// Project scope: nearest .gjc/RULES.md walking up from cwd to repoRoot
+	// User scope:    ~/.vib/agent/RULES.md
+	// Project scope: nearest .vib/RULES.md walking up from cwd to repoRoot
 	const userRulesFile = path.join(resolveUserAgentDir(ctx), "RULES.md");
 	const userRule = await loadStickyRulesFile(userRulesFile, "user");
 	if (userRule) items.push(userRule);
@@ -961,7 +961,7 @@ async function loadContextFiles(ctx: LoadContext): Promise<LoadResult<ContextFil
 registerProvider<ContextFile>(contextFileCapability.id, {
 	id: PROVIDER_ID,
 	displayName: DISPLAY_NAME,
-	description: "Load AGENTS.md from .gjc/ directories",
+	description: "Load AGENTS.md from .vib/ directories",
 	priority: PRIORITY,
 	load: loadContextFiles,
 });

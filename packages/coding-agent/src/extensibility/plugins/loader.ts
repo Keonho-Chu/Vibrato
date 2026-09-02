@@ -6,7 +6,7 @@
  */
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { getPluginsLockfile, getPluginsNodeModules, getPluginsPackageJson, isEnoent } from "@gajae-code/utils";
+import { getPluginsLockfile, getPluginsNodeModules, getPluginsPackageJson, isEnoent } from "@vib-rato/utils";
 import { getConfigDirPaths } from "../../config";
 import { installLegacyPiSpecifierShim } from "./legacy-pi-compat";
 import type { InstalledPlugin, PluginManifest, PluginRuntimeConfig, ProjectPluginOverrides } from "./types";
@@ -31,7 +31,7 @@ async function loadRuntimeConfig(): Promise<PluginRuntimeConfig> {
 }
 
 /**
- * Load project-local plugin overrides (checks .gjc and .pi directories).
+ * Load project-local plugin overrides (checks .vib and .pi directories).
  */
 async function loadProjectOverrides(cwd: string): Promise<ProjectPluginOverrides> {
 	for (const overridesPath of getConfigDirPaths("plugin-overrides.json", { user: false, cwd })) {
@@ -69,7 +69,7 @@ export async function getEnabledPlugins(cwd: string): Promise<InstalledPlugin[]>
 	const plugins: InstalledPlugin[] = [];
 	for (const [name] of Object.entries(deps)) {
 		const pluginPkgPath = path.join(nodeModulesPath, name, "package.json");
-		let pluginPkg: { version: string; gjc?: PluginManifest; pi?: PluginManifest };
+		let pluginPkg: { version: string; vib?: PluginManifest; pi?: PluginManifest };
 		try {
 			pluginPkg = await Bun.file(pluginPkgPath).json();
 		} catch (err) {
@@ -77,10 +77,10 @@ export async function getEnabledPlugins(cwd: string): Promise<InstalledPlugin[]>
 			throw err;
 		}
 
-		const manifest: PluginManifest | undefined = pluginPkg.gjc || pluginPkg.pi;
+		const manifest: PluginManifest | undefined = pluginPkg.vib || pluginPkg.pi;
 
 		if (!manifest) {
-			// Not an gjc plugin, skip
+			// Not an vib plugin, skip
 			continue;
 		}
 

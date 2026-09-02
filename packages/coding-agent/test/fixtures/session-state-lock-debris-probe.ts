@@ -7,19 +7,19 @@ import {
 	SessionStateLockUnavailableError,
 	setSessionStateLockNativeBindings,
 	withSessionStateFileLock,
-} from "../../src/gjc-runtime/session-state-lock";
+} from "../../src/vib-runtime/session-state-lock";
 import { exactIdentityNativeBindings } from "../helpers/exact-identity-natives";
 
 const scenario = process.argv[2];
 if (!scenario) throw new Error("scenario is required");
 
-const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-session-lock-debris-probe-"));
+const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-session-lock-debris-probe-"));
 const stateFile = path.join(root, "runtime-state.json");
 const lockFile = `${stateFile}.lock`;
 const DEAD_PID = 2 ** 22 - 1;
 let attempts = 0;
 
-if (process.env.GJC_SESSION_LOCK_PROBE_NATIVE !== "1")
+if (process.env.VIB_SESSION_LOCK_PROBE_NATIVE !== "1")
 	setSessionStateLockNativeBindings(() => exactIdentityNativeBindings);
 SessionStateLockTestHooks.ownerHostId = () => "probe-local-host";
 SessionStateLockTestHooks.legacyOwnerHostId = () => "probe-legacy-host";

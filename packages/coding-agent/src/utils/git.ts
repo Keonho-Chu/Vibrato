@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { $which, hasFsCode, isEnoent, Snowflake } from "@gajae-code/utils";
+import { $which, hasFsCode, isEnoent, Snowflake } from "@vib-rato/utils";
 import {
 	parseDiffHunks as parseCommitDiffHunks,
 	parseFileDiffs,
@@ -365,7 +365,7 @@ function buildApplyArgs(patchPath: string, options: PatchOptions): string[] {
 }
 
 async function writeTempPatch(content: string): Promise<string> {
-	const tempPath = path.join(os.tmpdir(), `gjc-git-patch-${Snowflake.next()}.patch`);
+	const tempPath = path.join(os.tmpdir(), `vib-git-patch-${Snowflake.next()}.patch`);
 	await Bun.write(tempPath, content);
 	return tempPath;
 }

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "bun:test";
-import { streamOpenAICompletions } from "@gajae-code/ai/providers/openai-completions";
-import type { Context, Model, ToolCall } from "@gajae-code/ai/types";
+import { streamOpenAICompletions } from "@vib-rato/ai/providers/openai-completions";
+import type { Context, Model, ToolCall } from "@vib-rato/ai/types";
 
 // finish_reason "length" can land mid-tool-call. The provider must flag the open
 // call's truncated arguments so the agent loop rejects it rather than executing

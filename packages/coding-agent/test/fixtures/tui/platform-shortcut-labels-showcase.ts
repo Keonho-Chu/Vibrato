@@ -1,4 +1,4 @@
-import { visibleWidth } from "@gajae-code/tui";
+import { visibleWidth } from "@vib-rato/tui";
 import chalk from "chalk";
 import { KeybindingsManager, type KeyDisplayContext } from "../../../src/config/keybindings";
 import { Settings } from "../../../src/config/settings";

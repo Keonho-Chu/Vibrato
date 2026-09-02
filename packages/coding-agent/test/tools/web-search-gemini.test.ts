@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
-import type { AuthStorage } from "@gajae-code/ai";
-import { hookFetch } from "@gajae-code/utils";
+import type { AuthStorage } from "@vib-rato/ai";
+import { hookFetch } from "@vib-rato/utils";
 import { searchGemini } from "../../src/web/search/providers/gemini";
 
 const SSE_RESPONSE =

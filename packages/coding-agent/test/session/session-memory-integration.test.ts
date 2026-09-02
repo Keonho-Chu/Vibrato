@@ -3,7 +3,7 @@ import * as crypto from "node:crypto";
 import { createHash } from "node:crypto";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { getBlobsDir, getResidentCacheRootDir, getSidecarCacheRootDir, logger, TempDir } from "@gajae-code/utils";
+import { getBlobsDir, getResidentCacheRootDir, getSidecarCacheRootDir, logger, TempDir } from "@vib-rato/utils";
 import {
 	ManagedSessionDescendantStore,
 	managedDirectoryRoot,
@@ -187,7 +187,7 @@ describe("SessionManager cold sidecar integration", () => {
 			`${JSON.stringify({ type: "session", version: 5, id: "large-session", timestamp: now, cwd: tempDir.path() })}\n`,
 		);
 		let priorId: string | null = null;
-		const soak = process.env.GJC_SESSION_MEMORY_SOAK === "1";
+		const soak = process.env.VIB_SESSION_MEMORY_SOAK === "1";
 		const entryCount = soak ? 1_000_000 : 120_000;
 		const firstId = soak ? "e0" : "entry-00000000";
 		for (let index = 0; index < entryCount; index++) {
@@ -1242,7 +1242,7 @@ it("constructs managed cold forks through bounded authority-bound publication", 
 	const tempDir = TempDir.createSync("@pi-session-managed-bounded-fork-");
 	const storage = new FileSessionStorage();
 	const cwd = tempDir.path();
-	const agentDir = path.join(cwd, ".gjc");
+	const agentDir = path.join(cwd, ".vib");
 	const destination = SessionManager.managedDestination(cwd, agentDir, storage);
 	const source = SessionManager.create(cwd, destination, storage);
 	let forked: SessionManager | undefined;
@@ -2257,7 +2257,7 @@ it("rejects malformed auto-small managed resumes through the strict eager path",
 	const tempDir = TempDir.createSync("@pi-session-auto-small-");
 	const storage = new FileSessionStorage();
 	const cwd = tempDir.path();
-	const agentDir = path.join(cwd, ".gjc");
+	const agentDir = path.join(cwd, ".vib");
 	const destination = SessionManager.managedDestination(cwd, agentDir, storage);
 	const sessionFile = path.join(agentDir, "sessions", "auto-small-malformed.jsonl");
 	storage.writeTextSync(
@@ -2536,7 +2536,7 @@ it("matches eager replay-metadata sanitation on bounded first open and exact reo
 	expect(JSON.stringify(coldExportEntries)).not.toContain("stale-signature");
 	expect(JSON.stringify(coldExportEntries)).not.toContain("openaiResponsesHistory");
 	expect(JSON.stringify(coldExportEntries)).not.toContain(missingImageRef);
-	expect(JSON.stringify(coldExportEntries)).not.toContain("__gjcResidentBlob");
+	expect(JSON.stringify(coldExportEntries)).not.toContain("__vibResidentBlob");
 	expect(JSON.stringify(coldExportEntries)).toContain("[Session resident imageData blob missing:");
 	expect(enabled.buildSessionContext()).toEqual(expected);
 	expect(JSON.stringify(enabled.buildSessionContext())).not.toContain("stale-signature");

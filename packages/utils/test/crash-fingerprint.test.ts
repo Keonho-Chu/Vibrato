@@ -8,7 +8,7 @@ import {
 	parseCrashRecordMarker,
 } from "../src/crash-fingerprint";
 
-const OPTIONS = { installRoot: "/opt/gjc", homeDir: "/home/alice" };
+const OPTIONS = { installRoot: "/opt/vib", homeDir: "/home/alice" };
 
 function fingerprint(input: { name: string; message: string; stack: string }): string {
 	return computeCrashFingerprint(input, OPTIONS).fingerprint;
@@ -17,15 +17,15 @@ function fingerprint(input: { name: string; message: string; stack: string }): s
 describe("normalizeCrashMessage", () => {
 	it("collapses absolute paths, home prefixes and high-entropy ids", () => {
 		const normalized = normalizeCrashMessage(
-			"ENOSPC writing /var/lib/gjc/state.db for 550e8400-e29b-41d4-a716-446655440000 (pid 2557873, sha deadbeefcafe)",
+			"ENOSPC writing /var/lib/vib/state.db for 550e8400-e29b-41d4-a716-446655440000 (pid 2557873, sha deadbeefcafe)",
 			OPTIONS,
 		);
 		expect(normalized).toBe("ENOSPC writing <path> for <uuid> (pid <num>, sha <hex>)");
 	});
 
 	it("maps a home-rooted path to <home> and a foreign path to <path>", () => {
-		expect(normalizeCrashMessage("read /home/alice/.gjc/agent/x.log", OPTIONS)).toBe("read <home>");
-		expect(normalizeCrashMessage("read /home/bob/.gjc/agent/x.log", OPTIONS)).toBe("read <path>");
+		expect(normalizeCrashMessage("read /home/alice/.vib/agent/x.log", OPTIONS)).toBe("read <home>");
+		expect(normalizeCrashMessage("read /home/bob/.vib/agent/x.log", OPTIONS)).toBe("read <path>");
 	});
 
 	it("preserves semantically meaningful codes so 404 and 500 stay distinct classes", () => {
@@ -45,8 +45,8 @@ describe("normalizeCrashMessage", () => {
 describe("normalizeCrashFrames", () => {
 	const sourceStack = [
 		"Error: shared topic authority unavailable",
-		"    at resolveTopic (/opt/gjc/packages/coding-agent/src/sdk/bus/topics.ts:412:19)",
-		"    at async publish (/opt/gjc/packages/coding-agent/src/sdk/bus/publish.ts:88:5)",
+		"    at resolveTopic (/opt/vib/packages/coding-agent/src/sdk/bus/topics.ts:412:19)",
+		"    at async publish (/opt/vib/packages/coding-agent/src/sdk/bus/publish.ts:88:5)",
 		"    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)",
 	].join("\n");
 
@@ -58,14 +58,14 @@ describe("normalizeCrashFrames", () => {
 	});
 
 	it("treats compiled-binary and Windows stacks as the same frames as the source stack", () => {
-		const bunfs = sourceStack.replace(/\/opt\/gjc\//g, "/$bunfs/root/");
+		const bunfs = sourceStack.replace(/\/opt\/vib\//g, "/$bunfs/root/");
 		const windows = [
 			"Error: shared topic authority unavailable",
-			"    at resolveTopic (C:\\gjc\\packages\\coding-agent\\src\\sdk\\bus\\topics.ts:9:1)",
-			"    at async publish (C:\\gjc\\packages\\coding-agent\\src\\sdk\\bus\\publish.ts:3:2)",
+			"    at resolveTopic (C:\\vib\\packages\\coding-agent\\src\\sdk\\bus\\topics.ts:9:1)",
+			"    at async publish (C:\\vib\\packages\\coding-agent\\src\\sdk\\bus\\publish.ts:3:2)",
 		].join("\n");
 		expect(normalizeCrashFrames(bunfs, OPTIONS)).toEqual(normalizeCrashFrames(sourceStack, OPTIONS));
-		expect(normalizeCrashFrames(windows, { ...OPTIONS, installRoot: "C:\\gjc" })).toEqual(
+		expect(normalizeCrashFrames(windows, { ...OPTIONS, installRoot: "C:\\vib" })).toEqual(
 			normalizeCrashFrames(sourceStack, OPTIONS),
 		);
 	});
@@ -73,7 +73,7 @@ describe("normalizeCrashFrames", () => {
 	it("skips dependency frames and reports <no-app-frame> when nothing is in-app", () => {
 		const stack = [
 			"TypeError: boom",
-			"    at fetch (/opt/gjc/node_modules/undici/lib/api.js:1:1)",
+			"    at fetch (/opt/vib/node_modules/undici/lib/api.js:1:1)",
 			"    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)",
 		].join("\n");
 		expect(normalizeCrashFrames(stack, OPTIONS)).toEqual([NO_APP_FRAME]);
@@ -90,28 +90,28 @@ describe("computeCrashFingerprint", () => {
 	it("is stable across versions, hosts and pids for the same logical crash", () => {
 		const a = fingerprint({
 			name: "Error",
-			message: "shared topic authority unavailable (pid 2557873, /home/alice/.gjc/agent)",
-			stack: stackFor("/opt/gjc", 412),
+			message: "shared topic authority unavailable (pid 2557873, /home/alice/.vib/agent)",
+			stack: stackFor("/opt/vib", 412),
 		});
 		const b = computeCrashFingerprint(
 			{
 				name: "Error",
-				message: "shared topic authority unavailable (pid 9104, /home/bob/.gjc/agent)",
-				stack: stackFor("/usr/lib/gjc", 998),
+				message: "shared topic authority unavailable (pid 9104, /home/bob/.vib/agent)",
+				stack: stackFor("/usr/lib/vib", 998),
 			},
-			{ installRoot: "/usr/lib/gjc", homeDir: "/home/bob" },
+			{ installRoot: "/usr/lib/vib", homeDir: "/home/bob" },
 		).fingerprint;
 		expect(a).toBe(b);
 	});
 
 	it("separates distinct error names and distinct top frames", () => {
-		const base = { message: "boom", stack: stackFor("/opt/gjc", 1) };
+		const base = { message: "boom", stack: stackFor("/opt/vib", 1) };
 		expect(fingerprint({ ...base, name: "Error" })).not.toBe(fingerprint({ ...base, name: "TypeError" }));
-		expect(fingerprint({ name: "Error", message: "boom", stack: stackFor("/opt/gjc", 1) })).not.toBe(
+		expect(fingerprint({ name: "Error", message: "boom", stack: stackFor("/opt/vib", 1) })).not.toBe(
 			fingerprint({
 				name: "Error",
 				message: "boom",
-				stack: "Error: boom\n    at other (/opt/gjc/packages/utils/src/other.ts:1:1)",
+				stack: "Error: boom\n    at other (/opt/vib/packages/utils/src/other.ts:1:1)",
 			}),
 		);
 	});
@@ -152,9 +152,9 @@ describe("crash record marker", () => {
 		expect(
 			parseCrashRecordMarker("2026-08-02T17:05:35.948Z pid=2557873 [Uncaught Exception] Error: x"),
 		).toBeUndefined();
-		expect(parseCrashRecordMarker("gjc-crash-record.v1 fp:zzz fpv:1 id:0123456789abcdef")).toBeUndefined();
+		expect(parseCrashRecordMarker("vib-crash-record.v1 fp:zzz fpv:1 id:0123456789abcdef")).toBeUndefined();
 		expect(
-			parseCrashRecordMarker(`gjc-crash-record.v1 fp:${"a".repeat(32)} fpv:0 id:0123456789abcdef`),
+			parseCrashRecordMarker(`vib-crash-record.v1 fp:${"a".repeat(32)} fpv:0 id:0123456789abcdef`),
 		).toBeUndefined();
 	});
 });

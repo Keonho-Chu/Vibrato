@@ -2,18 +2,18 @@ import { describe, expect, it } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { AgentTool } from "@gajae-code/agent-core";
-import { activeEntryPath, activeStateDir, modeStatePath } from "../src/gjc-runtime/session-layout";
-import { writeActiveEntry } from "../src/gjc-runtime/state-writer";
+import type { AgentTool } from "@vib-rato/agent-core";
 import {
 	invalidateVisibleSkillActiveStateCache,
 	readVisibleSkillActiveState,
 	type SkillActiveEntry,
 } from "../src/skill-state/active-state";
 import { getWorkflowMutationDecision } from "../src/skill-state/workflow-mutation-guard";
+import { activeEntryPath, activeStateDir, modeStatePath } from "../src/vib-runtime/session-layout";
+import { writeActiveEntry } from "../src/vib-runtime/state-writer";
 
 async function withTempCwd(fn: (cwd: string) => Promise<void>): Promise<void> {
-	const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-g005-redteam-"));
+	const cwd = await fs.mkdtemp(path.join(os.tmpdir(), "vib-g005-redteam-"));
 	try {
 		await fn(cwd);
 	} finally {

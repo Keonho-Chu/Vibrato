@@ -91,7 +91,7 @@ export interface OAuthLoginOptions {
 	/**
 	 * Pair by pasting the authorization code the provider displays instead of
 	 * waiting on a local loopback callback. Set when the browser completing the
-	 * login has no network route back to the machine running gjc (SSH, remote
+	 * login has no network route back to the machine running vib (SSH, remote
 	 * container, headless host). Providers without a paste-a-code redirect
 	 * ignore it.
 	 */

@@ -314,7 +314,7 @@ async function runConsecutiveSignalsShareCleanup(): Promise<void> {
 }
 
 async function runCleanupDeadlineSignal(): Promise<void> {
-	process.env.GJC_CLEANUP_DEADLINE_MS = "300";
+	process.env.VIB_CLEANUP_DEADLINE_MS = "300";
 	postmortem.register("fixture-deadline-signal", async () => {
 		writeResult({ started: true });
 		await new Promise(() => {});
@@ -325,7 +325,7 @@ async function runCleanupDeadlineSignal(): Promise<void> {
 }
 
 async function runCleanupDeadlineQuit(): Promise<void> {
-	process.env.GJC_CLEANUP_DEADLINE_MS = "300";
+	process.env.VIB_CLEANUP_DEADLINE_MS = "300";
 	postmortem.register("fixture-deadline-quit", async () => {
 		writeResult({ started: true });
 		await new Promise(() => {});
@@ -335,7 +335,7 @@ async function runCleanupDeadlineQuit(): Promise<void> {
 }
 
 async function runCleanupDeadlineFatal(): Promise<void> {
-	process.env.GJC_CLEANUP_DEADLINE_MS = "300";
+	process.env.VIB_CLEANUP_DEADLINE_MS = "300";
 	postmortem.register("fixture-deadline-fatal", async () => {
 		writeResult({ started: true });
 		await new Promise(() => {});

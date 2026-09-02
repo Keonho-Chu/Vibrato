@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test, vi } from "bun:test";
 import * as path from "node:path";
-import { TempDir } from "@gajae-code/utils";
+import { TempDir } from "@vib-rato/utils";
 import type { Args } from "../src/cli/args";
 import { ModelRegistry } from "../src/config/model-registry";
 import { Settings } from "../src/config/settings";
@@ -27,7 +27,7 @@ afterEach(() => {
 
 describe("--list-models cache refresh (issue #2227)", () => {
 	test("uses online-if-uncached exactly once through the public root command", async () => {
-		using tempDir = TempDir.createSync("@gjc-issue-2227-");
+		using tempDir = TempDir.createSync("@vib-issue-2227-");
 		const authStorage = await AuthStorage.create(path.join(tempDir.path(), "auth.db"));
 		authStorage.setRuntimeApiKey("anthropic", "test-key");
 		const registerProviderSpy = vi.spyOn(ModelRegistry.prototype, "registerProvider");

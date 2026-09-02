@@ -14,7 +14,7 @@ const CALLBACK_PATH = "/callback";
 /**
  * Redirect target for the paste-a-code login. Anthropic renders the
  * authorization code on this page instead of redirecting into this machine, so
- * a gjc running over SSH, in a container, or on a headless box can be paired
+ * a vib running over SSH, in a container, or on a headless box can be paired
  * from a browser that has no route back to `localhost:54545`.
  *
  * Deliberately a hard-coded constant rather than an env/config override: this
@@ -106,7 +106,7 @@ export interface AnthropicOAuthFlowOptions {
 	/**
 	 * Pair by pasting the code Anthropic displays instead of waiting on a local
 	 * `localhost:54545` callback. Use when the browser completing the login has
-	 * no network route back to the machine running gjc.
+	 * no network route back to the machine running vib.
 	 */
 	manualCode?: boolean;
 }

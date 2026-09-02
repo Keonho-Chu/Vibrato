@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import * as os from "node:os";
 import * as path from "node:path";
-import { getThemeByName } from "@gajae-code/coding-agent/modes/theme/theme";
+import { getThemeByName } from "@vib-rato/coding-agent/modes/theme/theme";
 import {
 	dedupeParseErrors,
 	formatCodeFrameLine,
@@ -10,7 +10,7 @@ import {
 	formatScreenshot,
 	getPreviewLines,
 	shortenPath,
-} from "@gajae-code/coding-agent/tools/render-utils";
+} from "@vib-rato/coding-agent/tools/render-utils";
 import { formatScreenshot as formatBrowserScreenshot } from "../../src/tools/browser/screenshot-format";
 
 describe("parse error formatting", () => {
@@ -127,7 +127,7 @@ describe("formatScreenshot", () => {
 				saveFullRes: false,
 				savedMimeType: "image/webp",
 				savedByteLength: 3072,
-				dest: "/tmp/gjc-sshots-123.png",
+				dest: "/tmp/vib-sshots-123.png",
 				resized,
 			}),
 		).toEqual(["Screenshot captured", "Format: image/webp (3.00 KB)", "Dimensions: 800x600"]);

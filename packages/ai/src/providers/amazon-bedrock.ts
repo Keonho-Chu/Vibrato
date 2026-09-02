@@ -7,7 +7,7 @@
  * Bun's native `HTTPS_PROXY` support.
  */
 
-import { $credentialEnv, $env, $flag, extractHttpStatusFromError, fetchWithRetry } from "@gajae-code/utils";
+import { $credentialEnv, $env, $flag, extractHttpStatusFromError, fetchWithRetry } from "@vib-rato/utils";
 import type { Effort } from "../model-thinking";
 import {
 	mapEffortToAnthropicAdaptiveEffort,

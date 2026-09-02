@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
-import { HindsightApi, HindsightError } from "@gajae-code/coding-agent/hindsight/client";
+import { HindsightApi, HindsightError } from "@vib-rato/coding-agent/hindsight/client";
 
 const client = new HindsightApi({ baseUrl: "https://hindsight.test" });
 

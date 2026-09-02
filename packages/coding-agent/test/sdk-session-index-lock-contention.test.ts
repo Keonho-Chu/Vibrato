@@ -21,7 +21,7 @@ function deferred<T = void>() {
 /**
  * Issue #4544: a live detached SDK broker held `<agentDir>/sdk/sessions/
  * index.jsonl.lock` across a wedged Windows sync-family await inside the locked
- * critical section, and every new `gjc` launch exhausted the full 600-attempt
+ * critical section, and every new `vib` launch exhausted the full 600-attempt
  * lock budget (60s) and crashed. The stale-lock recovery discipline (#652) is
  * correct — a proven-live owner must never have its lock stolen — so the fix has
  * to bound what the lock holder can do to the machine-global critical section,
@@ -30,7 +30,7 @@ function deferred<T = void>() {
  */
 describe("SDK session index lock contention (#4544)", () => {
 	it("reports the live lock owner when a launch exhausts the lock budget", async () => {
-		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-4544-owner-"));
+		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-4544-owner-"));
 		const sessionsDir = path.join(dir, "sdk", "sessions");
 		await fs.mkdir(sessionsDir, { recursive: true });
 		const logPath = path.join(sessionsDir, "index.jsonl");
@@ -67,7 +67,7 @@ describe("SDK session index lock contention (#4544)", () => {
 	});
 
 	it("reports a foreign lock owner with unknown liveness instead of probing a local pid", async () => {
-		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-4544-foreign-owner-"));
+		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-4544-foreign-owner-"));
 		const sessionsDir = path.join(dir, "sdk", "sessions");
 		await fs.mkdir(sessionsDir, { recursive: true });
 		// A shared-volume lock record owned by another host: its pid is meaningful
@@ -106,7 +106,7 @@ describe("SDK session index lock contention (#4544)", () => {
 	});
 
 	it("keeps the append path's OS incarnation derivation outside the lock-held section", async () => {
-		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-4544-append-probe-"));
+		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-4544-append-probe-"));
 		const index = await new SessionIndex(dir).open();
 		const realProcessIncarnation = incarnationModule.processIncarnation;
 		const realWithFileLock = lockModule.withFileLock;
@@ -141,7 +141,7 @@ describe("SDK session index lock contention (#4544)", () => {
 	});
 
 	it("keeps the heartbeat pass's OS incarnation probes outside the lock-held section", async () => {
-		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-4544-heartbeat-"));
+		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-4544-heartbeat-"));
 		const index = await new SessionIndex(dir).open();
 		await index.append(event("live-host"));
 		// An unlock-time probe record: the pass must observe liveness for each
@@ -176,7 +176,7 @@ describe("SDK session index lock contention (#4544)", () => {
 		}
 	});
 	it("fails closed when the locked replay outlives the probe freshness window", async () => {
-		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-4544-replay-stale-"));
+		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-4544-replay-stale-"));
 		const seed = await new SessionIndex(dir).open();
 		await seed.append(event("slow-replay"));
 		const index = await new SessionIndex(dir).open();
@@ -229,7 +229,7 @@ describe("SDK session index lock contention (#4544)", () => {
 	});
 
 	it("fails closed on a stale batch even when the wall clock steps backward", async () => {
-		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-4544-clock-regress-"));
+		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-4544-clock-regress-"));
 		const seed = await new SessionIndex(dir).open();
 		await seed.append(event("clock-regress"));
 		const index = await new SessionIndex(dir).open();
@@ -276,7 +276,7 @@ describe("SDK session index lock contention (#4544)", () => {
 	});
 
 	it("fails closed when lock acquisition alone outlives the probe freshness window", async () => {
-		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-4544-acq-bound-"));
+		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-4544-acq-bound-"));
 		const seed = await new SessionIndex(dir).open();
 		await seed.append(event("acq-bound"));
 		const index = await new SessionIndex(dir).open();
@@ -313,7 +313,7 @@ describe("SDK session index lock contention (#4544)", () => {
 	});
 
 	it("keeps the unregister pass's OS incarnation probes outside the lock-held section", async () => {
-		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-4544-unregister-probe-"));
+		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-4544-unregister-probe-"));
 		const index = await new SessionIndex(dir).open();
 		const appended = await index.append(event("retire-me"));
 		expect(appended.hostIncarnation).toBeDefined();
@@ -367,7 +367,7 @@ describe("SDK session index lock contention (#4544)", () => {
 	});
 
 	it("does not probe a dead pid while preparing an unregister projection", async () => {
-		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-4595-unregister-dead-pid-"));
+		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-4595-unregister-dead-pid-"));
 		const index = await new SessionIndex(dir).open();
 		const live = await index.append(event("live-host"));
 		const deadProcess = Bun.spawn({ cmd: ["true"] });
@@ -402,7 +402,7 @@ describe("SDK session index lock contention (#4544)", () => {
 	});
 
 	it("releases the lock when the critical section throws, and aborted acquisition fails fast", async () => {
-		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-4544-throw-"));
+		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-4544-throw-"));
 		const index = await new SessionIndex(dir).open();
 		await index.append(event("one"));
 		const boom = new Error("critical section failed");
@@ -447,7 +447,7 @@ describe("SDK session index lock contention (#4544)", () => {
 	});
 
 	it("bounds concurrent launches behind a legitimate holder and converges after release", async () => {
-		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-4544-concurrent-"));
+		const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-4544-concurrent-"));
 		const seed = await new SessionIndex(dir).open();
 		await seed.append(event("seed"));
 		// Simulate a long-but-bounded holder (compaction/audit on a large index):

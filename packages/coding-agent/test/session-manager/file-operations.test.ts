@@ -12,11 +12,11 @@ import {
 	type SessionHeader,
 	SessionManagedStorageError,
 	SessionManager,
-} from "@gajae-code/coding-agent/session/session-manager";
+} from "@vib-rato/coding-agent/session/session-manager";
 
-import { MemorySessionStorage } from "@gajae-code/coding-agent/session/session-storage";
+import { MemorySessionStorage } from "@vib-rato/coding-agent/session/session-storage";
 
-import { getConfigRootDir, getSessionsDir, getTerminalSessionsDir, Snowflake, setAgentDir } from "@gajae-code/utils";
+import { getConfigRootDir, getSessionsDir, getTerminalSessionsDir, Snowflake, setAgentDir } from "@vib-rato/utils";
 import { registerOwnedDeletionRoot, safeRmSync } from "../../../../scripts/safe-cleanup";
 import { listManagedCandidates, resolveManagedScope } from "../../src/session/internal/managed-session-scope";
 
@@ -554,7 +554,7 @@ describe("SessionManager temp cwd session dirs", () => {
 	}
 
 	beforeEach(() => {
-		testAgentDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-session-dir-test-"));
+		testAgentDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-session-dir-test-"));
 		setAgentDir(testAgentDir);
 	});
 
@@ -573,11 +573,11 @@ describe("SessionManager temp cwd session dirs", () => {
 
 		const projectsRoot = path.join(os.homedir(), "Projects");
 		fs.mkdirSync(projectsRoot, { recursive: true });
-		const realProjectDir = path.join(projectsRoot, `gjc-session-home-${process.pid}-${Date.now()}`);
+		const realProjectDir = path.join(projectsRoot, `vib-session-home-${process.pid}-${Date.now()}`);
 		const forgetRealGrant = registerOwnedDeletionRoot(realProjectDir);
 		fs.mkdirSync(realProjectDir, { recursive: true });
 		const nestedDir = path.join(realProjectDir, "nested");
-		const aliasRoot = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-session-home-alias-"));
+		const aliasRoot = fs.mkdtempSync(path.join(os.tmpdir(), "vib-session-home-alias-"));
 		const homeAlias = path.join(aliasRoot, "home-link");
 
 		try {
@@ -724,7 +724,7 @@ describe("SessionManager legacy session migration persistence", () => {
 	}
 
 	beforeEach(() => {
-		tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-session-manager-legacy-"));
+		tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-session-manager-legacy-"));
 	});
 
 	afterEach(() => {

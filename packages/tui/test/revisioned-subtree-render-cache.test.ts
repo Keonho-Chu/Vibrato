@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { type Component, Container, TUI } from "@gajae-code/tui";
+import { type Component, Container, TUI } from "@vib-rato/tui";
 import { VirtualTerminal } from "./virtual-terminal";
 
 class CountingTranscript extends Container {

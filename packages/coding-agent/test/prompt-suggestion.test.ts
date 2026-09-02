@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
-import type { AgentMessage } from "@gajae-code/agent-core";
-import * as ai from "@gajae-code/ai";
-import { type Api, getBundledModel, type Model } from "@gajae-code/ai";
+import type { AgentMessage } from "@vib-rato/agent-core";
+import * as ai from "@vib-rato/ai";
+import { type Api, getBundledModel, type Model } from "@vib-rato/ai";
 import {
 	buildPromptSuggestionContext,
 	generatePromptSuggestion,

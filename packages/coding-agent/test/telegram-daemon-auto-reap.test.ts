@@ -21,7 +21,7 @@ import {
 const BOT_TOKEN = "1234567890:ABCDEFghijkLmnOpQrsTuvWxYz012345678";
 
 function tempAgentDir(): string {
-	return fs.mkdtempSync(path.join(os.tmpdir(), "gjc-auto-reap-test-"));
+	return fs.mkdtempSync(path.join(os.tmpdir(), "vib-auto-reap-test-"));
 }
 function settings(agentDir: string): Settings {
 	const isolated = Settings.isolated({

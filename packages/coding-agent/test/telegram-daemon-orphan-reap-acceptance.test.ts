@@ -13,7 +13,7 @@ import {
 import { writeTelegramOwnerMarker } from "../src/sdk/bus/telegram-daemon-owner-registry";
 
 function tempAgentDir(): string {
-	return fs.mkdtempSync(path.join(os.tmpdir(), "gjc-4403-reap-"));
+	return fs.mkdtempSync(path.join(os.tmpdir(), "vib-4403-reap-"));
 }
 
 function digest(dir: string): string {

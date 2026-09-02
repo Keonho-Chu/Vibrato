@@ -5,7 +5,7 @@ use std::{ffi::OsStr, os::windows::process::CommandExt as WindowsCommandExt};
 use windows_sys::Win32::System::Console::GetConsoleWindow;
 use windows_sys::Win32::System::Threading::{CREATE_NEW_PROCESS_GROUP, CREATE_NO_WINDOW};
 
-/// Whether this process currently has no attached console — the state a GJC
+/// Whether this process currently has no attached console — the state a Vibrato
 /// agent runs in when embedded in a console-less ACP/GUI host (#4883).
 ///
 /// Deliberately not cached: `FreeConsole`/`AttachConsole` can change the

@@ -35,13 +35,13 @@ afterEach(async () => {
 });
 
 async function withNotifications<T>(fn: () => Promise<T>): Promise<T> {
-	const prevEnv = process.env.GJC_NOTIFICATIONS;
-	process.env.GJC_NOTIFICATIONS = "1";
+	const prevEnv = process.env.VIB_NOTIFICATIONS;
+	process.env.VIB_NOTIFICATIONS = "1";
 	try {
 		return await fn();
 	} finally {
-		if (prevEnv === undefined) delete process.env.GJC_NOTIFICATIONS;
-		else process.env.GJC_NOTIFICATIONS = prevEnv;
+		if (prevEnv === undefined) delete process.env.VIB_NOTIFICATIONS;
+		else process.env.VIB_NOTIFICATIONS = prevEnv;
 	}
 }
 
@@ -57,8 +57,8 @@ async function createHarness(
 		registerCommand: () => {},
 		sendUserMessage: () => {},
 	} as never;
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-notif-file-redaction-"));
-	const agentDir = path.join(cwd, ".gjc", "agent");
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-notif-file-redaction-"));
+	const agentDir = path.join(cwd, ".vib", "agent");
 	const cleanup = await createNotificationFixtureRoot(cwd, agentDir);
 	cleanupRoots.push(cleanup);
 	const settings = isolatedNotificationSettings(agentDir, { "notifications.redact": redact });
@@ -74,7 +74,7 @@ async function createHarness(
 			getCwd: () => cwd,
 		},
 	} as never;
-	const endpoint = () => path.join(cwd, ".gjc", "state", "sdk", `${sid}.json`);
+	const endpoint = () => path.join(cwd, ".vib", "state", "sdk", `${sid}.json`);
 
 	return {
 		handlers,
@@ -208,7 +208,7 @@ test("session_switch keeps telegram_send file attachments blocked under redactio
 		const previousId = harness.sid;
 		expect(getTelegramFileSink(previousId)).toBeDefined();
 		harness.sid = `file-redaction-new-${previousId}`;
-		const previousSessionFile = path.join(harness.cwd, ".gjc", "agent", "sessions", `ts_${previousId}.jsonl`);
+		const previousSessionFile = path.join(harness.cwd, ".vib", "agent", "sessions", `ts_${previousId}.jsonl`);
 		await harness.handlers.get("session_switch")!(
 			{ type: "session_switch", reason: "new", previousSessionFile },
 			harness.ctx,

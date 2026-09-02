@@ -3,10 +3,10 @@ import type { BigIntStats } from "node:fs";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import path from "node:path";
-import type { NativeDirectoryTreeSnapshot } from "@gajae-code/natives";
-import { logger } from "@gajae-code/utils";
+import type { NativeDirectoryTreeSnapshot } from "@vib-rato/natives";
+import { logger } from "@vib-rato/utils";
 import type { ModelProfileErrorDetails } from "../../config/model-profile-contract";
-import { planLaunchWorktree } from "../../gjc-runtime/launch-worktree";
+import { planLaunchWorktree } from "../../vib-runtime/launch-worktree";
 import { createDefaultSdkHostModelResolver, type SdkHostModelResolver } from "../host/model-pin";
 import {
 	type DirectoryMigrationPolicy,
@@ -353,9 +353,9 @@ function normalizeBrokerInput(operation: string, input: Record<string, unknown>)
 		normalizeLifecycleDirectory,
 	);
 	if (stateRoot.error) return error("invalid_input", stateRoot.error);
-	if (stateRoot.value !== undefined && (!cwd.value || stateRoot.value !== path.join(cwd.value, ".gjc", "state")))
-		return error("invalid_input", "stateRoot must be the default .gjc/state for cwd.");
-	if (cwd.value !== undefined) normalized.stateRoot = path.join(cwd.value, ".gjc", "state");
+	if (stateRoot.value !== undefined && (!cwd.value || stateRoot.value !== path.join(cwd.value, ".vib", "state")))
+		return error("invalid_input", "stateRoot must be the default .vib/state for cwd.");
+	if (cwd.value !== undefined) normalized.stateRoot = path.join(cwd.value, ".vib", "state");
 	else if (stateRoot.value !== undefined) return error("invalid_input", "stateRoot requires cwd.");
 
 	if (target) {
@@ -472,7 +472,7 @@ function lifecycleTarget(operation: string, input: Record<string, unknown>): unk
 		explicitRoot ??
 		(() => {
 			const cwd = string(input.cwd, input.path, target?.path);
-			return cwd ? path.join(cwd, ".gjc", "state") : undefined;
+			return cwd ? path.join(cwd, ".vib", "state") : undefined;
 		})();
 	const id = string(input.sessionId, input.id);
 	switch (operation) {
@@ -1676,7 +1676,7 @@ export class Broker {
 				input = {
 					sessionId: cleanup.sessionId,
 					cwd: cleanup.cwd,
-					stateRoot: path.join(cleanup.cwd, ".gjc", "state"),
+					stateRoot: path.join(cleanup.cwd, ".vib", "state"),
 					sessionPath: cleanup.transcriptPath,
 				};
 		}

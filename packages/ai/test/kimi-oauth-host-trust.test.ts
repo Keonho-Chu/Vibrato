@@ -20,7 +20,7 @@ const KEYS = ["KIMI_CODE_OAUTH_HOST", "KIMI_OAUTH_HOST"] as const;
 const tempDirs: string[] = [];
 
 function projectDir(dotenv?: string): string {
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-kimi-oauth-trust-"));
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-kimi-oauth-trust-"));
 	tempDirs.push(dir);
 	if (dotenv !== undefined) fs.writeFileSync(path.join(dir, ".env"), dotenv);
 	return dir;

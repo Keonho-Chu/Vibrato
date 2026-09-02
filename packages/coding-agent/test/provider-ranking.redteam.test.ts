@@ -212,17 +212,26 @@ describe("provider ranking spec-contract attacks", () => {
 		const expected = ["configured-custom", "invalid-custom", ...FAMOUS_PROVIDER_ORDER, "unknown-last"];
 		expect(sortedIds).toEqual(expected);
 
-		const groups = [
-			["openai-codex", "openai-codex-device"],
-			["zai", "glm-zcode"],
-			["alibaba-token-plan", "qwen-portal"],
-			["kimi-code", "moonshot"],
-			["minimax-code", "minimax-code-cn"],
-			["xiaomi", "xiaomi-token-plan-sgp", "xiaomi-token-plan-ams", "xiaomi-token-plan-cn"],
-		];
+		const groups = [["openai-codex", "openai-codex-device"]];
 		for (const group of groups) {
 			const start = sortedIds.indexOf(group[0]);
 			expect(sortedIds.slice(start, start + group.length)).toEqual(group);
+		}
+	});
+
+	test("hidden built-in providers cannot re-enter the famous tier through a mixed sort", () => {
+		const hiddenIds = ["zai", "minimax-code", "xiaomi", "cursor", "github-copilot", "opengateway"];
+		const mixed = [
+			...FAMOUS_PROVIDER_ORDER.map((id, index) => provider(id, "none", `Famous ${index}`)),
+			// Labels sort before every "Famous n" label, so only tier separation can
+			// keep these behind the allowlisted providers.
+			...hiddenIds.map(id => provider(id, "none", `AAA ${id}`)),
+		];
+		const sortedIds = sortRankedProviders(mixed).map(entry => entry.id);
+		expect(sortedIds.slice(0, FAMOUS_PROVIDER_ORDER.length)).toEqual([...FAMOUS_PROVIDER_ORDER]);
+		expect(sortedIds.slice(FAMOUS_PROVIDER_ORDER.length)).toEqual([...hiddenIds].sort());
+		for (const hidden of hiddenIds) {
+			expect(famousProviderIndex(hidden)).toBeUndefined();
 		}
 	});
 
@@ -321,15 +330,26 @@ describe("/provider preset CLI surface", () => {
 			return `${preset.id}${aliases}: ${preset.description}`;
 		});
 		expect(lines).toEqual(expectedLines);
-		expect(lines.map(line => line.match(/^([a-z0-9][a-z0-9._-]*)/)?.[1])).toEqual([
+		// The allowlist leaves exactly the two self-hosted endpoint presets, ordered
+		// by the shared famous-provider ranking (vllm before sglang).
+		expect(lines.map(line => line.match(/^([a-z0-9][a-z0-9._-]*)/)?.[1])).toEqual(["vllm", "sglang"]);
+	});
+
+	test("drops every preset whose provider the allowlist hides", () => {
+		const presetIds = new Set(PROVIDER_PRESETS.map(preset => preset.id));
+		for (const removed of [
 			"glm",
-			"cline-pass",
-			"commandcode-goat",
-			"alibaba-token-plan",
+			"zai",
 			"minimax",
 			"minimax-cn",
+			"cline-pass",
 			"litellm",
 			"openai-compatible-proxy",
-		]);
+		]) {
+			expect(presetIds.has(removed)).toBe(false);
+		}
+		for (const preset of PROVIDER_PRESETS) {
+			expect(["vllm", "sglang"]).toContain(preset.providerId);
+		}
 	});
 });

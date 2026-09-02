@@ -6,7 +6,7 @@ import {
 	CURRENT_SESSION_VERSION,
 	loadEntriesFromFile,
 	SessionManager,
-} from "@gajae-code/coding-agent/session/session-manager";
+} from "@vib-rato/coding-agent/session/session-manager";
 
 describe("existing title picker projection reproduction", () => {
 	let testDir: string | undefined;
@@ -16,7 +16,7 @@ describe("existing title picker projection reproduction", () => {
 	});
 
 	it("surfaces a canonical title patch outside the bounded picker projection", async () => {
-		testDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-existing-title-projection-"));
+		testDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-existing-title-projection-"));
 		const cwd = path.join(testDir, "cwd");
 		const sessionDir = path.join(testDir, "sessions");
 		const sessionId = "existing-title-projection-repro";

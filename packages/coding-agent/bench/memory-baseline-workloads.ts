@@ -60,7 +60,7 @@ function tuiLifecycleProxyWorkload(): MemoryWorkload {
 }
 
 export function workloadIterations(profile: MemoryWorkloadProfile): number {
-	const configured = Number(process.env.GJC_MEMORY_ITERATIONS);
+	const configured = Number(process.env.VIB_MEMORY_ITERATIONS);
 	if (Number.isSafeInteger(configured) && configured > 0 && configured <= 10_000_000) return configured;
 	return profile === "soak" ? 100_000 : 200;
 }

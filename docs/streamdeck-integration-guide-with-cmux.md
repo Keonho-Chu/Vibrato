@@ -1,37 +1,37 @@
 # Stream Deck integration guide with cmux
 
-This guide captures a production-style Elgato Stream Deck control surface for Gajae-Code (`gjc`) running inside [cmux](https://github.com/manaflow-ai/cmux). It is formatted as an installable AI skill template so an operator or coding agent can reproduce, audit, repair, or extend the integration without relying on undocumented UI automation.
+This guide captures a production-style Elgato Stream Deck control surface for Vibrato (`vib`) running inside [cmux](https://github.com/manaflow-ai/cmux). It is formatted as an installable AI skill template so an operator or coding agent can reproduce, audit, repair, or extend the integration without relying on undocumented UI automation.
 
 The installable skill body starts at the first frontmatter marker. To install it as a user skill:
 
 ```sh
-mkdir -p ~/.gjc/agent/skills/streamdeck-cmux
+mkdir -p ~/.vib/agent/skills/streamdeck-cmux
 sed -n '/^---$/,$p' docs/streamdeck-integration-guide-with-cmux.md \
-  > ~/.gjc/agent/skills/streamdeck-cmux/SKILL.md
+  > ~/.vib/agent/skills/streamdeck-cmux/SKILL.md
 ```
 
-Filesystem skill discovery is on by default, so no configuration is needed. Start a new GJC session and invoke `/skill:streamdeck-cmux`. To stop loading personal skills later, use `gjc config set skills.trustUserSkills false` (see [docs/skills.md](./skills.md)).
+Filesystem skill discovery is on by default, so no configuration is needed. Start a new Vibrato session and invoke `/skill:streamdeck-cmux`. To stop loading personal skills later, use `vib config set skills.trustUserSkills false` (see [docs/skills.md](./skills.md)).
 
 ---
 name: streamdeck-cmux
-description: Configure, operate, verify, or repair an Elgato Stream Deck integration for Gajae-Code sessions hosted in cmux.
+description: Configure, operate, verify, or repair an Elgato Stream Deck integration for Vibrato sessions hosted in cmux.
 argument-hint: "[install|audit|repair|extend]"
 level: 2
 ---
 
-# Gajae-Code Stream Deck + cmux operator skill
+# Vibrato Stream Deck + cmux operator skill
 
 ## Purpose
 
-Build a Stream Deck control surface that treats cmux as the terminal host, GJC as the interactive coding runtime, and the GJC SDK as the authoritative machine interface for pending questions.
+Build a Stream Deck control surface that treats cmux as the terminal host, Vibrato as the interactive coding runtime, and the Vibrato SDK as the authoritative machine interface for pending questions.
 
 The control surface should:
 
 - navigate cmux panes and surface tabs;
 - open fixed project and home-directory terminal tabs;
-- create worktree-scoped GJC sessions;
-- change the model profile of the focused GJC session;
-- invoke common GJC skills without submitting them prematurely;
+- create worktree-scoped Vibrato sessions;
+- change the model profile of the focused Vibrato session;
+- invoke common Vibrato skills without submitting them prematurely;
 - send precise keyboard controls such as `Shift+Tab`, `Esc`, and `Enter`;
 - render and answer the focused session's SDK questions;
 - open and close native cmux terminal surfaces;
@@ -43,7 +43,7 @@ The control surface should:
 
 - cmux is not the terminal host;
 - the Stream Deck application or hardware is unavailable;
-- the target GJC session has SDK hosting disabled with `GJC_SDK_DISABLE=1` and SDK question answering is required;
+- the target Vibrato session has SDK hosting disabled with `VIB_SDK_DISABLE=1` and SDK question answering is required;
 - the requested action would overwrite a shared checkout containing unrelated work;
 - the operator expects generic UI automation instead of deterministic cmux and SDK commands.
 
@@ -53,13 +53,13 @@ The control surface should:
 2. Preserve the original/default profile instead of reconstructing it manually.
 3. Never log or commit SDK tokens, provider API keys, browser credentials, or endpoint discovery files.
 4. Resolve the focused cmux surface with `cmux identify --no-caller`; do not infer focus only from tree decorations.
-5. Send GJC-only controls only when the focused surface title starts with `GJC:`.
+5. Send Vibrato-only controls only when the focused surface title starts with `Vibrato:`.
 6. Use `action_needed.id` as the only authority for a generic SDK question reply.
 7. Do not answer stale, resolved, hidden, non-focused, free-text, or unsupported controlled questions from fixed answer keys.
 8. Send `Shift+Tab` as one atomic key event. Do not emulate it with separately delivered `Esc`-prefixed text.
 9. Do not create duplicate browser tabs when an existing Chrome or Safari tab matches.
-10. Reuse a focused non-GJC terminal when the operator explicitly wants an in-place worktree launch.
-11. Keep Stream Deck profiles, local plugin installations, generated artwork, and SDK state outside version control. Repository-local `.gjc/state/` is gitignored and is the authoritative SDK discovery location; do not move, delete, or copy it elsewhere.
+10. Reuse a focused non-Vibrato terminal when the operator explicitly wants an in-place worktree launch.
+11. Keep Stream Deck profiles, local plugin installations, generated artwork, and SDK state outside version control. Repository-local `.vib/state/` is gitignored and is the authoritative SDK discovery location; do not move, delete, or copy it elsewhere.
 
 ## Reference environment
 
@@ -67,10 +67,10 @@ The implementation described here was validated with:
 
 - Elgato Stream Deck application `7.5.1`;
 - Stream Deck device model `20GBA9901`;
-- Gajae-Code `0.12.21`;
+- Vibrato `0.12.21`;
 - cmux installed at `/Applications/cmux.app`;
 - cmux CLI at `/Applications/cmux.app/Contents/Resources/bin/cmux`;
-- GJC installed at `~/.local/bin/gjc`;
+- Vibrato installed at `~/.local/bin/vib`;
 - official mascot source at `assets/character.png`.
 
 Treat versions and absolute paths as environment inputs, not permanent product constants.
@@ -82,7 +82,7 @@ Stream Deck hardware
   -> Elgato Stream Deck application
      -> native Stream Deck plugin
         -> cmux CLI / socket RPC
-        -> GJC SDK WebSocket endpoints
+        -> Vibrato SDK WebSocket endpoints
         -> local launch helpers
         -> generated key images
 ```
@@ -92,14 +92,14 @@ Use a native Stream Deck plugin instead of a collection of shell-command actions
 A representative local installation is:
 
 ```text
-~/.local/share/gjc-streamdeck-plugin/
+~/.local/share/vib-streamdeck-plugin/
   manifest.json
   plugin.js
   bin/plugin
   images/*.png
 
 ~/Library/Application Support/com.elgato.StreamDeck/Plugins/
-  dev.gajae.streamdeck.sdPlugin/
+  dev.vibrato.streamdeck.sdPlugin/
     manifest.json
     plugin.js
     bin/plugin
@@ -145,7 +145,7 @@ Compiled AppleScript applications are suitable when Stream Deck's built-in websi
 ### Page 2: cmux navigation and session entry
 
 ```text
-TAB PREV | TAB NEXT | NEW SESSION | CLOSE TAB | GJC FOCUS
+TAB PREV | TAB NEXT | NEW SESSION | CLOSE TAB | Vibrato FOCUS
 PANE PREV | PANE NEXT | VOICE | STEER | ESC X2
 BACK | PROJECT 1 | PROJECT 2 | HOME | NEXT
 ```
@@ -154,13 +154,13 @@ BACK | PROJECT 1 | PROJECT 2 | HOME | NEXT
 
 - `PANE PREV` / `PANE NEXT`: select the previous or next pane in the current workspace.
 - `TAB PREV` / `TAB NEXT`: select the previous or next surface in the focused pane.
-- `GJC FOCUS`: keep the text-focused visual style; when pressed, submit `proceed` plus `Enter` only to a focused `GJC:` surface.
+- `Vibrato FOCUS`: keep the text-focused visual style; when pressed, submit `proceed` plus `Enter` only to a focused `Vibrato:` surface.
 
 #### Session and surface controls
 
-- `NEW SESSION`: create a terminal surface and ask for a worktree name; a blank answer starts a plain `gjc` session, while a name starts `gjc --worktree <name>`. Do not select a profile here.
+- `NEW SESSION`: create a terminal surface and ask for a worktree name; a blank answer starts a plain `vib` session, while a name starts `vib --worktree <name>`. Do not select a profile here.
 - `CLOSE TAB`: close the focused cmux surface.
-- `VOICE`: invoke GJC's local Whisper speech-to-text action with a user remap to `Ctrl+H` on the focused `GJC:` surface.
+- `VOICE`: invoke Vibrato's local Whisper speech-to-text action with a user remap to `Ctrl+H` on the focused `Vibrato:` surface.
 - `STEER`: send `Esc`, wait 100 ms, then send `Enter`.
 - `ESC X2`: send `Esc`, wait 100 ms, then send `Esc` again.
 
@@ -170,20 +170,20 @@ A session-only launcher can be implemented as:
 #!/bin/zsh
 set -u
 
-printf 'GJC worktree name (blank = plain session): '
+printf 'Vibrato worktree name (blank = plain session): '
 IFS= read -r worktree_name
 args=()
 [[ -n "$worktree_name" ]] && args+=(--worktree "$worktree_name")
-exec "$HOME/.local/bin/gjc" "${args[@]}"
+exec "$HOME/.local/bin/vib" "${args[@]}"
 ```
 
-Do not prompt for a model profile here. Apply the profile after the GJC session starts.
+Do not prompt for a model profile here. Apply the profile after the Vibrato session starts.
 
-#### Frequent GJC project controls
+#### Frequent Vibrato project controls
 
-Bind the first two project keys from GJC session history, not operator-specific absolute paths. Merge `gjc sdk session list` with saved top-level session headers under the agent session store, canonicalize managed worktree paths such as `<repo>/.worktrees/<name>` (and legacy `<repo>.gajae-code-worktrees/<name>`) back to `<repo>`, discard non-existent and non-Git directories outside the user's home, count sessions per canonical repository, and display the top two repositories. The third key always opens `$HOME`.
+Bind the first two project keys from Vibrato session history, not operator-specific absolute paths. Merge `vib sdk session list` with saved top-level session headers under the agent session store, canonicalize managed worktree paths such as `<repo>/.worktrees/<name>` (and legacy `<repo>.vib-rato-worktrees/<name>`) back to `<repo>`, discard non-existent and non-Git directories outside the user's home, count sessions per canonical repository, and display the top two repositories. The third key always opens `$HOME`.
 
-Each project key shows the repository basename and session count. Pressing it creates a terminal surface in that repository. The `HOME` key creates a terminal surface in the user's home directory. Leave the cmux tab name automatic so a later `gjc` launch can publish its authoritative `GJC:` title.
+Each project key shows the repository basename and session count. Pressing it creates a terminal surface in that repository. The `HOME` key creates a terminal surface in the user's home directory. Leave the cmux tab name automatic so a later `vib` launch can publish its authoritative `Vibrato:` title.
 
 ### Bundled source and assets
 
@@ -193,9 +193,9 @@ The repository-owned implementation lives at `integrations/streamdeck-cmux/`:
 - `profile/page-2` and `profile/page-3` contain portable page manifests and page-owned artwork;
 - `install.sh` installs the plugin and creates an importable `.streamDeckProfile` bundle on the Desktop.
 
-Runtime paths are derived from `$HOME`, `import.meta.dir`, `PATH`, and optional environment overrides (`GJC_STREAMDECK_GJC`, `GJC_STREAMDECK_CMUX`, `GJC_STREAMDECK_WORKTREE`, `GJC_AGENT_DIR`, `GJC_STREAMDECK_LOG`). Never commit local profile databases, SDK endpoint files, tokens, or user-specific absolute project paths.
+Runtime paths are derived from `$HOME`, `import.meta.dir`, `PATH`, and optional environment overrides (`VIB_STREAMDECK_VIB`, `VIB_STREAMDECK_CMUX`, `VIB_STREAMDECK_WORKTREE`, `VIB_AGENT_DIR`, `VIB_STREAMDECK_LOG`). Never commit local profile databases, SDK endpoint files, tokens, or user-specific absolute project paths.
 
-### Page 3: focused GJC operations
+### Page 3: focused Vibrato operations
 
 ```text
 SET FRONTIER | SET GPT | SET GLM DS | KIMI GPT | BTW EXPLAIN
@@ -205,27 +205,27 @@ BACK | DEEP INTERVIEW | RALPLAN | ULTRAGOAL | NEXT
 
 #### Model profile controls
 
-Model profile keys submit commands to the focused GJC editor:
+Model profile keys submit commands to the focused Vibrato editor:
 
 ```text
-/model gajae-code/frontier-heavy
-/model gajae-code/gpt-heavy
-/model gajae-code/glm-deepseek
-/model gajae-code/kimi-gpt
+/model vib-rato/frontier-heavy
+/model vib-rato/gpt-heavy
+/model vib-rato/glm-deepseek
+/model vib-rato/kimi-gpt
 ```
 
-A profile must exist and be available to the current session. The names shown above (`frontier-heavy`, `gpt-heavy`, `glm-deepseek`, `kimi-gpt`) are operator-defined examples, not bundled defaults; none of them ships with GJC. Provide matching definitions in `~/.gjc/agent/models.yml` or replace them with bundled profile names before the keys will work.
+A profile must exist and be available to the current session. The names shown above (`frontier-heavy`, `gpt-heavy`, `glm-deepseek`, `kimi-gpt`) are operator-defined examples, not bundled defaults; none of them ships with Vibrato. Provide matching definitions in `~/.vib/agent/models.yml` or replace them with bundled profile names before the keys will work.
 
 #### Session controls
 
 - `RESUME`: submit `/resume` and open the saved-session selector.
-- `EXIT`: submit `/exit` for a clean GJC shutdown.
+- `EXIT`: submit `/exit` for a clean Vibrato shutdown.
 - `PR TO DEV`: submit the operator macro `make a PR targeting dev and make it LGTM` plus `Enter`.
 - `THINK LEVEL`: send atomic `Shift+Tab` through `cmux send-key`.
 - `CLEAR CTX`: submit `/clear`, preserving the session ID while clearing context.
 - `BTW EXPLAIN`: submit `/btw 설명해봐 이거` for an ephemeral side question.
 
-The PR macro is an operator convenience, not a policy bypass. GJC must still inspect repository rules, run required verification, use an isolated branch or worktree when appropriate, create a focused commit, and open a PR against `dev` only when that branch exists and is the repository's intended integration branch.
+The PR macro is an operator convenience, not a policy bypass. Vibrato must still inspect repository rules, run required verification, use an isolated branch or worktree when appropriate, create a focused commit, and open a PR against `dev` only when that branch exists and is the repository's intended integration branch.
 
 #### Skill controls
 
@@ -277,7 +277,7 @@ cmux send-key \
 
 ### Voice (`Ctrl+H`)
 
-Remap local Whisper speech-to-text in `~/.gjc/agent/keybindings.json`:
+Remap local Whisper speech-to-text in `~/.vib/agent/keybindings.json`:
 
 ```json
 {
@@ -285,7 +285,7 @@ Remap local Whisper speech-to-text in `~/.gjc/agent/keybindings.json`:
 }
 ```
 
-The Stream Deck plugin sends atomic `ctrl+h` through `cmux send-key`. New GJC sessions load the remap; already-running sessions keep the keybindings they started with and should not be modified in place.
+The Stream Deck plugin sends atomic `ctrl+h` through `cmux send-key`. New Vibrato sessions load the remap; already-running sessions keep the keybindings they started with and should not be modified in place.
 
 ### Shift+Tab
 
@@ -318,15 +318,15 @@ Keep these as distinct controls. The abort control should not require a hold unl
 
 ## SDK question answer pad
 
-Every top-level GJC session publishes a loopback SDK discovery file:
+Every top-level Vibrato session publishes a loopback SDK discovery file:
 
 ```text
-<repo>/.gjc/state/sdk/<sessionId>.json
+<repo>/.vib/state/sdk/<sessionId>.json
 ```
 
 The file contains the session WebSocket URL and token. Connect with the token as a query parameter and never persist or log it elsewhere.
 
-Do not assume repositories are only one directory below a fixed workspace root. Resolve each live `gjc` process PID to its TTY and current working directory, then inspect that exact `<cwd>/.gjc/state/sdk/` directory. This includes managed `.worktrees` sessions and legacy `.gajae-code-worktrees` sessions.
+Do not assume repositories are only one directory below a fixed workspace root. Resolve each live `vib` process PID to its TTY and current working directory, then inspect that exact `<cwd>/.vib/state/sdk/` directory. This includes managed `.worktrees` sessions and legacy `.vib-rato-worktrees` sessions.
 
 When the focused session emits:
 
@@ -370,7 +370,7 @@ For checkbox questions, negotiate `ask_controls_v1` in the client `hello` / repl
 ☐ OPTION 1 | ☑ OPTION 2 | ☐ OPTION 3 | NO OPTION | DONE
 ```
 
-Pressing an option sends its numeric index against the exact current `action_needed.id`. GJC resolves that presentation and reissues a fresh one with updated `selectedOptionIndices`; replace the displayed ID and selection state rather than reusing the old ID. Pressing the fifth key sends the typed control:
+Pressing an option sends its numeric index against the exact current `action_needed.id`. Vibrato resolves that presentation and reissues a fresh one with updated `selectedOptionIndices`; replace the displayed ID and selection state rather than reusing the old ID. Pressing the fifth key sends the typed control:
 
 ```json
 { "type": "reply", "id": "<current action id>", "answer": { "controlId": "navigation_forward" }, "token": "<session token>" }
@@ -378,12 +378,12 @@ Pressing an option sends its numeric index against the exact current `action_nee
 
 Do not infer controls from labels such as `Done` or `Next`; only use the negotiated control object and honor its `enabled` field.
 
-Only display the fixed answer pad when the question belongs to the focused GJC session, the PID/TTY mapping is exact, and the action is still active. Supported shapes are:
+Only display the fixed answer pad when the question belongs to the focused Vibrato session, the PID/TTY mapping is exact, and the action is still active. Supported shapes are:
 
 - one to five scalar options with no negotiated controls;
 - one to four checkbox options with `selectedOptionIndices` and a typed `navigation_forward` control.
 
-Leave free-text, checkbox questions with five or more options, malformed/missing controls, and other controlled asks to the native GJC UI.
+Leave free-text, checkbox questions with five or more options, malformed/missing controls, and other controlled asks to the native Vibrato UI.
 
 ## Mascot artwork
 
@@ -407,8 +407,8 @@ Represent each key with an action UUID and small settings payload. A generic con
 
 ```json
 { "name": "new-website-tab", "type": "newWebsiteTab" }
-{ "name": "folder-gajae", "type": "fixedFolder", "path": "$HOME/src/gajae-code", "label": "gajae-code" }
-{ "name": "set-kimi-gpt", "type": "command", "value": "/model gajae-code/kimi-gpt", "submit": true, "answerSlot": 3 }
+{ "name": "folder-vibrato", "type": "fixedFolder", "path": "$HOME/src/vib-rato", "label": "vib-rato" }
+{ "name": "set-kimi-gpt", "type": "command", "value": "/model vib-rato/kimi-gpt", "submit": true, "answerSlot": 3 }
 { "name": "thinking-level", "type": "key", "value": "shift+tab" }
 ```
 
@@ -421,12 +421,12 @@ After each behavioral change, verify the narrow observable contract.
 ### Build and installation
 
 ```sh
-bun build ~/.local/share/gjc-streamdeck-plugin/plugin.js \
+bun build ~/.local/share/vib-streamdeck-plugin/plugin.js \
   --target=bun \
-  --outfile="$HOME/tmp/gjc-streamdeck-plugin-verify.js"
+  --outfile="$HOME/tmp/vib-streamdeck-plugin-verify.js"
 
-cmp ~/.local/share/gjc-streamdeck-plugin/plugin.js \
-  "$HOME/Library/Application Support/com.elgato.StreamDeck/Plugins/dev.gajae.streamdeck.sdPlugin/plugin.js"
+cmp ~/.local/share/vib-streamdeck-plugin/plugin.js \
+  "$HOME/Library/Application Support/com.elgato.StreamDeck/Plugins/dev.vibrato.streamdeck.sdPlugin/plugin.js"
 ```
 
 ### Layout
@@ -455,7 +455,7 @@ Use temporary surfaces and restore the original focus after each test:
 
 ### SDK behavior
 
-Use a temporary token-authenticated SDK WebSocket server and a temporary GJC-titled cmux surface to prove:
+Use a temporary token-authenticated SDK WebSocket server and a temporary Vibrato-titled cmux surface to prove:
 
 - discovery;
 - focused session mapping;
@@ -480,13 +480,13 @@ Confirm the plugin reconnects, contexts render, and the active profile remains c
 
 ## Troubleshooting
 
-### A GJC control shows an error
+### A Vibrato control shows an error
 
-Check the focused cmux surface title. GJC-only commands intentionally fail closed unless the raw title starts with `GJC:`.
+Check the focused cmux surface title. Vibrato-only commands intentionally fail closed unless the raw title starts with `Vibrato:`.
 
 ### Worktree prompting does not appear
 
-Confirm the helper is executable. A blank name must invoke plain `gjc`; a non-empty name must invoke `gjc --worktree <name>` from a Git repository. Do not pass a filesystem path as the worktree name.
+Confirm the helper is executable. A blank name must invoke plain `vib`; a non-empty name must invoke `vib --worktree <name>` from a Git repository. Do not pass a filesystem path as the worktree name.
 
 ### Think level aborts the operation
 

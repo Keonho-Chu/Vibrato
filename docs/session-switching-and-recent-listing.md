@@ -20,9 +20,9 @@ It focuses on current implementation behavior, including fallback paths and cave
 
 ### Directory scope
 
-The default managed scope is `~/.gjc/agent/sessions/v2-<identity-digest>/`, where the digest is derived from the native canonical workspace identity rather than a path-string substitution. It is collision-resistant, but the digest is not a public injective identity or an authentication credential. POSIX aliases and supported Windows local aliases for the same directory resolve to the same scope; UNC/network workspaces are rejected as unsupported.
+The default managed scope is `~/.vib/agent/sessions/v2-<identity-digest>/`, where the digest is derived from the native canonical workspace identity rather than a path-string substitution. It is collision-resistant, but the digest is not a public injective identity or an authentication credential. POSIX aliases and supported Windows local aliases for the same directory resolve to the same scope; UNC/network workspaces are rejected as unsupported.
 
-`SessionManager.list(cwd, sessionDir?)` reads the selected directory unless an explicit `sessionDir` is provided. The public readonly SDK API is `resolveManagedSessionScope()` followed by `listManagedSessionCandidates()` from `@gajae-code/coding-agent/sdk`; both are versioned by `SESSION_DIRECTORY_API_VERSION` (currently `1`). The resolver/listing API creates, migrates, and deletes nothing. Listing reports validated v2 and legacy candidates, invalid candidates, and a foreign count instead of treating arbitrary files as owned sessions.
+`SessionManager.list(cwd, sessionDir?)` reads the selected directory unless an explicit `sessionDir` is provided. The public readonly SDK API is `resolveManagedSessionScope()` followed by `listManagedSessionCandidates()` from `@vib-rato/coding-agent/sdk`; both are versioned by `SESSION_DIRECTORY_API_VERSION` (currently `1`). The resolver/listing API creates, migrates, and deletes nothing. Listing reports validated v2 and legacy candidates, invalid candidates, and a foreign count instead of treating arbitrary files as owned sessions.
 
 Default writes are v2-only. Legacy discovery/migration is lazy, validates identity before use, and follows `session.directoryMigration` (`copy-retain` by default; `disabled` to opt out); no automatic legacy cleanup occurs.
 
@@ -60,7 +60,7 @@ For `SessionInfo` list entries:
 
 `SessionManager.continueRecent(cwd, sessionDir?)` resolves the target in this order:
 
-1. Read terminal-scoped breadcrumb (`~/.gjc/agent/terminal-sessions/<terminal-id>`)
+1. Read terminal-scoped breadcrumb (`~/.vib/agent/terminal-sessions/<terminal-id>`)
 2. Validate breadcrumb:
    - current terminal can be identified
    - breadcrumb cwd matches current cwd (resolved path compare)

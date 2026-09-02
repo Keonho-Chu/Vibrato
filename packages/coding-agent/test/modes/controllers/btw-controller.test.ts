@@ -1,10 +1,10 @@
 import { beforeAll, describe, expect, it, type Mock, vi } from "bun:test";
-import type { AssistantMessage, Usage } from "@gajae-code/ai";
-import { BtwController } from "@gajae-code/coding-agent/modes/controllers/btw-controller";
-import { initTheme } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { InteractiveModeContext } from "@gajae-code/coding-agent/modes/types";
-import { BTW_MAX_QUESTION_UTF8_BYTES, type BtwTextExchange } from "@gajae-code/coding-agent/session/btw-contract";
-import { Container, type TUI } from "@gajae-code/tui";
+import type { AssistantMessage, Usage } from "@vib-rato/ai";
+import { BtwController } from "@vib-rato/coding-agent/modes/controllers/btw-controller";
+import { initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { InteractiveModeContext } from "@vib-rato/coding-agent/modes/types";
+import { BTW_MAX_QUESTION_UTF8_BYTES, type BtwTextExchange } from "@vib-rato/coding-agent/session/btw-contract";
+import { Container, type TUI } from "@vib-rato/tui";
 
 const usage: Usage = {
 	input: 0,

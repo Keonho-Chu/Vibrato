@@ -3,7 +3,7 @@ import * as crypto from "node:crypto";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 import { Settings } from "../src/config/settings";
 import { tokenFingerprint } from "../src/sdk/bus/config";
 import { daemonPaths } from "../src/sdk/bus/daemon-paths";
@@ -56,7 +56,7 @@ import type { AgentDirSessionLifecycleService } from "../src/sdk/lifecycle/clien
 const BOT_TOKEN = "1234567890:ABCDEFghijkLmnOpQrsTuvWxYz012345678";
 
 function tempAgentDir(): string {
-	return fs.mkdtempSync(path.join(os.tmpdir(), "gjc-telegram-supervisor-test-"));
+	return fs.mkdtempSync(path.join(os.tmpdir(), "vib-telegram-supervisor-test-"));
 }
 
 function settings(agentDir: string): Settings {
@@ -972,7 +972,7 @@ describe("Telegram daemon retained owner lifecycle", () => {
 			const compiled = await spawnTelegramDaemonOwner(
 				{ settings: settings(compiledAgentDir), tokenFingerprint: "compiled-fingerprint", chatId: "42" },
 				{
-					execPath: "/opt/gjc/gjc",
+					execPath: "/opt/vib/vib",
 					platform: "win32",
 					pid: 708,
 					pidIncarnation: () => "linux:708",

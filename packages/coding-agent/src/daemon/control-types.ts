@@ -1,5 +1,5 @@
 /**
- * Public types for the `gjc daemon` control plane.
+ * Public types for the `vib daemon` control plane.
  *
  * Deliberately compact: a small result/status surface plus a built-in
  * controller contract. There is exactly one daemon kind today (`telegram`);

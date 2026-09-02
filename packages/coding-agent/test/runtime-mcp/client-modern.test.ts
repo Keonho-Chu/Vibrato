@@ -190,7 +190,7 @@ describe("MCP 2026-07-28 strict stateless transport", () => {
 				expect(request.headers.get("Mcp-Method")).toBe(request.body.method ?? null);
 				const meta = request.body.params?._meta as Record<string, unknown>;
 				expect(meta["io.modelcontextprotocol/protocolVersion"]).toBe("2026-07-28");
-				expect(meta["io.modelcontextprotocol/clientInfo"]).toMatchObject({ name: "gjc-coding-agent" });
+				expect(meta["io.modelcontextprotocol/clientInfo"]).toMatchObject({ name: "vib-coding-agent" });
 				expect(meta["io.modelcontextprotocol/clientCapabilities"]).toBeTypeOf("object");
 			}
 			// tools/call mirrors the tool name into Mcp-Name.

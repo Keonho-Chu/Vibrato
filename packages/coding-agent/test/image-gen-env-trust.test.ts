@@ -29,7 +29,7 @@ interface Resolved {
 const tempDirs: string[] = [];
 
 function projectDir(dotenv?: string): string {
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-image-gen-env-trust-"));
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-image-gen-env-trust-"));
 	tempDirs.push(dir);
 	if (dotenv !== undefined) fs.writeFileSync(path.join(dir, ".env"), dotenv);
 	return dir;
@@ -50,7 +50,7 @@ async function resolveIn(cwd: string, overrides: Record<string, string> = {}): P
 	// directory. Keep those trusted sources neutral so developer configuration
 	// cannot change the expected default or mask a project-env rejection.
 	env.HOME = projectDir();
-	env.GJC_CODING_AGENT_DIR = projectDir();
+	env.VIB_CODING_AGENT_DIR = projectDir();
 	Object.assign(env, overrides);
 
 	const proc = Bun.spawn([process.execPath, PROBE], { cwd, env, stdout: "pipe", stderr: "pipe" });

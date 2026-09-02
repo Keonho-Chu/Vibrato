@@ -1,14 +1,14 @@
 {
-  "name": "gajae-code-local",
+  "name": "vib-rato-local",
   "interface": {
-    "displayName": "Gajae Code"
+    "displayName": "Vibrato"
   },
   "plugins": [
     {
-      "name": "gajae-code",
+      "name": "vib-rato",
       "source": {
         "source": "local",
-        "path": "./gajae-code"
+        "path": "./vib-rato"
       },
       "policy": {
         "installation": "AVAILABLE",

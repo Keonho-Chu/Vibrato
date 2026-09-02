@@ -3,9 +3,9 @@ import {
 	createPetSelectItems,
 	getPetUnavailableWarning,
 	PET_UNAVAILABLE_WARNING,
-} from "@gajae-code/coding-agent/modes/components/pet-capability";
-import { PetSelectorComponent } from "@gajae-code/coding-agent/modes/components/pet-selector";
-import { initTheme } from "@gajae-code/coding-agent/modes/theme/theme";
+} from "@vib-rato/coding-agent/modes/components/pet-capability";
+import { PetSelectorComponent } from "@vib-rato/coding-agent/modes/components/pet-selector";
+import { initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
 
 function stripAnsi(text: string): string {
 	return text.replace(/\x1b\[[0-9;]*m/g, "");
@@ -22,10 +22,10 @@ describe("PetSelectorComponent", () => {
 		const component = new PetSelectorComponent("red", onSelect, () => {}, onPreview, true);
 		const rendered = stripAnsi(component.render(80).join("\n"));
 
-		expect(rendered).toContain("RedGajae");
-		expect(rendered).toContain("BlueGajae");
+		expect(rendered).toContain("RedVibrato");
+		expect(rendered).toContain("BlueVibrato");
 		expect(rendered).toContain("Ouroboros");
-		expect(stripAnsi(component.render(40).join("\n"))).toContain("RedGajae");
+		expect(stripAnsi(component.render(40).join("\n"))).toContain("RedVibrato");
 		expect(component.getSelectList().getSelectedItem()?.value).toBe("red");
 
 		component.getSelectList().handleInput("\x1b[B");
@@ -37,8 +37,8 @@ describe("PetSelectorComponent", () => {
 		const items = createPetSelectItems(
 			[
 				{ value: "off", label: "Off" },
-				{ value: "red", label: "RedGajae" },
-				{ value: "blue", label: "BlueGajae" },
+				{ value: "red", label: "RedVibrato" },
+				{ value: "blue", label: "BlueVibrato" },
 			],
 			"blue",
 			false,

@@ -3,7 +3,7 @@
  *
  * Agents are embedded at build time via Bun's import with { type: "text" }.
  */
-import { parseFrontmatter, prompt } from "@gajae-code/utils";
+import { parseFrontmatter, prompt } from "@vib-rato/utils";
 import { parseAgentFields } from "../discovery/helpers";
 import ralplanPersistenceTemplate from "../prompts/agent-fragments/ralplan-persistence.md" with { type: "text" };
 import restrictedBashTemplate from "../prompts/agent-fragments/restricted-bash.md" with { type: "text" };
@@ -35,8 +35,8 @@ interface EmbeddedAgentDef {
 	template: string;
 }
 
-const ULTRAGOAL_RED_TEAM_OPEN = "__GJC_ULTRAGOAL_RED_TEAM_OPEN__";
-const ULTRAGOAL_RED_TEAM_CLOSE = "__GJC_ULTRAGOAL_RED_TEAM_CLOSE__";
+const ULTRAGOAL_RED_TEAM_OPEN = "__VIB_ULTRAGOAL_RED_TEAM_OPEN__";
+const ULTRAGOAL_RED_TEAM_CLOSE = "__VIB_ULTRAGOAL_RED_TEAM_CLOSE__";
 
 function buildAgentContent(def: EmbeddedAgentDef): string {
 	const restrictedBash = prompt.render(restrictedBashTemplate);

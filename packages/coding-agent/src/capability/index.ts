@@ -7,7 +7,7 @@
  * - Loading items for a capability across all providers
  */
 import * as path from "node:path";
-import { getAgentDir, getProjectDir, getTrustedHomeDir, logger } from "@gajae-code/utils";
+import { getAgentDir, getProjectDir, getTrustedHomeDir, logger } from "@vib-rato/utils";
 
 import type { Settings } from "../config/settings";
 import { clearCache as clearFsCache, findRepoRoot, cacheStats as fsCacheStats, invalidate as invalidateFs } from "./fs";

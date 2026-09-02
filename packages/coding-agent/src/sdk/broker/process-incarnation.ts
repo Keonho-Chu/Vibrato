@@ -1,6 +1,6 @@
 import { dlopen, ptr } from "bun:ffi";
-import { nativeProcessBindings } from "@gajae-code/utils/native-process";
-import { readLinuxProcStartTimeSync } from "../../gjc-runtime/linux-proc";
+import { nativeProcessBindings } from "@vib-rato/utils/native-process";
+import { readLinuxProcStartTimeSync } from "../../vib-runtime/linux-proc";
 
 const DARWIN_PROC_PIDTBSDINFO = 3;
 const DARWIN_PROC_BSDINFO_SIZE = 136;

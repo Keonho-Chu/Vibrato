@@ -2,14 +2,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { createAgentSession } from "@gajae-code/coding-agent/sdk";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { createAgentSession } from "@vib-rato/coding-agent/sdk";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
 import {
 	buildSystemPrompt,
 	loadProjectContextFiles,
 	loadSystemPromptFiles,
-} from "@gajae-code/coding-agent/system-prompt";
+} from "@vib-rato/coding-agent/system-prompt";
 import { cleanupTempHome } from "./helpers/temp-home-cleanup";
 
 function escapeRegExp(text: string): string {
@@ -25,8 +25,8 @@ describe("SYSTEM.md prompt assembly", () => {
 		// Keep project-context fixtures outside the real user HOME even when
 		// TMPDIR points at ~/tmp; walk-up context discovery must not see
 		// host-level /home/bellman/AGENTS.md as a project file.
-		tempDir = fs.mkdtempSync(path.join(path.sep, "tmp", "gjc-system-prompt-"));
-		tempHomeDir = fs.mkdtempSync(path.join(path.sep, "tmp", "gjc-system-home-"));
+		tempDir = fs.mkdtempSync(path.join(path.sep, "tmp", "vib-system-prompt-"));
+		tempHomeDir = fs.mkdtempSync(path.join(path.sep, "tmp", "vib-system-home-"));
 		originalHome = process.env.HOME;
 		process.env.HOME = tempHomeDir;
 		vi.spyOn(os, "homedir").mockReturnValue(tempHomeDir);
@@ -36,7 +36,7 @@ describe("SYSTEM.md prompt assembly", () => {
 
 	it("renders SYSTEM.md exactly once when it is used as the custom base prompt", async () => {
 		const projectDir = path.join(tempDir, "project");
-		const systemDir = path.join(projectDir, ".gjc");
+		const systemDir = path.join(projectDir, ".vib");
 		const systemPrompt = "You are the project SYSTEM prompt.";
 		fs.mkdirSync(systemDir, { recursive: true });
 		fs.writeFileSync(path.join(systemDir, "SYSTEM.md"), systemPrompt);
@@ -67,10 +67,10 @@ describe("SYSTEM.md prompt assembly", () => {
 
 	it("prefers project SYSTEM.md over user SYSTEM.md", async () => {
 		const projectDir = path.join(tempDir, "project");
-		fs.mkdirSync(path.join(projectDir, ".gjc"), { recursive: true });
-		fs.mkdirSync(path.join(tempHomeDir, ".gjc", "agent"), { recursive: true });
-		fs.writeFileSync(path.join(tempHomeDir, ".gjc", "agent", "SYSTEM.md"), "User SYSTEM prompt");
-		fs.writeFileSync(path.join(projectDir, ".gjc", "SYSTEM.md"), "Project SYSTEM prompt");
+		fs.mkdirSync(path.join(projectDir, ".vib"), { recursive: true });
+		fs.mkdirSync(path.join(tempHomeDir, ".vib", "agent"), { recursive: true });
+		fs.writeFileSync(path.join(tempHomeDir, ".vib", "agent", "SYSTEM.md"), "User SYSTEM prompt");
+		fs.writeFileSync(path.join(projectDir, ".vib", "SYSTEM.md"), "Project SYSTEM prompt");
 
 		await expect(loadSystemPromptFiles({ cwd: projectDir })).resolves.toBe("Project SYSTEM prompt");
 	});
@@ -91,11 +91,11 @@ describe("SYSTEM.md prompt assembly", () => {
 		await expect(loadProjectContextFiles({ cwd: projectDir })).resolves.toEqual([]);
 	});
 
-	it("loads gjc's own user-global AGENTS.md before project context files", async () => {
+	it("loads vib's own user-global AGENTS.md before project context files", async () => {
 		const projectDir = path.join(tempDir, "project");
 		fs.mkdirSync(projectDir, { recursive: true });
 		fs.writeFileSync(path.join(projectDir, "AGENTS.md"), "Project instructions");
-		const userAgentsPath = path.join(tempHomeDir, ".gjc", "agent", "AGENTS.md");
+		const userAgentsPath = path.join(tempHomeDir, ".vib", "agent", "AGENTS.md");
 		fs.mkdirSync(path.dirname(userAgentsPath), { recursive: true });
 		fs.writeFileSync(userAgentsPath, "User-global instructions");
 
@@ -112,7 +112,7 @@ describe("SYSTEM.md prompt assembly", () => {
 		fs.mkdirSync(projectDir, { recursive: true });
 		fs.mkdirSync(path.join(tempHomeDir, ".claude"), { recursive: true });
 		fs.writeFileSync(path.join(tempHomeDir, ".claude", "CLAUDE.md"), "Home Claude instructions");
-		const userAgentsPath = path.join(tempHomeDir, ".gjc", "agent", "AGENTS.md");
+		const userAgentsPath = path.join(tempHomeDir, ".vib", "agent", "AGENTS.md");
 		fs.mkdirSync(path.dirname(userAgentsPath), { recursive: true });
 		fs.writeFileSync(userAgentsPath, "User-global instructions");
 

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { normalizeModelSelectorValue } from "@gajae-code/coding-agent/config/model-selector-value";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
+import { normalizeModelSelectorValue } from "@vib-rato/coding-agent/config/model-selector-value";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
 
 describe("settings model fallback chains", () => {
 	test("accepts scalar and array selector chains without narrowing permissive aliases", () => {

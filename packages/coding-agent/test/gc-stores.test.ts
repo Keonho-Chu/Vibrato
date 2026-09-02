@@ -2,13 +2,13 @@ import { afterEach, describe, expect, test } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { collectFileLocksForGc, fileLocksGcAdapter } from "@gajae-code/coding-agent/config/file-lock-gc";
-import type { GcContext, GcPidProbe } from "@gajae-code/coding-agent/gjc-runtime/gc-runtime";
-import { collectGcReport, computeExitCode } from "@gajae-code/coding-agent/gjc-runtime/gc-runtime";
+import { collectFileLocksForGc, fileLocksGcAdapter } from "@vib-rato/coding-agent/config/file-lock-gc";
 import {
 	harnessLeasesGcAdapter,
 	registryEntriesGcAdapter,
-} from "@gajae-code/coding-agent/harness-control-plane/gc-adapter";
+} from "@vib-rato/coding-agent/harness-control-plane/gc-adapter";
+import type { GcContext, GcPidProbe } from "@vib-rato/coding-agent/vib-runtime/gc-runtime";
+import { collectGcReport, computeExitCode } from "@vib-rato/coding-agent/vib-runtime/gc-runtime";
 
 const DEAD_PID = 4242;
 const ALIVE_PID = 4243;
@@ -31,7 +31,7 @@ async function makeTemp(): Promise<string> {
 const splitProbe: GcPidProbe = pid => (pid === DEAD_PID ? { status: "dead" } : { status: "keep", reason: "alive" });
 
 function ctxFor(base: string, registryDir: string, probe: GcPidProbe = splitProbe): GcContext {
-	return { probe, force: false, env: { ...process.env, GJC_HARNESS_ROOT_REGISTRY_DIR: registryDir }, cwd: base };
+	return { probe, force: false, env: { ...process.env, VIB_HARNESS_ROOT_REGISTRY_DIR: registryDir }, cwd: base };
 }
 
 async function writeJson(file: string, value: unknown): Promise<void> {
@@ -146,7 +146,7 @@ describe("fileLocksGcAdapter", () => {
 		const ctx: GcContext = {
 			probe: splitProbe,
 			force: false,
-			env: { ...process.env, GJC_RECEIPT_SPOOL_DIR: spoolDir },
+			env: { ...process.env, VIB_RECEIPT_SPOOL_DIR: spoolDir },
 			cwd: base,
 		};
 		const { records, errors, warnings } = await collectFileLocksForGc(ctx, { roots: [spoolDir] });
@@ -183,7 +183,7 @@ describe("fileLocksGcAdapter", () => {
 		const ctx: GcContext = {
 			probe: splitProbe,
 			force: false,
-			env: { ...process.env, GJC_RECEIPT_SPOOL_DIR: spoolDir },
+			env: { ...process.env, VIB_RECEIPT_SPOOL_DIR: spoolDir },
 			cwd: base,
 		};
 		// Budget of 3 is enough to start agent root but not exhaust its flood,

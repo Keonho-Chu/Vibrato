@@ -1,8 +1,8 @@
 import * as os from "node:os";
 import * as path from "node:path";
-import { enrichModelThinking } from "@gajae-code/ai/model-thinking";
-import type { Model } from "@gajae-code/ai/types";
-import { isEnoent } from "@gajae-code/utils";
+import { enrichModelThinking } from "@vib-rato/ai/model-thinking";
+import type { Model } from "@vib-rato/ai/types";
+import { isEnoent } from "@vib-rato/utils";
 
 export async function withEnv(
 	overrides: Record<string, string | undefined>,
@@ -80,9 +80,9 @@ export interface AuthGatewayE2ERequirements {
 	modelId: string;
 }
 
-export const AUTH_GATEWAY_E2E_URL = Bun.env.GJC_E2E_GATEWAY_URL ?? "http://127.0.0.1:4000";
+export const AUTH_GATEWAY_E2E_URL = Bun.env.VIB_E2E_GATEWAY_URL ?? "http://127.0.0.1:4000";
 
-const AUTH_GATEWAY_TOKEN_PATH = path.join(os.homedir(), ".gjc", "auth-gateway.token");
+const AUTH_GATEWAY_TOKEN_PATH = path.join(os.homedir(), ".vib", "auth-gateway.token");
 const AUTH_GATEWAY_HEALTH_TIMEOUT_MS = 500;
 
 const authGatewayE2EStatus = new Map<string, Promise<AuthGatewayE2EStatus>>();

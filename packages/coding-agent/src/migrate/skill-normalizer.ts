@@ -1,14 +1,14 @@
 /**
- * Normalize a skill from another agent into a native GJC `SKILL.md`.
+ * Normalize a skill from another agent into a native Vibrato `SKILL.md`.
  *
- * GJC derives a skill's loaded name from its directory (`<slug>/SKILL.md`) when no
+ * Vibrato derives a skill's loaded name from its directory (`<slug>/SKILL.md`) when no
  * frontmatter `name` is present, and requires a `description`. To guarantee the
  * effective loaded name equals the lowercase-hyphen slug, we drop any frontmatter
  * `name` and place the file at `<slug>/SKILL.md`, synthesizing a `description`
  * when the source lacks one.
  */
 
-import { parseFrontmatter } from "@gajae-code/utils";
+import { parseFrontmatter } from "@vib-rato/utils";
 import { YAML } from "bun";
 
 export interface NormalizeSkillInput {
@@ -46,7 +46,7 @@ function firstNonEmptyLine(body: string): string | undefined {
 }
 
 /**
- * Produce a `{ slug, content }` pair whose effective GJC-loaded name equals `slug`.
+ * Produce a `{ slug, content }` pair whose effective Vibrato-loaded name equals `slug`.
  * Throws only on an unusable name (cannot produce a slug).
  */
 export function normalizeSkill(input: NormalizeSkillInput): NormalizedSkill {

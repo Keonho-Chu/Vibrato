@@ -3,7 +3,7 @@ import * as nodeFs from "node:fs";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { getAgentDir, getSessionsDir, setAgentDir } from "@gajae-code/utils";
+import { getAgentDir, getSessionsDir, setAgentDir } from "@vib-rato/utils";
 import { ManagedSessionDescendantStore } from "../src/session/internal/managed-session-storage";
 import { SessionManager } from "../src/session/session-manager";
 import {
@@ -50,7 +50,7 @@ async function source(id: string, cwd: string, events: string[]): Promise<void> 
 }
 
 beforeEach(async () => {
-	root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-codex-import-"));
+	root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-codex-import-"));
 	roots.push(root);
 	workspace = path.join(root, "workspace");
 	codexHome = path.join(root, "codex");
@@ -518,7 +518,7 @@ describe.skipIf(process.platform !== "linux")("Codex session import", () => {
 		const first = await importCodexSessions(workspace, ["staging-root-setup"]);
 		const setup = first.results[0];
 		if (!setup || setup.status === "failed") throw new Error("Expected staging setup import success");
-		const stagingRoot = path.join(path.dirname(setup.targetPath), ".gjc-managed-session-internal", "import-staging");
+		const stagingRoot = path.join(path.dirname(setup.targetPath), ".vib-managed-session-internal", "import-staging");
 
 		await fs.rm(stagingRoot, { recursive: true });
 		await source("missing-staging-root", workspace, [message("assistant", "missing root is first-run safe")]);
@@ -544,7 +544,7 @@ describe.skipIf(process.platform !== "linux")("Codex session import", () => {
 		await fs.rm(setup.targetPath);
 		const recoveryDirectory = path.join(
 			path.dirname(setup.targetPath),
-			".gjc-managed-session-internal",
+			".vib-managed-session-internal",
 			"import-staging",
 			"receipt-path-uncertain",
 		);
@@ -591,7 +591,7 @@ describe.skipIf(process.platform !== "linux")("Codex session import", () => {
 		await fs.rm(setup.targetPath);
 		const recoveryDirectory = path.join(
 			path.dirname(setup.targetPath),
-			".gjc-managed-session-internal",
+			".vib-managed-session-internal",
 			"import-staging",
 			"transcript-path-uncertain",
 		);
@@ -649,7 +649,7 @@ describe.skipIf(process.platform !== "linux")("Codex session import", () => {
 		await fs.rm(result.targetPath);
 		const recoveryDirectory = path.join(
 			path.dirname(result.targetPath),
-			".gjc-managed-session-internal",
+			".vib-managed-session-internal",
 			"import-staging",
 			"crashed-attempt",
 		);
@@ -706,7 +706,7 @@ describe.skipIf(process.platform !== "linux")("Codex session import", () => {
 		await fs.rm(result.targetPath);
 		const recoveryDirectory = path.join(
 			path.dirname(result.targetPath),
-			".gjc-managed-session-internal",
+			".vib-managed-session-internal",
 			"import-staging",
 			"swap-attempt",
 		);

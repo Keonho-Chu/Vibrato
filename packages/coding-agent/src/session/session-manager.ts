@@ -5,8 +5,8 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import * as util from "node:util";
-import { type AgentMessage, canContinuePersistedHistory } from "@gajae-code/agent-core";
-import type { ConfiguredModelChainEntry as SharedConfiguredModelChainEntry } from "@gajae-code/agent-core/compaction";
+import { type AgentMessage, canContinuePersistedHistory } from "@vib-rato/agent-core";
+import type { ConfiguredModelChainEntry as SharedConfiguredModelChainEntry } from "@vib-rato/agent-core/compaction";
 import type {
 	ImageContent,
 	Message,
@@ -15,12 +15,12 @@ import type {
 	ServiceTier,
 	TextContent,
 	Usage,
-} from "@gajae-code/ai/core";
-import { hasAdjacentPrivateThinkingBlocks } from "@gajae-code/ai/core";
-import type * as native from "@gajae-code/natives";
+} from "@vib-rato/ai/core";
+import { hasAdjacentPrivateThinkingBlocks } from "@vib-rato/ai/core";
+import type * as native from "@vib-rato/natives";
 
-function nativeSessionManager(): typeof import("@gajae-code/natives") {
-	return require("@gajae-code/natives") as typeof import("@gajae-code/natives");
+function nativeSessionManager(): typeof import("@vib-rato/natives") {
+	return require("@vib-rato/natives") as typeof import("@vib-rato/natives");
 }
 const cwdTransitionAls = new AsyncLocalStorage<symbol>();
 type CwdReadLeaseContext = { active: boolean; owner: symbol };
@@ -30,7 +30,7 @@ const CWD_NOFOLLOW_OPEN_FLAGS =
 	(typeof fs.constants.O_DIRECTORY === "number" ? fs.constants.O_DIRECTORY : 0) |
 	(process.platform === "win32" ? 0 : (fs.constants.O_NOFOLLOW ?? 0));
 
-import { getTerminalId } from "@gajae-code/tui";
+import { getTerminalId } from "@vib-rato/tui";
 import {
 	getAgentDir,
 	getBlobsDir,
@@ -48,13 +48,13 @@ import {
 	resolveEquivalentPath,
 	Snowflake,
 	toError,
-} from "@gajae-code/utils";
+} from "@vib-rato/utils";
 import { EDIT_SNAPSHOT_EXTERNALIZED_NOTICE, editSnapshotReceipt } from "../edit/renderer";
 import type { TtsrInjectionRecord } from "../export/ttsr";
-import { assertSafePathComponent } from "../gjc-runtime/session-layout";
-import { writeTextAtomic } from "../gjc-runtime/state-writer";
 import type { ManagedLegacyLocalMigrationSource } from "../internal-urls/local-protocol";
 import * as git from "../utils/git";
+import { assertSafePathComponent } from "../vib-runtime/session-layout";
+import { writeTextAtomic } from "../vib-runtime/state-writer";
 import { ArtifactManager } from "./artifacts";
 import {
 	type BlobPutResult,
@@ -235,8 +235,8 @@ export const CURRENT_SESSION_VERSION = 5;
  * Version 4 patch records remain readable; older writers must not edit v5 sessions.
  */
 
-function isUnderProjectGjc(cwd: string, targetPath: string): boolean {
-	const relative = path.relative(path.join(path.resolve(cwd), ".gjc"), path.resolve(targetPath));
+function isUnderProjectVib(cwd: string, targetPath: string): boolean {
+	const relative = path.relative(path.join(path.resolve(cwd), ".vib"), path.resolve(targetPath));
 	return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
 }
 
@@ -1296,7 +1296,7 @@ class DiskBackedIdUniquenessCheck {
 	#failed = false;
 
 	constructor() {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-index-ids-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-index-ids-"));
 		try {
 			for (let bucket = 0; bucket < DiskBackedIdUniquenessCheck.BUCKETS; bucket++) {
 				const bucketPath = path.join(root, bucket.toString(16).padStart(2, "0"));
@@ -2148,7 +2148,7 @@ export const BOUNDED_RESUME_TRANSCRIPT_MAX_BYTES = 2 * 1024 * 1024 * 1024 + 1024
 const EAGER_RESUME_TRANSCRIPT_MAX_BYTES = MANAGED_ARTIFACT_MAX_FILE_BYTES;
 
 export const SESSION_OVERSIZED_RECOVERY_MESSAGE =
-	"The selected session transcript is too large to resume safely. Use `gjc export <session-file>` to export its content into a new session, or remove/archive it after confirming its content is no longer needed.";
+	"The selected session transcript is too large to resume safely. Use `vib export <session-file>` to export its content into a new session, or remove/archive it after confirming its content is no longer needed.";
 
 export class SessionAppendPersistenceError extends Error {
 	readonly phase: SessionAppendPersistenceFailurePhase;
@@ -2195,8 +2195,8 @@ export class SessionNearLimitAppendError extends Error {
 			[
 				`near_limit_append: entry (${details.entryBytes} B) plus live transcript (${details.liveBytes} B) exceeds the managed per-file limit (${details.capBytes} B).`,
 				details.entryRetained
-					? "The appended entry is retained in memory; its effect (including any committed source edit) is recorded and will persist on the next successful write. Compact the session (`/compact`) or export to a fresh session (`gjc export <session-file>`) before continuing."
-					: "The appended entry was rolled back from memory; re-issue it after compacting the session (`/compact`) or exporting to a fresh session (`gjc export <session-file>`).",
+					? "The appended entry is retained in memory; its effect (including any committed source edit) is recorded and will persist on the next successful write. Compact the session (`/compact`) or export to a fresh session (`vib export <session-file>`) before continuing."
+					: "The appended entry was rolled back from memory; re-issue it after compacting the session (`/compact`) or exporting to a fresh session (`vib export <session-file>`).",
 			].join(" "),
 		);
 		this.name = "SessionNearLimitAppendError";
@@ -2248,12 +2248,12 @@ export class SessionTranscriptOversizedError extends Error {
 }
 /** Default synchronous session-context materialization budget (512 MiB). */
 export const SESSION_CONTEXT_MATERIALIZATION_BUDGET_BYTES_DEFAULT = 512 * 1024 * 1024;
-/** Ceiling for a `GJC_SESSION_CONTEXT_BUDGET_BYTES` override (8 GiB) so the memory guard stays meaningful. */
+/** Ceiling for a `VIB_SESSION_CONTEXT_BUDGET_BYTES` override (8 GiB) so the memory guard stays meaningful. */
 export const SESSION_CONTEXT_MATERIALIZATION_BUDGET_BYTES_MAX = 8 * 1024 * 1024 * 1024;
 
 /**
  * Resolve the operation-peak session-context materialization budget from the
- * `GJC_SESSION_CONTEXT_BUDGET_BYTES` override. Parsing is fail-closed: only a
+ * `VIB_SESSION_CONTEXT_BUDGET_BYTES` override. Parsing is fail-closed: only a
  * canonical positive-integer decimal value is honored; anything else (empty,
  * non-numeric, negative, zero, overflowing a safe integer, or above the
  * documented ceiling) falls back to the 512 MiB default and is surfaced as a
@@ -2262,12 +2262,12 @@ export const SESSION_CONTEXT_MATERIALIZATION_BUDGET_BYTES_MAX = 8 * 1024 * 1024 
 export function resolveSessionContextBudgetBytes(override: string | undefined): number {
 	if (override === undefined) return SESSION_CONTEXT_MATERIALIZATION_BUDGET_BYTES_DEFAULT;
 	if (override === "" || !/^[0-9]+$/.test(override)) {
-		logger.warn("GJC_SESSION_CONTEXT_BUDGET_BYTES ignored: expected a positive integer", { override });
+		logger.warn("VIB_SESSION_CONTEXT_BUDGET_BYTES ignored: expected a positive integer", { override });
 		return SESSION_CONTEXT_MATERIALIZATION_BUDGET_BYTES_DEFAULT;
 	}
 	const parsed = Number(override);
 	if (!Number.isSafeInteger(parsed) || parsed <= 0 || parsed > SESSION_CONTEXT_MATERIALIZATION_BUDGET_BYTES_MAX) {
-		logger.warn("GJC_SESSION_CONTEXT_BUDGET_BYTES ignored: must be a positive integer ≤ 8 GiB", {
+		logger.warn("VIB_SESSION_CONTEXT_BUDGET_BYTES ignored: must be a positive integer ≤ 8 GiB", {
 			override,
 			max: SESSION_CONTEXT_MATERIALIZATION_BUDGET_BYTES_MAX,
 		});
@@ -2278,7 +2278,7 @@ export function resolveSessionContextBudgetBytes(override: string | undefined): 
 
 /** Operation-peak budget for one synchronous session-context materialization. */
 export const SESSION_CONTEXT_MATERIALIZATION_BUDGET_BYTES = resolveSessionContextBudgetBytes(
-	process.env.GJC_SESSION_CONTEXT_BUDGET_BYTES,
+	process.env.VIB_SESSION_CONTEXT_BUDGET_BYTES,
 );
 
 /**
@@ -2553,15 +2553,15 @@ function createSessionId(): string {
 
 /**
  * A session id pre-allocated by the notifications lifecycle subsystem, when this
- * process was spawned by `/session_create`. Gated by `GJC_LIFECYCLE_REQUEST_ID`
+ * process was spawned by `/session_create`. Gated by `VIB_LIFECYCLE_REQUEST_ID`
  * so it ONLY applies to lifecycle-launched sessions (never normal launches): the
  * daemon tags the tmux session, endpoint discovery, and its `/session_recent`
  * id with this value, so the agent MUST adopt it as its header id or those ids
  * diverge (breaking close/resume-by-id after the session is gone).
  */
 function lifecyclePreallocatedSessionId(): string | undefined {
-	if (!process.env.GJC_LIFECYCLE_REQUEST_ID) return undefined;
-	const id = process.env.GJC_SESSION_ID?.trim();
+	if (!process.env.VIB_LIFECYCLE_REQUEST_ID) return undefined;
+	const id = process.env.VIB_SESSION_ID?.trim();
 	if (!id || !/^[A-Za-z0-9._-]{1,128}$/.test(id)) return undefined;
 	return id;
 }
@@ -3449,10 +3449,10 @@ function writeTerminalBreadcrumb(cwd: string, sessionFile: string): void {
 	const breadcrumbFile = path.join(breadcrumbDir, terminalId);
 	const content = `${cwd}\n${sessionFile}\n`;
 	// Best-effort — don't break session creation if breadcrumb fails
-	const write = isUnderProjectGjc(cwd, breadcrumbFile)
+	const write = isUnderProjectVib(cwd, breadcrumbFile)
 		? writeTextAtomic(breadcrumbFile, content, {
 				cwd,
-				audit: { category: "artifact", verb: "write", owner: "gjc-runtime" },
+				audit: { category: "artifact", verb: "write", owner: "vib-runtime" },
 			})
 		: Bun.write(breadcrumbFile, content);
 	write.catch(() => {});
@@ -4813,7 +4813,7 @@ const EDIT_SNAPSHOT_INLINE_MAX_CHARS = 16 * 1024;
 /** Minimum base64 length to externalize to blob store (skip tiny inline images) */
 const BLOB_EXTERNALIZE_THRESHOLD = 1024;
 const TEXT_CONTENT_KEY = "content";
-const RESIDENT_BLOB_SENTINEL_KEY = "__gjcResidentBlob";
+const RESIDENT_BLOB_SENTINEL_KEY = "__vibResidentBlob";
 type ResidentBlobKind = "text" | "imageUrl" | "imageData";
 interface ResidentBlobSentinel {
 	[RESIDENT_BLOB_SENTINEL_KEY]: true;
@@ -5531,7 +5531,7 @@ function materializeProviderVisibleEntrySync(entry: SessionEntry, stores: Reside
 }
 
 const COLD_SPILL_NOTICE = "[Compacted history content evicted to durable cold storage]";
-const COLD_SPILL_ARGUMENTS_SENTINEL_KEY = "__gjcColdSpillArguments";
+const COLD_SPILL_ARGUMENTS_SENTINEL_KEY = "__vibColdSpillArguments";
 const COLD_SPILL_MIN_CHARS = 1024;
 
 type ColdSpillWrite = {
@@ -6349,9 +6349,9 @@ class NdjsonFileWriter {
 const PROJECT_SESSION_SCAN_MAX_DIRECTORIES = 4096;
 const PROJECT_SESSION_SCAN_MAX_FILES = 1000;
 
-function isProjectSessionTranscriptPath(projectGjcDir: string, filePath: string): boolean {
+function isProjectSessionTranscriptPath(projectVibDir: string, filePath: string): boolean {
 	if (isStagedSessionPath(filePath)) return false;
-	const relative = path.relative(projectGjcDir, filePath);
+	const relative = path.relative(projectVibDir, filePath);
 	if (relative.startsWith("..") || path.isAbsolute(relative)) return false;
 	const segments = relative.split(path.sep);
 	if (segments.includes(SESSION_STAGING_DIRNAME)) return false;
@@ -6361,21 +6361,21 @@ function isProjectSessionTranscriptPath(projectGjcDir: string, filePath: string)
 }
 
 /**
- * Discover resumable transcripts intentionally stored inside a project's `.gjc`.
+ * Discover resumable transcripts intentionally stored inside a project's `.vib`.
  * Runtime token/audit JSONL files are excluded by requiring a known transcript
  * container (`agent-session` or `sessions`).
  */
 export function listProjectSessionTranscriptFiles(cwd: string): string[] {
-	const projectGjcDir = path.join(path.resolve(cwd), ".gjc");
+	const projectVibDir = path.join(path.resolve(cwd), ".vib");
 	let rootStat: fs.Stats;
 	try {
-		rootStat = fs.lstatSync(projectGjcDir);
+		rootStat = fs.lstatSync(projectVibDir);
 	} catch {
 		return [];
 	}
 	if (!rootStat.isDirectory() || rootStat.isSymbolicLink()) return [];
 
-	const directories = [projectGjcDir];
+	const directories = [projectVibDir];
 	const files: string[] = [];
 	let scannedDirectories = 0;
 	while (directories.length > 0 && scannedDirectories < PROJECT_SESSION_SCAN_MAX_DIRECTORIES) {
@@ -6399,7 +6399,7 @@ export function listProjectSessionTranscriptFiles(cwd: string): string[] {
 				entry.isFile() &&
 				!entry.name.startsWith(".") &&
 				entry.name.endsWith(".jsonl") &&
-				isProjectSessionTranscriptPath(projectGjcDir, entryPath)
+				isProjectSessionTranscriptPath(projectVibDir, entryPath)
 			) {
 				files.push(entryPath);
 				if (files.length >= PROJECT_SESSION_SCAN_MAX_FILES) return files;
@@ -7087,7 +7087,7 @@ function emptyFirstOpenTelemetry(
 
 function firstOpenGcStrategy(): SessionMemoryGcStrategy {
 	const candidate =
-		SessionManagerTestHooks.firstOpenGcStrategy ?? process.env.GJC_SESSION_MEMORY_GC_STRATEGY?.trim().toLowerCase();
+		SessionManagerTestHooks.firstOpenGcStrategy ?? process.env.VIB_SESSION_MEMORY_GC_STRATEGY?.trim().toLowerCase();
 	return candidate === "none" || candidate === "async" || candidate === "pressure" || candidate === "current"
 		? candidate
 		: "pressure";
@@ -7096,7 +7096,7 @@ function firstOpenGcStrategy(): SessionMemoryGcStrategy {
 function firstOpenSecondaryArtifactMode(): SessionMemorySecondaryArtifactMode {
 	const candidate =
 		SessionManagerTestHooks.secondaryArtifactMode ??
-		process.env.GJC_SESSION_MEMORY_SECONDARY_ARTIFACT_MODE?.trim().toLowerCase();
+		process.env.VIB_SESSION_MEMORY_SECONDARY_ARTIFACT_MODE?.trim().toLowerCase();
 	return candidate === "enabled" || candidate === "disabled" || candidate === "auto" ? candidate : "disabled";
 }
 
@@ -7850,7 +7850,7 @@ export class SessionManager {
 			size: BigInt(named.size),
 			mtimeNs: named.mtimeNs,
 			sha256: publication.publishedSha256,
-			quarantineName: `.gjc-fork-${process.pid}-${crypto.randomUUID()}`,
+			quarantineName: `.vib-fork-${process.pid}-${crypto.randomUUID()}`,
 		});
 		if (
 			!removed.ok &&
@@ -16401,7 +16401,7 @@ export class SessionManager {
 		if (!this.#ephemeralArtifactInit) {
 			let init: Promise<ArtifactManager | null>;
 			init = fs.promises
-				.mkdtemp(path.join(os.tmpdir(), "gjc-session-artifacts-"))
+				.mkdtemp(path.join(os.tmpdir(), "vib-session-artifacts-"))
 				.then(async dir => {
 					try {
 						await SessionManagerTestHooks.beforeEphemeralArtifactManagerInstall?.(dir);
@@ -18631,7 +18631,7 @@ export class SessionManager {
 	/**
 	 * Create a new session.
 	 * @param cwd Working directory (stored in session header)
-	 * @param sessionDir Optional session directory. If omitted, uses default (~/.gjc/agent/sessions/<encoded-cwd>/).
+	 * @param sessionDir Optional session directory. If omitted, uses default (~/.vib/agent/sessions/<encoded-cwd>/).
 	 */
 	static nestedManagedDestination(
 		authority: ManagedDirectoryRoot | ManagedSessionDescendantStore,
@@ -19682,7 +19682,7 @@ export class SessionManager {
 						if (
 							entry.relativePath.length === 0 ||
 							beforePaths.has(entry.relativePath) ||
-							(!/^\.gjc-/u.test(path.posix.basename(entry.relativePath)) &&
+							(!/^\.vib-/u.test(path.posix.basename(entry.relativePath)) &&
 								!/\.removing$/u.test(path.posix.basename(entry.relativePath)))
 						)
 							continue;
@@ -20246,10 +20246,10 @@ export class SessionManager {
 		const inspected = inspectTranscriptHeaderBounded(sessionPath, storage, BOUNDED_RESUME_TRANSCRIPT_MAX_BYTES);
 		if (!inspected.ok || !inspected.inspection.cwd) throw new Error("Session has no valid workspace header.");
 		const headerCwd = inspected.inspection.cwd;
-		const projectGjcDir = path.join(path.resolve(headerCwd), ".gjc");
-		if (isProjectSessionTranscriptPath(projectGjcDir, sessionPath)) {
-			const relativePath = path.relative(projectGjcDir, path.resolve(sessionPath)).split(path.sep).join("/");
-			const authority = nativeSessionManager().openRecoveryFsRoot(projectGjcDir);
+		const projectVibDir = path.join(path.resolve(headerCwd), ".vib");
+		if (isProjectSessionTranscriptPath(projectVibDir, sessionPath)) {
+			const relativePath = path.relative(projectVibDir, path.resolve(sessionPath)).split(path.sep).join("/");
+			const authority = nativeSessionManager().openRecoveryFsRoot(projectVibDir);
 			try {
 				const observed = authority.stat(relativePath);
 				if (!observed.ok || !observed.identity?.sha256)
@@ -20693,7 +20693,7 @@ export class SessionManager {
 		try {
 			destination =
 				input.destination === undefined
-					? explicitDestination(path.join(os.tmpdir(), `gjc-memory-guard-${input.checkpoint.session_id}`))
+					? explicitDestination(path.join(os.tmpdir(), `vib-memory-guard-${input.checkpoint.session_id}`))
 					: destinationFor(getProjectDir(), input.destination, storage);
 		} catch {
 			return { kind: "blocked", reason: "destination-unavailable" };
@@ -20967,7 +20967,7 @@ export class SessionManager {
 	/**
 	 * Continue the most recent session, or create new if none.
 	 * @param cwd Working directory
-	 * @param sessionDir Optional session directory. If omitted, uses default (~/.gjc/agent/sessions/<encoded-cwd>/).
+	 * @param sessionDir Optional session directory. If omitted, uses default (~/.vib/agent/sessions/<encoded-cwd>/).
 	 */
 	static async continueRecent(
 		cwd: string,
@@ -21091,7 +21091,7 @@ export class SessionManager {
 	/**
 	 * List all sessions.
 	 * @param cwd Working directory (used to compute default session directory)
-	 * @param sessionDir Optional session directory. If omitted, uses default (~/.gjc/agent/sessions/<encoded-cwd>/).
+	 * @param sessionDir Optional session directory. If omitted, uses default (~/.vib/agent/sessions/<encoded-cwd>/).
 	 */
 	static async list(
 		cwd: string,

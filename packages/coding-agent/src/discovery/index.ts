@@ -34,9 +34,9 @@ import "./github";
 import "./mcp-json";
 import "./ssh";
 // NOTE: There is deliberately no VS Code provider and no MCP registration in
-// the cursor/gemini/opencode/windsurf providers: GJC does not inherit MCP
-// servers live from other hosts. MCP comes from GJC's own config (builtin,
-// mcp-json), validated plugin bundles, or an explicit `gjc mcp import <host>`.
+// the cursor/gemini/opencode/windsurf providers: Vibrato does not inherit MCP
+// servers live from other hosts. MCP comes from Vibrato's own config (builtin,
+// mcp-json), validated plugin bundles, or an explicit `vib mcp import <host>`.
 import "./windsurf";
 
 // Re-export the main API from capability registry

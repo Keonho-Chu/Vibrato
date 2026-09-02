@@ -1,14 +1,14 @@
 import { describe, expect, it } from "bun:test";
-import { getBundledModel } from "@gajae-code/ai/models";
-import { convertAnthropicMessages } from "@gajae-code/ai/providers/anthropic";
-import { convertMessages as convertGoogleMessages } from "@gajae-code/ai/providers/google-shared";
+import { getBundledModel } from "@vib-rato/ai/models";
+import { convertAnthropicMessages } from "@vib-rato/ai/providers/anthropic";
+import { convertMessages as convertGoogleMessages } from "@vib-rato/ai/providers/google-shared";
 import {
 	convertMessages as convertOpenAICompletionsMessages,
 	detectCompat,
-} from "@gajae-code/ai/providers/openai-completions";
-import { convertResponsesAssistantMessage } from "@gajae-code/ai/providers/openai-responses-shared";
-import { complete } from "@gajae-code/ai/stream";
-import type { Api, AssistantMessage, Context, Model, OptionsForApi, ToolResultMessage } from "@gajae-code/ai/types";
+} from "@vib-rato/ai/providers/openai-completions";
+import { convertResponsesAssistantMessage } from "@vib-rato/ai/providers/openai-responses-shared";
+import { complete } from "@vib-rato/ai/stream";
+import type { Api, AssistantMessage, Context, Model, OptionsForApi, ToolResultMessage } from "@vib-rato/ai/types";
 import * as z from "zod/v4";
 import { e2eApiKey, resolveApiKey } from "./oauth";
 

@@ -1,7 +1,7 @@
-import type { AgentMessage } from "@gajae-code/agent-core";
-import type { CompactionOutcome } from "@gajae-code/agent-core/compaction";
-import type { AssistantMessage, ImageContent, Message, UsageReport } from "@gajae-code/ai/core";
-import type { Component, Container, EditorTheme, Loader, SlashCommand, Spacer, Text, TUI } from "@gajae-code/tui";
+import type { AgentMessage } from "@vib-rato/agent-core";
+import type { CompactionOutcome } from "@vib-rato/agent-core/compaction";
+import type { AssistantMessage, ImageContent, Message, UsageReport } from "@vib-rato/ai/core";
+import type { Component, Container, EditorTheme, Loader, SlashCommand, Spacer, Text, TUI } from "@vib-rato/tui";
 import type { KeybindingsManager } from "../config/keybindings";
 import type { Settings } from "../config/settings";
 import type {
@@ -24,12 +24,12 @@ import type { BashExecutionComponent } from "./components/bash-execution";
 import type { CommandPaletteAction } from "./components/command-palette";
 import type { CustomEditor } from "./components/custom-editor";
 import type { EvalExecutionComponent } from "./components/eval-execution";
-import type { PetMode } from "./components/gajae-pet-widget";
 import type { HookEditorComponent } from "./components/hook-editor";
 import type { HookInputComponent } from "./components/hook-input";
 import type { HookSelectorComponent } from "./components/hook-selector";
 import type { ToolExecutionHandle } from "./components/tool-execution";
 import type { StatusLineComponent } from "./components/tool-status-header";
+import type { PetMode } from "./components/vibrato-pet-widget";
 import type { IrcObservationLedger } from "./irc-observation-ledger";
 import type { OAuthManualInputManager } from "./oauth-manual-input";
 import type { PromptSuggestionController } from "./prompt-suggestion-controller";

@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
-import { disposeAllKernelSessions, executePython } from "@gajae-code/coding-agent/eval/py/executor";
+import { disposeAllKernelSessions, executePython } from "@vib-rato/coding-agent/eval/py/executor";
 import type {
 	KernelExecuteOptions,
 	KernelExecuteResult,
 	KernelShutdownResult,
-} from "@gajae-code/coding-agent/eval/py/kernel";
-import { PythonKernel } from "@gajae-code/coding-agent/eval/py/kernel";
-import { TempDir } from "@gajae-code/utils";
+} from "@vib-rato/coding-agent/eval/py/kernel";
+import { PythonKernel } from "@vib-rato/coding-agent/eval/py/kernel";
+import { TempDir } from "@vib-rato/utils";
 
 class FakeKernel {
 	executeCalls = 0;

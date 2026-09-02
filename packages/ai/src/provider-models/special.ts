@@ -1,5 +1,5 @@
-import { UNK_CONTEXT_WINDOW, UNK_MAX_TOKENS } from "@gajae-code/ai";
-import { once, sanitizeText } from "@gajae-code/utils";
+import { UNK_CONTEXT_WINDOW, UNK_MAX_TOKENS } from "@vib-rato/ai";
+import { once, sanitizeText } from "@vib-rato/utils";
 
 import type { ModelManagerOptions } from "../model-manager";
 import { buildZCodeSourceHeaders, resolveGlmZcodeAnthropicBaseUrl } from "../providers/anthropic";

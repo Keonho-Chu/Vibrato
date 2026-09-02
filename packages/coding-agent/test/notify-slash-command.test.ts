@@ -23,7 +23,7 @@ function makeRuntime(): { runtime: SlashCommandRuntime; outputs: string[] } {
 	});
 	const runtime = {
 		settings,
-		cwd: "/tmp/gjc-notify-slash-does-not-exist",
+		cwd: "/tmp/vib-notify-slash-does-not-exist",
 		output: (text: string) => {
 			outputs.push(text);
 		},

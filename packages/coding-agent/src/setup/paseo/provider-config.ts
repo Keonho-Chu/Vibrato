@@ -1,11 +1,11 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { $which } from "@gajae-code/utils";
+import { $which } from "@vib-rato/utils";
 import { type BuildChannel, resolveBuildMetadata } from "../../build-metadata";
 import { hashBytes, type ReadTargetResult } from "./json-publisher";
 import { PROVIDER_EXTENDS, PROVIDER_KEY } from "./setup-deps";
 
-const PROVIDER_LABEL = "Gajae Code";
+const PROVIDER_LABEL = "Vibrato";
 
 export interface PaseoProviderEntry {
 	extends: string;
@@ -15,7 +15,7 @@ export interface PaseoProviderEntry {
 	enabled: boolean;
 }
 
-export type GjcCommandResolution =
+export type VibCommandResolution =
 	| { readonly ok: true; readonly command: string[]; readonly channel: BuildChannel }
 	| { readonly ok: false; readonly channel: BuildChannel; readonly detail: string };
 
@@ -28,7 +28,7 @@ function resolveViaPath(name: string): string | undefined {
 	return $which(name) ?? undefined;
 }
 
-export function resolveGjcCommand(): GjcCommandResolution {
+export function resolveVibCommand(): VibCommandResolution {
 	const metadata = resolveBuildMetadata();
 	switch (metadata.channel) {
 		case "release":
@@ -55,18 +55,18 @@ export function resolveGjcCommand(): GjcCommandResolution {
 			return { ok: true, command: [process.execPath, resolvedLauncher, "acp"], channel: metadata.channel };
 		}
 		case "package-install": {
-			const executable = resolveViaPath("gjc");
+			const executable = resolveViaPath("vib");
 			if (!executable || !path.isAbsolute(executable)) {
 				return {
 					ok: false,
 					channel: metadata.channel,
-					detail: "gjc was not found on PATH; cannot write an absolute command path",
+					detail: "vib was not found on PATH; cannot write an absolute command path",
 				};
 			}
 			return { ok: true, command: [executable, "acp"], channel: metadata.channel };
 		}
 		case "unknown":
-			return { ok: false, channel: metadata.channel, detail: "build channel is unknown; cannot resolve gjc" };
+			return { ok: false, channel: metadata.channel, detail: "build channel is unknown; cannot resolve vib" };
 		default: {
 			const _exhaustive: never = metadata.channel;
 			throw new Error(`Unhandled build channel '${_exhaustive}'`);
@@ -83,7 +83,7 @@ export function buildProviderEntry(command: string[], mpreset?: string): PaseoPr
 		extends: PROVIDER_EXTENDS,
 		label: mpreset === undefined ? PROVIDER_LABEL : `${PROVIDER_LABEL} (${mpreset})`,
 		command: mpreset === undefined ? [...command] : [...command, "--mpreset", mpreset],
-		env: { GJC_ACP_PERMISSION_MODE: "prompt" },
+		env: { VIB_ACP_PERMISSION_MODE: "prompt" },
 		enabled: true,
 	};
 }
@@ -117,7 +117,7 @@ export function hasProviderConflict(
 	return {
 		conflict: true,
 		subject: `agents.providers.${key}`,
-		detail: `Existing provider entry at agents.providers.${key} differs from the GJC-managed entry.`,
+		detail: `Existing provider entry at agents.providers.${key} differs from the Vibrato-managed entry.`,
 	};
 }
 

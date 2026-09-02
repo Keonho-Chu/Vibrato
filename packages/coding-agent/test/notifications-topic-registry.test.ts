@@ -41,7 +41,7 @@ describe("TopicRegistry", () => {
 			"s1",
 			async () => "1",
 			() => 1000,
-			"GJC abc123",
+			"Vibrato abc123",
 		);
 
 		expect(reg.needsRename("s1", "repo/main")).toBe(true);

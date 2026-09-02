@@ -1,5 +1,5 @@
 import { describe, expect, spyOn, test } from "bun:test";
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 import { EventBus } from "../../src/utils/event-bus";
 
 describe("EventBus", () => {

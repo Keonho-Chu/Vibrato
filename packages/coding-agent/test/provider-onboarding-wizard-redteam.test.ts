@@ -2,18 +2,18 @@ import { afterEach, beforeAll, describe, expect, it, mock } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { AuthStorage, SqliteAuthCredentialStore } from "@gajae-code/ai";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { CustomProviderWizardComponent } from "@gajae-code/coding-agent/modes/components/custom-provider-wizard";
+import { AuthStorage, SqliteAuthCredentialStore } from "@vib-rato/ai";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { CustomProviderWizardComponent } from "@vib-rato/coding-agent/modes/components/custom-provider-wizard";
 import {
 	type ProviderOnboardingAction,
 	ProviderOnboardingSelectorComponent,
-} from "@gajae-code/coding-agent/modes/components/provider-onboarding-selector";
-import { SelectorController } from "@gajae-code/coding-agent/modes/controllers/selector-controller";
-import { initTheme } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { InteractiveModeContext } from "@gajae-code/coding-agent/modes/types";
-import { addApiCompatibleProvider, type ProviderSetupInput } from "@gajae-code/coding-agent/setup/provider-onboarding";
-import { getAgentDir, setAgentDir } from "@gajae-code/utils";
+} from "@vib-rato/coding-agent/modes/components/provider-onboarding-selector";
+import { SelectorController } from "@vib-rato/coding-agent/modes/controllers/selector-controller";
+import { initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { InteractiveModeContext } from "@vib-rato/coding-agent/modes/types";
+import { addApiCompatibleProvider, type ProviderSetupInput } from "@vib-rato/coding-agent/setup/provider-onboarding";
+import { getAgentDir, setAgentDir } from "@vib-rato/utils";
 
 const originalAgentDir = getAgentDir();
 let tempAgentDir: string | undefined;
@@ -67,7 +67,7 @@ function driveWizard(
 async function withRegistry<T>(
 	run: (registry: ModelRegistry, store: SqliteAuthCredentialStore) => Promise<T>,
 ): Promise<T> {
-	tempAgentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-provider-wizard-redteam-"));
+	tempAgentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-provider-wizard-redteam-"));
 	setAgentDir(tempAgentDir);
 	const store = await SqliteAuthCredentialStore.open(path.join(tempAgentDir, "agent.db"));
 	try {
@@ -99,7 +99,20 @@ describe("provider onboarding wizard red-team", () => {
 				apiKeyEnv: "INSECURE_URL_KEY",
 				models: ["bad-model"],
 			}),
-		).rejects.toThrow("Base URL must use https unless it targets localhost or a loopback address");
+		).rejects.toThrow("Base URL must use https unless it targets localhost");
+
+		// A private-network host over plain http is the supported vLLM/SGLang case
+		// and must not be caught by the same guard.
+		await withRegistry(async () => {
+			const lan = await addApiCompatibleProvider({
+				compatibility: "openai",
+				providerId: "lan-url",
+				baseUrl: "http://192.168.1.20:8000/v1",
+				apiKeyEnv: "LAN_URL_KEY",
+				models: ["lan-model"],
+			});
+			expect(lan.baseUrl).toBe("http://192.168.1.20:8000/v1");
+		});
 
 		const ctx = createControllerContext({ refresh: async () => undefined } as unknown as ModelRegistry);
 		const controller = new SelectorController(ctx);
@@ -113,7 +126,7 @@ describe("provider onboarding wizard red-team", () => {
 
 		const rendered = visibleText(wizard);
 		expect(rendered).toContain("Provider setup failed");
-		expect(rendered).toContain("Base URL must use https unless it targets localhost or a loopback address");
+		expect(rendered).toContain("Base URL must use https unless it targets localhost");
 	});
 
 	it("does not report success when config notification rejects and renders the wizard error", async () => {
@@ -267,16 +280,21 @@ describe("provider onboarding wizard red-team", () => {
 		});
 	});
 
-	it("keeps Add custom provider at index 0 while OAuth and API-guide actions still route", () => {
+	it("keeps the vLLM endpoint at index 0 while OAuth and API-guide actions still route", () => {
 		const actions: ProviderOnboardingAction[] = [];
 		const selector = new ProviderOnboardingSelectorComponent(
 			action => actions.push(action),
 			() => undefined,
 		);
 		const rendered = visibleText(selector);
+		expect(rendered.indexOf("Connect a vLLM endpoint")).toBeLessThan(rendered.indexOf("Add custom provider"));
 		expect(rendered.indexOf("Add custom provider")).toBeLessThan(rendered.indexOf("Login with OAuth/subscription"));
 		selector.handleInput("\n");
-		expect(actions).toEqual(["custom-provider-wizard"]);
+		expect(actions).toEqual(["vllm-endpoint"]);
+		// Wrapping backwards from the top reaches the last option, not a stale index.
+		selector.handleInput("\x1b[A");
+		selector.handleInput("\n");
+		expect(actions).toEqual(["vllm-endpoint", "import-credentials"]);
 
 		const ctx = createControllerContext({ refresh: async () => undefined } as unknown as ModelRegistry);
 		const controller = new SelectorController(ctx);
@@ -285,16 +303,39 @@ describe("provider onboarding wizard red-team", () => {
 
 		controller.showProviderOnboarding();
 		let routed = ctx.ui.focused as ProviderOnboardingSelectorComponent;
-		routed.handleInput("\x1b[B");
+		for (let i = 0; i < 3; i++) routed.handleInput("\x1b[B");
 		routed.handleInput("\n");
 		expect(showOAuth).toHaveBeenCalledWith("login");
 
 		controller.showProviderOnboarding();
 		routed = ctx.ui.focused as ProviderOnboardingSelectorComponent;
-		routed.handleInput("\x1b[B");
-		routed.handleInput("\x1b[B");
+		for (let i = 0; i < 4; i++) routed.handleInput("\x1b[B");
 		routed.handleInput("\n");
 		expect(ctx.statuses.join("\n")).toContain("Custom API-compatible provider setup:");
+	});
+
+	it("routes both endpoint options into the matching preset wizard", () => {
+		const ctx = createControllerContext({ refresh: async () => undefined } as unknown as ModelRegistry);
+		const controller = new SelectorController(ctx);
+
+		for (const [downs, title, defaultUrl] of [
+			[0, "Connect a vLLM endpoint", "http://127.0.0.1:8000/v1"],
+			[1, "Connect an SGLang endpoint", "http://127.0.0.1:30000/v1"],
+		] as const) {
+			controller.showProviderOnboarding();
+			const selector = ctx.ui.focused as ProviderOnboardingSelectorComponent;
+			for (let i = 0; i < downs; i++) selector.handleInput("\x1b[B");
+			selector.handleInput("\n");
+
+			const wizard = ctx.ui.focused as CustomProviderWizardComponent;
+			const rendered = visibleText(wizard);
+			expect(rendered).toContain(title);
+			expect(rendered).toContain("Step 1: Server URL");
+			expect(rendered).toContain(defaultUrl);
+			// The preset path never asks for compatibility or a provider id.
+			expect(rendered).not.toContain("Step 1: Compatibility");
+			expect(rendered).not.toContain("Enter a provider id:");
+		}
 	});
 });
 

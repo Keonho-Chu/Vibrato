@@ -7,7 +7,7 @@
  * lines (every string passes through `replaceTabs` and `truncateToWidth` like
  * the other renderers) so it can be shown in any text surface.
  */
-import { replaceTabs, truncateToWidth } from "@gajae-code/tui";
+import { replaceTabs, truncateToWidth } from "@vib-rato/tui";
 import { formatElapsed, formatNum, isBetter } from "./harness";
 import {
 	type AutoresearchExperimentResult,

@@ -3,14 +3,14 @@ import { createHash } from "node:crypto";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { AssistantMessage } from "@gajae-code/ai";
-import { exportSessionToHtml } from "@gajae-code/coding-agent/export/html";
-import { SessionManager, type SessionMessageEntry } from "@gajae-code/coding-agent/session/session-manager";
-import * as native from "@gajae-code/natives";
-import { getAgentDir, getResidentCacheRootDir, setAgentDir } from "@gajae-code/utils";
+import type { AssistantMessage } from "@vib-rato/ai";
+import { exportSessionToHtml } from "@vib-rato/coding-agent/export/html";
+import { SessionManager, type SessionMessageEntry } from "@vib-rato/coding-agent/session/session-manager";
+import * as native from "@vib-rato/natives";
+import { getAgentDir, getResidentCacheRootDir, setAgentDir } from "@vib-rato/utils";
 
 const originalAgentDir = getAgentDir();
-const originalAgentDirOverride = process.env.GJC_CODING_AGENT_DIR;
+const originalAgentDirOverride = process.env.VIB_CODING_AGENT_DIR;
 const tempDirs: string[] = [];
 beforeEach(() => {
 	setAgentDir(path.join(tempRoot(), "agent"));
@@ -18,12 +18,12 @@ beforeEach(() => {
 afterEach(async () => {
 	vi.restoreAllMocks();
 	setAgentDir(originalAgentDir);
-	if (originalAgentDirOverride === undefined) delete process.env.GJC_CODING_AGENT_DIR;
-	else process.env.GJC_CODING_AGENT_DIR = originalAgentDirOverride;
+	if (originalAgentDirOverride === undefined) delete process.env.VIB_CODING_AGENT_DIR;
+	else process.env.VIB_CODING_AGENT_DIR = originalAgentDirOverride;
 	for (const dir of tempDirs.splice(0)) await fs.promises.rm(dir, { recursive: true, force: true });
 });
 
-function tempRoot(prefix = "gjc-resident-life-"): string {
+function tempRoot(prefix = "vib-resident-life-"): string {
 	const dir = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
 	tempDirs.push(dir);
 	return dir;
@@ -257,7 +257,7 @@ describe("resident cache prune retention, lifecycle cleanup, and JSONL parity", 
 	it("moveTo materializes before cache reset and rewrites JSONL from the new resident store", async () => {
 		const sentinel = `move resident ${"m".repeat(2048)}`;
 		const { sm, sessionFile, cacheDir } = await makeLargeSession(sentinel);
-		const newRoot = tempRoot("gjc-resident-moved-");
+		const newRoot = tempRoot("vib-resident-moved-");
 		await sm.moveTo(newRoot);
 		const movedFile = sm.getSessionFile();
 		if (!movedFile) throw new Error("Expected moved session file");
@@ -265,7 +265,7 @@ describe("resident cache prune retention, lifecycle cleanup, and JSONL parity", 
 		expect(JSON.stringify(sm.getEntries())).toContain(sentinel);
 		expect(JSON.stringify(sm.buildSessionContext())).toContain(sentinel);
 		expect(await readPersistedJsonl(movedFile)).toContain(sentinel.slice(0, 100));
-		expect(await readPersistedJsonl(movedFile)).not.toContain("__gjcResidentBlob");
+		expect(await readPersistedJsonl(movedFile)).not.toContain("__vibResidentBlob");
 		expect(await readPersistedJsonl(movedFile)).not.toContain("blob:sha256:");
 		const movedCacheDir = residentTextCacheDir(sm);
 		expect(movedCacheDir).not.toBe(cacheDir);
@@ -291,7 +291,7 @@ describe("resident cache prune retention, lifecycle cleanup, and JSONL parity", 
 		await sm.rewriteEntries();
 		const rewritten = await readPersistedJsonl(sessionFile);
 		expect(rewritten).toContain(sentinel.slice(0, 100));
-		expect(rewritten).not.toContain("__gjcResidentBlob");
+		expect(rewritten).not.toContain("__vibResidentBlob");
 		expect(rewritten).not.toContain("blob:sha256:");
 		await sm.close();
 	});
@@ -299,7 +299,7 @@ describe("resident cache prune retention, lifecycle cleanup, and JSONL parity", 
 	it("keeps live resident text readable when moveTo session-file publication fails", async () => {
 		const sentinel = `failed session publication ${"r".repeat(2048)}`;
 		const { sm, root, sessionFile } = await makeLargeSession(sentinel);
-		const newRoot = tempRoot("gjc-resident-failed-move-");
+		const newRoot = tempRoot("vib-resident-failed-move-");
 		const realRename = native.renameNoReplacePath;
 		vi.spyOn(native, "renameNoReplacePath").mockImplementation((source, target) =>
 			String(source) === sessionFile ? failedNativeRename() : realRename(source, target),
@@ -322,7 +322,7 @@ describe("resident cache prune retention, lifecycle cleanup, and JSONL parity", 
 		const oldArtifactDir = sessionFile.slice(0, -6);
 		fs.mkdirSync(oldArtifactDir, { recursive: true });
 		fs.writeFileSync(path.join(oldArtifactDir, "fixture.txt"), "artifact");
-		const newRoot = tempRoot("gjc-resident-failed-artifact-move-");
+		const newRoot = tempRoot("vib-resident-failed-artifact-move-");
 		const realRename = native.renameNoReplacePath;
 		vi.spyOn(native, "renameNoReplacePath").mockImplementation((source, target) =>
 			String(source) === oldArtifactDir ? failedNativeRename() : realRename(source, target),
@@ -345,7 +345,7 @@ describe("resident cache prune retention, lifecycle cleanup, and JSONL parity", 
 		await sm.close();
 		const jsonl = await readPersistedJsonl(sessionFile);
 		expect(jsonl).toContain("[Session persistence truncated large content]");
-		expect(jsonl).not.toContain("__gjcResidentBlob");
+		expect(jsonl).not.toContain("__vibResidentBlob");
 		expect(jsonl).not.toContain("blob:sha256:");
 		expect(jsonl).toContain(sentinel.slice(0, 10_000));
 		expect(jsonl).not.toContain(sentinel.slice(0, 510_000));

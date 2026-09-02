@@ -1,6 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { isCompiledBinary } from "@gajae-code/utils/env";
+import { isCompiledBinary } from "@vib-rato/utils/env";
 
 export type BuildChannel = "release" | "dev" | "local-source" | "package-install" | "compiled" | "unknown";
 
@@ -10,10 +10,10 @@ export interface BuildMetadata {
 }
 
 const REPO_MARKERS = [".git", "bun.lock"];
-const SOURCE_REPO_PACKAGE_NAME = "gajae-code";
+const SOURCE_REPO_PACKAGE_NAME = "vib-rato";
 
 export function resolveBuildMetadata(moduleDir: string = import.meta.dir): BuildMetadata {
-	const explicitChannel = normalizeBuildChannel(process.env.GJC_BUILD_CHANNEL);
+	const explicitChannel = normalizeBuildChannel(process.env.VIB_BUILD_CHANNEL);
 	if (explicitChannel) {
 		return metadataForChannel(explicitChannel);
 	}

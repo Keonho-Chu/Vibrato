@@ -1,5 +1,5 @@
 /** Process-wide emergency stop; it cannot be enabled by project dotenv files. */
-export const TELEMETRY_KILL_SWITCH_ENV = "GJC_DISABLE_TELEMETRY" as const;
+export const TELEMETRY_KILL_SWITCH_ENV = "VIB_DISABLE_TELEMETRY" as const;
 
 function isTruthy(value: string | undefined): boolean {
 	return value === "1" || value === "true" || value === "yes" || value === "on";

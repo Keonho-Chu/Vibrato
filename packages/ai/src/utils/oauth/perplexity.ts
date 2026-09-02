@@ -12,7 +12,7 @@
  * Architecture reverse-engineered from Perplexity macOS app (ai.perplexity.mac).
  */
 import * as os from "node:os";
-import { $env } from "@gajae-code/utils";
+import { $env } from "@vib-rato/utils";
 import { $ } from "bun";
 import type { OAuthController, OAuthCredentials } from "./types";
 
@@ -189,11 +189,11 @@ async function httpEmailLogin(ctrl: OAuthController): Promise<OAuthCredentials> 
 /**
  * Whether the operator disabled borrowing a token from the native macOS app.
  *
- * `GJC_AUTH_NO_BORROW` is the documented name; `PI_AUTH_NO_BORROW` is the legacy
+ * `VIB_AUTH_NO_BORROW` is the documented name; `PI_AUTH_NO_BORROW` is the legacy
  * one that was the only name actually read.
  */
 function authBorrowDisabled(): boolean {
-	return Boolean($env.GJC_AUTH_NO_BORROW || $env.PI_AUTH_NO_BORROW);
+	return Boolean($env.VIB_AUTH_NO_BORROW || $env.PI_AUTH_NO_BORROW);
 }
 
 /** Test seam: the resolved native-app borrowing opt-out. */
@@ -209,7 +209,7 @@ export async function loginPerplexity(ctrl: OAuthController): Promise<OAuthCrede
 	// Path 1: Native macOS app JWT, skipped when the operator opts out.
 	//
 	// Presence-based on purpose: this is a privacy opt-out, so any set value must
-	// disable borrowing. A boolean contract would let `GJC_AUTH_NO_BORROW=0`
+	// disable borrowing. A boolean contract would let `VIB_AUTH_NO_BORROW=0`
 	// silently re-enable reading a token out of another application.
 	if (!authBorrowDisabled()) {
 		ctrl.onProgress?.("Checking for Perplexity desktop app...");

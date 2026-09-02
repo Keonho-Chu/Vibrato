@@ -46,19 +46,19 @@ const TEST_FILE_PATTERN = /(?:^|\/)(?:[^/]+\.(?:test|spec)|(?:test|spec)_[^/]+)\
 const PROVIDER_ENDPOINT_ENV = [
 	"ANTHROPIC_BASE_URL",
 	"E2E",
-	"GJC_E2E_GATEWAY_URL",
+	"VIB_E2E_GATEWAY_URL",
 	"OPENAI_BASE_URL",
 ] as const;
-const INHERITED_GJC_STATE_ENV = [
-	"GJC_AGENT_DIR",
-	"GJC_CODING_AGENT_DIR",
+const INHERITED_VIB_STATE_ENV = [
+	"VIB_AGENT_DIR",
+	"VIB_CODING_AGENT_DIR",
 	"PI_CODING_AGENT_DIR",
 	"PI_CONFIG_DIR",
-	"GJC_SESSION_ID",
-	"GJC_STATE_SESSION_ID",
-	"GJC_STATE_ROOT",
-	"GJC_LIFECYCLE_REQUEST_ID",
-	"GJC_SDK_LIFECYCLE_REQUEST",
+	"VIB_SESSION_ID",
+	"VIB_STATE_SESSION_ID",
+	"VIB_STATE_ROOT",
+	"VIB_LIFECYCLE_REQUEST_ID",
+	"VIB_SDK_LIFECYCLE_REQUEST",
 ] as const;
 const CREDENTIAL_ENV_SUFFIXES = ["_API_KEY", "_AUTH_TOKEN", "_OAUTH_TOKEN", "_ACCESS_TOKEN"] as const;
 const CREDENTIAL_ENV_NAMES = new Set([
@@ -160,7 +160,7 @@ export function buildTestProcessSpec(
 			if (isCredentialEnvironmentName(name)) env[name] = undefined;
 		}
 	}
-	for (const name of INHERITED_GJC_STATE_ENV) env[name] = undefined;
+	for (const name of INHERITED_VIB_STATE_ENV) env[name] = undefined;
 	return {
 		argv: ["bun", "test", `--timeout=${testTimeoutMs}`, "--preload", TEST_PRELOAD, `./${file}`],
 		cwd: base,
@@ -178,8 +178,8 @@ export function buildTestProcessSpec(
 			TMPDIR: path.join(sandbox, "tmp"),
 			TMP: path.join(sandbox, "tmp"),
 			TEMP: path.join(sandbox, "tmp"),
-			GJC_HOME: path.join(sandbox, "gjc-home"),
-			GJC_CONFIG_DIR: ".gjc",
+			VIB_HOME: path.join(sandbox, "vib-home"),
+			VIB_CONFIG_DIR: ".vib",
 		},
 	};
 }
@@ -365,7 +365,7 @@ export async function runHarness(
 			const index = claimed++;
 			const file = files[index];
 			if (!file) return;
-			const sandbox = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-test-file-"));
+			const sandbox = await fs.mkdtemp(path.join(os.tmpdir(), "vib-test-file-"));
 			const spec = buildTestProcessSpec(file, sandbox, options.testTimeoutMs, base);
 			await Promise.all([
 				fs.mkdir(spec.env.HOME!, { recursive: true }),
@@ -375,7 +375,7 @@ export async function runHarness(
 				fs.mkdir(spec.env.XDG_CACHE_HOME!, { recursive: true }),
 				fs.mkdir(spec.env.XDG_RUNTIME_DIR!, { recursive: true, mode: 0o700 }),
 				fs.mkdir(spec.env.TMPDIR!, { recursive: true }),
-				fs.mkdir(spec.env.GJC_HOME!, { recursive: true }),
+				fs.mkdir(spec.env.VIB_HOME!, { recursive: true }),
 			]);
 			process.stdout.write(`\n[${index + 1}/${files.length}] START ${file}\n`);
 			let result: TestProcessResult;

@@ -1,11 +1,11 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "bun:test";
-import type { Model } from "@gajae-code/ai";
-import { getBundledModel } from "@gajae-code/ai";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { SelectorController } from "@gajae-code/coding-agent/modes/controllers/selector-controller";
-import { initTheme } from "@gajae-code/coding-agent/modes/theme/theme";
-import type { InteractiveModeContext } from "@gajae-code/coding-agent/modes/types";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
+import type { Model } from "@vib-rato/ai";
+import { getBundledModel } from "@vib-rato/ai";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { SelectorController } from "@vib-rato/coding-agent/modes/controllers/selector-controller";
+import { initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
+import type { InteractiveModeContext } from "@vib-rato/coding-agent/modes/types";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
 
 type TestContext = InteractiveModeContext & {
 	editorContainer: {

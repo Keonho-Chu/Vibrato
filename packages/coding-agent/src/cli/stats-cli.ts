@@ -1,10 +1,10 @@
 /**
  * Stats CLI command handlers.
  *
- * Handles `gjc stats` subcommand for viewing AI usage statistics.
+ * Handles `vib stats` subcommand for viewing AI usage statistics.
  */
 
-import { APP_NAME, formatDuration, formatNumber, formatPercent } from "@gajae-code/utils";
+import { APP_NAME, formatDuration, formatNumber, formatPercent } from "@vib-rato/utils";
 import chalk from "chalk";
 import { openPath } from "../utils/open";
 
@@ -122,7 +122,7 @@ function normalizePremiumRequests(n: number): number {
 export async function runStatsCommand(cmd: StatsCommandArgs): Promise<void> {
 	// Lazy import to avoid loading stats module when not needed
 	const { getDashboardStats, syncAllSessions, getTotalMessageCount, startServer, closeDb } = await import(
-		"@gajae-code/stats"
+		"@vib-rato/stats"
 	);
 
 	// Sync session files first
@@ -166,7 +166,7 @@ export async function runStatsCommand(cmd: StatsCommandArgs): Promise<void> {
 }
 
 async function printStatsSummary(): Promise<void> {
-	const { getDashboardStats } = await import("@gajae-code/stats");
+	const { getDashboardStats } = await import("@vib-rato/stats");
 	const stats = await getDashboardStats();
 	const { overall, byModel, byFolder } = stats;
 

@@ -2,7 +2,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "bun:
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { getConfigRootDir, getProjectDir, setAgentDir, setProjectDir } from "@gajae-code/utils";
+import { getConfigRootDir, getProjectDir, setAgentDir, setProjectDir } from "@vib-rato/utils";
 import { MCPCommandController } from "../src/modes/controllers/runtime-mcp-command-controller";
 import { initTheme } from "../src/modes/theme/theme";
 import * as mcpClient from "../src/runtime-mcp/client";
@@ -20,8 +20,8 @@ describe("issue #956: interactive /mcp test", () => {
 	});
 
 	beforeEach(async () => {
-		projectDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-issue-956-project-"));
-		agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-issue-956-agent-"));
+		projectDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-issue-956-project-"));
+		agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-issue-956-agent-"));
 		setProjectDir(projectDir);
 		setAgentDir(agentDir);
 

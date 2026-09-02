@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "bun:test";
 
 import * as path from "node:path";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import * as native from "@gajae-code/natives";
-import { getAgentDir, isEnoent, setAgentDir, TempDir } from "@gajae-code/utils";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import * as native from "@vib-rato/natives";
+import { getAgentDir, isEnoent, setAgentDir, TempDir } from "@vib-rato/utils";
 
 async function fileExists(p: string): Promise<boolean> {
 	try {

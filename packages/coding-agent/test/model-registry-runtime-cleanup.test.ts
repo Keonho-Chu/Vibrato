@@ -2,10 +2,10 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { type AssistantMessageEventStream, clearCustomApis, getCustomApi } from "@gajae-code/ai";
-import { ModelRegistry, type ProviderConfigInput } from "@gajae-code/coding-agent/config/model-registry";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { Snowflake } from "@gajae-code/utils";
+import { type AssistantMessageEventStream, clearCustomApis, getCustomApi } from "@vib-rato/ai";
+import { ModelRegistry, type ProviderConfigInput } from "@vib-rato/coding-agent/config/model-registry";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { Snowflake } from "@vib-rato/utils";
 
 describe("ModelRegistry runtime source cleanup", () => {
 	let tempDir: string;

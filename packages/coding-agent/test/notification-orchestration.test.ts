@@ -34,7 +34,7 @@ afterEach(() => {
 });
 
 function tempAgentDir(): string {
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-notification-orchestration-test-"));
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-notification-orchestration-test-"));
 	agentDirs.push(dir);
 	return dir;
 }
@@ -85,7 +85,7 @@ function writer(input: { snapshot?: NotificationSettingsSnapshot; agentDir?: str
 	const commits: SettingsAtomicPatch[][] = [];
 	return {
 		writer: {
-			getAgentDir: () => input.agentDir ?? "/tmp/gjc-notification-orchestration",
+			getAgentDir: () => input.agentDir ?? "/tmp/vib-notification-orchestration",
 			getNotificationSettingsSnapshot: () => structuredClone(initial),
 			commitAtomicBatch: async patches => {
 				input.onCommit?.();
@@ -271,7 +271,7 @@ describe("notification orchestration blocked activation", () => {
 			},
 		});
 		const settings: NotificationConfigurationWriter = {
-			getAgentDir: () => "/tmp/gjc-notification-orchestration",
+			getAgentDir: () => "/tmp/vib-notification-orchestration",
 			getNotificationSettingsSnapshot: () => snapshot(),
 			commitAtomicBatch: async patches => {
 				events.push("commit-active");
@@ -409,7 +409,7 @@ describe("notification orchestration blocked activation", () => {
 		let markers: TelegramActivationMarkers = {};
 		let queued = Promise.resolve();
 		const settings: NotificationConfigurationWriter = {
-			getAgentDir: () => "/tmp/gjc-notification-orchestration",
+			getAgentDir: () => "/tmp/vib-notification-orchestration",
 			getNotificationSettingsSnapshot: () => snapshot(),
 			commitAtomicBatch: async () => receipt(),
 			commitAtomicBatchWithCurrent: async buildPatches => {
@@ -458,7 +458,7 @@ describe("notification orchestration blocked activation", () => {
 			}),
 		});
 		const settings: NotificationConfigurationWriter = {
-			getAgentDir: () => "/tmp/gjc-notification-orchestration",
+			getAgentDir: () => "/tmp/vib-notification-orchestration",
 			getNotificationSettingsSnapshot: () => snapshot(),
 			commitAtomicBatch: async () => activeReceipt,
 			commitAtomicBatchWithCurrent: async buildPatches => {
@@ -505,7 +505,7 @@ describe("notification orchestration blocked activation", () => {
 			restore: async () => ({ status: "conflict", paths: ["notifications.telegram.activation"] }),
 		});
 		const settings: NotificationConfigurationWriter = {
-			getAgentDir: () => "/tmp/gjc-notification-orchestration",
+			getAgentDir: () => "/tmp/vib-notification-orchestration",
 			getNotificationSettingsSnapshot: () => snapshot(),
 			commitAtomicBatch: async () => activeReceipt,
 			commitAtomicBatchWithCurrent: async buildPatches => {

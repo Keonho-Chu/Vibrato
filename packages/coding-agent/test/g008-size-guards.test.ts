@@ -3,8 +3,8 @@ import { afterEach, describe, expect, it } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { MAX_EDIT_FILE_BYTES, readEditFileText } from "@gajae-code/coding-agent/edit/read-file";
-import { executeReadQuery } from "@gajae-code/coding-agent/tools/sqlite-reader";
+import { MAX_EDIT_FILE_BYTES, readEditFileText } from "@vib-rato/coding-agent/edit/read-file";
+import { executeReadQuery } from "@vib-rato/coding-agent/tools/sqlite-reader";
 
 const tmpFiles: string[] = [];
 
@@ -13,7 +13,7 @@ afterEach(async () => {
 });
 
 async function writeTmp(name: string, bytes: number): Promise<string> {
-	const file = path.join(os.tmpdir(), `gjc-g008-${Date.now()}-${name}`);
+	const file = path.join(os.tmpdir(), `vib-g008-${Date.now()}-${name}`);
 	await Bun.write(file, Buffer.alloc(bytes, 0x61));
 	tmpFiles.push(file);
 	return file;

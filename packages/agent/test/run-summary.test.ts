@@ -7,19 +7,6 @@
  */
 
 import { describe, expect, it } from "bun:test";
-import { agentLoop, agentLoopDetailed } from "@gajae-code/agent-core/agent-loop";
-import {
-	type AgentRunSummary,
-	aggregateAgentRunCoverage,
-	aggregateAgentRunSummaries,
-	emptyAgentRunCoverage,
-	emptyAgentRunSummary,
-} from "@gajae-code/agent-core/run-collector";
-import { EXECUTE_TOOL_STATUS_ATTR, GenAIAttr, PiGenAIAggregateAttr } from "@gajae-code/agent-core/telemetry";
-import type { AgentEvent, AgentLoopConfig, AgentMessage, AgentTool } from "@gajae-code/agent-core/types";
-import type { AssistantMessage, Message } from "@gajae-code/ai";
-import { z } from "@gajae-code/ai";
-import { createMockModel } from "@gajae-code/ai/providers/mock";
 import type {
 	AttributeValue,
 	Context as OtelContext,
@@ -29,6 +16,19 @@ import type {
 	TimeInput,
 	Tracer,
 } from "@opentelemetry/api";
+import { agentLoop, agentLoopDetailed } from "@vib-rato/agent-core/agent-loop";
+import {
+	type AgentRunSummary,
+	aggregateAgentRunCoverage,
+	aggregateAgentRunSummaries,
+	emptyAgentRunCoverage,
+	emptyAgentRunSummary,
+} from "@vib-rato/agent-core/run-collector";
+import { EXECUTE_TOOL_STATUS_ATTR, GenAIAttr, PiGenAIAggregateAttr } from "@vib-rato/agent-core/telemetry";
+import type { AgentEvent, AgentLoopConfig, AgentMessage, AgentTool } from "@vib-rato/agent-core/types";
+import type { AssistantMessage, Message } from "@vib-rato/ai";
+import { z } from "@vib-rato/ai";
+import { createMockModel } from "@vib-rato/ai/providers/mock";
 import { createUserMessage } from "./helpers";
 
 interface RecordedSpan {

@@ -1,4 +1,4 @@
-import type { Usage } from "@gajae-code/ai/core";
+import type { Usage } from "@vib-rato/ai/core";
 
 const TOKENS_PER_MILLION = 1_000_000;
 const MATERIAL_COST_USD = 0.01;
@@ -51,7 +51,7 @@ export interface CacheMissCostSummary {
 /**
  * How a detected cache-miss pattern is attributed, per issue #2020.
  *
- * - `actionable`: usage evidence points to a user-controllable cause and GJC
+ * - `actionable`: usage evidence points to a user-controllable cause and Vibrato
  *   has a concrete remediation.
  * - `diagnostic-only`: a miss pattern is observed but the cause is not
  *   determinable from usage alone; describe what is unknown, assert no cause.
@@ -66,7 +66,7 @@ export interface CacheBehaviorWarning {
 	reason: string;
 	/** Concrete remediation — present only when `attribution` is `actionable`. */
 	nextStep?: string;
-	/** What GJC cannot determine — present for non-actionable attributions. */
+	/** What Vibrato cannot determine — present for non-actionable attributions. */
 	unknown?: string;
 	costUsd: number;
 }
@@ -216,7 +216,7 @@ export function buildCacheBehaviorWarning(
 				attribution: "provider-side-suspected",
 				reason: `large uncached input with no cache activity (${formatUsd(summary.inputCostUsd)})`,
 				unknown:
-					"the provider reported no cache reads or writes, so GJC cannot tell whether prompt caching is unsupported, missing cache-control fields, or provider-side eviction",
+					"the provider reported no cache reads or writes, so Vibrato cannot tell whether prompt caching is unsupported, missing cache-control fields, or provider-side eviction",
 				costUsd: summary.inputCostUsd,
 			};
 		}
@@ -232,7 +232,7 @@ export function buildCacheBehaviorWarning(
 			};
 		}
 		// Reads happened but no writes this turn: part of the prefix was reused, yet
-		// the large new input was not cached. From usage alone GJC cannot tell new
+		// the large new input was not cached. From usage alone Vibrato cannot tell new
 		// content apart from a provider-side gap, so it reports without asserting.
 		return {
 			code: "expensive_cache_miss",

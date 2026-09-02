@@ -1,6 +1,6 @@
 # Natives media + system utilities
 
-This document covers the media/system/conversion exports in `@gajae-code/natives`: sixel encoding, HTML conversion, clipboard access, macOS appearance/power helpers, and work profiling.
+This document covers the media/system/conversion exports in `@vib-rato/natives`: sixel encoding, HTML conversion, clipboard access, macOS appearance/power helpers, and work profiling.
 
 ## Implementation files
 

@@ -1,22 +1,22 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "bun:test";
-import { Agent, type AgentMessage } from "@gajae-code/agent-core";
-import { calculateContextTokens, estimateMessageTokensHeuristic } from "@gajae-code/agent-core/compaction";
-import { type AssistantMessage, getBundledModel, type Model, type Usage } from "@gajae-code/ai";
-import { AssistantMessageEventStream } from "@gajae-code/ai/utils/event-stream";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { resetSettingsForTest, Settings } from "@gajae-code/coding-agent/config/settings";
-import type { ExtensionRunner } from "@gajae-code/coding-agent/extensibility/extensions/runner";
-import type { ContextUsage } from "@gajae-code/coding-agent/extensibility/extensions/types";
-import { initTheme, theme } from "@gajae-code/coding-agent/modes/theme/theme";
+import { Agent, type AgentMessage } from "@vib-rato/agent-core";
+import { calculateContextTokens, estimateMessageTokensHeuristic } from "@vib-rato/agent-core/compaction";
+import { type AssistantMessage, getBundledModel, type Model, type Usage } from "@vib-rato/ai";
+import { AssistantMessageEventStream } from "@vib-rato/ai/utils/event-stream";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { resetSettingsForTest, Settings } from "@vib-rato/coding-agent/config/settings";
+import type { ExtensionRunner } from "@vib-rato/coding-agent/extensibility/extensions/runner";
+import type { ContextUsage } from "@vib-rato/coding-agent/extensibility/extensions/types";
+import { initTheme, theme } from "@vib-rato/coding-agent/modes/theme/theme";
 import {
 	computeContextBreakdown,
 	computeNonMessageTokens,
 	renderContextUsage,
-} from "@gajae-code/coding-agent/modes/utils/context-usage";
-import { AgentSession } from "@gajae-code/coding-agent/session/agent-session";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { convertToLlm } from "@gajae-code/coding-agent/session/messages";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
+} from "@vib-rato/coding-agent/modes/utils/context-usage";
+import { AgentSession } from "@vib-rato/coding-agent/session/agent-session";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { convertToLlm } from "@vib-rato/coding-agent/session/messages";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
 import { StatusLineComponent } from "../src/modes/components/tool-status-header";
 
 const contextWindow = 200_000;

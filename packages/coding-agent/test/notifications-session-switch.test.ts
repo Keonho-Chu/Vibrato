@@ -2,8 +2,8 @@ import { afterEach, expect, test, vi } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { Agent, ThinkingLevel } from "@gajae-code/agent-core";
-import { closeModelCache, getBundledModel } from "@gajae-code/ai";
+import { Agent, ThinkingLevel } from "@vib-rato/agent-core";
+import { closeModelCache, getBundledModel } from "@vib-rato/ai";
 import { ModelRegistry } from "../src/config/model-registry";
 import type { ExtensionRunner } from "../src/extensibility/extensions/runner";
 import { INTERACTIVE_SELECTOR_RESUME_ORIGIN } from "../src/extensibility/shared-events";
@@ -67,13 +67,13 @@ afterEach(() => {
 });
 
 async function withNotifications<T>(fn: () => Promise<T>): Promise<T> {
-	const prevEnv = process.env.GJC_NOTIFICATIONS;
-	process.env.GJC_NOTIFICATIONS = "1";
+	const prevEnv = process.env.VIB_NOTIFICATIONS;
+	process.env.VIB_NOTIFICATIONS = "1";
 	try {
 		return await fn();
 	} finally {
-		if (prevEnv === undefined) delete process.env.GJC_NOTIFICATIONS;
-		else process.env.GJC_NOTIFICATIONS = prevEnv;
+		if (prevEnv === undefined) delete process.env.VIB_NOTIFICATIONS;
+		else process.env.VIB_NOTIFICATIONS = prevEnv;
 	}
 }
 
@@ -122,7 +122,7 @@ function createHarness(
 		},
 	} as never;
 
-	const notifDir = path.join(cwd, ".gjc", "state", "sdk");
+	const notifDir = path.join(cwd, ".vib", "state", "sdk");
 	return {
 		handlers,
 		commands,
@@ -145,7 +145,7 @@ function createHarness(
 			return path.join(notifDir, `${id}.json`);
 		},
 		previousSessionFile(id: string) {
-			return path.join(cwd, ".gjc", "agent", "sessions", `ts_${id}.jsonl`);
+			return path.join(cwd, ".vib", "agent", "sessions", `ts_${id}.jsonl`);
 		},
 	};
 }
@@ -175,8 +175,8 @@ async function startAndConnect(harness: ReturnType<typeof createHarness>): Promi
 }
 
 test("session_switch publishes successor SDK authority only after AgentSession restore commits", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-notif-post-commit-switch-"));
-	const agentDir = path.join(cwd, ".gjc", "agent");
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-notif-post-commit-switch-"));
+	const agentDir = path.join(cwd, ".vib", "agent");
 	const authStorage = await AuthStorage.create(path.join(cwd, "testauth.db"));
 	const model = getBundledModel("anthropic", "claude-sonnet-4-5");
 	if (!model) throw new Error("Expected bundled model");
@@ -199,8 +199,8 @@ test("session_switch publishes successor SDK authority only after AgentSession r
 	createNotificationsExtension(api);
 	const ctx = { cwd, sessionManager: currentSessionManager } as never;
 	const predecessorSessionId = currentSessionManager.getSessionId();
-	const predecessorEndpoint = path.join(cwd, ".gjc", "state", "sdk", `${predecessorSessionId}.json`);
-	const successorEndpoint = path.join(cwd, ".gjc", "state", "sdk", `${targetSessionId}.json`);
+	const predecessorEndpoint = path.join(cwd, ".vib", "state", "sdk", `${predecessorSessionId}.json`);
+	const successorEndpoint = path.join(cwd, ".vib", "state", "sdk", `${targetSessionId}.json`);
 	let session: AgentSession | undefined;
 	let postCommitObserved = false;
 	const extensionRunner = {
@@ -259,7 +259,7 @@ test("session_switch publishes successor SDK authority only after AgentSession r
 });
 
 test("turn.prompt preflight rejection returns a correlated failure without an accepted lifecycle", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-notif-prompt-preflight-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-notif-prompt-preflight-"));
 	tempDirs.push(cwd);
 	const handlers = new Map<string, Handler>();
 	createNotificationsExtension({
@@ -280,7 +280,7 @@ test("turn.prompt preflight rejection returns a correlated failure without an ac
 		},
 	} as never;
 	await handlers.get("session_start")!({ type: "session_start" }, ctx);
-	const endpointPath = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointPath = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointPath), 4000, "preflight endpoint");
 	const { url, token } = readTestSdkEndpoint(endpointPath);
 	const frames: Array<Record<string, unknown>> = [];
@@ -322,7 +322,7 @@ test("turn.prompt preflight rejection returns a correlated failure without an ac
 });
 
 test("accepted turn.prompt submission failures emit a correlated terminal event", async () => {
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-notif-prompt-terminal-failure-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-notif-prompt-terminal-failure-"));
 	tempDirs.push(cwd);
 	const handlers = new Map<string, Handler>();
 	createNotificationsExtension({
@@ -349,7 +349,7 @@ test("accepted turn.prompt submission failures emit a correlated terminal event"
 		},
 	} as never;
 	await handlers.get("session_start")!({ type: "session_start" }, ctx);
-	const endpointPath = path.join(cwd, ".gjc", "state", "sdk", `${sessionId}.json`);
+	const endpointPath = path.join(cwd, ".vib", "state", "sdk", `${sessionId}.json`);
 	await waitFor(() => fs.existsSync(endpointPath), 4000, "terminal failure endpoint");
 	const { url, token } = readTestSdkEndpoint(endpointPath);
 	const frames: Array<Record<string, unknown>> = [];
@@ -418,7 +418,7 @@ test("accepted turn.prompt submission failures emit a correlated terminal event"
 
 test("publishes a delayed session title without waiting for another agent lifecycle event", async () => {
 	await withNotifications(async () => {
-		const harness = createHarness("gjc-notif-delayed-title-", undefined);
+		const harness = createHarness("vib-notif-delayed-title-", undefined);
 		const frames = await startAndConnect(harness);
 		expect(frames.some(frame => frame.type === "identity_header")).toBe(false);
 
@@ -464,7 +464,7 @@ test("publishes a delayed session title without waiting for another agent lifecy
 
 test("startup title settlement publishes once after transport readiness", async () => {
 	await withNotifications(async () => {
-		const harness = createHarness("gjc-notif-title-startup-race-", undefined);
+		const harness = createHarness("vib-notif-title-startup-race-", undefined);
 		const entered = deferred();
 		const release = deferred();
 		const hostStart = SessionSdkHost.prototype.start;
@@ -506,7 +506,7 @@ test("startup title settlement publishes once after transport readiness", async 
 
 test("session_switch fences the predecessor title observer", async () => {
 	await withNotifications(async () => {
-		const harness = createHarness("gjc-notif-title-switch-fence-", undefined);
+		const harness = createHarness("vib-notif-title-switch-fence-", undefined);
 		const predecessorFrames = await startAndConnect(harness);
 		const predecessorId = harness.sid;
 		harness.sid = `successor-${predecessorId}`;
@@ -534,8 +534,8 @@ test("session_switch fences the predecessor title observer", async () => {
 	});
 });
 test("session_switch rotates SDK authority while preserving topic identity", async () => {
-	const prevEnv = process.env.GJC_NOTIFICATIONS;
-	process.env.GJC_NOTIFICATIONS = "1";
+	const prevEnv = process.env.VIB_NOTIFICATIONS;
+	process.env.VIB_NOTIFICATIONS = "1";
 	try {
 		const handlers = new Map<string, Handler>();
 		const api = {
@@ -547,7 +547,7 @@ test("session_switch rotates SDK authority while preserving topic identity", asy
 		} as never;
 		createNotificationsExtension(api);
 
-		const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-notif-switch-"));
+		const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-notif-switch-"));
 		tempDirs.push(cwd);
 
 		const suffix = `${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -565,7 +565,7 @@ test("session_switch rotates SDK authority while preserving topic identity", asy
 
 		await handlers.get("session_start")!({ type: "session_start" }, ctx);
 
-		const notifDir = path.join(cwd, ".gjc", "state", "sdk");
+		const notifDir = path.join(cwd, ".vib", "state", "sdk");
 		const originalEndpoint = path.join(notifDir, `${sid}.json`);
 		await waitFor(() => fs.existsSync(originalEndpoint), 4000, "original endpoint file");
 
@@ -584,7 +584,7 @@ test("session_switch rotates SDK authority while preserving topic identity", asy
 		const previousSessionId = sid;
 		sid = `switch-b-${suffix}`;
 		name = "Renamed Plan";
-		const previousSessionFile = path.join(cwd, ".gjc", "agent", "sessions", `ts_${previousSessionId}.jsonl`);
+		const previousSessionFile = path.join(cwd, ".vib", "agent", "sessions", `ts_${previousSessionId}.jsonl`);
 		await handlers.get("session_switch")!({ type: "session_switch", reason: "new", previousSessionFile }, ctx);
 
 		const newEndpoint = path.join(notifDir, `${sid}.json`);
@@ -601,14 +601,14 @@ test("session_switch rotates SDK authority while preserving topic identity", asy
 		);
 		expect(frames.some(f => f.type === "activity" && f.sessionId === sid)).toBe(false);
 	} finally {
-		if (prevEnv === undefined) delete process.env.GJC_NOTIFICATIONS;
-		else process.env.GJC_NOTIFICATIONS = prevEnv;
+		if (prevEnv === undefined) delete process.env.VIB_NOTIFICATIONS;
+		else process.env.VIB_NOTIFICATIONS = prevEnv;
 	}
 });
 
 test("session_switch rotates authority without a previous session file", async () => {
 	await withNotifications(async () => {
-		const harness = createHarness("gjc-notif-switch-missing-prev-");
+		const harness = createHarness("vib-notif-switch-missing-prev-");
 		const frames = await startAndConnect(harness);
 		const originalId = harness.sid;
 		const originalEndpoint = harness.endpoint(originalId);
@@ -634,7 +634,7 @@ test("session_switch rotates authority without a previous session file", async (
 
 test("session_branch rotates endpoint authority", async () => {
 	await withNotifications(async () => {
-		const harness = createHarness("gjc-notif-branch-");
+		const harness = createHarness("vib-notif-branch-");
 		await startAndConnect(harness);
 		const originalId = harness.sid;
 		const originalEndpoint = harness.endpoint(originalId);
@@ -665,7 +665,7 @@ test("session_branch with the same id awaits startup before settling", async () 
 			}
 			return await hostStart.call(this);
 		});
-		const harness = createHarness("gjc-notif-branch-same-pending-");
+		const harness = createHarness("vib-notif-branch-same-pending-");
 		try {
 			const startup = harness.handlers.get("session_start")!({ type: "session_start" }, harness.ctx);
 			await entered.promise;
@@ -708,7 +708,7 @@ test("session_branch awaits startup before publishing and settling", async () =>
 			await release.promise;
 			return await hostStart.call(this);
 		});
-		const harness = createHarness("gjc-notif-branch-new-pending-");
+		const harness = createHarness("vib-notif-branch-new-pending-");
 		try {
 			const previousId = `previous-${harness.sid}`;
 			let branchSettled = false;
@@ -752,7 +752,7 @@ test("session_branch propagates failed startup", async () => {
 			await release.promise;
 			throw new Error("branch startup failed");
 		});
-		const harness = createHarness("gjc-notif-branch-failed-pending-");
+		const harness = createHarness("vib-notif-branch-failed-pending-");
 		try {
 			let branchSettled = false;
 			let branchError: unknown;
@@ -802,7 +802,7 @@ test("session_branch remains pending while startup is blocked", async () => {
 			await release.promise;
 			return await hostStart.call(this);
 		});
-		const harness = createHarness("gjc-notif-branch-shutdown-pending-");
+		const harness = createHarness("vib-notif-branch-shutdown-pending-");
 		try {
 			let branchSettled = false;
 			const branch = Promise.resolve(
@@ -833,7 +833,7 @@ test("session_branch remains pending while startup is blocked", async () => {
 
 test("session_switch with matching previous and current ids is a safe no-op", async () => {
 	await withNotifications(async () => {
-		const harness = createHarness("gjc-notif-switch-same-id-");
+		const harness = createHarness("vib-notif-switch-same-id-");
 		const frames = await startAndConnect(harness);
 		const originalId = harness.sid;
 		const originalEndpoint = harness.endpoint(originalId);
@@ -858,7 +858,7 @@ test("session_switch with matching previous and current ids is a safe no-op", as
 
 test("session_switch starts authority when the previous runtime is absent", async () => {
 	await withNotifications(async () => {
-		const harness = createHarness("gjc-notif-switch-no-runtime-");
+		const harness = createHarness("vib-notif-switch-no-runtime-");
 		const missingPrevId = `missing-${harness.sid}`;
 		const newId = harness.sid;
 
@@ -872,7 +872,7 @@ test("session_switch starts authority when the previous runtime is absent", asyn
 
 test("session_switch to unnamed session rotates the endpoint without a title frame", async () => {
 	await withNotifications(async () => {
-		const harness = createHarness("gjc-notif-switch-unnamed-");
+		const harness = createHarness("vib-notif-switch-unnamed-");
 		await startAndConnect(harness);
 		const originalId = harness.sid;
 		const originalEndpoint = harness.endpoint(originalId);
@@ -899,7 +899,7 @@ test("session_switch to unnamed session rotates the endpoint without a title fra
 
 test("session_switch can chain A to B to C with one endpoint authority at a time", async () => {
 	await withNotifications(async () => {
-		const harness = createHarness("gjc-notif-switch-chain-");
+		const harness = createHarness("vib-notif-switch-chain-");
 		await startAndConnect(harness);
 		const a = harness.sid;
 		const originalEndpoint = harness.endpoint(a);
@@ -934,7 +934,7 @@ test("session_switch can chain A to B to C with one endpoint authority at a time
 });
 test("session_switch reason=resume starts a fresh runtime for the resumed session's own topic", async () => {
 	await withNotifications(async () => {
-		const harness = createHarness("gjc-notif-resume-");
+		const harness = createHarness("vib-notif-resume-");
 		await startAndConnect(harness);
 		const idA = harness.sid;
 		const endpointA = harness.endpoint(idA);
@@ -968,10 +968,10 @@ test("session_switch reason=resume starts a fresh runtime for the resumed sessio
 });
 
 test("session_switch keeps notification resources inactive until notify on rebinds them to the new id", async () => {
-	const previous = process.env.GJC_NOTIFICATIONS;
-	delete process.env.GJC_NOTIFICATIONS;
+	const previous = process.env.VIB_NOTIFICATIONS;
+	delete process.env.VIB_NOTIFICATIONS;
 	try {
-		const harness = createHarness("gjc-notif-switch-off-");
+		const harness = createHarness("vib-notif-switch-off-");
 		const originalId = harness.sid;
 		await harness.handlers.get("session_start")!({ type: "session_start" }, harness.ctx);
 		await waitFor(
@@ -995,7 +995,7 @@ test("session_switch keeps notification resources inactive until notify on rebin
 		expect(getAskAnswerSource(newId)).toBeUndefined();
 		expect(getTelegramFileSink(newId)).toBeUndefined();
 
-		process.env.GJC_NOTIFICATIONS = "1";
+		process.env.VIB_NOTIFICATIONS = "1";
 		await harness.commands
 			.get("notify")!
 			.handler("on", { ...(harness.ctx as Record<string, unknown>), ui: { notify: () => {} } });
@@ -1004,7 +1004,7 @@ test("session_switch keeps notification resources inactive until notify on rebin
 		expect(getAskAnswerSource(newId)).toBeDefined();
 		expect(getTelegramFileSink(newId)).toBeDefined();
 	} finally {
-		if (previous === undefined) delete process.env.GJC_NOTIFICATIONS;
-		else process.env.GJC_NOTIFICATIONS = previous;
+		if (previous === undefined) delete process.env.VIB_NOTIFICATIONS;
+		else process.env.VIB_NOTIFICATIONS = previous;
 	}
 });

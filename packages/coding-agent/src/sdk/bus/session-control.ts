@@ -100,8 +100,8 @@ export interface NotificationSessionControllerOptions {
 	getConfig(): NotificationConfig;
 	/** Kept as a reference so test and embedding hosts can supply their own environment. */
 	env?: NodeJS.ProcessEnv;
-	/** This process was launched by a marked GJC child spawn site. */
-	spawnedByGjc?: boolean;
+	/** This process was launched by a marked Vibrato child spawn site. */
+	spawnedByVib?: boolean;
 }
 
 /**
@@ -117,9 +117,9 @@ export class NotificationSessionController {
 	readonly #eligible: boolean;
 	readonly #getConfig: () => NotificationConfig;
 	readonly #env: NodeJS.ProcessEnv;
-	readonly #spawnedByGjc: boolean;
+	readonly #spawnedByVib: boolean;
 	readonly #disabledSessions = new Set<string>();
-	/** Explicit per-session opt-in overrides only the generic GJC_NOTIFICATIONS=0 auto-admission suppression. */
+	/** Explicit per-session opt-in overrides only the generic VIB_NOTIFICATIONS=0 auto-admission suppression. */
 	readonly #manualOptInSessions = new Set<string>();
 	/** Sessions held inactive after a post-commit foreign daemon identity race. */
 	readonly #blockedRuntimeSessions = new Set<string>();
@@ -133,7 +133,7 @@ export class NotificationSessionController {
 		this.#eligible = options.eligible;
 		this.#getConfig = options.getConfig;
 		this.#env = options.env ?? process.env;
-		this.#spawnedByGjc = options.spawnedByGjc ?? false;
+		this.#spawnedByVib = options.spawnedByVib ?? false;
 	}
 
 	/** Attach the concrete generic endpoint implementation used by this host. */
@@ -527,14 +527,14 @@ export class NotificationSessionController {
 		const shuttingDown = this.#shuttingDownSessions.has(binding.sessionId);
 		const manualOptIn = this.#manualOptInSessions.has(binding.sessionId);
 		const eligibilityEnv =
-			manualOptIn && this.#env.GJC_NOTIFICATIONS === "0"
-				? { ...this.#env, GJC_NOTIFICATIONS: undefined }
+			manualOptIn && this.#env.VIB_NOTIFICATIONS === "0"
+				? { ...this.#env, VIB_NOTIFICATIONS: undefined }
 				: this.#env;
 		const eligibility = resolveGenericNotificationSessionEligibility({
 			cfg,
 			env: eligibilityEnv,
 			sessionDisabled: !locallyEnabled,
-			spawnedByGjc: this.#spawnedByGjc,
+			spawnedByVib: this.#spawnedByVib,
 		});
 		const telegramMarkerBlocksOnlyProvider =
 			Boolean(getCurrentTelegramActivationMarker(cfg)) &&

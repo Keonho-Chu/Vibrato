@@ -6,8 +6,8 @@ thinking-level: high
 blocking: true
 forkContext: allowed
 bashAllowedPrefixes:
-  - gjc ralplan --write
-  - gjc state
+  - vib ralplan --write
+  - vib state
   - git status
   - git log
   - git show

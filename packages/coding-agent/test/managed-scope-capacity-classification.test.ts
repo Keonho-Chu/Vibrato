@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import * as native from "@gajae-code/natives";
+import * as native from "@vib-rato/natives";
 import {
 	prepareManagedSessionScopeForWriteSync,
 	resolveManagedScope,
@@ -18,9 +18,9 @@ afterEach(() => {
 });
 
 function fixture(): { cwd: string; agentDir: string; sessionsRoot: string } {
-	const home = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-scope-capacity-home-"));
+	const home = fs.mkdtempSync(path.join(os.tmpdir(), "vib-scope-capacity-home-"));
 	temporaryDirectories.push(home);
-	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-scope-capacity-cwd-"));
+	const cwd = fs.mkdtempSync(path.join(os.tmpdir(), "vib-scope-capacity-cwd-"));
 	temporaryDirectories.push(cwd);
 	const agentDir = path.join(home, "agent");
 	const sessionsRoot = path.join(agentDir, "sessions");
@@ -34,7 +34,7 @@ function scopeFor(input: { cwd: string; agentDir: string; sessionsRoot: string }
 	return resolved.scope;
 }
 
-// A managed scope grows past the native tree-snapshot budget purely from GJC's
+// A managed scope grows past the native tree-snapshot budget purely from Vibrato's
 // own session artifacts (tool logs, subagent transcripts). The snapshot then
 // fails with `content_too_large`, which the resolver used to collapse into
 // `binding_invalid` — reporting a corrupt binding for a scope whose binding is

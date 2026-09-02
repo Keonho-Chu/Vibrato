@@ -1,5 +1,5 @@
 import * as path from "node:path";
-import { isRecord } from "@gajae-code/utils";
+import { isRecord } from "@vib-rato/utils";
 import { hasRootMarkers, resolveCommand } from "../lsp/config";
 import DEFAULTS from "./defaults.json" with { type: "json" };
 import type { DapAdapterConfig, DapResolvedAdapter } from "./types";

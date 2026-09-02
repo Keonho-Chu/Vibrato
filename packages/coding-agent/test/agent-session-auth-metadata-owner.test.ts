@@ -1,13 +1,13 @@
 import { afterEach, describe, expect, it } from "bun:test";
 import * as path from "node:path";
-import { Agent } from "@gajae-code/agent-core";
-import type { SimpleStreamOptions } from "@gajae-code/ai";
-import { createMockModel } from "@gajae-code/ai/providers/mock";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { AgentSession } from "@gajae-code/coding-agent/session/agent-session";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { TempDir } from "@gajae-code/utils";
+import { Agent } from "@vib-rato/agent-core";
+import type { SimpleStreamOptions } from "@vib-rato/ai";
+import { createMockModel } from "@vib-rato/ai/providers/mock";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { AgentSession } from "@vib-rato/coding-agent/session/agent-session";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { TempDir } from "@vib-rato/utils";
 
 const sessions: AgentSession[] = [];
 const storages: AuthStorage[] = [];
@@ -21,7 +21,7 @@ afterEach(async () => {
 
 describe("AgentSession auth metadata owner boundary", () => {
 	it("omits OAuth metadata when auth storage has a registry-scoped key but the facade has no owner accessor", async () => {
-		const tempDir = TempDir.createSync("@gjc-auth-metadata-owner-");
+		const tempDir = TempDir.createSync("@vib-auth-metadata-owner-");
 		tempDirs.push(tempDir);
 		const authStorage = await AuthStorage.create(path.join(tempDir.path(), "auth.db"));
 		storages.push(authStorage);
@@ -68,7 +68,7 @@ describe("AgentSession auth metadata owner boundary", () => {
 	});
 
 	it("propagates account metadata when the real registry owner is available", async () => {
-		const tempDir = TempDir.createSync("@gjc-auth-metadata-owner-positive-");
+		const tempDir = TempDir.createSync("@vib-auth-metadata-owner-positive-");
 		tempDirs.push(tempDir);
 		const authStorage = await AuthStorage.create(path.join(tempDir.path(), "auth.db"));
 		storages.push(authStorage);

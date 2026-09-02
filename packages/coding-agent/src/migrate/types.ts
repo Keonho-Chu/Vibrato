@@ -1,9 +1,9 @@
 /**
- * Shared types for `gjc migrate`.
+ * Shared types for `vib migrate`.
  *
  * Imports MCP servers and skills from other coding agents (Claude Code, Codex,
- * OpenCode) into native GJC config. See the consensus plan under
- * `.gjc/plans/ralplan/` for the full taxonomy and force/collision semantics.
+ * OpenCode) into native Vibrato config. See the consensus plan under
+ * `.vib/plans/ralplan/` for the full taxonomy and force/collision semantics.
  */
 import type { MCPServerConfig } from "../runtime-mcp/types";
 
@@ -101,7 +101,7 @@ export interface MigrateAction {
 	source: MigrateSource;
 	type: MigrateItemType;
 	name?: string;
-	/** For skills: the effective GJC-loaded name (== slug). */
+	/** For skills: the effective Vibrato-loaded name (== slug). */
 	effectiveName?: string;
 	/** Absolute destination path (mcp.json for MCP, <skillsDir>/<slug>/SKILL.md for skills). */
 	destination?: string;

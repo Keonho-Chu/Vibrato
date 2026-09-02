@@ -1,4 +1,4 @@
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 
 export class EventBus {
 	readonly #listeners = new Map<string, Set<(data: unknown) => void | PromiseLike<void>>>();

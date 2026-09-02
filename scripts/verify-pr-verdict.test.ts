@@ -18,7 +18,7 @@ import type { IndependentReviewerEvidence } from "./verify-pr-verdict";
 const base = "a".repeat(40);
 const head = "b".repeat(40);
 const digest = "c".repeat(64);
-const approved = `gajae.pr-review-verdict.v1 merge-approved sha256:${digest} reviewer:architect reviewer-id:review-agent evidence:bun test scripts/verify-pr-verdict.test.ts`;
+const approved = `vibrato.pr-review-verdict.v1 merge-approved sha256:${digest} reviewer:architect reviewer-id:review-agent evidence:bun test scripts/verify-pr-verdict.test.ts`;
 
 function selfReviewComment(overrides: {
 	body?: string;
@@ -32,7 +32,7 @@ function selfReviewComment(overrides: {
 	const risk = overrides.risk ?? "low-risk";
 	const extraToken = overrides.extra ?? "none";
 	const parsedExtra = extraToken === "none" ? { kind: "none" as const } : { kind: "independent" as const, login: extraToken.slice("independent:".length) };
-	const record = `gajae.pr-self-review.v1 verdict:${verdict} base:${base} head:${head} sha256:${digest} reviewer-id:author risk:${risk} extra:${extraToken} evidence:adversarial exact-head review of the final tree`;
+	const record = `vibrato.pr-self-review.v1 verdict:${verdict} base:${base} head:${head} sha256:${digest} reviewer-id:author risk:${risk} extra:${extraToken} evidence:adversarial exact-head review of the final tree`;
 	const payload = selfReviewSignedPayload({
 		verdict,
 		baseSha: base,
@@ -47,13 +47,13 @@ function selfReviewComment(overrides: {
 	return {
 		login: overrides.login ?? "author",
 		authorAssociation: overrides.association ?? "OWNER",
-		body: overrides.body ?? `${record}\nself-review-signature: sha256:${signature}\nSigned-off-by: gaebal-gajae (clawdbot) 🦞`,
+		body: overrides.body ?? `${record}\nself-review-signature: sha256:${signature}\nSigned-off-by: gaebal-vibrato (clawdbot) 🦞`,
 	};
 }
 
 function validInput(overrides: Partial<Parameters<typeof validatePrContract>[0]> = {}) {
 	return {
-		body: `## GJC verdict\n\n${approved}\n`,
+		body: `## Vibrato verdict\n\n${approved}\n`,
 		baseRef: "dev",
 		baseSha: base,
 		headSha: head,
@@ -145,11 +145,11 @@ describe("parseGhPrCreate", () => {
 describe("maintainer self-authorization and risk record gate (issue #4703)", () => {
 	// The reviewed path: merge-approved naming the author is ALWAYS rejected.
 	const selfApproved = approved.replace("reviewer-id:review-agent", "reviewer-id:author");
-	const selfApprovedBody = `## GJC verdict\n\n${selfApproved}\n`;
+	const selfApprovedBody = `## Vibrato verdict\n\n${selfApproved}\n`;
 	// The honest solo path: the verdict name itself records that no independent
 	// human reviewed the change.
-	const soloVerdict = `gajae.pr-review-verdict.v1 merge-self-approved sha256:${digest} reviewer:human reviewer-id:author evidence:low-risk owner change; risk record bound to exact head`;
-	const soloBody = `## GJC verdict\n\n${soloVerdict}\n`;
+	const soloVerdict = `vibrato.pr-review-verdict.v1 merge-self-approved sha256:${digest} reviewer:human reviewer-id:author evidence:low-risk owner change; risk record bound to exact head`;
+	const soloBody = `## Vibrato verdict\n\n${soloVerdict}\n`;
 
 	test("merge-approved is NEVER reachable by the author, with or without a self-review record", () => {
 		const withComment = validatePrContract(validInput({ body: selfApprovedBody, selfReviewComment: selfReviewComment() }));
@@ -174,7 +174,7 @@ describe("maintainer self-authorization and risk record gate (issue #4703)", () 
 	test("merge-self-approved without any record fails closed", () => {
 		const result = validatePrContract(validInput({ body: soloBody, selfReviewComment: null, bodyRisk: "low-risk" }));
 		expect(result.ok).toBe(false);
-		expect(result.diagnostics.join("\n")).toContain("requires a valid gajae.pr-self-review.v1 risk record");
+		expect(result.diagnostics.join("\n")).toContain("requires a valid vibrato.pr-self-review.v1 risk record");
 	});
 
 	test("merge-self-approved with a regression-risk or high-risk record fails: higher tiers need independent review", () => {
@@ -201,7 +201,7 @@ describe("maintainer self-authorization and risk record gate (issue #4703)", () 
 	});
 
 	test("merge-self-approved naming a non-author reviewer fails", () => {
-		const result = validatePrContract(validInput({ body: `## GJC verdict\n\n${approved.replace("merge-approved", "merge-self-approved")}\n`, bodyRisk: "low-risk" }));
+		const result = validatePrContract(validInput({ body: `## Vibrato verdict\n\n${approved.replace("merge-approved", "merge-self-approved")}\n`, bodyRisk: "low-risk" }));
 		expect(result.ok).toBe(false);
 		expect(result.diagnostics.join("\n")).toContain("must name the PR author");
 	});
@@ -223,7 +223,7 @@ describe("maintainer self-authorization and risk record gate (issue #4703)", () 
 		const malformed = selfReviewComment().body.replace("verdict:merge-self-approved", "verdict:approved");
 		const result = validatePrContract(validInput({ body: soloBody, selfReviewComment: selfReviewComment({ body: malformed }), bodyRisk: "low-risk" }));
 		expect(result.ok).toBe(false);
-		expect(result.diagnostics.join("\n")).toContain("Malformed gajae.pr-self-review.v1");
+		expect(result.diagnostics.join("\n")).toContain("Malformed vibrato.pr-self-review.v1");
 	});
 
 	test("unsigned record fails closed", () => {
@@ -248,12 +248,12 @@ describe("maintainer self-authorization and risk record gate (issue #4703)", () 
 	});
 
 	test("record from a non-owner maintainer (MEMBER/COLLABORATOR) fails closed: only the owner may self-authorize", () => {
-		const record = `gajae.pr-self-review.v1 verdict:merge-self-approved base:${base} head:${head} sha256:${digest} reviewer-id:collab risk:low-risk extra:none evidence:collaborator attempt`;
+		const record = `vibrato.pr-self-review.v1 verdict:merge-self-approved base:${base} head:${head} sha256:${digest} reviewer-id:collab risk:low-risk extra:none evidence:collaborator attempt`;
 		const payload = selfReviewSignedPayload({ verdict: "merge-self-approved", baseSha: base, headSha: head, diffSha256: digest, reviewerId: "collab", risk: "low-risk", extra: { kind: "none" }, evidence: "collaborator attempt" });
-		const body = `${record}\nself-review-signature: sha256:${selfReviewSignature(payload)}\nSigned-off-by: gaebal-gajae (clawdbot) 🦞`;
+		const body = `${record}\nself-review-signature: sha256:${selfReviewSignature(payload)}\nSigned-off-by: gaebal-vibrato (clawdbot) 🦞`;
 		const collabSolo = soloVerdict.replace("reviewer-id:author", "reviewer-id:collab");
 		const result = validatePrContract(validInput({
-			body: `## GJC verdict\n\n${collabSolo}\n`,
+			body: `## Vibrato verdict\n\n${collabSolo}\n`,
 			authorLogin: "collab",
 			selfReviewComment: { login: "collab", authorAssociation: "COLLABORATOR", body },
 			bodyRisk: "low-risk",
@@ -263,9 +263,9 @@ describe("maintainer self-authorization and risk record gate (issue #4703)", () 
 	});
 
 	test("record reviewer-id must match the PR author", () => {
-		const record = `gajae.pr-self-review.v1 verdict:merge-self-approved base:${base} head:${head} sha256:${digest} reviewer-id:review-agent risk:low-risk extra:none evidence:wrong identity`;
+		const record = `vibrato.pr-self-review.v1 verdict:merge-self-approved base:${base} head:${head} sha256:${digest} reviewer-id:review-agent risk:low-risk extra:none evidence:wrong identity`;
 		const payload = selfReviewSignedPayload({ verdict: "merge-self-approved", baseSha: base, headSha: head, diffSha256: digest, reviewerId: "review-agent", risk: "low-risk", extra: { kind: "none" }, evidence: "wrong identity" });
-		const body = `${record}\nself-review-signature: sha256:${selfReviewSignature(payload)}\nSigned-off-by: gaebal-gajae (clawdbot) 🦞`;
+		const body = `${record}\nself-review-signature: sha256:${selfReviewSignature(payload)}\nSigned-off-by: gaebal-vibrato (clawdbot) 🦞`;
 		const result = validatePrContract(validInput({ body: soloBody, selfReviewComment: { login: "author", authorAssociation: "OWNER", body }, bodyRisk: "low-risk" }));
 		expect(result.ok).toBe(false);
 		expect(result.diagnostics.join("\n")).toContain("must match the PR author");
@@ -273,10 +273,10 @@ describe("maintainer self-authorization and risk record gate (issue #4703)", () 
 
 	test("PR-body-embedded record is never accepted as the comment", () => {
 		const recordBody = selfReviewComment().body;
-		const forgedBody = `## GJC verdict\n\n${soloVerdict}\n\n${recordBody}\n`;
+		const forgedBody = `## Vibrato verdict\n\n${soloVerdict}\n\n${recordBody}\n`;
 		const result = validatePrContract(validInput({ body: forgedBody, selfReviewComment: null, bodyRisk: "low-risk" }));
 		expect(result.ok).toBe(false);
-		expect(result.diagnostics.join("\n")).toContain("requires a valid gajae.pr-self-review.v1 risk record");
+		expect(result.diagnostics.join("\n")).toContain("requires a valid vibrato.pr-self-review.v1 risk record");
 	});
 
 	test("merge-blocked record verdict does not authorize anything", () => {
@@ -312,8 +312,8 @@ describe("maintainer self-authorization and risk record gate (issue #4703)", () 
 	});
 
 	test("gpt-heavy extra token is no longer parseable: it was an unauthenticated author claim", () => {
-		const record = `gajae.pr-self-review.v1 verdict:merge-self-approved base:${base} head:${head} sha256:${digest} reviewer-id:author risk:low-risk extra:gpt-heavy evidence:claim`;
-		const parsed = parseSelfReview(`${record}\nself-review-signature: sha256:${"0".repeat(64)}\nSigned-off-by: gaebal-gajae (clawdbot) 🦞`);
+		const record = `vibrato.pr-self-review.v1 verdict:merge-self-approved base:${base} head:${head} sha256:${digest} reviewer-id:author risk:low-risk extra:gpt-heavy evidence:claim`;
+		const parsed = parseSelfReview(`${record}\nself-review-signature: sha256:${"0".repeat(64)}\nSigned-off-by: gaebal-vibrato (clawdbot) 🦞`);
 		expect(parsed.selfReview).toBeUndefined();
 		expect(parsed.diagnostics.join("\n")).toContain("Malformed");
 	});
@@ -352,11 +352,11 @@ describe("maintainer self-authorization and risk record gate (issue #4703)", () 
 
 	test("external contributor: a distinct external author cannot use the self-authorization path", () => {
 		const externalAuthor = "external-contrib";
-		const record = `gajae.pr-self-review.v1 verdict:merge-self-approved base:${base} head:${head} sha256:${digest} reviewer-id:${externalAuthor} risk:low-risk extra:none evidence:external contributor attempt`;
+		const record = `vibrato.pr-self-review.v1 verdict:merge-self-approved base:${base} head:${head} sha256:${digest} reviewer-id:${externalAuthor} risk:low-risk extra:none evidence:external contributor attempt`;
 		const payload = selfReviewSignedPayload({ verdict: "merge-self-approved", baseSha: base, headSha: head, diffSha256: digest, reviewerId: externalAuthor, risk: "low-risk", extra: { kind: "none" }, evidence: "external contributor attempt" });
-		const body = `${record}\nself-review-signature: sha256:${selfReviewSignature(payload)}\nSigned-off-by: gaebal-gajae (clawdbot) 🦞`;
-		const externalSolo = `gajae.pr-review-verdict.v1 merge-self-approved sha256:${digest} reviewer:human reviewer-id:${externalAuthor} evidence:external attempt`;
-		const externalBody = `## GJC verdict\n\n${externalSolo}\n`;
+		const body = `${record}\nself-review-signature: sha256:${selfReviewSignature(payload)}\nSigned-off-by: gaebal-vibrato (clawdbot) 🦞`;
+		const externalSolo = `vibrato.pr-review-verdict.v1 merge-self-approved sha256:${digest} reviewer:human reviewer-id:${externalAuthor} evidence:external attempt`;
+		const externalBody = `## Vibrato verdict\n\n${externalSolo}\n`;
 		for (const association of ["NONE", "CONTRIBUTOR", "FIRST_TIME_CONTRIBUTOR", "MEMBER", "COLLABORATOR"]) {
 			const result = validatePrContract(validInput({
 				body: externalBody,
@@ -368,7 +368,7 @@ describe("maintainer self-authorization and risk record gate (issue #4703)", () 
 			expect(result.diagnostics.join("\n")).toContain("not the repository owner");
 		}
 		const externalApproved = approved.replace("reviewer-id:review-agent", `reviewer-id:${externalAuthor}`);
-		const noRecord = validatePrContract(validInput({ body: `## GJC verdict\n\n${externalApproved}\n`, authorLogin: externalAuthor, selfReviewComment: null }));
+		const noRecord = validatePrContract(validInput({ body: `## Vibrato verdict\n\n${externalApproved}\n`, authorLogin: externalAuthor, selfReviewComment: null }));
 		expect(noRecord.ok).toBe(false);
 		expect(noRecord.diagnostics.join("\n")).toContain("not backed by an authenticated");
 	});
@@ -376,8 +376,8 @@ describe("maintainer self-authorization and risk record gate (issue #4703)", () 
 	test("parseSelfReview rejects duplicate records and missing footer", () => {
 		const record = selfReviewComment().body;
 		expect(parseSelfReview(`${record}\n${record}`).diagnostics.join("\n")).toContain("keep exactly one");
-		const noFooter = record.replace("\nSigned-off-by: gaebal-gajae (clawdbot) 🦞", "");
-		expect(parseSelfReview(noFooter).diagnostics.join("\n")).toContain("Signed-off-by: gaebal-gajae (clawdbot) 🦞");
+		const noFooter = record.replace("\nSigned-off-by: gaebal-vibrato (clawdbot) 🦞", "");
+		expect(parseSelfReview(noFooter).diagnostics.join("\n")).toContain("Signed-off-by: gaebal-vibrato (clawdbot) 🦞");
 		const noSignature = record.replace(/\nself-review-signature: sha256:[0-9a-f]{64}/u, "");
 		expect(parseSelfReview(noSignature).diagnostics.join("\n")).toContain("self-review-signature");
 	});
@@ -406,7 +406,7 @@ describe("maintainer self-authorization and risk record gate (issue #4703)", () 
 	});
 
 	function buildRiskComment(risk: "low-risk" | "regression-risk" | "high-risk", extra: string) {
-		const record = `gajae.pr-self-review.v1 verdict:merge-approved base:${base} head:${head} sha256:${digest} reviewer-id:author risk:${risk} extra:${extra} evidence:risk-classified exact-head review`;
+		const record = `vibrato.pr-self-review.v1 verdict:merge-approved base:${base} head:${head} sha256:${digest} reviewer-id:author risk:${risk} extra:${extra} evidence:risk-classified exact-head review`;
 		const parsedExtra = extra === "none"
 			? { kind: "none" as const }
 			: { kind: "independent" as const, login: extra.slice("independent:".length) };
@@ -420,7 +420,7 @@ describe("maintainer self-authorization and risk record gate (issue #4703)", () 
 			extra: parsedExtra,
 			evidence: "risk-classified exact-head review",
 		});
-		return { login: "author", authorAssociation: "OWNER", body: `${record}\nself-review-signature: sha256:${selfReviewSignature(payload)}\nSigned-off-by: gaebal-gajae (clawdbot) 🦞` };
+		return { login: "author", authorAssociation: "OWNER", body: `${record}\nself-review-signature: sha256:${selfReviewSignature(payload)}\nSigned-off-by: gaebal-vibrato (clawdbot) 🦞` };
 	}
 });
 
@@ -435,12 +435,12 @@ test("server approval requires reviewer repository authority", async () => {
 });
 
 test("hook keeps repository root separate from nested invocation cwd", async () => {
-	const hook = await Bun.file(new URL("../docs/examples/gjc-hooks/pre/bash.ts", import.meta.url)).text();
+	const hook = await Bun.file(new URL("../docs/examples/vib-hooks/pre/bash.ts", import.meta.url)).text();
 	expect(hook).toContain('"--repo", repositoryRoot, "--invocation-cwd", invocationCwd');
 });
 
 test("preflight preserves missing body-file diagnostics", async () => {
-	const temp = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-pr-missing-body-"));
+	const temp = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-pr-missing-body-"));
 	try {
 		const script = url.fileURLToPath(new URL("./verify-pr-verdict.ts", import.meta.url));
 		const child = Bun.spawn([process.execPath, script, "--preflight-command", "gh pr create --base dev --body-file missing.md", "--repo", temp, "--trusted-root", temp, "--invocation-cwd", temp], { stdout: "pipe", stderr: "pipe" });
@@ -467,7 +467,7 @@ test("workflow is trusted-default-branch-controlled, read-only, exact-head, and 
 	expect(workflow).toContain("ref: ${{ steps.pr.outputs.base_sha }}");
 	expect(workflow.match(/persist-credentials: false/gu)).toHaveLength(2);
 	expect(workflow).toContain("unset BUN_OPTIONS");
-	expect(workflow).toContain("empty_bunfig=\"$RUNNER_TEMP/gjc-pr-contract-empty-bunfig.toml\"");
+	expect(workflow).toContain("empty_bunfig=\"$RUNNER_TEMP/vib-pr-contract-empty-bunfig.toml\"");
 	expect(workflow).toContain('if [[ ! -f "$trusted_root/scripts/verify-pr-verdict.ts" ]]');
 	expect(workflow).toContain("predates the trusted validator; Dev CI PR contract bootstrap remains authoritative");
 	expect(workflow).toMatch(/if \[\[ ! -f "\$trusted_root\/scripts\/verify-pr-verdict\.ts" \]\]; then[\s\S]*?exit 0[\s\S]*?bun --no-env-file/u);
@@ -527,7 +527,7 @@ test("issue_comment events cannot launch or cancel the affected Dev CI pipeline"
 test("trusted Bun launch cannot load an untrusted repo bunfig preload", async () => {
 	const root = await Bun.file(new URL("../package.json", import.meta.url)).json() as { packageManager: string };
 	expect(root.packageManager).toBe("bun@1.4.0");
-	const temp = await fs.mkdtemp("/tmp/gjc-pr-bun-isolation-");
+	const temp = await fs.mkdtemp("/tmp/vib-pr-bun-isolation-");
 	try {
 		const trusted = path.join(temp, "trusted");
 		const untrusted = path.join(temp, "untrusted");
@@ -587,7 +587,7 @@ test("dev CI carries immutable inline first-landing bootstrap validation", async
 	expect(workflow).toContain("if: ${{ github.event_name == 'pull_request' }}");
 	expect(workflow).toContain("bun --no-env-file --config=\"$empty_bunfig\" -e '");
 	expect(workflow).toContain("repository: ${{ github.event.pull_request.head.repo.full_name }}");
-	expect(workflow).toContain("bun scripts/verify-gjc-state-writers.ts --fail --root .");
+	expect(workflow).toContain("bun scripts/verify-vib-state-writers.ts --fail --root .");
 	expect(workflow).toContain("Expected exactly one verdict line");
 	expect(workflow).toContain("effective exact-head approval");
 	expect(workflow).toContain("lacks repository review authority");
@@ -607,9 +607,9 @@ test("dev CI carries immutable inline first-landing bootstrap validation", async
 	// Bootstrap/canonical parity: the mirror rejects duplicate-record,
 	// multi-signature, and missing-footer comments exactly like the canonical parser.
 	expect(workflow).toContain("exactly one record, signature, and footer line");
-	expect(workflow).toContain('footerLines = lines.filter(line => line === "Signed-off-by: gaebal-gajae (clawdbot) 🦞")');
+	expect(workflow).toContain('footerLines = lines.filter(line => line === "Signed-off-by: gaebal-vibrato (clawdbot) 🦞")');
 	expect(workflow).toContain("/issues/${Bun.env.PR_NUMBER}/comments");
-	expect(workflow).toContain("gajae.pr-self-review.v1.signature-domain");
+	expect(workflow).toContain("vibrato.pr-self-review.v1.signature-domain");
 	expect(workflow).toContain("Self-review is stale: base/head/digest do not match this exact PR");
 	expect(workflow).toContain("not the repository owner");
 	expect(workflow).toContain("does not match the PR body risk classification");

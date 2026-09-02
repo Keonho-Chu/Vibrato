@@ -2,17 +2,17 @@ import { afterEach, describe, expect, it } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { getBundledModel } from "@gajae-code/ai";
-import type { ModelProfileDefinition } from "@gajae-code/coding-agent/config/model-profiles";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
+import { getBundledModel } from "@vib-rato/ai";
+import type { ModelProfileDefinition } from "@vib-rato/coding-agent/config/model-profiles";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
 import {
 	findVendorSeparatedWorkerRoles,
 	resolveEagerTaskDelegation,
-} from "@gajae-code/coding-agent/config/task-delegation";
-import { createAgentSession } from "@gajae-code/coding-agent/sdk";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { Snowflake } from "@gajae-code/utils";
+} from "@vib-rato/coding-agent/config/task-delegation";
+import { createAgentSession } from "@vib-rato/coding-agent/sdk";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { Snowflake } from "@vib-rato/utils";
 
 const DELEGATION_DIRECTIVE = "Delegate by default for multi-file changes";
 
@@ -33,7 +33,7 @@ function vendorSeparatedProfile(): ModelProfileDefinition {
 }
 
 async function createSession(settings: Settings, toolNames?: string[]) {
-	const tempDir = path.join(os.tmpdir(), `gjc-task-eager-${Snowflake.next()}`);
+	const tempDir = path.join(os.tmpdir(), `vib-task-eager-${Snowflake.next()}`);
 	tempDirs.push(tempDir);
 	fs.mkdirSync(tempDir, { recursive: true });
 	settings.override("recipe.enabled", false);

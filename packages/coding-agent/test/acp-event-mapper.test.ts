@@ -61,14 +61,14 @@ describe("ACP event mapper", () => {
 		expect(updates[0]?.update).toMatchObject({
 			sessionUpdate: "session_info_update",
 			_meta: {
-				gjcPhase: "error",
-				gjcAgentFailed: true,
+				vibPhase: "error",
+				vibAgentFailed: true,
 				running: true,
-				gjcRunning: true,
+				vibRunning: true,
 				// Bounded sanitized diagnostic fields are carried through so ACP
 				// consumers can identify the documented failure cause.
-				gjcAgentFailedCode: "agent_failed",
-				gjcAgentFailedMessage: "Agent run failed.",
+				vibAgentFailedCode: "agent_failed",
+				vibAgentFailedMessage: "Agent run failed.",
 			},
 		});
 	});
@@ -167,17 +167,17 @@ describe("ACP event mapper", () => {
 			"session-1",
 		)[0]!.update._meta;
 		expect(retry).toMatchObject({
-			gjcPhase: "retrying",
-			gjcRetryAttempt: 2,
-			gjcRetryMaxAttempts: 4,
-			gjcRetryDelayMs: 1_500,
+			vibPhase: "retrying",
+			vibRetryAttempt: 2,
+			vibRetryMaxAttempts: 4,
+			vibRetryDelayMs: 1_500,
 			running: true,
 		});
 		const thinking = mapAgentSessionEventToAcpSessionUpdates(
 			{ type: "thinking_level_changed", thinkingLevel: "high" } as AgentSessionEvent,
 			"session-1",
 		);
-		expect(thinking[0]!.update._meta).toEqual({ gjcThinkingLevel: "high" });
+		expect(thinking[0]!.update._meta).toEqual({ vibThinkingLevel: "high" });
 		const goal = mapAgentSessionEventToAcpSessionUpdates(
 			{
 				type: "goal_updated",
@@ -194,10 +194,10 @@ describe("ACP event mapper", () => {
 			"session-1",
 		);
 		expect(goal[0]!.update._meta).toMatchObject({
-			gjcGoalActive: true,
-			gjcGoalId: "goal-1",
-			gjcGoalStatus: "active",
-			gjcGoalObjective: "Finish ACP support",
+			vibGoalActive: true,
+			vibGoalId: "goal-1",
+			vibGoalStatus: "active",
+			vibGoalObjective: "Finish ACP support",
 		});
 		expectAcpNotifications([...thinking, ...goal]);
 	});
@@ -224,16 +224,16 @@ describe("ACP event mapper", () => {
 		expect(updates[0]!.update).toEqual({
 			sessionUpdate: "session_info_update",
 			_meta: {
-				gjcModelFallbackSwitched: true,
-				gjcModelFallbackEventId: "fallback-1",
-				gjcModelFallbackFrom: "anthropic/claude-sonnet",
-				gjcModelFallbackTo: "openai/gpt-5",
-				gjcModelFallbackReason: "rate_limit",
-				gjcModelFallbackRole: "default",
-				gjcModelFallbackScope: "session",
-				gjcModelFallbackActiveIndex: 1,
-				gjcModelFallbackChainLength: 2,
-				gjcModelFallbackAttemptsUsed: 3,
+				vibModelFallbackSwitched: true,
+				vibModelFallbackEventId: "fallback-1",
+				vibModelFallbackFrom: "anthropic/claude-sonnet",
+				vibModelFallbackTo: "openai/gpt-5",
+				vibModelFallbackReason: "rate_limit",
+				vibModelFallbackRole: "default",
+				vibModelFallbackScope: "session",
+				vibModelFallbackActiveIndex: 1,
+				vibModelFallbackChainLength: 2,
+				vibModelFallbackAttemptsUsed: 3,
 			},
 		});
 	});
@@ -263,12 +263,12 @@ describe("ACP event mapper", () => {
 				update: {
 					sessionUpdate: "session_info_update",
 					_meta: {
-						gjcPhase: "compacting",
-						gjcCompactionState: "start",
-						gjcCompactionTrigger: "threshold",
-						gjcCompactionAction: "context-full",
+						vibPhase: "compacting",
+						vibCompactionState: "start",
+						vibCompactionTrigger: "threshold",
+						vibCompactionAction: "context-full",
 						running: true,
-						gjcRunning: true,
+						vibRunning: true,
 					},
 				},
 			},
@@ -279,16 +279,16 @@ describe("ACP event mapper", () => {
 				update: {
 					sessionUpdate: "session_info_update",
 					_meta: {
-						gjcPhase: "responding",
-						gjcCompactionState: "end",
-						gjcCompactionAction: "context-full",
-						gjcCompactionAborted: false,
-						gjcCompactionWillRetry: true,
-						gjcCompactionSkipped: true,
-						gjcCompactionErrorMessage: "retrying after maintenance",
-						gjcCompactionContinuationSkipReason: "auto_continue_disabled_non_resumable_tail",
+						vibPhase: "responding",
+						vibCompactionState: "end",
+						vibCompactionAction: "context-full",
+						vibCompactionAborted: false,
+						vibCompactionWillRetry: true,
+						vibCompactionSkipped: true,
+						vibCompactionErrorMessage: "retrying after maintenance",
+						vibCompactionContinuationSkipReason: "auto_continue_disabled_non_resumable_tail",
 						running: true,
-						gjcRunning: true,
+						vibRunning: true,
 					},
 				},
 			},
@@ -310,12 +310,12 @@ describe("ACP event mapper", () => {
 		);
 
 		expect(notification?.update._meta).toMatchObject({
-			gjcPhase: "idle",
-			gjcCompactionState: "end",
-			gjcCompactionAction: "handoff",
-			gjcCompactionAborted: true,
+			vibPhase: "idle",
+			vibCompactionState: "end",
+			vibCompactionAction: "handoff",
+			vibCompactionAborted: true,
 			running: false,
-			gjcRunning: false,
+			vibRunning: false,
 		});
 		expectAcpNotifications(notification ? [notification] : []);
 	});

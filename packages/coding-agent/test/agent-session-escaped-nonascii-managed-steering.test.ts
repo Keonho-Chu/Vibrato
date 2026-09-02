@@ -1,15 +1,15 @@
 import { afterEach, describe, expect, it } from "bun:test";
 import * as path from "node:path";
-import { Agent, type AgentMessage, type AgentTool } from "@gajae-code/agent-core";
-import { ESCAPED_NONASCII_RECOVERY_PROMPT } from "@gajae-code/agent-core/agent-loop";
-import { getBundledModel, type Message, type Model } from "@gajae-code/ai";
-import { createMockModel } from "@gajae-code/ai/providers/mock";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { AgentSession } from "@gajae-code/coding-agent/session/agent-session";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { TempDir } from "@gajae-code/utils";
+import { Agent, type AgentMessage, type AgentTool } from "@vib-rato/agent-core";
+import { ESCAPED_NONASCII_RECOVERY_PROMPT } from "@vib-rato/agent-core/agent-loop";
+import { getBundledModel, type Message, type Model } from "@vib-rato/ai";
+import { createMockModel } from "@vib-rato/ai/providers/mock";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { AgentSession } from "@vib-rato/coding-agent/session/agent-session";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { TempDir } from "@vib-rato/utils";
 import * as z from "zod/v4";
 
 const QUESTION = "마지막 병목";
@@ -80,7 +80,7 @@ describe("AgentSession escaped non-ASCII managed steering", () => {
 	});
 
 	it("carries the transient steering instruction through the managed fallback retry", async () => {
-		tempDir = TempDir.createSync("@gjc-escaped-managed-steering-");
+		tempDir = TempDir.createSync("@vib-escaped-managed-steering-");
 		authStorage = await AuthStorage.create(path.join(tempDir.path(), "auth.db"));
 		authStorage.setRuntimeApiKey("anthropic", "test-key");
 		authStorage.setRuntimeApiKey("openai", "test-key");
@@ -155,7 +155,7 @@ describe("AgentSession escaped non-ASCII managed steering", () => {
 	});
 
 	it("resets escaped retries after each accepted tool turn", async () => {
-		tempDir = TempDir.createSync("@gjc-escaped-managed-accepted-reset-");
+		tempDir = TempDir.createSync("@vib-escaped-managed-accepted-reset-");
 		authStorage = await AuthStorage.create(path.join(tempDir.path(), "auth.db"));
 		authStorage.setRuntimeApiKey("anthropic", "test-key");
 		authStorage.setRuntimeApiKey("openai", "test-key");
@@ -210,7 +210,7 @@ describe("AgentSession escaped non-ASCII managed steering", () => {
 	});
 
 	it("fails closed after the managed escaped retry budget instead of looping forever", async () => {
-		tempDir = TempDir.createSync("@gjc-escaped-managed-budget-");
+		tempDir = TempDir.createSync("@vib-escaped-managed-budget-");
 		authStorage = await AuthStorage.create(path.join(tempDir.path(), "auth.db"));
 		authStorage.setRuntimeApiKey("anthropic", "test-key");
 		authStorage.setRuntimeApiKey("openai", "test-key");

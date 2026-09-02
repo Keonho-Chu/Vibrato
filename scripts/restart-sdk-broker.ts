@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 
 import { randomUUID } from "node:crypto";
-import { getAgentDir } from "@gajae-code/utils";
+import { getAgentDir } from "@vib-rato/utils";
 import { brokerProcessIncarnation, readBrokerDiscovery } from "../packages/coding-agent/src/sdk/broker/discovery";
 import { ensureBroker } from "../packages/coding-agent/src/sdk/broker/ensure";
 import { SdkClient, SdkClientError } from "../packages/coding-agent/src/sdk/client";

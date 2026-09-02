@@ -2,13 +2,13 @@ import { afterEach, describe, expect, it, vi } from "bun:test";
 import { AsyncJobManager } from "../../src/async";
 import type { ModelRegistry } from "../../src/config/model-registry";
 import { Settings } from "../../src/config/settings";
-import * as repositoryBindingModule from "../../src/gjc-runtime/repository-binding";
 import type { MCPManager } from "../../src/runtime-mcp/manager";
 import { TaskTool } from "../../src/task";
 import * as discoveryModule from "../../src/task/discovery";
 import * as executorModule from "../../src/task/executor";
 import type { AgentDefinition, SingleResult } from "../../src/task/types";
 import type { ToolSession } from "../../src/tools";
+import * as repositoryBindingModule from "../../src/vib-runtime/repository-binding";
 
 const AGENT: AgentDefinition = {
 	name: "planner",
@@ -82,13 +82,13 @@ describe("task MCP inheritance", () => {
 	it("does not pass a tools-only parent manager into a sub-session", async () => {
 		vi.spyOn(discoveryModule, "discoverAgents").mockResolvedValue({ agents: [AGENT], projectAgentsDir: null });
 		vi.spyOn(repositoryBindingModule, "resolveTaskRepositoryBinding").mockResolvedValue({
-			schema: "gjc.repository_binding.v1",
+			schema: "vib.repository_binding.v1",
 			worktreeRoot: "/repo",
 			commonDir: null,
 			displayPath: "/repo",
 		});
 		vi.spyOn(repositoryBindingModule, "assertExecutionRootMatchesRepositoryBinding").mockResolvedValue({
-			schema: "gjc.repository_binding.v1",
+			schema: "vib.repository_binding.v1",
 			worktreeRoot: "/repo",
 			commonDir: null,
 			displayPath: "/repo",
@@ -103,13 +103,13 @@ describe("task MCP inheritance", () => {
 	it("continues to pass a reusable parent manager into a sub-session", async () => {
 		vi.spyOn(discoveryModule, "discoverAgents").mockResolvedValue({ agents: [AGENT], projectAgentsDir: null });
 		vi.spyOn(repositoryBindingModule, "resolveTaskRepositoryBinding").mockResolvedValue({
-			schema: "gjc.repository_binding.v1",
+			schema: "vib.repository_binding.v1",
 			worktreeRoot: "/repo",
 			commonDir: null,
 			displayPath: "/repo",
 		});
 		vi.spyOn(repositoryBindingModule, "assertExecutionRootMatchesRepositoryBinding").mockResolvedValue({
-			schema: "gjc.repository_binding.v1",
+			schema: "vib.repository_binding.v1",
 			worktreeRoot: "/repo",
 			commonDir: null,
 			displayPath: "/repo",

@@ -3141,7 +3141,7 @@
 		}
 	},
 	{
-		"sourceId": "agent_session:refreshGjcSubskillTools",
+		"sourceId": "agent_session:refreshVibSubskillTools",
 		"sourceFile": "packages/coding-agent/src/session/agent-session.ts",
 		"sourceKind": "agent_session",
 		"decision": "exclude",
@@ -4197,7 +4197,7 @@
 		"sourceFile": "packages/coding-agent/src/session/agent-session.ts",
 		"sourceKind": "agent_session",
 		"decision": "exclude",
-		"rationale": "internal control wrapper behind the reviewed model.set seam (session-scoped synthetic gajae-code selection), not an independent public SDK operation",
+		"rationale": "internal control wrapper behind the reviewed model.set seam (session-scoped synthetic vib-rato selection), not an independent public SDK operation",
 		"exclusionMetadata": {
 			"adapterMappings": "not_applicable",
 			"testIds": "not_applicable"

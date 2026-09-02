@@ -9,7 +9,7 @@ import type { SessionRouterClient } from "../../src/sdk/router";
 import { prepareExactSessionAuthority } from "../helpers/sdk-exact-session-authority";
 
 async function withTempRoot(run: (root: string) => Promise<void>): Promise<void> {
-	const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-coord-race-"));
+	const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-coord-race-"));
 	try {
 		await run(root);
 	} finally {
@@ -54,11 +54,11 @@ describe("send_prompt same-session concurrency", () => {
 
 			const server = await createCoordinatorMcpServer({
 				env: {
-					GJC_COORDINATOR_MCP_WORKDIR_ROOTS: root,
-					GJC_COORDINATOR_MCP_MUTATIONS: "sessions,questions,reports",
-					GJC_COORDINATOR_MCP_STATE_ROOT: path.join(root, ".state"),
-					GJC_COORDINATOR_MCP_PROFILE: "race-controller",
-					GJC_COORDINATOR_MCP_REPO: "repo-race",
+					VIB_COORDINATOR_MCP_WORKDIR_ROOTS: root,
+					VIB_COORDINATOR_MCP_MUTATIONS: "sessions,questions,reports",
+					VIB_COORDINATOR_MCP_STATE_ROOT: path.join(root, ".state"),
+					VIB_COORDINATOR_MCP_PROFILE: "race-controller",
+					VIB_COORDINATOR_MCP_REPO: "repo-race",
 				},
 				services: {
 					getAgentDir: () => agentDir,
@@ -99,7 +99,7 @@ describe("send_prompt same-session concurrency", () => {
 									indexSeq: 1,
 									sessions: brokerSessions.map(session => ({
 										sessionId: session.sessionId,
-										locator: { repo: root, stateRoot: path.join(root, ".gjc", "state") },
+										locator: { repo: root, stateRoot: path.join(root, ".vib", "state") },
 										live: session.live,
 										endpointGeneration: session.endpointGeneration,
 										pid: session.pid,
@@ -129,7 +129,7 @@ describe("send_prompt same-session concurrency", () => {
 				},
 			});
 
-			const started = await server.callTool("gjc_coordinator_start_session", {
+			const started = await server.callTool("vib_coordinator_start_session", {
 				cwd: root,
 				idempotency_key: "start-session",
 				allow_mutation: true,
@@ -139,13 +139,13 @@ describe("send_prompt same-session concurrency", () => {
 
 			// The exact race the maintainer reproduced 25/25: two same-session prompts at once.
 			const results = await Promise.all([
-				server.callTool("gjc_coordinator_send_prompt", {
+				server.callTool("vib_coordinator_send_prompt", {
 					session_id: sessionId,
 					prompt: "first concurrent prompt",
 					idempotency_key: "first-prompt",
 					allow_mutation: true,
 				}),
-				server.callTool("gjc_coordinator_send_prompt", {
+				server.callTool("vib_coordinator_send_prompt", {
 					session_id: sessionId,
 					prompt: "second concurrent prompt",
 					idempotency_key: "second-prompt",

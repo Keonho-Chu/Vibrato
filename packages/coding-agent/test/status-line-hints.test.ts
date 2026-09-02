@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from "bun:test";
-import { visibleWidth } from "@gajae-code/tui";
+import { visibleWidth } from "@vib-rato/tui";
 import { formatKeyHints, KEYBINDINGS, KeybindingsManager } from "../src/config/keybindings";
 import { resetSettingsForTest, Settings } from "../src/config/settings";
 import { SETTINGS_SCHEMA } from "../src/config/settings-schema";

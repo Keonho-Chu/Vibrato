@@ -1,5 +1,5 @@
-import type { ToolChoice } from "@gajae-code/ai/core";
-import { logger } from "@gajae-code/utils";
+import type { ToolChoice } from "@vib-rato/ai/core";
+import { logger } from "@vib-rato/utils";
 
 // ── Callback types ──────────────────────────────────────────────────────────
 

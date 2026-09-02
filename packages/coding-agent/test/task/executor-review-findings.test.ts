@@ -3,8 +3,8 @@ import { createHash } from "node:crypto";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { AgentEvent } from "@gajae-code/agent-core";
-import type { AssistantMessage } from "@gajae-code/ai";
+import type { AgentEvent } from "@vib-rato/agent-core";
+import type { AssistantMessage } from "@vib-rato/ai";
 import { AsyncJobManager } from "../../src/async/job-manager";
 import { kNoAuth } from "../../src/config/model-registry";
 import { Settings } from "../../src/config/settings";
@@ -200,7 +200,7 @@ function createSessionResult(session: AgentSession): CreateAgentSessionResult {
 }
 
 async function tempRoot(): Promise<string> {
-	const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-review-findings-"));
+	const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-review-findings-"));
 	roots.push(root);
 	return root;
 }

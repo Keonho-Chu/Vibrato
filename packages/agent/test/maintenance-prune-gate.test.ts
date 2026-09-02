@@ -1,11 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import type { SessionEntry, SessionMessageEntry } from "@gajae-code/agent-core/compaction/entries";
+import type { SessionEntry, SessionMessageEntry } from "@vib-rato/agent-core/compaction/entries";
 import {
 	estimateToolOutputPruneSavings,
 	type PruneConfig,
 	shouldRunMaintenancePrune,
-} from "@gajae-code/agent-core/compaction/pruning";
-import type { ToolResultMessage } from "@gajae-code/ai/types";
+} from "@vib-rato/agent-core/compaction/pruning";
+import type { ToolResultMessage } from "@vib-rato/ai/types";
 import { applyToolOutputPrune as pruneToolOutputs } from "./pruning-test-utils";
 
 const timestamp = "2026-06-12T00:00:00.000Z";

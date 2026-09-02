@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import type { AssistantMessageEvent, Model, ThinkingContent } from "@gajae-code/ai";
+import type { AssistantMessageEvent, Model, ThinkingContent } from "@vib-rato/ai";
 import { streamProxy } from "../src/proxy";
 
 const RAW_SENTINEL = "RAW_SENTINEL_DO_NOT_SURFACE";

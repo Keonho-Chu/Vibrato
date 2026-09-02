@@ -1,19 +1,19 @@
-import { Command, renderCommandHelp } from "@gajae-code/utils/cli";
+import { Command, renderCommandHelp } from "@vib-rato/utils/cli";
 import { ensureWorkflowSettingsMigrated } from "../config/settings";
 import {
-	GJC_SESSION_FILE_ENV,
-	GJC_SESSION_ID_ENV,
 	isUltragoalCreateGoalsInvocation,
-	readUltragoalGjcObjective,
+	readUltragoalVibObjective,
+	VIB_SESSION_FILE_ENV,
+	VIB_SESSION_ID_ENV,
 	writeCurrentSessionGoalModeState,
 	writePendingGoalModeRequest,
-} from "../gjc-runtime/goal-mode-request";
-import { runNativeUltragoalCommand } from "../gjc-runtime/ultragoal-runtime";
+} from "../vib-runtime/goal-mode-request";
+import { runNativeUltragoalCommand } from "../vib-runtime/ultragoal-runtime";
 
 export default class Ultragoal extends Command {
-	static description = "Run native GJC Ultragoal workflow commands";
+	static description = "Run native Vibrato Ultragoal workflow commands";
 	static strict = false;
-	static examples = ["$ gjc ultragoal status --json"];
+	static examples = ["$ vib ultragoal status --json"];
 	static delegateHelp = true;
 
 	async run(): Promise<void> {
@@ -21,7 +21,7 @@ export default class Ultragoal extends Command {
 		// migration (which can create/drain agent.db, write config.yml, and
 		// retire legacy settings.json): render help before the trigger.
 		if (this.argv.includes("--help") || this.argv.includes("-h")) {
-			renderCommandHelp("gjc", "ultragoal", Ultragoal);
+			renderCommandHelp("vib", "ultragoal", Ultragoal);
 			return;
 		}
 		await ensureWorkflowSettingsMigrated(process.cwd());
@@ -35,10 +35,10 @@ export default class Ultragoal extends Command {
 		if (isReviewStart && !result.createdReviewPlan && (result.reviewBlockerGoalIds?.length ?? 0) === 0) return;
 
 		const cwd = process.cwd();
-		const { objective, goalsPath, provenance } = await readUltragoalGjcObjective(cwd);
+		const { objective, goalsPath, provenance } = await readUltragoalVibObjective(cwd);
 
 		await writeCurrentSessionGoalModeState({
-			sessionFile: process.env[GJC_SESSION_FILE_ENV],
+			sessionFile: process.env[VIB_SESSION_FILE_ENV],
 			objective,
 			provenance,
 		});
@@ -47,7 +47,7 @@ export default class Ultragoal extends Command {
 			objective,
 			goalsPath,
 			provenance,
-			sessionId: process.env[GJC_SESSION_ID_ENV],
+			sessionId: process.env[VIB_SESSION_ID_ENV],
 		});
 	}
 }

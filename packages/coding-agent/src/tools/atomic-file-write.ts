@@ -26,7 +26,7 @@
  * Destination symlinks are followed: the referent is replaced, the link stays.
  * The referent is re-resolved immediately before publication so a retargeted
  * link cannot silently repoint the write, and when the lexical destination
- * sits inside a session-scoped `gjc-local` root the resolved referent and its
+ * sits inside a session-scoped `vib-local` root the resolved referent and its
  * parent must remain inside that root (a link there must not redirect the
  * write out of the trust boundary).
  *
@@ -43,7 +43,7 @@
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { hasFsCode, isEacces, isEisdir, isEnoent, isFsError } from "@gajae-code/utils";
+import { hasFsCode, isEacces, isEisdir, isEnoent, isFsError } from "@vib-rato/utils";
 
 const TEMP_CREATE_ATTEMPTS = 8;
 const DEFAULT_FILE_MODE = 0o666;
@@ -112,8 +112,8 @@ export interface WriteFileAtomicallyOptions {
 	/**
 	 * Trusted root that a resolved symlink referent and its parent must not
 	 * leave. When omitted, the helper still enforces the session-scoped
-	 * `gjc-local` boundary implied by a lexical destination under
-	 * `<tmpdir>/gjc-local/<session-id>`.
+	 * `vib-local` boundary implied by a lexical destination under
+	 * `<tmpdir>/vib-local/<session-id>`.
 	 */
 	trustBoundary?: string;
 	/** Platform override used by deterministic retry tests. */
@@ -180,12 +180,12 @@ async function realpathOrSelf(p: string): Promise<string> {
 
 /**
  * Derive the session-scoped `local://` trust boundary from a lexical write
- * destination. Session roots live at `<tmpdir>/gjc-local/<session-id>`, and a
+ * destination. Session roots live at `<tmpdir>/vib-local/<session-id>`, and a
  * symlink placed inside one must not be able to redirect a write out of it.
  */
 function sessionLocalRootFor(lexicalDest: string): string | undefined {
 	const resolvedDest = path.resolve(lexicalDest);
-	const localParent = path.join(os.tmpdir(), "gjc-local");
+	const localParent = path.join(os.tmpdir(), "vib-local");
 	if (!pathIsWithin(resolvedDest, localParent)) return undefined;
 	const rest = resolvedDest.slice(localParent.length + path.sep.length);
 	const sessionSegment = rest.split(path.sep, 1)[0] ?? "";
@@ -196,7 +196,7 @@ function sessionLocalRootFor(lexicalDest: string): string | undefined {
 /**
  * Reject publication when the resolved referent's real parent (and therefore
  * the referent itself) leaves the trust boundary. The boundary root is
- * realpathed so a symlinked `gjc-local` root cannot smuggle a write out.
+ * realpathed so a symlinked `vib-local` root cannot smuggle a write out.
  *
  * This must run before any directory is created. A dangling symlink inside a
  * trusted root resolves to a path outside it, so creating parents first would

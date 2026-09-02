@@ -1,5 +1,5 @@
-import type { ResolvedThinkingLevel } from "@gajae-code/agent-core";
-import { isRecord } from "@gajae-code/utils";
+import type { ResolvedThinkingLevel } from "@vib-rato/agent-core";
+import { isRecord } from "@vib-rato/utils";
 
 export type DefaultModelSelectionRollbackStage = "durable" | "session" | "live";
 

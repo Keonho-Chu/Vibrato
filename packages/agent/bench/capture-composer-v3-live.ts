@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * Plans or runs live Composer V3 matrix capture via isolated GJC print-mode sessions.
+ * Plans or runs live Composer V3 matrix capture via isolated Vibrato print-mode sessions.
  * Default: --dry-run prints the matrix without API calls.
  */
 import { spawn } from "node:child_process";
@@ -61,7 +61,7 @@ type CaptureArgs = {
 	out?: string;
 	candidateModel: string;
 	baselineModel: string;
-	gjcBin: string;
+	vibBin: string;
 	scenarioFilter?: Set<ScenarioId>;
 	timeoutSec: number;
 };
@@ -76,7 +76,7 @@ function parseArgs(argv: string[]): CaptureArgs {
 	let out: string | undefined;
 	let candidateModel = DEFAULT_COMPOSER_CANDIDATE_MODEL;
 	let baselineModel = DEFAULT_CODEX_BASELINE_MODEL;
-	let gjcBin = process.env.GJC_BIN?.trim() || "gjc";
+	let vibBin = process.env.VIB_BIN?.trim() || "vib";
 	let scenarioFilter: Set<ScenarioId> | undefined;
 	let timeoutSec = 600;
 	for (let i = 0; i < argv.length; i++) {
@@ -88,14 +88,14 @@ function parseArgs(argv: string[]): CaptureArgs {
 		if (arg === "--out") out = argv[++i];
 		if (arg === "--model") candidateModel = argv[++i] ?? candidateModel;
 		if (arg === "--baseline-model") baselineModel = argv[++i] ?? baselineModel;
-		if (arg === "--gjc") gjcBin = argv[++i] ?? gjcBin;
+		if (arg === "--vib") vibBin = argv[++i] ?? vibBin;
 		if (arg === "--timeout") timeoutSec = Number(argv[++i] ?? "600");
 		if (arg === "--scenarios") {
 			const ids = (argv[++i] ?? "").split(",").map(s => s.trim()).filter(Boolean) as ScenarioId[];
 			scenarioFilter = new Set(ids);
 		}
 	}
-	return { dryRun, skipCredCheck, k, out, candidateModel, baselineModel, gjcBin, scenarioFilter, timeoutSec };
+	return { dryRun, skipCredCheck, k, out, candidateModel, baselineModel, vibBin, scenarioFilter, timeoutSec };
 }
 
 function hasGrokCreds(): boolean {
@@ -155,8 +155,8 @@ function assertPublishSafeArtifact(name: string, text: string): void {
 	}
 }
 
-async function runGjcPrint(input: {
-	gjcBin: string;
+async function runVibPrint(input: {
+	vibBin: string;
 	cwd: string;
 	model: string;
 	prompt: string;
@@ -165,7 +165,7 @@ async function runGjcPrint(input: {
 }): Promise<{ exitCode: number; stderr: string }> {
 	const { promise, resolve, reject } = Promise.withResolvers<{ exitCode: number; stderr: string }>();
 	const child = spawn(
-		input.gjcBin,
+		input.vibBin,
 		["-p", "--mode", "json", "--model", input.model, "--session-dir", input.sessionDir, input.prompt],
 		{
 			cwd: input.cwd,
@@ -249,8 +249,8 @@ async function executeRow(
 	await fs.mkdir(sessionDir, { recursive: true });
 	await seedScenarioWorkdir(workdir, row.scenarioId);
 
-	const { exitCode, stderr } = await runGjcPrint({
-		gjcBin: args.gjcBin,
+	const { exitCode, stderr } = await runVibPrint({
+		vibBin: args.vibBin,
 		cwd: workdir,
 		model: row.model,
 		prompt: row.userPrompt,
@@ -306,8 +306,8 @@ async function main(): Promise<void> {
 	const planned = buildMatrix(args);
 	const runId = new Date().toISOString().replace(/[:.]/g, "-");
 	const outDir =
-		args.out ?? path.join(REPO_ROOT, ".gjc/ultragoal/artifacts", `composer-evidence-${runId}`);
-	const tracePath = path.join(outDir, "traces", "real-gjc-print-traces.json");
+		args.out ?? path.join(REPO_ROOT, ".vib/ultragoal/artifacts", `composer-evidence-${runId}`);
+	const tracePath = path.join(outDir, "traces", "real-vib-print-traces.json");
 
 	const payload = {
 		schemaVersion: 1,
@@ -324,7 +324,7 @@ async function main(): Promise<void> {
 			baseline: hasBaselineCreds(),
 		},
 		repoRootArtifact: path.basename(REPO_ROOT),
-		gjc_bin_basename: path.basename(args.gjcBin),
+		vib_bin_basename: path.basename(args.vibBin),
 		planned,
 	};
 
@@ -384,7 +384,7 @@ async function main(): Promise<void> {
 			k: args.k,
 			candidate_model: args.candidateModel,
 			baseline_model: args.baselineModel,
-			gjc_bin_basename: path.basename(args.gjcBin),
+			vib_bin_basename: path.basename(args.vibBin),
 			trace_sha256: sha256Text(traceText),
 		},
 		null,

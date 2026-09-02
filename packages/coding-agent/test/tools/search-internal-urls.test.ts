@@ -2,11 +2,11 @@ import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { InternalUrlRouter, LocalProtocolHandler } from "@gajae-code/coding-agent/internal-urls";
-import type { ToolSession } from "@gajae-code/coding-agent/tools";
-import { FindTool } from "@gajae-code/coding-agent/tools/find";
-import { SearchTool } from "@gajae-code/coding-agent/tools/search";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { InternalUrlRouter, LocalProtocolHandler } from "@vib-rato/coding-agent/internal-urls";
+import type { ToolSession } from "@vib-rato/coding-agent/tools";
+import { FindTool } from "@vib-rato/coding-agent/tools/find";
+import { SearchTool } from "@vib-rato/coding-agent/tools/search";
 import { AgentRegistry } from "../../src/registry/agent-registry";
 
 function getResultText(result: { content: Array<{ type: string; text?: string }> }): string {

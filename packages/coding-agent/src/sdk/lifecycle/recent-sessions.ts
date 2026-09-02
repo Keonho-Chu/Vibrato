@@ -1,7 +1,7 @@
 /**
  * Recent-activity session picker (G006).
  *
- * Ranks GJC sessions by session-history file mtime (most recent first) and
+ * Ranks Vibrato sessions by session-history file mtime (most recent first) and
  * enriches each with terminal-breadcrumb info, so a remote lifecycle client can
  * pick a repo to create in or a recent session to resume without typing raw
  * paths. Dependency-light + injectable so it is unit-testable over a temp dir.
@@ -13,7 +13,7 @@ import * as path from "node:path";
 import type {
 	NativeOwnerOnlySecurityResult,
 	verifyOwnerOnlyPathSecurity as verifyOwnerOnlyPathSecurityFn,
-} from "@gajae-code/natives";
+} from "@vib-rato/natives";
 
 let nativeVerifyOwnerOnlyPathSecurity: typeof verifyOwnerOnlyPathSecurityFn | undefined;
 
@@ -21,12 +21,12 @@ function verifyOwnerOnlyPathSecurityNative(
 	...args: Parameters<typeof verifyOwnerOnlyPathSecurityFn>
 ): NativeOwnerOnlySecurityResult {
 	nativeVerifyOwnerOnlyPathSecurity ??= (
-		require("@gajae-code/natives") as { verifyOwnerOnlyPathSecurity: typeof verifyOwnerOnlyPathSecurityFn }
+		require("@vib-rato/natives") as { verifyOwnerOnlyPathSecurity: typeof verifyOwnerOnlyPathSecurityFn }
 	).verifyOwnerOnlyPathSecurity;
 	return nativeVerifyOwnerOnlyPathSecurity(...args);
 }
 
-import { getAgentDir, getSessionsDir } from "@gajae-code/utils";
+import { getAgentDir, getSessionsDir } from "@vib-rato/utils";
 import { FileSessionStorage, type SessionStorageSnapshot } from "../../session/session-storage";
 import {
 	type LogicalSessionCandidate,
@@ -221,7 +221,7 @@ async function resolveRecentScopes(
 			if (!directory.isDirectory() || directory.isSymbolicLink() || !directory.name.startsWith("v2-")) continue;
 			try {
 				const binding = JSON.parse(
-					await fs.readFile(path.join(sessionsRoot, directory.name, ".gjc-managed-session-scope.v2.json"), "utf8"),
+					await fs.readFile(path.join(sessionsRoot, directory.name, ".vib-managed-session-scope.v2.json"), "utf8"),
 				) as { canonicalPath?: unknown };
 				if (typeof binding.canonicalPath !== "string") {
 					warnings.push("Ignored invalid managed session scope binding.");

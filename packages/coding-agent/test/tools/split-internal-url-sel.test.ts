@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { splitInternalUrlSel } from "@gajae-code/coding-agent/tools/path-utils";
+import { splitInternalUrlSel } from "@vib-rato/coding-agent/tools/path-utils";
 
 describe("splitInternalUrlSel", () => {
 	it("peels strict artifact selectors, including compounds", () => {
@@ -32,7 +32,7 @@ describe("splitInternalUrlSel", () => {
 	});
 
 	it("preserves literal-colon authorities for path-like resources", () => {
-		for (const scheme of ["local", "rule", "gjc"]) {
+		for (const scheme of ["local", "rule", "vib"]) {
 			expect(splitInternalUrlSel(`${scheme}://report:raw.txt`)).toEqual({
 				path: `${scheme}://report:raw.txt`,
 			});

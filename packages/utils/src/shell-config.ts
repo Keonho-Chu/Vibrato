@@ -40,21 +40,21 @@ function isExecutable(path: string): boolean {
 /**
  * Build the spawn environment (cached).
  *
- * `CI=true` is injected unless the documented `GJC_BASH_NO_CI` (or its legacy
+ * `CI=true` is injected unless the documented `VIB_BASH_NO_CI` (or its legacy
  * `PI_BASH_NO_CI` / `CLAUDE_BASH_NO_CI` aliases) is set to a canonical truthy
  * flag value.
  */
 function buildSpawnEnv(shell: string): Record<string, string> {
-	const noCI = $pickflag("GJC_BASH_NO_CI", "PI_BASH_NO_CI", "CLAUDE_BASH_NO_CI");
+	const noCI = $pickflag("VIB_BASH_NO_CI", "PI_BASH_NO_CI", "CLAUDE_BASH_NO_CI");
 	const inherited = filterProcessEnv(Bun.env);
-	delete inherited.GJC_SESSION_FILE;
-	delete inherited.GJC_MANAGED_OWNER_TRANSCRIPT_PATH;
+	delete inherited.VIB_SESSION_FILE;
+	delete inherited.VIB_MANAGED_OWNER_TRANSCRIPT_PATH;
 	return {
 		...inherited,
 		SHELL: shell,
 		GIT_EDITOR: "true",
 		GPG_TTY: "not a tty",
-		GJCCODE: "1",
+		VIBCODE: "1",
 		CLAUDECODE: "1",
 		...(noCI ? {} : { CI: "true" }),
 	} as Record<string, string>;
@@ -63,14 +63,14 @@ function buildSpawnEnv(shell: string): Record<string, string> {
 /**
  * Get shell args, optionally including login shell flag.
  *
- * Honors the documented `GJC_BASH_NO_LOGIN` first, with `PI_BASH_NO_LOGIN` and
+ * Honors the documented `VIB_BASH_NO_LOGIN` first, with `PI_BASH_NO_LOGIN` and
  * `CLAUDE_BASH_NO_LOGIN` as legacy aliases. Boolean-like values follow the
  * canonical flag contract (`1`/`Y`/`TRUE`/`YES`/`ON`, case-insensitive), so an
- * explicit `GJC_BASH_NO_LOGIN=0` keeps the login shell even when a legacy alias
+ * explicit `VIB_BASH_NO_LOGIN=0` keeps the login shell even when a legacy alias
  * is set to a truthy value.
  */
 function getShellArgs(): string[] {
-	const noLogin = $pickflag("GJC_BASH_NO_LOGIN", "PI_BASH_NO_LOGIN", "CLAUDE_BASH_NO_LOGIN");
+	const noLogin = $pickflag("VIB_BASH_NO_LOGIN", "PI_BASH_NO_LOGIN", "CLAUDE_BASH_NO_LOGIN");
 	return noLogin ? ["-c"] : ["-l", "-c"];
 }
 
@@ -82,7 +82,7 @@ function getShellArgs(): string[] {
  * an arbitrary-command-execution surface. `$env` merges the caller's
  * `cwd/.env`, which means repository content could otherwise set it; resolution
  * therefore goes through the non-project resolver (launching shell plus
- * GJC/user-owned `.env` files), matching how provider credentials are resolved.
+ * Vibrato/user-owned `.env` files), matching how provider credentials are resolved.
  */
 function getShellPrefix(): string | undefined {
 	return $pickCredentialEnv("PI_SHELL_PREFIX", "CLAUDE_CODE_SHELL_PREFIX");
@@ -144,7 +144,7 @@ export function getShellConfig(customShellPath?: string): ShellConfig {
 			return cachedShellConfig;
 		}
 		throw new Error(
-			`Custom shell path not found: ${customShellPath}\nPlease update shellPath in ~/.gjc/agent/settings.json`,
+			`Custom shell path not found: ${customShellPath}\nPlease update shellPath in ~/.vib/agent/settings.json`,
 		);
 	}
 
@@ -178,7 +178,7 @@ export function getShellConfig(customShellPath?: string): ShellConfig {
 			`No bash shell found. Options:\n` +
 				`  1. Install Git for Windows: https://git-scm.com/download/win\n` +
 				`  2. Add your bash to PATH (Cygwin, MSYS2, etc.)\n` +
-				`  3. Set shellPath in ~/.gjc/agent/settings.json\n\n` +
+				`  3. Set shellPath in ~/.vib/agent/settings.json\n\n` +
 				`Searched Git Bash in:\n${paths.map(p => `  ${p}`).join("\n")}`,
 		);
 	}

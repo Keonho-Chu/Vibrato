@@ -10,7 +10,7 @@ describe("Settings global model role durability", () => {
 	let configPath: string;
 
 	beforeEach(async () => {
-		testDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-settings-global-model-role-"));
+		testDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-settings-global-model-role-"));
 		configPath = path.join(testDir, "config.yml");
 	});
 

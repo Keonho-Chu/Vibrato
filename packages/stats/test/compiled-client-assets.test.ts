@@ -83,10 +83,10 @@ describe("compiled stats client assets", () => {
 	});
 
 	it("never references or mutates a legacy deterministic cache path", async () => {
-		const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-stats-assets-test-"));
+		const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "vib-stats-assets-test-"));
 		try {
 			const legacyTarget = path.join(tempRoot, "legacy-target");
-			const legacyPath = path.join(tempRoot, "gjc-stats-client");
+			const legacyPath = path.join(tempRoot, "vib-stats-client");
 			await fs.mkdir(legacyTarget);
 			await Bun.write(path.join(legacyTarget, "sentinel"), "untouched");
 			await fs.symlink(legacyTarget, legacyPath, "dir");

@@ -4,9 +4,9 @@
  * CLI entry point — registers all commands explicitly and delegates to the
  * lightweight CLI runner from pi-utils.
  */
-import "@gajae-code/utils/postmortem";
-import { Args, type CliConfig, Command, type CommandEntry, run } from "@gajae-code/utils/cli";
-import { APP_NAME, formatBunRuntimeError, MIN_BUN_VERSION, VERSION } from "@gajae-code/utils/dirs";
+import "@vib-rato/utils/postmortem";
+import { Args, type CliConfig, Command, type CommandEntry, run } from "@vib-rato/utils/cli";
+import { APP_NAME, formatBunRuntimeError, MIN_BUN_VERSION, VERSION } from "@vib-rato/utils/dirs";
 import { runFixtureReport } from "./cli/fixture-report";
 import { ROOT_LAUNCH_FLAGS } from "./cli/root-flags";
 import QuickLane from "./commands/quick-lane";
@@ -27,7 +27,7 @@ process.title = APP_NAME;
 const rootHelpFlags = ["--help", "-h", "help"];
 const versionFlags = ["--version", "-v"];
 const MANAGED_OWNER_SUPERVISOR_ARG = "--internal-managed-owner-supervisor";
-const MANAGED_OWNER_CHILD_TOKEN_ENV = "GJC_MANAGED_OWNER_CHILD_TOKEN";
+const MANAGED_OWNER_CHILD_TOKEN_ENV = "VIB_MANAGED_OWNER_CHILD_TOKEN";
 const TMUX_OWNER_ISOLATION_ARG = "--internal-tmux-owner-isolation";
 
 export const commands: CommandEntry[] = [
@@ -74,7 +74,7 @@ export const commands: CommandEntry[] = [
 ];
 
 async function showHelp(config: CliConfig): Promise<void> {
-	const { renderRootHelp } = await import("@gajae-code/utils/cli");
+	const { renderRootHelp } = await import("@vib-rato/utils/cli");
 	const { getExtraHelpText } = await import("./cli/fast-help");
 	renderRootHelp(config);
 	const extra = getExtraHelpText();
@@ -84,12 +84,12 @@ async function showHelp(config: CliConfig): Promise<void> {
 }
 
 async function installRuntimeGlobals(): Promise<void> {
-	const { installH2Fetch } = await import("@gajae-code/ai/utils/h2-fetch");
+	const { installH2Fetch } = await import("@vib-rato/ai/utils/h2-fetch");
 	// Activate HTTP/2 for all `fetch()` calls (provider streams, OAuth, model
 	// discovery, web tools). Bun's HTTP/2 client is gated on a startup flag we
 	// can't toggle from JS, so we patch globalThis.fetch to pass
 	// `protocol: "http2"` per request, with transparent HTTP/1.1 fallback on
-	// `HTTP2Unsupported`. See @gajae-code/ai/utils/h2-fetch for details.
+	// `HTTP2Unsupported`. See @vib-rato/ai/utils/h2-fetch for details.
 	installH2Fetch();
 
 	const { warnIfMacOSNoFileLimitTooLow } = await import("./cli/nofile-limit");
@@ -150,7 +150,7 @@ export function interactiveBootstrapText(
 		)
 			return undefined;
 	}
-	return "\u001b[?25h\u001b[38;5;45mGJC\u001b[0m warming workspace\r\n\r\n> ";
+	return "\u001b[?25h\u001b[38;5;45mVibrato\u001b[0m warming workspace\r\n\r\n> ";
 }
 
 function isNotifyDaemonInternalFastPath(argv: string[]): boolean {
@@ -308,7 +308,7 @@ export class RootHelpCommand extends Command {
 		`# Prefer a stored credential, falling back on quota limits\n  ${APP_NAME} --prefer-credential id:15`,
 		`# Activate a model profile for this session\n  ${APP_NAME} --mpreset codex-medium`,
 		`# Persist a model profile as the default\n  ${APP_NAME} --mpreset opencodego --default`,
-		`# Export a session file to HTML\n  ${APP_NAME} --export ~/.gjc/agent/sessions/--path--/session.jsonl`,
+		`# Export a session file to HTML\n  ${APP_NAME} --export ~/.vib/agent/sessions/--path--/session.jsonl`,
 	];
 	static strict = false;
 	async run(): Promise<void> {}
@@ -335,7 +335,7 @@ function isSubcommand(first: string | undefined): boolean {
  * exercise it on every CI run.
  */
 async function runSmokeTest(): Promise<void> {
-	const { smokeTestSyncWorker } = await import("@gajae-code/stats");
+	const { smokeTestSyncWorker } = await import("@vib-rato/stats");
 	await smokeTestSyncWorker();
 	const { runNativeSmokeTest } = await import("./cli/native-smoke");
 	await runNativeSmokeTest();
@@ -343,7 +343,7 @@ async function runSmokeTest(): Promise<void> {
 	process.stdout.write("smoke-test: ok\n");
 }
 
-/** Normalize the sole `gjc resume` alias into the value-less launch intent. */
+/** Normalize the sole `vib resume` alias into the value-less launch intent. */
 export function normalizeResumeAlias(argv: readonly string[]): string[] {
 	return argv.length === 1 && argv[0] === "resume" ? ["--resume"] : [...argv];
 }
@@ -356,9 +356,9 @@ function routeLegacyRootArgv(argv: readonly string[]): string[] | undefined {
 /**
  * Map the common mistaken `models` subcommand spelling to non-agent listing.
  *
- * Agents frequently run `gjc models` from the bash tool expecting a catalog.
+ * Agents frequently run `vib models` from the bash tool expecting a catalog.
  * Without this route, `models` was a positional launch prompt and nested agents
- * re-invoked `gjc models`, spawning an unbounded process chain (#3857).
+ * re-invoked `vib models`, spawning an unbounded process chain (#3857).
  * Always rewrite to `launch --list-models` so the invocation exits after a
  * bounded listing and never starts an interactive agent session.
  */
@@ -399,10 +399,10 @@ export async function runCli(argv: string[]): Promise<void> {
 	// tmux-owner-isolation and notify-daemon fast paths so those lanes execute inside
 	// the already-scrubbed process too. The cheap inline predicate keeps the common
 	// (uncontaminated / non-darwin) path free of extra module loads; the guard module
-	// (MACOS_MALLOC_ENV_VARS / GJC_MALLOC_ENV_REEXEC) loads only when a re-exec is due.
+	// (MACOS_MALLOC_ENV_VARS / VIB_MALLOC_ENV_REEXEC) loads only when a re-exec is due.
 	if (
 		process.platform === "darwin" &&
-		process.env.GJC_MALLOC_ENV_REEXEC === undefined &&
+		process.env.VIB_MALLOC_ENV_REEXEC === undefined &&
 		(process.env.MallocStackLogging !== undefined || process.env.MallocStackLoggingNoCompact !== undefined)
 	) {
 		const { reexecWithScrubbedMallocEnv } = await import("./cli/malloc-env-guard");
@@ -418,18 +418,18 @@ export async function runCli(argv: string[]): Promise<void> {
 		return;
 	}
 	if (argv.length === 1 && argv[0] === TMUX_OWNER_ISOLATION_ARG) {
-		const { runTmuxOwnerIsolationCliFromStdin } = await import("./gjc-runtime/tmux-owner-isolation-cli");
+		const { runTmuxOwnerIsolationCliFromStdin } = await import("./vib-runtime/tmux-owner-isolation-cli");
 		await runTmuxOwnerIsolationCliFromStdin();
 		return;
 	}
 	if (argv.length === 1 && argv[0] === MANAGED_OWNER_SUPERVISOR_ARG) {
-		const { runManagedOwnerSupervisor } = await import("./gjc-runtime/managed-owner-supervisor");
+		const { runManagedOwnerSupervisor } = await import("./vib-runtime/managed-owner-supervisor");
 		await runManagedOwnerSupervisor();
 		return;
 	}
 	if (process.env[MANAGED_OWNER_CHILD_TOKEN_ENV] !== undefined) {
 		const { admitManagedOwnerBeforeCli, completeManagedOwnerRecovery } = await import(
-			"./gjc-runtime/managed-owner-admission"
+			"./vib-runtime/managed-owner-admission"
 		);
 		const admission = await admitManagedOwnerBeforeCli();
 		if (admission.kind === "blocked") return;
@@ -466,7 +466,7 @@ export async function runCli(argv: string[]): Promise<void> {
 	const modelPresetsArgv =
 		normalizedArgv[0] === "models" && normalizedArgv[1] === "presets" ? routeModelsAlias(normalizedArgv) : undefined;
 	if (!legacyArgv && !modelPresetsArgv && hasRootHelpFlag(normalizedArgv)) {
-		const { renderRootHelp } = await import("@gajae-code/utils/cli");
+		const { renderRootHelp } = await import("@vib-rato/utils/cli");
 		const { getExtraHelpText } = await import("./cli/fast-help");
 		renderRootHelp({ bin: APP_NAME, version: VERSION, commands: new Map([["launch", RootHelpCommand]]) });
 		const extra = getExtraHelpText();

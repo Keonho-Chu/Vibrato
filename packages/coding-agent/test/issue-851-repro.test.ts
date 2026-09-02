@@ -2,11 +2,11 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { loadCapability } from "@gajae-code/coding-agent/capability";
-import { clearCache as clearFsCache } from "@gajae-code/coding-agent/capability/fs";
-import { clearClaudePluginRootsCache } from "@gajae-code/coding-agent/discovery/helpers";
+import { loadCapability } from "@vib-rato/coding-agent/capability";
+import { clearCache as clearFsCache } from "@vib-rato/coding-agent/capability/fs";
+import { clearClaudePluginRootsCache } from "@vib-rato/coding-agent/discovery/helpers";
 import { safeRm } from "../../../scripts/safe-cleanup";
-import "@gajae-code/coding-agent/discovery/claude-plugins";
+import "@vib-rato/coding-agent/discovery/claude-plugins";
 import type { MCPServer } from "../src/capability/mcp";
 
 describe("issue-851: marketplace plugins load flat .mcp.json shape", () => {
@@ -32,7 +32,7 @@ describe("issue-851: marketplace plugins load flat .mcp.json shape", () => {
 	});
 
 	async function setupPlugin(pluginId: string, mcpJson: unknown): Promise<void> {
-		const pluginsDir = path.join(tempDir, ".gjc", "plugins");
+		const pluginsDir = path.join(tempDir, ".vib", "plugins");
 		const pluginPath = path.join(tempDir, "plugins", pluginId);
 		await fs.mkdir(pluginsDir, { recursive: true });
 		await fs.mkdir(pluginPath, { recursive: true });

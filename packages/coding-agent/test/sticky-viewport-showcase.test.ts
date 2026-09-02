@@ -1090,10 +1090,10 @@ describe("sticky viewport production evidence verifier", () => {
 		const root = await capture();
 		const oracle = "packages/coding-agent/scripts/verify-sticky-viewport-showcase.ts";
 		const original = await fs.readFile(resolveRepositoryPath(oracle), "utf8");
-		const index = path.join(os.tmpdir(), `gjc-attacker-index-${Date.now()}`);
+		const index = path.join(os.tmpdir(), `vib-attacker-index-${Date.now()}`);
 		const refSuffix = `${process.pid}-${Date.now()}-${crypto.randomUUID()}`;
-		const refs = [`refs/heads/gjc-test-attacker-${refSuffix}`, `refs/remotes/origin/gjc-test-attacker-${refSuffix}`];
-		const originalOracleCommit = process.env.GJC_STICKY_VIEWPORT_ORACLE_COMMIT;
+		const refs = [`refs/heads/vib-test-attacker-${refSuffix}`, `refs/remotes/origin/vib-test-attacker-${refSuffix}`];
+		const originalOracleCommit = process.env.VIB_STICKY_VIEWPORT_ORACLE_COMMIT;
 		const git = async (args: string[], stdin?: string) => {
 			const proc = Bun.spawn(["git", ...args], {
 				cwd: REPOSITORY_ROOT,
@@ -1105,10 +1105,10 @@ describe("sticky viewport production evidence verifier", () => {
 				env: {
 					...process.env,
 					GIT_INDEX_FILE: index,
-					GIT_AUTHOR_NAME: "gjc-test",
-					GIT_AUTHOR_EMAIL: "gjc-test@example.invalid",
-					GIT_COMMITTER_NAME: "gjc-test",
-					GIT_COMMITTER_EMAIL: "gjc-test@example.invalid",
+					GIT_AUTHOR_NAME: "vib-test",
+					GIT_AUTHOR_EMAIL: "vib-test@example.invalid",
+					GIT_COMMITTER_NAME: "vib-test",
+					GIT_COMMITTER_EMAIL: "vib-test@example.invalid",
 					GIT_AUTHOR_DATE: "2000-01-01T00:00:00Z",
 					GIT_COMMITTER_DATE: "2000-01-01T00:00:00Z",
 					TZ: "UTC",
@@ -1134,15 +1134,15 @@ describe("sticky viewport production evidence verifier", () => {
 			// The operator may have declared an authority for the whole run (that is how
 			// an uncommitted staged oracle is reviewed). Save and restore it rather than
 			// deleting, or this case silently unpins every later case in the file.
-			process.env.GJC_STICKY_VIEWPORT_ORACLE_COMMIT = await git(["rev-parse", "HEAD"]);
+			process.env.VIB_STICKY_VIEWPORT_ORACLE_COMMIT = await git(["rev-parse", "HEAD"]);
 			try {
 				await restampProvenance(root);
 				await expect(verifyStickyViewportShowcase(root)).rejects.toThrow("oracle integrity");
 			} finally {
-				restoreEnvironment("GJC_STICKY_VIEWPORT_ORACLE_COMMIT", originalOracleCommit);
+				restoreEnvironment("VIB_STICKY_VIEWPORT_ORACLE_COMMIT", originalOracleCommit);
 			}
 		} finally {
-			restoreEnvironment("GJC_STICKY_VIEWPORT_ORACLE_COMMIT", originalOracleCommit);
+			restoreEnvironment("VIB_STICKY_VIEWPORT_ORACLE_COMMIT", originalOracleCommit);
 			await Bun.write(resolveRepositoryPath(oracle), original);
 			for (const ref of refs) {
 				Bun.spawnSync(["git", "update-ref", "-d", ref], {
@@ -1163,9 +1163,9 @@ describe("sticky viewport production evidence verifier", () => {
 		const older = original.replace("Authority is exactly one commit.", "Authority is one explicitly trusted commit.");
 		expect(older).not.toBe(original);
 
-		const temporaryGitDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-older-oracle-"));
+		const temporaryGitDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "vib-older-oracle-"));
 		const index = path.join(temporaryGitDirectory, "index");
-		const originalOracleCommit = process.env.GJC_STICKY_VIEWPORT_ORACLE_COMMIT;
+		const originalOracleCommit = process.env.VIB_STICKY_VIEWPORT_ORACLE_COMMIT;
 		const git = async (args: string[], stdin?: string): Promise<string> => {
 			const proc = Bun.spawn(["git", ...args], {
 				cwd: REPOSITORY_ROOT,
@@ -1175,10 +1175,10 @@ describe("sticky viewport production evidence verifier", () => {
 				env: {
 					...process.env,
 					GIT_INDEX_FILE: index,
-					GIT_AUTHOR_NAME: "gjc-sticky-viewport-test",
-					GIT_AUTHOR_EMAIL: "gjc-sticky-viewport-test@example.invalid",
-					GIT_COMMITTER_NAME: "gjc-sticky-viewport-test",
-					GIT_COMMITTER_EMAIL: "gjc-sticky-viewport-test@example.invalid",
+					GIT_AUTHOR_NAME: "vib-sticky-viewport-test",
+					GIT_AUTHOR_EMAIL: "vib-sticky-viewport-test@example.invalid",
+					GIT_COMMITTER_NAME: "vib-sticky-viewport-test",
+					GIT_COMMITTER_EMAIL: "vib-sticky-viewport-test@example.invalid",
 					GIT_AUTHOR_DATE: "2000-01-01T00:00:00Z",
 					GIT_COMMITTER_DATE: "2000-01-01T00:00:00Z",
 					TZ: "UTC",
@@ -1198,7 +1198,7 @@ describe("sticky viewport production evidence verifier", () => {
 			expect(authority).toMatch(/^[0-9a-f]{40}$/);
 			expect(await committedBlobSha256(authority, oracle)).not.toBe(running);
 
-			process.env.GJC_STICKY_VIEWPORT_ORACLE_COMMIT = authority;
+			process.env.VIB_STICKY_VIEWPORT_ORACLE_COMMIT = authority;
 			// Must observe the env var set immediately above, so no cached bundle.
 			const root = await captureUncached();
 			await restampProvenance(root);
@@ -1206,11 +1206,11 @@ describe("sticky viewport production evidence verifier", () => {
 				`oracle integrity: ${oracle} differs from its committed blob at ${authority}`,
 			);
 
-			restoreEnvironment("GJC_STICKY_VIEWPORT_ORACLE_COMMIT", originalOracleCommit);
+			restoreEnvironment("VIB_STICKY_VIEWPORT_ORACLE_COMMIT", originalOracleCommit);
 			await restampProvenance(root);
 			await verifyStickyViewportShowcase(root);
 		} finally {
-			restoreEnvironment("GJC_STICKY_VIEWPORT_ORACLE_COMMIT", originalOracleCommit);
+			restoreEnvironment("VIB_STICKY_VIEWPORT_ORACLE_COMMIT", originalOracleCommit);
 			await fs.rm(temporaryGitDirectory, { recursive: true, force: true });
 		}
 	}, 300_000);

@@ -6,8 +6,8 @@
  * that do not hold the Broker's indexed lifecycle record cannot satisfy this
  * gate.
  */
-export const BROKER_RUNTIME_CLOSE_CAPABILITY_FIELD = "__gjcBrokerCloseCapability";
-const EXPECTED_BROKER_RUNTIME_CLOSE_CAPABILITY = process.env.GJC_LIFECYCLE_REQUEST_ID;
+export const BROKER_RUNTIME_CLOSE_CAPABILITY_FIELD = "__vibBrokerCloseCapability";
+const EXPECTED_BROKER_RUNTIME_CLOSE_CAPABILITY = process.env.VIB_LIFECYCLE_REQUEST_ID;
 
 function record(value: unknown): Record<string, unknown> | undefined {
 	return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : undefined;
@@ -30,7 +30,7 @@ export function redactBrokerRuntimeCloseCapability(frame: Record<string, unknown
 /**
  * Runtime-local authority check for the Broker-only graceful close executor.
  *
- * A lifecycle child receives GJC_LIFECYCLE_REQUEST_ID from the Broker launch
+ * A lifecycle child receives VIB_LIFECYCLE_REQUEST_ID from the Broker launch
  * environment. Generic SDK requests never receive that private marker.
  */
 export function hasBrokerRuntimeCloseCapability(input: unknown): boolean {

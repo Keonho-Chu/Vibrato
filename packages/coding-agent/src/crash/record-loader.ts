@@ -17,7 +17,7 @@ import {
 	type CrashFingerprint,
 	computeCrashFingerprint,
 	parseCrashRecordMarker,
-} from "@gajae-code/utils";
+} from "@vib-rato/utils";
 
 /** A record header: ISO timestamp, pid, label. Starts a new record boundary. */
 const RECORD_HEADER = /^(\d{4}-\d{2}-\d{2}T[\d:.]+Z) pid=\d+ \[[^\]]+\] (.+)$/;

@@ -35,7 +35,7 @@ function bigText(index: number, chars: number): string {
  */
 export function measureSessionMemory(entryCount = 4_000, largeBodyChars = 2_048): SessionMemoryReport {
 	const gc = (globalThis as { gc?: () => void }).gc;
-	const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-session-memory-"));
+	const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-session-memory-"));
 	try {
 		gc?.();
 		const baselineBytes = process.memoryUsage().rss;

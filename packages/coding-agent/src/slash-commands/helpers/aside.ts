@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { sanitizeDisplayLine, sanitizeText } from "@gajae-code/utils";
+import { sanitizeDisplayLine, sanitizeText } from "@vib-rato/utils";
 import { type ExecOptions, type ExecResult, execCommand } from "../../exec/exec";
 import type { ParsedSlashCommand, SlashCommandResult, SlashCommandRuntime } from "../types";
 import { commandConsumed, errorMessage, parseSubcommand, usage } from "./parse";
@@ -10,7 +10,7 @@ import { commandConsumed, errorMessage, parseSubcommand, usage } from "./parse";
  * Aside CLI discovery and `/aside` dispatch.
  *
  * Probe-only: never runs the installer. Missing-CLI handling is the caller's
- * decision. This is an explicit composer frontend, not a GJC browser backend.
+ * decision. This is an explicit composer frontend, not a Vibrato browser backend.
  */
 
 export const ASIDE_INSTALL_URL = "https://releases.aside.com/install.sh";
@@ -22,11 +22,11 @@ const ASIDE_STATUS_TIMEOUT_MS = 15_000;
 const ASIDE_EXEC_TIMEOUT_MS = 10 * 60 * 1000;
 
 export const ASIDE_USAGE = [
-	"Aside CLI (explicit opt-in; does not enable GJC browser-control by default)",
+	"Aside CLI (explicit opt-in; does not enable Vibrato browser-control by default)",
 	"  /aside                         Show CLI path and usage",
 	"  /aside <prompt>                Run `aside exec <prompt>`",
 	"  /aside exec [args]             Pass argv through to `aside exec`",
-	"  /aside repl                    Not available inside GJC; run `aside repl` in a terminal",
+	"  /aside repl                    Not available inside Vibrato; run `aside repl` in a terminal",
 	"  /aside mcp                     Print MCP registration using the resolved CLI path",
 	"  /aside account [args]          Run `aside account` (list/status/use)",
 	"  /aside help                    Show this help",
@@ -184,10 +184,10 @@ export function formatAsideMcpRegistration(cliPath: string, platform = process.p
 	const quotedCliPath = quoteAsidePath(safeCliPath, platform);
 	return [
 		`Aside CLI: ${safeCliPath}`,
-		"`/aside mcp` does not start a stdio server inside GJC.",
+		"`/aside mcp` does not start a stdio server inside Vibrato.",
 		"Register the user-owned MCP definition with the resolved binary:",
-		`  gjc mcp add aside ${quotedCliPath} mcp --project`,
-		"Inspect the redacted record with `gjc mcp list --json`.",
+		`  vib mcp add aside ${quotedCliPath} mcp --project`,
+		"Inspect the redacted record with `vib mcp list --json`.",
 		"Do not paste cookies, screenshots, or private Aside profile paths into issues or PRs.",
 	].join("\n");
 }
@@ -249,7 +249,7 @@ export function createAsideHandler(options: AsideHandlerOptions = {}) {
 			return usage(
 				[
 					"`/aside repl` needs a real terminal TTY.",
-					`Run this outside GJC: ${quoteAsidePath(probe.path)} repl`,
+					`Run this outside Vibrato: ${quoteAsidePath(probe.path)} repl`,
 				].join("\n"),
 				runtime,
 			);

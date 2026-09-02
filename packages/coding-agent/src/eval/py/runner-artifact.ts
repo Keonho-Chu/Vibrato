@@ -1,12 +1,12 @@
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { postmortem } from "@gajae-code/utils";
+import { postmortem } from "@vib-rato/utils";
 import RUNNER_SCRIPT from "./runner.py" with { type: "text" };
 
 const DIRECTORY_MODE = 0o700;
 const FILE_MODE = 0o600;
-const DIRECTORY_PREFIX = "gjc-python-runner-";
+const DIRECTORY_PREFIX = "vib-python-runner-";
 
 interface RunnerScriptArtifact {
 	directory: string;

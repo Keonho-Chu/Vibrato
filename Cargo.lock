@@ -1265,22 +1265,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "gjc-sdk"
-version = "0.15.6"
-dependencies = [
- "futures-util",
- "hmac",
- "libc",
- "parking_lot",
- "serde",
- "serde_json",
- "sha2",
- "tokio",
- "tokio-tungstenite",
- "tokio-util",
-]
-
-[[package]]
 name = "glob"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2452,7 +2436,6 @@ dependencies = [
  "ast-grep-core",
  "clap",
  "dashmap",
- "gjc-sdk",
  "globset",
  "grep-matcher",
  "grep-regex",
@@ -2487,6 +2470,7 @@ dependencies = [
  "unicode-normalization",
  "unicode-segmentation",
  "unicode-width",
+ "vib-sdk",
  "windows-sys 0.61.2",
  "winreg 0.56.0",
  "xxhash-rust",
@@ -4261,6 +4245,22 @@ name = "version_check"
 version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
+
+[[package]]
+name = "vib-sdk"
+version = "0.15.6"
+dependencies = [
+ "futures-util",
+ "hmac",
+ "libc",
+ "parking_lot",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tokio",
+ "tokio-tungstenite",
+ "tokio-util",
+]
 
 [[package]]
 name = "walkdir"

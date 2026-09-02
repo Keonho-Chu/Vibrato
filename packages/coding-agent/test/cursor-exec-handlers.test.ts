@@ -8,8 +8,8 @@
  */
 import { describe, expect, it } from "bun:test";
 import { create } from "@bufbuild/protobuf";
-import type { AgentEvent, AgentTool } from "@gajae-code/agent-core";
-import { dispatchedToolIdentity } from "@gajae-code/agent-core";
+import type { AgentEvent, AgentTool } from "@vib-rato/agent-core";
+import { dispatchedToolIdentity } from "@vib-rato/agent-core";
 import {
 	DeleteArgsSchema,
 	DiagnosticsArgsSchema,
@@ -22,7 +22,7 @@ import {
 	ReadArgsSchema,
 	ShellArgsSchema,
 	WriteArgsSchema,
-} from "@gajae-code/ai/providers/cursor/gen/agent_pb";
+} from "@vib-rato/ai/providers/cursor/gen/agent_pb";
 import { CursorExecHandlers } from "../src/cursor";
 
 function makeTool(name: string): AgentTool {
@@ -366,7 +366,7 @@ describe("CursorExecHandlers dispatched tool identity", () => {
 		} as never);
 
 		await handlers.delete(
-			create(DeleteArgsSchema, { path: "/tmp/gjc-cursor-identity-missing.txt", toolCallId: "d1" }),
+			create(DeleteArgsSchema, { path: "/tmp/vib-cursor-identity-missing.txt", toolCallId: "d1" }),
 		);
 
 		const start = events.find(event => event.type === "tool_execution_start");

@@ -2,12 +2,12 @@ import { afterEach, describe, expect, it } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { pruneHttpRequestDumps } from "@gajae-code/ai/utils/http-inspector";
+import { pruneHttpRequestDumps } from "@vib-rato/ai/utils/http-inspector";
 
 /**
  * Every HTTP 400 wrote a dump of the full sanitized request body and nothing ever
  * removed one. A developer machine reached 27,249 files totalling 7.0 GB,
- * averaging 264 KB each — 96% of everything under `~/.gjc`.
+ * averaging 264 KB each — 96% of everything under `~/.vib`.
  *
  * The rotating application log already bounds itself (`maxSize: 10m`,
  * `maxFiles: 5`); these diagnostics now do too.
@@ -17,7 +17,7 @@ const MAX_RETAINED = 50;
 const tempDirs: string[] = [];
 
 function dumpDirWith(count: number): string {
-	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-http400-retention-"));
+	const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-http400-retention-"));
 	tempDirs.push(dir);
 	for (let i = 0; i < count; i++) {
 		// Real writer format: `${Date.now()}-${hash}.json`, zero-padded here so the
@@ -57,7 +57,7 @@ describe("HTTP 400 dump retention", () => {
 	});
 
 	it("is a no-op on a missing directory rather than throwing", async () => {
-		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-http400-absent-"));
+		const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-http400-absent-"));
 		fs.rmSync(dir, { recursive: true, force: true });
 		expect(await pruneHttpRequestDumps(dir)).toBe(0);
 	});

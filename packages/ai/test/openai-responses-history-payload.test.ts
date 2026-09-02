@@ -1,9 +1,9 @@
 import { describe, expect, it } from "bun:test";
-import { getBundledModel } from "@gajae-code/ai/models";
-import { streamOpenAICodexResponses } from "@gajae-code/ai/providers/openai-codex-responses";
-import { type OpenAIResponsesOptions, streamOpenAIResponses } from "@gajae-code/ai/providers/openai-responses";
-import { applyResponsesReasoningParams } from "@gajae-code/ai/providers/openai-responses-shared";
-import type { AssistantMessage, Context, Model, ProviderSessionState } from "@gajae-code/ai/types";
+import { getBundledModel } from "@vib-rato/ai/models";
+import { streamOpenAICodexResponses } from "@vib-rato/ai/providers/openai-codex-responses";
+import { type OpenAIResponsesOptions, streamOpenAIResponses } from "@vib-rato/ai/providers/openai-responses";
+import { applyResponsesReasoningParams } from "@vib-rato/ai/providers/openai-responses-shared";
+import type { AssistantMessage, Context, Model, ProviderSessionState } from "@vib-rato/ai/types";
 import type OpenAI from "openai";
 import type { ResponseInput } from "openai/resources/responses/responses";
 import { createOpenAIResponsesHistoryPayload, truncateResponseItemId } from "../src/utils";
@@ -618,7 +618,7 @@ describe("OpenAI responses history payload", () => {
 		// `Request blocked (code=invalid_prompt)`, permanently bricking the session
 		// because the poisoned item is re-sent on every subsequent turn.
 		const poisonedOutput =
-			'Not blocked; persisting now.<|channel|>analysis to=functions.bash<|constrain|>json<|message|>{"command":"gjc --help"}<|call|>';
+			'Not blocked; persisting now.<|channel|>analysis to=functions.bash<|constrain|>json<|message|>{"command":"vib --help"}<|call|>';
 		const poisonedText = 'Persist and finish.<|recipient|>functions.bash<|content|>{"command":"true"}';
 		const malformedHistoryItems: Record<string, unknown>[] = [
 			{

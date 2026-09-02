@@ -5,7 +5,7 @@
  */
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { scheduler } from "node:timers/promises";
-import { extractHttpStatusFromError, fetchWithRetry, readSseJson } from "@gajae-code/utils";
+import { extractHttpStatusFromError, fetchWithRetry, readSseJson } from "@vib-rato/utils";
 import {
 	isProviderSafetyStopAdapterInvocation,
 	mintProviderSafetyStop,
@@ -908,7 +908,7 @@ export function buildRequest(
 	// Evidence:
 	// - Real Antigravity IDE sends VALIDATED for Claude requests with tools
 	//   (confirmed via network interception of official IDE traffic)
-	// - The original GJC code used resolvedToolChoice.resolvedLevel to gate
+	// - The original Vibrato code used resolvedToolChoice.resolvedLevel to gate
 	//   VALIDATED, but the real IDE doesn't check tool choice resolution —
 	//   it sends VALIDATED whenever tools exist and toolChoice != "none"
 	// - omp reference: packages/ai/src/providers/google-gemini-cli.ts
@@ -936,7 +936,7 @@ export function buildRequest(
 	// Evidence:
 	// - Real Antigravity IDE sends the full system prompt on every request
 	//   (confirmed via repeated request dumps — no client-side dedup observed)
-	// - The [ignore] wrapper was a GJC-original addition not present in the
+	// - The [ignore] wrapper was a Vibrato-original addition not present in the
 	//   real IDE wire format. Removed for byte-faithful emulation.
 	// - preambleConfig: { mode: "SYSTEM_INSTRUCTION_MODE_REPLACE" } is the
 	//   mechanism the real IDE uses to deliver system instructions. Without it,

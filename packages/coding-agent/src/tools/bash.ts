@@ -1,18 +1,13 @@
 import * as fs from "node:fs";
-import type { AgentTool, AgentToolContext, AgentToolResult, AgentToolUpdateCallback } from "@gajae-code/agent-core";
-import type { Component } from "@gajae-code/tui";
-import { getKeybindings, ImageProtocol, TERMINAL, Text, visibleWidth } from "@gajae-code/tui";
-import { getProjectDir, isEnoent, logger, prompt } from "@gajae-code/utils";
+import type { AgentTool, AgentToolContext, AgentToolResult, AgentToolUpdateCallback } from "@vib-rato/agent-core";
+import type { Component } from "@vib-rato/tui";
+import { getKeybindings, ImageProtocol, TERMINAL, Text, visibleWidth } from "@vib-rato/tui";
+import { getProjectDir, isEnoent, logger, prompt } from "@vib-rato/utils";
 import * as z from "zod/v4";
 import { AsyncJobManager } from "../async";
 import { type BashArtifactSaveResult, type BashResult, executeBash } from "../exec/bash-executor";
 
 import type { RenderResultOptions } from "../extensibility/custom-tools/types";
-import { buildGjcRuntimeSessionEnv } from "../gjc-runtime/goal-mode-request";
-import {
-	GJC_RALPLAN_ARTIFACT_ENV,
-	GJC_RESTRICTED_ROLE_AGENT_BASH_ENV,
-} from "../gjc-runtime/restricted-role-agent-bash";
 import { InternalUrlRouter } from "../internal-urls";
 import { truncateToVisualLines } from "../modes/components/visual-truncate";
 import { highlightCode, type Theme } from "../modes/theme/theme";
@@ -39,11 +34,15 @@ import {
 	registerOwnedIfLineaged,
 	unregisterOwnedRegistration,
 } from "../session/terminal-abort";
-
 import { renderStatusLine } from "../tui";
 import { CachedOutputBlock, getOutputBlockContentWidth } from "../tui/output-block";
 import { truncateToWidth } from "../tui/utils";
 import { getSixelLineMask } from "../utils/sixel";
+import { buildVibRuntimeSessionEnv } from "../vib-runtime/goal-mode-request";
+import {
+	VIB_RALPLAN_ARTIFACT_ENV,
+	VIB_RESTRICTED_ROLE_AGENT_BASH_ENV,
+} from "../vib-runtime/restricted-role-agent-bash";
 import type { ToolSession } from ".";
 import { checkBashAllowedPrefixes, normalizeReadOnlyBashCommand } from "./bash-allowed-prefixes";
 import { applyBashFixups } from "./bash-command-fixup";
@@ -1093,8 +1092,8 @@ export class BashTool implements AgentTool<BashToolSchema, BashToolDetails> {
 			this.session.bashRestrictionProfile !== "read-only" &&
 			env &&
 			Object.keys(env).length === 1 &&
-			Object.hasOwn(env, GJC_RALPLAN_ARTIFACT_ENV) &&
-			rawCommand.includes(`--artifact-env ${GJC_RALPLAN_ARTIFACT_ENV}`);
+			Object.hasOwn(env, VIB_RALPLAN_ARTIFACT_ENV) &&
+			rawCommand.includes(`--artifact-env ${VIB_RALPLAN_ARTIFACT_ENV}`);
 		if (
 			(this.session.bashRestrictionProfile === "read-only" || (allowedPrefixes && allowedPrefixes.length > 0)) &&
 			env &&
@@ -1103,7 +1102,7 @@ export class BashTool implements AgentTool<BashToolSchema, BashToolDetails> {
 		) {
 			const mode = this.session.bashRestrictionProfile === "read-only" ? "Read-only" : "Restricted role-agent";
 			throw new ToolError(
-				`${mode} bash only allows the ${GJC_RALPLAN_ARTIFACT_ENV} env override for --artifact-env.`,
+				`${mode} bash only allows the ${VIB_RALPLAN_ARTIFACT_ENV} env override for --artifact-env.`,
 			);
 		}
 		if (allowedPrefixes && allowedPrefixes.length > 0) {
@@ -1180,7 +1179,7 @@ export class BashTool implements AgentTool<BashToolSchema, BashToolDetails> {
 					await Promise.all(
 						Object.entries(env).map(async ([key, value]) => [
 							key,
-							key === GJC_RALPLAN_ARTIFACT_ENV
+							key === VIB_RALPLAN_ARTIFACT_ENV
 								? value
 								: await expandInternalUrls(value, {
 										...internalUrlOptions,
@@ -1192,7 +1191,7 @@ export class BashTool implements AgentTool<BashToolSchema, BashToolDetails> {
 				)
 			: undefined;
 		// Spawned workflow commands must resolve the SESSION's agent
-		// profile: the child's getAgentDir() reads GJC_CODING_AGENT_DIR at
+		// profile: the child's getAgentDir() reads VIB_CODING_AGENT_DIR at
 		// module load. Injected per-command (session-scoped), never
 		// mutating the host process; an explicit tool-call env wins. The
 		// session's REQUESTED directory (getSessionAgentDir) takes
@@ -1201,21 +1200,21 @@ export class BashTool implements AgentTool<BashToolSchema, BashToolDetails> {
 		const sessionAgentDir = this.session.getSessionAgentDir?.() ?? this.session.settings?.getAgentDir?.();
 		// An EXPLICIT tool-call env that supplies either supported spelling of
 		// the agent-directory override wins over the session injection: the
-		// child's getAgentDir() prefers GJC_CODING_AGENT_DIR, so injecting it
+		// child's getAgentDir() prefers VIB_CODING_AGENT_DIR, so injecting it
 		// while the caller only set the legacy PI_CODING_AGENT_DIR alias would
 		// silently ignore the caller's override.
 		const explicitAgentDirOverride =
-			expandedEnv?.GJC_CODING_AGENT_DIR !== undefined || expandedEnv?.PI_CODING_AGENT_DIR !== undefined;
+			expandedEnv?.VIB_CODING_AGENT_DIR !== undefined || expandedEnv?.PI_CODING_AGENT_DIR !== undefined;
 		const resolvedEnv = {
-			...buildGjcRuntimeSessionEnv({
+			...buildVibRuntimeSessionEnv({
 				sessionFile: null,
 				sessionId: this.session.getSessionId?.(),
 				cwd: this.session.cwd,
 			}),
-			...(sessionAgentDir && !explicitAgentDirOverride ? { GJC_CODING_AGENT_DIR: sessionAgentDir } : {}),
+			...(sessionAgentDir && !explicitAgentDirOverride ? { VIB_CODING_AGENT_DIR: sessionAgentDir } : {}),
 			...expandedEnv,
 			...(this.session.bashRestrictionProfile === "read-only" ? READ_ONLY_BASH_ENV : {}),
-			...(allowedPrefixes && allowedPrefixes.length > 0 ? { [GJC_RESTRICTED_ROLE_AGENT_BASH_ENV]: "1" } : {}),
+			...(allowedPrefixes && allowedPrefixes.length > 0 ? { [VIB_RESTRICTED_ROLE_AGENT_BASH_ENV]: "1" } : {}),
 		};
 
 		if (cwd?.includes("://") || cwd?.includes("local:/")) {

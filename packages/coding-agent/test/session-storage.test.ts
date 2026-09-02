@@ -4,7 +4,7 @@ import * as fs from "node:fs";
 import * as fsp from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import * as native from "@gajae-code/natives";
+import * as native from "@vib-rato/natives";
 import {
 	captureManagedFileNoFollow,
 	MANAGED_ARTIFACT_MAX_FILE_BYTES,
@@ -347,7 +347,7 @@ describe("FileSessionStorage.deleteSessionWithArtifacts", () => {
 	let storage: { deleteSessionWithArtifacts(sessionPath: string): Promise<void> };
 
 	beforeEach(async () => {
-		tempDir = await fsp.mkdtemp(path.join(os.tmpdir(), "gjc-session-storage-"));
+		tempDir = await fsp.mkdtemp(path.join(os.tmpdir(), "vib-session-storage-"));
 		const { FileSessionStorage } = await import("../src/session/session-storage");
 		storage = new FileSessionStorage();
 	});
@@ -398,7 +398,7 @@ describe("FileSessionStorageWriter certainty-aware close", () => {
 	let storage: FileSessionStorage;
 
 	beforeEach(async () => {
-		tempDir = await fsp.mkdtemp(path.join(os.tmpdir(), "gjc-writer-close-"));
+		tempDir = await fsp.mkdtemp(path.join(os.tmpdir(), "vib-writer-close-"));
 		storage = new FileSessionStorage();
 	});
 
@@ -509,7 +509,7 @@ describe("FileSessionStorageWriter certainty-aware close", () => {
 
 describe("managed descriptor reads", () => {
 	it("returns transcript identity without exposing file bytes", () => {
-		const root = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), "gjc-managed-descriptor-")));
+		const root = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), "vib-managed-descriptor-")));
 		try {
 			const store = new ManagedSessionDescendantStore(managedDirectoryRoot(root), root);
 			const bytes = Buffer.from("descriptor payload\n");
@@ -527,7 +527,7 @@ describe("managed descriptor reads", () => {
 	});
 
 	it("reads bounded ranges and rejects a pathname swap before returning bytes", () => {
-		const root = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), "gjc-managed-range-")));
+		const root = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), "vib-managed-range-")));
 		const store = new ManagedSessionDescendantStore(managedDirectoryRoot(root), root);
 		const transcript = path.join(root, "session.jsonl");
 		try {
@@ -558,7 +558,7 @@ describe("managed descriptor reads", () => {
 		}
 	});
 	it("binds ranges to the caller's committed descriptor generation", () => {
-		const root = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), "gjc-managed-generation-")));
+		const root = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), "vib-managed-generation-")));
 		const store = new ManagedSessionDescendantStore(managedDirectoryRoot(root), root);
 		try {
 			store.publishNoReplaceSync("session.jsonl", Buffer.from("generation-one\n"));
@@ -575,7 +575,7 @@ describe("managed descriptor reads", () => {
 	});
 
 	it.skipIf(process.platform === "win32")("rejects a FIFO pathname substitution without blocking", () => {
-		const root = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), "gjc-managed-fifo-")));
+		const root = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), "vib-managed-fifo-")));
 		const store = new ManagedSessionDescendantStore(managedDirectoryRoot(root), root);
 		const transcript = path.join(root, "session.jsonl");
 		const detached = `${transcript}.detached`;
@@ -605,7 +605,7 @@ describe("managed descriptor reads", () => {
 		}
 	});
 	it.skipIf(process.platform === "win32")("rejects a FIFO cold-fallback capture without blocking", () => {
-		const root = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), "gjc-managed-fallback-fifo-")));
+		const root = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), "vib-managed-fallback-fifo-")));
 		const fifo = path.join(root, "session.jsonl");
 		try {
 			const created = Bun.spawnSync(["mkfifo", fifo]);
@@ -631,7 +631,7 @@ describe("managed descriptor reads", () => {
 
 describe.skipIf(process.platform !== "darwin")("authority-absent managed replacement", () => {
 	it("rejects authority-absent subtree replacement before read or delete", () => {
-		const root = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), "gjc-managed-darwin-subtree-swap-")));
+		const root = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), "vib-managed-darwin-subtree-swap-")));
 		try {
 			const sessionDir = path.join(root, "session");
 			const store = new ManagedSessionDescendantStore(managedDirectoryRoot(root), sessionDir);
@@ -661,7 +661,7 @@ describe.skipIf(process.platform !== "darwin")("authority-absent managed replace
 		).toThrow("content_too_large");
 	});
 	it("rejects repeated over-ceiling appends without replacement staging leaks", () => {
-		const root = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), "gjc-managed-darwin-append-limit-")));
+		const root = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), "vib-managed-darwin-append-limit-")));
 		try {
 			const sessionDir = path.join(root, "session");
 			const store = new ManagedSessionDescendantStore(managedDirectoryRoot(root), sessionDir);
@@ -676,7 +676,7 @@ describe.skipIf(process.platform !== "darwin")("authority-absent managed replace
 		}
 	});
 	it("atomically replaces an existing file through the Darwin path", () => {
-		const root = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), "gjc-managed-darwin-replace-")));
+		const root = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), "vib-managed-darwin-replace-")));
 		try {
 			const sessionDir = path.join(root, "session");
 			const store = new ManagedSessionDescendantStore(managedDirectoryRoot(root), sessionDir);
@@ -690,7 +690,7 @@ describe.skipIf(process.platform !== "darwin")("authority-absent managed replace
 			expect(after.ino).not.toBe(before.ino);
 			const retained = fs.readdirSync(sessionDir).filter(entry => entry.endsWith(".replacement"));
 			expect(retained).toHaveLength(0);
-			for (const entry of fs.readdirSync(sessionDir).filter(entry => entry.startsWith(".gjc-"))) {
+			for (const entry of fs.readdirSync(sessionDir).filter(entry => entry.startsWith(".vib-"))) {
 				expect(fs.readFileSync(path.join(sessionDir, entry))).toHaveLength(0);
 			}
 		} finally {
@@ -698,7 +698,7 @@ describe.skipIf(process.platform !== "darwin")("authority-absent managed replace
 		}
 	});
 	it("appends by exact full-file replacement so a short write cannot tear JSONL", () => {
-		const root = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), "gjc-managed-darwin-append-")));
+		const root = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), "vib-managed-darwin-append-")));
 		try {
 			const sessionDir = path.join(root, "session");
 			const store = new ManagedSessionDescendantStore(managedDirectoryRoot(root), sessionDir);
@@ -716,7 +716,7 @@ describe.skipIf(process.platform !== "darwin")("authority-absent managed replace
 		}
 	});
 	it("keeps memory-authoritative append success when cleanup receipt retirement is pending", () => {
-		const root = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), "gjc-managed-darwin-append-receipt-")));
+		const root = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), "vib-managed-darwin-append-receipt-")));
 		let exactUnlink: Mock<typeof native.exactUnlink> | undefined;
 		try {
 			const sessionDir = path.join(root, "session");
@@ -730,7 +730,7 @@ describe.skipIf(process.platform !== "darwin")("authority-absent managed replace
 			const receipt = store.appendSync("session.jsonl", Buffer.from("after\n"));
 			expect(receipt.descriptor.size).toBe(Buffer.byteLength("before\nafter\n"));
 			expect(fs.readFileSync(path.join(sessionDir, "session.jsonl"), "utf8")).toBe("before\nafter\n");
-			expect(fs.readdirSync(sessionDir).some(entry => entry.startsWith(".gjc-replace-cleanup-"))).toBe(true);
+			expect(fs.readdirSync(sessionDir).some(entry => entry.startsWith(".vib-replace-cleanup-"))).toBe(true);
 		} finally {
 			exactUnlink?.mockRestore();
 			fs.rmSync(root, { recursive: true, force: true });
@@ -739,7 +739,7 @@ describe.skipIf(process.platform !== "darwin")("authority-absent managed replace
 
 	it("preserves the staged successor when receipt publication commits but reports failure", () => {
 		const root = fs.realpathSync.native(
-			fs.mkdtempSync(path.join(os.tmpdir(), "gjc-managed-darwin-receipt-publish-")),
+			fs.mkdtempSync(path.join(os.tmpdir(), "vib-managed-darwin-receipt-publish-")),
 		);
 		const realRenameNoReplacePath = native.renameNoReplacePath;
 		let renameNoReplace: Mock<typeof native.renameNoReplacePath> | undefined;
@@ -750,7 +750,7 @@ describe.skipIf(process.platform !== "darwin")("authority-absent managed replace
 			const destination = path.join(sessionDir, "session.jsonl");
 			renameNoReplace = vi.spyOn(native, "renameNoReplacePath").mockImplementation((sourcePath, destinationPath) => {
 				const result = realRenameNoReplacePath(sourcePath, destinationPath);
-				if (!destinationPath.includes(".gjc-replace-cleanup-") || !result.ok) return result;
+				if (!destinationPath.includes(".vib-replace-cleanup-") || !result.ok) return result;
 				return {
 					...result,
 					ok: false,
@@ -766,7 +766,7 @@ describe.skipIf(process.platform !== "darwin")("authority-absent managed replace
 
 			expect(fs.readFileSync(destination, "utf8")).toBe("before\n");
 			const entries = fs.readdirSync(sessionDir);
-			expect(entries.some(entry => entry.startsWith(".gjc-replace-cleanup-"))).toBe(true);
+			expect(entries.some(entry => entry.startsWith(".vib-replace-cleanup-"))).toBe(true);
 			const staged = entries.find(entry => entry.endsWith(".replacement"));
 			expect(staged).toBeDefined();
 			expect(fs.readFileSync(path.join(sessionDir, staged!), "utf8")).toBe("successor\n");
@@ -776,7 +776,7 @@ describe.skipIf(process.platform !== "darwin")("authority-absent managed replace
 		}
 	});
 	it("rejects a destination substitution at the native exchange boundary", () => {
-		const root = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), "gjc-managed-darwin-replace-race-")));
+		const root = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), "vib-managed-darwin-replace-race-")));
 		const realExactReplacePath = native.exactReplacePath;
 		let exactReplace: Mock<typeof native.exactReplacePath> | undefined;
 		try {
@@ -799,7 +799,7 @@ describe.skipIf(process.platform !== "darwin")("authority-absent managed replace
 			expect(fs.readFileSync(destination, "utf8")).toBe("attacker\n");
 			expect(fs.readFileSync(detached, "utf8")).toBe("authorized\n");
 			expect(fs.readdirSync(sessionDir).some(entry => entry.endsWith(".replacement"))).toBe(true);
-			expect(fs.readdirSync(sessionDir).some(entry => entry.startsWith(".gjc-replace-cleanup-"))).toBe(true);
+			expect(fs.readdirSync(sessionDir).some(entry => entry.startsWith(".vib-replace-cleanup-"))).toBe(true);
 		} finally {
 			exactReplace?.mockRestore();
 			fs.rmSync(root, { recursive: true, force: true });
@@ -807,7 +807,7 @@ describe.skipIf(process.platform !== "darwin")("authority-absent managed replace
 	});
 	it("retains native post-exchange paths inside committed-outcome evidence", () => {
 		const root = fs.realpathSync.native(
-			fs.mkdtempSync(path.join(os.tmpdir(), "gjc-managed-darwin-replace-failure-")),
+			fs.mkdtempSync(path.join(os.tmpdir(), "vib-managed-darwin-replace-failure-")),
 		);
 		let exactReplace: Mock<typeof native.exactReplacePath> | undefined;
 		let exactUnlink: Mock<typeof native.exactUnlink> | undefined;
@@ -866,7 +866,7 @@ describe.skipIf(process.platform !== "darwin")("authority-absent managed replace
 	});
 	it("retains receipt retirement paths after a committed replacement", () => {
 		const root = fs.realpathSync.native(
-			fs.mkdtempSync(path.join(os.tmpdir(), "gjc-managed-darwin-receipt-retirement-")),
+			fs.mkdtempSync(path.join(os.tmpdir(), "vib-managed-darwin-receipt-retirement-")),
 		);
 		let exactUnlink: Mock<typeof native.exactUnlink> | undefined;
 		try {
@@ -916,7 +916,7 @@ describe.skipIf(process.platform !== "darwin")("authority-absent managed replace
 
 	it("never deletes a committed successor moved back to staging after native return", () => {
 		const root = fs.realpathSync.native(
-			fs.mkdtempSync(path.join(os.tmpdir(), "gjc-managed-darwin-replace-postcommit-")),
+			fs.mkdtempSync(path.join(os.tmpdir(), "vib-managed-darwin-replace-postcommit-")),
 		);
 		let exactReplace: Mock<typeof native.exactReplacePath> | undefined;
 		let committedSource: string | undefined;
@@ -949,7 +949,7 @@ describe.skipIf(process.platform !== "darwin")("authority-absent managed replace
 	});
 	it("identity-binds receipt retirement when the successor is moved onto the receipt name", () => {
 		const root = fs.realpathSync.native(
-			fs.mkdtempSync(path.join(os.tmpdir(), "gjc-managed-darwin-replace-postreceipt-")),
+			fs.mkdtempSync(path.join(os.tmpdir(), "vib-managed-darwin-replace-postreceipt-")),
 		);
 		const realExactReplacePath = native.exactReplacePath;
 		const realExactUnlink = native.exactUnlink;
@@ -970,7 +970,7 @@ describe.skipIf(process.platform !== "darwin")("authority-absent managed replace
 					return realExactReplacePath(sourcePath, destinationPath, expectedSource, expectedDestination);
 				});
 			exactUnlink = vi.spyOn(native, "exactUnlink").mockImplementation((...args) => {
-				if (!moved && args[0].includes(".gjc-replace-cleanup-")) {
+				if (!moved && args[0].includes(".vib-replace-cleanup-")) {
 					if (!committedSource) throw new Error("Expected native replacement source");
 					retainedReceipt = `${args[0]}.retained`;
 					fs.renameSync(args[0], retainedReceipt);
@@ -1035,10 +1035,10 @@ describe.skipIf(process.platform !== "darwin")("managed replacement receipt deta
 	const receiptPath = (predecessor: ReceiptTestSnapshot, receipt: ReceiptTestSnapshot) =>
 		path.join(
 			root,
-			`.gjc-replace-cleanup-${BigInt(predecessor.dev).toString(16)}-${BigInt(predecessor.ino).toString(16)}-receipt-${BigInt(receipt.dev).toString(16)}-${BigInt(receipt.ino).toString(16)}.json`,
+			`.vib-replace-cleanup-${BigInt(predecessor.dev).toString(16)}-${BigInt(predecessor.ino).toString(16)}-receipt-${BigInt(receipt.dev).toString(16)}-${BigInt(receipt.ino).toString(16)}.json`,
 		);
 	const publishReceipt = (predecessor: ReceiptTestSnapshot, contents: string) => {
-		const pending = path.join(root, `.gjc-replace-receipt-pending-${randomUUID()}.json`);
+		const pending = path.join(root, `.vib-replace-receipt-pending-${randomUUID()}.json`);
 		fs.writeFileSync(pending, contents);
 		const receiptIdentity = snapshot(pending);
 		const receipt = receiptPath(predecessor, receiptIdentity);
@@ -1048,7 +1048,7 @@ describe.skipIf(process.platform !== "darwin")("managed replacement receipt deta
 	const receiptQuarantine = (receipt: ReceiptTestSnapshot, predecessor: ReceiptTestSnapshot) =>
 		path.join(
 			root,
-			`.gjc-receipt-remove-${BigInt(receipt.dev).toString(16)}-${BigInt(receipt.ino).toString(16)}-${BigInt(predecessor.dev).toString(16)}-${BigInt(predecessor.ino).toString(16)}`,
+			`.vib-receipt-remove-${BigInt(receipt.dev).toString(16)}-${BigInt(receipt.ino).toString(16)}-${BigInt(predecessor.dev).toString(16)}-${BigInt(predecessor.ino).toString(16)}`,
 		);
 	const replay = (name: string) => {
 		const store = new ManagedSessionDescendantStore(managedDirectoryRoot(root), root);
@@ -1056,7 +1056,7 @@ describe.skipIf(process.platform !== "darwin")("managed replacement receipt deta
 	};
 
 	beforeEach(() => {
-		root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-replace-journal-"));
+		root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-replace-journal-"));
 		leaveReceiptPlaceholder = false;
 		vi.spyOn(native, "exactUnlink").mockImplementation((pathname, expected) => {
 			const stat = fs.lstatSync(pathname, { bigint: true });
@@ -1092,7 +1092,7 @@ describe.skipIf(process.platform !== "darwin")("managed replacement receipt deta
 	it("detaches an advisory receipt without retiring its predecessor, successor, or staging object", () => {
 		const destination = path.join(root, "session.jsonl");
 		const staging = path.join(root, ".session.replacement");
-		const predecessorPath = path.join(root, ".gjc-exact-replace-destination-retained");
+		const predecessorPath = path.join(root, ".vib-exact-replace-destination-retained");
 		fs.writeFileSync(destination, "committed successor\n");
 		fs.writeFileSync(staging, "prepared successor\n");
 		fs.writeFileSync(predecessorPath, "retained predecessor\n");
@@ -1204,7 +1204,7 @@ describe.skipIf(process.platform !== "darwin")("managed replacement receipt deta
 	});
 
 	it("fails closed on a malformed canonical receipt filename", () => {
-		const malformed = path.join(root, ".gjc-replace-cleanup-00-1.json");
+		const malformed = path.join(root, ".vib-replace-cleanup-00-1.json");
 		fs.writeFileSync(malformed, "receipt");
 
 		expect(() => replay("malformed-receipt")).toThrow("managed_replace_cleanup_receipt_invalid");
@@ -1218,13 +1218,13 @@ describe.skipIf(process.platform !== "darwin")("managed replacement receipt deta
 		const seedIdentity = snapshot(predecessorSeed);
 		const predecessorPath = path.join(
 			root,
-			`.gjc-exact-replace-destination-${BigInt(seedIdentity.dev).toString(16)}-${BigInt(seedIdentity.ino).toString(16)}`,
+			`.vib-exact-replace-destination-${BigInt(seedIdentity.dev).toString(16)}-${BigInt(seedIdentity.ino).toString(16)}`,
 		);
 		fs.renameSync(predecessorSeed, predecessorPath);
 		const predecessor = snapshot(predecessorPath);
 		const receipt = path.join(
 			root,
-			`.gjc-replace-cleanup-${BigInt(predecessor.dev).toString(16)}-${BigInt(predecessor.ino).toString(16)}.json`,
+			`.vib-replace-cleanup-${BigInt(predecessor.dev).toString(16)}-${BigInt(predecessor.ino).toString(16)}.json`,
 		);
 		fs.writeFileSync(
 			receipt,
@@ -1271,10 +1271,10 @@ describe("replacement cleanup receipt reconcile TOCTOU resilience", () => {
 	const canonicalReceiptPath = (predecessor: ReceiptTestSnapshot, receipt: ReceiptTestSnapshot) =>
 		path.join(
 			root,
-			`.gjc-replace-cleanup-${BigInt(predecessor.dev).toString(16)}-${BigInt(predecessor.ino).toString(16)}-receipt-${BigInt(receipt.dev).toString(16)}-${BigInt(receipt.ino).toString(16)}.json`,
+			`.vib-replace-cleanup-${BigInt(predecessor.dev).toString(16)}-${BigInt(predecessor.ino).toString(16)}-receipt-${BigInt(receipt.dev).toString(16)}-${BigInt(receipt.ino).toString(16)}.json`,
 		);
 	const publishCanonicalReceipt = (predecessor: ReceiptTestSnapshot, contents: string) => {
-		const pending = path.join(root, `.gjc-replace-receipt-pending-${randomUUID()}.json`);
+		const pending = path.join(root, `.vib-replace-receipt-pending-${randomUUID()}.json`);
 		fs.writeFileSync(pending, contents);
 		const receiptIdentity = snapshot(pending);
 		const receipt = canonicalReceiptPath(predecessor, receiptIdentity);
@@ -1284,12 +1284,12 @@ describe("replacement cleanup receipt reconcile TOCTOU resilience", () => {
 	const receiptQuarantine = (receipt: ReceiptTestSnapshot, predecessor: ReceiptTestSnapshot) =>
 		path.join(
 			root,
-			`.gjc-receipt-remove-${BigInt(receipt.dev).toString(16)}-${BigInt(receipt.ino).toString(16)}-${BigInt(predecessor.dev).toString(16)}-${BigInt(predecessor.ino).toString(16)}`,
+			`.vib-receipt-remove-${BigInt(receipt.dev).toString(16)}-${BigInt(receipt.ino).toString(16)}-${BigInt(predecessor.dev).toString(16)}-${BigInt(predecessor.ino).toString(16)}`,
 		);
 	const legacyReceiptPath = (predecessor: ReceiptTestSnapshot) =>
 		path.join(
 			root,
-			`.gjc-replace-cleanup-${BigInt(predecessor.dev).toString(16)}-${BigInt(predecessor.ino).toString(16)}.json`,
+			`.vib-replace-cleanup-${BigInt(predecessor.dev).toString(16)}-${BigInt(predecessor.ino).toString(16)}.json`,
 		);
 	const replay = (name: string) => {
 		const store = new ManagedSessionDescendantStore(managedDirectoryRoot(root), root);
@@ -1303,7 +1303,7 @@ describe("replacement cleanup receipt reconcile TOCTOU resilience", () => {
 		fs.writeFileSync(staging, "prepared\n");
 		fs.writeFileSync(predecessorPath, "predecessor\n");
 		const predecessor = snapshot(predecessorPath);
-		const pending = path.join(root, `.gjc-replace-receipt-pending-${randomUUID()}.json`);
+		const pending = path.join(root, `.vib-replace-receipt-pending-${randomUUID()}.json`);
 		fs.writeFileSync(
 			pending,
 			JSON.stringify({
@@ -1330,7 +1330,7 @@ describe("replacement cleanup receipt reconcile TOCTOU resilience", () => {
 		}) as const;
 
 	beforeEach(() => {
-		root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-replace-toctou-"));
+		root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-replace-toctou-"));
 	});
 	afterEach(() => {
 		vi.restoreAllMocks();
@@ -1558,7 +1558,7 @@ describe("replacement cleanup receipt reconcile TOCTOU resilience", () => {
 				"managed_replace_failed:io_error",
 			);
 			expect(fs.readFileSync(destination, "utf8")).toBe("predecessor\n");
-			expect(fs.readdirSync(sessionDir).some(name => name.startsWith(".gjc-replace-cleanup-"))).toBe(true);
+			expect(fs.readdirSync(sessionDir).some(name => name.startsWith(".vib-replace-cleanup-"))).toBe(true);
 		},
 	);
 
@@ -1594,7 +1594,7 @@ describe("replacement cleanup receipt reconcile TOCTOU resilience", () => {
 		const seedIdentity = snapshot(predecessorSeed);
 		const predecessorPath = path.join(
 			root,
-			`.gjc-exact-replace-destination-${BigInt(seedIdentity.dev).toString(16)}-${BigInt(seedIdentity.ino).toString(16)}`,
+			`.vib-exact-replace-destination-${BigInt(seedIdentity.dev).toString(16)}-${BigInt(seedIdentity.ino).toString(16)}`,
 		);
 		fs.renameSync(predecessorSeed, predecessorPath);
 		const predecessor = snapshot(predecessorPath);
@@ -1668,7 +1668,7 @@ describe("replacement cleanup receipt reconcile TOCTOU resilience", () => {
 		const seedIdentity = snapshot(predecessorSeed);
 		const predecessorPath = path.join(
 			root,
-			`.gjc-exact-replace-destination-${BigInt(seedIdentity.dev).toString(16)}-${BigInt(seedIdentity.ino).toString(16)}`,
+			`.vib-exact-replace-destination-${BigInt(seedIdentity.dev).toString(16)}-${BigInt(seedIdentity.ino).toString(16)}`,
 		);
 		fs.renameSync(predecessorSeed, predecessorPath);
 		const predecessor = snapshot(predecessorPath);
@@ -1762,7 +1762,7 @@ describe.skipIf(process.platform !== "linux")("managed native security result va
 
 describe.skipIf(process.platform !== "linux")("managed descendant retained binding", () => {
 	it("rejects publication after the retained subtree pathname is replaced", async () => {
-		const root = await fsp.mkdtemp(path.join(os.tmpdir(), "gjc-managed-store-binding-"));
+		const root = await fsp.mkdtemp(path.join(os.tmpdir(), "vib-managed-store-binding-"));
 		try {
 			const artifacts = path.join(root, "artifacts");
 			const store = new ManagedSessionDescendantStore(managedDirectoryRoot(root), artifacts);
@@ -1779,7 +1779,7 @@ describe.skipIf(process.platform !== "linux")("managed descendant retained bindi
 	});
 
 	it("fails closed when a retained managed transcript leaf is replaced during a sync rewrite", () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-managed-transcript-leaf-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-managed-transcript-leaf-"));
 		try {
 			const sessionDir = path.join(root, "session");
 			const store = new ManagedSessionDescendantStore(managedDirectoryRoot(root), sessionDir);
@@ -1826,7 +1826,7 @@ describe.skipIf(process.platform !== "linux")("managed descendant retained bindi
 	});
 
 	it("does not publish an initial transcript into a substituted session directory", () => {
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-managed-transcript-root-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-managed-transcript-root-"));
 		try {
 			const sessionDir = path.join(root, "session");
 			const store = new ManagedSessionDescendantStore(managedDirectoryRoot(root), sessionDir);
@@ -1862,7 +1862,7 @@ describe.skipIf(process.platform !== "linux")("managed descendant retained bindi
 		// which walks every mutable descendant and returns identity_mismatch under
 		// concurrent writers. #assertBound() already uses identity() for this case;
 		// the constructor must mirror it. Nested descendants still snapshot.
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-managed-root-snapshot-3906-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-managed-root-snapshot-3906-"));
 		try {
 			const rootAuthority = managedDirectoryRoot(root);
 			// Publish a file so the tree is non-empty (a mutable descendant exists).
@@ -1901,7 +1901,7 @@ describe.skipIf(process.platform !== "linux")("managed descendant retained bindi
 		// Simulate a concurrent writer appending to a descendant file while the
 		// root store is constructed. Before the fix, snapshotManagedTree("") would
 		// observe the mutable descendant mid-write and return identity_mismatch.
-		const root = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-managed-concurrent-3906-"));
+		const root = fs.mkdtempSync(path.join(os.tmpdir(), "vib-managed-concurrent-3906-"));
 		try {
 			const rootAuthority = managedDirectoryRoot(root);
 			// Warm up: create a descendant file that will be concurrently written.
@@ -1960,7 +1960,7 @@ describe("FileSessionStorageWriter path security", () => {
 	let storage: FileSessionStorage;
 
 	beforeEach(async () => {
-		tempDir = await fsp.mkdtemp(path.join(os.tmpdir(), "gjc-writer-security-"));
+		tempDir = await fsp.mkdtemp(path.join(os.tmpdir(), "vib-writer-security-"));
 		storage = new FileSessionStorage();
 	});
 
@@ -2081,7 +2081,7 @@ describe("FileSessionStorage.deleteSessionVerified artifact-first", () => {
 	let storage: FileSessionStorage;
 
 	beforeEach(async () => {
-		tempDir = await fsp.mkdtemp(path.join(os.tmpdir(), "gjc-verified-delete-"));
+		tempDir = await fsp.mkdtemp(path.join(os.tmpdir(), "vib-verified-delete-"));
 		storage = new FileSessionStorage();
 		const deleteSessionVerified = storage.deleteSessionVerified.bind(storage);
 		let plannedAttempt = 0;
@@ -2091,10 +2091,10 @@ describe("FileSessionStorage.deleteSessionVerified artifact-first", () => {
 				...target,
 				plannedArtifactsPath:
 					target.plannedArtifactsPath ??
-					path.join(path.dirname(target.transcriptPath), `.gjc-delete-test-artifacts-${attempt}`),
+					path.join(path.dirname(target.transcriptPath), `.vib-delete-test-artifacts-${attempt}`),
 				plannedTranscriptPath:
 					target.plannedTranscriptPath ??
-					path.join(path.dirname(target.transcriptPath), `.gjc-delete-test-transcript-${attempt}`),
+					path.join(path.dirname(target.transcriptPath), `.vib-delete-test-transcript-${attempt}`),
 			});
 		};
 	});
@@ -2131,7 +2131,7 @@ describe("FileSessionStorage.deleteSessionVerified artifact-first", () => {
 		await fsp.mkdir(artifactsDir, { recursive: true });
 		await Bun.write(path.join(artifactsDir, "artifact.txt"), "payload");
 
-		const plannedArtifactsPath = path.join(tempDir, ".gjc-delete-happy-artifacts");
+		const plannedArtifactsPath = path.join(tempDir, ".vib-delete-happy-artifacts");
 
 		const target: VerifiedSessionDeleteTarget = {
 			sessionsRoot: tempDir,
@@ -2141,7 +2141,7 @@ describe("FileSessionStorage.deleteSessionVerified artifact-first", () => {
 			transcriptIdentity: verifiedIdentity(transcriptPath),
 			plannedArtifactsPath,
 
-			plannedTranscriptPath: path.join(tempDir, ".gjc-delete-happy-transcript"),
+			plannedTranscriptPath: path.join(tempDir, ".vib-delete-happy-transcript"),
 		};
 		const artifacts = await storage.deleteSessionVerified(target);
 		if (artifacts.kind !== "cleanup_pending" || artifacts.phase !== "artifacts")
@@ -2156,7 +2156,7 @@ describe("FileSessionStorage.deleteSessionVerified artifact-first", () => {
 
 	it("revalidates a retained scrubbed root immediately before transcript unlink", async () => {
 		const transcriptPath = await createTranscript("retained-boundary");
-		const retainedRoot = path.join(tempDir, ".gjc-delete-retained-boundary-artifacts.removing");
+		const retainedRoot = path.join(tempDir, ".vib-delete-retained-boundary-artifacts.removing");
 		await fsp.mkdir(retainedRoot);
 		await Bun.write(path.join(retainedRoot, "artifact.txt"), "");
 		const retainedStat = fs.lstatSync(retainedRoot, { bigint: true });
@@ -2181,8 +2181,8 @@ describe("FileSessionStorage.deleteSessionVerified artifact-first", () => {
 				},
 				expectedArtifactsTree: retainedTree.snapshot,
 				detachedArtifactsPath: retainedRoot,
-				plannedArtifactsPath: path.join(tempDir, ".gjc-delete-retained-boundary-artifacts"),
-				plannedTranscriptPath: path.join(tempDir, ".gjc-delete-retained-boundary-transcript"),
+				plannedArtifactsPath: path.join(tempDir, ".vib-delete-retained-boundary-artifacts"),
+				plannedTranscriptPath: path.join(tempDir, ".vib-delete-retained-boundary-transcript"),
 			})
 			.catch(value => value);
 
@@ -2254,7 +2254,7 @@ describe("FileSessionStorage.deleteSessionVerified artifact-first", () => {
 		if (process.platform === "win32") return;
 		const transcriptPath = await createTranscript("tree-root-retained");
 		const artifactsDir = transcriptPath.slice(0, -6);
-		const plannedArtifactsPath = path.join(tempDir, ".gjc-delete-tree-root-q1");
+		const plannedArtifactsPath = path.join(tempDir, ".vib-delete-tree-root-q1");
 		await fsp.mkdir(artifactsDir, { recursive: true });
 		await Bun.write(path.join(artifactsDir, "artifact.txt"), "payload");
 		const remove = vi.spyOn(native, "exactRemoveDirectoryTree");
@@ -2267,7 +2267,7 @@ describe("FileSessionStorage.deleteSessionVerified artifact-first", () => {
 				cwd: tempDir,
 				transcriptIdentity: verifiedIdentity(transcriptPath),
 				plannedArtifactsPath,
-				plannedTranscriptPath: path.join(tempDir, ".gjc-delete-tree-root-transcript"),
+				plannedTranscriptPath: path.join(tempDir, ".vib-delete-tree-root-transcript"),
 			});
 			if (result.kind !== "cleanup_pending" || result.phase !== "artifacts")
 				throw new Error("Expected pending tree cleanup");
@@ -2282,7 +2282,7 @@ describe("FileSessionStorage.deleteSessionVerified artifact-first", () => {
 	it("retains partial tree cleanup at its planned authority", async () => {
 		const transcriptPath = await createTranscript("tree-removing-retry");
 		const artifactsDir = transcriptPath.slice(0, -6);
-		const plannedArtifactsPath = path.join(tempDir, ".gjc-delete-tree-root-q1");
+		const plannedArtifactsPath = path.join(tempDir, ".vib-delete-tree-root-q1");
 		await fsp.mkdir(artifactsDir, { recursive: true });
 		await Bun.write(path.join(artifactsDir, "artifact.txt"), "payload");
 		const target: VerifiedSessionDeleteTarget = {
@@ -2292,7 +2292,7 @@ describe("FileSessionStorage.deleteSessionVerified artifact-first", () => {
 			cwd: tempDir,
 			transcriptIdentity: verifiedIdentity(transcriptPath),
 			plannedArtifactsPath,
-			plannedTranscriptPath: path.join(tempDir, ".gjc-delete-tree-root-transcript"),
+			plannedTranscriptPath: path.join(tempDir, ".vib-delete-tree-root-transcript"),
 		};
 		const pending = await storage.deleteSessionVerified(target);
 		if (pending.kind !== "cleanup_pending" || pending.phase !== "artifacts")
@@ -2391,7 +2391,7 @@ describe("FileSessionStorage.deleteSessionVerified artifact-first", () => {
 	it("exactly removes a retained artifact root before reconciling an absent transcript", async () => {
 		const transcriptPath = await createTranscript("retained-root-transcript-absent");
 		const transcriptIdentity = verifiedIdentity(transcriptPath);
-		const retainedRoot = path.join(tempDir, ".gjc-delete-retained-root-q1");
+		const retainedRoot = path.join(tempDir, ".vib-delete-retained-root-q1");
 		await fsp.mkdir(retainedRoot);
 		const retainedStat = fs.lstatSync(retainedRoot, { bigint: true });
 		const retainedTree = native.snapshotDirectoryTree(retainedRoot);
@@ -2407,8 +2407,8 @@ describe("FileSessionStorage.deleteSessionVerified artifact-first", () => {
 			sessionId: "session-id",
 			cwd: tempDir,
 			transcriptIdentity,
-			plannedArtifactsPath: path.join(tempDir, ".gjc-delete-retained-root-q2"),
-			plannedTranscriptPath: path.join(tempDir, ".gjc-delete-retained-transcript-q2"),
+			plannedArtifactsPath: path.join(tempDir, ".vib-delete-retained-root-q2"),
+			plannedTranscriptPath: path.join(tempDir, ".vib-delete-retained-transcript-q2"),
 			expectedArtifactsIdentity: {
 				dev: retainedStat.dev,
 				ino: retainedStat.ino,
@@ -2427,7 +2427,7 @@ describe("FileSessionStorage.deleteSessionVerified artifact-first", () => {
 
 	it("rejects late files instead of expanding retained artifact tree authority", async () => {
 		const transcriptPath = await createTranscript("retained-root-late-file");
-		const retainedRoot = path.join(tempDir, ".gjc-delete-retained-late-q1");
+		const retainedRoot = path.join(tempDir, ".vib-delete-retained-late-q1");
 		await fsp.mkdir(retainedRoot);
 		await Bun.write(path.join(retainedRoot, "authorized.txt"), "authorized");
 		const retainedStat = fs.lstatSync(retainedRoot, { bigint: true });
@@ -2445,8 +2445,8 @@ describe("FileSessionStorage.deleteSessionVerified artifact-first", () => {
 				sessionId: "session-id",
 				cwd: tempDir,
 				transcriptIdentity: verifiedIdentity(transcriptPath),
-				plannedArtifactsPath: path.join(tempDir, ".gjc-delete-retained-late-q2"),
-				plannedTranscriptPath: path.join(tempDir, ".gjc-delete-retained-late-transcript-q2"),
+				plannedArtifactsPath: path.join(tempDir, ".vib-delete-retained-late-q2"),
+				plannedTranscriptPath: path.join(tempDir, ".vib-delete-retained-late-transcript-q2"),
 				expectedArtifactsIdentity: {
 					dev: retainedStat.dev,
 					ino: retainedStat.ino,
@@ -2472,7 +2472,7 @@ describe("FileSessionStorage.deleteSessionVerified artifact-first", () => {
 		"rejects an artifact hardlink created after the authorized tree snapshot",
 		async () => {
 			const transcriptPath = await createTranscript("retained-root-hardlink");
-			const retainedRoot = path.join(tempDir, ".gjc-delete-retained-hardlink-q1");
+			const retainedRoot = path.join(tempDir, ".vib-delete-retained-hardlink-q1");
 			const authorizedFile = path.join(retainedRoot, "authorized.txt");
 			const externalHardlink = path.join(tempDir, "retained-artifact-hardlink.txt");
 			await fsp.mkdir(retainedRoot);
@@ -2488,8 +2488,8 @@ describe("FileSessionStorage.deleteSessionVerified artifact-first", () => {
 					sessionId: "session-id",
 					cwd: tempDir,
 					transcriptIdentity: verifiedIdentity(transcriptPath),
-					plannedArtifactsPath: path.join(tempDir, ".gjc-delete-retained-hardlink-q2"),
-					plannedTranscriptPath: path.join(tempDir, ".gjc-delete-retained-hardlink-transcript-q2"),
+					plannedArtifactsPath: path.join(tempDir, ".vib-delete-retained-hardlink-q2"),
+					plannedTranscriptPath: path.join(tempDir, ".vib-delete-retained-hardlink-transcript-q2"),
 					expectedArtifactsIdentity: {
 						dev: retainedStat.dev,
 						ino: retainedStat.ino,
@@ -2535,7 +2535,7 @@ describe("FileSessionStorage.deleteSessionVerified artifact-first", () => {
 		async () => {
 			const transcriptPath = await createTranscript("retained-transcript-hardlink");
 			const identity = verifiedIdentity(transcriptPath);
-			const externalDir = await fsp.mkdtemp(path.join(path.dirname(tempDir), "gjc-external-transcript-link-"));
+			const externalDir = await fsp.mkdtemp(path.join(path.dirname(tempDir), "vib-external-transcript-link-"));
 			const externalHardlink = path.join(externalDir, "retained.jsonl");
 			try {
 				await fsp.link(transcriptPath, externalHardlink);
@@ -2559,7 +2559,7 @@ describe("FileSessionStorage.deleteSessionVerified artifact-first", () => {
 
 	it.skipIf(process.platform === "win32")("rejects a transcript already hardlinked at authorization", async () => {
 		const transcriptPath = await createTranscript("preauthorized-transcript-hardlink");
-		const externalDir = await fsp.mkdtemp(path.join(path.dirname(tempDir), "gjc-preauthorized-transcript-link-"));
+		const externalDir = await fsp.mkdtemp(path.join(path.dirname(tempDir), "vib-preauthorized-transcript-link-"));
 		const externalHardlink = path.join(externalDir, "retained.jsonl");
 		try {
 			await fsp.link(transcriptPath, externalHardlink);
@@ -2604,7 +2604,7 @@ describe("FileSessionStorage.deleteSessionVerified artifact-first", () => {
 
 	it("returns the native detached transcript path after a post-detach failure", async () => {
 		const transcriptPath = await createTranscript("detached-transcript-evidence");
-		const plannedTranscriptPath = path.join(tempDir, ".gjc-delete-transcript-planned");
+		const plannedTranscriptPath = path.join(tempDir, ".vib-delete-transcript-planned");
 		const expectedIdentity = verifiedIdentity(transcriptPath);
 		const exactUnlink = native.exactUnlink;
 		let nativeTranscriptSha256: string | undefined;
@@ -2983,8 +2983,8 @@ describe("FileSessionStorage.deleteSessionVerified artifact-first", () => {
 	// placeholder was retained, so the placeholder alone never keeps transcript bytes.
 	it("terminalizes a scrubbed transcript with a durable retained exchange placeholder", async () => {
 		const transcriptPath = await createTranscript("scrubbed-placeholder-terminal");
-		const plannedTranscriptPath = path.join(tempDir, ".gjc-delete-scrubbed-placeholder-transcript");
-		const placeholderPath = path.join(tempDir, ".gjc-exact-unlink-placeholder-scrubbed");
+		const plannedTranscriptPath = path.join(tempDir, ".vib-delete-scrubbed-placeholder-transcript");
+		const placeholderPath = path.join(tempDir, ".vib-exact-unlink-placeholder-scrubbed");
 		const expectedIdentity = verifiedIdentity(transcriptPath);
 		const exactUnlink = native.exactUnlink;
 		vi.spyOn(native, "exactUnlink").mockImplementation((pathname, identity) => {
@@ -3019,8 +3019,8 @@ describe("FileSessionStorage.deleteSessionVerified artifact-first", () => {
 	// (a genuine canonical replacement that survived cleanup) must stay cleanup_pending.
 	it("keeps cleanup_pending for a transcript with a retained successor path", async () => {
 		const transcriptPath = await createTranscript("retained-successor-pending");
-		const plannedTranscriptPath = path.join(tempDir, ".gjc-delete-retained-successor-transcript");
-		const successorPath = path.join(tempDir, ".gjc-retained-successor");
+		const plannedTranscriptPath = path.join(tempDir, ".vib-delete-retained-successor-transcript");
+		const successorPath = path.join(tempDir, ".vib-retained-successor");
 		const expectedIdentity = verifiedIdentity(transcriptPath);
 		const exactUnlink = native.exactUnlink;
 		vi.spyOn(native, "exactUnlink").mockImplementation((pathname, identity) => {

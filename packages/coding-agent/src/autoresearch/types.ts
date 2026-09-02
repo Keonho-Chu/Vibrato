@@ -4,7 +4,7 @@
  * These mirror the deleted extension's `types.ts` surface (metrics, ASI,
  * experiment statuses) without the extension-only runtime types (dashboards,
  * tool factories, session entries). The mission/verdict/ledger types live in
- * `gjc-runtime/autoresearch-runtime.ts`; run storage and dashboard models live
+ * `vib-runtime/autoresearch-runtime.ts`; run storage and dashboard models live
  * in `runs.ts` / `dashboard.ts`.
  */
 

@@ -9,9 +9,9 @@ import * as path from "node:path";
 
 /** Environment inputs the decision reads. Injectable for tests. */
 export interface AgentDirIsolationEnv {
-	GJC_CODING_AGENT_DIR?: string | undefined;
+	VIB_CODING_AGENT_DIR?: string | undefined;
 	PI_CODING_AGENT_DIR?: string | undefined;
-	GJC_CONFIG_DIR?: string | undefined;
+	VIB_CONFIG_DIR?: string | undefined;
 	PI_CONFIG_DIR?: string | undefined;
 }
 
@@ -146,7 +146,7 @@ function sanitizeConfigDirName(value: string | undefined): string | undefined {
 
 /** The agent directory production would resolve with no trusted override. */
 export function defaultAgentDirFor(home: string, env: AgentDirIsolationEnv, projectEnv: Record<string, string>): string {
-	const trusted = (name: "GJC_CONFIG_DIR" | "PI_CONFIG_DIR"): string | undefined => {
+	const trusted = (name: "VIB_CONFIG_DIR" | "PI_CONFIG_DIR"): string | undefined => {
 		const value = env[name];
 		if (!value) return undefined;
 		// Same distrust rule as production: a value planted by the project `.env`
@@ -155,7 +155,7 @@ export function defaultAgentDirFor(home: string, env: AgentDirIsolationEnv, proj
 		return value;
 	};
 	const configDirName =
-		sanitizeConfigDirName(trusted("GJC_CONFIG_DIR")) ?? sanitizeConfigDirName(trusted("PI_CONFIG_DIR")) ?? ".gjc";
+		sanitizeConfigDirName(trusted("VIB_CONFIG_DIR")) ?? sanitizeConfigDirName(trusted("PI_CONFIG_DIR")) ?? ".vib";
 	return path.join(home, configDirName, "agent");
 }
 
@@ -164,8 +164,8 @@ export function defaultAgentDirFor(home: string, env: AgentDirIsolationEnv, proj
  *
  * Isolation is the default. An ambient override is deferred to ONLY when it is
  * trusted (not planted by the project `.env`) and points somewhere other than
- * the default agent dir: a `gjc` parent process exports
- * `GJC_CODING_AGENT_DIR=<home>/<config>/agent` into every child it spawns, so
+ * the default agent dir: a `vib` parent process exports
+ * `VIB_CODING_AGENT_DIR=<home>/<config>/agent` into every child it spawns, so
  * equality with the default carries no test intent.
  */
 export function decideAgentDirIsolation(input: {
@@ -176,9 +176,9 @@ export function decideAgentDirIsolation(input: {
 }): AgentDirIsolationDecision {
 	const { env, projectEnv } = input;
 	const realpath = input.realpath ?? ((target: string) => fs.realpathSync(target));
-	const configured = env.GJC_CODING_AGENT_DIR || env.PI_CODING_AGENT_DIR;
+	const configured = env.VIB_CODING_AGENT_DIR || env.PI_CODING_AGENT_DIR;
 	if (!configured) return { action: "isolate", reason: "absent" };
-	if (projectEnv.GJC_CODING_AGENT_DIR === configured || projectEnv.PI_CODING_AGENT_DIR === configured)
+	if (projectEnv.VIB_CODING_AGENT_DIR === configured || projectEnv.PI_CODING_AGENT_DIR === configured)
 		return { action: "isolate", reason: "untrusted" };
 	const defaultAgentDir = defaultAgentDirFor(input.home, env, projectEnv);
 	const resolved = path.resolve(configured);

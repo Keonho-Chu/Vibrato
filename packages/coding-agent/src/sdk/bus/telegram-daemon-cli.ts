@@ -1,6 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { logger, postmortem } from "@gajae-code/utils";
+import { logger, postmortem } from "@vib-rato/utils";
 import { YAML } from "bun";
 import { applyAtomicYamlPatches, setByPath } from "../../config/atomic-yaml-patch";
 import type { Settings } from "../../config/settings";
@@ -287,10 +287,10 @@ export async function runDaemonInternal(argv: string[], deps: RunDaemonInternalD
 	const ownerId = argValue(argv, "--owner-id");
 	if (!ownerId) throw new Error("missing --owner-id");
 	if (!ownerProcessIsAlive(ownerId, deps)) {
-		recordDaemonCompatibilityDiagnostic("GJC notify daemon exiting because its owner is not alive");
+		recordDaemonCompatibilityDiagnostic("Vibrato notify daemon exiting because its owner is not alive");
 		return;
 	}
-	const resolvedAgentDir = agentDir ?? process.env.GJC_CODING_AGENT_DIR ?? path.join(process.cwd(), ".gjc", "agent");
+	const resolvedAgentDir = agentDir ?? process.env.VIB_CODING_AGENT_DIR ?? path.join(process.cwd(), ".vib", "agent");
 	const settings = await resolveDaemonSettings(resolvedAgentDir, deps);
 	const cfg = getNotificationConfig(settings);
 	if (!isProviderEffectivelyEnabled(cfg, "telegram") || !isTelegramComplete(cfg)) return;
@@ -337,7 +337,7 @@ export async function runDaemonInternal(argv: string[], deps: RunDaemonInternalD
 		const snapshot = await readOwnerFreshnessSnapshot({ settings: settings as Settings });
 		const state = snapshot.state;
 		if (!state || !hasSafeDaemonStateShape(state) || state.ownershipPhase !== "ready") return;
-		const { nativeProcessBindings } = await import("@gajae-code/utils/native-process");
+		const { nativeProcessBindings } = await import("@vib-rato/utils/native-process");
 		const incarnation = state.incarnation;
 		const { receipt } = await reapTelegramDaemonOrphans({
 			agentDir: resolvedAgentDir,

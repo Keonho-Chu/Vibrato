@@ -1,20 +1,20 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "bun:test";
 import * as path from "node:path";
-import { Agent, type AgentEvent, type AgentToolContext } from "@gajae-code/agent-core";
-import type { AssistantMessage } from "@gajae-code/ai";
-import { getBundledModel } from "@gajae-code/ai/models";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { modeStatePath } from "@gajae-code/coding-agent/gjc-runtime/session-layout";
-import * as skillState from "@gajae-code/coding-agent/hooks/skill-state";
-import { ensureWorkflowSkillActivationState } from "@gajae-code/coding-agent/hooks/skill-state";
-import { initTheme } from "@gajae-code/coding-agent/modes/theme/theme";
-import { AgentSession, type AgentSessionEvent } from "@gajae-code/coding-agent/session/agent-session";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import type { ToolSession } from "@gajae-code/coding-agent/tools";
-import { AskTool } from "@gajae-code/coding-agent/tools/ask";
-import { logger, TempDir } from "@gajae-code/utils";
+import { Agent, type AgentEvent, type AgentToolContext } from "@vib-rato/agent-core";
+import type { AssistantMessage } from "@vib-rato/ai";
+import { getBundledModel } from "@vib-rato/ai/models";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import * as skillState from "@vib-rato/coding-agent/hooks/skill-state";
+import { ensureWorkflowSkillActivationState } from "@vib-rato/coding-agent/hooks/skill-state";
+import { initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
+import { AgentSession, type AgentSessionEvent } from "@vib-rato/coding-agent/session/agent-session";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import type { ToolSession } from "@vib-rato/coding-agent/tools";
+import { AskTool } from "@vib-rato/coding-agent/tools/ask";
+import { modeStatePath } from "@vib-rato/coding-agent/vib-runtime/session-layout";
+import { logger, TempDir } from "@vib-rato/utils";
 import { createAssistantMessage } from "./helpers/agent-session-setup";
 
 const REMINDER_MARKER = "deep-interview workflow is still active";
@@ -171,7 +171,7 @@ describe("AgentSession deep-interview continuation", () => {
 
 		expect(continueSpy).toHaveBeenCalledTimes(1);
 		const [reminder] = developerReminders();
-		expect(reminder).toContain("stop gate: gjc_skill_deep_interview_");
+		expect(reminder).toContain("stop gate: vib_skill_deep_interview_");
 		expect(reminder).toContain("score and persist the answered round");
 		expect(reminder).toContain("use the ask tool for the next question");
 	});
@@ -647,7 +647,7 @@ describe("AgentSession deep-interview continuation", () => {
 		vi.spyOn(skillState, "buildSkillStopOutput").mockImplementation(async () => {
 			if (++reads === 3) threeReads.resolve();
 			await gate.promise;
-			return { decision: "block", stopReason: "gjc_skill_deep_interview_interviewing" };
+			return { decision: "block", stopReason: "vib_skill_deep_interview_interviewing" };
 		});
 		const twoContinues = Promise.withResolvers<void>();
 		let continuations = 0;

@@ -1,7 +1,7 @@
 /**
  * Host-wide shared Telegram rate-limit pool for the threaded session surface.
  *
- * Multiple GJC sessions on one host share a single bot token and paired chat.
+ * Multiple Vibrato sessions on one host share a single bot token and paired chat.
  * Telegram enforces per-bot/per-chat limits (~1 message/sec, bursts up to ~20),
  * so the singleton notifications daemon owns ONE pool that all per-session
  * threads draw from. The pool provides:

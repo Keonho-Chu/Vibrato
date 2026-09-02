@@ -19,7 +19,7 @@ const removedDocs = [
 	"task-agent-discovery.md",
 ] as const;
 
-describe("GJC docs utility surface cleanup", () => {
+describe("Vibrato docs utility surface cleanup", () => {
 	it("removes standalone utility feature docs", async () => {
 		for (const fileName of removedDocs) {
 			expect(await Bun.file(path.join(repoRoot, "docs", fileName)).exists()).toBe(false);

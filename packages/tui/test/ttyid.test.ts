@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
-import { getTerminalId } from "@gajae-code/tui/ttyid";
+import { getTerminalId } from "@vib-rato/tui/ttyid";
 
 describe("getTerminalId tmux ordering", () => {
 	const TMUX_KEYS = ["TMUX", "TMUX_PANE", "KITTY_WINDOW_ID", "TERM_SESSION_ID", "WT_SESSION"];

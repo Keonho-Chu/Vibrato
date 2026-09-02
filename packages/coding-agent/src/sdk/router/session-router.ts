@@ -1,7 +1,7 @@
 import * as crypto from "node:crypto";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { logger, resolveEquivalentPath } from "@gajae-code/utils";
+import { logger, resolveEquivalentPath } from "@vib-rato/utils";
 import {
 	SessionIndex as DefaultSessionIndex,
 	type IndexedSession,
@@ -397,7 +397,7 @@ const NOTIFICATION_WORK_TIMEOUT = Symbol("notification_work_timeout");
 const NOTIFICATION_LOCAL_FAILURE_LIMIT = 5;
 /**
  * Client-message types the native session server authorizes with the
- * per-session endpoint token (`tokens_match` in crates/gjc-sdk server.rs).
+ * per-session endpoint token (`tokens_match` in crates/vib-sdk server.rs).
  * Frames of these types without a matching `token` are dropped silently.
  */
 const TOKEN_AUTHORIZED_FRAME_TYPES = new Set([
@@ -754,7 +754,7 @@ export class SessionRouter {
 				"Broker lifecycle result omitted an exact session endpoint authority.",
 			);
 		const repo = path.resolve(fallback.cwd);
-		const stateRoot = path.join(repo, ".gjc", "state");
+		const stateRoot = path.join(repo, ".vib", "state");
 		const indexed: IndexedSession = {
 			sessionId,
 			locator: { repo, stateRoot },
@@ -1362,7 +1362,7 @@ export class SessionRouter {
 	): Promise<{ endpoint: SdkSessionEndpoint; identity: SessionEndpointIdentity } | null> {
 		if (!isSessionAuthorityEligible(indexed)) return null;
 		const repo = path.resolve(indexed.locator.repo);
-		const defaultStateRoot = path.join(repo, ".gjc", "state");
+		const defaultStateRoot = path.join(repo, ".vib", "state");
 		// The session index stores the lifecycle caller's lexical cwd in `locator.repo`
 		// (reconcileReadyScope re-scopes only that field) while `locator.stateRoot` is
 		// the host process's physical path, because process.cwd() resolves symlinks.
@@ -1930,7 +1930,7 @@ export class SessionRouter {
 	}
 
 	async #boundedNotificationWork<T>(work: () => Promise<T> | T): Promise<T | typeof NOTIFICATION_WORK_TIMEOUT> {
-		// The dominant cost of a one-shot `gjc sdk` command: notification work that
+		// The dominant cost of a one-shot `vib sdk` command: notification work that
 		// finished in milliseconds left this timeout pending, and a pending Bun.sleep
 		// keeps the event loop alive, so the process wrote its response and then idled
 		// for the full budget before exiting.

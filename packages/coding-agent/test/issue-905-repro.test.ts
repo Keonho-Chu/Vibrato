@@ -1,7 +1,7 @@
 /**
  * Regression test for issue #905.
  *
- * `gjc --list-models` did not include providers contributed by extensions
+ * `vib --list-models` did not include providers contributed by extensions
  * (via `pi.registerProvider(...)`), regardless of whether the extension was
  * supplied via `-e <path>` or configured under `extensions:` in the user
  * settings. The `--list-models` short-circuit in `runRootCommand` exited
@@ -16,7 +16,7 @@ import { afterAll, beforeAll, expect, test } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { AuthStorage } from "@gajae-code/ai";
+import { AuthStorage } from "@vib-rato/ai";
 import { runListModelsCommand } from "../src/cli/list-models";
 import { ModelRegistry } from "../src/config/model-registry";
 

@@ -144,7 +144,7 @@ describe("Coordinator durability", () => {
 	});
 
 	it("never classifies file fsync failures as unsupported directory failures", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-coordinator-durability-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-coordinator-durability-"));
 		try {
 			const handle = await fs.open(path.join(root, "state.json"), "w");
 			try {
@@ -162,7 +162,7 @@ describe("Coordinator durability", () => {
 	});
 
 	it("appends a journal record only after file durability and its parent barrier", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-coordinator-durability-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-coordinator-durability-"));
 		try {
 			const file = path.join(root, "event-journal.jsonl");
 			const calls: string[] = [];
@@ -188,7 +188,7 @@ describe("Coordinator durability", () => {
 	});
 
 	it("keeps append file sync failures fail-closed without a directory barrier", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-coordinator-durability-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-coordinator-durability-"));
 		try {
 			const file = path.join(root, "event-journal.jsonl");
 			const calls: string[] = [];
@@ -215,7 +215,7 @@ describe("Coordinator durability", () => {
 	});
 
 	it("preserves append write and close failures and leaves no staged artifact", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-coordinator-durability-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-coordinator-durability-"));
 		const file = path.join(root, "event-journal.jsonl");
 		const realOpen = fs.open;
 		const open = spyOn(fs, "open").mockImplementation(async (...args) => {
@@ -239,7 +239,7 @@ describe("Coordinator durability", () => {
 	});
 
 	it("rolls back a partial append before surfacing the write failure", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-coordinator-durability-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-coordinator-durability-"));
 		const file = path.join(root, "event-journal.jsonl");
 		await fs.writeFile(file, "prior\n");
 		const realOpen = fs.open;
@@ -268,7 +268,7 @@ describe("Coordinator durability", () => {
 	});
 
 	it("publishes coordinator state only after file durability and accepts Windows directory EPERM", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-coordinator-durability-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-coordinator-durability-"));
 		try {
 			const file = path.join(root, "state.json");
 			const calls: string[] = [];
@@ -300,7 +300,7 @@ describe("Coordinator durability", () => {
 	});
 
 	it("does not publish a coordinator state file when file sync fails", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-coordinator-durability-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-coordinator-durability-"));
 		try {
 			const file = path.join(root, "state.json");
 			await expect(
@@ -313,7 +313,7 @@ describe("Coordinator durability", () => {
 	});
 
 	it("cleans up the temporary file after rename failure", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-coordinator-durability-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-coordinator-durability-"));
 		try {
 			const file = path.join(root, "state.json");
 			await expect(
@@ -326,7 +326,7 @@ describe("Coordinator durability", () => {
 	});
 
 	it("reports an uncertain outcome after rename when the parent barrier fails", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-coordinator-durability-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-coordinator-durability-"));
 		try {
 			const file = path.join(root, "state.json");
 			await expect(

@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import * as fs from "node:fs/promises";
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 import { formatCrashDiagnosticNotice, writeCrashReport } from "../debug/crash-diagnostics";
 import { NON_INTERACTIVE_ENV } from "../exec/non-interactive-env";
 import { type OwnedProcess, spawnOwnedProcess } from "../runtime/process-lifecycle";

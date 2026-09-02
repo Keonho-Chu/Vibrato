@@ -3,7 +3,7 @@ import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 import { gunzipSync, gzipSync } from "node:zlib";
-import { getAgentDir, setAgentDir } from "@gajae-code/utils";
+import { getAgentDir, setAgentDir } from "@vib-rato/utils";
 import { ToolAbortError } from "../../../src/tools/tool-errors";
 import { handleDocsRs } from "../../../src/web/scrapers/docs-rs";
 import { MAX_BYTES } from "../../../src/web/scrapers/types";
@@ -36,7 +36,7 @@ function mockGzip(body: Uint8Array): void {
 }
 
 beforeEach(async () => {
-	agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-docs-rs-"));
+	agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-docs-rs-"));
 	setAgentDir(agentDir);
 });
 

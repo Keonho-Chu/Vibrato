@@ -35,14 +35,14 @@ import {
 	mcpDelegateHostContextPath,
 	persistMcpDelegateHostContext,
 } from "../src/hooks/mcp-delegate-host-context";
-import { dispatchGjcNativeSkillHook } from "../src/hooks/native-skill-hook";
-import { GJC_SKILL_KEYWORD_DEFINITIONS } from "../src/hooks/skill-keywords";
+import { dispatchVibNativeSkillHook } from "../src/hooks/native-skill-hook";
+import { VIB_SKILL_KEYWORD_DEFINITIONS } from "../src/hooks/skill-keywords";
 import { readVisibleSkillActiveState } from "../src/hooks/skill-state";
 
 const tempDirs: string[] = [];
 
 async function tempRoot(): Promise<string> {
-	const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-codex-bridge-redteam-"));
+	const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-codex-bridge-redteam-"));
 	tempDirs.push(root);
 	return root;
 }
@@ -72,7 +72,7 @@ function wakeEvent(summary = "wake summary"): CodexWakeEventV1 {
 		summary,
 		status: "pending",
 		attempts: 0,
-		client_user_message_id: "gjc-wake-session-1:1",
+		client_user_message_id: "vib-wake-session-1:1",
 		created_at: "2026-01-01T00:00:00.000Z",
 		updated_at: "2026-01-01T00:00:00.000Z",
 		last_error: null,
@@ -135,12 +135,12 @@ function createServer(
 ) {
 	return createCoordinatorMcpServer({
 		env: {
-			GJC_COORDINATOR_MCP_WORKDIR_ROOTS: root,
-			GJC_COORDINATOR_MCP_STATE_ROOT: path.join(root, ".gjc", "coordinator-state"),
-			GJC_COORDINATOR_MCP_CODEX_TOKEN_ROOT: path.join(root, ".gjc", "codex-tokens"),
-			GJC_COORDINATOR_MCP_PROFILE: "local",
-			GJC_COORDINATOR_MCP_REPO: "repo",
-			GJC_COORDINATOR_MCP_MUTATIONS: "sessions",
+			VIB_COORDINATOR_MCP_WORKDIR_ROOTS: root,
+			VIB_COORDINATOR_MCP_STATE_ROOT: path.join(root, ".vib", "coordinator-state"),
+			VIB_COORDINATOR_MCP_CODEX_TOKEN_ROOT: path.join(root, ".vib", "codex-tokens"),
+			VIB_COORDINATOR_MCP_PROFILE: "local",
+			VIB_COORDINATOR_MCP_REPO: "repo",
+			VIB_COORDINATOR_MCP_MUTATIONS: "sessions",
 		},
 		services: {
 			codexTransportFactory: async (): Promise<CodexAppServerTransport> => ({
@@ -156,7 +156,7 @@ function createServer(
 }
 
 async function writeManagedToken(root: string, token = "token"): Promise<string> {
-	const tokenRoot = path.join(root, ".gjc", "codex-tokens");
+	const tokenRoot = path.join(root, ".vib", "codex-tokens");
 	await fs.mkdir(tokenRoot, { recursive: true, mode: 0o700 });
 	await fs.chmod(tokenRoot, 0o700);
 	const tokenFile = path.join(tokenRoot, "token");
@@ -167,7 +167,7 @@ async function writeManagedToken(root: string, token = "token"): Promise<string>
 
 async function registerViaServer(server: CoordinatorMcpServer, root: string): Promise<void> {
 	const tokenFile = await writeManagedToken(root);
-	const response = await server.callTool("gjc_coordinator_register_codex_handoff", {
+	const response = await server.callTool("vib_coordinator_register_codex_handoff", {
 		session_id: "session-1",
 		thread_id: "thread-1",
 		endpoint: { kind: "unix", path: "/tmp/codex-redteam.sock" },
@@ -262,7 +262,7 @@ describe("Codex resume bridge red-team", () => {
 		const server = createServer(serverRoot, [], { type: "idle" });
 		await createSession(serverRoot, server);
 		await expect(
-			server.callTool("gjc_coordinator_register_codex_handoff", {
+			server.callTool("vib_coordinator_register_codex_handoff", {
 				session_id: "session-1",
 				thread_id: "thread-1",
 				endpoint: { kind: "unix", path: "/tmp/codex-redteam.sock" },
@@ -423,7 +423,7 @@ describe("Codex resume bridge red-team", () => {
 			summary: "failure",
 		});
 		await awaitCodexWakePublishesForTest(namespace);
-		const response = await server.callTool("gjc_coordinator_read_codex_handoff", { session_id: "session-1" });
+		const response = await server.callTool("vib_coordinator_read_codex_handoff", { session_id: "session-1" });
 		expect(response).toMatchObject({
 			wake_events: [{ key: `session-1:${event.seq}`, status: "failed", last_error: "codex_wake_publish_failed" }],
 		});
@@ -431,13 +431,13 @@ describe("Codex resume bridge red-team", () => {
 	});
 
 	it("does not activate a workflow for delegate-flow spoofing and preserves exactly four workflow skills", async () => {
-		expect(new Set(GJC_SKILL_KEYWORD_DEFINITIONS.map(definition => definition.skill))).toEqual(
+		expect(new Set(VIB_SKILL_KEYWORD_DEFINITIONS.map(definition => definition.skill))).toEqual(
 			new Set(["deep-interview", "ralplan", "ultragoal", "autoresearch"]),
 		);
 		const root = await tempRoot();
-		const spoofed = "$gjc-mcp-delegate-flow$ultragoal";
+		const spoofed = "$vib-mcp-delegate-flow$ultragoal";
 		await expect(
-			dispatchGjcNativeSkillHook({
+			dispatchVibNativeSkillHook({
 				hookEventName: "UserPromptSubmit",
 				userPrompt: spoofed,
 				cwd: root,
@@ -446,20 +446,20 @@ describe("Codex resume bridge red-team", () => {
 		).resolves.toBeDefined();
 		expect(await readVisibleSkillActiveState(root, "session-0")).toBeNull();
 		for (const [index, prompt] of [
-			"x$gjc-mcp-delegate-flow",
-			"$gjc-mcp-delegate-flowed",
-			"＄gjc-mcp-delegate-flow",
+			"x$vib-mcp-delegate-flow",
+			"$vib-mcp-delegate-flowed",
+			"＄vib-mcp-delegate-flow",
 			"x".repeat(1_000_000),
 		].entries()) {
 			const sessionId = `session-${index + 1}`;
 			await expect(
-				dispatchGjcNativeSkillHook({ hookEventName: "UserPromptSubmit", userPrompt: prompt, cwd: root, sessionId }),
+				dispatchVibNativeSkillHook({ hookEventName: "UserPromptSubmit", userPrompt: prompt, cwd: root, sessionId }),
 			).resolves.toBeDefined();
 			expect(await readVisibleSkillActiveState(root, sessionId)).toBeNull();
 		}
 		expect(detectMcpDelegateFlowActivation(spoofed)).toBe(true);
 		expect(await persistMcpDelegateHostContext({ cwd: root, sessionId: "spoofed", prompt: spoofed })).not.toBeNull();
-		for (const prompt of ["x$gjc-mcp-delegate-flow", "$gjc-mcp-delegate-flowed", "＄gjc-mcp-delegate-flow"])
+		for (const prompt of ["x$vib-mcp-delegate-flow", "$vib-mcp-delegate-flowed", "＄vib-mcp-delegate-flow"])
 			expect(detectMcpDelegateFlowActivation(prompt)).toBe(false);
 		expect(await Bun.file(mcpDelegateHostContextPath(root, "session-4")).exists()).toBe(false);
 	});

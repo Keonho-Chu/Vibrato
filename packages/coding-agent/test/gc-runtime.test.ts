@@ -13,9 +13,9 @@ import {
 	type GcStoreAdapter,
 	gcPidProbe,
 	gcProbeToLeasePidStatus,
-	runGjcGcCommand,
-} from "@gajae-code/coding-agent/gjc-runtime/gc-runtime";
-import { getAgentDir, setAgentDir } from "@gajae-code/utils";
+	runVibGcCommand,
+} from "@vib-rato/coding-agent/vib-runtime/gc-runtime";
+import { getAgentDir, setAgentDir } from "@vib-rato/utils";
 import { SessionIndex } from "../src/sdk/broker/session-index";
 
 const originalAgentDir = getAgentDir();
@@ -318,11 +318,11 @@ describe("collectGcReport", () => {
 	});
 });
 
-describe("runGjcGcCommand", () => {
+describe("runVibGcCommand", () => {
 	const adapters = [fakeAdapter("harness_leases", [])];
 
 	test("unknown flag => status 2 with stderr", async () => {
-		const result = await runGjcGcCommand(["--nope"], "/tmp", {}, adapters);
+		const result = await runVibGcCommand(["--nope"], "/tmp", {}, adapters);
 		expect(result.status).toBe(2);
 		expect(result.stderr).toContain("unknown_flag");
 	});
@@ -331,14 +331,14 @@ describe("runGjcGcCommand", () => {
 			["--repair-session-index", "--prune"],
 			["--repair-session-index", "--dry-run"],
 		]) {
-			const result = await runGjcGcCommand(args, "/tmp", {}, adapters);
+			const result = await runVibGcCommand(args, "/tmp", {}, adapters);
 			expect(result.status).toBe(2);
 			expect(result.stderr).toContain("repair_session_index_cannot_combine");
 		}
 	});
 
 	test("--json emits a report with an array for every known store", async () => {
-		const result = await runGjcGcCommand(["--json"], "/tmp", {}, adapters);
+		const result = await runVibGcCommand(["--json"], "/tmp", {}, adapters);
 		expect(result.status).toBe(0);
 		const parsed = JSON.parse(result.stdout);
 		expect(parsed.dry_run).toBe(true);
@@ -348,7 +348,7 @@ describe("runGjcGcCommand", () => {
 	});
 
 	test("default text mode reports dry run", async () => {
-		const result = await runGjcGcCommand([], "/tmp", {}, adapters);
+		const result = await runVibGcCommand([], "/tmp", {}, adapters);
 		expect(result.stdout).toContain("dry run");
 	});
 
@@ -358,7 +358,7 @@ describe("runGjcGcCommand", () => {
 			pruned = true;
 			return { removed: true };
 		});
-		const result = await runGjcGcCommand(["--prune", "--dry-run", "--json"], "/tmp", {}, [a]);
+		const result = await runVibGcCommand(["--prune", "--dry-run", "--json"], "/tmp", {}, [a]);
 		expect(pruned).toBe(false);
 		expect(JSON.parse(result.stdout).dry_run).toBe(true);
 	});
@@ -369,7 +369,7 @@ describe("runGjcGcCommand", () => {
 			pruned++;
 			return { removed: true };
 		});
-		const result = await runGjcGcCommand(["--prune", "--json"], "/tmp", {}, [a]);
+		const result = await runVibGcCommand(["--prune", "--json"], "/tmp", {}, [a]);
 		expect(pruned).toBe(1);
 		const parsed = JSON.parse(result.stdout);
 		expect(parsed.dry_run).toBe(false);
@@ -385,7 +385,7 @@ describe("runGjcGcCommand", () => {
 			pruned += 1;
 			return { removed: true };
 		});
-		const result = await runGjcGcCommand(
+		const result = await runVibGcCommand(
 			["--prune", "--empty-delete-receipts", "--manifest", manifest],
 			perTestAgentDir,
 			{},
@@ -403,7 +403,7 @@ describe("runGjcGcCommand", () => {
 			pruned += 1;
 			return { removed: true };
 		});
-		const result = await runGjcGcCommand(
+		const result = await runVibGcCommand(
 			["--prune", "--empty-delete-receipts", "--root", missingRoot, "--json"],
 			perTestAgentDir,
 			{},
@@ -432,7 +432,7 @@ describe("runGjcGcCommand", () => {
 			return { removed: true };
 		});
 		try {
-			const result = await runGjcGcCommand(
+			const result = await runVibGcCommand(
 				["--prune", "--empty-delete-receipts", "--root", root, "--json"],
 				perTestAgentDir,
 				{},
@@ -459,7 +459,7 @@ describe("runGjcGcCommand", () => {
 			pruned += 1;
 			return { removed: true };
 		});
-		const result = await runGjcGcCommand(
+		const result = await runVibGcCommand(
 			["--prune", "--empty-delete-receipts", "--root", root, "--json"],
 			perTestAgentDir,
 			{},
@@ -473,7 +473,7 @@ describe("runGjcGcCommand", () => {
 	test("includes healthy session-index diagnosis in ordinary JSON output", async () => {
 		const agentDir = await sessionIndexAgentDir();
 		await appendSessionIndexEvent(agentDir);
-		const result = await runGjcGcCommand(["--json"], "/tmp", {}, adapters);
+		const result = await runVibGcCommand(["--json"], "/tmp", {}, adapters);
 		const report = JSON.parse(result.stdout);
 		expect(report.session_index).toMatchObject({ status: "healthy", valid_prefix_seq: 1 });
 		expect(result.status).toBe(0);
@@ -486,7 +486,7 @@ describe("runGjcGcCommand", () => {
 		const log = path.join(agentDir, "sdk", "sessions", "index.jsonl");
 		await fs.appendFile(log, "broken\n");
 		const before = await fs.readFile(log, "utf8");
-		const result = await runGjcGcCommand(["--json"], "/tmp", {}, adapters);
+		const result = await runVibGcCommand(["--json"], "/tmp", {}, adapters);
 		const report = JSON.parse(result.stdout);
 		expect(report.session_index).toMatchObject({ status: "corrupt", valid_prefix_seq: 1 });
 		expect(await fs.readFile(log, "utf8")).toBe(before);
@@ -499,7 +499,7 @@ describe("runGjcGcCommand", () => {
 		const log = path.join(agentDir, "sdk", "sessions", "index.jsonl");
 		await fs.mkdir(path.dirname(log), { recursive: true });
 		await fs.writeFile(log, `${JSON.stringify({ version: 99 })}\n`);
-		const result = await runGjcGcCommand(["--json"], "/tmp", {}, adapters);
+		const result = await runVibGcCommand(["--json"], "/tmp", {}, adapters);
 		const report = JSON.parse(result.stdout);
 		expect(report.session_index.status).toBe("unsupported");
 		expect(report.session_index.reason).toContain("Unsupported SDK state version");

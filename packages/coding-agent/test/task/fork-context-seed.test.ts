@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
-import { Agent } from "@gajae-code/agent-core";
-import { estimateMessageTokensHeuristic } from "@gajae-code/agent-core/compaction";
-import { getBundledModel, getBundledModels } from "@gajae-code/ai";
+import { Agent } from "@vib-rato/agent-core";
+import { estimateMessageTokensHeuristic } from "@vib-rato/agent-core/compaction";
+import { getBundledModel, getBundledModels } from "@vib-rato/ai";
 import { ModelRegistry } from "../../src/config/model-registry";
 import { Settings } from "../../src/config/settings";
 import { AgentSession, type ForkContextSeed } from "../../src/session/agent-session";

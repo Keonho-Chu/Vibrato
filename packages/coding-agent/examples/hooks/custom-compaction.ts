@@ -10,11 +10,11 @@
  * which can be cheaper/faster than the main conversation model.
  *
  * Usage:
- *   gjc --hook examples/hooks/custom-compaction.ts
+ *   vib --hook examples/hooks/custom-compaction.ts
  */
-import { complete, getModel } from "@gajae-code/ai";
-import type { HookAPI } from "@gajae-code/coding-agent";
-import { convertToLlm, serializeConversation } from "@gajae-code/coding-agent";
+import { complete, getModel } from "@vib-rato/ai";
+import type { HookAPI } from "@vib-rato/coding-agent";
+import { convertToLlm, serializeConversation } from "@vib-rato/coding-agent";
 
 export default function (pi: HookAPI) {
 	pi.on("session_before_compact", async (event, ctx) => {

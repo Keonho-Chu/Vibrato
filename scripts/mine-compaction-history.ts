@@ -1,5 +1,5 @@
 /**
- * Stream local GJC session JSONL files and mine compaction behavior.
+ * Stream local Vibrato session JSONL files and mine compaction behavior.
  *
  * Usage: bun scripts/mine-compaction-history.ts [--json] [--since YYYY-MM-DD]
  */
@@ -10,7 +10,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { createInterface } from "node:readline";
 
-const SESSIONS_ROOT = join(homedir(), ".gjc", "agent", "sessions");
+const SESSIONS_ROOT = join(homedir(), ".vib", "agent", "sessions");
 
 function opaqueSessionId(sessionFile: string): string {
   return `session:${createHash("sha256").update(sessionFile).digest("hex").slice(0, 16)}`;
@@ -20,7 +20,7 @@ const JULY_END = "2026-07-17";
 const OVERFLOW_PATTERN =
   /context_too_large|exceeds the context window|exceeds the available context size|prompt is too long|context (?:window|length|size).*(?:exceeded|overflow)|(?:input|request|payload).*too large/i;
 
-/** User ~/.gjc/agent/models.yml, verified 2026-07-16. Exact keys take precedence. */
+/** User ~/.vib/agent/models.yml, verified 2026-07-16. Exact keys take precedence. */
 const EXACT_MODEL_WINDOWS: Record<string, number> = {
   // layofflabs (openai-responses proxy): 400k except kimi family (256k)
   "layofflabs/gpt-5.2": 400_000,
@@ -432,8 +432,8 @@ async function main() {
   const dailyAggregates = [...daily.values()].sort((a, b) => a.key.localeCompare(b.key)).map((aggregate) => ({ ...serializeAggregate(aggregate), day: aggregate.key, week: undefined }));
   const output = {
     provenance: {
-      sessionStore: "Local GJC session store (path redacted)",
-      modelWindowMap: "User ~/.gjc/agent/models.yml, verified 2026-07-16; exact provider/model keys precede documented provider/model prefixes.",
+      sessionStore: "Local Vibrato session store (path redacted)",
+      modelWindowMap: "User ~/.vib/agent/models.yml, verified 2026-07-16; exact provider/model keys precede documented provider/model prefixes.",
       thresholdSemantics: "Pre-#1021 uses maxOutputTokens=128000 for known mapped models; post-#1021 uses maxOutputTokens=0.",
     },
     methodology: {

@@ -152,7 +152,7 @@ describe("xAI OAuth login provider", () => {
 				extraAuthorizeParams: {
 					client_id: "must-not-override",
 					plan: "generic",
-					referrer: "gjc-grok-cli",
+					referrer: "vib-grok-cli",
 				},
 			},
 		);
@@ -162,7 +162,7 @@ describe("xAI OAuth login provider", () => {
 
 		expect(authUrl.searchParams.get("client_id")).toBe(XAI_OAUTH_CLIENT_ID);
 		expect(authUrl.searchParams.get("plan")).toBe("generic");
-		expect(authUrl.searchParams.get("referrer")).toBe("gjc-grok-cli");
+		expect(authUrl.searchParams.get("referrer")).toBe("vib-grok-cli");
 	});
 
 	it("exchanges an authorization code for refreshable OAuth credentials", async () => {
@@ -288,7 +288,7 @@ describe("xAI OAuth login provider", () => {
 			extraTokenParams: {
 				client_id: "must-not-override",
 				plan: "generic",
-				referrer: "gjc-grok-cli",
+				referrer: "vib-grok-cli",
 				scope: XAI_OAUTH_SCOPE,
 			},
 		});
@@ -298,7 +298,7 @@ describe("xAI OAuth login provider", () => {
 		expect(tokenParams.get("client_id")).toBe(XAI_OAUTH_CLIENT_ID);
 		expect(tokenParams.get("refresh_token")).toBe("refresh-old");
 		expect(tokenParams.get("plan")).toBe("generic");
-		expect(tokenParams.get("referrer")).toBe("gjc-grok-cli");
+		expect(tokenParams.get("referrer")).toBe("vib-grok-cli");
 		expect(tokenParams.get("scope")).toBe(XAI_OAUTH_SCOPE);
 		expect(refreshed).toMatchObject({
 			access: "access-build",

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { ModelsConfigSchema } from "@gajae-code/coding-agent/config/models-config-schema";
+import { ModelsConfigSchema } from "@vib-rato/coding-agent/config/models-config-schema";
 import modelsSchema from "../../../schemas/models.schema.json" with { type: "json" };
 
 describe("models config Anthropic prompt-cache compatibility", () => {

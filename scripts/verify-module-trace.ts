@@ -50,10 +50,10 @@ const EXPECTED_TOOL_LOADER_SPECIFIERS = new Set([
 ]);
 const TRACE_MILESTONE_DENY_RULES: Record<string, string[]> = {
 	W1c: ["src/sdk/bus/adapters/**", "src/memories/**", "src/hindsight/**", "src/stt/**", "src/secrets/**"],
-	W5b: ["@gajae-code/natives", "bun:sqlite", "packages/ai/src/providers/**"],
+	W5b: ["@vib-rato/natives", "bun:sqlite", "packages/ai/src/providers/**"],
 };
 
-const TRACE_ROOT_SENTINEL = "__GJC_TRACE_ROOT__";
+const TRACE_ROOT_SENTINEL = "__VIB_TRACE_ROOT__";
 
 interface TraceRecord {
 	specifier: string;
@@ -237,7 +237,7 @@ function parseArgs(argv: string[]): CliOptions {
 function isolatedEnvironment(tempRoot: string, scenario: ScenarioName): Record<string, string> {
 	const env: Record<string, string> = {};
 	for (const [key, value] of Object.entries(Bun.env)) {
-		if (!key.startsWith("GJC_") && value !== undefined) env[key] = value;
+		if (!key.startsWith("VIB_") && value !== undefined) env[key] = value;
 	}
 	const home = path.join(tempRoot, "home");
 	const xdgConfig = path.join(tempRoot, "xdg-config");
@@ -247,10 +247,10 @@ function isolatedEnvironment(tempRoot: string, scenario: ScenarioName): Record<s
 		HOME: home,
 		USERPROFILE: home,
 		XDG_CONFIG_HOME: xdgConfig,
-		GJC_CODING_AGENT_DIR: agentDir,
-		GJC_AGENT_DIR: agentDir,
-		GJC_TRACE_SCENARIO: scenario,
-		GJC_TRACE_HARNESS: "1",
+		VIB_CODING_AGENT_DIR: agentDir,
+		VIB_AGENT_DIR: agentDir,
+		VIB_TRACE_SCENARIO: scenario,
+		VIB_TRACE_HARNESS: "1",
 	};
 }
 
@@ -313,7 +313,7 @@ const packageDirCache = new Map<string, string[]>();
 /**
  * Directories that own a given package name (workspace package or node_modules copy).
  *
- * A trace record for `@gajae-code/natives` is usually a relative or absolute path inside
+ * A trace record for `@vib-rato/natives` is usually a relative or absolute path inside
  * `packages/natives`, never the bare package name, so a literal glob can never match it.
  * Resolving the package to its directories lets a package-scoped deny rule fire on any
  * module physically inside that package.
@@ -389,9 +389,9 @@ function isNativeImport(entry: TraceRecord): boolean {
 	return values.some(
 		value =>
 			value === "bun:sqlite" ||
-			value.startsWith("@gajae-code/natives") ||
-			value.includes("/node_modules/@gajae-code/natives") ||
-			value.includes("/node_modules/@gajae-code/natives-") ||
+			value.startsWith("@vib-rato/natives") ||
+			value.includes("/node_modules/@vib-rato/natives") ||
+			value.includes("/node_modules/@vib-rato/natives-") ||
 			value.endsWith(".node") ||
 			value.includes("/native/") ||
 			value.includes("\\native\\"),
@@ -497,8 +497,8 @@ async function readTrace(tracePath: string, entryPath: string): Promise<TraceRec
 
 async function runIdleScenario(tempRoot: string, env: Record<string, string>): Promise<{ stdout: string; stderr: string; exitCode: number; barrier: string }> {
 	const debugPaths = [
-		path.join(env.GJC_AGENT_DIR ?? "", "gjc-debug.log"),
-		path.join(env.GJC_AGENT_DIR ?? "", "state", "gjc-debug.log"),
+		path.join(env.VIB_AGENT_DIR ?? "", "vib-debug.log"),
+		path.join(env.VIB_AGENT_DIR ?? "", "state", "vib-debug.log"),
 	];
 	const driverPath = path.join(tempRoot, "idle-driver.py");
 	const pythonSource = `
@@ -591,12 +591,12 @@ async function runScenario(tempRoot: string, scenario: ScenarioName): Promise<Sc
 			`Scenario "${scenario}" cannot yet reach its non-interactive barrier`,
 		);
 	}
-	const requestedTracePath = process.env.GJC_TRACE_OUT?.trim();
+	const requestedTracePath = process.env.VIB_TRACE_OUT?.trim();
 	const tracePath = requestedTracePath || path.join(tempRoot, `${scenario}.trace.json`);
 	const env = isolatedEnvironment(tempRoot, scenario);
-	env.GJC_TRACE_OUT = tracePath;
+	env.VIB_TRACE_OUT = tracePath;
 	if (scenario === "idle") {
-		env.GJC_DEBUG_REDRAW = "1";
+		env.VIB_DEBUG_REDRAW = "1";
 		const result = await runIdleScenario(tempRoot, env);
 		const records = await readTrace(tracePath, cliEntry);
 		return {
@@ -801,7 +801,7 @@ async function assertLiteralCatalog(kind: CatalogKind): Promise<CatalogReport> {
 	}
 
 	if (kind === "skills") {
-		const filePath = path.join(packageRoot, "src", "defaults", "gjc-skills.generated.ts");
+		const filePath = path.join(packageRoot, "src", "defaults", "vib-skills.generated.ts");
 		if (!fsSync.existsSync(filePath)) {
 			throw new VerifyModuleTraceError("CatalogNotFound", `Bundled skill catalog is missing: ${filePath}`);
 		}
@@ -816,7 +816,7 @@ async function assertLiteralCatalog(kind: CatalogKind): Promise<CatalogReport> {
 		for (const match of source.matchAll(/relativePath:\s*["']([^"']+)["']/g)) {
 			const relativePath = match[1];
 			if (relativePath !== undefined) {
-				expected.add(`./gjc/skills/${relativePath.replace(/^skills\//, "").replace(/^skill-fragments\//, "")}`);
+				expected.add(`./vib/skills/${relativePath.replace(/^skills\//, "").replace(/^skill-fragments\//, "")}`);
 			}
 		}
 		if (expected.size === 0 || expected.size !== actual.size || [...expected].some(specifier => !actual.has(specifier))) {
@@ -880,7 +880,7 @@ async function main(): Promise<void> {
 	}
 
 	const scenarioReports: ScenarioTraceReport[] = [];
-	const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-module-trace-"));
+	const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "vib-module-trace-"));
 	try {
 		for (const scenario of options.scenarios) {
 			const report = await runScenario(tempRoot, scenario);

@@ -1,7 +1,7 @@
-import type { AgentTool, AgentToolResult } from "@gajae-code/agent-core";
-import type { Component } from "@gajae-code/tui";
-import { Text } from "@gajae-code/tui";
-import { prompt, untilAborted } from "@gajae-code/utils";
+import type { AgentTool, AgentToolResult } from "@vib-rato/agent-core";
+import type { Component } from "@vib-rato/tui";
+import { Text } from "@vib-rato/tui";
+import { prompt, untilAborted } from "@vib-rato/utils";
 import * as z from "zod/v4";
 import type { RenderResultOptions } from "../extensibility/custom-tools/types";
 import type { Theme } from "../modes/theme/theme";

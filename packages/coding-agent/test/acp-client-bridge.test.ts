@@ -19,7 +19,7 @@ describe("ACP client bridge permission requests", () => {
 		} as unknown as AgentSideConnection;
 
 		const bridge = createAcpClientBridge(connection, "session-1", {
-			_meta: { gjc: { permissionHandling: "prompt" } },
+			_meta: { vib: { permissionHandling: "prompt" } },
 		});
 
 		const outcome = await bridge.requestPermission!(
@@ -53,7 +53,7 @@ describe("ACP client bridge permission requests", () => {
 			},
 		} as unknown as AgentSideConnection;
 		const bridge = createAcpClientBridge(connection, "session-1", {
-			_meta: { gjc: { permissionHandling: "prompt" } },
+			_meta: { vib: { permissionHandling: "prompt" } },
 		});
 
 		expect(
@@ -65,47 +65,47 @@ describe("ACP client bridge permission requests", () => {
 	});
 
 	it("only enables ACP permission requests in prompt mode", () => {
-		expectPermissionPrompt({ _meta: { gjc: { permissionHandling: "prompt" } } }, true);
-		expectPermissionPrompt({ _meta: { gjc: { permissionHandling: "auto" } } }, false);
-		expectPermissionPrompt({ _meta: { gjc: { permissionHandling: "always-allow" } } }, false);
+		expectPermissionPrompt({ _meta: { vib: { permissionHandling: "prompt" } } }, true);
+		expectPermissionPrompt({ _meta: { vib: { permissionHandling: "auto" } } }, false);
+		expectPermissionPrompt({ _meta: { vib: { permissionHandling: "always-allow" } } }, false);
 	});
 
-	it("uses GJC_ACP_PERMISSION_MODE when client metadata is absent", () => {
-		const previous = process.env.GJC_ACP_PERMISSION_MODE;
+	it("uses VIB_ACP_PERMISSION_MODE when client metadata is absent", () => {
+		const previous = process.env.VIB_ACP_PERMISSION_MODE;
 		try {
-			process.env.GJC_ACP_PERMISSION_MODE = "auto";
+			process.env.VIB_ACP_PERMISSION_MODE = "auto";
 			expectPermissionPrompt(undefined, false);
-			process.env.GJC_ACP_PERMISSION_MODE = "always-allow";
+			process.env.VIB_ACP_PERMISSION_MODE = "always-allow";
 			expectPermissionPrompt({}, false);
-			process.env.GJC_ACP_PERMISSION_MODE = "prompt";
+			process.env.VIB_ACP_PERMISSION_MODE = "prompt";
 			expectPermissionPrompt({}, true);
-			process.env.GJC_ACP_PERMISSION_MODE = "invalid";
+			process.env.VIB_ACP_PERMISSION_MODE = "invalid";
 			expectPermissionPrompt({}, true);
-			process.env.GJC_ACP_PERMISSION_MODE = "AUTO";
+			process.env.VIB_ACP_PERMISSION_MODE = "AUTO";
 			expectPermissionPrompt({}, true);
-			process.env.GJC_ACP_PERMISSION_MODE = " always-allow ";
+			process.env.VIB_ACP_PERMISSION_MODE = " always-allow ";
 			expectPermissionPrompt({}, true);
 		} finally {
-			if (previous === undefined) delete process.env.GJC_ACP_PERMISSION_MODE;
-			else process.env.GJC_ACP_PERMISSION_MODE = previous;
+			if (previous === undefined) delete process.env.VIB_ACP_PERMISSION_MODE;
+			else process.env.VIB_ACP_PERMISSION_MODE = previous;
 		}
 	});
 
 	it("prefers client metadata and fails safely for invalid explicit values", () => {
-		const previous = process.env.GJC_ACP_PERMISSION_MODE;
+		const previous = process.env.VIB_ACP_PERMISSION_MODE;
 		try {
-			process.env.GJC_ACP_PERMISSION_MODE = "prompt";
-			expectPermissionPrompt({ _meta: { gjc: { permissionHandling: "auto" } } }, false);
-			expectPermissionPrompt({ _meta: { gjc: { permissionHandling: "always-allow" } } }, false);
-			process.env.GJC_ACP_PERMISSION_MODE = "always-allow";
-			expectPermissionPrompt({ _meta: { gjc: { permissionHandling: "prompt" } } }, true);
-			expectPermissionPrompt({ _meta: { gjc: { permissionHandling: "invalid" } } }, true);
-			expectPermissionPrompt({ _meta: { gjc: { permissionHandling: "AUTO" } } }, true);
-			expectPermissionPrompt({ _meta: { gjc: { permissionHandling: " always-allow " } } }, true);
-			expectPermissionPrompt({ _meta: { gjc: { permissionHandling: null } } }, true);
+			process.env.VIB_ACP_PERMISSION_MODE = "prompt";
+			expectPermissionPrompt({ _meta: { vib: { permissionHandling: "auto" } } }, false);
+			expectPermissionPrompt({ _meta: { vib: { permissionHandling: "always-allow" } } }, false);
+			process.env.VIB_ACP_PERMISSION_MODE = "always-allow";
+			expectPermissionPrompt({ _meta: { vib: { permissionHandling: "prompt" } } }, true);
+			expectPermissionPrompt({ _meta: { vib: { permissionHandling: "invalid" } } }, true);
+			expectPermissionPrompt({ _meta: { vib: { permissionHandling: "AUTO" } } }, true);
+			expectPermissionPrompt({ _meta: { vib: { permissionHandling: " always-allow " } } }, true);
+			expectPermissionPrompt({ _meta: { vib: { permissionHandling: null } } }, true);
 		} finally {
-			if (previous === undefined) delete process.env.GJC_ACP_PERMISSION_MODE;
-			else process.env.GJC_ACP_PERMISSION_MODE = previous;
+			if (previous === undefined) delete process.env.VIB_ACP_PERMISSION_MODE;
+			else process.env.VIB_ACP_PERMISSION_MODE = previous;
 		}
 	});
 });

@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import type { AgentMessage } from "@gajae-code/agent-core";
-import { formatSessionDumpText, SessionManager } from "@gajae-code/coding-agent";
-import { TempDir } from "@gajae-code/utils";
+import type { AgentMessage } from "@vib-rato/agent-core";
+import { formatSessionDumpText, SessionManager } from "@vib-rato/coding-agent";
+import { TempDir } from "@vib-rato/utils";
 import { generateReport } from "../src/report";
 import { buildBenchmarkResult, type TaskRunResult, writeConversationDump } from "../src/runner";
 import type { EditTask } from "../src/tasks";

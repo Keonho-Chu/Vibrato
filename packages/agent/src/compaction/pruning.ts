@@ -9,8 +9,8 @@
  */
 
 import { createHash } from "node:crypto";
-import type { ToolCall, ToolResultMessage } from "@gajae-code/ai";
-import { sanitizeText } from "@gajae-code/utils";
+import type { ToolCall, ToolResultMessage } from "@vib-rato/ai";
+import { sanitizeText } from "@vib-rato/utils";
 import type { AgentMessage } from "../types";
 import { estimateEntryTokens, estimateTextTokensHeuristic } from "./compaction";
 import type { SessionEntry, SessionMessageEntry } from "./entries";

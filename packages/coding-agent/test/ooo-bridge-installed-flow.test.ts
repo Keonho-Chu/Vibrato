@@ -2,9 +2,9 @@ import { afterEach, describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { AgentMessage } from "@gajae-code/agent-core";
-import { Agent } from "@gajae-code/agent-core";
-import { getBundledModel } from "@gajae-code/ai";
+import type { AgentMessage } from "@vib-rato/agent-core";
+import { Agent } from "@vib-rato/agent-core";
+import { getBundledModel } from "@vib-rato/ai";
 import { ModelRegistry } from "../src/config/model-registry";
 import { Settings } from "../src/config/settings";
 import { loadExtensions } from "../src/extensibility/extensions/loader";
@@ -28,7 +28,7 @@ describe("installed ooo bridge flow", () => {
 	afterEach(() => {
 		vi.restoreAllMocks();
 		delete process.env.OUROBOROS_CLI;
-		delete process.env.GJC_NO_TITLE;
+		delete process.env.VIB_NO_TITLE;
 	});
 
 	it("renders the first question, correlates the next answer, and renders termination", async () => {
@@ -106,7 +106,7 @@ describe("installed ooo bridge flow", () => {
 			{
 				type: "stdio",
 				command: "/opt/ouroboros/bin/ouroboros",
-				args: ["mcp", "serve", "--runtime", "gjc"],
+				args: ["mcp", "serve", "--runtime", "vib"],
 				cwd: "/tmp/ooo-installed-flow",
 			},
 			{ signal: expect.any(AbortSignal) },
@@ -189,7 +189,7 @@ describe("installed ooo bridge flow", () => {
 	});
 
 	it("drops queued explicit starts across AgentSession switch and InputController clear resets", async () => {
-		process.env.GJC_NO_TITLE = "1";
+		process.env.VIB_NO_TITLE = "1";
 		const connection = { name: "session-controls" } as MCPServerConnection;
 		vi.spyOn(runtimeMcpModule, "connectToServer").mockResolvedValue(connection);
 		const pendingBeforeSwitch = Promise.withResolvers<MCPToolCallResult>();
@@ -301,7 +301,7 @@ describe("installed ooo bridge flow", () => {
 	it.skipIf(process.platform !== "linux" || process.arch !== "x64")(
 		"loads the copied one-file extension from a compiled binary without peer node_modules",
 		async () => {
-			const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-ooo-compiled-"));
+			const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-ooo-compiled-"));
 			try {
 				const extensionDir = path.join(root, "extensions", "ouroboros-ooo-bridge");
 				const projectDir = path.join(root, "project");

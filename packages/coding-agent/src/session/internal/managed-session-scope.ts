@@ -3,10 +3,10 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 
-import type { RecoveryFsRoot } from "@gajae-code/natives";
+import type { RecoveryFsRoot } from "@vib-rato/natives";
 
 type NativeManagedScope = Pick<
-	typeof import("@gajae-code/natives"),
+	typeof import("@vib-rato/natives"),
 	| "applyOwnerOnlyPathSecurity"
 	| "canonicalExistingDirectoryIdentity"
 	| "exactRestore"
@@ -17,10 +17,10 @@ type NativeManagedScope = Pick<
 >;
 
 function nativeScope(): NativeManagedScope {
-	return require("@gajae-code/natives") as NativeManagedScope;
+	return require("@vib-rato/natives") as NativeManagedScope;
 }
 
-import { hasFsCode, logger, pathIsWithin } from "@gajae-code/utils";
+import { hasFsCode, logger, pathIsWithin } from "@vib-rato/utils";
 import type { ResumeSessionIdentity } from "../session-manager";
 import {
 	FileSessionStorage,
@@ -59,7 +59,7 @@ import {
 
 export const MANAGED_SESSION_LAYOUT_VERSION = 2 as const;
 export const MANAGED_SESSION_IDENTITY_VERSION = 1 as const;
-export const MANAGED_SESSION_BINDING_FILE = ".gjc-managed-session-scope.v2.json";
+export const MANAGED_SESSION_BINDING_FILE = ".vib-managed-session-scope.v2.json";
 
 export interface ManagedScope {
 	apiVersion: 1;
@@ -352,7 +352,7 @@ const HEADER_MAX_BYTES = 64 * 1024;
 
 function scopeDigest(platform: "posix" | "win32", canonicalPath: string): string {
 	const bytes = createHash("sha256")
-		.update("gjc-managed-session-scope\0identity-v1\0", "utf8")
+		.update("vib-managed-session-scope\0identity-v1\0", "utf8")
 		.update(platform, "utf8")
 		.update("\0", "utf8")
 		.update(canonicalPath, "utf8")
@@ -1261,7 +1261,7 @@ export function listManagedCandidates(scope: ManagedScope): ManagedCandidateList
 	}
 }
 
-const MANAGED_INTERNAL_DIRECTORY = ".gjc-managed-session-internal";
+const MANAGED_INTERNAL_DIRECTORY = ".vib-managed-session-internal";
 const MANAGED_RECEIPTS_DIRECTORY = "receipts";
 const MANAGED_LOCKS_DIRECTORY = "locks";
 const MANAGED_TOMBSTONES_DIRECTORY = "tombstones";
@@ -1886,7 +1886,7 @@ function isQuarantinePath(target: RetiredTarget, pathname: unknown): pathname is
 	return (
 		typeof pathname === "string" &&
 		path.dirname(pathname) === path.dirname(target.path) &&
-		path.basename(pathname).startsWith(".gjc-delete-")
+		path.basename(pathname).startsWith(".vib-delete-")
 	);
 }
 
@@ -1894,7 +1894,7 @@ function isRetainedNativePath(target: RetiredTarget, pathname: unknown): pathnam
 	return (
 		typeof pathname === "string" &&
 		path.dirname(pathname) === path.dirname(target.path) &&
-		path.basename(pathname).startsWith(".gjc-")
+		path.basename(pathname).startsWith(".vib-")
 	);
 }
 
@@ -2526,8 +2526,8 @@ function nextCleanupReceipt(target: RetiredTarget, pending: CleanupReceipt | und
 		retainedTranscriptSuccessorPath: pending?.retainedTranscriptSuccessorPath,
 		retainedTranscriptPlaceholderPath: pending?.retainedTranscriptPlaceholderPath,
 		retainedTranscriptUnknownPath: pending?.retainedTranscriptUnknownPath,
-		plannedArtifactsPath: path.join(directory, `.gjc-delete-${operation}-artifacts-${attempt}`),
-		plannedTranscriptPath: path.join(directory, `.gjc-delete-${operation}-transcript-${attempt}`),
+		plannedArtifactsPath: path.join(directory, `.vib-delete-${operation}-artifacts-${attempt}`),
+		plannedTranscriptPath: path.join(directory, `.vib-delete-${operation}-transcript-${attempt}`),
 	};
 }
 
@@ -2888,7 +2888,7 @@ function planArtifactRootForMigration(sourceTranscript: string, operation: strin
 	const parent = fs.lstatSync(path.dirname(originalPath), { bigint: true });
 	return {
 		originalPath,
-		detachedPath: path.join(path.dirname(originalPath), `.gjc-migrate-${operation}-artifacts`),
+		detachedPath: path.join(path.dirname(originalPath), `.vib-migrate-${operation}-artifacts`),
 		identity: {
 			dev: stat.dev,
 			ino: stat.ino,
@@ -3155,7 +3155,7 @@ export function restorePreparedArtifactRoot(
 		quarantine.path !== source.path.slice(0, -6) ||
 		typeof quarantine.detachedPath !== "string" ||
 		path.dirname(quarantine.detachedPath) !== path.dirname(source.path) ||
-		!path.basename(quarantine.detachedPath).startsWith(".gjc-migrate-") ||
+		!path.basename(quarantine.detachedPath).startsWith(".vib-migrate-") ||
 		!artifactTreeSnapshot(quarantine.tree) ||
 		!identity ||
 		typeof identity.dev !== "string" ||

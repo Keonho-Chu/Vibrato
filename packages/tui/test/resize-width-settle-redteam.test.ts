@@ -172,14 +172,14 @@ beforeEach(() => {
 	originalTmuxPane = process.env.TMUX_PANE;
 	originalSty = process.env.STY;
 	originalZellij = process.env.ZELLIJ;
-	originalTmuxLaunched = process.env.GJC_TMUX_LAUNCHED;
+	originalTmuxLaunched = process.env.VIB_TMUX_LAUNCHED;
 	originalVirtualViewport = process.env.PI_TUI_VIRTUAL_VIEWPORT;
 	originalLegacyMultiplexer = process.env.PI_TUI_LEGACY_MULTIPLEXER_FULL_RENDER;
 	delete process.env.TMUX;
 	delete process.env.TMUX_PANE;
 	delete process.env.STY;
 	delete process.env.ZELLIJ;
-	delete process.env.GJC_TMUX_LAUNCHED;
+	delete process.env.VIB_TMUX_LAUNCHED;
 	delete process.env.PI_TUI_VIRTUAL_VIEWPORT;
 	delete process.env.PI_TUI_LEGACY_MULTIPLEXER_FULL_RENDER;
 });
@@ -193,7 +193,7 @@ afterEach(() => {
 	restore("TMUX_PANE", originalTmuxPane);
 	restore("STY", originalSty);
 	restore("ZELLIJ", originalZellij);
-	restore("GJC_TMUX_LAUNCHED", originalTmuxLaunched);
+	restore("VIB_TMUX_LAUNCHED", originalTmuxLaunched);
 	restore("PI_TUI_VIRTUAL_VIEWPORT", originalVirtualViewport);
 	restore("PI_TUI_LEGACY_MULTIPLEXER_FULL_RENDER", originalLegacyMultiplexer);
 });

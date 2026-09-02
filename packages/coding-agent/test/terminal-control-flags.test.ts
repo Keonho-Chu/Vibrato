@@ -8,33 +8,33 @@ describe("applyTerminalControlFlagsToEnv", () => {
 		expect(env).toEqual({});
 	});
 
-	it("--no-pty sets the canonical GJC_ name and the legacy PI_ name", () => {
+	it("--no-pty sets the canonical VIB_ name and the legacy PI_ name", () => {
 		const env: NodeJS.ProcessEnv = {};
 		applyTerminalControlFlagsToEnv({ noPty: true, noTitle: false }, env);
-		expect(env.GJC_NO_PTY).toBe("1");
+		expect(env.VIB_NO_PTY).toBe("1");
 		expect(env.PI_NO_PTY).toBe("1");
 	});
 
-	it("--no-pty overrides a user's GJC_NO_PTY=0 so the flag keeps CLI authority", () => {
-		// Regression: the reader resolves GJC-first, so if the flag only set PI_NO_PTY
-		// a user's GJC_NO_PTY=0 would silently override the explicit --no-pty.
-		const env: NodeJS.ProcessEnv = { GJC_NO_PTY: "0" };
+	it("--no-pty overrides a user's VIB_NO_PTY=0 so the flag keeps CLI authority", () => {
+		// Regression: the reader resolves Vibrato-first, so if the flag only set PI_NO_PTY
+		// a user's VIB_NO_PTY=0 would silently override the explicit --no-pty.
+		const env: NodeJS.ProcessEnv = { VIB_NO_PTY: "0" };
 		applyTerminalControlFlagsToEnv({ noPty: true, noTitle: false }, env);
-		expect(env.GJC_NO_PTY).toBe("1");
+		expect(env.VIB_NO_PTY).toBe("1");
 	});
 
-	it("--no-title sets the canonical GJC_ name and the legacy PI_ name", () => {
-		const env: NodeJS.ProcessEnv = { GJC_NO_TITLE: "0" };
+	it("--no-title sets the canonical VIB_ name and the legacy PI_ name", () => {
+		const env: NodeJS.ProcessEnv = { VIB_NO_TITLE: "0" };
 		applyTerminalControlFlagsToEnv({ noPty: false, noTitle: true }, env);
-		expect(env.GJC_NO_TITLE).toBe("1");
+		expect(env.VIB_NO_TITLE).toBe("1");
 		expect(env.PI_NO_TITLE).toBe("1");
 	});
 
 	it("--acp mode implies no-title but not no-pty", () => {
 		const env: NodeJS.ProcessEnv = {};
 		applyTerminalControlFlagsToEnv({ noPty: false, noTitle: false, mode: "acp" }, env);
-		expect(env.GJC_NO_TITLE).toBe("1");
+		expect(env.VIB_NO_TITLE).toBe("1");
 		expect(env.PI_NO_TITLE).toBe("1");
-		expect(env.GJC_NO_PTY).toBeUndefined();
+		expect(env.VIB_NO_PTY).toBeUndefined();
 	});
 });

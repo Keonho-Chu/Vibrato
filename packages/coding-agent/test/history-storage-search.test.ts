@@ -7,7 +7,7 @@ import { HistoryStorage } from "../src/session/history-storage";
 let tempDir = "";
 
 async function freshStorage(): Promise<HistoryStorage> {
-	tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-history-search-"));
+	tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-history-search-"));
 	HistoryStorage.resetInstance();
 	return HistoryStorage.open(path.join(tempDir, "history.db"));
 }

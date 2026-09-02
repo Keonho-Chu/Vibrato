@@ -1,0 +1,40 @@
+{
+	"type": "module",
+	"name": "vib-rato",
+	"version": "0.15.6",
+	"description": "One-line npm install wrapper for the Vibrato vib CLI",
+	"homepage": "https://vib-rato.com",
+	"author": "Yeachan-Heo and Vibrato Contributors",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Keonho-Chu/Vibrato.git",
+		"directory": "packages/vib-rato"
+	},
+	"bugs": {
+		"url": "https://github.com/Keonho-Chu/Vibrato/issues"
+	},
+	"keywords": [
+		"coding-agent",
+		"ai",
+		"llm",
+		"cli",
+		"tui",
+		"agent",
+		"vib"
+	],
+	"bin": {
+		"vib": "bin/vib.js"
+	},
+	"dependencies": {
+		"@vib-rato/coding-agent": "catalog:"
+	},
+	"engines": {
+		"bun": ">=1.4.0"
+	},
+	"files": [
+		"bin",
+		"README.md",
+		"CHANGELOG.md"
+	]
+}

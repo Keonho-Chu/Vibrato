@@ -1,6 +1,6 @@
 import * as path from "node:path";
-import type { FileType as FileTypeEnum, GlobMatch, listWorkspace as listWorkspaceFn } from "@gajae-code/natives";
-import { formatAge, formatBytes } from "@gajae-code/utils";
+import type { FileType as FileTypeEnum, GlobMatch, listWorkspace as listWorkspaceFn } from "@vib-rato/natives";
+import { formatAge, formatBytes } from "@vib-rato/utils";
 
 /** Defaults for the workspace tree shown in the system prompt. */
 const WORKSPACE_DEFAULTS = {
@@ -16,12 +16,12 @@ const WORKSPACE_DEFAULTS = {
 export const AGENTS_MD_LIMIT = 200;
 
 // Lazy natives binding: loading this module must not materialize
-// @gajae-code/natives (W5b S1/idle module-trace gate). The addon loads only
+// @vib-rato/natives (W5b S1/idle module-trace gate). The addon loads only
 // when a workspace scan actually runs.
 let nativeWorkspaceBindings: { FileType: typeof FileTypeEnum; listWorkspace: typeof listWorkspaceFn } | undefined;
 async function workspaceNatives(): Promise<{ FileType: typeof FileTypeEnum; listWorkspace: typeof listWorkspaceFn }> {
 	if (!nativeWorkspaceBindings) {
-		const mod = require("@gajae-code/natives") as {
+		const mod = require("@vib-rato/natives") as {
 			FileType: typeof FileTypeEnum;
 			listWorkspace: typeof listWorkspaceFn;
 		};

@@ -8,7 +8,7 @@ Ralplan now persists an `intent` stage after the Planner artifact and before Arc
 
 ## Structured workflow recovery projection
 
-`packages/coding-agent/src/gjc-runtime/workflow-recovery-projection.ts` derives a bounded projection from canonical durable state through read-only filesystem access:
+`packages/coding-agent/src/vib-runtime/workflow-recovery-projection.ts` derives a bounded projection from canonical durable state through read-only filesystem access:
 
 - **Ralplan**: durable mode state selects the active run. During consensus, the latest confined `planner`/`revision` artifact supplies objective/scope/non-goals/acceptance criteria and the exact next action (`run-plan-review`, `revise-plan`, or `reconcile-intent`); after finalization the `final` artifact yields `awaiting-approval`. Legacy discovery orders runs by `index.jsonl` freshness and skips unfinished/malformed candidates. Artifact paths are realpath-confined to the run directory and their recorded SHA-256 must match the bytes read.
 - **Ultragoal**: `goals.json` + `ledger.jsonl` produce the aggregate objective, per-goal accepted scope, completed-goal acceptance evidence, the current goal (active/failed or first schedulable), measurable progress counters (total/completed/outstanding goals, latest joined cohort generation + frozen `sourceHash`, newest ledger event id), and the exact next action class (`continue-current-goal`, `start-next-goal`, `resolve-review-blockers`, `final-aggregate-checkpoint`, ...).
@@ -16,7 +16,7 @@ Ralplan now persists an `intent` stage after the Planner artifact and before Arc
 Safety properties:
 
 - **Safe degradation** — malformed, stale, unreadable, or tampered durable state yields `undefined` and compaction falls back to the previous thin projection; projection failures never abort compaction.
-- **Read-only** — the projection never mutates `.gjc/` state.
+- **Read-only** — the projection never mutates `.vib/` state.
 
 ### Compaction consumption
 
@@ -32,7 +32,7 @@ Each compaction attempt fingerprints the projection's contract-relevant fields (
 
 ## Ultragoal validation-applicability policy
 
-`packages/coding-agent/src/gjc-runtime/ultragoal-validation-policy.ts` selects expensive boundary lanes deterministically from durable facts. Selection is runtime-authoritative and inspectable; free-form model prose can never grant a reduction.
+`packages/coding-agent/src/vib-runtime/ultragoal-validation-policy.ts` selects expensive boundary lanes deterministically from durable facts. Selection is runtime-authoritative and inspectable; free-form model prose can never grant a reduction.
 
 Low-risk eligibility (the only case where redundant lanes may be omitted) requires **all** of:
 
@@ -51,7 +51,7 @@ Omission mechanics:
 
 ### Unchanged-basis rerun avoidance
 
-Run `gjc ultragoal quality-gate source-hash --json` on the clean frozen snapshot to obtain the only accepted cohort hash. `basisUnchanged` is true only when the newest ledger-recorded joined cohort source hash and the gate's current cohort hash both equal that runtime-computed digest, and no review blockers reopened. The digest binds integration base, merge base, normalized path/status rows, captured diff, and the identity/content of untracked files without following symlink targets. CI changed-path metadata participates only when the inspected Git root equals its authoritative `GITHUB_WORKSPACE`; an independent nested/temp repository cannot inherit unrelated outer-workspace paths. A changed source, a review fix, an integration-base change, incompletely captured content, or invalidated evidence forces a full rerun exactly as before; cohort parallelism and the frozen-source-hash lane binding are untouched whenever lanes run.
+Run `vib ultragoal quality-gate source-hash --json` on the clean frozen snapshot to obtain the only accepted cohort hash. `basisUnchanged` is true only when the newest ledger-recorded joined cohort source hash and the gate's current cohort hash both equal that runtime-computed digest, and no review blockers reopened. The digest binds integration base, merge base, normalized path/status rows, captured diff, and the identity/content of untracked files without following symlink targets. CI changed-path metadata participates only when the inspected Git root equals its authoritative `GITHUB_WORKSPACE`; an independent nested/temp repository cannot inherit unrelated outer-workspace paths. A changed source, a review fix, an integration-base change, incompletely captured content, or invalidated evidence forces a full rerun exactly as before; cohort parallelism and the frozen-source-hash lane binding are untouched whenever lanes run.
 
 ## Comparative and forced-compaction evidence
 

@@ -2,14 +2,14 @@
 
 /**
  * Credential-free ACP fixture launcher. The loopback endpoint is deliberately
- * deterministic; the child remains the production `gjc --mode acp` surface.
+ * deterministic; the child remains the production `vib --mode acp` surface.
  */
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 
 const root = path.resolve(import.meta.dir, "..", "..", "..");
-const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-acp-conformance-"));
+const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-acp-conformance-"));
 let child: ReturnType<typeof Bun.spawn> | undefined;
 let server: ReturnType<typeof Bun.serve> | undefined;
 
@@ -35,7 +35,7 @@ function sse(value: unknown): string {
 }
 
 function completion(delta: Record<string, unknown>, finishReason: string | null = null): string {
-	return sse({ id: "gjc-conformance", choices: [{ delta, finish_reason: finishReason }] });
+	return sse({ id: "vib-conformance", choices: [{ delta, finish_reason: finishReason }] });
 }
 
 function toolCall(name: "read" | "write", arguments_: Record<string, string>): string {
@@ -185,7 +185,7 @@ await Bun.write(
 // The pinned corpus reads `README.md` from the session cwd the runner passes on
 // `session/new`. The runner creates that directory but seeds no content, so seed it
 // here (never inside the upstream corpus) when the harness names it.
-const scratchCwd = process.env.GJC_ACP_CONFORMANCE_CWD?.trim();
+const scratchCwd = process.env.VIB_ACP_CONFORMANCE_CWD?.trim();
 if (scratchCwd) {
 	const scratchReadme = path.join(scratchCwd, "README.md");
 	if (!(await Bun.file(scratchReadme).exists())) await Bun.write(scratchReadme, "acpx conformance workspace\n");
@@ -202,7 +202,7 @@ child = Bun.spawn(
 	],
 	{
 		cwd: root,
-		env: { ...process.env, GJC_CODING_AGENT_DIR: agentDir, PI_CODING_AGENT_DIR: agentDir },
+		env: { ...process.env, VIB_CODING_AGENT_DIR: agentDir, PI_CODING_AGENT_DIR: agentDir },
 		stdin: "inherit",
 		stdout: "inherit",
 		stderr: "inherit",

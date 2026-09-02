@@ -43,7 +43,7 @@ export type UpstreamReport = {
 export type ConformanceReport = {
 	command: string[];
 	cwd: string;
-	gjc: { commit: string; dirty: boolean };
+	vib: { commit: string; dirty: boolean };
 	acpx: { version: string; gitHead: string };
 	profile: string;
 	agentCommand: string;
@@ -118,7 +118,7 @@ export async function runAcpConformance(options: RunAcpConformanceOptions): Prom
 	const metadata = await (options.fetchMetadata ?? fetchNpmMetadata)();
 	const checkout = await (options.checkout ?? checkoutAcpxSource)();
 	assertProvenance(metadata, checkout);
-	const upstreamReportPath = path.join(os.tmpdir(), `gjc-acpx-${crypto.randomUUID()}.json`);
+	const upstreamReportPath = path.join(os.tmpdir(), `vib-acpx-${crypto.randomUUID()}.json`);
 	const command = [
 		"bun",
 		path.join(checkout.root, "conformance", "runner", "run.ts"),
@@ -150,7 +150,7 @@ export async function runAcpConformance(options: RunAcpConformanceOptions): Prom
 			await (options.writeReport ?? writeReport)(options.reportPath, {
 				command,
 				cwd: options.cwd ?? process.cwd(),
-				gjc: gjcIdentity(),
+				vib: vibIdentity(),
 				acpx: { version: metadata.version, gitHead: metadata.gitHead as string },
 				profile,
 				agentCommand,
@@ -164,7 +164,7 @@ export async function runAcpConformance(options: RunAcpConformanceOptions): Prom
 	const report: ConformanceReport = {
 		command,
 		cwd: options.cwd ?? process.cwd(),
-		gjc: gjcIdentity(),
+		vib: vibIdentity(),
 		acpx: { version: metadata.version, gitHead: metadata.gitHead! },
 		profile,
 		agentCommand,
@@ -175,7 +175,7 @@ export async function runAcpConformance(options: RunAcpConformanceOptions): Prom
 	return report;
 }
 
-function gjcIdentity(): { commit: string; dirty: boolean } {
+function vibIdentity(): { commit: string; dirty: boolean } {
 	try {
 		const commit = Bun.spawnSync(["git", "rev-parse", "HEAD"]).stdout.toString().trim();
 		const dirty = Bun.spawnSync(["git", "status", "--porcelain"]).stdout.toString().trim().length > 0;
@@ -210,7 +210,7 @@ async function commandOutput(command: string[], cwd?: string, env?: Record<strin
 }
 
 async function checkoutAcpxSource(): Promise<AcpxCheckout> {
-	const root = path.join(os.homedir(), ".cache", "gjc", "acpx", ACPX_GIT_HEAD);
+	const root = path.join(os.homedir(), ".cache", "vib", "acpx", ACPX_GIT_HEAD);
 	try {
 		await fs.access(path.join(root, ".git"));
 	} catch {
@@ -226,7 +226,7 @@ async function checkoutAcpxSource(): Promise<AcpxCheckout> {
 	const status = await commandOutput(["git", "status", "--porcelain"], root);
 	if (status.length > 0) throw new Error(`acpx source checkout is not clean at ${ACPX_GIT_HEAD}.`);
 	// The upstream runner resolves its own imports (`@agentclientprotocol/sdk`, `zod`)
-	// from this checkout, not from the gjc workspace, so the pin has to be installed
+	// from this checkout, not from the vib workspace, so the pin has to be installed
 	// before it can run. `git clean` deliberately preserves node_modules so a warm
 	// cache skips the reinstall.
 	await commandOutput(["bun", "install", "--no-save", "--ignore-scripts"], root);
@@ -238,7 +238,7 @@ async function runRunner(options: { command: string[]; cwd: string; sessionCwd?:
 	await commandOutput(
 		options.command,
 		options.cwd,
-		options.sessionCwd ? { GJC_ACP_CONFORMANCE_CWD: options.sessionCwd } : undefined,
+		options.sessionCwd ? { VIB_ACP_CONFORMANCE_CWD: options.sessionCwd } : undefined,
 	);
 }
 async function readReport(reportPath: string): Promise<unknown> {

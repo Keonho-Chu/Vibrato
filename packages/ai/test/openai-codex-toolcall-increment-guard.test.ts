@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
-import * as utils from "@gajae-code/utils";
-import { getAgentDir, setAgentDir, TempDir } from "@gajae-code/utils";
+import * as utils from "@vib-rato/utils";
+import { getAgentDir, setAgentDir, TempDir } from "@vib-rato/utils";
 import { streamOpenAICodexResponses } from "../src/providers/openai-codex-responses";
 import type { Context, Model, ToolCall } from "../src/types";
 

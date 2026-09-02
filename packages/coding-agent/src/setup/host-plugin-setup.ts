@@ -1,5 +1,5 @@
 /**
- * Host plugin setup for `gjc setup claude` and `gjc setup codex`.
+ * Host plugin setup for `vib setup claude` and `vib setup codex`.
  *
  * Renders install guidance and a fail-closed coordinator MCP config preview for
  * the canonical generated plugin bundle under `plugins/`. This is intentionally
@@ -9,7 +9,7 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { getProjectDir } from "@gajae-code/utils";
+import { getProjectDir } from "@vib-rato/utils";
 
 export type HostPluginKind = "claude" | "codex";
 
@@ -39,7 +39,7 @@ export interface HostPluginSetupResult {
 	check?: { ok: boolean; checked: string[]; missing: string[] };
 }
 
-const NAMESPACE_LABEL = "gajae-code-plugin";
+const NAMESPACE_LABEL = "vib-rato-plugin";
 
 function resolveProjectRoot(flags: HostPluginSetupFlags): string {
 	const explicit = flags.root?.find(root => root.trim().length > 0);
@@ -54,14 +54,14 @@ function verifyBundleFiles(files: string[]): { ok: boolean; checked: string[]; m
 export function buildHostPluginSetup(host: HostPluginKind, flags: HostPluginSetupFlags = {}): HostPluginSetupResult {
 	const projectRoot = resolveProjectRoot(flags);
 	const marketplaceRoot = path.join(projectRoot, "plugins");
-	const pluginDir = path.join(marketplaceRoot, "gajae-code");
+	const pluginDir = path.join(marketplaceRoot, "vib-rato");
 	const repo = flags.repo && flags.repo.trim().length > 0 ? flags.repo.trim() : NAMESPACE_LABEL;
 
 	// Concrete, fail-closed env: workdir allowlist is the project root, no mutations.
 	const env: Record<string, string> = {
-		GJC_COORDINATOR_MCP_WORKDIR_ROOTS: projectRoot,
-		GJC_COORDINATOR_MCP_REPO: repo,
-		GJC_COORDINATOR_MCP_SESSION_COMMAND: "gjc --worktree",
+		VIB_COORDINATOR_MCP_WORKDIR_ROOTS: projectRoot,
+		VIB_COORDINATOR_MCP_REPO: repo,
+		VIB_COORDINATOR_MCP_SESSION_COMMAND: "vib --worktree",
 	};
 
 	if (host === "claude") {
@@ -77,12 +77,12 @@ export function buildHostPluginSetup(host: HostPluginKind, flags: HostPluginSetu
 			marketplacePath,
 			installGuidance: [
 				`Add the local marketplace: /plugin marketplace add ${marketplaceRoot}`,
-				"Install the plugin: /plugin install gajae-code",
-				"Then call gjc_delegate_plan / gjc_delegate_execute from Claude Code.",
+				"Install the plugin: /plugin install vib-rato",
+				"Then call vib_delegate_plan / vib_delegate_execute from Claude Code.",
 			],
-			coordinatorConfigPreview: { command: "gjc", args: ["mcp-serve", "coordinator"], env },
+			coordinatorConfigPreview: { command: "vib", args: ["mcp-serve", "coordinator"], env },
 			mutationPolicy:
-				"Fail-closed: delegation is read-only until you set GJC_COORDINATOR_MCP_MUTATIONS=sessions and pass allow_mutation:true per call.",
+				"Fail-closed: delegation is read-only until you set VIB_COORDINATOR_MCP_MUTATIONS=sessions and pass allow_mutation:true per call.",
 			notes: [],
 			...(flags.check
 				? { check: verifyBundleFiles([manifestPath, marketplacePath, path.join(pluginDir, ".mcp.json")]) }
@@ -103,15 +103,15 @@ export function buildHostPluginSetup(host: HostPluginKind, flags: HostPluginSetu
 		marketplacePath,
 		installGuidance: [
 			`Add the local marketplace: codex plugin marketplace add ${marketplaceRoot}`,
-			"Install the plugin: codex plugin add gajae-code@gajae-code-local",
-			"Then call gjc_delegate_plan / gjc_delegate_execute from Codex.",
+			"Install the plugin: codex plugin add vib-rato@vib-rato-local",
+			"Then call vib_delegate_plan / vib_delegate_execute from Codex.",
 		],
-		coordinatorConfigPreview: { command: "gjc", args: ["mcp-serve", "coordinator"], env },
+		coordinatorConfigPreview: { command: "vib", args: ["mcp-serve", "coordinator"], env },
 		mutationPolicy:
-			"Fail-closed: delegation is read-only until you set GJC_COORDINATOR_MCP_MUTATIONS=sessions and pass allow_mutation:true per call.",
+			"Fail-closed: delegation is read-only until you set VIB_COORDINATOR_MCP_MUTATIONS=sessions and pass allow_mutation:true per call.",
 		notes: [
-			"Verified on Codex CLI 0.139.0: marketplace add + plugin add install the plugin (enabled) and `codex mcp list` registers gjc-coordinator with the fail-closed env.",
-			"The bundled .codex.mcp.json workdir root is host-neutral; `gjc setup codex` renders a concrete root, and operators should re-run the local marketplace smoke on their target Codex version.",
+			"Verified on Codex CLI 0.139.0: marketplace add + plugin add install the plugin (enabled) and `codex mcp list` registers vib-coordinator with the fail-closed env.",
+			"The bundled .codex.mcp.json workdir root is host-neutral; `vib setup codex` renders a concrete root, and operators should re-run the local marketplace smoke on their target Codex version.",
 		],
 		...(flags.check
 			? {
@@ -119,7 +119,7 @@ export function buildHostPluginSetup(host: HostPluginKind, flags: HostPluginSetu
 						manifestPath,
 						marketplacePath,
 						path.join(pluginDir, ".codex.mcp.json"),
-						path.join(pluginDir, "skills", "gjc-delegation", "SKILL.md"),
+						path.join(pluginDir, "skills", "vib-delegation", "SKILL.md"),
 					]),
 				}
 			: {}),
@@ -134,7 +134,7 @@ export function formatHostPluginSetup(result: HostPluginSetupResult): string {
 	for (const step of result.installGuidance) lines.push(`  - ${step}`);
 	lines.push(`mcp: ${result.coordinatorConfigPreview.command} ${result.coordinatorConfigPreview.args.join(" ")}`);
 	lines.push(
-		`  GJC_COORDINATOR_MCP_WORKDIR_ROOTS=${result.coordinatorConfigPreview.env.GJC_COORDINATOR_MCP_WORKDIR_ROOTS}`,
+		`  VIB_COORDINATOR_MCP_WORKDIR_ROOTS=${result.coordinatorConfigPreview.env.VIB_COORDINATOR_MCP_WORKDIR_ROOTS}`,
 	);
 	lines.push(result.mutationPolicy);
 	for (const note of result.notes) lines.push(`note: ${note}`);

@@ -1,45 +1,45 @@
-import { CANONICAL_GJC_WORKFLOW_SKILLS, type CanonicalGjcWorkflowSkill } from "../skill-state/active-state";
+import { CANONICAL_VIB_WORKFLOW_SKILLS, type CanonicalVibWorkflowSkill } from "../skill-state/active-state";
 
 export interface SkillKeywordDefinition {
 	keyword: string;
-	skill: GjcWorkflowSkill;
+	skill: VibWorkflowSkill;
 	priority: number;
 	guidance: string;
 }
 
-export const GJC_WORKFLOW_SKILLS = CANONICAL_GJC_WORKFLOW_SKILLS;
+export const VIB_WORKFLOW_SKILLS = CANONICAL_VIB_WORKFLOW_SKILLS;
 
-export type GjcWorkflowSkill = CanonicalGjcWorkflowSkill;
+export type VibWorkflowSkill = CanonicalVibWorkflowSkill;
 
-export const GJC_SKILL_KEYWORD_DEFINITIONS: readonly SkillKeywordDefinition[] = [
+export const VIB_SKILL_KEYWORD_DEFINITIONS: readonly SkillKeywordDefinition[] = [
 	{
 		keyword: "$deep-interview",
 		skill: "deep-interview",
 		priority: 8,
-		guidance: "Activate GJC deep-interview requirements workflow",
+		guidance: "Activate Vibrato deep-interview requirements workflow",
 	},
 	{
 		keyword: "$ralplan",
 		skill: "ralplan",
 		priority: 9,
-		guidance: "Activate GJC ralplan planning workflow",
+		guidance: "Activate Vibrato ralplan planning workflow",
 	},
 	{
 		keyword: "$ultragoal",
 		skill: "ultragoal",
 		priority: 8,
-		guidance: "Activate GJC ultragoal durable goal workflow",
+		guidance: "Activate Vibrato ultragoal durable goal workflow",
 	},
 	{
 		keyword: "$autoresearch",
 		skill: "autoresearch",
 		priority: 8,
-		guidance: "Activate GJC autoresearch research-mission workflow",
+		guidance: "Activate Vibrato autoresearch research-mission workflow",
 	},
 ] as const;
 
-export function isGjcWorkflowSkill(value: string): value is GjcWorkflowSkill {
-	return (GJC_WORKFLOW_SKILLS as readonly string[]).includes(value);
+export function isVibWorkflowSkill(value: string): value is VibWorkflowSkill {
+	return (VIB_WORKFLOW_SKILLS as readonly string[]).includes(value);
 }
 
 export function compareSkillKeywordMatches(

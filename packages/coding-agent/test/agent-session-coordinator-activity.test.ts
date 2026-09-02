@@ -2,17 +2,17 @@ import { afterEach, describe, expect, it, setSystemTime } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { Agent, type AgentTool, bindDispatchedToolIdentity } from "@gajae-code/agent-core";
-import type { AssistantMessage, Model, StopReason, ToolCall } from "@gajae-code/ai";
-import { AssistantMessageEventStream } from "@gajae-code/ai/utils/event-stream";
+import { Agent, type AgentTool, bindDispatchedToolIdentity } from "@vib-rato/agent-core";
+import type { AssistantMessage, Model, StopReason, ToolCall } from "@vib-rato/ai";
+import { AssistantMessageEventStream } from "@vib-rato/ai/utils/event-stream";
 import * as z from "zod/v4";
 import { Settings } from "../src/config/settings";
-import {
-	GJC_COORDINATOR_SESSION_STATE_FILE_ENV,
-	persistCoordinatorRuntimeStateFromEvent,
-} from "../src/gjc-runtime/session-state-sidecar";
 import { AgentSession } from "../src/session/agent-session";
 import { SessionManager } from "../src/session/session-manager";
+import {
+	persistCoordinatorRuntimeStateFromEvent,
+	VIB_COORDINATOR_SESSION_STATE_FILE_ENV,
+} from "../src/vib-runtime/session-state-sidecar";
 import { installExactIdentityNatives } from "./helpers/exact-identity-natives";
 
 // The agent loop emits the raw model-supplied `toolCall.name`, including for a
@@ -24,7 +24,7 @@ import { installExactIdentityNatives } from "./helpers/exact-identity-natives";
 // object it ran. Nothing downstream re-resolves the name, so an unbound external
 // event stays `custom` no matter which tool currently holds that name.
 
-const ORIGINAL_STATE_FILE = process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV];
+const ORIGINAL_STATE_FILE = process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV];
 const tempDirs: string[] = [];
 const sessions: AgentSession[] = [];
 // Every activity write serializes on the coordinator state lock, whose removals go through
@@ -35,8 +35,8 @@ installExactIdentityNatives();
 afterEach(async () => {
 	setSystemTime();
 	for (const session of sessions.splice(0)) await session.dispose();
-	if (ORIGINAL_STATE_FILE === undefined) delete process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV];
-	else process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = ORIGINAL_STATE_FILE;
+	if (ORIGINAL_STATE_FILE === undefined) delete process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV];
+	else process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = ORIGINAL_STATE_FILE;
 	await Promise.all(tempDirs.splice(0).map(dir => fs.rm(dir, { recursive: true, force: true })));
 });
 
@@ -87,10 +87,10 @@ async function newSession(
 	stateFile: string;
 	tools: { edit: AgentTool; bash: AgentTool; read: AgentTool; mcp: AgentTool };
 }> {
-	const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-activity-boundary-"));
+	const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-activity-boundary-"));
 	tempDirs.push(root);
 	const stateFile = path.join(root, "runtime-state.json");
-	process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+	process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
 
 	// `edit` presents itself to some models under the wire name `apply_patch`.
 	const editTool = createTool("edit", { customWireName: "apply_patch" } as Partial<AgentTool>);
@@ -224,10 +224,10 @@ async function newDispatchSession(options: {
 	streamFn?: Agent["streamFn"];
 	transformToolCallArguments?: (args: Record<string, unknown>, toolName: string) => Record<string, unknown>;
 }): Promise<{ session: AgentSession; stateFile: string }> {
-	const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-activity-dispatch-"));
+	const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-activity-dispatch-"));
 	tempDirs.push(root);
 	const stateFile = path.join(root, "runtime-state.json");
-	process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+	process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
 	const agent = new Agent({
 		getApiKey: () => "test-key",
 		initialState: { model: createModel(), systemPrompt: ["initial"], tools: options.activeTools, messages: [] },
@@ -367,10 +367,10 @@ describe("AgentSession coordinator activity labels", () => {
 	});
 
 	it("reports every tool as custom when the session was given no provenance", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-activity-no-provenance-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-activity-no-provenance-"));
 		tempDirs.push(root);
 		const stateFile = path.join(root, "runtime-state.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
 		const bashTool = createTool("bash");
 		const agent = new Agent({
 			initialState: { model: createModel(), systemPrompt: ["initial"], tools: [bashTool], messages: [] },

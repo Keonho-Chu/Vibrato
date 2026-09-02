@@ -20,7 +20,7 @@ afterEach(async () => {
 // session-index.ts changes; see scripts/ci-dev-affected.ts.
 describe.skipIf(process.platform !== "win32")("Windows session-index snapshot fsync (#4250)", () => {
 	it("publishes and re-publishes the snapshot without EPERM or temp leftovers", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-session-index-fsync-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-session-index-fsync-"));
 		temporaryDirectories.push(root);
 		const sessionsDir = path.join(root, "sdk", "sessions");
 		const snapshotFile = path.join(sessionsDir, "index.snapshot.json");

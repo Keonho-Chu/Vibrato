@@ -4,7 +4,7 @@ import {
 	type ResumeDescriptor,
 	type ResumeRunner,
 	type SubagentRecord,
-} from "@gajae-code/coding-agent/async/job-manager";
+} from "@vib-rato/coding-agent/async/job-manager";
 
 // Regression coverage for #2303: AsyncJobManager.setResumeRunner used to be a
 // process-global, last-writer-wins slot, so resuming a completed nested

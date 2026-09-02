@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import { normalizeAnthropicToolSchema } from "@gajae-code/ai/providers/anthropic";
-import { flattenToolRootCombinators } from "@gajae-code/ai/utils/schema";
+import { normalizeAnthropicToolSchema } from "@vib-rato/ai/providers/anthropic";
+import { flattenToolRootCombinators } from "@vib-rato/ai/utils/schema";
 
 describe("normalizeAnthropicToolSchema — SDK whitelist", () => {
 	describe("number / integer nodes", () => {

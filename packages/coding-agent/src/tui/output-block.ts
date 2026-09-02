@@ -8,7 +8,7 @@ import {
 	TERMINAL,
 	visibleWidth,
 	wrapTextWithAnsi,
-} from "@gajae-code/tui";
+} from "@vib-rato/tui";
 import type { Theme } from "../modes/theme/theme";
 import { containsSixelSequence, getSixelLineMask } from "../utils/sixel";
 import type { State } from "./types";

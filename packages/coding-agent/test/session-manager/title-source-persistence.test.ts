@@ -8,9 +8,9 @@ import {
 	parseSessionEntries,
 	type SessionHeader,
 	SessionManager,
-} from "@gajae-code/coding-agent/session/session-manager";
-import { FileSessionStorage, type SessionStorageWriter } from "@gajae-code/coding-agent/session/session-storage";
-import { getConfigRootDir, parseJsonlLenient, setAgentDir } from "@gajae-code/utils";
+} from "@vib-rato/coding-agent/session/session-manager";
+import { FileSessionStorage, type SessionStorageWriter } from "@vib-rato/coding-agent/session/session-storage";
+import { getConfigRootDir, parseJsonlLenient, setAgentDir } from "@vib-rato/utils";
 
 import { makeAssistantMessage } from "./helpers";
 import { injectManagedAppendOutcomeUncertain, injectManagedAppendPreCommit } from "./managed-failure-injection";
@@ -66,7 +66,7 @@ describe("session title source persistence", () => {
 	const fallbackAgentDir = path.join(getConfigRootDir(), "agent");
 
 	beforeEach(() => {
-		testAgentDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-title-source-"));
+		testAgentDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-title-source-"));
 		cwd = path.join(testAgentDir, "cwd");
 		fs.mkdirSync(cwd, { recursive: true });
 		setAgentDir(testAgentDir);

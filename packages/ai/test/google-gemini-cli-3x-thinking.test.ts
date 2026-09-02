@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
-import { Effort } from "@gajae-code/ai";
-import { enrichModelThinking } from "@gajae-code/ai/model-thinking";
-import { hookFetch } from "@gajae-code/utils";
+import { Effort } from "@vib-rato/ai";
+import { enrichModelThinking } from "@vib-rato/ai/model-thinking";
+import { hookFetch } from "@vib-rato/utils";
 import { streamSimple } from "../src/stream";
 import type { Context, Model } from "../src/types";
 

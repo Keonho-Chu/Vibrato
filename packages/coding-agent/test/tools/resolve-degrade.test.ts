@@ -1,8 +1,8 @@
 import { describe, expect, it } from "bun:test";
-import type { ToolChoice } from "@gajae-code/ai";
-import { ToolChoiceQueue } from "@gajae-code/coding-agent/session/tool-choice-queue";
-import type { ToolSession } from "@gajae-code/coding-agent/tools";
-import { queueResolveHandler } from "@gajae-code/coding-agent/tools/resolve";
+import type { ToolChoice } from "@vib-rato/ai";
+import { ToolChoiceQueue } from "@vib-rato/coding-agent/session/tool-choice-queue";
+import type { ToolSession } from "@vib-rato/coding-agent/tools";
+import { queueResolveHandler } from "@vib-rato/coding-agent/tools/resolve";
 
 const forcedResolve = { type: "tool", name: "resolve" } as const satisfies ToolChoice;
 

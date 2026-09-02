@@ -1,16 +1,16 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "bun:test";
 import { stripVTControlCharacters } from "node:util";
-import { Agent } from "@gajae-code/agent-core";
-import type { AssistantMessage } from "@gajae-code/ai";
-import { formatKeyHint, formatKeyHints, type KeyDisplayContext } from "@gajae-code/coding-agent/config/keybindings";
-import { resetSettingsForTest, Settings, settings } from "@gajae-code/coding-agent/config/settings";
+import { Agent } from "@vib-rato/agent-core";
+import type { AssistantMessage } from "@vib-rato/ai";
+import { formatKeyHint, formatKeyHints, type KeyDisplayContext } from "@vib-rato/coding-agent/config/keybindings";
+import { resetSettingsForTest, Settings, settings } from "@vib-rato/coding-agent/config/settings";
 import {
 	PET_CAPABILITY_SETTLE_MS,
 	setVerifiedItermPetAvailability,
-} from "@gajae-code/coding-agent/modes/components/pet-capability";
-import { initTheme, theme } from "@gajae-code/coding-agent/modes/theme/theme";
-import { CURSOR_MARKER, ImageProtocol, setTerminalImageProtocol, TERMINAL, Text, visibleWidth } from "@gajae-code/tui";
-import { TempDir } from "@gajae-code/utils";
+} from "@vib-rato/coding-agent/modes/components/pet-capability";
+import { initTheme, theme } from "@vib-rato/coding-agent/modes/theme/theme";
+import { CURSOR_MARKER, ImageProtocol, setTerminalImageProtocol, TERMINAL, Text, visibleWidth } from "@vib-rato/tui";
+import { TempDir } from "@vib-rato/utils";
 import { ModelRegistry } from "../src/config/model-registry";
 import type {
 	ExtensionActions,
@@ -130,9 +130,9 @@ describe("InteractiveMode.setEditorComponent", () => {
 			"TMUX_PANE",
 			"STY",
 			"ZELLIJ",
-			"GJC_TMUX_LAUNCHED",
-			"GJC_TMUX_ACTIVE_SESSION",
-			"GJC_MANAGED_OWNER_RUN_ID",
+			"VIB_TMUX_LAUNCHED",
+			"VIB_TMUX_ACTIVE_SESSION",
+			"VIB_MANAGED_OWNER_RUN_ID",
 		] as const;
 		const originalEnv = new Map(envKeys.map(key => [key, Bun.env[key]] as const));
 		vi.useFakeTimers();
@@ -188,9 +188,9 @@ describe("InteractiveMode.setEditorComponent", () => {
 			"TMUX_PANE",
 			"STY",
 			"ZELLIJ",
-			"GJC_TMUX_LAUNCHED",
-			"GJC_TMUX_ACTIVE_SESSION",
-			"GJC_MANAGED_OWNER_RUN_ID",
+			"VIB_TMUX_LAUNCHED",
+			"VIB_TMUX_ACTIVE_SESSION",
+			"VIB_MANAGED_OWNER_RUN_ID",
 		] as const;
 		const originalEnv = new Map(envKeys.map(key => [key, Bun.env[key]] as const));
 		vi.useFakeTimers();
@@ -237,9 +237,9 @@ describe("InteractiveMode.setEditorComponent", () => {
 			"TMUX_PANE",
 			"STY",
 			"ZELLIJ",
-			"GJC_TMUX_LAUNCHED",
-			"GJC_TMUX_ACTIVE_SESSION",
-			"GJC_MANAGED_OWNER_RUN_ID",
+			"VIB_TMUX_LAUNCHED",
+			"VIB_TMUX_ACTIVE_SESSION",
+			"VIB_MANAGED_OWNER_RUN_ID",
 		] as const;
 		const originalEnv = new Map(envKeys.map(key => [key, Bun.env[key]] as const));
 		vi.useFakeTimers();
@@ -924,7 +924,7 @@ describe("InteractiveMode.setEditorComponent", () => {
 		const renderedText = rendered.join("\n");
 		const noticeIndex = rendered.findIndex(line => line.includes("New session started"));
 		expect(rendered.length).toBeLessThanOrEqual(rows);
-		expect(renderedText).toContain("GJC Forge");
+		expect(renderedText).toContain("Vibrato Forge");
 		expect(noticeIndex).toBeGreaterThan(0);
 		expect(rendered[noticeIndex - 1]?.trim()).not.toBe("");
 		expect(renderedText).toContain("New session started");
@@ -932,7 +932,7 @@ describe("InteractiveMode.setEditorComponent", () => {
 
 	it("keeps closed rounded composer chrome for one-line, multiline, and narrow prompts", () => {
 		for (const [width, text] of [
-			[48, "Ask gjc to improve the composer"],
+			[48, "Ask vib to improve the composer"],
 			[48, "first line\nsecond line"],
 			[28, "narrow terminal composer"],
 		] as const) {

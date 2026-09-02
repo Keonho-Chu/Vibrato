@@ -19,11 +19,11 @@ export const HookAuthority = {
 export type HookAuthority = (typeof HookAuthority)[keyof typeof HookAuthority];
 
 export const HookSourceConvention = {
-	NativeGjc: "native-gjc",
+	NativeVib: "native-vib",
 	ClaudeCode: "claude-code",
 	Codex: "codex",
 	CodexManagedJson: "codex-managed-json",
-	GjcPlugin: "gjc-plugin",
+	VibPlugin: "vib-plugin",
 	InProcess: "in-process",
 } as const;
 
@@ -57,8 +57,8 @@ export const HOOK_EVENT_SCHEMAS: Record<HookEventKind, HookEventSchemaContract> 
 	},
 	[HookEventKind.Stop]: {
 		kind: HookEventKind.Stop,
-		input: "AgentEndEvent for GJC in-process hooks, or provider-owned Stop payload",
-		output: "void for GJC in-process hooks, or provider-owned command output",
+		input: "AgentEndEvent for Vibrato in-process hooks, or provider-owned Stop payload",
+		output: "void for Vibrato in-process hooks, or provider-owned command output",
 	},
 	[HookEventKind.SessionStart]: {
 		kind: HookEventKind.SessionStart,
@@ -164,7 +164,7 @@ const constrainedLifecycle = (kind: HookEventKind, runtimeEvent: string): HookEx
 	redaction: "none",
 	logging: "Extension errors expose the extension path, event name, error message, and stack to registered listeners.",
 	semanticNotes:
-		"The constrained GJC API remains denied, but the imported plugin module retains ambient host-process authority.",
+		"The constrained Vibrato API remains denied, but the imported plugin module retains ambient host-process authority.",
 });
 
 const managedPrompt: HookExecutionContract = {
@@ -180,8 +180,8 @@ const managedPrompt: HookExecutionContract = {
 	processAuthority: "command",
 	trustRequirement: "provider-owned",
 	redaction: "provider-owned",
-	logging: "Codex owns command invocation logging; GJC only installs and handles its managed command payload.",
-	semanticNotes: "Normalization describes hooks.json configuration; GJC does not schedule this command itself.",
+	logging: "Codex owns command invocation logging; Vibrato only installs and handles its managed command payload.",
+	semanticNotes: "Normalization describes hooks.json configuration; Vibrato does not schedule this command itself.",
 };
 
 const managedStop: HookExecutionContract = {
@@ -247,7 +247,7 @@ export const CONVENTION_EVENT_CONTRACTS: Record<
 	HookSourceConvention,
 	Partial<Record<HookEventKind, HookExecutionContract>>
 > = {
-	[HookSourceConvention.NativeGjc]: {
+	[HookSourceConvention.NativeVib]: {
 		[HookEventKind.PreToolUse]: hookModulePre,
 		[HookEventKind.PostToolUse]: hookModulePost,
 	},
@@ -263,7 +263,7 @@ export const CONVENTION_EVENT_CONTRACTS: Record<
 		[HookEventKind.UserPromptSubmit]: managedPrompt,
 		[HookEventKind.Stop]: managedStop,
 	},
-	[HookSourceConvention.GjcPlugin]: {
+	[HookSourceConvention.VibPlugin]: {
 		[HookEventKind.PreToolUse]: constrainedPre,
 		[HookEventKind.PostToolUse]: constrainedPost,
 		[HookEventKind.SessionStart]: constrainedLifecycle(HookEventKind.SessionStart, "session_start"),

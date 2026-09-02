@@ -9,7 +9,7 @@
 import * as fs from "node:fs";
 import * as fsPromises from "node:fs/promises";
 import * as path from "node:path";
-import { logger, tryParseJson } from "@gajae-code/utils";
+import { logger, tryParseJson } from "@vib-rato/utils";
 import { registerProvider } from "../capability";
 import { readFile } from "../capability/fs";
 import { type MCPServer, mcpCapability } from "../capability/mcp";

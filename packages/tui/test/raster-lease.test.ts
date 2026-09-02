@@ -1,5 +1,5 @@
 import { describe, expect, it, spyOn } from "bun:test";
-import { type Component, Container, CURSOR_MARKER, setTerminalImageProtocol, Text, TUI } from "@gajae-code/tui";
+import { type Component, Container, CURSOR_MARKER, setTerminalImageProtocol, Text, TUI } from "@vib-rato/tui";
 import { VirtualTerminal } from "./virtual-terminal";
 
 const rect = (column = 0, row = 0, width = 2, height = 1) => ({ column, row, width, height });

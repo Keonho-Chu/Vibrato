@@ -2,11 +2,11 @@ import { describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { ToolSession } from "@gajae-code/coding-agent/tools";
-import { BashTool } from "@gajae-code/coding-agent/tools/bash";
-import { ToolError } from "@gajae-code/coding-agent/tools/tool-errors";
-import * as shellSnapshot from "@gajae-code/coding-agent/utils/shell-snapshot";
-import { resetShellConfigCache } from "@gajae-code/utils/shell-config";
+import type { ToolSession } from "@vib-rato/coding-agent/tools";
+import { BashTool } from "@vib-rato/coding-agent/tools/bash";
+import { ToolError } from "@vib-rato/coding-agent/tools/tool-errors";
+import * as shellSnapshot from "@vib-rato/coding-agent/utils/shell-snapshot";
+import { resetShellConfigCache } from "@vib-rato/utils/shell-config";
 import { stubBashExecutorSettings } from "../helpers/tool-session-settings";
 
 /**
@@ -56,7 +56,7 @@ function createBashTool(cwd: string): BashTool {
 }
 
 function tmpWorkspace(): string {
-	return fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "gjc-bash-sleep-notice-")));
+	return fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "vib-bash-sleep-notice-")));
 }
 
 /** Run a command through a real BashTool and return the outcome as a string. */

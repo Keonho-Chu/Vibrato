@@ -1,8 +1,8 @@
 /**
  * Check for and install updates.
  */
-import { getProjectDir } from "@gajae-code/utils";
-import { Args, Command, Flags } from "@gajae-code/utils/cli";
+import { getProjectDir } from "@vib-rato/utils";
+import { Args, Command, Flags } from "@vib-rato/utils/cli";
 import { runManagedNotifyRecovery, runUpdateCommand } from "../cli/update-cli";
 import { Settings } from "../config/settings";
 import {
@@ -49,7 +49,7 @@ export default class Update extends Command {
 			channel = flags.channel;
 		} else {
 			const settings = await Settings.init({ cwd: getProjectDir() });
-			// Update selection is machine-local: a project `.gjc/config.yml`
+			// Update selection is machine-local: a project `.vib/config.yml`
 			// startup.updateChannel override must never silently pick the
 			// global release channel, so read the user/global layer only and
 			// fall back to the stable schema default when it is unset.

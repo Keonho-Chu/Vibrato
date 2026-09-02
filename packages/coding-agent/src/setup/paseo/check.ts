@@ -1,9 +1,9 @@
 /**
- * Read-only diagnosis for `gjc setup paseo --check`.
+ * Read-only diagnosis for `vib setup paseo --check`.
  *
  * Two layers, deliberately separated:
  *
- * - L1 is everything GJC can observe on the filesystem. Any non-clean L1
+ * - L1 is everything Vibrato can observe on the filesystem. Any non-clean L1
  *   condition is `drift`, checked first and independent of the daemon.
  * - L2 is a bounded probe of the Paseo daemon. It only runs when L1 is clean,
  *   and it partitions the remaining three states by its own outcome.
@@ -22,7 +22,7 @@ import { recoverIntent } from "./install-saga";
 import { PaseoPublishError, readTarget } from "./json-publisher";
 import { createOrchestrationSeed } from "./orchestration-preferences";
 import { readIntent } from "./paseo-ownership";
-import { buildProviderEntry, hasProviderConflict, providerKeyFor, resolveGjcCommand } from "./provider-config";
+import { buildProviderEntry, hasProviderConflict, providerKeyFor, resolveVibCommand } from "./provider-config";
 import type { DriftReason, SetupCheckResult } from "./result-types";
 import { INSTALL_SKILL_NAMES, type PaseoSetupDependencies } from "./setup-deps";
 import { scanSkillsBridgeDrift } from "./skills-bridge";
@@ -30,7 +30,7 @@ import { scanSkillsBridgeDrift } from "./skills-bridge";
 const PROBE_TIMEOUT_MS = 5_000;
 
 export const STALE_GUIDANCE =
-	"Paseo has not picked up the new provider entry yet. Paseo does not reload config.json automatically; restart the Paseo daemon yourself when convenient (GJC will not restart it for you).";
+	"Paseo has not picked up the new provider entry yet. Paseo does not reload config.json automatically; restart the Paseo daemon yourself when convenient (Vibrato will not restart it for you).";
 
 export interface CheckOptions {
 	readonly mpreset?: string;
@@ -57,7 +57,7 @@ async function collectL1(deps: PaseoSetupDependencies, options: CheckOptions): P
 		}
 	}
 
-	const resolution = resolveGjcCommand();
+	const resolution = resolveVibCommand();
 	if (!resolution.ok) {
 		reasons.push({ code: "missing-executable", subject: "command[0]", detail: resolution.detail });
 	}
@@ -85,7 +85,7 @@ async function collectL1(deps: PaseoSetupDependencies, options: CheckOptions): P
 			reasons.push({
 				code: "missing-provider-entry",
 				subject: `agents.providers.${providerKey}`,
-				detail: "GJC is not registered as a Paseo provider",
+				detail: "Vibrato is not registered as a Paseo provider",
 			});
 		} else if (resolution.ok) {
 			const desired = buildProviderEntry(resolution.command, options.mpreset);
@@ -190,7 +190,7 @@ export async function checkPaseoSetup(
 	if (outcome.kind !== "ok") {
 		// The daemon being down, slow, or speaking an unexpected dialect says
 		// nothing about whether our files are correct -- and L1 already proved
-		// they are. Reporting drift here would blame GJC for Paseo being asleep.
+		// they are. Reporting drift here would blame Vibrato for Paseo being asleep.
 		return { component: "paseo", status: "skipped", reasons: [] };
 	}
 
@@ -206,7 +206,7 @@ export async function checkPaseoSetup(
 			component: "paseo",
 			status: "stale",
 			reasons: [],
-			guidance: `Paseo knows about the GJC provider but reports it as "${row.status}". ${STALE_GUIDANCE}`,
+			guidance: `Paseo knows about the Vibrato provider but reports it as "${row.status}". ${STALE_GUIDANCE}`,
 		};
 	}
 	return { component: "paseo", status: "pass", reasons: [] };

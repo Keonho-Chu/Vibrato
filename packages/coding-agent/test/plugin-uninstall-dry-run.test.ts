@@ -5,8 +5,8 @@ import * as path from "node:path";
 
 const cliEntry = path.join(import.meta.dir, "../src/cli.ts");
 const marketplaceFixture = path.join(import.meta.dir, "marketplace/fixtures/valid-marketplace");
-const gjcBundleFixture = path.join(import.meta.dir, "fixtures/gjc-plugins/valid-six-surface-bundle");
-const legacyBundleFixture = path.join(import.meta.dir, "fixtures/gjc-plugins/valid-skill-plugin");
+const vibBundleFixture = path.join(import.meta.dir, "fixtures/vib-plugins/valid-six-surface-bundle");
+const legacyBundleFixture = path.join(import.meta.dir, "fixtures/vib-plugins/valid-skill-plugin");
 
 const sandboxes: string[] = [];
 
@@ -16,7 +16,7 @@ interface Sandbox {
 	run: (args: string[]) => Promise<{ exitCode: number; stdout: string; stderr: string }>;
 	/**
 	 * Content-addressed snapshot of the whole sandbox root: the home AND the
-	 * project cwd. Project-scope GJC state lives at `<cwd>/.gjc/gjc-plugins`,
+	 * project cwd. Project-scope Vibrato state lives at `<cwd>/.vib/vib-plugins`,
 	 * outside the home, so a home-only snapshot cannot see a project-scope
 	 * registry write or lock.
 	 */
@@ -26,20 +26,20 @@ interface Sandbox {
 }
 
 /**
- * A `gjc plugin` command resolves user-scope state from HOME, not only from the
- * agent directory: the marketplace registry lives under `<home>/.gjc` and the
- * plugin cache under the plugins dir. Overriding GJC_CODING_AGENT_DIR alone
+ * A `vib plugin` command resolves user-scope state from HOME, not only from the
+ * agent directory: the marketplace registry lives under `<home>/.vib` and the
+ * plugin cache under the plugins dir. Overriding VIB_CODING_AGENT_DIR alone
  * would leave these tests writing into the developer's real home.
  */
 async function makeSandbox(): Promise<Sandbox> {
-	const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-plugin-dry-run-"));
+	const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-plugin-dry-run-"));
 	sandboxes.push(root);
 	const home = path.join(root, "home");
 	const cwd = path.join(root, "project");
 	// The child's temp dir must stay outside the snapshotted surface: it is the
 	// runtime's scratch space, not plugin state.
 	const tmp = path.join(root, "scratch", "tmp");
-	const agentDir = path.join(home, ".gjc", "agent");
+	const agentDir = path.join(home, ".vib", "agent");
 	await fs.mkdir(agentDir, { recursive: true });
 	await fs.mkdir(cwd, { recursive: true });
 	await fs.mkdir(tmp, { recursive: true });
@@ -55,8 +55,8 @@ async function makeSandbox(): Promise<Sandbox> {
 		XDG_DATA_HOME: path.join(home, "data"),
 		XDG_STATE_HOME: path.join(home, "state"),
 		XDG_CACHE_HOME: path.join(root, "scratch", "cache"),
-		GJC_CONFIG_DIR: ".gjc",
-		GJC_CODING_AGENT_DIR: agentDir,
+		VIB_CONFIG_DIR: ".vib",
+		VIB_CODING_AGENT_DIR: agentDir,
 		PI_CODING_AGENT_DIR: agentDir,
 		NO_COLOR: "1",
 		PI_NO_TITLE: "1",
@@ -73,7 +73,7 @@ async function makeSandbox(): Promise<Sandbox> {
 		plantLegacyProjectBundle: async fixture => {
 			// Files on disk under the project scope root, deliberately with no
 			// registry.json: exactly the shape legacy discovery migrates in.
-			const projectRoot = path.join(cwd, ".gjc", "gjc-plugins", path.basename(fixture));
+			const projectRoot = path.join(cwd, ".vib", "vib-plugins", path.basename(fixture));
 			await fs.cp(fixture, projectRoot, { recursive: true });
 		},
 		run: async args => {
@@ -114,7 +114,7 @@ async function makeSandbox(): Promise<Sandbox> {
 	};
 }
 
-// Every case below drives the real `gjc plugin` CLI as a child process, up to
+// Every case below drives the real `vib plugin` CLI as a child process, up to
 // five spawns per case, each paying source-CLI startup. That is well past the 5s
 // default whenever the machine is cold or the suite runs alongside other files,
 // and a timeout there would retire this regression without any assertion having
@@ -198,10 +198,10 @@ describe("plugin uninstall --dry-run", () => {
 	);
 
 	it(
-		"previews a GJC bundle uninstall without removing the bundle or its registry entry",
+		"previews a Vibrato bundle uninstall without removing the bundle or its registry entry",
 		async () => {
 			const sandbox = await makeSandbox();
-			expect((await sandbox.run(["install", gjcBundleFixture, "--user"])).exitCode).toBe(0);
+			expect((await sandbox.run(["install", vibBundleFixture, "--user"])).exitCode).toBe(0);
 
 			const listedBefore = await sandbox.run(["list", "--json"]);
 			const before = await sandbox.snapshot();
@@ -212,7 +212,7 @@ describe("plugin uninstall --dry-run", () => {
 			expect(dryRun.stderr).toBe("");
 			expect(JSON.parse(dryRun.stdout)).toEqual({
 				dryRun: true,
-				wouldUninstall: { kind: "gjc-bundle", scope: "user", name: "valid-six-surface-bundle" },
+				wouldUninstall: { kind: "vib-bundle", scope: "user", name: "valid-six-surface-bundle" },
 			});
 
 			expectUnchanged(before, await sandbox.snapshot());
@@ -222,10 +222,10 @@ describe("plugin uninstall --dry-run", () => {
 	);
 
 	it(
-		"reports a GJC bundle dry run as a preview in human output",
+		"reports a Vibrato bundle dry run as a preview in human output",
 		async () => {
 			const sandbox = await makeSandbox();
-			expect((await sandbox.run(["install", gjcBundleFixture, "--user"])).exitCode).toBe(0);
+			expect((await sandbox.run(["install", vibBundleFixture, "--user"])).exitCode).toBe(0);
 			const before = await sandbox.snapshot();
 
 			const dryRun = await sandbox.run(["uninstall", "valid-six-surface-bundle", "--user", "--dry-run"]);
@@ -256,9 +256,9 @@ describe("plugin uninstall --dry-run", () => {
 		CLI_TEST_TIMEOUT_MS,
 	);
 
-	// Classification runs before any target is selected, so it touches the GJC
+	// Classification runs before any target is selected, so it touches the Vibrato
 	// registry for every uninstall target -- including npm and marketplace names
-	// that will never reach the GJC path. A legacy bundle on disk with no
+	// that will never reach the Vibrato path. A legacy bundle on disk with no
 	// registry entry is what legacy discovery migrates and persists, so
 	// classifying under --dry-run must not perform that migration.
 	it(
@@ -277,7 +277,7 @@ describe("plugin uninstall --dry-run", () => {
 		CLI_TEST_TIMEOUT_MS,
 	);
 
-	// An unreadable GJC registry means ownership of the target is unknown: the
+	// An unreadable Vibrato registry means ownership of the target is unknown: the
 	// corrupt scope may be the one that owns the name. Classification fails
 	// closed for both dry-run and real uninstall instead of falling through to
 	// the marketplace or npm branch, which could remove a same-named plugin the
@@ -288,7 +288,7 @@ describe("plugin uninstall --dry-run", () => {
 			const sandbox = await makeSandbox();
 			expect((await sandbox.run(["marketplace", "add", marketplaceFixture])).exitCode).toBe(0);
 			expect((await sandbox.run(["install", "hello-plugin@test-marketplace", "--scope", "user"])).exitCode).toBe(0);
-			const registryPath = path.join(sandbox.home, ".gjc", "agent", "gjc-plugins", "registry.json");
+			const registryPath = path.join(sandbox.home, ".vib", "agent", "vib-plugins", "registry.json");
 			await fs.mkdir(path.dirname(registryPath), { recursive: true });
 			await fs.writeFile(registryPath, "{ corrupt");
 			const before = await sandbox.snapshot();
@@ -302,7 +302,7 @@ describe("plugin uninstall --dry-run", () => {
 			]);
 
 			expect(dryRun.exitCode).toBe(3);
-			expect(dryRun.stderr).toContain("Could not read the GJC user plugin registry");
+			expect(dryRun.stderr).toContain("Could not read the Vibrato user plugin registry");
 			// The installed marketplace plugin must survive the refusal untouched.
 			expectUnchanged(before, await sandbox.snapshot());
 		},
@@ -313,7 +313,7 @@ describe("plugin uninstall --dry-run", () => {
 		"fails closed on a corrupt user registry for an npm-target dry run",
 		async () => {
 			const sandbox = await makeSandbox();
-			const registryPath = path.join(sandbox.home, ".gjc", "agent", "gjc-plugins", "registry.json");
+			const registryPath = path.join(sandbox.home, ".vib", "agent", "vib-plugins", "registry.json");
 			await fs.mkdir(path.dirname(registryPath), { recursive: true });
 			await fs.writeFile(registryPath, "{ corrupt");
 			const before = await sandbox.snapshot();
@@ -321,35 +321,35 @@ describe("plugin uninstall --dry-run", () => {
 			const dryRun = await sandbox.run(["uninstall", "some-npm-name", "--dry-run", "--json"]);
 
 			expect(dryRun.exitCode).toBe(3);
-			expect(dryRun.stderr).toContain("Could not read the GJC user plugin registry");
+			expect(dryRun.stderr).toContain("Could not read the Vibrato user plugin registry");
 			expectUnchanged(before, await sandbox.snapshot());
 		},
 		CLI_TEST_TIMEOUT_MS,
 	);
 
-	// The reviewer-reported collision: the corrupt GJC registry may own the name
+	// The reviewer-reported collision: the corrupt Vibrato registry may own the name
 	// while npm has a same-named plugin installed. Neither the dry run nor the
-	// real uninstall may touch the npm plugin when GJC ownership is unreadable.
+	// real uninstall may touch the npm plugin when Vibrato ownership is unreadable.
 	it(
-		"never removes a same-named npm plugin when the GJC registry is corrupt",
+		"never removes a same-named npm plugin when the Vibrato registry is corrupt",
 		async () => {
 			const sandbox = await makeSandbox();
-			const pluginsDir = path.join(sandbox.home, ".gjc", "plugins");
+			const pluginsDir = path.join(sandbox.home, ".vib", "plugins");
 			const npmPluginDir = path.join(pluginsDir, "node_modules", "collide-plugin");
 			await fs.mkdir(npmPluginDir, { recursive: true });
 			await fs.writeFile(
 				path.join(pluginsDir, "package.json"),
 				JSON.stringify(
-					{ name: "gjc-plugins", private: true, dependencies: { "collide-plugin": "1.0.0" } },
+					{ name: "vib-plugins", private: true, dependencies: { "collide-plugin": "1.0.0" } },
 					null,
 					"\t",
 				),
 			);
 			await fs.writeFile(
 				path.join(npmPluginDir, "package.json"),
-				JSON.stringify({ name: "collide-plugin", version: "1.0.0", gjc: { version: "1.0.0" } }),
+				JSON.stringify({ name: "collide-plugin", version: "1.0.0", vib: { version: "1.0.0" } }),
 			);
-			const registryPath = path.join(sandbox.home, ".gjc", "agent", "gjc-plugins", "registry.json");
+			const registryPath = path.join(sandbox.home, ".vib", "agent", "vib-plugins", "registry.json");
 			await fs.mkdir(path.dirname(registryPath), { recursive: true });
 			await fs.writeFile(registryPath, "{ corrupt");
 			const before = await sandbox.snapshot();
@@ -357,12 +357,12 @@ describe("plugin uninstall --dry-run", () => {
 			const dryRun = await sandbox.run(["uninstall", "collide-plugin", "--dry-run"]);
 
 			expect(dryRun.exitCode).toBe(3);
-			expect(dryRun.stderr).toContain("Could not read the GJC user plugin registry");
+			expect(dryRun.stderr).toContain("Could not read the Vibrato user plugin registry");
 
 			const real = await sandbox.run(["uninstall", "collide-plugin"]);
 
 			expect(real.exitCode).toBe(3);
-			expect(real.stderr).toContain("Could not read the GJC user plugin registry");
+			expect(real.stderr).toContain("Could not read the Vibrato user plugin registry");
 			// The npm plugin must still be on disk after both refusals.
 			expectUnchanged(before, await sandbox.snapshot());
 		},
@@ -373,11 +373,11 @@ describe("plugin uninstall --dry-run", () => {
 	// same refusal in dry-run and real mode; the preview may never report a
 	// would-uninstall the real command would refuse with invalid_target.
 	it(
-		"refuses a non-uninstallable GJC entry identically in dry-run and real mode",
+		"refuses a non-uninstallable Vibrato entry identically in dry-run and real mode",
 		async () => {
 			const sandbox = await makeSandbox();
-			expect((await sandbox.run(["install", gjcBundleFixture, "--user"])).exitCode).toBe(0);
-			const registryPath = path.join(sandbox.home, ".gjc", "agent", "gjc-plugins", "registry.json");
+			expect((await sandbox.run(["install", vibBundleFixture, "--user"])).exitCode).toBe(0);
+			const registryPath = path.join(sandbox.home, ".vib", "agent", "vib-plugins", "registry.json");
 			const raw = JSON.parse(await fs.readFile(registryPath, "utf8")) as {
 				plugins: Array<Record<string, unknown>>;
 			};
@@ -403,7 +403,7 @@ describe("plugin uninstall --dry-run", () => {
 
 			const dryRun = await sandbox.run(["uninstall", "valid-skill-plugin", "--project", "--dry-run", "--json"]);
 
-			// The bundle is not in the registry, so the GJC path does not own it and the
+			// The bundle is not in the registry, so the Vibrato path does not own it and the
 			// command falls through to the npm preview. Either way, nothing is written.
 			expect(dryRun.exitCode).toBe(0);
 			expect(dryRun.stdout).toContain("valid-skill-plugin");
@@ -454,7 +454,7 @@ describe("plugin uninstall --dry-run", () => {
 
 			expect(uninstall.exitCode).toBe(0);
 			expect(uninstall.stdout).toContain("Uninstalled valid-skill-plugin (project)");
-			expect(JSON.parse((await sandbox.run(["list", "--json"])).stdout)).toMatchObject({ gjc: [] });
+			expect(JSON.parse((await sandbox.run(["list", "--json"])).stdout)).toMatchObject({ vib: [] });
 		},
 		CLI_TEST_TIMEOUT_MS,
 	);
@@ -483,16 +483,16 @@ describe("plugin uninstall --dry-run", () => {
 	);
 
 	it(
-		"still removes a GJC bundle without --dry-run",
+		"still removes a Vibrato bundle without --dry-run",
 		async () => {
 			const sandbox = await makeSandbox();
-			expect((await sandbox.run(["install", gjcBundleFixture, "--user"])).exitCode).toBe(0);
+			expect((await sandbox.run(["install", vibBundleFixture, "--user"])).exitCode).toBe(0);
 
 			const uninstall = await sandbox.run(["uninstall", "valid-six-surface-bundle", "--user"]);
 
 			expect(uninstall.exitCode).toBe(0);
 			expect(uninstall.stdout).toContain("Uninstalled valid-six-surface-bundle (user)");
-			expect(JSON.parse((await sandbox.run(["list", "--json"])).stdout)).toMatchObject({ gjc: [] });
+			expect(JSON.parse((await sandbox.run(["list", "--json"])).stdout)).toMatchObject({ vib: [] });
 		},
 		CLI_TEST_TIMEOUT_MS,
 	);

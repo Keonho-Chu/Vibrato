@@ -2,17 +2,17 @@ import { afterEach, describe, expect, it } from "bun:test";
 import * as crypto from "node:crypto";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { Agent } from "@gajae-code/agent-core";
-import type { AssistantMessage, Context, ToolResultMessage } from "@gajae-code/ai";
-import { getBundledModel } from "@gajae-code/ai/models";
-import { AssistantMessageEventStream } from "@gajae-code/ai/utils/event-stream";
-import { ModelRegistry } from "@gajae-code/coding-agent/config/model-registry";
-import { Settings } from "@gajae-code/coding-agent/config/settings";
-import { SETTINGS_SCHEMA } from "@gajae-code/coding-agent/config/settings-schema";
-import { AgentSession } from "@gajae-code/coding-agent/session/agent-session";
-import { AuthStorage } from "@gajae-code/coding-agent/session/auth-storage";
-import { SessionManager } from "@gajae-code/coding-agent/session/session-manager";
-import { TempDir, withTimeout } from "@gajae-code/utils";
+import { Agent } from "@vib-rato/agent-core";
+import type { AssistantMessage, Context, ToolResultMessage } from "@vib-rato/ai";
+import { getBundledModel } from "@vib-rato/ai/models";
+import { AssistantMessageEventStream } from "@vib-rato/ai/utils/event-stream";
+import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
+import { Settings } from "@vib-rato/coding-agent/config/settings";
+import { SETTINGS_SCHEMA } from "@vib-rato/coding-agent/config/settings-schema";
+import { AgentSession } from "@vib-rato/coding-agent/session/agent-session";
+import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
+import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
+import { TempDir, withTimeout } from "@vib-rato/utils";
 
 const SPILL_URI = /artifact:\/\/(\d+)/;
 
@@ -28,7 +28,7 @@ describe("AgentSession pre-admission artifact spill", () => {
 	});
 
 	it("spills oversized UTF-8 tool results before provider admission and rehydrates byte-exactly", async () => {
-		tempDir = TempDir.createSync("@gjc-pre-admission-spill-");
+		tempDir = TempDir.createSync("@vib-pre-admission-spill-");
 		authStorage = await AuthStorage.create(path.join(tempDir.path(), "auth.db"));
 		authStorage.setRuntimeApiKey("anthropic", "test-key");
 		const model = getBundledModel("anthropic", "claude-sonnet-4-5");
@@ -194,7 +194,7 @@ describe("AgentSession pre-admission artifact spill", () => {
 	});
 
 	it("keeps the canonical inline tool result when artifact writing fails", async () => {
-		tempDir = TempDir.createSync("@gjc-pre-admission-spill-failure-");
+		tempDir = TempDir.createSync("@vib-pre-admission-spill-failure-");
 		const model = getBundledModel("anthropic", "claude-sonnet-4-5");
 		if (!model) throw new Error("Expected bundled Anthropic model");
 		const agent = new Agent({
@@ -236,7 +236,7 @@ describe("AgentSession pre-admission artifact spill", () => {
 		expect(JSON.stringify(persisted.message)).not.toContain("artifact://");
 	});
 	it("keeps canonical admission live when the same message_end event object is emitted twice", async () => {
-		tempDir = TempDir.createSync("@gjc-pre-admission-spill-duplicate-");
+		tempDir = TempDir.createSync("@vib-pre-admission-spill-duplicate-");
 		authStorage = await AuthStorage.create(path.join(tempDir.path(), "auth.db"));
 		authStorage.setRuntimeApiKey("anthropic", "test-key");
 		const model = getBundledModel("anthropic", "claude-sonnet-4-5");
@@ -282,7 +282,7 @@ describe("AgentSession pre-admission artifact spill", () => {
 		expect(persistedToolResults).toHaveLength(2);
 	});
 	it("appends canonical messages synchronously when no admission is contended", async () => {
-		tempDir = TempDir.createSync("@gjc-admission-sync-visibility-");
+		tempDir = TempDir.createSync("@vib-admission-sync-visibility-");
 		const model = getBundledModel("anthropic", "claude-sonnet-4-5");
 		if (!model) throw new Error("Expected bundled Anthropic model");
 		const agent = new Agent({
@@ -317,7 +317,7 @@ describe("AgentSession pre-admission artifact spill", () => {
 	});
 
 	it("preserves FIFO admission when a contended predecessor is still in flight", async () => {
-		tempDir = TempDir.createSync("@gjc-admission-fifo-");
+		tempDir = TempDir.createSync("@vib-admission-fifo-");
 		authStorage = await AuthStorage.create(path.join(tempDir.path(), "auth.db"));
 		authStorage.setRuntimeApiKey("anthropic", "test-key");
 		const model = getBundledModel("anthropic", "claude-sonnet-4-5");

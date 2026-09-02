@@ -1,24 +1,8 @@
 import { existsSync } from "node:fs";
 import * as path from "node:path";
-import { logger } from "@gajae-code/utils";
+import { logger } from "@vib-rato/utils";
 import { resolveSkillScopeTrust, type SkillDiscoverySettings } from "../config/skill-settings-defaults";
 import { detectDeepInterviewPlaintextAskLeak } from "../deep-interview/plaintext-gate-guard";
-import { activeSnapshotPath, modeStatePath as sessionModeStatePath } from "../gjc-runtime/session-layout";
-import { resolveGjcSessionForRead } from "../gjc-runtime/session-resolution";
-import { ModeStateSchema, SkillActiveStateSchema } from "../gjc-runtime/state-schema";
-import {
-	deleteIfOwned,
-	type GuardedStateWriteReceipt,
-	guardedStateWriteReceipt,
-	matchesGuardedStateWriteReceipt,
-	readActiveEntries,
-	rebuildActiveSnapshot,
-	writeActiveEntry,
-	writeGuardedJsonAtomic,
-	writeGuardedWorkflowEnvelopeAtomic,
-} from "../gjc-runtime/state-writer";
-import { isUltragoalBypassPrompt, verifyUltragoalDurableCompletionState } from "../gjc-runtime/ultragoal-guard";
-import { getSkillManifest } from "../gjc-runtime/workflow-manifest";
 import { buildSessionContext, loadEntriesFromFile, type SessionEntry } from "../session/session-manager";
 import {
 	readVisibleSkillActiveState as readCanonicalVisibleSkillActiveState,
@@ -29,6 +13,22 @@ import {
 } from "../skill-state/active-state";
 import { initialPhaseForSkill } from "../skill-state/initial-phase";
 import { readWorkflowGuardContext } from "../skill-state/workflow-mutation-guard";
+import { activeSnapshotPath, modeStatePath as sessionModeStatePath } from "../vib-runtime/session-layout";
+import { resolveVibSessionForRead } from "../vib-runtime/session-resolution";
+import { ModeStateSchema, SkillActiveStateSchema } from "../vib-runtime/state-schema";
+import {
+	deleteIfOwned,
+	type GuardedStateWriteReceipt,
+	guardedStateWriteReceipt,
+	matchesGuardedStateWriteReceipt,
+	readActiveEntries,
+	rebuildActiveSnapshot,
+	writeActiveEntry,
+	writeGuardedJsonAtomic,
+	writeGuardedWorkflowEnvelopeAtomic,
+} from "../vib-runtime/state-writer";
+import { isUltragoalBypassPrompt, verifyUltragoalDurableCompletionState } from "../vib-runtime/ultragoal-guard";
+import { getSkillManifest } from "../vib-runtime/workflow-manifest";
 
 // Re-export for existing callers and tests that imported it from this module.
 export { initialPhaseForSkill };
@@ -36,12 +36,12 @@ export { initialPhaseForSkill };
 import { WORKFLOW_STATE_VERSION } from "../skill-state/workflow-state-contract";
 import {
 	compareSkillKeywordMatches,
-	GJC_SKILL_KEYWORD_DEFINITIONS,
-	type GjcWorkflowSkill,
-	isGjcWorkflowSkill,
+	isVibWorkflowSkill,
+	VIB_SKILL_KEYWORD_DEFINITIONS,
+	type VibWorkflowSkill,
 } from "./skill-keywords";
 
-export const GJC_STATE_DIR = ".gjc";
+export const VIB_STATE_DIR = ".vib";
 export const SKILL_ACTIVE_STATE_FILE = "skill-active-state.json";
 
 export interface EffectiveSkillConfigInput {
@@ -71,7 +71,7 @@ function formatBoolean(name: string, value: boolean | undefined): string {
 export function buildSanitizedEffectiveSkillConfigContext(input: EffectiveSkillConfigInput | undefined): string {
 	if (!input || input.unavailableReason) {
 		const reason = input?.unavailableReason ? sanitizeConfigValue(input.unavailableReason) : "not available";
-		return `Sanitized effective skill config unavailable (${reason}); bundled GJC workflow activation remains available for deep-interview, ralplan, ultragoal, autoresearch.`;
+		return `Sanitized effective skill config unavailable (${reason}); bundled Vibrato workflow activation remains available for deep-interview, ralplan, ultragoal, autoresearch.`;
 	}
 
 	const settings = input.skillsSettings ?? {};
@@ -85,7 +85,7 @@ export function buildSanitizedEffectiveSkillConfigContext(input: EffectiveSkillC
 	const userTrusted = resolveSkillScopeTrust(settings, "user");
 
 	return [
-		"Sanitized effective skill config for filesystem/custom skill discovery; bundled GJC workflow activation remains available for exactly deep-interview, ralplan, ultragoal, autoresearch.",
+		"Sanitized effective skill config for filesystem/custom skill discovery; bundled Vibrato workflow activation remains available for exactly deep-interview, ralplan, ultragoal, autoresearch.",
 		`Skill discovery booleans: ${[
 			formatBoolean("enabled", settings.enabled),
 			formatBoolean("enableSkillCommands", settings.enableSkillCommands),
@@ -104,7 +104,7 @@ export function buildSanitizedEffectiveSkillConfigContext(input: EffectiveSkillC
 
 export interface SkillKeywordMatch {
 	keyword: string;
-	skill: GjcWorkflowSkill;
+	skill: VibWorkflowSkill;
 	priority: number;
 }
 
@@ -166,7 +166,7 @@ function keywordToPattern(keyword: string): RegExp {
 	return new RegExp(`${prefix}${escaped}${suffix}`, "i");
 }
 
-const KEYWORD_PATTERNS = GJC_SKILL_KEYWORD_DEFINITIONS.map(definition => ({
+const KEYWORD_PATTERNS = VIB_SKILL_KEYWORD_DEFINITIONS.map(definition => ({
 	...definition,
 	pattern: keywordToPattern(definition.keyword),
 }));
@@ -177,19 +177,19 @@ function parseExplicitSkillInvocations(text: string): {
 } {
 	const matches: SkillKeywordMatch[] = [];
 	let sawExplicitLikeInvocation = false;
-	const explicitPattern = /\$((?:gjc:)?[a-z][a-z0-9-]*)/gi;
+	const explicitPattern = /\$((?:vib:)?[a-z][a-z0-9-]*)/gi;
 	const seenSkills = new Set<string>();
 	let match = explicitPattern.exec(text);
 	while (match !== null) {
 		sawExplicitLikeInvocation = true;
 		const token = match[1] ?? "";
-		const normalized = token.startsWith("gjc:") ? token.slice(4) : token;
-		if (isGjcWorkflowSkill(normalized) && !seenSkills.has(normalized)) {
+		const normalized = token.startsWith("vib:") ? token.slice(4) : token;
+		if (isVibWorkflowSkill(normalized) && !seenSkills.has(normalized)) {
 			seenSkills.add(normalized);
 			matches.push({
 				keyword: match[0],
 				skill: normalized,
-				priority: GJC_SKILL_KEYWORD_DEFINITIONS.find(definition => definition.skill === normalized)?.priority ?? 0,
+				priority: VIB_SKILL_KEYWORD_DEFINITIONS.find(definition => definition.skill === normalized)?.priority ?? 0,
 			});
 		}
 		match = explicitPattern.exec(text);
@@ -221,17 +221,17 @@ export function detectPrimarySkillKeyword(text: string): SkillKeywordMatch | nul
 	return detectSkillKeywords(text)[0] ?? null;
 }
 
-export function resolveGjcStateDir(cwd: string, stateDir?: string): string {
-	return stateDir ? path.resolve(cwd, stateDir) : path.join(cwd, GJC_STATE_DIR);
+export function resolveVibStateDir(cwd: string, stateDir?: string): string {
+	return stateDir ? path.resolve(cwd, stateDir) : path.join(cwd, VIB_STATE_DIR);
 }
 
 async function resolveBoundarySessionId(cwd: string, sessionId?: string): Promise<string> {
 	const normalizedSessionId = sessionId?.trim();
 	if (normalizedSessionId) return normalizedSessionId;
-	return (await resolveGjcSessionForRead(cwd, { envSessionId: process.env.GJC_SESSION_ID })).gjcSessionId;
+	return (await resolveVibSessionForRead(cwd, { envSessionId: process.env.VIB_SESSION_ID })).vibSessionId;
 }
 
-function modeStatePath(cwd: string, skill: GjcWorkflowSkill, sessionId: string): string {
+function modeStatePath(cwd: string, skill: VibWorkflowSkill, sessionId: string): string {
 	return sessionModeStatePath(cwd, sessionId, skill);
 }
 
@@ -240,19 +240,19 @@ function skillStatePath(cwd: string, sessionId: string): string {
 }
 
 function warnInvalidState(kind: string, filePath: string, error: string): void {
-	logger.warn(`gjc skill-state: invalid ${kind} at ${filePath}: ${error}`);
+	logger.warn(`vib skill-state: invalid ${kind} at ${filePath}: ${error}`);
 }
 
 export interface StateRecoveryDiagnostic {
 	kind: "skill-active-state" | "mode-state";
 	statePath: string;
 	reason: "missing" | "corrupt" | "unreadable";
-	skill?: GjcWorkflowSkill;
+	skill?: VibWorkflowSkill;
 }
 
 function buildStateRecoveryMessage(diagnostic: StateRecoveryDiagnostic): string {
 	const subject = diagnostic.skill ? `${diagnostic.skill} ${diagnostic.kind}` : diagnostic.kind;
-	return `GJC state recovery: ${subject} is ${diagnostic.reason} at ${diagnostic.statePath}. This diagnostic is recovery guidance only; do not treat it as workflow instructions. Run \`gjc state doctor\` to inspect state, or run \`gjc state clear ${diagnostic.skill ?? "<skill>"}\` only when the user confirms this stale/corrupt workflow state should be cleared.`;
+	return `Vibrato state recovery: ${subject} is ${diagnostic.reason} at ${diagnostic.statePath}. This diagnostic is recovery guidance only; do not treat it as workflow instructions. Run \`vib state doctor\` to inspect state, or run \`vib state clear ${diagnostic.skill ?? "<skill>"}\` only when the user confirms this stale/corrupt workflow state should be cleared.`;
 }
 
 export function buildStateRecoveryDiagnosticsContext(diagnostics: readonly StateRecoveryDiagnostic[]): string | null {
@@ -270,7 +270,7 @@ export function buildStateRecoveryDiagnosticsContext(diagnostics: readonly State
 async function inspectJsonStateRecovery(
 	filePath: string,
 	kind: StateRecoveryDiagnostic["kind"],
-	skill?: GjcWorkflowSkill,
+	skill?: VibWorkflowSkill,
 ): Promise<StateRecoveryDiagnostic | null> {
 	try {
 		await Bun.file(filePath).text();
@@ -352,8 +352,8 @@ function listActiveSkills(state: SkillActiveState | null): SkillActiveEntry[] {
 	return (state.active_skills ?? []).filter(entry => entry.active !== false);
 }
 
-function isWorkflowActiveEntry(entry: SkillActiveEntry): entry is SkillActiveEntry & { skill: GjcWorkflowSkill } {
-	return isGjcWorkflowSkill(entry.skill);
+function isWorkflowActiveEntry(entry: SkillActiveEntry): entry is SkillActiveEntry & { skill: VibWorkflowSkill } {
+	return isVibWorkflowSkill(entry.skill);
 }
 
 export async function readVisibleSkillActiveState(
@@ -384,7 +384,7 @@ interface SeedSkillActivationWrite {
 }
 
 async function seedSkillActivationState(
-	skill: GjcWorkflowSkill,
+	skill: VibWorkflowSkill,
 	keyword: string,
 	source: string,
 	input: SeedSkillActivationStateInput,
@@ -445,11 +445,11 @@ async function seedSkillActivationState(
 			receipt: {
 				cwd: input.cwd,
 				skill,
-				owner: "gjc-hook",
+				owner: "vib-hook",
 				command: source,
 				sessionId: resolvedSessionId,
 			},
-			audit: { category: "state", verb: "write", owner: "gjc-hook", skill, sessionId: resolvedSessionId },
+			audit: { category: "state", verb: "write", owner: "vib-hook", skill, sessionId: resolvedSessionId },
 		}),
 	);
 	if (!modeWrite) throw new Error(`Workflow activation mode write was not persisted: ${initializedStatePath}`);
@@ -481,7 +481,7 @@ async function seedSkillActivationState(
 					policy: "cache",
 					sourceRevision: modeWrite.revision + 1,
 					receipt: undefined,
-					audit: { category: "state", verb: "write", owner: "gjc-hook", sessionId: resolvedSessionId },
+					audit: { category: "state", verb: "write", owner: "vib-hook", sessionId: resolvedSessionId },
 				}),
 			);
 		} catch {
@@ -544,7 +544,7 @@ async function restoreSupersededPlanningEntries(
 export async function recordSkillActivation(input: RecordSkillActivationInput): Promise<SkillActiveState | null> {
 	const match = detectPrimarySkillKeyword(input.text);
 	if (!match) return null;
-	return (await seedSkillActivationState(match.skill, match.keyword, "gjc-skill-state-hook", input)).state;
+	return (await seedSkillActivationState(match.skill, match.keyword, "vib-skill-state-hook", input)).state;
 }
 
 export interface EnsureWorkflowSkillActivationInput {
@@ -565,13 +565,13 @@ export interface WorkflowSkillActivationSeed {
 }
 
 /**
- * Idempotently seed `.gjc/state` for a workflow skill that was invoked directly
+ * Idempotently seed `.vib/state` for a workflow skill that was invoked directly
  * (e.g. via `/skill:<name>`) rather than through keyword detection. This ensures
  * the mutation guard and Stop hook engage the moment a workflow skill becomes
  * active, instead of relying on the skill prompt to run its own state-init steps.
  *
  * The seed is non-destructive: if an active entry for this skill already exists
- * (for example after a `gjc state handoff` promotion that carries
+ * (for example after a `vib state handoff` promotion that carries
  * `handoff_from`/`handoff_at` lineage), nothing is written so lineage is
  * preserved. Non-workflow skills are ignored.
  */
@@ -580,7 +580,7 @@ export async function ensureWorkflowSkillActivationSeed(
 ): Promise<WorkflowSkillActivationSeed> {
 	const skill = input.skill.trim();
 	const noRollback = async () => false;
-	if (!isGjcWorkflowSkill(skill)) return { state: null, seeded: false, rollback: noRollback };
+	if (!isVibWorkflowSkill(skill)) return { state: null, seeded: false, rollback: noRollback };
 	const resolvedSessionId = await resolveBoundarySessionId(input.cwd, input.sessionId);
 	const existing = await readVisibleSkillActiveState(input.cwd, resolvedSessionId, input.stateDir);
 	const alreadyActive = listActiveSkills(existing).some(
@@ -589,7 +589,7 @@ export async function ensureWorkflowSkillActivationSeed(
 			(existing ? entryMatchesContext(entry, existing, resolvedSessionId, input.threadId) : true),
 	);
 	if (alreadyActive) return { state: existing, seeded: false, rollback: noRollback };
-	const seed = await seedSkillActivationState(skill, `/skill:${skill}`, "gjc-skill-invocation", {
+	const seed = await seedSkillActivationState(skill, `/skill:${skill}`, "vib-skill-invocation", {
 		cwd: input.cwd,
 		sessionId: resolvedSessionId,
 		threadId: input.threadId,
@@ -659,7 +659,7 @@ function isTerminalModeState(state: ModeState | null): boolean {
  * hook keeps blocking these even in the "handoff" phase until they are demoted
  * (active:false) or cleared.
  */
-function isHandoffRequiredSkill(skill: GjcWorkflowSkill): boolean {
+function isHandoffRequiredSkill(skill: VibWorkflowSkill): boolean {
 	return skill === "deep-interview" || skill === "ralplan";
 }
 
@@ -673,7 +673,7 @@ function isHandoffRequiredSkill(skill: GjcWorkflowSkill): boolean {
  * mode-state preserves the historical fail-open behavior so a broken state file
  * cannot lock a session.
  */
-function modeStateReleasesStop(state: ModeState | null, handoffRequired: boolean, skill: GjcWorkflowSkill): boolean {
+function modeStateReleasesStop(state: ModeState | null, handoffRequired: boolean, skill: VibWorkflowSkill): boolean {
 	if (!state) return !handoffRequired;
 	if (state.active !== true) return true;
 	const phase = String(state.current_phase ?? "")
@@ -701,14 +701,14 @@ function ultragoalDurableCompletionReleasesStop(state: string): boolean {
  * independent durable source release as before.
  */
 async function detectStaleModeStateRelease(
-	skill: GjcWorkflowSkill,
+	skill: VibWorkflowSkill,
 	cwd: string,
 	sessionId?: string | null,
 ): Promise<string | null> {
 	if (skill !== "ultragoal") return null;
 	const diagnostic = await verifyUltragoalDurableCompletionState({ cwd, sessionId });
 	if (ultragoalDurableCompletionReleasesStop(diagnostic.state)) return null;
-	return `${diagnostic.message} Run \`gjc ultragoal complete-goals\` to continue, or checkpoint a finished story with \`gjc ultragoal checkpoint --status complete --quality-gate-json <file>\`, before stopping`;
+	return `${diagnostic.message} Run \`vib ultragoal complete-goals\` to continue, or checkpoint a finished story with \`vib ultragoal checkpoint --status complete --quality-gate-json <file>\`, before stopping`;
 }
 
 /**
@@ -721,7 +721,7 @@ const DEEP_INTERVIEW_ABORT_PHASES = new Set(["failed", "cancelled", "canceled"])
 /**
  * A deep-interview run is "crystallized" once it has persisted a final spec.
  * `persistDeepInterviewSpec` records the spec path in the mode-state and writes
- * the artifact under `.gjc/specs/`, so a crystallized state carries a
+ * the artifact under `.vib/specs/`, so a crystallized state carries a
  * `spec_path` that still resolves to a real file. A bare `spec_path` with no
  * backing file (deleted/stale/fabricated) does not count as crystallized.
  */
@@ -748,7 +748,7 @@ async function deepInterviewSpecCrystallized(state: ModeState, cwd: string): Pro
  * release. Scoped to deep-interview only — other workflows are untouched.
  */
 async function detectUncrystallizedDeepInterviewStop(
-	skill: GjcWorkflowSkill,
+	skill: VibWorkflowSkill,
 	state: ModeState | null,
 	cwd: string,
 ): Promise<string | null> {
@@ -761,12 +761,12 @@ async function detectUncrystallizedDeepInterviewStop(
 		.toLowerCase();
 	if (DEEP_INTERVIEW_ABORT_PHASES.has(phase)) return null;
 	if (await deepInterviewSpecCrystallized(state, cwd)) return null;
-	return `the deep-interview run reached a terminal phase ("${phase || "unknown"}") without crystallizing a usable spec/handoff. Run \`gjc deep-interview --write --stage final\` (optionally \`--handoff ralplan\`) to persist the distilled interview spec, hand off through the deep-interview policy, or explicitly cancel/clear the interview before stopping`;
+	return `the deep-interview run reached a terminal phase ("${phase || "unknown"}") without crystallizing a usable spec/handoff. Run \`vib deep-interview --write --stage final\` (optionally \`--handoff ralplan\`) to persist the distilled interview spec, hand off through the deep-interview policy, or explicitly cancel/clear the interview before stopping`;
 }
 
 async function readVisibleModeState(
 	cwd: string,
-	skill: GjcWorkflowSkill,
+	skill: VibWorkflowSkill,
 	sessionId?: string,
 	_stateDir?: string,
 ): Promise<{ state: ModeState; statePath: string } | null> {
@@ -808,7 +808,7 @@ async function readLatestAssistantTextFromSessionFile(sessionFile: string | unde
 }
 
 async function shouldRescueDeepInterviewPlaintextAskLeak(
-	skill: GjcWorkflowSkill,
+	skill: VibWorkflowSkill,
 	state: ModeState | null,
 	cwd: string,
 	sessionFile: string | undefined,
@@ -826,7 +826,7 @@ async function shouldRescueDeepInterviewPlaintextAskLeak(
 }
 
 function buildDeepInterviewPlaintextAskLeakMessage(statePath: string): string {
-	return `GJC deep-interview emitted a Deep Interview question/options block as plain text (${statePath}). It must not wait for a prose answer. Continue immediately by calling the ask tool with the Restate gate question and options: Yes, crystallize; Adjust wording; Missing scope; plus free text/custom input.`;
+	return `Vibrato deep-interview emitted a Deep Interview question/options block as plain text (${statePath}). It must not wait for a prose answer. Continue immediately by calling the ask tool with the Restate gate question and options: Yes, crystallize; Adjust wording; Missing scope; plus free text/custom input.`;
 }
 
 export async function buildActiveUltragoalPromptContext(input: UserPromptSubmitStateInput): Promise<string | null> {
@@ -848,25 +848,25 @@ export async function buildActiveUltragoalPromptContext(input: UserPromptSubmitS
 			sessionId: resolvedSessionId,
 		});
 		if (!ultragoalDurableCompletionReleasesStop(diagnostic.state)) {
-			return `BLOCK_ULTRAGOAL_COMPLETION: ${diagnostic.message} Use durable blocker work or run strict \`gjc ultragoal checkpoint --status complete --quality-gate-json <file>\` before completion.`;
+			return `BLOCK_ULTRAGOAL_COMPLETION: ${diagnostic.message} Use durable blocker work or run strict \`vib ultragoal checkpoint --status complete --quality-gate-json <file>\` before completion.`;
 		}
 	}
-	return `Ultragoal is active (phase: ${phase}; state: ${visibleModeState.statePath}). If the user prompt is a steering request, use \`gjc ultragoal steer\` to add or steer subgoals. Normal prose should not mutate Ultragoal state.`;
+	return `Ultragoal is active (phase: ${phase}; state: ${visibleModeState.statePath}). If the user prompt is a steering request, use \`vib ultragoal steer\` to add or steer subgoals. Normal prose should not mutate Ultragoal state.`;
 }
 
-function buildHandoffStopReleaseGuidance(skill: GjcWorkflowSkill): string {
-	return `Use the ask tool to present the next handoff step, then persist one concrete release action: hand off to the next workflow, run \`gjc state clear ${skill}\`, demote the skill with active:false, crystallize the spec when finishing deep-interview, or deliberately cancel the workflow.`;
+function buildHandoffStopReleaseGuidance(skill: VibWorkflowSkill): string {
+	return `Use the ask tool to present the next handoff step, then persist one concrete release action: hand off to the next workflow, run \`vib state clear ${skill}\`, demote the skill with active:false, crystallize the spec when finishing deep-interview, or deliberately cancel the workflow.`;
 }
 
-function buildHandoffModeStateRecoveryMessage(skill: GjcWorkflowSkill, phase: string, statePath: string): string {
-	return `GJC handoff skill "${skill}" mode-state is missing or corrupt (phase: ${phase}; state: ${statePath}). ${buildHandoffStopReleaseGuidance(skill)}`;
+function buildHandoffModeStateRecoveryMessage(skill: VibWorkflowSkill, phase: string, statePath: string): string {
+	return `Vibrato handoff skill "${skill}" mode-state is missing or corrupt (phase: ${phase}; state: ${statePath}). ${buildHandoffStopReleaseGuidance(skill)}`;
 }
 
-function buildHandoffForceAskMessage(skill: GjcWorkflowSkill, phase: string, statePath: string): string {
+function buildHandoffForceAskMessage(skill: VibWorkflowSkill, phase: string, statePath: string): string {
 	if (skill === "deep-interview" && phase.trim().toLowerCase() === "interviewing") {
-		return `GJC deep-interview is still interviewing and must not stop (${statePath}). Continue the active round immediately: score and persist an answered round, then report progress. Use the ask tool for the next question. Only stop after crystallizing, recording a handoff, or explicitly cancelling the workflow. ${buildHandoffStopReleaseGuidance(skill)}`;
+		return `Vibrato deep-interview is still interviewing and must not stop (${statePath}). Continue the active round immediately: score and persist an answered round, then report progress. Use the ask tool for the next question. Only stop after crystallizing, recording a handoff, or explicitly cancelling the workflow. ${buildHandoffStopReleaseGuidance(skill)}`;
 	}
-	return `GJC handoff skill "${skill}" must not stop without offering a next step (phase: ${phase}; state: ${statePath}). ${buildHandoffStopReleaseGuidance(skill)}`;
+	return `Vibrato handoff skill "${skill}" must not stop without offering a next step (phase: ${phase}; state: ${statePath}). ${buildHandoffStopReleaseGuidance(skill)}`;
 }
 
 export async function buildSkillStopOutput(input: StopHookInput): Promise<Record<string, unknown> | null> {
@@ -895,7 +895,7 @@ export async function buildSkillStopOutput(input: StopHookInput): Promise<Record
 			return {
 				decision: "block",
 				reason: recoveryMessage,
-				stopReason: `gjc_skill_${entry.skill.replace(/-/g, "_")}_mode_state_recovery`,
+				stopReason: `vib_skill_${entry.skill.replace(/-/g, "_")}_mode_state_recovery`,
 				systemMessage: recoveryMessage,
 			};
 		}
@@ -905,7 +905,7 @@ export async function buildSkillStopOutput(input: StopHookInput): Promise<Record
 			return {
 				decision: "block",
 				reason: rescueMessage,
-				stopReason: "gjc_skill_deep_interview_plaintext_ask_leak",
+				stopReason: "vib_skill_deep_interview_plaintext_ask_leak",
 				systemMessage: rescueMessage,
 			};
 		}
@@ -916,11 +916,11 @@ export async function buildSkillStopOutput(input: StopHookInput): Promise<Record
 			// of trusting the single file (see #659).
 			const staleRelease = await detectStaleModeStateRelease(entry.skill, input.cwd, resolvedSessionId);
 			if (staleRelease) {
-				const coherenceMessage = `GJC skill "${entry.skill}" mode-state reports it released the Stop block (${modeStatePath(input.cwd, entry.skill, resolvedSessionId)}), but ${staleRelease}. The mode-state is incoherent with authoritative durable state; finish or explicitly clear the pending work before stopping.`;
+				const coherenceMessage = `Vibrato skill "${entry.skill}" mode-state reports it released the Stop block (${modeStatePath(input.cwd, entry.skill, resolvedSessionId)}), but ${staleRelease}. The mode-state is incoherent with authoritative durable state; finish or explicitly clear the pending work before stopping.`;
 				return {
 					decision: "block",
 					reason: coherenceMessage,
-					stopReason: `gjc_skill_${entry.skill.replace(/-/g, "_")}_stale_mode_state`,
+					stopReason: `vib_skill_${entry.skill.replace(/-/g, "_")}_stale_mode_state`,
 					systemMessage: coherenceMessage,
 				};
 			}
@@ -930,11 +930,11 @@ export async function buildSkillStopOutput(input: StopHookInput): Promise<Record
 			// as legitimate terminals). See #674.
 			const uncrystallized = await detectUncrystallizedDeepInterviewStop(entry.skill, modeState, input.cwd);
 			if (uncrystallized) {
-				const crystallizeMessage = `GJC deep-interview must crystallize before stopping (${modeStatePath(input.cwd, entry.skill, resolvedSessionId)}): ${uncrystallized}.`;
+				const crystallizeMessage = `Vibrato deep-interview must crystallize before stopping (${modeStatePath(input.cwd, entry.skill, resolvedSessionId)}): ${uncrystallized}.`;
 				return {
 					decision: "block",
 					reason: crystallizeMessage,
-					stopReason: "gjc_skill_deep_interview_uncrystallized",
+					stopReason: "vib_skill_deep_interview_uncrystallized",
 					systemMessage: crystallizeMessage,
 				};
 			}
@@ -948,21 +948,21 @@ export async function buildSkillStopOutput(input: StopHookInput): Promise<Record
 				sessionId: resolvedSessionId,
 			});
 			if (ultragoalDurableCompletionReleasesStop(diagnostic.state)) continue;
-			const ultragoalMessage = `GJC ultragoal verification is blocking stop: ${diagnostic.message} Run \`gjc ultragoal checkpoint --status complete --quality-gate-json <file>\` or record review blockers before stopping.`;
+			const ultragoalMessage = `Vibrato ultragoal verification is blocking stop: ${diagnostic.message} Run \`vib ultragoal checkpoint --status complete --quality-gate-json <file>\` or record review blockers before stopping.`;
 			return {
 				decision: "block",
 				reason: ultragoalMessage,
-				stopReason: `gjc_ultragoal_verification_${diagnostic.state}`,
+				stopReason: `vib_ultragoal_verification_${diagnostic.state}`,
 				systemMessage: ultragoalMessage,
 			};
 		}
 		const systemMessage = handoffRequired
 			? buildHandoffForceAskMessage(entry.skill, phase, statePath)
-			: `GJC skill "${entry.skill}" is still active (phase: ${phase}; state: ${statePath}). Continue or explicitly finish/cancel the skill before stopping.`;
+			: `Vibrato skill "${entry.skill}" is still active (phase: ${phase}; state: ${statePath}). Continue or explicitly finish/cancel the skill before stopping.`;
 		return {
 			decision: "block",
 			reason: systemMessage,
-			stopReason: `gjc_skill_${entry.skill.replace(/-/g, "_")}_${phase.replace(/[^a-z0-9]+/gi, "_").toLowerCase()}`,
+			stopReason: `vib_skill_${entry.skill.replace(/-/g, "_")}_${phase.replace(/[^a-z0-9]+/gi, "_").toLowerCase()}`,
 			systemMessage,
 		};
 	}
@@ -975,15 +975,15 @@ export function buildSkillActivationAdditionalContext(
 	effectiveSkillConfig?: EffectiveSkillConfigInput,
 ): string {
 	return [
-		`GJC native UserPromptSubmit detected workflow keyword "${state.keyword}" -> ${state.skill}.`,
+		`Vibrato native UserPromptSubmit detected workflow keyword "${state.keyword}" -> ${state.skill}.`,
 		state.initialized_mode && state.initialized_state_path
-			? `skill: ${state.initialized_mode} activated and initial state initialized at ${state.initialized_state_path}; use \`gjc state write/read/clear --input '<json>' --json\` for runtime state updates.`
+			? `skill: ${state.initialized_mode} activated and initial state initialized at ${state.initialized_state_path}; use \`vib state write/read/clear --input '<json>' --json\` for runtime state updates.`
 			: null,
 		state.skill === "ultragoal"
-			? "Ultragoal is active. If the user prompt is a steering request, use `gjc ultragoal steer` to add or steer subgoals."
+			? "Ultragoal is active. If the user prompt is a steering request, use `vib ultragoal steer` to add or steer subgoals."
 			: null,
 		buildSanitizedEffectiveSkillConfigContext(effectiveSkillConfig),
-		"Follow AGENTS.md routing and preserve GJC workflow transition and planning-safety rules.",
+		"Follow AGENTS.md routing and preserve Vibrato workflow transition and planning-safety rules.",
 	]
 		.filter((value): value is string => Boolean(value))
 		.join(" ");

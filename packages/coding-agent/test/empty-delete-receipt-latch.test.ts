@@ -4,7 +4,7 @@ import * as fsSync from "node:fs";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { exactUnlinkDirect } from "@gajae-code/natives";
+import { exactUnlinkDirect } from "@vib-rato/natives";
 import { writeCoordinatorAtomic } from "../src/coordinator-mcp/durability";
 import {
 	COORDINATOR_JSON_SCAN_CAP,
@@ -12,30 +12,30 @@ import {
 	type ProjectionScanDirectory,
 	ProjectionScanTestHooks,
 } from "../src/coordinator-mcp/projection-scan";
-import { collectEmptyDeleteReceipts, runEmptyDeleteGc } from "../src/gjc-runtime/empty-delete-gc";
-import { runGjcGcCommand } from "../src/gjc-runtime/gc-runtime";
+import { collectEmptyDeleteReceipts, runEmptyDeleteGc } from "../src/vib-runtime/empty-delete-gc";
+import { runVibGcCommand } from "../src/vib-runtime/gc-runtime";
 import {
 	reclaimStaleSessionStateLock,
 	removeVerifiedEmptyQuarantine,
 	SessionStateLockTestHooks,
 	SessionStateLockUnavailableError,
 	setSessionStateLockNativeBindings,
-} from "../src/gjc-runtime/session-state-lock";
+} from "../src/vib-runtime/session-state-lock";
 import {
-	GJC_COORDINATOR_SESSION_STATE_FILE_ENV,
 	persistCoordinatorRuntimeStateFromEvent,
-} from "../src/gjc-runtime/session-state-sidecar";
+	VIB_COORDINATOR_SESSION_STATE_FILE_ENV,
+} from "../src/vib-runtime/session-state-sidecar";
 import { exactIdentityNativeBindings, installExactIdentityNatives } from "./helpers/exact-identity-natives";
 
 const tempDirs: string[] = [];
-const ORIGINAL_STATE_FILE = process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV];
+const ORIGINAL_STATE_FILE = process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV];
 const ORIGINAL_OWNER_HOST_ID = SessionStateLockTestHooks.ownerHostId;
 const ORIGINAL_UNQUALIFIED_OWNER_IS_LOCAL = SessionStateLockTestHooks.unqualifiedOwnerIsLocal;
 installExactIdentityNatives();
 
 afterEach(async () => {
-	if (ORIGINAL_STATE_FILE === undefined) delete process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV];
-	else process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = ORIGINAL_STATE_FILE;
+	if (ORIGINAL_STATE_FILE === undefined) delete process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV];
+	else process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = ORIGINAL_STATE_FILE;
 	ProjectionScanTestHooks.platform = undefined;
 	SessionStateLockTestHooks.ownerHostId = ORIGINAL_OWNER_HOST_ID;
 	SessionStateLockTestHooks.unqualifiedOwnerIsLocal = ORIGINAL_UNQUALIFIED_OWNER_IS_LOCAL;
@@ -54,11 +54,11 @@ async function tempRoot(prefix: string): Promise<string> {
 	return dir;
 }
 
-describe("empty .gjc-delete-* latch", () => {
-	it("Test 1: planted 0-byte .gjc-delete-* is never opened or parsed", async () => {
-		const dir = await tempRoot("gjc-scan-");
+describe("empty .vib-delete-* latch", () => {
+	it("Test 1: planted 0-byte .vib-delete-* is never opened or parsed", async () => {
+		const dir = await tempRoot("vib-scan-");
 		const live = path.join(dir, "live.json");
-		const debris = path.join(dir, ".gjc-delete-session-state-lock-aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa.json");
+		const debris = path.join(dir, ".vib-delete-session-state-lock-aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa.json");
 		await fs.writeFile(live, JSON.stringify({ session_id: "live", state: "ready_for_input" }));
 		await fs.writeFile(debris, "");
 		const opened: string[] = [];
@@ -73,12 +73,12 @@ describe("empty .gjc-delete-* latch", () => {
 		const scan = await listCoordinatorJsonFiles(dir, io);
 		expect(scan.values).toHaveLength(1);
 		expect((scan.values[0] as { session_id: string }).session_id).toBe("live");
-		expect(opened.every(file => !file.includes(".gjc-delete-"))).toBe(true);
+		expect(opened.every(file => !file.includes(".vib-delete-"))).toBe(true);
 		expect(scan.skippedDebris).toBeGreaterThan(0);
 	});
 
 	it("Test 1 race: a candidate that becomes unsafe is reported incomplete without reading it", async () => {
-		const dir = await tempRoot("gjc-scan-race-");
+		const dir = await tempRoot("vib-scan-race-");
 		const candidate = path.join(dir, "candidate.json");
 		await fs.writeFile(candidate, JSON.stringify({ session_id: "candidate" }));
 		const scan = await listCoordinatorJsonFiles(dir, {
@@ -100,7 +100,7 @@ describe("empty .gjc-delete-* latch", () => {
 	it.skipIf(process.platform !== "linux")(
 		"Test 1 race: a post-enumeration symlink candidate is raced, not skipped",
 		async () => {
-			const dir = await tempRoot("gjc-scan-candidate-reparse-race-");
+			const dir = await tempRoot("vib-scan-candidate-reparse-race-");
 			const candidate = path.join(dir, "candidate.json");
 			const target = path.join(dir, "candidate-target.txt");
 			await fs.writeFile(candidate, JSON.stringify({ session_id: "source" }));
@@ -135,7 +135,7 @@ describe("empty .gjc-delete-* latch", () => {
 	it.skipIf(process.platform !== "linux")(
 		"Test 1 race: a valid replacement after enumeration is not parsed as the candidate",
 		async () => {
-			const dir = await tempRoot("gjc-scan-candidate-race-");
+			const dir = await tempRoot("vib-scan-candidate-race-");
 			const candidate = path.join(dir, "candidate.json");
 			const replacement = path.join(dir, "candidate-replacement.tmp");
 			await fs.writeFile(candidate, JSON.stringify({ session_id: "source" }));
@@ -170,7 +170,7 @@ describe("empty .gjc-delete-* latch", () => {
 	);
 
 	it("Test 1 root race: replacement enumeration is incomplete without a foreign record", async () => {
-		const dir = await tempRoot("gjc-scan-root-race-");
+		const dir = await tempRoot("vib-scan-root-race-");
 		const replacement = `${dir}-replacement`;
 		tempDirs.push(replacement);
 		await fs.writeFile(path.join(dir, "original.json"), JSON.stringify({ session_id: "original" }));
@@ -191,7 +191,7 @@ describe("empty .gjc-delete-* latch", () => {
 	});
 
 	it("Test 1 root ABA: pinned authority survives post-enumeration swap and restore", async () => {
-		const dir = await tempRoot("gjc-scan-root-aba-");
+		const dir = await tempRoot("vib-scan-root-aba-");
 		const replacement = `${dir}-replacement`;
 		tempDirs.push(replacement);
 		const original = path.join(dir, "record.json");
@@ -241,7 +241,7 @@ describe("empty .gjc-delete-* latch", () => {
 	});
 
 	it("Test 1 unsupported authority: scan fails closed without foreign values", async () => {
-		const dir = await tempRoot("gjc-scan-unsupported-");
+		const dir = await tempRoot("vib-scan-unsupported-");
 		const io = {
 			readdir: async () => [],
 			lstat: async () => {
@@ -262,7 +262,7 @@ describe("empty .gjc-delete-* latch", () => {
 	});
 
 	it("Test 1 Windows authority: stable regular JSON remains readable", async () => {
-		const dir = await tempRoot("gjc-scan-win-stable-");
+		const dir = await tempRoot("vib-scan-win-stable-");
 		ProjectionScanTestHooks.platform = "win32";
 		await fs.writeFile(path.join(dir, "stable.json"), JSON.stringify({ session_id: "stable" }));
 
@@ -275,7 +275,7 @@ describe("empty .gjc-delete-* latch", () => {
 	});
 
 	it("Test 1 Windows authority: root replacement fails closed", async () => {
-		const dir = await tempRoot("gjc-scan-win-root-race-");
+		const dir = await tempRoot("vib-scan-win-root-race-");
 		const replacement = `${dir}-replacement`;
 		tempDirs.push(replacement);
 		ProjectionScanTestHooks.platform = "win32";
@@ -304,7 +304,7 @@ describe("empty .gjc-delete-* latch", () => {
 	});
 
 	it("Test 1 Windows authority: candidate replacement fails closed before parsing", async () => {
-		const dir = await tempRoot("gjc-scan-win-candidate-race-");
+		const dir = await tempRoot("vib-scan-win-candidate-race-");
 		const candidate = path.join(dir, "candidate.json");
 		const replacement = path.join(dir, "candidate-replacement.tmp");
 		ProjectionScanTestHooks.platform = "win32";
@@ -336,7 +336,7 @@ describe("empty .gjc-delete-* latch", () => {
 	});
 
 	it("Test 1 Windows authority: ctime-only candidate replacement fails closed", async () => {
-		const dir = await tempRoot("gjc-scan-win-ctime-race-");
+		const dir = await tempRoot("vib-scan-win-ctime-race-");
 		const candidate = path.join(dir, "candidate.json");
 		ProjectionScanTestHooks.platform = "win32";
 		await fs.writeFile(candidate, JSON.stringify({ session_id: "source" }));
@@ -385,7 +385,7 @@ describe("empty .gjc-delete-* latch", () => {
 	});
 
 	it("Test 1 Windows authority: candidate reparse replacement fails closed", async () => {
-		const dir = await tempRoot("gjc-scan-win-reparse-race-");
+		const dir = await tempRoot("vib-scan-win-reparse-race-");
 		const candidate = path.join(dir, "candidate.json");
 		const source = path.join(dir, "candidate-source.txt");
 		ProjectionScanTestHooks.platform = "win32";
@@ -417,7 +417,7 @@ describe("empty .gjc-delete-* latch", () => {
 	});
 
 	it("Test 1 Windows authority: unsupported platform remains fail-closed", async () => {
-		const dir = await tempRoot("gjc-scan-unsupported-platform-");
+		const dir = await tempRoot("vib-scan-unsupported-platform-");
 		ProjectionScanTestHooks.platform = "darwin";
 		await fs.writeFile(path.join(dir, "foreign.json"), JSON.stringify({ session_id: "foreign" }));
 
@@ -430,7 +430,7 @@ describe("empty .gjc-delete-* latch", () => {
 	});
 
 	it("Test 1 lazy namespace: initial missing directory is a complete empty scan", async () => {
-		const dir = await tempRoot("gjc-scan-lazy-empty-");
+		const dir = await tempRoot("vib-scan-lazy-empty-");
 		const io = {
 			readdir: async () => [],
 			lstat: async () => {
@@ -490,12 +490,12 @@ describe("empty .gjc-delete-* latch", () => {
 	it.skipIf(process.platform !== "linux")(
 		"Test 1 over-cap: debris pile + few valid records succeeds without unreadable",
 		async () => {
-			const dir = await tempRoot("gjc-cap-");
+			const dir = await tempRoot("vib-cap-");
 			await fs.writeFile(path.join(dir, "a.json"), JSON.stringify({ session_id: "a" }));
 			await fs.writeFile(path.join(dir, "b.json"), JSON.stringify({ session_id: "b" }));
 			for (let i = 0; i < COORDINATOR_JSON_SCAN_CAP + 5; i++) {
 				await fs.writeFile(
-					path.join(dir, `.gjc-delete-session-state-lock-${i.toString(16).padStart(32, "0")}.json`),
+					path.join(dir, `.vib-delete-session-state-lock-${i.toString(16).padStart(32, "0")}.json`),
 					"",
 				);
 			}
@@ -511,7 +511,7 @@ describe("empty .gjc-delete-* latch", () => {
 	it.skipIf(process.platform !== "linux")(
 		"Test 1: zero-byte canonical JSON fails closed instead of being ignored",
 		async () => {
-			const dir = await tempRoot("gjc-postcap-");
+			const dir = await tempRoot("vib-postcap-");
 			await fs.writeFile(path.join(dir, "live.json"), JSON.stringify({ session_id: "live" }));
 			await fs.writeFile(path.join(dir, "empty.json"), "");
 			await expect(listCoordinatorJsonFiles(dir, undefined, 10)).rejects.toThrow("Unexpected EOF");
@@ -519,8 +519,8 @@ describe("empty .gjc-delete-* latch", () => {
 	);
 
 	it("Test 2: leftover empty at reserved name is removed before exchange", async () => {
-		const dir = await tempRoot("gjc-mint-");
-		const reserved = ".gjc-delete-session-state-lock-bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb.json";
+		const dir = await tempRoot("vib-mint-");
+		const reserved = ".vib-delete-session-state-lock-bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb.json";
 		await fs.writeFile(path.join(dir, reserved), "");
 		await removeVerifiedEmptyQuarantine(dir, reserved);
 		expect(
@@ -535,10 +535,10 @@ describe("empty .gjc-delete-* latch", () => {
 	});
 
 	it("Test 2b: stale reclaim does not refuse a planted leftover at forced quarantine name", async () => {
-		const dir = await tempRoot("gjc-reclaim-");
+		const dir = await tempRoot("vib-reclaim-");
 		const stateFile = path.join(dir, "session.json");
 		const lockFile = `${stateFile}.lock`;
-		const reserved = ".gjc-delete-session-state-lock-cccccccc-cccc-cccc-cccc-cccccccccccc.json";
+		const reserved = ".vib-delete-session-state-lock-cccccccc-cccc-cccc-cccc-cccccccccccc.json";
 		await fs.writeFile(stateFile, JSON.stringify({ state: "running" }));
 		await fs.writeFile(path.join(dir, reserved), "");
 		await fs.writeFile(
@@ -566,9 +566,9 @@ describe("empty .gjc-delete-* latch", () => {
 	});
 
 	it("Test 3: turn-start persist then next lock cycle can rewrite off running", async () => {
-		const dir = await tempRoot("gjc-running-");
+		const dir = await tempRoot("vib-running-");
 		const stateFile = path.join(dir, "runtime-state.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
 		await persistCoordinatorRuntimeStateFromEvent(
 			{ type: "turn_start" },
 			{ sessionId: "sid", cwd: dir, sessionFile: null },
@@ -581,14 +581,14 @@ describe("empty .gjc-delete-* latch", () => {
 		);
 		const second = JSON.parse(await fs.readFile(stateFile, "utf8")) as { state: string };
 		expect(second.state).not.toBe("running");
-		delete process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV];
+		delete process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV];
 	});
 
 	it("Test 4: gc operands keep non-empty/symlink/missing-root and prune only empty prefix", async () => {
-		const root = await tempRoot("gjc-gc-root-");
-		const empty = path.join(root, ".gjc-delete-session-state-lock-dddddddd-dddd-dddd-dddd-dddddddddddd.json");
+		const root = await tempRoot("vib-gc-root-");
+		const empty = path.join(root, ".vib-delete-session-state-lock-dddddddd-dddd-dddd-dddd-dddddddddddd.json");
 		const live = path.join(root, "live.json");
-		const other = path.join(root, ".gjc-delete-session-state-lock-eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee.json");
+		const other = path.join(root, ".vib-delete-session-state-lock-eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee.json");
 		await fs.writeFile(empty, "");
 		await fs.writeFile(live, "{}");
 		await fs.writeFile(other, "not-empty");
@@ -607,7 +607,7 @@ describe("empty .gjc-delete-* latch", () => {
 	});
 
 	it("Test 4b: symlink root skipped; forged non-UUID and GC-minted names never collected", async () => {
-		const root = await tempRoot("gjc-gc-id-");
+		const root = await tempRoot("vib-gc-id-");
 		const linked = path.join(root, "linked-root");
 		await fs.symlink(root, linked);
 		const viaLink = await runEmptyDeleteGc({ roots: [linked], prune: false });
@@ -616,9 +616,9 @@ describe("empty .gjc-delete-* latch", () => {
 		expect(viaTrailingLink.records).toEqual([expect.objectContaining({ action: "skipped", reason: "symlink_root" })]);
 		const viaDotLink = await runEmptyDeleteGc({ roots: [`${linked}${path.sep}.`], prune: false });
 		expect(viaDotLink.records).toEqual([expect.objectContaining({ action: "skipped", reason: "symlink_root" })]);
-		const empty = path.join(root, ".gjc-delete-session-state-lock-ffffffff-ffff-ffff-ffff-ffffffffffff.json");
-		const shortHex = path.join(root, ".gjc-delete-session-state-lock-aaaaaaaa.json");
-		const gcMinted = path.join(root, ".gjc-delete-gc-33333333-3333-3333-3333-333333333333.json");
+		const empty = path.join(root, ".vib-delete-session-state-lock-ffffffff-ffff-ffff-ffff-ffffffffffff.json");
+		const shortHex = path.join(root, ".vib-delete-session-state-lock-aaaaaaaa.json");
+		const gcMinted = path.join(root, ".vib-delete-gc-33333333-3333-3333-3333-333333333333.json");
 		await Promise.all([fs.writeFile(empty, ""), fs.writeFile(shortHex, ""), fs.writeFile(gcMinted, "")]);
 		const collected = await collectEmptyDeleteReceipts(root);
 		expect(collected.find(r => r.path === empty)?.identity).toBeDefined();
@@ -632,8 +632,8 @@ describe("empty .gjc-delete-* latch", () => {
 	});
 
 	it("Test 4c: replacement planted after collection is refused by identity drift", async () => {
-		const root = await tempRoot("gjc-gc-drift-");
-		const file = path.join(root, ".gjc-delete-session-state-lock-22222222-2222-2222-2222-222222222222.json");
+		const root = await tempRoot("vib-gc-drift-");
+		const file = path.join(root, ".vib-delete-session-state-lock-22222222-2222-2222-2222-222222222222.json");
 		await fs.writeFile(file, "");
 		const collected = await collectEmptyDeleteReceipts(root);
 		const wouldRemove = collected.find(r => r.action === "would_remove");
@@ -656,7 +656,7 @@ describe("empty .gjc-delete-* latch", () => {
 		// against the replaced object, and the replacement must remain.
 		const driftResult = exactUnlinkDirect(file, {
 			...wouldRemove!.identity!,
-			quarantineName: ".gjc-delete-drift-probe.json",
+			quarantineName: ".vib-delete-drift-probe.json",
 		});
 		expect(driftResult.ok).toBe(false);
 		expect(driftResult.code).toBe("identity_mismatch");
@@ -664,9 +664,9 @@ describe("empty .gjc-delete-* latch", () => {
 	});
 
 	it("Test 4d: readdir/lstat race records a raced skipped candidate instead of omitting it", async () => {
-		const root = await tempRoot("gjc-gc-race-");
-		const gone = path.join(root, ".gjc-delete-session-state-lock-44444444-4444-4444-4444-444444444444.json");
-		const live = path.join(root, ".gjc-delete-session-state-lock-55555555-5555-5555-5555-555555555555.json");
+		const root = await tempRoot("vib-gc-race-");
+		const gone = path.join(root, ".vib-delete-session-state-lock-44444444-4444-4444-4444-444444444444.json");
+		const live = path.join(root, ".vib-delete-session-state-lock-55555555-5555-5555-5555-555555555555.json");
 		await fs.writeFile(gone, "");
 		await fs.writeFile(live, "");
 		// Model the discovery race deterministically: both entries are present at readdir,
@@ -689,10 +689,10 @@ describe("empty .gjc-delete-* latch", () => {
 	});
 
 	it("Test 4e: root replacement during discovery reports a root race without external paths", async () => {
-		const root = await tempRoot("gjc-gc-root-race-");
+		const root = await tempRoot("vib-gc-root-race-");
 		const replacement = `${root}-replacement`;
 		tempDirs.push(replacement);
-		const receipt = path.join(root, ".gjc-delete-session-state-lock-66666666-6666-6666-6666-666666666666.json");
+		const receipt = path.join(root, ".vib-delete-session-state-lock-66666666-6666-6666-6666-666666666666.json");
 		await fs.writeFile(receipt, "");
 		let rootChecks = 0;
 		const collected = await collectEmptyDeleteReceipts(root, {
@@ -701,7 +701,7 @@ describe("empty .gjc-delete-* latch", () => {
 					await fs.rename(root, replacement);
 					await fs.mkdir(root);
 					await fs.writeFile(
-						path.join(root, ".gjc-delete-session-state-lock-77777777-7777-7777-7777-777777777777.json"),
+						path.join(root, ".vib-delete-session-state-lock-77777777-7777-7777-7777-777777777777.json"),
 						'{"foreign":true}',
 					);
 				}
@@ -719,8 +719,8 @@ describe("empty .gjc-delete-* latch", () => {
 	});
 
 	it("Test 4f: collect-to-prune replacement keeps the successor and reports identity drift", async () => {
-		const root = await tempRoot("gjc-gc-orchestration-race-");
-		const file = path.join(root, ".gjc-delete-session-state-lock-88888888-8888-8888-8888-888888888888.json");
+		const root = await tempRoot("vib-gc-orchestration-race-");
+		const file = path.join(root, ".vib-delete-session-state-lock-88888888-8888-8888-8888-888888888888.json");
 		await fs.writeFile(file, "");
 		let collected = false;
 		const report = await runEmptyDeleteGc(
@@ -745,42 +745,42 @@ describe("empty .gjc-delete-* latch", () => {
 	});
 
 	it("Test 4 CLI: empty-delete-receipts requires operand", async () => {
-		const result = await runGjcGcCommand(["--empty-delete-receipts", "--json"], "/tmp", process.env, []);
+		const result = await runVibGcCommand(["--empty-delete-receipts", "--json"], "/tmp", process.env, []);
 		expect(result.status).toBe(2);
 		expect(result.stderr).toContain("empty_delete_receipts_requires_root_or_manifest");
 	});
 
 	it("Test 4b CLI: JSON and text reports include identity-safe empty-delete results", async () => {
-		const root = await tempRoot("gjc-gc-report-");
-		const empty = path.join(root, ".gjc-delete-session-state-lock-11111111-1111-1111-1111-111111111111.json");
+		const root = await tempRoot("vib-gc-report-");
+		const empty = path.join(root, ".vib-delete-session-state-lock-11111111-1111-1111-1111-111111111111.json");
 		await fs.writeFile(empty, "");
-		const json = await runGjcGcCommand(["--empty-delete-receipts", "--root", root, "--json"], root, process.env, []);
+		const json = await runVibGcCommand(["--empty-delete-receipts", "--root", root, "--json"], root, process.env, []);
 		expect(json.status).toBe(0);
 		const parsed = JSON.parse(json.stdout) as {
 			empty_delete_receipts?: { records: Array<{ identity?: { dev: unknown } }> };
 		};
 		expect(parsed.empty_delete_receipts?.records[0]?.identity?.dev).toBeTypeOf("string");
-		const text = await runGjcGcCommand(["--empty-delete-receipts", "--root", root], root, process.env, []);
+		const text = await runVibGcCommand(["--empty-delete-receipts", "--root", root], root, process.env, []);
 		expect(text.status).toBe(0);
-		expect(text.stdout).toContain("Empty .gjc-delete receipts");
+		expect(text.stdout).toContain("Empty .vib-delete receipts");
 	});
 
 	it("Test 4c CLI: malformed manifest is a structured usage error", async () => {
-		const root = await tempRoot("gjc-gc-manifest-");
+		const root = await tempRoot("vib-gc-manifest-");
 		const manifest = path.join(root, "manifest.json");
 		await fs.writeFile(manifest, "{");
-		const result = await runGjcGcCommand(["--empty-delete-receipts", "--manifest", manifest], root, process.env, []);
+		const result = await runVibGcCommand(["--empty-delete-receipts", "--manifest", manifest], root, process.env, []);
 		expect(result.status).toBe(2);
 		expect(result.stderr).toContain("manifest_invalid");
 	});
 
 	it("Test 4d CLI: malformed manifest with --prune mutates nothing", async () => {
-		const root = await tempRoot("gjc-gc-preflight-");
+		const root = await tempRoot("vib-gc-preflight-");
 		const manifest = path.join(root, "manifest.json");
-		const empty = path.join(root, ".gjc-delete-session-state-lock-44444444-4444-4444-4444-444444444444.json");
+		const empty = path.join(root, ".vib-delete-session-state-lock-44444444-4444-4444-4444-444444444444.json");
 		await fs.writeFile(manifest, "{");
 		await fs.writeFile(empty, "");
-		const result = await runGjcGcCommand(
+		const result = await runVibGcCommand(
 			["--prune", "--empty-delete-receipts", "--manifest", manifest, "--root", root],
 			root,
 			process.env,
@@ -793,11 +793,11 @@ describe("empty .gjc-delete-* latch", () => {
 	});
 
 	it("Test 4e CLI: a following option token is a missing operand, not a root", async () => {
-		const root = await tempRoot("gjc-gc-opttoken-");
-		const result = await runGjcGcCommand(["--empty-delete-receipts", "--root", "--json"], root, process.env, []);
+		const root = await tempRoot("vib-gc-opttoken-");
+		const result = await runVibGcCommand(["--empty-delete-receipts", "--root", "--json"], root, process.env, []);
 		expect(result.status).toBe(2);
 		expect(result.stderr).toContain("missing_root");
-		const manifest = await runGjcGcCommand(
+		const manifest = await runVibGcCommand(
 			["--empty-delete-receipts", "--manifest", "--json"],
 			root,
 			process.env,
@@ -807,7 +807,7 @@ describe("empty .gjc-delete-* latch", () => {
 		expect(manifest.stderr).toContain("missing_manifest");
 		// A declared SHORT option is just as much an option token: `-j` must be a
 		// missing operand, never a root path that lets a normal prune proceed.
-		const shortRoot = await runGjcGcCommand(
+		const shortRoot = await runVibGcCommand(
 			["--prune", "--empty-delete-receipts", "--root", "-j"],
 			root,
 			process.env,
@@ -815,7 +815,7 @@ describe("empty .gjc-delete-* latch", () => {
 		);
 		expect(shortRoot.status).toBe(2);
 		expect(shortRoot.stderr).toContain("missing_root");
-		const shortManifest = await runGjcGcCommand(
+		const shortManifest = await runVibGcCommand(
 			["--prune", "--empty-delete-receipts", "--manifest", "-h"],
 			root,
 			process.env,
@@ -826,14 +826,14 @@ describe("empty .gjc-delete-* latch", () => {
 	});
 
 	it("Test 4f CLI: every supplied manifest is validated, not just the last", async () => {
-		const root = await tempRoot("gjc-gc-dupmanifest-");
+		const root = await tempRoot("vib-gc-dupmanifest-");
 		const malformed = path.join(root, "malformed.json");
 		const valid = path.join(root, "valid.json");
-		const empty = path.join(root, ".gjc-delete-session-state-lock-66666666-6666-6666-6666-666666666666.json");
+		const empty = path.join(root, ".vib-delete-session-state-lock-66666666-6666-6666-6666-666666666666.json");
 		await fs.writeFile(malformed, "{");
 		await fs.writeFile(valid, JSON.stringify({ roots: [root] }));
 		await fs.writeFile(empty, "");
-		const result = await runGjcGcCommand(
+		const result = await runVibGcCommand(
 			["--prune", "--empty-delete-receipts", "--manifest", malformed, "--manifest", valid],
 			root,
 			process.env,
@@ -846,15 +846,15 @@ describe("empty .gjc-delete-* latch", () => {
 	});
 
 	it("Test 4g CLI: root/manifest operands without --empty-delete-receipts are a usage error", async () => {
-		const root = await tempRoot("gjc-gc-orphan-");
+		const root = await tempRoot("vib-gc-orphan-");
 		const manifest = path.join(root, "manifest.json");
-		const empty = path.join(root, ".gjc-delete-session-state-lock-77777777-7777-7777-7777-777777777777.json");
+		const empty = path.join(root, ".vib-delete-session-state-lock-77777777-7777-7777-7777-777777777777.json");
 		await fs.writeFile(manifest, JSON.stringify({ roots: [root] }));
 		await fs.writeFile(empty, "");
-		const orphanRoot = await runGjcGcCommand(["--prune", "--root", root], root, process.env, []);
+		const orphanRoot = await runVibGcCommand(["--prune", "--root", root], root, process.env, []);
 		expect(orphanRoot.status).toBe(2);
 		expect(orphanRoot.stderr).toContain("empty_delete_operands_require_feature_flag");
-		const orphanManifest = await runGjcGcCommand(["--prune", "--manifest", manifest], root, process.env, []);
+		const orphanManifest = await runVibGcCommand(["--prune", "--manifest", manifest], root, process.env, []);
 		expect(orphanManifest.status).toBe(2);
 		expect(orphanManifest.stderr).toContain("empty_delete_operands_require_feature_flag");
 		// Neither run reached any prune: the receipt is intact.
@@ -862,10 +862,10 @@ describe("empty .gjc-delete-* latch", () => {
 	});
 
 	it("Test 4h CLI: a null manifest is a structured shape error, not a crash", async () => {
-		const root = await tempRoot("gjc-gc-nullmanifest-");
+		const root = await tempRoot("vib-gc-nullmanifest-");
 		const manifest = path.join(root, "manifest.json");
 		await fs.writeFile(manifest, "null");
-		const result = await runGjcGcCommand(
+		const result = await runVibGcCommand(
 			["--prune", "--empty-delete-receipts", "--manifest", manifest],
 			root,
 			process.env,
@@ -876,8 +876,8 @@ describe("empty .gjc-delete-* latch", () => {
 	});
 
 	it("Test 2c: replacement swapped in inside the cleanup race window survives", async () => {
-		const dir = await tempRoot("gjc-quarantine-toctou-");
-		const reserved = ".gjc-delete-session-state-lock-55555555-5555-5555-5555-555555555555.json";
+		const dir = await tempRoot("vib-quarantine-toctou-");
+		const reserved = ".vib-delete-session-state-lock-55555555-5555-5555-5555-555555555555.json";
 		const target = path.join(dir, reserved);
 		await fs.writeFile(target, "");
 		// Inject the replacement INSIDE the race window: the production lstat has
@@ -896,10 +896,10 @@ describe("empty .gjc-delete-* latch", () => {
 	});
 
 	it("Test 2c parent race: replacement directory is refused by parent identity", async () => {
-		const dir = await tempRoot("gjc-quarantine-parent-race-");
+		const dir = await tempRoot("vib-quarantine-parent-race-");
 		const replacement = `${dir}-replacement`;
 		tempDirs.push(replacement);
-		const reserved = ".gjc-delete-session-state-lock-66666666-6666-6666-6666-666666666666.json";
+		const reserved = ".vib-delete-session-state-lock-66666666-6666-6666-6666-666666666666.json";
 		const target = path.join(dir, reserved);
 		await fs.writeFile(target, "");
 		setSessionStateLockNativeBindings(() => ({
@@ -921,12 +921,12 @@ describe("empty .gjc-delete-* latch", () => {
 	});
 
 	it("Test 2d: a backslash traversal quarantine name is refused before any join", async () => {
-		const dir = await tempRoot("gjc-quarantine-backslash-");
+		const dir = await tempRoot("vib-quarantine-backslash-");
 		// The victim is planted at the RESOLVED location so the fixture runs on both
 		// platforms: on Windows the child\..\ form traverses to dir/victim; on POSIX
 		// it is a literal backslash filename inside dir. Either way the guard must
 		// refuse the name before path.join, and the planted bytes must survive.
-		const name = ".gjc-delete-child\\..\\victim";
+		const name = ".vib-delete-child\\..\\victim";
 		const planted = process.platform === "win32" ? path.join(dir, "victim") : path.join(dir, name);
 		await fs.writeFile(planted, "");
 		await removeVerifiedEmptyQuarantine(dir, name);
@@ -937,11 +937,11 @@ describe("empty .gjc-delete-* latch", () => {
 	});
 
 	it("Test 2e: a stranded detached object fails closed with retained evidence", async () => {
-		const dir = await tempRoot("gjc-quarantine-retained-");
-		const reserved = ".gjc-delete-session-state-lock-88888888-8888-8888-8888-888888888888.json";
+		const dir = await tempRoot("vib-quarantine-retained-");
+		const reserved = ".vib-delete-session-state-lock-88888888-8888-8888-8888-888888888888.json";
 		const target = path.join(dir, reserved);
 		await fs.writeFile(target, "");
-		const stranded = path.join(dir, ".gjc-delete-cleanup-stranded.json");
+		const stranded = path.join(dir, ".vib-delete-cleanup-stranded.json");
 		setSessionStateLockNativeBindings(() => ({
 			...exactIdentityNativeBindings,
 			exactUnlinkDirect: () => ({ ok: false, code: "identity_mismatch", detachedPath: stranded }),
@@ -959,9 +959,9 @@ describe("empty .gjc-delete-* latch", () => {
 	});
 
 	it("Test 2f: the native exact unlink refuses a quarantine collision", async () => {
-		const dir = await tempRoot("gjc-quarantine-collision-");
+		const dir = await tempRoot("vib-quarantine-collision-");
 		const target = path.join(dir, "victim");
-		const quarantine = ".gjc-delete-collision.json";
+		const quarantine = ".vib-delete-collision.json";
 		const detached = path.join(dir, quarantine);
 		await fs.writeFile(target, "");
 		await fs.writeFile(detached, "pre-existing quarantine occupant");
@@ -990,9 +990,9 @@ describe("empty .gjc-delete-* latch", () => {
 	});
 
 	it("Test 2g: a dangling symlink at the quarantine name is still a native collision", async () => {
-		const dir = await tempRoot("gjc-quarantine-dangling-");
+		const dir = await tempRoot("vib-quarantine-dangling-");
 		const target = path.join(dir, "victim");
-		const quarantine = ".gjc-delete-dangling.json";
+		const quarantine = ".vib-delete-dangling.json";
 		const detached = path.join(dir, quarantine);
 		await fs.writeFile(target, "");
 		// existsSync follows links and reports a DANGLING symlink as absent; the
@@ -1023,7 +1023,7 @@ describe("empty .gjc-delete-* latch", () => {
 	});
 
 	it("Test 5: atomic write leaves no 0-byte canonical on crash-before-rename", async () => {
-		const dir = await tempRoot("gjc-atomic-");
+		const dir = await tempRoot("vib-atomic-");
 		const file = path.join(dir, "canonical.json");
 		await writeCoordinatorAtomic(file, '{"ok":true}\n');
 		expect(await fs.readFile(file, "utf8")).toBe('{"ok":true}\n');

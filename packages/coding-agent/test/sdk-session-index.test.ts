@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "bun:test";
 import * as fs from "node:fs/promises";
 import path from "node:path";
-import * as native from "@gajae-code/natives";
+import * as native from "@vib-rato/natives";
 import { FileLockTestHooks } from "../src/config/file-lock";
 import { SessionIndex, type SessionIndexEvent, sessionIndexChecksum } from "../src/sdk/broker/session-index";
 import { SDK_STATE_VERSION } from "../src/sdk/broker/state-version";
@@ -19,7 +19,7 @@ function deferred<T = void>() {
 }
 describe("SDK session index", () => {
 	it("diagnoses a missing index without creating session directories", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-missing-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-missing-"));
 		expect(await new SessionIndex(dir).diagnose()).toEqual({
 			status: "healthy",
 			validPrefixSeq: 0,
@@ -28,7 +28,7 @@ describe("SDK session index", () => {
 		expect(await fs.exists(path.join(dir, "sdk", "sessions"))).toBe(false);
 	});
 	it("coordinates concurrent opens for one normalized index path", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-open-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-open-"));
 		const sessionsDir = path.join(dir, "sdk", "sessions");
 		const entered = deferred();
 		const release = deferred();
@@ -57,7 +57,7 @@ describe("SDK session index", () => {
 		}
 	});
 	it("clears a failed open group so a later open can retry", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-open-failure-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-open-failure-"));
 		const sessionsDir = path.join(dir, "sdk", "sessions");
 		const chmod = fs.chmod.bind(fs);
 		let fail = true;
@@ -77,7 +77,7 @@ describe("SDK session index", () => {
 		}
 	});
 	it("does not serialize opens for different index paths", async () => {
-		const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-open-isolation-"));
+		const root = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-open-isolation-"));
 		const firstDir = path.join(root, "first");
 		const secondDir = path.join(root, "second");
 		const firstSessionsDir = path.join(firstDir, "sdk", "sessions");
@@ -102,7 +102,7 @@ describe("SDK session index", () => {
 		}
 	});
 	it("uses the native Windows process handle when signal-zero misreports a detached host", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-windows-live-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-windows-live-"));
 		const originalPlatform = process.platform;
 		const originalKill = process.kill;
 		const processRef = {
@@ -132,7 +132,7 @@ describe("SDK session index", () => {
 		}
 	});
 	it("replays only rows after the snapshotted prefix", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-"));
 		const index = await new SessionIndex(dir).open();
 		await index.append(event("one"));
 		await index.snapshot();
@@ -142,7 +142,7 @@ describe("SDK session index", () => {
 		expect(replay.indexSeq).toBe(2);
 	});
 	it("accepts a contiguous crash-window overlap that starts after an earlier rotation", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-overlap-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-overlap-"));
 		const index = await new SessionIndex(dir).open();
 		await index.append(event("one"));
 		await index.snapshot();
@@ -155,7 +155,7 @@ describe("SDK session index", () => {
 		expect((await index.append(event("four"))).indexSeq).toBe(4);
 	});
 	it("does not resynchronize after an incomplete pre-watermark overlap", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-overlap-gap-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-overlap-gap-"));
 		const index = await new SessionIndex(dir).open();
 		await index.append(event("one"));
 		await index.append(event("two"));
@@ -178,7 +178,7 @@ describe("SDK session index", () => {
 		expect(replay.indexSeq).toBe(4);
 	});
 	it("retains the valid prefix and warns on corrupt post-snapshot data", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-"));
 		const index = await new SessionIndex(dir).open();
 		await index.append(event("s"));
 		await fs.appendFile(path.join(dir, "sdk", "sessions", "index.jsonl"), "broken\n");
@@ -187,7 +187,7 @@ describe("SDK session index", () => {
 		expect(replay.listSessions().warnings).not.toHaveLength(0);
 	});
 	it("resyncs a stale reader after another index rotates the log", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-"));
 		const writer = await new SessionIndex(dir).open();
 		const reader = await new SessionIndex(dir).open();
 		await writer.append(event("before"));
@@ -202,7 +202,7 @@ describe("SDK session index", () => {
 		expect(reader.listSessions().warnings).toEqual([]);
 	});
 	it("does not let a stale snapshot overwrite a newer snapshot", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-"));
 		const stale = await new SessionIndex(dir).open();
 		const writer = await new SessionIndex(dir).open();
 		await writer.append(event("one"));
@@ -214,7 +214,7 @@ describe("SDK session index", () => {
 		expect(snapshot.indexSeq).toBe(2);
 	});
 	it("repairs a corrupt snapshot before rotating the retained log", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-"));
 		const index = await new SessionIndex(dir).open();
 		await index.append(event("before"));
 		const sessionsDir = path.join(dir, "sdk", "sessions");
@@ -235,7 +235,7 @@ describe("SDK session index", () => {
 		expect(replay.listSessions().warnings).toEqual([]);
 	});
 	it("repairs a structurally invalid high-sequence snapshot before rotating an oversized log", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-"));
 		const index = await new SessionIndex(dir).open();
 		const sessionsDir = path.join(dir, "sdk", "sessions");
 		const snapshotFile = path.join(sessionsDir, "index.snapshot.json");
@@ -276,7 +276,7 @@ describe("SDK session index", () => {
 		expect(replay.indexSeq).toBe(4);
 	});
 	it("preserves the repaired valid-prefix watermark after a historical overlap", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-repair-watermark-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-repair-watermark-"));
 		const index = await new SessionIndex(dir).open();
 		await index.append(event("one"));
 		await index.append(event("two"));
@@ -300,7 +300,7 @@ describe("SDK session index", () => {
 		expect((await index.append(event("after-repair"))).indexSeq).toBe(repair.validPrefixSeq + 1);
 	});
 	it("tolerates Windows permission errors while opening and syncing the snapshot directory", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-"));
 		const index = await new SessionIndex(dir).open();
 		await index.append(event("snapshot"));
 		const sessionsDir = path.join(dir, "sdk", "sessions");
@@ -336,7 +336,7 @@ describe("SDK session index", () => {
 		}
 	});
 	it("propagates non-permission Windows directory fsync errors", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-"));
 		const index = await new SessionIndex(dir).open();
 		const sessionsDir = path.join(dir, "sdk", "sessions");
 		const platform = Object.getOwnPropertyDescriptor(process, "platform");
@@ -359,7 +359,7 @@ describe("SDK session index", () => {
 		}
 	});
 	it("publishes the snapshot without fsyncing a read-only temp handle (Windows EPERM, #4250)", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-readonly-fsync-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-readonly-fsync-"));
 		const index = await new SessionIndex(dir).open();
 		await index.append(event("windows"));
 		// Windows refuses FlushFileBuffers on a handle opened read-only with EPERM.
@@ -386,7 +386,7 @@ describe("SDK session index", () => {
 		expect(entries.filter(name => name.endsWith(".tmp"))).toEqual([]);
 	});
 	it("accepts EBADF when closing a successfully written and synced append handle", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-close-ebadf-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-close-ebadf-"));
 		const index = await new SessionIndex(dir).open();
 		const log = path.join(dir, "sdk", "sessions", "index.jsonl");
 		const open = fs.open.bind(fs);
@@ -414,7 +414,7 @@ describe("SDK session index", () => {
 		]);
 	});
 	it("holds refresh at a filesystem barrier while queued replay, append, and snapshot preserve monotonic state", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-mutation-race-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-mutation-race-"));
 		const index = await new SessionIndex(dir).open();
 		await index.append(event("before"));
 		const log = path.join(dir, "sdk", "sessions", "index.jsonl");
@@ -473,7 +473,7 @@ describe("SDK session index", () => {
 		}
 	});
 	it("serializes concurrent writers and replays a strictly monotonic log", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-"));
 		const one = await new SessionIndex(dir).open();
 		const two = await new SessionIndex(dir).open();
 		await Promise.all(Array.from({ length: 20 }, (_, i) => (i % 2 ? one : two).append(event(`s-${i}`))));
@@ -488,7 +488,7 @@ describe("SDK session index", () => {
 		).toEqual(Array.from({ length: 20 }, (_, i) => i + 1));
 	});
 	it("serializes independent writer processes without duplicate or inverted sequences", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-processes-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-processes-"));
 		const modulePath = path.resolve(import.meta.dir, "../src/sdk/broker/session-index.ts");
 		const script = `
 			import { SessionIndex } from ${JSON.stringify(modulePath)};
@@ -524,7 +524,7 @@ describe("SDK session index", () => {
 		expect(sequences).toEqual(Array.from({ length: 15 }, (_, index) => index + 1));
 	}, 30_000);
 	it("self-repairs an unterminated suffix on append while quarantining evidence", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-"));
 		const index = await new SessionIndex(dir).open();
 		await index.append(event("prefix"));
 		const log = path.join(dir, "sdk", "sessions", "index.jsonl");
@@ -557,7 +557,7 @@ describe("SDK session index", () => {
 		// row used to poison the log permanently — every later append threw, and an
 		// operator-run repair was re-poisoned by the next stale write, leaving
 		// delegated session launches dead until someone deleted the index by hand.
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-"));
 		const index = await new SessionIndex(dir).open();
 		for (const name of ["one", "two", "three"]) await index.append(event(name));
 		const log = path.join(dir, "sdk", "sessions", "index.jsonl");
@@ -582,7 +582,7 @@ describe("SDK session index", () => {
 		expect(replay.listSessions().sessions.map(session => session.sessionId)).toEqual(["one", "two", "three", "four"]);
 	});
 	it("refreshes a cold reader from a compacted snapshot", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-cold-refresh-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-cold-refresh-"));
 		const writer = await new SessionIndex(dir).open();
 		await writer.append(event("snapshot-only"));
 		await writer.compact();
@@ -592,7 +592,7 @@ describe("SDK session index", () => {
 		expect(cold.listSessions().sessions.map(session => session.sessionId)).toEqual(["snapshot-only"]);
 	});
 	it("rotates repeatedly while concurrent writers and readers preserve every event", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-"));
 		const writers = await Promise.all([new SessionIndex(dir).open(), new SessionIndex(dir).open()]);
 		const largeEvent = (sessionId: string) => ({
 			...event(sessionId),
@@ -617,7 +617,7 @@ describe("SDK session index", () => {
 	}, 30_000);
 
 	it("compaction retains terminal sessions and keeps live sessions with their original indexSeq", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-"));
 		const deadPid = await (async () => {
 			const proc = Bun.spawn({ cmd: ["true"] });
 			await proc.exited;
@@ -642,7 +642,7 @@ describe("SDK session index", () => {
 		expect(replay.indexSeq).toBe(4);
 	});
 	it("collapses superseded heartbeats to the latest per surviving session", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-"));
 		const index = await new SessionIndex(dir).open();
 		await index.append(event("s"));
 		await index.append({ ...event("s"), type: "host_heartbeat" });
@@ -658,7 +658,7 @@ describe("SDK session index", () => {
 		expect(replay.listSessions().sessions.map(s => s.sessionId)).toEqual(before);
 	});
 	it("accepts a gapped-monotonic snapshot on replay and chains subsequent appends", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-"));
 		const sessionsDir = path.join(dir, "sdk", "sessions");
 		await fs.mkdir(sessionsDir, { recursive: true });
 		const signed = (indexSeq: number, sessionId: string) => {
@@ -681,7 +681,7 @@ describe("SDK session index", () => {
 		expect(appended.indexSeq).toBe(6);
 	});
 	it("repairs a compacted high-watermark snapshot with historical overlap and remains appendable", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-repair-watermark-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-repair-watermark-"));
 		const sessionsDir = path.join(dir, "sdk", "sessions");
 		await fs.mkdir(sessionsDir, { recursive: true });
 		const signed = (indexSeq: number, sessionId: string) => {
@@ -709,7 +709,7 @@ describe("SDK session index", () => {
 		expect((await index.append(event("resumed"))).indexSeq).toBe(repair.validPrefixSeq + 1);
 	});
 	it("rejects a non-monotonic snapshot as invalid", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-"));
 		const sessionsDir = path.join(dir, "sdk", "sessions");
 		await fs.mkdir(sessionsDir, { recursive: true });
 		const signed = (indexSeq: number, sessionId: string) => {
@@ -725,7 +725,7 @@ describe("SDK session index", () => {
 		expect(replay.indexSeq).toBe(0);
 	});
 	it("guards state version: rejects a newer snapshot and reads an older one", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-"));
 		const sessionsDir = path.join(dir, "sdk", "sessions");
 		await fs.mkdir(sessionsDir, { recursive: true });
 		const snapshotFile = path.join(sessionsDir, "index.snapshot.json");
@@ -789,7 +789,7 @@ describe("SDK session index", () => {
 		expect(replay.listSessions().sessions.map(s => s.sessionId)).toEqual(["legacy"]);
 	});
 	it("compacts idempotently: a second snapshot of the same history is byte-identical", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-"));
 		const deadPid = await (async () => {
 			const proc = Bun.spawn({ cmd: ["true"] });
 			await proc.exited;
@@ -810,7 +810,7 @@ describe("SDK session index", () => {
 		expect(second).toBe(first);
 	});
 	it("diagnoses and repairs legacy sequence inversion without mutating dry evidence", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-"));
 		const index = await new SessionIndex(dir).open();
 		await index.append(event("snapshot"));
 		await index.snapshot();
@@ -836,7 +836,7 @@ describe("SDK session index", () => {
 		expect(await resumed.repair()).toMatchObject({ status: "healthy", repaired: false, validPrefixSeq: 3 });
 	});
 	it("quarantines an invalid snapshot and rebuilds from a valid log prefix", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-invalid-snapshot-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-invalid-snapshot-"));
 		const index = await new SessionIndex(dir).open();
 		await index.append(event("log-prefix"));
 		const snapshot = path.join(dir, "sdk", "sessions", "index.snapshot.json");
@@ -850,7 +850,7 @@ describe("SDK session index", () => {
 		expect((await new SessionIndex(dir).open()).indexSeq).toBe(1);
 	});
 	it("detects checksum corruption in physical log history covered by a valid snapshot", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-covered-history-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-covered-history-"));
 		const index = await new SessionIndex(dir).open();
 		await index.append(event("snapshotted"));
 		await index.snapshot();
@@ -867,7 +867,7 @@ describe("SDK session index", () => {
 		expect((await new SessionIndex(dir).open()).indexSeq).toBe(1);
 	});
 	it("persists quarantine evidence before replacing the live snapshot or log", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-quarantine-order-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-quarantine-order-"));
 		const index = await new SessionIndex(dir).open();
 		await index.append(event("prefix"));
 		const sessionsDir = path.join(dir, "sdk", "sessions");
@@ -894,7 +894,7 @@ describe("SDK session index", () => {
 		expect(replacementChecks).toBe(2);
 	});
 	it("does not recreate a retired index directory when a heartbeat pass runs", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-retired-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-retired-"));
 		const index = await new SessionIndex(dir).open();
 		await index.append(event("heartbeat-owner"));
 		const sessionsDir = path.join(dir, "sdk", "sessions");
@@ -908,7 +908,7 @@ describe("SDK session index", () => {
 		expect(await fs.exists(path.join(dir, "sdk"))).toBe(false);
 	});
 	it("repairs a long history into a retention-bounded snapshot other clients can lock promptly", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-repair-bound-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-repair-bound-"));
 		const maxRows = 50;
 		const policy = { maxRows };
 		const seed = await new SessionIndex(dir, policy).open();
@@ -951,7 +951,7 @@ describe("SDK session index", () => {
 		// other heavy multi-process tests in this file.
 	}, 30_000);
 	it("serializes repair with a racing writer and resumes after the retained prefix", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-"));
 		const seed = await new SessionIndex(dir).open();
 		await seed.append(event("snapshot"));
 		await seed.snapshot();
@@ -991,7 +991,7 @@ describe("SDK session index", () => {
 		}
 	});
 	it("does not unregister a same-session successor under the index lock", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-unregister-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-unregister-"));
 		const index = await new SessionIndex(dir).open();
 		await index.append({
 			...event("session"),
@@ -1024,7 +1024,7 @@ describe("SDK session index", () => {
 		]);
 	});
 	it("does not unregister a concurrent terminal-uncertain record", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-uncertain-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-uncertain-"));
 		const index = await new SessionIndex(dir).open();
 		await index.append({
 			...event("session"),
@@ -1051,7 +1051,7 @@ describe("SDK session index", () => {
 		});
 	});
 	it("never exposes a terminal-uncertain identity as live", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-uncertain-live-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-uncertain-live-"));
 		const index = await new SessionIndex(dir).open();
 		const registration = await index.append(event("session"));
 		expect(await index.checkpointLiveHeartbeats()).toBe(1);
@@ -1072,7 +1072,7 @@ describe("SDK session index", () => {
 	});
 	it("fences unresolved state roots, then projects either surviving root as authority", async () => {
 		for (const terminateHigherGeneration of [false, true]) {
-			const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-ambiguous-"));
+			const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-ambiguous-"));
 			const index = await new SessionIndex(dir).open();
 			const sessionId = `ambiguous-${terminateHigherGeneration ? "higher" : "lower"}`;
 			const alternate = await index.append({
@@ -1137,7 +1137,7 @@ describe("SDK session index", () => {
 		// session would otherwise read live:false and chat daemons (Telegram)
 		// could never attach any session (#post-0.13.1 notification outage).
 		for (const bookkeepingFirst of [true, false]) {
-			const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-bookkeeping-"));
+			const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-bookkeeping-"));
 			const index = await new SessionIndex(dir).open();
 			const sessionId = `direct-${bookkeepingFirst ? "first" : "second"}`;
 			const bookkeeping = {
@@ -1171,7 +1171,7 @@ describe("SDK session index", () => {
 			{ name: "lifecycle-uncertain", type: "lifecycle_terminal" as const, endpointGeneration: 0 },
 			{ name: "malformed-generation", type: "host_registered" as const, endpointGeneration: 1.5 },
 		]) {
-			const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-fence-"));
+			const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-fence-"));
 			const index = await new SessionIndex(dir).open();
 			const sessionId = `fenced-${conflicting.name}`;
 			await index.append({
@@ -1193,7 +1193,7 @@ describe("SDK session index", () => {
 		// surviving-authority selection: while the direct session process is still
 		// registered, an unregistered endpoint root must not become the public row
 		// (which would let lifecycle admit a delete for a live session).
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-survivor-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-survivor-"));
 		const index = await new SessionIndex(dir).open();
 		const sessionId = "survivor";
 		const bookkeeping = await index.append({
@@ -1228,7 +1228,7 @@ describe("SDK session index", () => {
 		// provenance (agent dir as state root). A foreign or legacy generation-0
 		// registration proves nothing and must keep fencing, or the fence is
 		// fail-open relative to the symmetric rule it relaxes.
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-foreign-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-foreign-"));
 		const index = await new SessionIndex(dir).open();
 		const sessionId = "foreign-zero";
 		await index.append({
@@ -1249,7 +1249,7 @@ describe("SDK session index", () => {
 		// symlinked agent dir read back via its realpath (or the reverse) must
 		// still be recognized, or every session is re-fenced and no chat daemon
 		// can attach — the original outage, reintroduced by a stricter check.
-		const real = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-real-"));
+		const real = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-real-"));
 		const link = `${real}-link`;
 		await fs.symlink(real, link);
 		const sessionId = "symlinked-agent-dir";
@@ -1278,7 +1278,7 @@ describe("SDK session index", () => {
 		// one, even though it holds the higher generation. Otherwise SessionRouter
 		// stays detached after the ambiguity clears.
 		for (const terminatedIsHigher of [true, false]) {
-			const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-promote-"));
+			const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-promote-"));
 			const index = await new SessionIndex(dir).open();
 			const sessionId = `promote-${terminatedIsHigher ? "higher" : "lower"}`;
 			await index.append({
@@ -1326,7 +1326,7 @@ describe("SDK session index", () => {
 		}
 	});
 	it("hides deleted sessions until a later registration establishes new authority", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-deleted-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-deleted-"));
 		const index = await new SessionIndex(dir).open();
 		const registration = await index.append(event("deleted"));
 		await index.append({
@@ -1361,7 +1361,7 @@ describe("SDK session index", () => {
 		]);
 	});
 	it("preserves closure before deletion but rejects delayed closure evidence", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-retirement-evidence-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-retirement-evidence-"));
 		const index = await new SessionIndex(dir).open();
 		const expected = {
 			sessionId: "retirement-evidence",
@@ -1409,7 +1409,7 @@ describe("SDK session index", () => {
 		}
 	});
 	it("refreshIfChanged skips the locked rescan while the index is unchanged (#4689)", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-poll-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-poll-"));
 		await new SessionIndex(dir).append(event("polled"));
 		const index = new SessionIndex(dir);
 		// First poll establishes the baseline stamp and loads state.
@@ -1443,7 +1443,7 @@ describe("SDK session index", () => {
 		}
 	});
 	it("a changed index still takes the session-index lock, so the no-lock assertion discriminates (#4689)", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-poll-lock-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-poll-lock-"));
 		const writer = new SessionIndex(dir);
 		await writer.append(event("locked"));
 		const index = new SessionIndex(dir);
@@ -1469,7 +1469,7 @@ describe("SDK session index", () => {
 		}
 	});
 	it("refreshIfChanged reloads after an external append and after log removal (#4689)", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-poll-reload-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-poll-reload-"));
 		const writer = new SessionIndex(dir);
 		await writer.append(event("first"));
 		const reader = new SessionIndex(dir);
@@ -1487,7 +1487,7 @@ describe("SDK session index", () => {
 	it("refreshIfChanged observes same-instance rotation compaction (#4689 review)", async () => {
 		// A self-rotation resets the log offset; the fast path must never accept
 		// the new stamp while pre-compaction events are still resident.
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-rotate-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-rotate-"));
 		// maxRows makes rotation drop rows, so stale pre-compaction memory is
 		// distinguishable from the compacted on-disk truth.
 		const index = new SessionIndex(dir, { maxRows: 10 });
@@ -1503,7 +1503,7 @@ describe("SDK session index", () => {
 					indexSeq: ++seq,
 					type,
 					sessionId: `old-${i}`,
-					locator: { repo: "/tmp/old", stateRoot: "/tmp/old/.gjc/state" },
+					locator: { repo: "/tmp/old", stateRoot: "/tmp/old/.vib/state" },
 					endpointGeneration: 1,
 					pid: 2147480000 + i,
 					ts: now - (7500 - i) * 2000,
@@ -1534,7 +1534,7 @@ describe("SDK session index", () => {
 		expect(index.listSessions().sessions).toEqual(fresh.listSessions().sessions);
 	});
 	it("refreshIfChanged never fast-paths a corrupt suffix (#4689 review)", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-poll-corrupt-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-poll-corrupt-"));
 		const writer = new SessionIndex(dir);
 		await writer.append(event("corrupt-me"));
 		await fs.appendFile(path.join(dir, "sdk", "sessions", "index.jsonl"), "broken\n");
@@ -1553,7 +1553,7 @@ describe("SDK session index", () => {
 		// "unchanged" after a real snapshot replacement. The cooperative writer
 		// protocol replaces files by rename, which always installs a new inode,
 		// so the inode is the field that makes this detectable.
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-ino-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-ino-"));
 		const writer = new SessionIndex(dir);
 		const first = await writer.append(event("ino-old"));
 		await writer.snapshot();
@@ -1632,7 +1632,7 @@ describe("SDK session index", () => {
 		// current. Each half is covered separately elsewhere; this pins the
 		// combination, and it is asserted through the real reader so a
 		// misclassification shows up as a divergent projection.
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-tail-ino-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-tail-ino-"));
 		const writer = new SessionIndex(dir);
 		const first = await writer.append(event("combo-a"));
 		await writer.snapshot();
@@ -1688,7 +1688,7 @@ describe("SDK session index", () => {
 		expect(reader.listSessions().sessions.map(s => s.sessionId)).toContain("combo-z");
 	});
 	it("refreshIfChanged fully replays same-size rewrites and snapshot-only changes (#4689 QA)", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-poll-rewrite-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-poll-rewrite-"));
 		const writer = new SessionIndex(dir);
 		await writer.append(event("alpha"));
 		const reader = new SessionIndex(dir);
@@ -1731,7 +1731,7 @@ describe("SDK session index", () => {
 		expect(reader.listSessions().sessions.map(s => s.sessionId)).toEqual([String(rewritten.sessionId)]);
 	});
 	it("refreshIfChanged fully replays a snapshot-only replacement (#4689 QA)", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-poll-snaponly-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-poll-snaponly-"));
 		const writer = new SessionIndex(dir);
 		const first = await writer.append(event("snap-old"));
 		await writer.snapshot();
@@ -1768,7 +1768,7 @@ describe("SDK session index", () => {
 		expect(reader.listSessions().sessions.map(s => s.sessionId)).toEqual(["snap-new"]);
 	});
 	it("refreshIfChanged reclassifies under the lock when a compaction lands mid-poll (#4689 review)", async () => {
-		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-index-poll-race-"));
+		const dir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-index-poll-race-"));
 		const logPath = path.join(dir, "sdk", "sessions", "index.jsonl");
 		const writer = new SessionIndex(dir);
 		await writer.append(event("base"));

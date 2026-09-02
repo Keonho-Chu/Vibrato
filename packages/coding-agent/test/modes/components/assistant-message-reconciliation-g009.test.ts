@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import * as path from "node:path";
-import type { AssistantMessage, Usage } from "@gajae-code/ai";
-import { Container, ImageProtocol, Markdown, Spacer, setTerminalImageProtocol, TERMINAL, Text } from "@gajae-code/tui";
-import { clearRenderCache } from "@gajae-code/tui/components/markdown";
+import type { AssistantMessage, Usage } from "@vib-rato/ai";
+import { Container, ImageProtocol, Markdown, Spacer, setTerminalImageProtocol, TERMINAL, Text } from "@vib-rato/tui";
+import { clearRenderCache } from "@vib-rato/tui/components/markdown";
 import { resetSettingsForTest, Settings, settings } from "../../../src/config/settings.js";
 import { AssistantMessageComponent } from "../../../src/modes/components/assistant-message.js";
 import { initTheme } from "../../../src/modes/theme/theme.js";
@@ -43,7 +43,7 @@ function renderedTextLines(component: AssistantMessageComponent): string[] {
 		.split("\n")
 		.map(line => line.trim())
 		.filter(Boolean)
-		.filter(line => line !== "gajae");
+		.filter(line => line !== "vibrato");
 }
 
 function contentContainer(component: AssistantMessageComponent): Container {

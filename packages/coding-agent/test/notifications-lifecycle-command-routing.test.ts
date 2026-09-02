@@ -105,7 +105,7 @@ function message(text: string, updateId: number): unknown {
 
 describe("Telegram lifecycle command routing", () => {
 	test("routes create, close, and resume only through the SDK lifecycle service", async () => {
-		const agentDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-lifecycle-route-"));
+		const agentDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-lifecycle-route-"));
 		const { calls, service } = lifecycleHarness();
 		const { api, calls: botCalls } = bot();
 		const factoryCalls = { count: 0 };
@@ -123,7 +123,7 @@ describe("Telegram lifecycle command routing", () => {
 	});
 
 	test("duplicate update across daemon restart reuses one stable lifecycle request key", async () => {
-		const agentDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-lifecycle-restart-"));
+		const agentDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-lifecycle-restart-"));
 		const { calls, service } = lifecycleHarness();
 		const firstBot = bot();
 		const secondBot = bot();
@@ -137,7 +137,7 @@ describe("Telegram lifecycle command routing", () => {
 	});
 
 	test("limits distinct session creates per Telegram actor without blocking idempotent retries", async () => {
-		const agentDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-lifecycle-rate-limit-"));
+		const agentDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-lifecycle-rate-limit-"));
 		const { calls, service } = lifecycleHarness();
 		const telegram = bot();
 		const daemonInstance = daemon(agentDir, telegram.api, service, { count: 0 });
@@ -157,7 +157,7 @@ describe("Telegram lifecycle command routing", () => {
 	});
 
 	test("session_recent is provided by lifecycleService.listRecent and rendered without credentials", async () => {
-		const agentDir = fs.mkdtempSync(path.join(os.tmpdir(), "gjc-lifecycle-recent-"));
+		const agentDir = fs.mkdtempSync(path.join(os.tmpdir(), "vib-lifecycle-recent-"));
 		const { service, setRecent } = lifecycleHarness();
 		setRecent({
 			kind: "complete",

@@ -20,14 +20,14 @@ Avoid ports that depend on JS-only state or dynamic imports. N-API exports shoul
 
 ## Current package shape
 
-`@gajae-code/natives` no longer has a `packages/natives/src/<module>` TypeScript wrapper layer. The package root points at generated native artifacts:
+`@vib-rato/natives` no longer has a `packages/natives/src/<module>` TypeScript wrapper layer. The package root points at generated native artifacts:
 
 - runtime entry: `packages/natives/native/index.js`
 - types entry: `packages/natives/native/index.d.ts`
 - loader helpers: `packages/natives/native/loader-state.js`
 - embedded manifest: `packages/natives/native/embedded-addon.js`
 
-Consumers import directly from `@gajae-code/natives`. The generated declarations are produced during `bun --cwd=packages/natives run build`.
+Consumers import directly from `@vib-rato/natives`. The generated declarations are produced during `bun --cwd=packages/natives run build`.
 
 ## Anatomy of a native export
 
@@ -44,7 +44,7 @@ Consumers import directly from `@gajae-code/natives`. The generated declarations
 
 - `packages/natives/scripts/build-native.ts` runs napi-rs, installs the `.node` artifact, copies generated `index.js`/`index.d.ts`, and appends enum runtime exports.
 - `packages/natives/native/index.js` is the loader that chooses a candidate `.node` file and returns the loaded addon.
-- `packages/natives/package.json` exposes only the package root (`@gajae-code/natives`).
+- `packages/natives/package.json` exposes only the package root (`@vib-rato/natives`).
 
 **Consumer side:**
 
@@ -70,7 +70,7 @@ Consumers import directly from `@gajae-code/natives`. The generated declarations
 
 3. **Update consumers**
 
-- Import the new export directly from `@gajae-code/natives`.
+- Import the new export directly from `@vib-rato/natives`.
 - Replace only callsites where the native implementation is faster/equivalent and preserves behavior.
 - Remove obsolete JS implementation code in the same change when the native path becomes canonical.
 
@@ -109,7 +109,7 @@ rm packages/natives/native/pi_natives.<platform>-<arch>-baseline.node
 bun --cwd=packages/natives run build
 ```
 
-For compiled binaries, delete the versioned addon cache shown in the loader error (normally under `~/.gjc/natives/<version>` unless `$XDG_DATA_HOME/gjc` is used).
+For compiled binaries, delete the versioned addon cache shown in the loader error (normally under `~/.vib/natives/<version>` unless `$XDG_DATA_HOME/vib` is used).
 
 ### 2) Generated types do not match loaded binary
 

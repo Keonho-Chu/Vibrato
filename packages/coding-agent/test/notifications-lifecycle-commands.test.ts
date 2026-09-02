@@ -8,7 +8,7 @@ import {
 	normalizeLifecyclePath,
 	parseLifecycleCommand,
 	validateLifecycleTarget,
-} from "@gajae-code/coding-agent/sdk/bus/lifecycle-commands";
+} from "@vib-rato/coding-agent/sdk/bus/lifecycle-commands";
 
 describe("lifecycle command parser (G009)", () => {
 	it("detects lifecycle command text", () => {
@@ -65,41 +65,41 @@ describe("lifecycle command parser (G009)", () => {
 		expect(parseLifecycleCommand("/session_recent create")).toEqual({ kind: "recent", which: "create" });
 	});
 	it("accepts only this bot's Telegram username suffix in non-private chats", () => {
-		const groupCtx = { chatType: "supergroup", botUsername: "GajaeCodeBot" };
-		expect(isLifecycleCommandText("/session_recent@GajaeCodeBot", groupCtx)).toBe(true);
-		expect(parseLifecycleCommand("/session_recent@GajaeCodeBot", groupCtx)).toEqual({
+		const groupCtx = { chatType: "supergroup", botUsername: "VibratoCodeBot" };
+		expect(isLifecycleCommandText("/session_recent@VibratoCodeBot", groupCtx)).toBe(true);
+		expect(parseLifecycleCommand("/session_recent@VibratoCodeBot", groupCtx)).toEqual({
 			kind: "recent",
 			which: "all",
 		});
-		expect(parseLifecycleCommand("/session_create@GajaeCodeBot path /repo", groupCtx)).toEqual({
+		expect(parseLifecycleCommand("/session_create@VibratoCodeBot path /repo", groupCtx)).toEqual({
 			kind: "create",
 			target: { kind: "existing_path", path: "/repo" },
 		});
-		expect(parseLifecycleCommand("/session_create@GajaeCodeBot worktree /repo feat/x", groupCtx)).toEqual({
+		expect(parseLifecycleCommand("/session_create@VibratoCodeBot worktree /repo feat/x", groupCtx)).toEqual({
 			kind: "create",
 			target: { kind: "worktree", repo: "/repo", branch: "feat/x" },
 		});
-		expect(parseLifecycleCommand("/session_create@GajaeCodeBot dir /new/dir", groupCtx)).toEqual({
+		expect(parseLifecycleCommand("/session_create@VibratoCodeBot dir /new/dir", groupCtx)).toEqual({
 			kind: "create",
 			target: { kind: "plain_dir", path: "/new/dir" },
 		});
-		expect(parseLifecycleCommand("/session_close@GajaeCodeBot sess-1", groupCtx)).toEqual({
+		expect(parseLifecycleCommand("/session_close@VibratoCodeBot sess-1", groupCtx)).toEqual({
 			kind: "close",
 			target: { sessionId: "sess-1" },
 		});
-		expect(parseLifecycleCommand("/session_resume@GajaeCodeBot abc", groupCtx)).toEqual({
+		expect(parseLifecycleCommand("/session_resume@VibratoCodeBot abc", groupCtx)).toEqual({
 			kind: "resume",
 			target: { sessionIdOrPrefix: "abc" },
 		});
 		expect(
-			parseLifecycleCommand("/session_recent@GajaeCodeBot", { chatType: "group", botUsername: "gajaecodebot" }),
+			parseLifecycleCommand("/session_recent@VibratoCodeBot", { chatType: "group", botUsername: "vibratocodebot" }),
 		).toEqual({
 			kind: "recent",
 			which: "all",
 		});
 		expect(parseLifecycleCommand("/session_recent", groupCtx)).toEqual({ kind: "none" });
 		expect(parseLifecycleCommand("/session_recent@OtherBot", groupCtx)).toEqual({ kind: "none" });
-		expect(parseLifecycleCommand("/session_recent@GajaeCodeBot", { chatType: "supergroup" })).toEqual({
+		expect(parseLifecycleCommand("/session_recent@VibratoCodeBot", { chatType: "supergroup" })).toEqual({
 			kind: "none",
 		});
 	});
@@ -261,7 +261,7 @@ describe("lifecycle command parser (G009)", () => {
 			message: "ignored",
 		});
 		expect(output).toBe(
-			"Remote session lifecycle is unavailable on this psmux host because GJC cannot prove immutable session identity. No lifecycle action was performed. Use a local GJC terminal with a supported tmux provider.",
+			"Remote session lifecycle is unavailable on this psmux host because Vibrato cannot prove immutable session identity. No lifecycle action was performed. Use a local Vibrato terminal with a supported tmux provider.",
 		);
 		expect(output).not.toContain("request-1");
 		expect(output).not.toContain("chat");

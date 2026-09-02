@@ -12,22 +12,22 @@ import {
 	autoresearchRunsStore,
 	autoresearchSetupPrompt,
 	autoresearchWrite,
-} from "../../src/gjc-runtime/autoresearch-runtime";
+} from "../../src/vib-runtime/autoresearch-runtime";
 
 const TEST_SESSION_ID = "capabilities-test-session";
 const tempRoots: string[] = [];
-let previousGjcSessionId: string | undefined;
+let previousVibSessionId: string | undefined;
 
 beforeAll(() => {
-	previousGjcSessionId = process.env.GJC_SESSION_ID;
-	process.env.GJC_SESSION_ID = TEST_SESSION_ID;
+	previousVibSessionId = process.env.VIB_SESSION_ID;
+	process.env.VIB_SESSION_ID = TEST_SESSION_ID;
 });
 
 afterAll(() => {
-	if (previousGjcSessionId === undefined) {
-		delete process.env.GJC_SESSION_ID;
+	if (previousVibSessionId === undefined) {
+		delete process.env.VIB_SESSION_ID;
 	} else {
-		process.env.GJC_SESSION_ID = previousGjcSessionId;
+		process.env.VIB_SESSION_ID = previousVibSessionId;
 	}
 });
 
@@ -36,7 +36,7 @@ afterEach(async () => {
 });
 
 async function tempDir(): Promise<string> {
-	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-autoresearch-capabilities-"));
+	const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-autoresearch-capabilities-"));
 	tempRoots.push(dir);
 	return dir;
 }

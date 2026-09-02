@@ -10,7 +10,7 @@ import * as fs from "node:fs";
 import * as fsp from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import * as native from "@gajae-code/natives";
+import * as native from "@vib-rato/natives";
 import {
 	createSessionCommitMarkerCheckedSync,
 	FileSessionStorage,
@@ -47,7 +47,7 @@ const sampleContent = `${sampleLines.join("\n")}\n`;
 
 describe("descriptor-validated bounded range reads", () => {
 	it("sync read returns exact bytes and a matching descriptor snapshot", async () => {
-		const dir = await makeTempDir("gjc-range-sync-");
+		const dir = await makeTempDir("vib-range-sync-");
 		const filePath = path.join(dir, "transcript.jsonl");
 		const file = new FileSessionStorage();
 		file.writeTextSync(filePath, sampleContent);
@@ -64,7 +64,7 @@ describe("descriptor-validated bounded range reads", () => {
 	});
 
 	it("sync and async reads agree with the memory backend (parity)", async () => {
-		const dir = await makeTempDir("gjc-range-parity-");
+		const dir = await makeTempDir("vib-range-parity-");
 		const filePath = path.join(dir, "transcript.jsonl");
 		const file = new FileSessionStorage();
 		file.writeTextSync(filePath, sampleContent);
@@ -82,7 +82,7 @@ describe("descriptor-validated bounded range reads", () => {
 	});
 
 	it("rejects out-of-bounds ranges", async () => {
-		const dir = await makeTempDir("gjc-range-bounds-");
+		const dir = await makeTempDir("vib-range-bounds-");
 		const filePath = path.join(dir, "transcript.jsonl");
 		const file = new FileSessionStorage();
 		file.writeTextSync(filePath, sampleContent);
@@ -97,7 +97,7 @@ describe("descriptor-validated bounded range reads", () => {
 	});
 
 	it("rejects a swapped object: a second hard link (nlink > 1) is not a single-owned descriptor", async () => {
-		const dir = await makeTempDir("gjc-range-nlink-");
+		const dir = await makeTempDir("vib-range-nlink-");
 		const filePath = path.join(dir, "transcript.jsonl");
 		const linkPath = path.join(dir, "transcript.jsonl.hardlink");
 		const file = new FileSessionStorage();
@@ -109,7 +109,7 @@ describe("descriptor-validated bounded range reads", () => {
 	});
 
 	it("never follows a symlink (no path-based Bun Blob reads for managed authority)", async () => {
-		const dir = await makeTempDir("gjc-range-symlink-");
+		const dir = await makeTempDir("vib-range-symlink-");
 		const filePath = path.join(dir, "transcript.jsonl");
 		const linkPath = path.join(dir, "transcript.jsonl.link");
 		const file = new FileSessionStorage();
@@ -125,7 +125,7 @@ describe("buffered sidecar writers", () => {
 	const serializedBytes = Buffer.from('{"type":"index","id":"é"}\n{"type":"tail","n":2}\n', "utf8");
 
 	it("keeps exact bytes across file and memory backends and bounds pending bytes", async () => {
-		const dir = await makeTempDir("gjc-buffered-parity-");
+		const dir = await makeTempDir("vib-buffered-parity-");
 		const file = new FileSessionStorage();
 		const memory = new MemorySessionStorage();
 		const filePath = path.join(dir, "index.jsonl");
@@ -191,7 +191,7 @@ describe("buffered sidecar writers", () => {
 	});
 
 	it("flushes pending bytes before fsync and close", async () => {
-		const dir = await makeTempDir("gjc-buffered-order-");
+		const dir = await makeTempDir("vib-buffered-order-");
 		const file = new FileSessionStorage();
 		const filePath = path.join(dir, "order.jsonl");
 		const events: string[] = [];
@@ -230,7 +230,7 @@ describe("buffered sidecar writers", () => {
 	});
 
 	it("reduces backend write calls while preserving ordinary writer behavior", async () => {
-		const dir = await makeTempDir("gjc-buffered-calls-");
+		const dir = await makeTempDir("vib-buffered-calls-");
 		const file = new FileSessionStorage();
 		const ordinaryPath = path.join(dir, "ordinary.jsonl");
 		const bufferedPath = path.join(dir, "buffered.jsonl");
@@ -251,7 +251,7 @@ describe("buffered sidecar writers", () => {
 	});
 
 	it("records write failures and keeps subsequent operations deterministic", async () => {
-		const dir = await makeTempDir("gjc-buffered-write-failure-");
+		const dir = await makeTempDir("vib-buffered-write-failure-");
 		const file = new FileSessionStorage();
 		const writer = file.openBufferedWriter!(path.join(dir, "write-failure.jsonl"), {
 			flags: "w",
@@ -274,7 +274,7 @@ describe("buffered sidecar writers", () => {
 	});
 
 	it("flushes before and preserves the first fsync failure", async () => {
-		const dir = await makeTempDir("gjc-buffered-fsync-failure-");
+		const dir = await makeTempDir("vib-buffered-fsync-failure-");
 		const file = new FileSessionStorage();
 		const filePath = path.join(dir, "fsync-failure.jsonl");
 		const writer = file.openBufferedWriter!(filePath, {
@@ -297,7 +297,7 @@ describe("buffered sidecar writers", () => {
 	});
 
 	it("preserves retryable close state after flushing pending bytes", async () => {
-		const dir = await makeTempDir("gjc-buffered-close-state-");
+		const dir = await makeTempDir("vib-buffered-close-state-");
 		const file = new FileSessionStorage();
 		const filePath = path.join(dir, "close-state.jsonl");
 		let failFirst = true;
@@ -326,7 +326,7 @@ describe("buffered sidecar writers", () => {
 	});
 
 	it("rejects capacities outside the bounded range", async () => {
-		const dir = await makeTempDir("gjc-buffered-capacity-");
+		const dir = await makeTempDir("vib-buffered-capacity-");
 		const file = new FileSessionStorage();
 		expect(() =>
 			file.openBufferedWriter!(path.join(dir, "too-small.jsonl"), {
@@ -343,7 +343,7 @@ describe("buffered sidecar writers", () => {
 
 describe("exclusive disposable build locks", () => {
 	it("serializes file and memory owners and releases only the captured identity", async () => {
-		const dir = await makeTempDir("gjc-exclusive-lock-");
+		const dir = await makeTempDir("vib-exclusive-lock-");
 		for (const [storage, lockPath] of [
 			[new FileSessionStorage(), path.join(dir, "build.lock")],
 			[new MemorySessionStorage(), "/sessions/build.lock"],
@@ -360,7 +360,7 @@ describe("exclusive disposable build locks", () => {
 	});
 
 	it("reclaims a lock whose recorded owner process is absent", async () => {
-		const dir = await makeTempDir("gjc-exclusive-lock-stale-");
+		const dir = await makeTempDir("vib-exclusive-lock-stale-");
 		const storage = new FileSessionStorage();
 		const lockPath = path.join(dir, "build.lock");
 		storage.writeTextSync(
@@ -374,7 +374,7 @@ describe("exclusive disposable build locks", () => {
 	});
 
 	it("does not publish a lock before owner metadata is durable", async () => {
-		const dir = await makeTempDir("gjc-exclusive-lock-owner-write-");
+		const dir = await makeTempDir("vib-exclusive-lock-owner-write-");
 		const storage = new FileSessionStorage();
 		const lockPath = path.join(dir, "build.lock");
 		const write = vi.spyOn(fs, "writeSync").mockImplementationOnce(() => {
@@ -395,7 +395,7 @@ describe("exclusive disposable build locks", () => {
 	});
 
 	it("uses the hard-link fallback without retaining the staged owner name", async () => {
-		const dir = await makeTempDir("gjc-exclusive-lock-link-fallback-");
+		const dir = await makeTempDir("vib-exclusive-lock-link-fallback-");
 		const storage = new FileSessionStorage();
 		const lockPath = path.join(dir, "build.lock");
 		const rename = vi.spyOn(native, "renameNoReplacePath").mockReturnValue({
@@ -420,7 +420,7 @@ describe("exclusive disposable build locks", () => {
 	});
 
 	it("reclaims a stale hard-link fallback crash after removing its staged name", async () => {
-		const dir = await makeTempDir("gjc-exclusive-lock-stale-link-");
+		const dir = await makeTempDir("vib-exclusive-lock-stale-link-");
 		const storage = new FileSessionStorage();
 		const lockPath = path.join(dir, "build.lock");
 		const token = "stale-link";
@@ -434,7 +434,7 @@ describe("exclusive disposable build locks", () => {
 	});
 
 	it("allows release retry when exact cleanup transiently fails", async () => {
-		const dir = await makeTempDir("gjc-exclusive-lock-release-retry-");
+		const dir = await makeTempDir("vib-exclusive-lock-release-retry-");
 		const storage = new FileSessionStorage();
 		const lockPath = path.join(dir, "build.lock");
 		const lock = storage.acquireExclusiveLockSync!(lockPath)!;
@@ -457,7 +457,7 @@ describe("exclusive disposable build locks", () => {
 	});
 
 	it("does not reap a replacement installed during stale-lock cleanup", async () => {
-		const dir = await makeTempDir("gjc-exclusive-lock-reap-race-");
+		const dir = await makeTempDir("vib-exclusive-lock-reap-race-");
 		const storage = new FileSessionStorage();
 		const lockPath = path.join(dir, "build.lock");
 		storage.writeTextSync(
@@ -481,7 +481,7 @@ describe("exclusive disposable build locks", () => {
 	});
 
 	it("does not unlink a replacement file when releasing the original file lock", async () => {
-		const dir = await makeTempDir("gjc-exclusive-lock-replacement-");
+		const dir = await makeTempDir("vib-exclusive-lock-replacement-");
 		const storage = new FileSessionStorage();
 		const lockPath = path.join(dir, "build.lock");
 		const lock = storage.acquireExclusiveLockSync!(lockPath)!;
@@ -494,7 +494,7 @@ describe("exclusive disposable build locks", () => {
 
 describe("staged streaming writers (immutable destinations)", () => {
 	it("file backend: stream, patch same-length in place, publish no-replace", async () => {
-		const dir = await makeTempDir("gjc-staged-file-");
+		const dir = await makeTempDir("vib-staged-file-");
 		const destination = path.join(dir, "fork.jsonl");
 		const file = new FileSessionStorage();
 
@@ -512,7 +512,7 @@ describe("staged streaming writers (immutable destinations)", () => {
 	});
 
 	it("file backend: patches high ordinals without retaining per-line offsets", async () => {
-		const dir = await makeTempDir("gjc-staged-many-lines-");
+		const dir = await makeTempDir("vib-staged-many-lines-");
 		const destination = path.join(dir, "fork.jsonl");
 		const file = new FileSessionStorage();
 		const writer = file.openStagedWriter!(destination);
@@ -526,7 +526,7 @@ describe("staged streaming writers (immutable destinations)", () => {
 	});
 
 	it("file backend: different-length patches are applied by the bounded publish-time overlay pass", async () => {
-		const dir = await makeTempDir("gjc-staged-overlay-");
+		const dir = await makeTempDir("vib-staged-overlay-");
 		const destination = path.join(dir, "fork.jsonl");
 		const file = new FileSessionStorage();
 
@@ -541,7 +541,7 @@ describe("staged streaming writers (immutable destinations)", () => {
 	});
 
 	it("no-replace never overwrites an existing destination", async () => {
-		const dir = await makeTempDir("gjc-staged-conflict-");
+		const dir = await makeTempDir("vib-staged-conflict-");
 		const destination = path.join(dir, "fork.jsonl");
 		const file = new FileSessionStorage();
 		file.writeTextSync(destination, "existing\n");
@@ -553,7 +553,7 @@ describe("staged streaming writers (immutable destinations)", () => {
 	});
 
 	it("requires close before publish and rejects unknown ordinals", async () => {
-		const dir = await makeTempDir("gjc-staged-close-");
+		const dir = await makeTempDir("vib-staged-close-");
 		const destination = path.join(dir, "fork.jsonl");
 		const file = new FileSessionStorage();
 		const writer = file.openStagedWriter!(destination);
@@ -615,7 +615,7 @@ describe("staged streaming writers (immutable destinations)", () => {
 
 describe("exact staged replacement", () => {
 	it("rejects a destination changed after staging", async () => {
-		const dir = await makeTempDir("gjc-staged-exact-");
+		const dir = await makeTempDir("vib-staged-exact-");
 		const destination = path.join(dir, "session.jsonl");
 		const source = path.join(dir, "selection.tmp");
 		const file = new FileSessionStorage();
@@ -644,7 +644,7 @@ describe("commit-marker checked create/replace", () => {
 	const markerHash = (bytes: Uint8Array): string => createHash("sha256").update(bytes).digest("hex");
 
 	it("file backend: create only while missing; a second create aborts", async () => {
-		const dir = await makeTempDir("gjc-marker-create-");
+		const dir = await makeTempDir("vib-marker-create-");
 		const markerPath = path.join(dir, "session.jsonl.spill.commit");
 		const file = new FileSessionStorage();
 
@@ -665,7 +665,7 @@ describe("commit-marker checked create/replace", () => {
 	});
 
 	it("file backend: zero-byte marker writes fail closed", async () => {
-		const dir = await makeTempDir("gjc-marker-short-write-");
+		const dir = await makeTempDir("vib-marker-short-write-");
 		const markerPath = path.join(dir, "session.jsonl.spill.commit");
 		const file = new FileSessionStorage();
 		const createWrite = vi.spyOn(fs, "writeSync").mockReturnValueOnce(0);
@@ -695,7 +695,7 @@ describe("commit-marker checked create/replace", () => {
 	});
 
 	it("file backend: temp fsync failure publishes no marker and leaves no temp debris", async () => {
-		const dir = await makeTempDir("gjc-marker-temp-fsync-");
+		const dir = await makeTempDir("vib-marker-temp-fsync-");
 		const markerPath = path.join(dir, "session.jsonl.spill.commit");
 		const file = new FileSessionStorage();
 		const fsync = vi.spyOn(fs, "fsyncSync").mockImplementationOnce(() => {
@@ -718,7 +718,7 @@ describe("commit-marker checked create/replace", () => {
 
 	it("file backend: directory fsync failure leaves a valid published marker for exact recovery", async () => {
 		if (process.platform === "win32") return;
-		const dir = await makeTempDir("gjc-marker-directory-fsync-");
+		const dir = await makeTempDir("vib-marker-directory-fsync-");
 		const markerPath = path.join(dir, "session.jsonl.spill.commit");
 		const file = new FileSessionStorage();
 		const realFsync = fs.fsyncSync;
@@ -741,7 +741,7 @@ describe("commit-marker checked create/replace", () => {
 		expect(fs.readdirSync(dir).filter(name => name.endsWith(".tmp"))).toEqual([]);
 	});
 	it("file backend: replacement temp fsync failure preserves the marker and leaves no debris", async () => {
-		const dir = await makeTempDir("gjc-marker-replace-temp-fsync-");
+		const dir = await makeTempDir("vib-marker-replace-temp-fsync-");
 		const markerPath = path.join(dir, "session.jsonl.spill.commit");
 		const file = new FileSessionStorage();
 		createSessionCommitMarkerCheckedSync(file, markerPath, markerBytes(0));
@@ -767,7 +767,7 @@ describe("commit-marker checked create/replace", () => {
 	});
 	it("file backend: replacement directory fsync failure leaves the exact new marker recoverable", async () => {
 		if (process.platform === "win32") return;
-		const dir = await makeTempDir("gjc-marker-replace-directory-fsync-");
+		const dir = await makeTempDir("vib-marker-replace-directory-fsync-");
 		const markerPath = path.join(dir, "session.jsonl.spill.commit");
 		const file = new FileSessionStorage();
 		createSessionCommitMarkerCheckedSync(file, markerPath, markerBytes(0));
@@ -796,7 +796,7 @@ describe("commit-marker checked create/replace", () => {
 		expect(fs.readdirSync(dir).filter(name => name.endsWith(".tmp"))).toEqual([]);
 	});
 	it("file backend: replace only on exact present raw/hash + descriptor identity match", async () => {
-		const dir = await makeTempDir("gjc-marker-replace-");
+		const dir = await makeTempDir("vib-marker-replace-");
 		const markerPath = path.join(dir, "session.jsonl.spill.commit");
 		const file = new FileSessionStorage();
 		createSessionCommitMarkerCheckedSync(file, markerPath, markerBytes(0));
@@ -814,7 +814,7 @@ describe("commit-marker checked create/replace", () => {
 	});
 
 	it("file backend: wrong raw hash aborts and never touches the marker", async () => {
-		const dir = await makeTempDir("gjc-marker-hash-");
+		const dir = await makeTempDir("vib-marker-hash-");
 		const markerPath = path.join(dir, "session.jsonl.spill.commit");
 		const file = new FileSessionStorage();
 		createSessionCommitMarkerCheckedSync(file, markerPath, markerBytes(0));
@@ -833,7 +833,7 @@ describe("commit-marker checked create/replace", () => {
 	});
 
 	it("file backend: stale descriptor identity aborts", async () => {
-		const dir = await makeTempDir("gjc-marker-stale-");
+		const dir = await makeTempDir("vib-marker-stale-");
 		const markerPath = path.join(dir, "session.jsonl.spill.commit");
 		const file = new FileSessionStorage();
 		createSessionCommitMarkerCheckedSync(file, markerPath, markerBytes(0));
@@ -852,7 +852,7 @@ describe("commit-marker checked create/replace", () => {
 	});
 
 	it("file backend: a stale concurrent publisher cannot overwrite the winning marker", async () => {
-		const dir = await makeTempDir("gjc-marker-concurrent-");
+		const dir = await makeTempDir("vib-marker-concurrent-");
 		const markerPath = path.join(dir, "session.jsonl.spill.commit");
 		const file = new FileSessionStorage();
 		createSessionCommitMarkerCheckedSync(file, markerPath, markerBytes(0));
@@ -871,7 +871,7 @@ describe("commit-marker checked create/replace", () => {
 		if (winner.kind === "present") expect(winner.rawBytesSha256).toBe(markerHash(markerBytes(1)));
 	});
 	it("file backend: simultaneous publishers admit exactly one checked replacement", async () => {
-		const dir = await makeTempDir("gjc-marker-concurrent-process-");
+		const dir = await makeTempDir("vib-marker-concurrent-process-");
 		const markerPath = path.join(dir, "session.spill.commit");
 		const file = new FileSessionStorage();
 		createSessionCommitMarkerCheckedSync(file, markerPath, markerBytes(0));
@@ -881,9 +881,9 @@ describe("commit-marker checked create/replace", () => {
 				cmd: [process.execPath, worker],
 				env: {
 					...process.env,
-					GJC_MARKER_RACE_ROOT: dir,
-					GJC_MARKER_RACE_PUBLISHER: publisher,
-					GJC_MARKER_RACE_GENERATION: String(generation),
+					VIB_MARKER_RACE_ROOT: dir,
+					VIB_MARKER_RACE_PUBLISHER: publisher,
+					VIB_MARKER_RACE_GENERATION: String(generation),
 				},
 				stdout: "pipe",
 				stderr: "pipe",
@@ -922,7 +922,7 @@ describe("commit-marker checked create/replace", () => {
 		expect(fs.readdirSync(dir).filter(name => name.endsWith(".tmp"))).toEqual([]);
 	});
 	it("file backend: corrupt-present is present, never missing, and replaceable by exact raw bytes", async () => {
-		const dir = await makeTempDir("gjc-marker-corrupt-");
+		const dir = await makeTempDir("vib-marker-corrupt-");
 		const markerPath = path.join(dir, "session.jsonl.spill.commit");
 		const file = new FileSessionStorage();
 		const corrupt = Buffer.from("not-json{{{{", "utf8");
@@ -943,7 +943,7 @@ describe("commit-marker checked create/replace", () => {
 	});
 
 	it("file backend: replace when the marker is missing aborts", async () => {
-		const dir = await makeTempDir("gjc-marker-missing-");
+		const dir = await makeTempDir("vib-marker-missing-");
 		const markerPath = path.join(dir, "session.jsonl.spill.commit");
 		const file = new FileSessionStorage();
 		expect(() =>
@@ -1007,7 +1007,7 @@ describe("commit-marker checked create/replace", () => {
 
 describe("derived sidecar lifecycle cleanup", () => {
 	it("removes derived siblings for file and memory storage", async () => {
-		const dir = await makeTempDir("gjc-sidecar-delete-");
+		const dir = await makeTempDir("vib-sidecar-delete-");
 		const sessionPath = path.join(dir, "session.jsonl");
 		const file = new FileSessionStorage();
 		file.writeTextSync(sessionPath, "{}\n");
@@ -1036,7 +1036,7 @@ describe("derived sidecar lifecycle cleanup", () => {
 	});
 
 	it("leaves no spill debris across 100 create-delete cycles", async () => {
-		const dir = await makeTempDir("gjc-sidecar-cycles-");
+		const dir = await makeTempDir("vib-sidecar-cycles-");
 		const file = new FileSessionStorage();
 		const memory = new MemorySessionStorage();
 		for (let cycle = 0; cycle < 100; cycle++) {

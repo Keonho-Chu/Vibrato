@@ -6,10 +6,10 @@ import {
 	type AgentTool,
 	getAgentTerminalOwnerContext,
 	type StreamFn,
-} from "@gajae-code/agent-core";
-import type { CursorExecHandlers, SimpleStreamOptions } from "@gajae-code/ai";
-import { createMockModel } from "@gajae-code/ai/providers/mock";
-import { AssistantMessageEventStream } from "@gajae-code/ai/utils/event-stream";
+} from "@vib-rato/agent-core";
+import type { CursorExecHandlers, SimpleStreamOptions } from "@vib-rato/ai";
+import { createMockModel } from "@vib-rato/ai/providers/mock";
+import { AssistantMessageEventStream } from "@vib-rato/ai/utils/event-stream";
 import { createAssistantMessage } from "./helpers";
 
 async function waitForStreaming(agent: Agent): Promise<void> {

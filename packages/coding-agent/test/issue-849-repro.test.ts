@@ -1,11 +1,11 @@
 import { describe, expect, it } from "bun:test";
-import type { AssistantMessage } from "@gajae-code/ai";
+import type { AssistantMessage } from "@vib-rato/ai";
 import {
 	buildSessionContext,
 	type ModelChangeEntry,
 	type SessionEntry,
 	type SessionMessageEntry,
-} from "@gajae-code/coding-agent/session/session-manager";
+} from "@vib-rato/coding-agent/session/session-manager";
 
 /**
  * Issue #849: After a user explicitly switches to gpt-5.5, the session reverts

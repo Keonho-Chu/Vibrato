@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "bun:test";
-import * as ai from "@gajae-code/ai";
-import { getBundledModel } from "@gajae-code/ai";
+import * as ai from "@vib-rato/ai";
+import { getBundledModel } from "@vib-rato/ai";
 import { PromptSuggestionController } from "../src/modes/prompt-suggestion-controller";
 import type { InteractiveModeContext } from "../src/modes/types";
 

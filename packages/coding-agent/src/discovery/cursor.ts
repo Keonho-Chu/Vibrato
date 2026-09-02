@@ -12,12 +12,12 @@
  * - rules: From rules/*.mdc files with MDC frontmatter (description, globs, alwaysApply)
  * - settings: From settings.json if present
  *
- * MCP servers are intentionally NOT inherited live from Cursor config: GJC owns
- * MCP runtime execution. Use `gjc mcp import cursor` to copy definitions into
- * GJC's own mcp.json instead.
+ * MCP servers are intentionally NOT inherited live from Cursor config: Vibrato owns
+ * MCP runtime execution. Use `vib mcp import cursor` to copy definitions into
+ * Vibrato's own mcp.json instead.
  */
 
-import { tryParseJson } from "@gajae-code/utils";
+import { tryParseJson } from "@vib-rato/utils";
 import { registerProvider } from "../capability";
 import { readFile } from "../capability/fs";
 import type { Rule } from "../capability/rule";

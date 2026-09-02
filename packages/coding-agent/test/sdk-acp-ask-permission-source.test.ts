@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { createSdkPermissionAskAnswerSource } from "../src/sdk/bus/index";
-import { GJC_ASK_TIMEOUT_CODE } from "../src/tools/ask-answer-registry";
+import { VIB_ASK_TIMEOUT_CODE } from "../src/tools/ask-answer-registry";
 
 test("bridges selector asks to the ACP permission channel and maps optionId to the answer", async () => {
 	const requests: Array<Record<string, unknown>> = [];
@@ -194,7 +194,7 @@ test("signals its own timeout with the marked error", async () => {
 			recommendedIndex: 0,
 			timeoutMs: 50,
 		}),
-	).rejects.toMatchObject({ code: GJC_ASK_TIMEOUT_CODE });
+	).rejects.toMatchObject({ code: VIB_ASK_TIMEOUT_CODE });
 });
 
 test("aborts the underlying permission request on timeout", async () => {
@@ -220,6 +220,6 @@ test("aborts the underlying permission request on timeout", async () => {
 			controls: [],
 			timeoutMs: 50,
 		}),
-	).rejects.toMatchObject({ code: GJC_ASK_TIMEOUT_CODE });
+	).rejects.toMatchObject({ code: VIB_ASK_TIMEOUT_CODE });
 	expect(sawAbortSignal).toBe(true);
 });

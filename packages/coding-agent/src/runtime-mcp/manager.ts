@@ -8,8 +8,8 @@
 import { realpathSync } from "node:fs";
 import * as path from "node:path";
 import * as url from "node:url";
-import { isCanonicalMCPOAuthBinding, resolveMCPOAuthResourceOrigin, type TSchema } from "@gajae-code/ai/core";
-import { logger } from "@gajae-code/utils";
+import { isCanonicalMCPOAuthBinding, resolveMCPOAuthResourceOrigin, type TSchema } from "@vib-rato/ai/core";
+import { logger } from "@vib-rato/utils";
 import type { SourceMeta } from "../capability/types";
 import * as configValue from "../config/resolve-config-value";
 import type { CustomTool } from "../extensibility/custom-tools/types";
@@ -270,9 +270,9 @@ export interface MCPDiscoverOptions {
 	/** Only connect servers with autoload !== false (default: false) */
 	autoloadOnly?: boolean;
 	/**
-	 * Restrict discovery to GJC's native `.gjc` scopes (user + project).
-	 * Runtime MCP authority for GJC sessions; Claude Code/Codex files are
-	 * explicit import sources into `.gjc`, not implicit runtime authorities.
+	 * Restrict discovery to Vibrato's native `.vib` scopes (user + project).
+	 * Runtime MCP authority for Vibrato sessions; Claude Code/Codex files are
+	 * explicit import sources into `.vib`, not implicit runtime authorities.
 	 */
 	nativeOnly?: boolean;
 	/** Called when starting to connect to servers */
@@ -1208,7 +1208,7 @@ export class MCPManager {
 				if (pendingWithoutCache.length > 0) {
 					// The startup wait elapsing means "stop blocking session start", not
 					// "this server failed". A server whose operator declared a `timeout`
-					// (`gjc mcp add --timeout`) asked to wait that long for it, so while it
+					// (`vib mcp add --timeout`) asked to wait that long for it, so while it
 					// is still inside that window it keeps connecting in the background
 					// under `connectToServer`'s own timeout, and the background tool load
 					// adopts it. Only a server that declared no window, or already spent it,

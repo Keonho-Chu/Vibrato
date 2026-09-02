@@ -1,9 +1,9 @@
 /**
  * Prints the workflow settings resolved for the current working directory.
- * `GJC_CONFIG_DIR` is read at module load, so this must be a child process.
+ * `VIB_CONFIG_DIR` is read at module load, so this must be a child process.
  */
-import { resolveRalplanAutoHandoff, resolveRalplanMaxIterations } from "../../src/gjc-runtime/ralplan-runtime";
-import { resolveUltragoalNudgeBudget } from "../../src/gjc-runtime/ultragoal-runtime";
+import { resolveRalplanAutoHandoff, resolveRalplanMaxIterations } from "../../src/vib-runtime/ralplan-runtime";
+import { resolveUltragoalNudgeBudget } from "../../src/vib-runtime/ultragoal-runtime";
 
 const cwd = process.cwd();
 const autoHandoff = process.argv.includes("--ralplan-auto-handoff") ? await resolveRalplanAutoHandoff(cwd) : undefined;

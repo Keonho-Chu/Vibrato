@@ -11,7 +11,7 @@
  */
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { isEnoent } from "@gajae-code/utils";
+import { isEnoent } from "@vib-rato/utils";
 import { authorizedArtifactsDirsFromContext } from "./registry-helpers";
 import type { InternalResource, InternalUrl, ProtocolHandler, ResolveContext } from "./types";
 

@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
-import { resolveLaunchDisposition } from "@gajae-code/coding-agent/cli/launch-disposition";
+import { resolveLaunchDisposition } from "@vib-rato/coding-agent/cli/launch-disposition";
 
 const repoRoot = path.resolve(import.meta.dir, "..", "..", "..");
 const cliEntry = path.join(repoRoot, "packages", "coding-agent", "src", "cli.ts");
@@ -97,14 +97,14 @@ async function runCliWithIgnoredStdin(
 
 describe("non-TTY CLI startup", () => {
 	it("exits instead of hanging when stdin is ignored and no prompt is provided", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-non-tty-startup-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-non-tty-startup-"));
 		try {
 			const result = await runCliWithIgnoredStdin(["--no-session"], {
 				...process.env,
-				GJC_CODING_AGENT_DIR: root,
+				VIB_CODING_AGENT_DIR: root,
 				PI_CODING_AGENT_DIR: root,
-				GJC_NOTIFICATIONS: "0",
-				GJC_CLEANUP_DEADLINE_MS: "250",
+				VIB_NOTIFICATIONS: "0",
+				VIB_CLEANUP_DEADLINE_MS: "250",
 				NO_COLOR: "1",
 			});
 
@@ -116,13 +116,13 @@ describe("non-TTY CLI startup", () => {
 	}, 15_000);
 
 	it("routes a positional prompt without waiting for ignored stdin", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-non-tty-prompt-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-non-tty-prompt-"));
 		const env = { ...process.env };
-		delete env.GJC_SDK_DISABLE;
-		delete env.GJC_SESSION_ID;
-		delete env.GJC_SESSION_FILE;
-		delete env.GJC_SESSION_CWD;
-		delete env.GJCCODE;
+		delete env.VIB_SDK_DISABLE;
+		delete env.VIB_SESSION_ID;
+		delete env.VIB_SESSION_FILE;
+		delete env.VIB_SESSION_CWD;
+		delete env.VIBCODE;
 		delete env.CLAUDECODE;
 		delete env.ANTHROPIC_AUTH_TOKEN;
 		delete env.ANTHROPIC_BASE_URL;
@@ -133,9 +133,9 @@ describe("non-TTY CLI startup", () => {
 				HOME: root,
 				XDG_CONFIG_HOME: root,
 				XDG_DATA_HOME: root,
-				GJC_CODING_AGENT_DIR: root,
+				VIB_CODING_AGENT_DIR: root,
 				PI_CODING_AGENT_DIR: root,
-				GJC_NOTIFICATIONS: "0",
+				VIB_NOTIFICATIONS: "0",
 				ANTHROPIC_API_KEY: "",
 				ANTHROPIC_OAUTH_TOKEN: "",
 				OPENAI_API_KEY: "",
