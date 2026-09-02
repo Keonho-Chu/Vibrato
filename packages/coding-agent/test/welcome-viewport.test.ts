@@ -242,14 +242,32 @@ describe("welcome launch surface", () => {
 			component.playIntro(() => {});
 			// Each rendered row is `<border>│ …mark… <border>│`, so drop the first and
 			// last colour escape on every row: those paint the border, not the mark.
-			const colours = component
-				.render(120)
-				.slice(MARK_START, MARK_START + MARK_ROWS)
-				.flatMap(row =>
-					[...row.matchAll(/\x1b\[38;2;(\d+);(\d+);(\d+)m/g)]
-						.slice(1, -1)
-						.map(m => [Number(m[1]), Number(m[2]), Number(m[3])] as const),
+			const markRows = component.render(120).slice(MARK_START, MARK_START + MARK_ROWS);
+			const colours = markRows.flatMap(row =>
+				[...row.matchAll(/\x1b\[38;2;(\d+);(\d+);(\d+)m/g)]
+					.slice(1, -1)
+					.map(m => [Number(m[1]), Number(m[2]), Number(m[3])] as const),
+			);
+			if (colours.length === 0) {
+				// No truecolor on this terminal (CI runners carry no terminal identity),
+				// so the sweep degrades to the 256-colour ramp. The claim still holds
+				// there: every index must come from the blue family and none from the
+				// neutral gray ramp the old palette used.
+				const blueRamp = new Set([17, 25, 111, 189]);
+				const grayRamp = new Set([250, 252, 254, 231]);
+				// Same border-stripping as the truecolor branch: the first and last
+				// escape on each row paint the box edge, not the mark.
+				const indices = markRows.flatMap(row =>
+					[...row.matchAll(/\x1b\[38;5;(\d+)m/g)].slice(1, -1).map(m => Number(m[1])),
 				);
+				expect(indices.length).toBeGreaterThan(100);
+				for (const index of indices) {
+					expect(grayRamp.has(index)).toBe(false);
+					expect(blueRamp.has(index)).toBe(true);
+				}
+				expect(new Set(indices).size).toBeGreaterThan(1);
+				return;
+			}
 			expect(colours.length).toBeGreaterThan(100);
 
 			// Every glyph is blue-dominant: the old #BCBEC0 ⇄ #FFFFFF ramp was
