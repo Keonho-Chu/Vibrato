@@ -337,6 +337,7 @@
     "resolveModelRoleOverrides",
     "resolveResumableSession",
     "resolveSkillSlashCommands",
+    "resolveWelcomeIntroTickMs",
     "restore",
     "restoreThemePreview",
     "router",

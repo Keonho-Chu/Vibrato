@@ -7,7 +7,7 @@ Vibrato's visual identity follows the LIG Corporate Identity Design Guidelines (
 | Token | Guide name | PANTONE | CMYK | HEX | Bound to |
 | --- | --- | --- | --- | --- | --- |
 | `brandBlue` | LIG Innovative Blue (main) | 294 C | C100 M86 Y30 K23 | `#002F6D` | Status-line background in both themes; accents, headings, links, and borders in `lig-white`; export header band; stats primary accent. |
-| `brandGray` | LIG Futuristic Gray (sub) | CoolGray 4 C | K30 | `#BCBEC0` | Secondary/muted type in `lig-blue`; kicker and labels on the export header; welcome-mark sweep on dark terminals. |
+| `brandGray` | LIG Futuristic Gray (sub) | CoolGray 4 C | K30 | `#BCBEC0` | Secondary/muted type in `lig-blue`; kicker and labels on the export header. |
 | `brandWhite` | White | — | — | `#FFFFFF` | Primary type on LIG-blue and dark grounds. |
 | `brandBlack` | Black | Black C | K100 | `#000000` | Reserved; not used as a UI colour. |
 
@@ -25,10 +25,12 @@ One readability tint exists for the dark TUI only: `accentTint #7FA6E6` (and `sk
 ## Background rules (BS 08)
 
 - On white grounds the brand is carried by LIG Innovative Blue type and rules.
-- On LIG-blue, black, or ≥ 40 % black grounds the wordmark and brand type are white or LIG Futuristic Gray. A lighter blue is never used for the mark.
+- On LIG-blue, black, or ≥ 40 % black grounds the wordmark and brand type are white or LIG Futuristic Gray. A lighter blue is never used for the wordmark.
 - Forbidden everywhere (BS 09): recolouring, outlining, shadowing, tilting, or redrawing the wordmark; placing it on busy patterns or on similar-hue blue grounds.
 
-This is why the welcome mark spells `vib` in block letters rather than drawing "LIG", and why its sweep is white ⇄ gray on dark terminals and navy ⇄ blue on light ones.
+This is why the welcome mark spells `vib` in block letters rather than drawing "LIG": the block-letter mark is the lettering of the `vib` command, not the LIG wordmark, and BS 09 still forbids redrawing or recolouring the wordmark itself anywhere.
+
+**Documented exception — the `vib` mark sweeps blue on dark terminals.** BS 08 reserves white and LIG Futuristic Gray for brand elements on dark grounds, and the startup sweep followed that rule: `#BCBEC0 ⇄ #FFFFFF`. Measured, that ramp spans only ~134 of 255 luminance with its floor at 121, so the animation had almost no contrast to show and read as static. The repository owner decided the mark sweeps a blue ramp on dark terminals as well, trading the letter of BS 08 for an animation that is actually visible. The shipped ramp is `#1A3666 → #3F6EB4 → #DCE8FB` (deep navy through mid blue to a near-white blue peak) on dark grounds, and the unchanged `#002D5C → #002F6D → #003D96` on light ones. The exception is scoped to this mark only. It does not extend to the LIG wordmark, to brand type, or to any other surface, all of which continue to follow BS 08 and BS 09 exactly.
 
 ## Semantic tokens stay semantic
 

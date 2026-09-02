@@ -78,7 +78,11 @@ import type { ToolExecutionHandle } from "./components/tool-execution";
 import { StatusLineComponent } from "./components/tool-status-header";
 import { composeToolText } from "./components/tool-transcript-format";
 import { type PetMode, VibratoPetWidget } from "./components/vibrato-pet-widget";
-import { WelcomeComponent, type LspServerInfo as WelcomeLspServerInfo } from "./components/welcome";
+import {
+	WelcomeComponent,
+	type WelcomeLogoMode,
+	type LspServerInfo as WelcomeLspServerInfo,
+} from "./components/welcome";
 import { BtwController } from "./controllers/btw-controller";
 import { CommandController } from "./controllers/command-controller";
 import { EventController } from "./controllers/event-controller";
@@ -299,6 +303,21 @@ function formatHudNoteMarker(count: number): string {
 		.map(d => HUD_NOTE_SUP_DIGITS[d] ?? d)
 		.join("");
 	return theme.fg("dim", chalk.italic(` \u207a${sub}`));
+}
+
+export type WelcomeBannerSettingMode = "auto" | "unicode" | "square" | "ascii";
+
+export function resolveWelcomeLogoMode(
+	mode: WelcomeBannerSettingMode,
+	env: Record<string, string | undefined> = Bun.env,
+	platform: NodeJS.Platform = process.platform,
+): WelcomeLogoMode {
+	void env;
+	void platform;
+	if (mode === "unicode") return "unicode";
+	if (mode === "square") return "square";
+	if (mode === "ascii") return "ascii";
+	return "unicode";
 }
 
 /** Options for creating an InteractiveMode instance (for future API use) */
@@ -788,6 +807,7 @@ export class InteractiveMode implements InteractiveModeContext {
 		const providerName = this.session.model?.provider ?? "Unknown";
 
 		const startupQuiet = settings.get("startup.quiet");
+		const welcomeLogoMode = resolveWelcomeLogoMode(settings.get("startup.welcomeBannerMode"));
 		this.#welcomeComponent = undefined;
 
 		for (const warning of this.session.configWarnings) {
@@ -804,11 +824,13 @@ export class InteractiveMode implements InteractiveModeContext {
 				modelName,
 				providerName,
 				this.#getWelcomeLspServers(),
+				welcomeLogoMode,
 				{
 					getViewportRows: () => this.ui.terminal.rows,
 					getReservedBottomRows: getWelcomeReservedBottomRows,
 					rightGutterWidth: COMPOSER_RIGHT_GUTTER_WIDTH,
 					keyDisplayContext: this.#keyDisplayContext,
+					reducedMotion: settings.get("startup.skipLogoAnimation") === true,
 				},
 			);
 
@@ -1221,6 +1243,10 @@ export class InteractiveMode implements InteractiveModeContext {
 			return false;
 		}
 		input.started = true;
+		// The launch mark is decoration for an idle screen. Once the session is
+		// working it has scrolled away, so settle it rather than paying for a
+		// full-UI repaint every frame for the rest of the session.
+		this.#welcomeComponent?.settle();
 		return true;
 	}
 

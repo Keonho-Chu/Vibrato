@@ -2,8 +2,11 @@ import type { PresetDef, StatusLinePreset } from "./types";
 
 export const STATUS_LINE_PRESETS: Record<StatusLinePreset, PresetDef> = {
 	default: {
+		// Every informational segment is on by default. Each one hides itself when
+		// it has no value, so a self-hosted model with no per-token price simply
+		// shows its token counts and omits the cost.
 		leftSegments: ["model", "mode", "git", "pr", "path"],
-		rightSegments: ["session_name", "jobs", "token_rate", "cost"],
+		rightSegments: ["session_name", "jobs", "token_in", "token_out", "token_rate", "cache_read", "cost"],
 		separator: "slash",
 		segmentOptions: {
 			model: { showThinkingLevel: true },
@@ -14,7 +17,7 @@ export const STATUS_LINE_PRESETS: Record<StatusLinePreset, PresetDef> = {
 
 	"default-usage": {
 		leftSegments: ["model", "mode", "git", "pr", "path"],
-		rightSegments: ["session_name", "jobs", "token_rate", "usage", "cost"],
+		rightSegments: ["session_name", "jobs", "token_in", "token_out", "token_rate", "cache_read", "usage", "cost"],
 		separator: "slash",
 		segmentOptions: {
 			model: { showThinkingLevel: true },

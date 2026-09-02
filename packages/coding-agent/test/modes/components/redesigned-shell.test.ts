@@ -9,6 +9,7 @@ import { FooterComponent } from "@vib-rato/coding-agent/modes/components/footer"
 import { STATUS_LINE_PRESETS } from "@vib-rato/coding-agent/modes/components/status-line/presets";
 import { UserMessageComponent } from "@vib-rato/coding-agent/modes/components/user-message";
 import { WelcomeComponent } from "@vib-rato/coding-agent/modes/components/welcome";
+import { resolveWelcomeLogoMode } from "@vib-rato/coding-agent/modes/interactive-mode";
 import { getEditorTheme, initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
 import type { AgentSession } from "@vib-rato/coding-agent/session/agent-session";
 import { type TUI, visibleWidth } from "@vib-rato/tui";
@@ -101,6 +102,13 @@ beforeAll(async () => {
 	await initTheme(false);
 });
 
+/** Rows the `vib` block-letter mark occupies inside the welcome border. */
+const WELCOME_MARK_ROWS = 6;
+/** Index of the mark's first row: below the title rail and the top blank. */
+const WELCOME_MARK_START = 2;
+/** Index of the identity row: below the mark and the blank under it. */
+const WELCOME_IDENTITY_ROW = WELCOME_MARK_START + WELCOME_MARK_ROWS + 1;
+
 describe("redesigned interactive shell chrome", () => {
 	it("renders opencode-style minimal user and vibrato turns", () => {
 		const user = Bun.stripANSI(new UserMessageComponent("hello").render(80).join("\n"));
@@ -149,29 +157,67 @@ describe("redesigned interactive shell chrome", () => {
 		const lines = component.render(54);
 		const rendered = Bun.stripANSI(lines.join("\n"));
 
-		expect(rendered).toContain("▌ vib");
-		expect(rendered).toContain("▌ Vibrato · LIG System");
-		// No block-letter mark, and no box chrome around it.
-		expect(rendered).not.toContain("╭──╮        ╭──╮  ╭────╮  ╭───────╮");
-		expect(rendered).not.toMatch(/[╭╰╯╮│]/);
+		expect(rendered).toContain("╭──╮        ╭──╮  ╭────╮  ╭───────╮");
+		expect(rendered).toContain("╰──────╯      ╰────╯  ╰───────╯");
+		expect(rendered).toContain("Vibrato · LIG System");
+		// The mark and the border carry the brand: no rule, no plain-text wordmark.
+		expect(rendered).not.toContain("▌");
+		// The border closes and every row spans the full width.
+		expect(Bun.stripANSI(lines.at(-1) ?? "")).toBe(`╰${"─".repeat(52)}╯`);
 		for (const line of lines) {
-			expect(visibleWidth(line)).toBeLessThanOrEqual(54);
+			expect(visibleWidth(line)).toBe(54);
 		}
 	});
 
 	it("right-aligns the version to the terminal edge on wide terminals", () => {
 		const component = new WelcomeComponent("1.2.3", "gpt-5.5", "openai");
-		const narrowTop = Bun.stripANSI(component.render(100)[0] ?? "");
+		// The version rides the title rail; the box stretches, the mark does not.
+		const narrowLines = component.render(100);
 		const wideLines = component.render(160);
-		const wideTop = Bun.stripANSI(wideLines[0] ?? "");
 
-		expect(visibleWidth(narrowTop)).toBe(100);
-		expect(visibleWidth(wideTop)).toBe(160);
-		expect(wideTop).toStartWith("▌ vib");
-		expect(wideTop).toContain("1.2.3");
+		expect(visibleWidth(Bun.stripANSI(narrowLines[0] ?? ""))).toBe(100);
+		expect(visibleWidth(Bun.stripANSI(wideLines[0] ?? ""))).toBe(160);
+		expect(Bun.stripANSI(wideLines[0] ?? "")).toStartWith("╭─── vib v1.2.3");
+		expect(Bun.stripANSI(wideLines[WELCOME_IDENTITY_ROW] ?? "")).toStartWith("│   Vibrato · LIG System");
 		for (const line of wideLines) {
-			expect(visibleWidth(line)).toBeLessThanOrEqual(160);
+			expect(visibleWidth(line)).toBe(160);
 		}
+	});
+
+	it("renders an ASCII-safe welcome logo when requested", () => {
+		const component = new WelcomeComponent("1.2.3", "gpt-5.5", "openai", [], "ascii");
+		const lines = component.render(54);
+		const rendered = Bun.stripANSI(lines.join("\n"));
+
+		expect(rendered).toContain("+--+        +--+  +----+  +-------+");
+		expect(rendered).toContain("+----+       +----+  +-------+");
+		expect(rendered).not.toContain("╭──╮        ╭──╮");
+		for (const line of lines) {
+			expect(visibleWidth(line)).toBeLessThanOrEqual(54);
+		}
+	});
+
+	it("renders a square-corner Unicode welcome logo when requested", () => {
+		const component = new WelcomeComponent("1.2.3", "gpt-5.5", "openai", [], "square");
+		const lines = component.render(54);
+		const rendered = Bun.stripANSI(lines.join("\n"));
+
+		expect(rendered).toContain("┌──┐        ┌──┐  ┌────┐  ┌───────┐");
+		expect(rendered).toContain("└──────┘      └────┘  └───────┘");
+		expect(rendered).not.toContain("╭──╮        ╭──╮");
+		expect(rendered).not.toContain("+--+        +--+");
+		for (const line of lines) {
+			expect(visibleWidth(line)).toBeLessThanOrEqual(54);
+		}
+	});
+
+	it("resolves welcome banner auto and manual override modes", () => {
+		expect(resolveWelcomeLogoMode("auto", { WT_SESSION: "session-id" }, "win32")).toBe("unicode");
+		expect(resolveWelcomeLogoMode("auto", { WT_SESSION: "session-id" }, "linux")).toBe("unicode");
+		expect(resolveWelcomeLogoMode("auto", {}, "win32")).toBe("unicode");
+		expect(resolveWelcomeLogoMode("unicode", { WT_SESSION: "session-id" }, "win32")).toBe("unicode");
+		expect(resolveWelcomeLogoMode("square", { WT_SESSION: "session-id" }, "win32")).toBe("square");
+		expect(resolveWelcomeLogoMode("ascii", {}, "linux")).toBe("ascii");
 	});
 
 	it("renders the live composer as a borderless opencode-style prompt", () => {
@@ -299,9 +345,20 @@ describe("redesigned interactive shell chrome", () => {
 		expect(STATUS_LINE_PRESETS.nerd.leftSegments).toContain("vibrato");
 	});
 
-	it("keeps the default status preset dense and pulse-forward", () => {
+	it("turns every informational segment on in the default status preset", () => {
 		expect(STATUS_LINE_PRESETS.default.leftSegments).toEqual(["model", "mode", "git", "pr", "path"]);
-		expect(STATUS_LINE_PRESETS.default.rightSegments).toEqual(["session_name", "jobs", "token_rate", "cost"]);
+		// Token counts and cache reads ride along with the rate and the cost, so a
+		// self-hosted model still reports its usage. Each segment hides itself when
+		// it has no value, so the line stays quiet until there is something to say.
+		expect(STATUS_LINE_PRESETS.default.rightSegments).toEqual([
+			"session_name",
+			"jobs",
+			"token_in",
+			"token_out",
+			"token_rate",
+			"cache_read",
+			"cost",
+		]);
 		expect(STATUS_LINE_PRESETS.default.segmentOptions?.path?.maxLength).toBe(32);
 	});
 
@@ -310,7 +367,10 @@ describe("redesigned interactive shell chrome", () => {
 		expect(STATUS_LINE_PRESETS["default-usage"].rightSegments).toEqual([
 			"session_name",
 			"jobs",
+			"token_in",
+			"token_out",
 			"token_rate",
+			"cache_read",
 			"usage",
 			"cost",
 		]);
