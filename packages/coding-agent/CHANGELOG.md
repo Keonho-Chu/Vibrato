@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- **Breaking:** The pre-rebrand `red-claw`, `blue-crab`, and `ouroboros` themes are removed. `lig-blue` and `lig-white` remain the defaults, alongside the `claude-code`, `codex`, `opencode`, and `gruvbox-dark` migration themes. A config pinned to one of the removed names falls back to `lig-blue`, which was already the hardcoded fallback despite comments that still named `red-claw`.
+- Status-line usage segments name themselves in words instead of glyphs: `in 5.1K`, `out 149`, `70.1 tok/s`, `cache read 8.2K`, `cache write 1.2K`. An arrow left the reader guessing which direction was the prompt and which the reply, and a disk glyph said nothing about read versus write.
+
 - The `vib` mark and its gradient sweep return to the launch screen, now inside the bordered box and above the minimal information rows; the two-column layout, the four side panels, the pills, and the taglines stay gone. The sweep loops instead of playing once, runs a blue ramp on dark terminals as well as light ones so the movement is actually visible, and settles on the resting frame as soon as the session becomes active — the component is never removed from the UI root, so a still-running loop would repaint the whole interface for the rest of the session. `startup.welcomeBannerMode` and `startup.skipLogoAnimation` return with it.
 - The default status-line preset now carries every informational segment: cumulative input and output tokens and cache reads alongside the token rate and the cost. Each segment hides itself when it has no value, so a self-hosted model with no per-token price reports its token counts and simply omits the money.
 

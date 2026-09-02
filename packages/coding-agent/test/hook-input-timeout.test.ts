@@ -5,7 +5,7 @@ import { getThemeByName, setThemeInstance } from "@vib-rato/coding-agent/modes/t
 import type { TUI } from "@vib-rato/tui";
 
 beforeAll(async () => {
-	const theme = await getThemeByName("red-claw");
+	const theme = await getThemeByName("lig-blue");
 	if (!theme) {
 		throw new Error("Failed to load dark theme for tests");
 	}

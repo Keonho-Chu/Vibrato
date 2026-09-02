@@ -115,7 +115,7 @@ Switching backends mid-session is honoured on the next system-prompt rebuild and
 
 ## Red-claw TUI theme
 
-The interactive TUI defaults to the bundled `lig-blue` theme for dark terminals and the bundled `lig-white` theme for light-appearance terminals; both apply the LIG System corporate identity (see `docs/design-system.md`). The legacy `red-claw` and `blue-crab` palettes remain selectable. Three additional bundled migration themes — `claude-code`, `codex`, and `opencode` — mirror the look of those tools for easy eye-migration and are selectable from Settings or `/theme`. Explicit user theme settings still win; set `theme.dark: red-claw` and `theme.light: blue-crab` in `~/.vib/agent/config.yml` to pin them.
+The interactive TUI defaults to the bundled `lig-blue` theme for dark terminals and the bundled `lig-white` theme for light-appearance terminals; both apply the LIG System corporate identity (see `docs/design-system.md`). Three bundled migration themes — `claude-code`, `codex`, and `opencode` — mirror the look of those tools for easy eye-migration, and `gruvbox-dark` is bundled too; all are selectable from Settings or `/theme`. Explicit user theme settings still win; set `theme.dark` and `theme.light` in `~/.vib/agent/config.yml` to pin a choice.
 
 ### Welcome banner fonts on Windows Terminal
 

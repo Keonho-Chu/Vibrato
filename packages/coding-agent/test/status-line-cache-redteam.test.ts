@@ -91,6 +91,28 @@ function makeComponent(session = makeSession()): StatusLineComponent {
 	return component;
 }
 
+function textForLabels(rows: string[]): string {
+	return rows.join("\n");
+}
+
+function labelSession(): AgentSession {
+	return makeSession({
+		state: { messages: [], model: { id: "test-model", name: "test-model", contextWindow: 100_000 } },
+		sessionManager: {
+			getUsageStatistics: () => ({
+				input: 5_100,
+				output: 149,
+				cacheRead: 8_200,
+				cacheWrite: 1_200,
+				premiumRequests: 0,
+				cost: 0,
+			}),
+			getSessionName: () => "labels",
+			getSessionId: () => "session-labels",
+		},
+	}) as AgentSession;
+}
+
 function text(rows: string[]): string {
 	return rows.join("\n");
 }
@@ -348,5 +370,23 @@ describe("StatusLineComponent cache red-team coverage", () => {
 		const second = text(component.render(160));
 		expect(second).not.toBe(first);
 		expect(second).toContain("2m");
+	});
+});
+
+describe("usage segments name themselves in words", () => {
+	it("labels tokens and cache instead of relying on arrow and disk glyphs", () => {
+		const component = makeComponent(labelSession());
+		component.setJobs(EMPTY_JOBS_SNAPSHOT);
+		const rendered = textForLabels(component.render(200));
+
+		// An arrow leaves the reader guessing which direction is the prompt and
+		// which is the reply, and a disk glyph says nothing about read versus write.
+		expect(rendered).toContain("in 5.1K");
+		expect(rendered).toContain("out 149");
+		expect(rendered).toContain("cache read 8.2K");
+		expect(rendered).toContain("cache write 1.2K");
+		for (const glyph of [theme.icon.input, theme.icon.output, theme.icon.cache, theme.icon.tokens]) {
+			if (glyph) expect(rendered).not.toContain(glyph);
+		}
 	});
 });

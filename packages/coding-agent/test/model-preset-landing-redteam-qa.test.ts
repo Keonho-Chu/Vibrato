@@ -108,7 +108,7 @@ const codexPro: ModelProfileDefinition = {
 	source: "builtin",
 };
 
-let testTheme = await getThemeByName("red-claw");
+let testTheme = await getThemeByName("lig-blue");
 function installTestTheme(): void {
 	if (!testTheme) throw new Error("Failed to load test theme");
 	setThemeInstance(testTheme);
@@ -195,7 +195,7 @@ function cursorRowLabel(selector: ModelSelectorComponent): string | undefined {
 
 describe("preset landing adversarial QA", () => {
 	beforeAll(async () => {
-		testTheme = await getThemeByName("red-claw");
+		testTheme = await getThemeByName("lig-blue");
 		installTestTheme();
 	});
 

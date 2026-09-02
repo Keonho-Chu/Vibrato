@@ -1851,7 +1851,7 @@ export async function initTheme(
 			await startSigwinchListener();
 		}
 	} catch (err) {
-		logger.debug("Theme loading failed, falling back to red-claw theme", { error: String(err) });
+		logger.debug("Theme loading failed, falling back to the lig-blue theme", { error: String(err) });
 		currentThemeName = "lig-blue";
 		theme = await loadTheme("lig-blue", getCurrentThemeOptions());
 		// Don't start watcher for fallback theme
@@ -1995,7 +1995,7 @@ export async function setSymbolPreset(preset: SymbolPreset): Promise<void> {
 		try {
 			theme = await loadTheme(currentThemeName, getCurrentThemeOptions());
 		} catch {
-			// Fall back to red-claw theme with new preset
+			// Fall back to the default theme with the new preset
 			theme = await loadTheme("lig-blue", getCurrentThemeOptions());
 		}
 		if (onThemeChangeCallback) {
@@ -2021,7 +2021,7 @@ export async function setColorBlindMode(enabled: boolean): Promise<void> {
 		try {
 			theme = await loadTheme(currentThemeName, getCurrentThemeOptions());
 		} catch {
-			// Fall back to red-claw theme
+			// Fall back to the default theme
 			theme = await loadTheme("lig-blue", getCurrentThemeOptions());
 		}
 		if (onThemeChangeCallback) {

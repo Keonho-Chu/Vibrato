@@ -61,4 +61,4 @@ Terminal surfaces use the user's terminal font. HTML exports keep monospace for 
 | Stats dashboard | `packages/stats/src/client/styles.css`, `tailwind.config.js` |
 | Gates | `bun run check:vib-ui` |
 
-Legacy `red-claw` and `blue-crab` themes remain bundled for users who prefer them; they are not part of the corporate identity and are not defaults.
+The pre-rebrand `red-claw`, `blue-crab`, and `ouroboros` themes have been removed. What ships alongside the LIG pair is `claude-code`, `codex`, `opencode`, and `gruvbox-dark`.

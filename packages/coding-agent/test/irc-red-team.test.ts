@@ -24,8 +24,8 @@ const originalAllowPassthrough = Bun.env.PI_ALLOW_SIXEL_PASSTHROUGH;
 
 beforeAll(async () => {
 	await initTheme();
-	const theme = await getThemeByName("red-claw");
-	if (!theme) throw new Error("Expected red-claw theme");
+	const theme = await getThemeByName("lig-blue");
+	if (!theme) throw new Error("Expected lig-blue theme");
 	setThemeInstance(theme);
 });
 

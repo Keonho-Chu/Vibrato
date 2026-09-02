@@ -616,7 +616,7 @@ describe("UiHelpers / InputController against the queued-display layer (E8-E9)",
 		// No `afterEach` restore is required by that convention; the theme
 		// module exposes no reset API, and `dark` is the suite-wide assumed
 		// post-state.
-		const themeInstance = await getThemeByName("red-claw");
+		const themeInstance = await getThemeByName("lig-blue");
 		expect(themeInstance).toBeDefined();
 		setThemeInstance(themeInstance!);
 	});

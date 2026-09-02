@@ -28,7 +28,7 @@ const model = (provider: string, id: string): Model =>
 
 const PROBE_API_KEY_ENV = "VIB_REDTEAM_PROVIDER_AUTH_HEALTH_PROBE_KEY";
 
-let testTheme = await getThemeByName("red-claw");
+let testTheme = await getThemeByName("lig-blue");
 
 function installTestTheme(): void {
 	if (!testTheme) throw new Error("Failed to load test theme");
@@ -143,7 +143,7 @@ async function waitFor(condition: () => boolean): Promise<void> {
 
 beforeEach(async () => {
 	clearTrackedProviderAuthHealth();
-	testTheme = await getThemeByName("red-claw");
+	testTheme = await getThemeByName("lig-blue");
 	installTestTheme();
 });
 

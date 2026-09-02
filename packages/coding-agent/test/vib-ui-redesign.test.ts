@@ -3,11 +3,8 @@ import { SETTINGS_SCHEMA } from "../src/config/settings-schema";
 import { TEMPLATE } from "../src/export/html/template.generated";
 import { STATUS_LINE_PRESETS } from "../src/modes/components/status-line/presets";
 import { defaultThemes } from "../src/modes/theme/defaults";
-import blueCrabTheme from "../src/modes/theme/defaults/blue-crab.json" with { type: "json" };
 import ligBlueTheme from "../src/modes/theme/defaults/lig-blue.json" with { type: "json" };
 import ligWhiteTheme from "../src/modes/theme/defaults/lig-white.json" with { type: "json" };
-import ouroborosTheme from "../src/modes/theme/defaults/ouroboros.json" with { type: "json" };
-import redClawTheme from "../src/modes/theme/defaults/red-claw.json" with { type: "json" };
 import * as themeModule from "../src/modes/theme/theme";
 import { ACP_BUILTIN_SLASH_COMMANDS } from "../src/slash-commands/acp-builtins";
 import { lookupBuiltinSlashCommand } from "../src/slash-commands/builtin-registry";
@@ -68,66 +65,22 @@ describe("Vibrato LIG CI theme defaults", () => {
 		expect(new Set([colors.accent, colors.error, colors.warning, colors.toolDiffRemoved]).size).toBe(4);
 	});
 
-	it("keeps red-claw brand tokens separate from semantic warning/error/diff tokens", async () => {
-		const colors = await themeModule.getResolvedThemeColors("red-claw");
-		const vars = redClawTheme.vars;
-
-		expect(vars.brandRed).toBeDefined();
-		expect(vars.claw).toBeDefined();
-		expect(vars.coral).toBeDefined();
-		expect(vars.shell).toBeDefined();
-		expect(vars.dangerRed).toBeDefined();
-		expect(vars.warningAmber).toBeDefined();
-		expect(vars.diffRemovalRed).toBeDefined();
-
-		expect(colors.accent).toBe(vars.claw);
-		expect(colors.borderAccent).toBe(vars.brandRed);
-		expect(colors.error).toBe(vars.dangerRed);
-		expect(colors.warning).toBe(vars.warningAmber);
-		expect(colors.toolDiffRemoved).toBe(vars.diffRemovalRed);
-		expect(new Set([colors.accent, colors.error, colors.warning, colors.toolDiffRemoved]).size).toBe(4);
-	});
-
 	it("exposes bundled selectable themes while preserving lig-blue and lig-white defaults", async () => {
 		const themes = await themeModule.getAvailableThemes();
 
-		expect(themes).toEqual([
-			"blue-crab",
-			"claude-code",
-			"codex",
-			"gruvbox-dark",
-			"lig-blue",
-			"lig-white",
-			"opencode",
-			"ouroboros",
-			"red-claw",
-		]);
+		// The pre-rebrand crab and ouroboros skins are gone; what ships is the LIG
+		// pair plus the neutral third-party-flavoured themes.
+		expect(themes).toEqual(["claude-code", "codex", "gruvbox-dark", "lig-blue", "lig-white", "opencode"]);
 		expect(Object.keys(defaultThemes).sort()).toEqual([
-			"blue-crab",
 			"claude-code",
 			"codex",
 			"gruvbox-dark",
 			"lig-blue",
 			"lig-white",
 			"opencode",
-			"ouroboros",
-			"red-claw",
 		]);
 		expect(SETTINGS_SCHEMA["theme.dark"].default).toBe("lig-blue");
 		expect(SETTINGS_SCHEMA["theme.light"].default).toBe("lig-white");
-	});
-
-	it("keeps Ouroboros brand colors distinct from semantic state colors", async () => {
-		const colors = await themeModule.getResolvedThemeColors("ouroboros");
-		const vars = ouroborosTheme.vars;
-
-		expect(colors.accent).toBe(vars.petLime);
-		expect(colors.border).toBe(vars.ouroTeal);
-		expect(colors.borderAccent).toBe(vars.ritualGold);
-		expect(colors.statusLineBg).toBe(vars.deepNavy);
-		expect(colors.error).toBe(vars.dangerRed);
-		expect(colors.toolDiffRemoved).toBe(vars.diffRemovalRed);
-		expect(new Set([colors.accent, colors.warning, colors.error, colors.toolDiffRemoved]).size).toBe(4);
 	});
 
 	it("validates every bundled built-in theme against the schema-required token set", async () => {
@@ -187,26 +140,6 @@ describe("Vibrato LIG CI theme defaults", () => {
 		]) {
 			expect(colors[token], `codex ${token} must be concrete hex`).toMatch(hex);
 		}
-	});
-
-	it("keeps blue-crab coastal tokens separate from semantic warning/error/diff tokens", async () => {
-		const colors = await themeModule.getResolvedThemeColors("blue-crab");
-		const vars = blueCrabTheme.vars;
-
-		expect(vars.brandBlue).toBeDefined();
-		expect(vars.claw).toBeDefined();
-		expect(vars.seafoam).toBeDefined();
-		expect(vars.sand).toBeDefined();
-		expect(vars.dangerRed).toBeDefined();
-		expect(vars.warningAmber).toBeDefined();
-		expect(vars.diffRemovalRed).toBeDefined();
-
-		expect(colors.accent).toBe(vars.claw);
-		expect(colors.borderAccent).toBe(vars.brandBlue);
-		expect(colors.error).toBe(vars.dangerRed);
-		expect(colors.warning).toBe(vars.warningAmber);
-		expect(colors.toolDiffRemoved).toBe(vars.diffRemovalRed);
-		expect(new Set([colors.accent, colors.error, colors.warning, colors.toolDiffRemoved]).size).toBe(4);
 	});
 
 	it("exposes /theme only for TUI selection, not ACP text clients", () => {

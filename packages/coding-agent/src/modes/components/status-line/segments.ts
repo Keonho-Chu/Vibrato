@@ -338,7 +338,9 @@ const tokenInSegment: StatusLineSegment = {
 		const { input } = ctx.usageStats;
 		if (!input) return { content: "", visible: false };
 
-		const content = withIcon(theme.icon.input, formatNumber(input));
+		// Word labels rather than arrows: an arrow leaves the reader guessing which
+		// direction is the prompt and which is the reply.
+		const content = `in ${formatNumber(input)}`;
 		return { content: theme.fg("statusLineSpend", content), visible: true };
 	},
 };
@@ -349,7 +351,7 @@ const tokenOutSegment: StatusLineSegment = {
 		const { output } = ctx.usageStats;
 		if (!output) return { content: "", visible: false };
 
-		const content = withIcon(theme.icon.output, formatNumber(output));
+		const content = `out ${formatNumber(output)}`;
 		return { content: theme.fg("statusLineOutput", content), visible: true };
 	},
 };
@@ -364,7 +366,7 @@ const tokenTotalSegment: StatusLineSegment = {
 		const total = input + output + cacheWrite;
 		if (!total) return { content: "", visible: false };
 
-		const content = withIcon(theme.icon.tokens, formatNumber(total));
+		const content = `tokens ${formatNumber(total)}`;
 		return { content: theme.fg("statusLineSpend", content), visible: true };
 	},
 };
@@ -375,7 +377,7 @@ const tokenRateSegment: StatusLineSegment = {
 		const { tokensPerSecond } = ctx.usageStats;
 		if (!tokensPerSecond) return { content: "", visible: false };
 
-		const content = withIcon(theme.icon.output, `${tokensPerSecond.toFixed(1)}/s`);
+		const content = `${tokensPerSecond.toFixed(1)} tok/s`;
 		return { content: theme.fg("statusLineOutput", content), visible: true };
 	},
 };
@@ -491,8 +493,7 @@ const cacheReadSegment: StatusLineSegment = {
 		const { cacheRead } = ctx.usageStats;
 		if (!cacheRead) return { content: "", visible: false };
 
-		const parts = [theme.icon.cache, theme.icon.output, formatNumber(cacheRead)].filter(Boolean);
-		const content = parts.join(" ");
+		const content = `cache read ${formatNumber(cacheRead)}`;
 		return { content: theme.fg("statusLineSpend", content), visible: true };
 	},
 };
@@ -503,8 +504,7 @@ const cacheWriteSegment: StatusLineSegment = {
 		const { cacheWrite } = ctx.usageStats;
 		if (!cacheWrite) return { content: "", visible: false };
 
-		const parts = [theme.icon.cache, theme.icon.input, formatNumber(cacheWrite)].filter(Boolean);
-		const content = parts.join(" ");
+		const content = `cache write ${formatNumber(cacheWrite)}`;
 		return { content: theme.fg("statusLineOutput", content), visible: true };
 	},
 };

@@ -48,7 +48,7 @@ function canonicalBytes(value: unknown): string {
 	return Buffer.from(canonicalJsonBytes(value)).toString("hex");
 }
 
-let themeInstance = await getThemeByName("red-claw");
+let themeInstance = await getThemeByName("lig-blue");
 
 function installTheme(): void {
 	if (!themeInstance) throw new Error("Failed to load test theme");
@@ -158,7 +158,7 @@ async function openPanel(options: Parameters<typeof createContext>[0] & { smartR
 
 describe("/model smart-routing panel integration", () => {
 	beforeAll(async () => {
-		themeInstance = await getThemeByName("red-claw");
+		themeInstance = await getThemeByName("lig-blue");
 		installTheme();
 	});
 

@@ -33,7 +33,7 @@ function deferred<T>(): Deferred<T> {
 	return { promise: resolvers.promise, resolve: resolvers.resolve };
 }
 beforeAll(async () => {
-	await setTheme("red-claw");
+	await setTheme("lig-blue");
 });
 
 async function settle(): Promise<void> {

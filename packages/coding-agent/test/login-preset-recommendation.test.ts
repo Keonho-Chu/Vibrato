@@ -33,7 +33,7 @@ const codexProfile = profile("codex-medium", "openai-codex", "openai-codex/gpt-5
 const claudeProfile = profile("claude-opus", "anthropic", "anthropic/claude-opus-5:medium");
 const minimaxProfile = profile("minimax-medium", "minimax-code", "minimax-code/MiniMax-M3:medium");
 const plainMinimaxProfile = profile("minimax", "minimax-code", "minimax-code/MiniMax-M3:medium");
-let testTheme = await getThemeByName("red-claw");
+let testTheme = await getThemeByName("lig-blue");
 
 function installTestTheme(): void {
 	if (!testTheme) throw new Error("Failed to load test theme");
@@ -125,7 +125,7 @@ async function login(ctx: InteractiveModeContext, providerId: string): Promise<v
 
 describe("login preset recommendation", () => {
 	beforeAll(async () => {
-		testTheme = await getThemeByName("red-claw");
+		testTheme = await getThemeByName("lig-blue");
 		installTestTheme();
 	});
 
