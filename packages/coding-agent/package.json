@@ -3,7 +3,7 @@
 	"name": "@vib-rato/coding-agent",
 	"version": "0.15.6",
 	"description": "Vibrato CLI with read, bash, edit, write tools and session management",
-	"homepage": "https://vib-rato.com",
+	"homepage": "https://github.com/Keonho-Chu/Vibrato",
 	"author": "Yeachan-Heo and Vibrato Contributors",
 	"license": "MIT",
 	"repository": {

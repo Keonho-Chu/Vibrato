@@ -3,7 +3,7 @@
 	"name": "@vib-rato/tui",
 	"version": "0.15.6",
 	"description": "Terminal User Interface library with differential rendering for efficient text-based applications",
-	"homepage": "https://vib-rato.com",
+	"homepage": "https://github.com/Keonho-Chu/Vibrato",
 	"author": "Yeachan-Heo and Vibrato Contributors",
 	"license": "MIT",
 	"repository": {

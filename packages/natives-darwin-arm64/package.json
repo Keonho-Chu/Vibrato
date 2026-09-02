@@ -3,7 +3,7 @@
 	"version": "0.15.6",
 	"description": "Darwin arm64 native addon for @vib-rato/natives",
 	"type": "module",
-	"homepage": "https://vib-rato.com",
+	"homepage": "https://github.com/Keonho-Chu/Vibrato",
 	"author": "Yeachan-Heo",
 	"license": "MIT",
 	"repository": {

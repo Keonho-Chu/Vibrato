@@ -97,3 +97,6 @@ packages/coding-agent/binaries/
 # Python SDK build output
 python/vib-sdk/build/
 *.py[cod]
+
+# OMC session state
+.omc/
