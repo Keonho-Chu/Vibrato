@@ -2,12 +2,6 @@
   <a href="README.md">English</a> | <a href="README.ko.md">한국어</a> | <strong>中文</strong> | <a href="README.ja.md">日本語</a>
 </p>
 
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/lig-system-w.png">
-    <img src="assets/lig-system.png" alt="LIG System" width="260" />
-  </picture>
-</p>
 
 <h1 align="center">Vibrato</h1>
 
