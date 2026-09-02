@@ -22,7 +22,9 @@ Appearing there grants no repository access.
 
 ## Branch and release policy
 
-- `main` is protected against deletion and force-push.
+- All pull requests target `dev`. `main` is reserved for maintainer-directed
+  release flow; maintainers advance `dev` into `main` when cutting a release.
+- `main` and `dev` are protected against deletion and force-push.
 - Stable releases are cut with `bun run release <version>` from a clean `main`
   checkout; the script pushes the release commit and the immutable `v<version>`
   tag atomically. Release tags are never retagged, deleted, or force-pushed.
