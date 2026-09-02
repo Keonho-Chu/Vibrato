@@ -151,7 +151,7 @@ HOTSPOT_STATUSES = (
 )
 PROFILERS = ("bun", "node", "clinic", "instruments", "perf", "other", "none")
 PARITY_VERDICTS = ("pass", "fail", "not-run")
-EXPECTED_PREREGISTRATION_POLICY_SHA256 = "1fcadb3829aef34ca410b41c7146ec8843b9339ec27e57868467dfeed0ae027f"
+EXPECTED_PREREGISTRATION_POLICY_SHA256 = "b795bfd84b80f97d664d6ee27248c188f48a60aa2128f51f8c91f74f987779bb"
 
 
 class EvidenceError(Exception):
