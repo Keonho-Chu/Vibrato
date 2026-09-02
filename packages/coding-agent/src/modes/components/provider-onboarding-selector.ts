@@ -17,19 +17,25 @@ interface ProviderOnboardingOption {
 	label: string;
 	description: string;
 	action: ProviderOnboardingAction;
+	/** Rendered above this entry as a muted group heading. Not selectable. */
+	groupHeading?: string;
+	/** The main path. Rendered bold so it does not read as a peer of the rest. */
+	primary?: boolean;
 }
 
 const PROVIDER_ONBOARDING_OPTIONS: ProviderOnboardingOption[] = [
 	{
 		label: "Connect a local LLM endpoint",
 		description:
-			"Enter the URL of an OpenAI-compatible local LLM server (vLLM, SGLang, Ollama, LM Studio, llama.cpp, …) and an optional API key; models are discovered and registered.",
+			"Connect an OpenAI-compatible LLM server, usually another machine on your network. Models are discovered and registered.",
 		action: "local-endpoint",
+		primary: true,
 	},
 	{
 		label: "Login with OpenAI Codex",
 		description: "Authorize the OpenAI Codex subscription in the browser.",
 		action: "codex-login",
+		groupHeading: "Other ways to sign in",
 	},
 	{
 		label: "Login with Claude",
@@ -45,6 +51,7 @@ const PROVIDER_ONBOARDING_OPTIONS: ProviderOnboardingOption[] = [
 		label: "Add custom provider",
 		description: "Configure an OpenAI- or Anthropic-compatible API provider interactively.",
 		action: "custom-provider-wizard",
+		groupHeading: "Advanced setup",
 	},
 	{
 		label: "Import existing credentials",
@@ -90,8 +97,13 @@ export class ProviderOnboardingSelectorComponent extends Container {
 			const option = PROVIDER_ONBOARDING_OPTIONS[i];
 			if (!option) continue;
 			const selected = i === this.#selectedIndex;
+			if (option.groupHeading) {
+				this.#listContainer.addChild(new Spacer(1));
+				this.#listContainer.addChild(new TruncatedText(theme.fg("dim", `  ${option.groupHeading}`), 0, 0));
+			}
 			const prefix = selected ? theme.fg("accent", `${theme.nav.cursor} `) : "  ";
-			const label = selected ? theme.fg("accent", option.label) : option.label;
+			const text = option.primary ? theme.bold(option.label) : option.label;
+			const label = selected ? theme.fg("accent", text) : text;
 			this.#listContainer.addChild(new TruncatedText(`${prefix}${label}`, 0, 0));
 			this.#listContainer.addChild(new TruncatedText(theme.fg("muted", `    ${option.description}`), 0, 0));
 		}

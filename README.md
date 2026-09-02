@@ -54,25 +54,25 @@ Full platform matrix, nightly channel, shell completion, and source builds: [doc
 
 ## First run
 
-Start `vib` inside any git checkout. On the first launch with no usable model, Vibrato asks you to connect a local LLM endpoint first; press Esc to fall through to the full provider menu. The same menu is available any time with `/provider`.
+Start `vib` inside any git checkout. On the first launch with no usable model, Vibrato opens a single connect screen; press Esc to fall through to the full provider menu. The same screen opens any time with `/provider`.
 
-- **Local LLM endpoint** (vLLM, SGLang, Ollama, LM Studio, llama.cpp, or any other OpenAI-compatible server): pick *Connect a local LLM endpoint*, enter the server URL and an optional API key, and Vibrato discovers the models from the server. Leave the key empty for an unauthenticated local server.
-- **Claude** or **OpenAI Codex** (subscription plans): run `/login` and pick `anthropic`, `openai-codex` (browser), or `openai-codex-device` (headless).
+- **Local LLM endpoint** (vLLM, SGLang, Ollama, LM Studio, llama.cpp, or any other OpenAI-compatible server): your LLM server is usually another machine on the network — a GPU box on your LAN — so just type its address and connect. Shorthand like `192.168.0.10:8000` or `gpu-server.lan:8000` is enough; Vibrato fills in the scheme and `/v1` path for you. Plain `http://` works for private-network and `.local` / `.internal` / `.lan` addresses; a public host needs `https://`. There's no separate API key step: Vibrato probes the endpoint first and only asks for a key if the server answers 401 or 403. As a minor convenience, a compatible server already running on your own machine on a well-known loopback port (Ollama, llama.cpp, LM Studio, oMLX, vLLM, SGLang) also shows up as a selectable row on the same screen. Once connected, pick a model from what the server reports; a single discovered model is selected automatically.
+- **Claude** or **OpenAI Codex** (subscription plans, as an alternative to a local endpoint): run `/login` and pick `anthropic`, `openai-codex` (browser), or `openai-codex-device` (headless).
 
 The same setup from the shell:
 
 ```sh
-vib setup provider --preset local --base-url http://HOST:PORT/v1     # key from LOCAL_LLM_API_KEY, if any
+vib setup provider --preset local --base-url http://192.168.0.10:8000/v1   # e.g. a LAN GPU box; key from LOCAL_LLM_API_KEY, if any
 ```
 
 The `vllm` and `sglang` presets are still available for scripts and CI that already target them:
 
 ```sh
-vib setup provider --preset vllm --base-url http://HOST:8000/v1      # key from VLLM_API_KEY, if any
-vib setup provider --preset sglang --base-url http://HOST:30000/v1   # key from SGLANG_API_KEY, if any
+vib setup provider --preset vllm --base-url http://192.168.0.10:8000/v1    # key from VLLM_API_KEY, if any
+vib setup provider --preset sglang --base-url http://192.168.0.10:30000/v1 # key from SGLANG_API_KEY, if any
 ```
 
-Plain `http://` is accepted for localhost, private-network hosts, and `.local` / `.internal` / `.lan` names; public hosts need `https://`.
+Plain `http://` is accepted for localhost, private-network hosts, bare hostnames, and `.local` / `.internal` / `.lan` names; public hosts need `https://`.
 
 ## Usage
 
@@ -93,7 +93,7 @@ Inside a session:
 
 | Command | What it does |
 | :--- | :--- |
-| `/provider` | Connect a local LLM endpoint (or vLLM/SGLang/OpenAI Codex/Claude) |
+| `/provider` | Open the connect screen (local LLM endpoint, with OpenAI Codex/Claude as alternatives) |
 | `/login` | Sign in to Claude or OpenAI Codex |
 | `/model` | Switch the active model |
 | `/theme` | Switch the TUI theme |

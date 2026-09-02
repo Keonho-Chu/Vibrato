@@ -5,6 +5,7 @@ import * as path from "node:path";
 import { AuthStorage, SqliteAuthCredentialStore } from "@vib-rato/ai";
 import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
 import { CustomProviderWizardComponent } from "@vib-rato/coding-agent/modes/components/custom-provider-wizard";
+import { LocalEndpointConnectComponent } from "@vib-rato/coding-agent/modes/components/local-endpoint-connect";
 import {
 	type ProviderOnboardingAction,
 	ProviderOnboardingSelectorComponent,
@@ -323,7 +324,7 @@ describe("provider onboarding wizard red-team", () => {
 		expect(ctx.statuses.join("\n")).toContain("Custom API-compatible provider setup:");
 	});
 
-	it("routes the first entry into the generic local endpoint preset wizard", () => {
+	it("routes the first entry into the one-screen local endpoint connect flow", () => {
 		const ctx = createControllerContext({ refresh: async () => undefined } as unknown as ModelRegistry);
 		const controller = new SelectorController(ctx);
 
@@ -331,14 +332,16 @@ describe("provider onboarding wizard red-team", () => {
 		const selector = ctx.ui.focused as ProviderOnboardingSelectorComponent;
 		selector.handleInput("\n");
 
-		const wizard = ctx.ui.focused as CustomProviderWizardComponent;
-		const rendered = visibleText(wizard);
+		const connect = ctx.ui.focused as LocalEndpointConnectComponent;
+		expect(connect).toBeInstanceOf(LocalEndpointConnectComponent);
+		const rendered = visibleText(connect);
 		expect(rendered).toContain("Connect a local LLM endpoint");
-		expect(rendered).toContain("Step 1: Server URL");
-		expect(rendered).toContain("http://127.0.0.1:8000/v1");
-		// The preset path never asks for compatibility or a provider id.
-		expect(rendered).not.toContain("Step 1: Compatibility");
+		expect(rendered).toContain("Server address");
+		// One screen: no numbered steps, no compatibility or provider-id prompt,
+		// and no API key field until the server actually asks for one.
+		expect(rendered).not.toContain("Step 1:");
 		expect(rendered).not.toContain("Enter a provider id:");
+		expect(rendered).not.toContain("API key");
 	});
 });
 

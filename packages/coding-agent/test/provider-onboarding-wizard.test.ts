@@ -1,4 +1,4 @@
-import { afterEach, beforeAll, describe, expect, it, mock } from "bun:test";
+import { afterAll, afterEach, beforeAll, describe, expect, it, mock } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
@@ -8,6 +8,8 @@ import {
 	CustomProviderWizardComponent,
 	type CustomProviderWizardSubmit,
 } from "@vib-rato/coding-agent/modes/components/custom-provider-wizard";
+import { LocalEndpointConnectComponent } from "@vib-rato/coding-agent/modes/components/local-endpoint-connect";
+import { LocalModelPickerComponent } from "@vib-rato/coding-agent/modes/components/local-model-picker";
 import {
 	type ProviderOnboardingAction,
 	ProviderOnboardingSelectorComponent,
@@ -15,22 +17,55 @@ import {
 import { SelectorController } from "@vib-rato/coding-agent/modes/controllers/selector-controller";
 import { initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
 import type { InteractiveModeContext } from "@vib-rato/coding-agent/modes/types";
+import * as localEndpoint from "@vib-rato/coding-agent/setup/local-endpoint";
+import type { ProviderSetupResult } from "@vib-rato/coding-agent/setup/provider-onboarding";
 import { getAgentDir, setAgentDir } from "@vib-rato/utils";
 
 const originalAgentDir = getAgentDir();
 let tempAgentDir: string | undefined;
 
+const REAL_LOCAL_ENDPOINT = { ...localEndpoint };
+
+// The connect screen reaches the network through these three; only the URL
+// normalizer stays real, so the tests still assert the shorthand a user types.
+let discoverStub: typeof localEndpoint.discoverLoopbackEndpoints = async () => [];
+let probeStub: typeof localEndpoint.probeLocalEndpoint = async () => ({ status: "unreachable", detail: "no stub" });
+let registerStub: typeof localEndpoint.registerLocalEndpoint = async () => {
+	throw new Error("registerLocalEndpoint is not stubbed");
+};
+
 beforeAll(async () => {
 	await initTheme(false);
+	mock.module("../src/setup/local-endpoint", () => ({
+		...REAL_LOCAL_ENDPOINT,
+		discoverLoopbackEndpoints: (...args: Parameters<typeof localEndpoint.discoverLoopbackEndpoints>) =>
+			discoverStub(...args),
+		probeLocalEndpoint: (...args: Parameters<typeof localEndpoint.probeLocalEndpoint>) => probeStub(...args),
+		registerLocalEndpoint: (...args: Parameters<typeof localEndpoint.registerLocalEndpoint>) => registerStub(...args),
+	}));
+});
+
+afterAll(() => {
+	mock.module("../src/setup/local-endpoint", () => REAL_LOCAL_ENDPOINT);
 });
 
 afterEach(async () => {
 	setAgentDir(originalAgentDir);
+	discoverStub = async () => [];
+	probeStub = async () => ({ status: "unreachable", detail: "no stub" });
+	registerStub = async () => {
+		throw new Error("registerLocalEndpoint is not stubbed");
+	};
 	if (tempAgentDir) {
 		await fs.rm(tempAgentDir, { recursive: true, force: true });
 		tempAgentDir = undefined;
 	}
 });
+
+/** Let the stubbed probe/registration promises settle. */
+async function flush(): Promise<void> {
+	await new Promise(resolve => setTimeout(resolve, 0));
+}
 
 function visibleText(component: { render(width: number): string[] }): string {
 	return Bun.stripANSI(component.render(160).join("\n"));
@@ -38,10 +73,6 @@ function visibleText(component: { render(width: number): string[] }): string {
 
 function typeText(component: { handleInput(input: string): void }, text: string): void {
 	for (const char of text) component.handleInput(char);
-}
-
-function clearInput(component: { handleInput(input: string): void }, length: number): void {
-	for (let i = 0; i < length; i++) component.handleInput("\x7f");
 }
 
 function driveEnvWizard(
@@ -83,6 +114,13 @@ describe("provider onboarding wizard", () => {
 		expect(rendered).not.toContain("Connect a vLLM endpoint");
 		expect(rendered).not.toContain("Connect an SGLang endpoint");
 
+		// The endpoint is the main path; the subscription logins sit under a muted
+		// heading below it so they read as secondary, not as peers.
+		expect(rendered.indexOf("Connect a local LLM endpoint")).toBeLessThan(rendered.indexOf("Other ways to sign in"));
+		expect(rendered.indexOf("Other ways to sign in")).toBeLessThan(rendered.indexOf("Login with OpenAI Codex"));
+		expect(rendered.indexOf("Login with OAuth/subscription")).toBeLessThan(rendered.indexOf("Advanced setup"));
+		expect(rendered.indexOf("Advanced setup")).toBeLessThan(rendered.indexOf("Add custom provider"));
+
 		selector.handleInput("\n");
 		expect(actions).toEqual(["local-endpoint"]);
 
@@ -93,140 +131,6 @@ describe("provider onboarding wizard", () => {
 		selector.handleInput("\x1b[B");
 		selector.handleInput("\n");
 		expect(actions).toEqual(["local-endpoint", "codex-login", "claude-login"]);
-	});
-
-	it("collapses the vLLM preset wizard to base URL, key, confirm", () => {
-		const submissions: CustomProviderWizardSubmit[] = [];
-		const wizard = new CustomProviderWizardComponent(
-			input => submissions.push(input),
-			() => undefined,
-			() => undefined,
-			{ preset: "vllm" },
-		);
-
-		// Step 1 is the server URL: there is no compatibility or provider-id step.
-		expect(visibleText(wizard)).toContain("Connect a vLLM endpoint");
-		expect(visibleText(wizard)).toContain("Step 1: Server URL");
-		// The field is pre-filled with the loopback default; clear it before typing.
-		clearInput(wizard, "http://127.0.0.1:8000/v1".length);
-		typeText(wizard, "http://10.0.0.5:8000/v1");
-		wizard.handleInput("\n");
-
-		expect(visibleText(wizard)).toContain("Step 2: API key");
-		typeText(wizard, "sk-vllm-secret");
-		expect(visibleText(wizard)).not.toContain("sk-vllm-secret");
-		wizard.handleInput("\n");
-
-		const confirm = visibleText(wizard);
-		expect(confirm).toContain("Confirm custom provider");
-		expect(confirm).toContain("Provider: vllm");
-		expect(confirm).toContain("Base URL: http://10.0.0.5:8000/v1");
-		expect(confirm).toContain("Models: discovered from the server");
-		wizard.handleInput("\n");
-
-		expect(submissions).toEqual([
-			{ preset: "vllm", baseUrl: "http://10.0.0.5:8000/v1", apiKey: "sk-vllm-secret", force: false },
-		]);
-	});
-
-	it("stores the vllm-local token when the vLLM key is left empty", () => {
-		const submissions: CustomProviderWizardSubmit[] = [];
-		const wizard = new CustomProviderWizardComponent(
-			input => submissions.push(input),
-			() => undefined,
-			() => undefined,
-			{ preset: "vllm" },
-		);
-
-		wizard.handleInput("\n"); // accept the default server URL
-		expect(visibleText(wizard)).toContain("Leave empty for an unauthenticated local server.");
-		wizard.handleInput("\n"); // empty key
-
-		expect(visibleText(wizard)).toContain("Credential: none (unauthenticated local server)");
-		wizard.handleInput("\n");
-
-		expect(submissions).toEqual([
-			{ preset: "vllm", baseUrl: "http://127.0.0.1:8000/v1", apiKey: "vllm-local", force: false },
-		]);
-	});
-
-	it("collapses the generic local-endpoint preset wizard to base URL, key, confirm", () => {
-		const submissions: CustomProviderWizardSubmit[] = [];
-		const wizard = new CustomProviderWizardComponent(
-			input => submissions.push(input),
-			() => undefined,
-			() => undefined,
-			{ preset: "local" },
-		);
-
-		const opening = visibleText(wizard);
-		expect(opening).toContain("Connect a local LLM endpoint");
-		// The subtitle names the servers this preset covers, so a user running
-		// Ollama or LM Studio recognizes the entry as theirs.
-		expect(opening).toContain("Enter the local LLM server URL (OpenAI-compatible)");
-		expect(opening).toContain("Step 1: Server URL");
-		clearInput(wizard, "http://127.0.0.1:8000/v1".length);
-		typeText(wizard, "http://127.0.0.1:11434/v1");
-		wizard.handleInput("\n");
-
-		expect(visibleText(wizard)).toContain("Step 2: API key");
-		typeText(wizard, "sk-local-secret");
-		expect(visibleText(wizard)).not.toContain("sk-local-secret");
-		wizard.handleInput("\n");
-
-		const confirm = visibleText(wizard);
-		expect(confirm).toContain("Provider: local");
-		expect(confirm).toContain("Base URL: http://127.0.0.1:11434/v1");
-		expect(confirm).toContain("Models: discovered from the server");
-		wizard.handleInput("\n");
-
-		expect(submissions).toEqual([
-			{ preset: "local", baseUrl: "http://127.0.0.1:11434/v1", apiKey: "sk-local-secret", force: false },
-		]);
-	});
-
-	it("stores the local token when the local-endpoint key is left empty", () => {
-		const submissions: CustomProviderWizardSubmit[] = [];
-		const wizard = new CustomProviderWizardComponent(
-			input => submissions.push(input),
-			() => undefined,
-			() => undefined,
-			{ preset: "local" },
-		);
-
-		wizard.handleInput("\n"); // accept the default server URL
-		expect(visibleText(wizard)).toContain("Leave empty for an unauthenticated local server.");
-		wizard.handleInput("\n"); // empty key
-
-		expect(visibleText(wizard)).toContain("Credential: none (unauthenticated local server)");
-		wizard.handleInput("\n");
-
-		expect(submissions).toEqual([
-			{ preset: "local", baseUrl: "http://127.0.0.1:8000/v1", apiKey: "local", force: false },
-		]);
-	});
-
-	it("requires a key for the SGLang preset, which has no local fallback token", () => {
-		const submissions: CustomProviderWizardSubmit[] = [];
-		const wizard = new CustomProviderWizardComponent(
-			input => submissions.push(input),
-			() => undefined,
-			() => undefined,
-			{ preset: "sglang" },
-		);
-
-		expect(visibleText(wizard)).toContain("Connect an SGLang endpoint");
-		wizard.handleInput("\n"); // accept the default server URL
-		expect(visibleText(wizard)).not.toContain("Leave empty for an unauthenticated local server.");
-		wizard.handleInput("\n"); // empty key is refused, so the step stays put
-		expect(visibleText(wizard)).toContain("Step 2: API key");
-
-		typeText(wizard, "sk-sglang-secret");
-		wizard.handleInput("\n");
-		wizard.handleInput("\n");
-		expect(submissions).toEqual([
-			{ preset: "sglang", baseUrl: "http://127.0.0.1:30000/v1", apiKey: "sk-sglang-secret", force: false },
-		]);
 	});
 
 	it("emits the expected addApiCompatibleProvider input", () => {
@@ -404,15 +308,16 @@ describe("provider onboarding wizard", () => {
 		expect(ctx.statuses.join("\n")).toContain("Custom API-compatible provider setup:");
 	});
 
-	it("falls back to the provider menu when the first-launch local endpoint wizard is cancelled", async () => {
+	it("falls back to the provider menu when the first-launch connect screen is cancelled", async () => {
 		const ctx = createControllerContext({ refresh: async () => undefined } as unknown as ModelRegistry);
 		const controller = new SelectorController(ctx);
 
 		const settled = controller.showLocalEndpointOnboarding();
-		const wizard = ctx.ui.focused as CustomProviderWizardComponent;
-		expect(visibleText(wizard)).toContain("Connect a local LLM endpoint");
+		const connect = ctx.ui.focused as LocalEndpointConnectComponent;
+		expect(connect).toBeInstanceOf(LocalEndpointConnectComponent);
+		expect(visibleText(connect)).toContain("Connect a local LLM endpoint");
 
-		wizard.handleInput("\x1b");
+		connect.handleInput("\x1b");
 		const menu = ctx.ui.focused as ProviderOnboardingSelectorComponent;
 		expect(menu).toBeInstanceOf(ProviderOnboardingSelectorComponent);
 
@@ -421,7 +326,125 @@ describe("provider onboarding wizard", () => {
 		menu.handleInput("\x1b");
 		await settled;
 	});
+
+	it("opens the one-screen connect flow from the provider menu, not the old wizard", () => {
+		const ctx = createControllerContext({ refresh: async () => undefined } as unknown as ModelRegistry);
+		const controller = new SelectorController(ctx);
+
+		controller.showProviderOnboarding();
+		const menu = ctx.ui.focused as ProviderOnboardingSelectorComponent;
+		menu.handleInput("\n");
+
+		expect(ctx.ui.focused).toBeInstanceOf(LocalEndpointConnectComponent);
+	});
+
+	it("registers the endpoint and selects the only served model without a picker", async () => {
+		const model = { provider: "local", id: "only-model" };
+		const ctx = createModelSelectionContext(model);
+		const controller = new SelectorController(ctx);
+
+		const settled = controller.showLocalEndpointOnboarding();
+		const connect = ctx.ui.focused as LocalEndpointConnectComponent;
+		typeText(connect, "192.168.0.10:8000");
+		connect.handleInput("\n");
+		await settled;
+
+		expect(ctx.registrations).toEqual([{ baseUrl: "http://192.168.0.10:8000/v1" }]);
+		expect(ctx.setModelCalls).toEqual([{ model, role: "default", selector: "local/only-model" }]);
+		expect(ctx.modelRoles).toEqual({ default: "local/only-model" });
+		// A single model needs no screen, only a status line.
+		expect(ctx.statuses.join("\n")).toContain("Default model: local/only-model");
+	});
+
+	it("shows the model picker when the endpoint serves several models", async () => {
+		const model = { provider: "local", id: "gpt-oss-120b" };
+		const ctx = createModelSelectionContext(model, [
+			{ id: "qwen3-coder", contextLength: 262144 },
+			{ id: "gpt-oss-120b", contextLength: 128000 },
+		]);
+		const controller = new SelectorController(ctx);
+
+		const settled = controller.showLocalEndpointOnboarding();
+		const connect = ctx.ui.focused as LocalEndpointConnectComponent;
+		typeText(connect, "192.168.0.10:8000");
+		connect.handleInput("\n");
+		await flush();
+
+		const picker = ctx.ui.focused as LocalModelPickerComponent;
+		expect(picker).toBeInstanceOf(LocalModelPickerComponent);
+		expect(visibleText(picker)).toContain("qwen3-coder  262K context");
+		picker.handleInput("\x1b[B");
+		picker.handleInput("\n");
+		await settled;
+
+		expect(ctx.setModelCalls).toEqual([{ model, role: "default", selector: "local/gpt-oss-120b" }]);
+		expect(ctx.modelRoles).toEqual({ default: "local/gpt-oss-120b" });
+	});
 });
+
+type ModelSelectionContext = InteractiveModeContext & {
+	statuses: string[];
+	ui: { focused?: unknown; requestRender: () => void; setFocus: (component: unknown) => void };
+	modelRoles: Record<string, string>;
+	registrations: Array<{ baseUrl: string; apiKey?: string }>;
+	setModelCalls: Array<{ model: unknown; role: string; selector: string | undefined }>;
+};
+
+/**
+ * A controller context wired far enough to observe the whole connect flow:
+ * registration, the registry lookup, and how the picked model is persisted.
+ */
+function createModelSelectionContext(
+	model: { provider: string; id: string },
+	models: localEndpoint.LocalEndpointModel[] = [{ id: model.id }],
+): ModelSelectionContext {
+	const registrations: Array<{ baseUrl: string; apiKey?: string }> = [];
+	const setModelCalls: Array<{ model: unknown; role: string; selector: string | undefined }> = [];
+	const modelRoles: Record<string, string> = {};
+
+	probeStub = async () => ({ status: "ok", models });
+	registerStub = async input => {
+		registrations.push(input);
+		return {
+			providerId: model.provider,
+			compatibility: "openai",
+			api: "openai-completions",
+			baseUrl: input.baseUrl,
+			modelIds: models.map(entry => entry.id),
+			modelsPath: "/tmp/models.yml",
+			redactedApiKey: "none",
+			credentialSource: "literal",
+		} as unknown as ProviderSetupResult;
+	};
+
+	const registry = {
+		refresh: async () => undefined,
+		find: (provider: string, modelId: string) =>
+			provider === model.provider && modelId === model.id ? model : undefined,
+	} as unknown as ModelRegistry;
+
+	const ctx = createControllerContext(registry) as ModelSelectionContext;
+	ctx.registrations = registrations;
+	ctx.setModelCalls = setModelCalls;
+	ctx.modelRoles = modelRoles;
+	const mutable = ctx as unknown as Record<string, unknown>;
+	mutable.session = {
+		modelRegistry: registry,
+		setModel: async (selected: unknown, role: string, options?: { selector?: string }) => {
+			setModelCalls.push({ model: selected, role, selector: options?.selector });
+		},
+	};
+	mutable.settings = {
+		get: () => undefined,
+		setModelRole: (role: string, value: string) => {
+			modelRoles[role] = value;
+		},
+		getStorage: () => undefined,
+	};
+	mutable.statusLine = { invalidate: () => undefined };
+	mutable.updateEditorBorderColor = () => undefined;
+	return ctx;
+}
 
 function createControllerContext(
 	modelRegistry: Pick<ModelRegistry, "refresh">,

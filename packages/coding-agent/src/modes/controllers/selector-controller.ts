@@ -140,6 +140,12 @@ import {
 	writeOnboardingState,
 } from "../../setup/frictionless-onboarding";
 import {
+	discoverLoopbackEndpoints,
+	normalizeLocalEndpointInput,
+	probeLocalEndpoint,
+	registerLocalEndpoint,
+} from "../../setup/local-endpoint";
+import {
 	MODEL_ONBOARDING_API_PROVIDER_COMMAND,
 	MODEL_ONBOARDING_PROVIDER_PRESET_COMMAND,
 	MODEL_ONBOARDING_SETUP_COMMAND,
@@ -165,11 +171,7 @@ import {
 	CustomModelPresetWizardComponent,
 	type CustomModelPresetWizardSubmit,
 } from "../components/custom-model-preset-wizard";
-import {
-	CustomProviderWizardComponent,
-	type CustomProviderWizardOptions,
-	type CustomProviderWizardSubmit,
-} from "../components/custom-provider-wizard";
+import { CustomProviderWizardComponent, type CustomProviderWizardSubmit } from "../components/custom-provider-wizard";
 import { CustomizationDashboard } from "../components/customization";
 import { ExtensionDashboard } from "../components/extensions";
 import {
@@ -180,6 +182,8 @@ import {
 import { HistorySearchComponent } from "../components/history-search";
 import { HookSelectorComponent } from "../components/hook-selector";
 import { JobsOverlayComponent } from "../components/jobs-overlay";
+import { LocalEndpointConnectComponent, type LocalEndpointConnection } from "../components/local-endpoint-connect";
+import { type LocalModelChoice, LocalModelPickerComponent } from "../components/local-model-picker";
 import { ModelSelectorComponent } from "../components/model-selector";
 import type {
 	NotificationsEditorOperations,
@@ -1463,7 +1467,7 @@ export class SelectorController {
 			const selector = new ProviderOnboardingSelectorComponent(
 				(action: ProviderOnboardingAction) => {
 					done();
-					if (action === "local-endpoint") this.showCustomProviderWizard({ preset: "local" });
+					if (action === "local-endpoint") this.showLocalEndpointConnect();
 					else if (action === "codex-login") void this.showOAuthSelector("login", "openai-codex");
 					else if (action === "claude-login") void this.showOAuthSelector("login", "anthropic");
 					else if (action === "custom-provider-wizard") this.showCustomProviderWizard();
@@ -1483,22 +1487,151 @@ export class SelectorController {
 	}
 
 	/**
-	 * First-launch entry point: open the local LLM endpoint wizard directly.
-	 * Escaping the wizard falls through to the full provider onboarding menu so
-	 * the user can still reach the Codex and Claude logins. The promise resolves
-	 * once the onboarding surface is closed, so callers can chain the next
-	 * startup overlay without clobbering it.
+	 * First-launch entry point: open the one-screen local endpoint connect flow.
+	 * Escaping it falls through to the full provider onboarding menu so the user
+	 * can still reach the Codex and Claude logins. The promise resolves once the
+	 * onboarding surface is closed, so callers can chain the next startup overlay
+	 * without clobbering it.
 	 */
-	showLocalEndpointOnboarding(): Promise<void> {
+	/**
+	 * The local endpoint is the primary connection path, so the first run asks
+	 * for it even when Claude or Codex credentials were imported automatically.
+	 * `providerMenuOnCancel` opens the provider menu when the user escapes with
+	 * nothing usable configured; when a model is already available, escaping
+	 * simply continues into the session.
+	 */
+	showLocalEndpointOnboarding(options: { providerMenuOnCancel?: boolean } = {}): Promise<void> {
+		const providerMenuOnCancel = options.providerMenuOnCancel ?? true;
 		const { promise, resolve } = Promise.withResolvers<void>();
-		this.showCustomProviderWizard(
-			{ preset: "local" },
-			{
-				onSubmitted: () => resolve(),
-				onCancelled: () => this.showProviderOnboarding(() => resolve()),
+		this.showLocalEndpointConnect({
+			onSubmitted: () => resolve(),
+			onCancelled: () => {
+				if (providerMenuOnCancel) this.showProviderOnboarding(() => resolve());
+				else resolve();
 			},
-		);
+		});
 		return promise;
+	}
+
+	/**
+	 * The whole local endpoint setup: one screen for the address (with loopback
+	 * servers offered as rows once the background probe answers), then the model
+	 * picker. There is no API key step unless the server asks for one, and no
+	 * confirm step at all.
+	 */
+	showLocalEndpointConnect(lifecycle: CustomProviderWizardLifecycle = {}): void {
+		this.showSelector(done => {
+			let connect: LocalEndpointConnectComponent;
+			const submit = async (connection: LocalEndpointConnection): Promise<void> => {
+				try {
+					const result = await registerLocalEndpoint({
+						baseUrl: connection.baseUrl,
+						...(connection.apiKey ? { apiKey: connection.apiKey } : {}),
+					});
+					// The endpoint's models exist only in live discovery, so an offline
+					// refresh would leave the picked model unregistered.
+					await this.ctx.session.modelRegistry.refresh("online");
+					await this.ctx.notifyConfigChanged?.();
+					this.ctx.showStatus(formatProviderSetupResult(result));
+					connect.complete();
+					done();
+					this.ctx.ui.requestRender();
+					this.#pickLocalEndpointModel(result.providerId, connection, lifecycle);
+				} catch (err) {
+					const message = err instanceof Error ? err.message : String(err);
+					connect.setSubmitError(`Provider setup failed: ${message}`);
+				}
+			};
+			connect = new LocalEndpointConnectComponent(
+				{
+					normalize: normalizeLocalEndpointInput,
+					probe: (baseUrl, apiKey) => probeLocalEndpoint(baseUrl, apiKey),
+					discover: () => discoverLoopbackEndpoints(),
+				},
+				connection => submit(connection),
+				() => {
+					done();
+					this.ctx.ui.requestRender();
+					lifecycle.onCancelled?.();
+				},
+				() => this.ctx.ui.requestRender(),
+			);
+			return { component: connect, focus: connect };
+		});
+	}
+
+	/**
+	 * Choose which discovered model the session starts on. A server that serves
+	 * exactly one model needs no screen — it is selected with a status line.
+	 */
+	#pickLocalEndpointModel(
+		providerId: string,
+		connection: LocalEndpointConnection,
+		lifecycle: CustomProviderWizardLifecycle,
+	): void {
+		const models = connection.models;
+		const single = models.length === 1 ? models[0] : undefined;
+		if (models.length === 0) {
+			this.ctx.showStatus(`${providerId} is configured. Pick a model with /model.`);
+			lifecycle.onSubmitted?.();
+			return;
+		}
+		if (single) {
+			void this.#applyLocalEndpointModel(providerId, single).finally(() => lifecycle.onSubmitted?.());
+			return;
+		}
+		this.showSelector(done => {
+			const picker = new LocalModelPickerComponent(
+				models,
+				connection.baseUrl,
+				model => {
+					return this.#applyLocalEndpointModel(providerId, model).then(applied => {
+						if (!applied) return;
+						done();
+						this.ctx.ui.requestRender();
+						lifecycle.onSubmitted?.();
+					});
+				},
+				() => {
+					done();
+					this.ctx.ui.requestRender();
+					lifecycle.onSubmitted?.();
+				},
+				() => this.ctx.ui.requestRender(),
+			);
+			return { component: picker, focus: picker };
+		});
+	}
+
+	/**
+	 * Persist the picked model as the session default, exactly the way the
+	 * `/model` selector does: session state first, then the active model profile
+	 * (or the `modelRoles.default` setting when no profile is active).
+	 */
+	async #applyLocalEndpointModel(providerId: string, choice: LocalModelChoice): Promise<boolean> {
+		try {
+			const model = this.ctx.session.modelRegistry.find(providerId, choice.id);
+			if (!model) throw new Error(`Model ${providerId}/${choice.id} is not registered.`);
+			const selector = `${providerId}/${choice.id}`;
+			const value = formatModelSelectorValue(selector, undefined);
+			await this.ctx.session.setModel(model, "default", { selector, cause: "user-selection" });
+			const materialized = materializeActiveModelProfileAssignment({
+				session: this.ctx.session,
+				settings: this.ctx.settings,
+				role: "default",
+				selector: value,
+			});
+			if (!materialized) this.ctx.settings.setModelRole("default", value);
+			this.ctx.settings.getStorage()?.recordModelUsage(selector);
+			this.ctx.statusLine.invalidate();
+			this.ctx.updateEditorBorderColor();
+			await this.ctx.notifyConfigChanged?.();
+			this.ctx.showStatus(`Default model: ${selector}`);
+			return true;
+		} catch (error) {
+			this.ctx.showError(error instanceof Error ? error.message : String(error));
+			return false;
+		}
 	}
 
 	async showFrictionlessOnboarding(): Promise<void> {
@@ -1786,10 +1919,7 @@ export class SelectorController {
 		}
 	}
 
-	showCustomProviderWizard(
-		options: CustomProviderWizardOptions = {},
-		lifecycle: CustomProviderWizardLifecycle = {},
-	): void {
+	showCustomProviderWizard(lifecycle: CustomProviderWizardLifecycle = {}): void {
 		this.showSelector(done => {
 			let wizard: CustomProviderWizardComponent;
 			const submit = async (input: CustomProviderWizardSubmit): Promise<void> => {
@@ -1817,7 +1947,6 @@ export class SelectorController {
 					lifecycle.onCancelled?.();
 				},
 				() => this.ctx.ui.requestRender(),
-				options,
 			);
 			return { component: wizard, focus: wizard };
 		});

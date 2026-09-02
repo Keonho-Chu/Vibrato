@@ -208,17 +208,17 @@ providers:
 `vib setup provider --preset` is reduced to three self-hosted runtime presets: `local` (aliases `local-llm`, `local-endpoint`, `endpoint`), and the legacy `vllm` and `sglang` presets kept for backwards compatibility. All three are parameterized: `--base-url` is required, and the credential comes from `LOCAL_LLM_API_KEY` / `VLLM_API_KEY` / `SGLANG_API_KEY` (or a pasted value during interactive setup) rather than from a hardcoded env-var name per plan.
 
 ```sh
-vib setup provider --preset local --base-url http://127.0.0.1:8000/v1
-vib setup provider --preset vllm --base-url http://127.0.0.1:8000/v1
-vib setup provider --preset sglang --base-url http://127.0.0.1:30000/v1
+vib setup provider --preset local --base-url http://192.168.0.10:8000/v1   # e.g. a LAN GPU box
+vib setup provider --preset vllm --base-url http://192.168.0.10:8000/v1
+vib setup provider --preset sglang --base-url http://192.168.0.10:30000/v1
 ```
 
-The same presets are available inside the TUI, either through the automatic first-run local-endpoint onboarding step or any time via `/provider`:
+The same presets are available inside the TUI, either through the automatic first-run connect screen or any time via `/provider`:
 
 ```text
-/provider add --preset local --base-url http://127.0.0.1:8000/v1
-/provider add --preset vllm --base-url http://127.0.0.1:8000/v1
-/provider add --preset sglang --base-url http://127.0.0.1:30000/v1
+/provider add --preset local --base-url http://192.168.0.10:8000/v1
+/provider add --preset vllm --base-url http://192.168.0.10:8000/v1
+/provider add --preset sglang --base-url http://192.168.0.10:30000/v1
 ```
 
 All three presets write an OpenAI-compatible provider entry with live model discovery against the server's `/v1/models`, including `max_model_len`; see [Local LLM endpoint](#local-llm-endpoint), [Implicit vLLM discovery](#implicit-vllm-discovery), and [Implicit SGLang discovery](#implicit-sglang-discovery) below for the equivalent zero-config behavior when the server is already running on its default loopback address.
@@ -728,13 +728,21 @@ Runtime discovery fetches models (`GET /v1/models`) and synthesizes model entrie
 
 ### Local LLM endpoint
 
-`local` (aliases `local-llm`, `local-endpoint`, `endpoint`) is the primary self-hosted provider in the default [allowlist](#supported-providers): any OpenAI-compatible local LLM server — vLLM, SGLang, Ollama, LM Studio, llama.cpp, or anything else that speaks the same API. On first launch, if Vibrato has no usable model configured, it asks to connect a local LLM endpoint ("Connect a local LLM endpoint") before falling through to the rest of the provider menu (Esc skips it); the same entry is the first item in `/provider` at any time.
+`local` (aliases `local-llm`, `local-endpoint`, `endpoint`) is the primary self-hosted provider in the default [allowlist](#supported-providers): any OpenAI-compatible LLM server — vLLM, SGLang, Ollama, LM Studio, llama.cpp, or anything else that speaks the same API. The common case is a server on another machine, such as a GPU box on the LAN, not a server on the same machine as Vibrato. On first launch, if Vibrato has no usable model configured, it opens a single connect screen before falling through to the rest of the provider menu (Esc skips it); the same screen opens any time via `/provider`. Claude and OpenAI Codex sign-in (`/login`) are alternatives to a local endpoint, not the primary path.
 
-`vib setup provider --preset local --base-url <url>` writes an explicit `providers:` entry with discovery type `openai-models-list`, registered under provider id `local` in `models.yml`. The credential comes from `LOCAL_LLM_API_KEY` or a pasted value entered during setup; leaving the key empty in the interactive wizard stores a placeholder `local` token so unauthenticated servers still work. Models are discovered live from the server's `GET /v1/models` and registered under the `local` provider id — there is no separate implicit/loopback-default behavior the way there is for `vllm`/`sglang` below, since `--base-url` is always required for `local`.
+The connect screen is one address field, not a wizard: type the server's address — for example `192.168.0.10:8000` or `gpu-server.lan:8000` — and it fills in the scheme and `/v1` path for you. Plain `http://` works for private-network and `.local`/`.internal`/`.lan` addresses; a public host needs `https://`. There is no separate API-key screen: Vibrato probes the endpoint first and only reveals a key field inline, under the address, when the server answers 401 or 403. There is no confirmation step either; a bad address or a failed probe surfaces its error inline so you can edit and retry in place. As a minor convenience on the same screen, any OpenAI-compatible server already listening on a well-known loopback port on your own machine (see the implicit-discovery sections below) is found by a fast background probe and offered as a selectable row — it is never a separate step, and it does not change how you connect to a remote server. Once the connection succeeds, Vibrato lists the models the server reports so you can pick one immediately; if the server reports exactly one model, it is selected automatically.
+
+`vib setup provider --preset local --base-url <url>` is unchanged: it writes an explicit `providers:` entry with discovery type `openai-models-list`, registered under provider id `local` in `models.yml`.
+
+```sh
+vib setup provider --preset local --base-url http://192.168.0.10:8000/v1   # e.g. a LAN GPU box
+```
+
+The credential comes from `LOCAL_LLM_API_KEY` or a pasted value entered during setup; leaving the key empty in the interactive wizard stores a placeholder `local` token so unauthenticated servers still work. Models are discovered live from the server's `GET /v1/models` and registered under the `local` provider id — there is no separate implicit/loopback-default behavior the way there is for `vllm`/`sglang` below, since `--base-url` is always required for `local`.
 
 ### Implicit vLLM discovery
 
-vLLM is one of the self-hosted providers in the default [allowlist](#supported-providers); it is no longer a dedicated first entry in the automatic first-run onboarding menu (that role now belongs to the generic [local LLM endpoint](#local-llm-endpoint) above, which covers vLLM servers too), but the `vllm` preset and provider id remain available at any time in `/provider` for backwards compatibility. Both surfaces, and the `vllm` preset (`vib setup provider --preset vllm --base-url <url>`), are thin UI over the same implicit discovery described here — they ask for the server URL and an optional key, then call `/v1/models`.
+vLLM is one of the self-hosted providers in the default [allowlist](#supported-providers); it is no longer a dedicated first entry in the automatic first-run onboarding menu (that role now belongs to the generic [local LLM endpoint](#local-llm-endpoint) above, which covers vLLM servers too), but the `vllm` preset and provider id remain available at any time in `/provider` for backwards compatibility. Both surfaces, and the `vllm` preset (`vib setup provider --preset vllm --base-url <url>`), are thin UI over the same implicit discovery described here — they ask for the server URL and an optional key, then call `/v1/models`. A vLLM server already listening on its default loopback port is also one of the rows the connect screen's background probe can surface directly, with no separate step.
 
 If `vllm` is not explicitly configured, its bundled provider descriptor discovers the local server implicitly:
 
@@ -743,11 +751,11 @@ If `vllm` is not explicitly configured, its bundled provider descriptor discover
 - base URL: trusted `VLLM_BASE_URL` or `http://127.0.0.1:8000/v1` (a project `.env` cannot redirect authenticated traffic)
 - auth mode: keyless (`auth: none` behavior), `VLLM_API_KEY` attaches when present
 
-Runtime discovery fetches models (`GET /v1/models`) and synthesizes model entries with local defaults and `max_model_len` support. Credentialless implicit discovery is limited to loopback. For a remote vLLM server (for example, a LAN GPU box), set `VLLM_BASE_URL` and `VLLM_API_KEY` in the launching shell or a user-owned Vibrato environment file, or configure it explicitly under `providers` as shown below.
+Runtime discovery fetches models (`GET /v1/models`) and synthesizes model entries with local defaults and `max_model_len` support. Credentialless implicit discovery is limited to loopback. For a remote vLLM server (for example, a LAN GPU box), set `VLLM_BASE_URL` and `VLLM_API_KEY` in the launching shell or a user-owned Vibrato environment file, connect it directly by address on the connect screen, or configure it explicitly under `providers` as shown below.
 
 ### Implicit SGLang discovery
 
-SGLang is another self-hosted provider in the default [allowlist](#supported-providers); like vLLM, it is covered by the generic [local LLM endpoint](#local-llm-endpoint) onboarding entry, but the `sglang` preset and provider id remain available at any time in `/provider` for backwards compatibility. Both surfaces, and the `sglang` preset (`vib setup provider --preset sglang --base-url <url>`), are thin UI over the same implicit discovery described here — they ask for the server URL and an optional key, then call `/v1/models`.
+SGLang is another self-hosted provider in the default [allowlist](#supported-providers); like vLLM, it is covered by the generic [local LLM endpoint](#local-llm-endpoint) onboarding entry, but the `sglang` preset and provider id remain available at any time in `/provider` for backwards compatibility. Both surfaces, and the `sglang` preset (`vib setup provider --preset sglang --base-url <url>`), are thin UI over the same implicit discovery described here — they ask for the server URL and an optional key, then call `/v1/models`. An SGLang server already listening on its default loopback port is also one of the rows the connect screen's background probe can surface directly, with no separate step.
 
 If `sglang` is not explicitly configured, its bundled provider descriptor discovers the local server implicitly:
 
@@ -756,7 +764,7 @@ If `sglang` is not explicitly configured, its bundled provider descriptor discov
 - base URL: trusted `SGLANG_BASE_URL` or `http://127.0.0.1:30000/v1` (a project `.env` cannot redirect authenticated traffic)
 - auth mode: keyless (`auth: none` behavior), `SGLANG_API_KEY` attaches when present
 
-Runtime discovery fetches models (`GET /v1/models`) and synthesizes model entries with local defaults and `max_model_len` support. Credentialless implicit discovery is limited to loopback and needs no `/login`; `/login sglang` stores only an actual API key. For a remote SGLang server (for example, a LAN GPU box), set `SGLANG_BASE_URL` and `SGLANG_API_KEY` in the launching shell or a user-owned Vibrato environment file, or configure it explicitly under `providers` as shown below. Standard proxy environment variables remain explicit transport configuration, so include local SGLang hosts in `NO_PROXY` when local traffic must connect directly.
+Runtime discovery fetches models (`GET /v1/models`) and synthesizes model entries with local defaults and `max_model_len` support. Credentialless implicit discovery is limited to loopback and needs no `/login`; `/login sglang` stores only an actual API key. For a remote SGLang server (for example, a LAN GPU box), set `SGLANG_BASE_URL` and `SGLANG_API_KEY` in the launching shell or a user-owned Vibrato environment file, connect it directly by address on the connect screen, or configure it explicitly under `providers` as shown below. Standard proxy environment variables remain explicit transport configuration, so include local SGLang hosts in `NO_PROXY` when local traffic must connect directly.
 
 ### Explicit provider discovery
 

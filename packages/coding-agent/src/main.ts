@@ -758,20 +758,24 @@ export async function runInteractiveMode(
 			resumeAction,
 		})
 	) {
-		// Nothing usable yet (no credentials, no discovered endpoint): the local
-		// LLM endpoint is the primary connection path, so its wizard comes first —
-		// before the frictionless onboarding. Escaping it falls through to the
-		// provider menu, where the Codex and Claude logins live.
+		// The local LLM endpoint is the primary connection path, so it is asked
+		// for before the frictionless onboarding — on the very first run even when
+		// Claude or Codex credentials were imported automatically, and whenever
+		// nothing usable is configured at all. Escaping with nothing usable falls
+		// through to the provider menu, where the Codex and Claude logins live;
+		// escaping with a model already available just continues.
 		// Test harnesses stub the registry and mode, so probe both before calling.
+		const agentDir = session.getSessionAgentDir?.() ?? session.settings?.getAgentDir?.();
+		const onboardingState = agentDir ? await readOnboardingState(agentDir) : undefined;
+		const firstRun = onboardingState !== undefined && shouldOfferOnboarding(onboardingState);
 		const availableModels =
 			typeof session.modelRegistry?.getAvailable === "function" ? session.modelRegistry.getAvailable() : undefined;
-		if (availableModels?.length === 0 && typeof mode.showLocalEndpointOnboarding === "function") {
-			await mode.showLocalEndpointOnboarding();
+		const nothingUsable = availableModels?.length === 0;
+		if ((firstRun || nothingUsable) && typeof mode.showLocalEndpointOnboarding === "function") {
+			await mode.showLocalEndpointOnboarding({ providerMenuOnCancel: nothingUsable });
 		}
-		const agentDir = session.getSessionAgentDir?.() ?? session.settings?.getAgentDir?.();
-		if (agentDir) {
-			const onboardingState = await readOnboardingState(agentDir);
-			if (shouldOfferOnboarding(onboardingState)) await mode.showFrictionlessOnboarding();
+		if (onboardingState && shouldOfferOnboarding(onboardingState)) {
+			await mode.showFrictionlessOnboarding();
 		}
 	}
 	mode.renderInitialMessages(undefined, { preserveExistingChat: true });

@@ -55,25 +55,25 @@ vib update
 
 ## 初回起動
 
-任意の git チェックアウト内で `vib` を実行します。使用可能なモデルがない初回起動では、まずローカル LLM エンドポイントの接続を尋ねます。Esc を押すとプロバイダーメニュー全体に切り替わります。同じメニューは `/provider` でいつでも開けます。
+任意の git チェックアウト内で `vib` を実行します。使用可能なモデルがない初回起動では、単一の接続画面がそのまま開きます。Esc を押すとプロバイダーメニュー全体に切り替わります。同じ画面は `/provider` でいつでも開けます。
 
-- **ローカル LLM エンドポイント** (vLLM、SGLang、Ollama、LM Studio、llama.cpp など、OpenAI 互換サーバーであれば何でも): *Connect a local LLM endpoint* を選び、サーバー URL と任意の API キーを入力すると、サーバーからモデル一覧を取得します。認証なしのローカルサーバーならキーは空のままで構いません。
-- **Claude** または **OpenAI Codex** (サブスクリプション): `/login` で `anthropic`、`openai-codex` (ブラウザ)、`openai-codex-device` (ヘッドレス) のいずれかを選びます。
+- **ローカル LLM エンドポイント** (vLLM、SGLang、Ollama、LM Studio、llama.cpp など、OpenAI 互換サーバーであれば何でも): LLM サーバーは多くの場合、ネットワーク上の別マシン、たとえば LAN 上の GPU マシンです。そのアドレスを入力して接続するだけです。`192.168.0.10:8000` や `gpu-server.lan:8000` のような省略形で十分で、スキームと `/v1` パスは Vibrato が補います。プライベートネットワークのアドレスと `.local` / `.internal` / `.lan` アドレスは平文の `http://` で動作し、公開ホストには `https://` が必要です。API キーの入力は別ステップではありません。Vibrato がまずエンドポイントを probe し、サーバーが 401 か 403 を返したときだけキー入力欄を表示します。ちょっとした便利機能として、自分のマシン上でよく使われるループバックポート(Ollama、llama.cpp、LM Studio、oMLX、vLLM、SGLang)で既にサーバーが動いていれば、同じ画面に選択可能な行としても表示されます。接続後はサーバーが報告したモデルから選べ、見つかったモデルが1つだけなら自動的に選択されます。
+- **Claude** または **OpenAI Codex** (サブスクリプション。ローカルエンドポイントの代替): `/login` で `anthropic`、`openai-codex` (ブラウザ)、`openai-codex-device` (ヘッドレス) のいずれかを選びます。
 
 シェルから同じ設定を行うには:
 
 ```sh
-vib setup provider --preset local --base-url http://HOST:PORT/v1     # キーは LOCAL_LLM_API_KEY から (あれば)
+vib setup provider --preset local --base-url http://192.168.0.10:8000/v1   # 例: LAN 上の GPU マシン; キーは LOCAL_LLM_API_KEY から (あれば)
 ```
 
 `vllm` と `sglang` のプリセットは、すでにそれらを使用しているスクリプトや CI のために引き続き利用できます:
 
 ```sh
-vib setup provider --preset vllm --base-url http://HOST:8000/v1      # キーは VLLM_API_KEY から (あれば)
-vib setup provider --preset sglang --base-url http://HOST:30000/v1   # キーは SGLANG_API_KEY から (あれば)
+vib setup provider --preset vllm --base-url http://192.168.0.10:8000/v1    # キーは VLLM_API_KEY から (あれば)
+vib setup provider --preset sglang --base-url http://192.168.0.10:30000/v1 # キーは SGLANG_API_KEY から (あれば)
 ```
 
-localhost、プライベートネットワークのホスト、`.local` / `.internal` / `.lan` 名では平文の `http://` を許可します。公開ホストには `https://` が必要です。
+localhost、プライベートネットワークのホスト、素のホスト名、`.local` / `.internal` / `.lan` 名では平文の `http://` を許可します。公開ホストには `https://` が必要です。
 
 ## 使い方
 
@@ -94,7 +94,7 @@ vib --list-models                          # 使用可能なモデルを表示
 
 | コマンド | 内容 |
 | :--- | :--- |
-| `/provider` | ローカル LLM エンドポイントを接続 (または vLLM/SGLang/OpenAI Codex/Claude) |
+| `/provider` | 接続画面を開く (ローカル LLM エンドポイント。代替として OpenAI Codex/Claude) |
 | `/login` | Claude または OpenAI Codex にサインイン |
 | `/model` | 使用モデルを切り替え |
 | `/theme` | TUI テーマを切り替え |

@@ -54,7 +54,6 @@ import type { AssistantMessageComponent } from "./components/assistant-message";
 import type { BashExecutionComponent } from "./components/bash-execution";
 import type { CommandPaletteAction } from "./components/command-palette";
 import { CustomEditor } from "./components/custom-editor";
-import type { CustomProviderWizardOptions } from "./components/custom-provider-wizard";
 import type { EvalExecutionComponent } from "./components/eval-execution";
 import type { HookEditorComponent } from "./components/hook-editor";
 import type { HookInputComponent } from "./components/hook-input";
@@ -2440,11 +2439,11 @@ export class InteractiveMode implements InteractiveModeContext {
 	showProviderOnboarding(): void {
 		this.#selectorController.showProviderOnboarding();
 	}
-	showCustomProviderWizard(options: CustomProviderWizardOptions = {}): void {
-		this.#selectorController.showCustomProviderWizard(options);
+	showCustomProviderWizard(): void {
+		this.#selectorController.showCustomProviderWizard();
 	}
-	showLocalEndpointOnboarding(): Promise<void> {
-		return this.#selectorController.showLocalEndpointOnboarding();
+	showLocalEndpointOnboarding(options: { providerMenuOnCancel?: boolean } = {}): Promise<void> {
+		return this.#selectorController.showLocalEndpointOnboarding(options);
 	}
 	showFrictionlessOnboarding(): Promise<void> {
 		return this.#selectorController.showFrictionlessOnboarding();

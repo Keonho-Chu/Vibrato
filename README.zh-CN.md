@@ -55,25 +55,25 @@ vib update
 
 ## 首次运行
 
-在任意 git 检出目录中运行 `vib`。首次启动且没有可用模型时，Vibrato 会先询问是否连接本地 LLM 端点，按 Esc 可跳转到完整的提供商菜单。随时可用 `/provider` 打开同一菜单。
+在任意 git 检出目录中运行 `vib`。首次启动且没有可用模型时，Vibrato 会直接打开一个连接屏幕，按 Esc 可跳转到完整的提供商菜单。随时可用 `/provider` 打开同一屏幕。
 
-- **本地 LLM 端点** (vLLM、SGLang、Ollama、LM Studio、llama.cpp，或任何其他兼容 OpenAI 的服务器): 选择 *Connect a local LLM endpoint*，输入服务器 URL 和可选的 API 密钥，Vibrato 会从服务器发现模型。本地无鉴权服务器可将密钥留空。
-- **Claude** 或 **OpenAI Codex** (订阅计划): 运行 `/login`，选择 `anthropic`、`openai-codex` (浏览器) 或 `openai-codex-device` (无头模式)。
+- **本地 LLM 端点** (vLLM、SGLang、Ollama、LM Studio、llama.cpp，或任何其他兼容 OpenAI 的服务器): LLM 服务器通常是网络中的另一台机器，例如局域网里的 GPU 主机，输入它的地址并连接即可。`192.168.0.10:8000` 或 `gpu-server.lan:8000` 这样的简写就够了，Vibrato 会自动补上协议和 `/v1` 路径。私有网络地址以及 `.local` / `.internal` / `.lan` 地址可以直接用明文 `http://`；公网主机则需要 `https://`。不再需要单独的 API 密钥步骤：Vibrato 会先探测端点，只有当服务器返回 401 或 403 时才会显示密钥输入框。作为一个附带的便利功能，如果本机上已经有兼容服务器运行在常见回环端口(Ollama、llama.cpp、LM Studio、oMLX、vLLM、SGLang)，也会作为可选择的一行出现在同一屏幕上。连接后，从服务器报告的模型中选择；如果只发现一个模型，会自动选中它。
+- **Claude** 或 **OpenAI Codex** (订阅计划，作为本地端点的替代方案): 运行 `/login`，选择 `anthropic`、`openai-codex` (浏览器) 或 `openai-codex-device` (无头模式)。
 
 在 Shell 中完成同样的设置:
 
 ```sh
-vib setup provider --preset local --base-url http://HOST:PORT/v1     # 密钥来自 LOCAL_LLM_API_KEY (如有)
+vib setup provider --preset local --base-url http://192.168.0.10:8000/v1   # 例如局域网中的 GPU 主机；密钥来自 LOCAL_LLM_API_KEY (如有)
 ```
 
 `vllm` 和 `sglang` 预设仍然保留，供已经使用它们的脚本和 CI 继续使用:
 
 ```sh
-vib setup provider --preset vllm --base-url http://HOST:8000/v1      # 密钥来自 VLLM_API_KEY (如有)
-vib setup provider --preset sglang --base-url http://HOST:30000/v1   # 密钥来自 SGLANG_API_KEY (如有)
+vib setup provider --preset vllm --base-url http://192.168.0.10:8000/v1    # 密钥来自 VLLM_API_KEY (如有)
+vib setup provider --preset sglang --base-url http://192.168.0.10:30000/v1 # 密钥来自 SGLANG_API_KEY (如有)
 ```
 
-localhost、私有网络主机以及 `.local` / `.internal` / `.lan` 名称允许明文 `http://`；公网主机需要 `https://`。
+localhost、私有网络主机、裸主机名以及 `.local` / `.internal` / `.lan` 名称允许明文 `http://`；公网主机需要 `https://`。
 
 ## 使用
 
@@ -94,7 +94,7 @@ vib --list-models                          # 显示可用模型
 
 | 命令 | 作用 |
 | :--- | :--- |
-| `/provider` | 连接本地 LLM 端点 (或 vLLM/SGLang/OpenAI Codex/Claude) |
+| `/provider` | 打开连接屏幕 (本地 LLM 端点，OpenAI Codex/Claude 作为替代方案) |
 | `/login` | 登录 Claude 或 OpenAI Codex |
 | `/model` | 切换当前模型 |
 | `/theme` | 切换 TUI 主题 |

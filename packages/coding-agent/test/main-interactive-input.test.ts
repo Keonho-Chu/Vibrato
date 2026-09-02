@@ -308,7 +308,7 @@ describe("interactive startup input ordering", () => {
 		expect(events).toEqual(["init", "local-endpoint", "frictionless", "render"]);
 	});
 
-	it("skips the local LLM endpoint wizard when models are already available", async () => {
+	it("still asks for the local LLM endpoint on the first run when credentials were imported", async () => {
 		const events: string[] = [];
 		const stop = new Error("stop interactive input");
 		const session = {
@@ -321,8 +321,8 @@ describe("interactive startup input ordering", () => {
 				showNewVersionNotification: () => {},
 				renderInitialMessages: () => events.push("render"),
 				showError: () => {},
-				showLocalEndpointOnboarding: async () => {
-					events.push("local-endpoint");
+				showLocalEndpointOnboarding: async (options?: { providerMenuOnCancel?: boolean }) => {
+					events.push(`local-endpoint:menu=${options?.providerMenuOnCancel ?? true}`);
 				},
 				showFrictionlessOnboarding: async () => {
 					events.push("frictionless");
@@ -355,7 +355,10 @@ describe("interactive startup input ordering", () => {
 			),
 		).rejects.toBe(stop);
 
-		expect(events).toEqual(["init", "frictionless", "render"]);
+		// The local endpoint is the primary path, so the first run asks for it even
+		// though Claude/Codex credentials were imported. Escaping continues into the
+		// session instead of opening the provider menu, because a model is usable.
+		expect(events).toEqual(["init", "local-endpoint:menu=false", "frictionless", "render"]);
 	});
 
 	it("runs queued startup messages once after UI initialization instead of continuing the persisted tail", async () => {

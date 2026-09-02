@@ -55,25 +55,25 @@ vib update
 
 ## 첫 실행
 
-아무 git 체크아웃 안에서 `vib`를 실행하세요. 사용 가능한 모델이 없는 첫 실행에서는 먼저 로컬 LLM 엔드포인트 연결을 물어봅니다. Esc를 누르면 전체 프로바이더 메뉴로 넘어갑니다. 같은 메뉴는 언제든 `/provider`로 열 수 있습니다.
+아무 git 체크아웃 안에서 `vib`를 실행하세요. 사용 가능한 모델이 없는 첫 실행에서는 하나의 연결 화면이 바로 열립니다. Esc를 누르면 전체 프로바이더 메뉴로 넘어갑니다. 같은 화면은 언제든 `/provider`로 열 수 있습니다.
 
-- **로컬 LLM 엔드포인트** (vLLM, SGLang, Ollama, LM Studio, llama.cpp 등 OpenAI 호환 서버라면 무엇이든): *Connect a local LLM endpoint*를 고르고 서버 URL과 API 키(선택)를 입력하면 서버에서 모델 목록을 가져옵니다. 인증 없는 로컬 서버라면 키를 비워 두세요.
-- **Claude** 또는 **OpenAI Codex** (구독 플랜): `/login`에서 `anthropic`, `openai-codex`(브라우저), `openai-codex-device`(헤드리스) 중 하나를 고릅니다.
+- **로컬 LLM 엔드포인트** (vLLM, SGLang, Ollama, LM Studio, llama.cpp 등 OpenAI 호환 서버라면 무엇이든): LLM 서버는 보통 네트워크상의 다른 머신, 예를 들어 LAN의 GPU 박스입니다. 그 주소를 입력하고 연결하기만 하면 됩니다. `192.168.0.10:8000`이나 `gpu-server.lan:8000`처럼 축약해서 입력해도 되며, 스킴과 `/v1` 경로는 Vibrato가 채워 줍니다. 사설망 주소와 `.local` / `.internal` / `.lan` 주소는 평문 `http://`로 동작하고, 공개 호스트에는 `https://`가 필요합니다. 별도의 API 키 입력 단계는 없습니다. Vibrato가 먼저 엔드포인트를 탐색하고, 서버가 401이나 403을 응답할 때만 키 입력란을 보여줍니다. 부가적인 편의로, 내 컴퓨터에서 잘 알려진 루프백 포트(Ollama, llama.cpp, LM Studio, oMLX, vLLM, SGLang)로 이미 실행 중인 호환 서버가 있다면 같은 화면에 선택 가능한 항목으로도 표시됩니다. 연결되면 서버가 보고한 모델 중에서 고르면 되고, 발견된 모델이 하나뿐이면 자동으로 선택됩니다.
+- **Claude** 또는 **OpenAI Codex** (구독 플랜, 로컬 엔드포인트의 대안): `/login`에서 `anthropic`, `openai-codex`(브라우저), `openai-codex-device`(헤드리스) 중 하나를 고릅니다.
 
 셸에서 같은 설정을 하려면:
 
 ```sh
-vib setup provider --preset local --base-url http://HOST:PORT/v1     # 키는 LOCAL_LLM_API_KEY에서 읽음(있을 때)
+vib setup provider --preset local --base-url http://192.168.0.10:8000/v1   # 예: LAN의 GPU 박스; 키는 LOCAL_LLM_API_KEY에서 읽음(있을 때)
 ```
 
 `vllm`과 `sglang` 프리셋은 이미 이를 사용하는 스크립트나 CI를 위해 계속 제공됩니다:
 
 ```sh
-vib setup provider --preset vllm --base-url http://HOST:8000/v1      # 키는 VLLM_API_KEY에서 읽음(있을 때)
-vib setup provider --preset sglang --base-url http://HOST:30000/v1   # 키는 SGLANG_API_KEY에서 읽음(있을 때)
+vib setup provider --preset vllm --base-url http://192.168.0.10:8000/v1    # 키는 VLLM_API_KEY에서 읽음(있을 때)
+vib setup provider --preset sglang --base-url http://192.168.0.10:30000/v1 # 키는 SGLANG_API_KEY에서 읽음(있을 때)
 ```
 
-localhost, 사설망 호스트, `.local` / `.internal` / `.lan` 이름에는 평문 `http://`를 허용하고, 공개 호스트에는 `https://`가 필요합니다.
+localhost, 사설망 호스트, 단순 호스트 이름, `.local` / `.internal` / `.lan` 이름에는 평문 `http://`를 허용하고, 공개 호스트에는 `https://`가 필요합니다.
 
 ## 사용법
 
@@ -94,7 +94,7 @@ vib --list-models                          # 사용 가능한 모델 표시
 
 | 명령 | 역할 |
 | :--- | :--- |
-| `/provider` | 로컬 LLM 엔드포인트 연결(또는 vLLM/SGLang/OpenAI Codex/Claude) |
+| `/provider` | 연결 화면 열기(로컬 LLM 엔드포인트, 대안으로 OpenAI Codex/Claude) |
 | `/login` | Claude 또는 OpenAI Codex 로그인 |
 | `/model` | 활성 모델 전환 |
 | `/theme` | TUI 테마 전환 |

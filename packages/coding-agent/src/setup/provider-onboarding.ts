@@ -434,7 +434,14 @@ export async function addApiCompatibleProvider(input: ProviderSetupInput): Promi
 	};
 }
 
-function isLocalHttpHost(hostname: string): boolean {
+/**
+ * Whether plain `http:` is acceptable for this hostname.
+ *
+ * Exported so the one-screen local-endpoint connect flow
+ * (`./local-endpoint`) applies the same rule the CLI/wizard path applies,
+ * instead of carrying a second copy that can drift.
+ */
+export function isLocalHttpHost(hostname: string): boolean {
 	const normalized = hostname.toLowerCase().replace(/^\[(.*)]$/, "$1");
 	if (
 		normalized === "localhost" ||
