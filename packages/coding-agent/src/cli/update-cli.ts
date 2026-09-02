@@ -32,7 +32,7 @@ import {
 import { runNotifyCommand } from "./notify-cli";
 
 const PACKAGE = "@vib-rato/coding-agent";
-const NPM_WRAPPER_PACKAGE = "vib-rato";
+const NPM_WRAPPER_PACKAGE = "vibrato-cli";
 const NPM_MANAGED_PACKAGES = [NPM_WRAPPER_PACKAGE, PACKAGE] as const;
 
 export interface UpdateCommandOptions {

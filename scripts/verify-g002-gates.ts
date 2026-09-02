@@ -20,11 +20,11 @@ const ALLOWED_PRIVATE_PACKAGE_VERSIONS = new Map<string, string>([
 	["@vib-rato/orchestration-token-benchmark", "0.0.1"],
 	["@vib-rato/typescript-edit-benchmark", "0.0.1"],
 ]);
-const ALLOWED_UNSCOPED_PACKAGE_NAMES = new Set<string>(["vib-rato"]);
+const ALLOWED_UNSCOPED_PACKAGE_NAMES = new Set<string>(["vibrato-cli"]);
 const ALLOWED_PACKAGE_BINARIES = new Map<string, readonly string[]>([
 	["@vib-rato/ai", ["pi-ai"]],
 	["@vib-rato/coding-agent", ["vib"]],
-	["vib-rato", ["vib"]],
+	["vibrato-cli", ["vib"]],
 	["@vib-rato/stats", ["vib-stats"]],
 	["@vib-rato/typescript-edit-benchmark", ["typescript-edit-benchmark"]],
 ]);

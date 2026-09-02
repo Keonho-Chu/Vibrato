@@ -4,7 +4,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 
 const repoRoot = path.resolve(import.meta.dir, "..", "..", "..");
-const binWrapper = path.join(repoRoot, "packages", "vib-rato", "bin", "vib.js");
+const binWrapper = path.join(repoRoot, "packages", "vibrato-cli", "bin", "vib.js");
 
 let cleanupRoot: string | undefined;
 
@@ -25,7 +25,7 @@ async function readStream(stream: ReadableStream<Uint8Array>): Promise<string> {
 }
 
 async function copyWrapperIntoInstallRoot(root: string): Promise<string> {
-	const installedBinDir = path.join(root, "node_modules", "vib-rato", "bin");
+	const installedBinDir = path.join(root, "node_modules", "vibrato-cli", "bin");
 	await fs.mkdir(installedBinDir, { recursive: true });
 	const installedWrapper = path.join(installedBinDir, "vib.js");
 	await fs.copyFile(binWrapper, installedWrapper);

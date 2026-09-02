@@ -1,15 +1,15 @@
-# vib-rato
+# vibrato-cli
 
 One-line npm package for the Vibrato `vib` CLI.
 
 ```sh
-bun install -g vib-rato
+bun install -g vibrato-cli
 ```
 
 Nightly builds use the separate npm `nightly` dist-tag and never move `latest`:
 
 ```sh
-bun install -g vib-rato@nightly
+bun install -g vibrato-cli@nightly
 ```
 
 Once installed, `vib update --channel nightly` / `vib update --channel stable` switch channels in place; the **Update Channel** settings entry (`startup.updateChannel`) picks the default channel for `vib update` and the startup update check.

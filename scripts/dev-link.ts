@@ -265,7 +265,7 @@ function describe(real: string | null): string {
 	if (real === realpath(binarySource)) return "workspace compiled binary (dist/vib) — OK";
 	if (/[/\\]dist[/\\]/.test(real)) return `compiled binary: ${real}`;
 	if (real.includes("$bunfs")) return `compiled binary (bunfs): ${real}`;
-	if (real.includes(`${path.sep}node_modules${path.sep}vib-rato${path.sep}`)) return `published wrapper: ${real}`;
+	if (real.includes(`${path.sep}node_modules${path.sep}vibrato-cli${path.sep}`)) return `published wrapper: ${real}`;
 	return real;
 }
 

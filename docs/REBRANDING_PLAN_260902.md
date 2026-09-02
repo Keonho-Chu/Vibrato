@@ -17,7 +17,7 @@ Full rename with a clean break. Unlike the 2026-05-26 visual rebrand (`docs/REBR
 | Product name | Gajae-Code / GJC | Vibrato |
 | CLI command | `gjc`, `gjc-stats`, `가재씨` | `vib`, `vib-stats` (Korean alias removed) |
 | npm scope | `@gajae-code/*` | `@vib-rato/*` |
-| Unscoped npm alias package | `gajae-code` | `vib-rato` (`vibrato` and `vib` are taken on npm) |
+| Unscoped npm alias package | `gajae-code` | `vibrato-cli` (`vibrato` and `vib` are taken on npm; npm also rejected `vib-rato` on 2026-09-02 as too similar to `vibrato`, so the wrapper lives in `packages/vibrato-cli`) |
 | Config root | `~/.gjc`, project `.gjc` | `~/.vib`, project `.vib` |
 | Environment prefix | `GJC_*` | `VIB_*` |
 | Rust SDK crate | `gjc-sdk` | `vib-sdk` |

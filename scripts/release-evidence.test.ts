@@ -183,7 +183,7 @@ describe("release package evidence", () => {
 			const manifest = JSON.stringify({ name: definition.name, version: "1.2.3", [field]: { [dependencyName]: spec } });
 			expect(() => packageEvidenceFromTarball(definition, fixtureTarball(manifest))).toThrow("exact release version");
 		}
-		const wrapper = PUBLIC_PACKAGE_DEFINITIONS.find(candidate => candidate.name === "vib-rato")!;
+		const wrapper = PUBLIC_PACKAGE_DEFINITIONS.find(candidate => candidate.name === "vibrato-cli")!;
 		expect(() => packageEvidenceFromTarball(wrapper, fixtureTarball(JSON.stringify({
 			name: wrapper.name,
 			version: "1.2.3",

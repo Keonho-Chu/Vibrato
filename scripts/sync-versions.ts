@@ -21,7 +21,7 @@ interface PackageInfo {
 	data: PackageJson;
 }
 
-const VERSION_LOCKSTEP_EXEMPT_PACKAGES = new Set(["vib-rato"]);
+const VERSION_LOCKSTEP_EXEMPT_PACKAGES = new Set(["vibrato-cli"]);
 
 const packagesDir = join(process.cwd(), "packages");
 const packageDirs = readdirSync(packagesDir, { withFileTypes: true })

@@ -254,8 +254,8 @@ describe.skipIf(process.platform === "win32")("dev:link Windows Bun workspace sh
 		expect(isFixtureSource(path.join(root, "dist", "vib.exe"), path.join(root, "dist", "vib.exe"), root, "win32")).toBe(false);
 		expect(
 			isFixtureSource(
-				path.join(root, "node_modules", "vib-rato", "bin", "vib.js"),
-				path.join(root, "node_modules", "vib-rato", "bin", "vib.js"),
+				path.join(root, "node_modules", "vibrato-cli", "bin", "vib.js"),
+				path.join(root, "node_modules", "vibrato-cli", "bin", "vib.js"),
 				root,
 				"win32",
 			),

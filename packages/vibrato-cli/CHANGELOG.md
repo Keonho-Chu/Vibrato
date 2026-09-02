@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- **Breaking:** Package renamed from `vib-rato` to `vibrato-cli`; npm rejects `vib-rato` as too similar to the existing `vibrato` package. Install with `bun install -g vibrato-cli`.
+
 ## [0.16.0] - 2026-09-02
 
 - **Breaking:** Package renamed from `gajae-code` to `vib-rato`; it now exposes only the `vib` bin (the `가재씨` alias was removed) and depends on `@vib-rato/coding-agent`.

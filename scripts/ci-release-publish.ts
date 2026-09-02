@@ -212,7 +212,7 @@ export const packages: PublishPackage[] = [
 	},
 	{ dir: "packages/agent", kind: "typescript" },
 	{ dir: "packages/coding-agent", kind: "typescript" },
-	{ dir: "packages/vib-rato", kind: "manifest" },
+	{ dir: "packages/vibrato-cli", kind: "manifest" },
 ];
 const dependencyFieldNames = [
 	"dependencies",

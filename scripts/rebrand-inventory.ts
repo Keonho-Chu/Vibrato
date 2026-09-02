@@ -34,7 +34,7 @@ const expectedBundledRoleAgents = ["architect", "critic", "executor", "planner"]
 const expectedPackageScope = "@vib-rato/";
 const expectedCliBins = ["vib", "vib-stats"] as const;
 const expectedRootPackageName = "vib-rato";
-const allowedUnscopedPackageNames = new Set([expectedRootPackageName]);
+const allowedUnscopedPackageNames = new Set([expectedRootPackageName, "vibrato-cli"]);
 const rootPublicMetadataFields = ["name", "description", "homepage", "repository", "bugs"] as const;
 const rootLegacyScriptKeys = new Set(["test:py"]);
 

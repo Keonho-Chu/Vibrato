@@ -36,7 +36,7 @@ export const PUBLIC_PACKAGE_DEFINITIONS: readonly PublicPackageDefinition[] = [
 	{ dir: "packages/stats", name: "@vib-rato/stats" },
 	{ dir: "packages/tui", name: "@vib-rato/tui" },
 	{ dir: "packages/utils", name: "@vib-rato/utils" },
-	{ dir: "packages/vib-rato", name: "vib-rato" },
+	{ dir: "packages/vibrato-cli", name: "vibrato-cli" },
 ] as const;
 
 const dependencyFieldNames = ["dependencies", "devDependencies", "peerDependencies", "optionalDependencies"] as const;

@@ -856,7 +856,7 @@ export function planTasks(
 		add(tasks, "root-check", "Root TypeScript/tooling check", ["bun", "run", "ci:check:full"]);
 	}
 	if (wrapperChanged) {
-		add(tasks, "wrapper-version", "Unscoped wrapper CLI version smoke", ["bun", "packages/vib-rato/bin/vib.js", "--version"]);
+		add(tasks, "wrapper-version", "Unscoped wrapper CLI version smoke", ["bun", "packages/vibrato-cli/bin/vib.js", "--version"]);
 	}
 	if (publishChanged) {
 		addReleasePublishTasks(tasks);
@@ -962,7 +962,7 @@ export function planTargetedTasks(
 		if (isReleasePublishPath(changedPath)) {
 			addReleasePublishTasks(tasks);
 			if (isUnscopedWrapperPath(changedPath)) {
-				add(tasks, "wrapper-version", "Unscoped wrapper CLI version smoke", ["bun", "packages/vib-rato/bin/vib.js", "--version"]);
+				add(tasks, "wrapper-version", "Unscoped wrapper CLI version smoke", ["bun", "packages/vibrato-cli/bin/vib.js", "--version"]);
 			}
 		}
 		if (isSdkPackageSmokePath(changedPath)) {
@@ -1005,7 +1005,7 @@ export function planTargetedTasks(
 				add(tasks, "cli-smoke", "Vibrato CLI smoke test", ["bun", "run", "ci:test:smoke"]);
 			}
 			if (isUnscopedWrapperPath(changedPath)) {
-				add(tasks, "wrapper-version", "Unscoped wrapper CLI version smoke", ["bun", "packages/vib-rato/bin/vib.js", "--version"]);
+				add(tasks, "wrapper-version", "Unscoped wrapper CLI version smoke", ["bun", "packages/vibrato-cli/bin/vib.js", "--version"]);
 			}
 			continue;
 		}
@@ -1606,14 +1606,14 @@ function isReleasePublishPath(changedPath: string): boolean {
 	return (
 		changedPath === "scripts/ci-release-publish.ts" ||
 		changedPath === "scripts/release-evidence.ts" ||
-		changedPath.startsWith("packages/vib-rato/") ||
+		changedPath.startsWith("packages/vibrato-cli/") ||
 		changedPath.startsWith("packages/natives-") ||
 		changedPath === "packages/natives/package.json"
 	);
 }
 
 function isUnscopedWrapperPath(changedPath: string): boolean {
-	return changedPath.startsWith("packages/vib-rato/");
+	return changedPath.startsWith("packages/vibrato-cli/");
 }
 
 function isString(value: unknown): value is string {

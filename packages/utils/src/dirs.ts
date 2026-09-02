@@ -33,7 +33,7 @@ export const MIN_BUN_VERSION: string = engines.bun.replace(/[^0-9.]/g, "");
 /**
  * Build the diagnostic shown when the Bun runtime executing `vib` is older
  * than {@link MIN_BUN_VERSION}. This is the most common Windows native-install
- * failure (issue #525): `bun install -g vib-rato` probes a recent Bun while
+ * failure (issue #525): `bun install -g vibrato-cli` probes a recent Bun while
  * the `vib` launcher resolves an older Bun still on PATH. The message names the
  * exact detected runtime path and gives a platform-specific upgrade + PATH fix
  * instead of a bare `bun upgrade`.

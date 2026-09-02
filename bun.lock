@@ -209,8 +209,8 @@
         "@types/bun": "catalog:",
       },
     },
-    "packages/vib-rato": {
-      "name": "vib-rato",
+    "packages/vibrato-cli": {
+      "name": "vibrato-cli",
       "version": "0.16.0",
       "bin": {
         "vib": "bin/vib.js",
@@ -1112,7 +1112,7 @@
 
     "util-deprecate": ["util-deprecate@1.0.2", "", {}, "sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw=="],
 
-    "vib-rato": ["vib-rato@workspace:packages/vib-rato"],
+    "vibrato-cli": ["vibrato-cli@workspace:packages/vibrato-cli"],
 
     "webdriver-bidi-protocol": ["webdriver-bidi-protocol@0.4.1", "", {}, "sha512-ARrjNjtWRRs2w4Tk7nqrf2gBI0QXWuOmMCx2hU+1jUt6d00MjMxURrhxhGbrsoiZKJrhTSTzbIrc554iKI10qw=="],
 

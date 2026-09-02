@@ -126,14 +126,14 @@ describe("update-cli install target detection", () => {
 			"win32",
 			(packageName, packageRoot) => {
 				seenRoots.push({ packageName, packageRoot });
-				return packageName === "vib-rato";
+				return packageName === "vibrato-cli";
 			},
 		);
 
-		expect(target).toEqual({ manager: "npm", packageName: "vib-rato" });
+		expect(target).toEqual({ manager: "npm", packageName: "vibrato-cli" });
 		expect(seenRoots[0]).toEqual({
-			packageName: "vib-rato",
-			packageRoot: "C:\\Users\\alice\\AppData\\Roaming\\npm\\node_modules\\vib-rato",
+			packageName: "vibrato-cli",
+			packageRoot: "C:\\Users\\alice\\AppData\\Roaming\\npm\\node_modules\\vibrato-cli",
 		});
 	});
 
@@ -141,10 +141,10 @@ describe("update-cli install target detection", () => {
 		const target = resolveNpmManagedTargetForTest(
 			"C:\\Users\\alice\\AppData\\Roaming\\npm\\vib.ps1",
 			"win32",
-			packageName => packageName === "vib-rato",
+			packageName => packageName === "vibrato-cli",
 		);
 
-		expect(target).toEqual({ manager: "npm", packageName: "vib-rato" });
+		expect(target).toEqual({ manager: "npm", packageName: "vibrato-cli" });
 	});
 
 	it("does not classify missing Windows node_modules roots as npm-managed", () => {
@@ -933,7 +933,7 @@ describe("update-cli managed notification recovery", () => {
 			method === "binary"
 				? { method, path: "/verified/vib" }
 				: method === "npm"
-					? { method, packageName: "vib-rato" }
+					? { method, packageName: "vibrato-cli" }
 					: { method };
 		await runUpdateCommand(
 			{ force: false, check: false },

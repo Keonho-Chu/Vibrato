@@ -1551,7 +1551,7 @@ test("tab-worker graph changes always include install-methods and are Darwin rel
 	});
 
 	test("unscoped wrapper package changes keep wrapper-version smoke with release validation", () => {
-		const tasks = targeted(["packages/vib-rato/bin/vib.js"]);
+		const tasks = targeted(["packages/vibrato-cli/bin/vib.js"]);
 		const keys = tasks.map(task => task.key);
 		expect(keys).toContain("release-publish-contract");
 		expect(keys).toContain("release-publish-dry-run");

@@ -12,7 +12,7 @@
 
 <p align="center">
   <a href="https://github.com/Keonho-Chu/Vibrato"><img alt="Repository" src="https://img.shields.io/badge/github-Keonho--Chu%2FVibrato-002F6D?style=flat-square"></a>
-  <a href="https://www.npmjs.com/package/vib-rato"><img alt="npm package" src="https://img.shields.io/npm/v/vib-rato?style=flat-square"></a>
+  <a href="https://www.npmjs.com/package/vibrato-cli"><img alt="npm package" src="https://img.shields.io/npm/v/vibrato-cli?style=flat-square"></a>
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-green?style=flat-square"></a>
 </p>
 
@@ -21,7 +21,7 @@
 **With Bun** (Bun 1.4 or newer on PATH):
 
 ```sh
-bun install -g vib-rato
+bun install -g vibrato-cli
 vib --version
 ```
 

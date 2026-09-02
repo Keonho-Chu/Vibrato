@@ -69,13 +69,13 @@ function workflowJob(workflow: string, name: string): string {
 	return workflow.slice(start, nextJob === -1 ? workflow.length : start + marker.length + nextJob);
 }
 
-describe("unscoped vib-rato package publication", () => {
+describe("unscoped vibrato-cli package publication", () => {
 	test("manifest exposes vib and depends on the scoped CLI package", async () => {
-		const aliasManifest = await readManifest("packages/vib-rato");
+		const aliasManifest = await readManifest("packages/vibrato-cli");
 		const codingAgentManifest = await readManifest("packages/coding-agent");
 
 		expect(aliasManifest.private).toBeUndefined();
-		expect(aliasManifest.name).toBe("vib-rato");
+		expect(aliasManifest.name).toBe("vibrato-cli");
 		// The unscoped wrapper may carry a patch-only hotfix version when an
 		// immutable npm publish has to be superseded without republishing the
 		// scoped CLI. Its dependency remains catalog-backed so the release
@@ -87,7 +87,7 @@ describe("unscoped vib-rato package publication", () => {
 		);
 		expect(aliasManifest.bin).toEqual({ vib: "bin/vib.js" });
 		expect(aliasManifest.dependencies?.["@vib-rato/coding-agent"]).toBe("catalog:");
-		const wrapper = await Bun.file(path.join(repoRoot, "packages/vib-rato/bin/vib.js")).text();
+		const wrapper = await Bun.file(path.join(repoRoot, "packages/vibrato-cli/bin/vib.js")).text();
 		expect(wrapper).toContain('import { runCli } from "@vib-rato/coding-agent/cli";');
 		expect(wrapper).toContain("await runCli(process.argv.slice(2));");
 	});
@@ -104,7 +104,7 @@ describe("unscoped vib-rato package publication", () => {
 	test("release publish order publishes the alias after its scoped dependency", async () => {
 		const releaseScript = await Bun.file(path.join(repoRoot, "scripts/ci-release-publish.ts")).text();
 		const codingAgentIndex = releaseScript.indexOf('dir: "packages/coding-agent"');
-		const aliasIndex = releaseScript.indexOf('dir: "packages/vib-rato"');
+		const aliasIndex = releaseScript.indexOf('dir: "packages/vibrato-cli"');
 
 		expect(codingAgentIndex).toBeGreaterThan(-1);
 		expect(aliasIndex).toBeGreaterThan(codingAgentIndex);
@@ -130,22 +130,22 @@ describe("unscoped vib-rato package publication", () => {
 		}
 	});
 
-	test("plans the real vib-rato wrapper edge before the wrapper is published", () => {
+	test("plans the real vibrato-cli wrapper edge before the wrapper is published", () => {
 		const records = canonicalEvidenceRecords();
-		const wrapper = records.find(record => record.name === "vib-rato")!;
+		const wrapper = records.find(record => record.name === "vibrato-cli")!;
 		wrapper.internal_dependencies = { "@vib-rato/coding-agent": "1.2.3" };
 
 		const plannedNames = planExpectedEvidencePublication(records).map(record => record.name);
-		expect(plannedNames.indexOf("@vib-rato/coding-agent")).toBeLessThan(plannedNames.indexOf("vib-rato"));
+		expect(plannedNames.indexOf("@vib-rato/coding-agent")).toBeLessThan(plannedNames.indexOf("vibrato-cli"));
 	});
 
 	test("topologically moves an early declared package behind a late dependency", () => {
 		const records = canonicalEvidenceRecords();
 		const utils = records.find(record => record.name === "@vib-rato/utils")!;
-		utils.internal_dependencies = { "vib-rato": "1.2.3" };
+		utils.internal_dependencies = { "vibrato-cli": "1.2.3" };
 
 		const plannedNames = planExpectedEvidencePublication(records).map(record => record.name);
-		expect(plannedNames.indexOf("vib-rato")).toBeLessThan(plannedNames.indexOf("@vib-rato/utils"));
+		expect(plannedNames.indexOf("vibrato-cli")).toBeLessThan(plannedNames.indexOf("@vib-rato/utils"));
 	});
 
 	test("rejects a closed-set internal dependency cycle before registry publication begins", async () => {

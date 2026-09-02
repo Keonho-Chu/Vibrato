@@ -25,7 +25,7 @@ function rootPackage(version = "1.2.3"): string {
 			workspaces: {
 				catalog: {
 					"@vib-rato/coding-agent": version,
-					"vib-rato": version,
+					"vibrato-cli": version,
 				},
 			},
 		},
@@ -176,7 +176,7 @@ describe("public docs/site/version sync guard", () => {
 		const root = await createRepo({
 			"package.json": rootPackage(),
 			"packages/coding-agent/package.json": packageJson("@vib-rato/coding-agent"),
-			"packages/vib-rato/package.json": packageJson("vib-rato"),
+			"packages/vibrato-cli/package.json": packageJson("vibrato-cli"),
 			"README.md": "# Vibrato\n\n## Recent highlights\n",
 			"docs/sdk.md": "# SDK\n\nCurrent docs.\n",
 		});
@@ -198,16 +198,16 @@ describe("public docs/site/version sync guard", () => {
 		const root = await createRepo({
 			"package.json": rootPackage("1.2.3"),
 			"packages/coding-agent/package.json": packageJson("@vib-rato/coding-agent", "1.2.3"),
-			"packages/vib-rato/package.json": packageJson("vib-rato", "1.2.2", "https://example.invalid"),
+			"packages/vibrato-cli/package.json": packageJson("vibrato-cli", "1.2.2", "https://example.invalid"),
 			"README.md": "# Vibrato\n\n## New in 1.2.2\n",
 			"docs/sdk.md": "# SDK\n",
 			"packages/coding-agent/src/internal-urls/docs-index.generated.ts": "stale\n",
 		});
 
 		const violations = await checkPublicVersionSync(root);
-		expect(violations.some(violation => violation.path === "packages/vib-rato/package.json" && violation.message.includes("version 1.2.2"))).toBe(true);
-		expect(violations.some(violation => violation.path === "packages/vib-rato/package.json" && violation.message.includes("homepage"))).toBe(true);
-		expect(violations.some(violation => violation.path === "package.json" && violation.message.includes("catalog vib-rato"))).toBe(true);
+		expect(violations.some(violation => violation.path === "packages/vibrato-cli/package.json" && violation.message.includes("version 1.2.2"))).toBe(true);
+		expect(violations.some(violation => violation.path === "packages/vibrato-cli/package.json" && violation.message.includes("homepage"))).toBe(true);
+		expect(violations.some(violation => violation.path === "package.json" && violation.message.includes("catalog vibrato-cli"))).toBe(true);
 		expect(violations.some(violation => violation.path === "README.md" && violation.message.includes("Visible marketing version 1.2.2"))).toBe(true);
 		expect(violations.some(violation => violation.path.includes("docs-index.generated.ts") && violation.message.includes("stale"))).toBe(true);
 	});
@@ -218,7 +218,7 @@ describe("public docs/site/version sync guard", () => {
 		const root = await createRepo({
 			"package.json": rootPackage(),
 			"packages/coding-agent/package.json": packageJson("@vib-rato/coding-agent"),
-			"packages/vib-rato/package.json": packageJson("vib-rato"),
+			"packages/vibrato-cli/package.json": packageJson("vibrato-cli"),
 			"README.md": "# Vibrato\n",
 			"docs/sdk.md": "# SDK\n\nCurrent docs.\n",
 			".gitignore": "packages/coding-agent/src/internal-urls/docs-index.generated.ts\n",
@@ -247,7 +247,7 @@ describe("public docs/site/version sync guard", () => {
 		const root = await createRepo({
 			"package.json": rootPackage(),
 			"packages/coding-agent/package.json": packageJson("@vib-rato/coding-agent"),
-			"packages/vib-rato/package.json": packageJson("vib-rato"),
+			"packages/vibrato-cli/package.json": packageJson("vibrato-cli"),
 			"README.md": "# Vibrato\n",
 			"docs/sdk.md": "# SDK\n\nCurrent docs.\n",
 		});
@@ -276,7 +276,7 @@ describe("public docs/site/version sync guard", () => {
 		const root = await createRepo({
 			"package.json": rootPackage(),
 			"packages/coding-agent/package.json": packageJson("@vib-rato/coding-agent"),
-			"packages/vib-rato/package.json": packageJson("vib-rato"),
+			"packages/vibrato-cli/package.json": packageJson("vibrato-cli"),
 			"bun.lock": bunLock({ "coding-agent": "1.2.2" }, { "@vib-rato/coding-agent": "1.2.3" }),
 			"README.md": "# Vibrato\n",
 			"docs/sdk.md": "# SDK\n",
@@ -298,7 +298,7 @@ describe("public docs/site/version sync guard", () => {
 		const root = await createRepo({
 			"package.json": rootPackage(),
 			"packages/coding-agent/package.json": packageJson("@vib-rato/coding-agent"),
-			"packages/vib-rato/package.json": packageJson("vib-rato"),
+			"packages/vibrato-cli/package.json": packageJson("vibrato-cli"),
 			"bun.lock": bunLock({ "coding-agent": "1.2.3" }, { "@vib-rato/coding-agent": "1.2.2" }),
 			"README.md": "# Vibrato\n",
 			"docs/sdk.md": "# SDK\n",
@@ -320,7 +320,7 @@ describe("public docs/site/version sync guard", () => {
 		const root = await createRepo({
 			"package.json": rootPackage(),
 			"packages/coding-agent/package.json": packageJson("@vib-rato/coding-agent"),
-			"packages/vib-rato/package.json": packageJson("vib-rato"),
+			"packages/vibrato-cli/package.json": packageJson("vibrato-cli"),
 			"bun.lock": bunLock({ "coding-agent": "1.2.3" }, {}),
 			"README.md": "# Vibrato\n",
 			"docs/sdk.md": "# SDK\n",
