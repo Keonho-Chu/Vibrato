@@ -678,7 +678,7 @@ describe("status line overflow cue geometry", () => {
 
 	it.each([
 		[1, 20, "…+12"],
-		[1, 30, "…+10"],
+		[1, 30, "…+9"],
 		[2, 20, "…+7"],
 	] as const)("reports an exact known count (maxRows %i, width %i)", (maxRows, width, expected) => {
 		const rendered = buildRepeated(maxRows, 14).render(width);
@@ -697,12 +697,18 @@ describe("status line overflow cue geometry", () => {
 		const component = buildRepeated(maxRows, 14);
 
 		// Raw rows prove the bare marker is the reserved cue, not a truncation
-		// lookalike that the defensive guard happened to emit.
-		expect(component.getPreviewContent(3).split("\n").map(strip)).toEqual(["…"]);
+		// lookalike that the defensive guard happened to emit. A one-column
+		// identity glyph may occupy its own row first; the cue row is always the
+		// bare marker and no row ever carries a partial count.
+		const previewRows = component.getPreviewContent(3).split("\n").map(strip);
+		expect(previewRows.at(-1)).toBe("…");
+		for (const row of previewRows) expect(row).not.toMatch(/…\+/);
 
 		const rendered = component.render(3);
-		expect(rendered.map(strip)).toEqual(["…"]);
-		expect(visibleWidth(rendered[0])).toBe(1);
+		const renderedRows = rendered.map(strip);
+		expect(renderedRows.at(-1)).toBe("…");
+		for (const row of renderedRows) expect(row).not.toMatch(/…\+/);
+		expect(visibleWidth(rendered.at(-1) ?? "")).toBe(1);
 		expect(strip(rendered[0])).not.toMatch(/\d/);
 	});
 

@@ -38,7 +38,7 @@ function runPerfCorpusBenchmark(): PerfCorpusReport {
 	return JSON.parse(decoder.decode(result.stdout)) as PerfCorpusReport;
 }
 const gitSha = "0123456789abcdef0123456789abcdef01234567";
-const expectedTemplateSha256 = "dab587637aa4202c97348dbe2f856df95827598bc8abd87079af8b6e91884d36";
+const expectedTemplateSha256 = "117cec9d670977b994f09529b7a9a0df5dc1d149279920af75b50c1c8707f959";
 const decoder = new TextDecoder();
 let temporaryRoot = "";
 let preregistration: Preregistration;

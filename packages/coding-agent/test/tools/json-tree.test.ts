@@ -25,16 +25,16 @@ describe("renderJsonTreeLines", () => {
 
 	it("wraps long path-like string values as deterministic continuations", async () => {
 		const theme = await testTheme();
-		const target = "../../../vib-rato.vib-rato-worktrees/release-0-5-4-64d49adc/packages/coding-agent";
+		const target = "../../../vibrato-cc.vibrato-cc-worktrees/release-0-5-4-64d49adc/packages/coding-agent";
 
 		const tree = renderJsonTreeLines({ target }, theme, 2, 10, 32);
 		const lines = stripLines(tree.lines);
 
 		expect(tree.truncated).toBe(false);
 		expect(lines.length).toBeGreaterThan(1);
-		expect(lines[0]).toContain('target: "../../../vib-rato.vib-rato');
+		expect(lines[0]).toContain('target: "../../../vibrato-cc.vibrato-cc');
 		expect(lines[0]).not.toContain(
-			'"../../../vib-rato.vib-rato-worktrees/release-0-5-4-64d49adc/packages/coding-agent"',
+			'"../../../vibrato-cc.vibrato-cc-worktrees/release-0-5-4-64d49adc/packages/coding-agent"',
 		);
 		expect(lines.slice(1).every(line => line.includes("↳ "))).toBe(true);
 		expect(lines.at(-1)).toContain('"');
@@ -45,7 +45,7 @@ describe("renderJsonTreeLines", () => {
 	it("marks long string values truncated when continuation lines exhaust the line budget", async () => {
 		const theme = await testTheme();
 		const real =
-			"/Users/example/Documents/Workspace/vib-rato.vib-rato-worktrees/release-0-5-4-64d49adc/packages/coding-agent/src/tools/json-tree.ts";
+			"/Users/example/Documents/Workspace/vibrato-cc.vibrato-cc-worktrees/release-0-5-4-64d49adc/packages/coding-agent/src/tools/json-tree.ts";
 
 		const tree = renderJsonTreeLines({ real, isSymbolicLink: true }, theme, 2, 2, 36);
 		const lines = stripLines(tree.lines);
