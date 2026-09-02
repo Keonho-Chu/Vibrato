@@ -1484,12 +1484,9 @@ async function writeStateFileSync(
  * than faulting forever.
  */
 async function withStateFileLock<T>(stateFile: string, operation: () => Promise<T>): Promise<T> {
-	try {
-		return await withSessionStateFileLock(stateFile, operation);
-	} catch (error) {
-		if (error instanceof SessionStateLockUnavailableError) throw new PreviousRuntimeStateReadError(error);
-		throw error;
-	}
+	// Preserve the lock's typed path/reason diagnostics. A transition timeout means the
+	// state file was never entered, not that its existing JSON marker was unreadable.
+	return await withSessionStateFileLock(stateFile, operation);
 }
 
 function coordinatorTransactionLockFile(stateFile: string): string {
@@ -1502,17 +1499,13 @@ function coordinatorTransactionLockFile(stateFile: string): string {
  * protocol.
  */
 async function withCoordinatorTransactionLock<T>(stateFile: string, operation: () => Promise<T>): Promise<T> {
-	try {
-		return await withFileLock(coordinatorTransactionLockFile(stateFile), operation, {
-			staleMs: 30_000,
-			retries: 12_000,
-			retryDelayMs: 5,
-		});
-	} catch (error) {
-		if (error instanceof Error && error.message.startsWith("Failed to acquire lock"))
-			throw new PreviousRuntimeStateReadError();
-		throw error;
-	}
+	// Namespace-lock failures are contention or filesystem failures, not evidence that
+	// runtime-state.json is malformed. Let the original diagnostic reach the caller.
+	return await withFileLock(coordinatorTransactionLockFile(stateFile), operation, {
+		staleMs: 30_000,
+		retries: 12_000,
+		retryDelayMs: 5,
+	});
 }
 
 async function writeStateFile(stateFile: string, payload: Record<string, unknown>): Promise<void> {
