@@ -8,7 +8,7 @@ version = "0.15.6"
 edition = "2024"
 license = "MIT"
 authors = ["Yeachan-Heo"]
-homepage = "https://vib-rato.com/"
+homepage = "https://github.com/Keonho-Chu/Vibrato"
 repository = "https://github.com/Keonho-Chu/Vibrato"
 
 [patch.crates-io]

@@ -75,7 +75,7 @@ interface ExpectedDeployedRelease {
 	commitSha: string;
 }
 
-const PUBLIC_HOMEPAGE = "https://vib-rato.com";
+const PUBLIC_HOMEPAGE = "https://github.com/Keonho-Chu/Vibrato";
 const PUBLIC_RELEASE_STATE = `${PUBLIC_HOMEPAGE}/release-sync.json`;
 const SOURCE_REPOSITORY = "Keonho-Chu/Vibrato";
 const SOURCE_LATEST_RELEASE_API = `https://api.github.com/repos/${SOURCE_REPOSITORY}/releases/latest`;

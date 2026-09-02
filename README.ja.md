@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <a href="https://vib-rato.com"><img alt="Website" src="https://img.shields.io/badge/website-vibrato--code.com-ff4d4f?style=flat-square"></a>
+  <a href="https://github.com/Keonho-Chu/Vibrato"><img alt="Repository" src="https://img.shields.io/badge/github-Keonho--Chu%2FVibrato-002F6D?style=flat-square"></a>
   <a href="https://www.npmjs.com/package/vib-rato"><img alt="npm package" src="https://img.shields.io/npm/v/vib-rato?style=flat-square"></a>
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-green?style=flat-square"></a>
   <a href="https://discord.gg/wSyUQYfhAw"><img alt="Discord" src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white"></a>
@@ -345,7 +345,7 @@ Orca は 1 フィールドだけです。Vibrato をインストールして（[
 
 ## ドキュメント
 
-**[vib-rato.com](https://vib-rato.com)** または `docs/` から:
+[docs/](docs/) または `docs/` から:
 
 - [インストールと更新](docs/install.md) · [環境変数](docs/environment-variables.md) · [キーバインド](docs/keybindings.md) · [テーマ](docs/theme.md) · [UI 言語](docs/ui-language.md)
 - [モデルとプロバイダ](docs/models.md) · [カスタムプロバイダとマルチアカウントルーティング](docs/custom-providers-and-multi-account.md) · [マルチベンダープロファイル](docs/multi-vendor-profiles.md) · [Auth ブローカー](docs/auth-broker-gateway.md)

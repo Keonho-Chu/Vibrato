@@ -22,7 +22,7 @@
 </p>
 
 <p align="center">
-  <a href="https://vib-rato.com"><img alt="Website" src="https://img.shields.io/badge/website-vibrato--code.com-ff4d4f?style=flat-square"></a>
+  <a href="https://github.com/Keonho-Chu/Vibrato"><img alt="Repository" src="https://img.shields.io/badge/github-Keonho--Chu%2FVibrato-002F6D?style=flat-square"></a>
   <a href="https://www.npmjs.com/package/vib-rato"><img alt="npm package" src="https://img.shields.io/npm/v/vib-rato?style=flat-square"></a>
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-green?style=flat-square"></a>
   <a href="https://discord.gg/wSyUQYfhAw"><img alt="Discord" src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white"></a>
@@ -358,7 +358,7 @@ Orca는 필드 하나다: Vibrato를 설치([docs/install.md](docs/install.md))�
 
 ## 문서
 
-**[vib-rato.com](https://vib-rato.com)** 또는 `docs/`에서 시작하세요:
+[docs/](docs/) 또는 `docs/`에서 시작하세요:
 
 - [설치 & 업데이트](docs/install.md) · [환경 변수](docs/environment-variables.md) · [키바인딩](docs/keybindings.md) · [테마](docs/theme.md) · [UI 언어](docs/ui-language.md)
 - [모델 & 프로바이더](docs/models.md) · [커스텀 프로바이더 & 멀티 계정 라우팅](docs/custom-providers-and-multi-account.md) · [멀티 벤더 프로필](docs/multi-vendor-profiles.md) · [Auth 브로커](docs/auth-broker-gateway.md)

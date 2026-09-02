@@ -22,7 +22,7 @@
 </p>
 
 <p align="center">
-  <a href="https://vib-rato.com"><img alt="Website" src="https://img.shields.io/badge/website-vibrato--code.com-ff4d4f?style=flat-square"></a>
+  <a href="https://github.com/Keonho-Chu/Vibrato"><img alt="Repository" src="https://img.shields.io/badge/github-Keonho--Chu%2FVibrato-002F6D?style=flat-square"></a>
   <a href="https://www.npmjs.com/package/vib-rato"><img alt="npm package" src="https://img.shields.io/npm/v/vib-rato?style=flat-square"></a>
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-green?style=flat-square"></a>
   <a href="https://discord.gg/wSyUQYfhAw"><img alt="Discord" src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white"></a>
@@ -357,7 +357,7 @@ per-host setup, verification, cancel semantics, troubleshooting tables, and what
 
 ## Documentation
 
-Start at **[vib-rato.com](https://vib-rato.com)** or `docs/`:
+Start at `docs/`:
 
 - [Install & updates](docs/install.md) · [Environment variables](docs/environment-variables.md) · [Keybindings](docs/keybindings.md) · [Themes](docs/theme.md) · [UI language](docs/ui-language.md)
 - [Models & providers](docs/models.md) · [Custom providers & multi-account routing](docs/custom-providers-and-multi-account.md) · [Multi-vendor profiles](docs/multi-vendor-profiles.md) · [Auth broker](docs/auth-broker-gateway.md)

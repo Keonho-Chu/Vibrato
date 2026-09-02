@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <a href="https://vib-rato.com"><img alt="Website" src="https://img.shields.io/badge/website-vibrato--code.com-ff4d4f?style=flat-square"></a>
+  <a href="https://github.com/Keonho-Chu/Vibrato"><img alt="Repository" src="https://img.shields.io/badge/github-Keonho--Chu%2FVibrato-002F6D?style=flat-square"></a>
   <a href="https://www.npmjs.com/package/vib-rato"><img alt="npm package" src="https://img.shields.io/npm/v/vib-rato?style=flat-square"></a>
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-green?style=flat-square"></a>
   <a href="https://discord.gg/wSyUQYfhAw"><img alt="Discord" src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white"></a>
@@ -241,7 +241,7 @@ The session command selector accepts only "vib" or "vib --worktree [name]".
 
 ## 文档
 
-从 **[vib-rato.com](https://vib-rato.com)** 或 `docs/` 开始：
+从 [docs/](docs/) 或 `docs/` 开始：
 
 - [安装与更新](docs/install.md) · [环境变量](docs/environment-variables.md) · [快捷键](docs/keybindings.md) · [主题](docs/theme.md)
 - [模型与提供商](docs/models.md) · [自定义提供商与多账户路由](docs/custom-providers-and-multi-account.md) · [多厂商配置](docs/multi-vendor-profiles.md) · [Auth broker](docs/auth-broker-gateway.md)

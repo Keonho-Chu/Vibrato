@@ -34,7 +34,7 @@ function rootPackage(version = "1.2.3"): string {
 	);
 }
 
-function packageJson(name: string, version = "1.2.3", homepage = "https://vib-rato.com"): string {
+function packageJson(name: string, version = "1.2.3", homepage = "https://github.com/Keonho-Chu/Vibrato"): string {
 	return JSON.stringify({ name, version, homepage }, null, "\t");
 }
 
@@ -52,7 +52,7 @@ const RELEASE_LIST_API = "https://api.github.com/repos/Keonho-Chu/Vibrato/releas
 const RELEASE_LIST_PAGE_TWO_API = "https://api.github.com/repos/Keonho-Chu/Vibrato/releases?per_page=100&page=2";
 const TAG_API = `${GIT_API}/ref/tags/v1.2.3`;
 
-const RELEASE_STATE_URL = "https://vib-rato.com/release-sync.json";
+const RELEASE_STATE_URL = "https://github.com/Keonho-Chu/Vibrato/release-sync.json";
 const RELEASE_URL = "https://github.com/Keonho-Chu/Vibrato/releases/tag/v1.2.3";
 const EXPECTED_ASSET_URL = "https://assets.example/vibrato-release-packages-expected-v1.json";
 const FINAL_ASSET_URL = "https://assets.example/vibrato-release-packages-v1.json";
