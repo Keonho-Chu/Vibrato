@@ -179,6 +179,16 @@ async function runRuntimePhase(root: FixtureRootCleanup, phase: RuntimePhase): P
 	if (failures.length) throw new AggregateError(failures, `Fixture broker ${phase} failed.`);
 }
 
+/** Names the entries that reappeared under a removed fixture root, bounded so the error stays readable. */
+async function listRecreatedEntries(root: string, limit = 24): Promise<string[]> {
+	try {
+		const entries = await fs.readdir(root, { recursive: true });
+		return entries.slice(0, limit).map(entry => String(entry));
+	} catch {
+		return [];
+	}
+}
+
 async function cleanupFixtureRootOnce(
 	root: FixtureRootCleanup,
 	options: FixtureRootCleanupOptions = {},
@@ -236,10 +246,14 @@ async function cleanupFixtureRootOnce(
 		let observing = true;
 		while (observing) {
 			if (await rootExists(root.root)) {
-				root.recreation = { observedAt: new Date().toISOString(), detail: "fixture root reappeared" };
+				const recreated = await listRecreatedEntries(root.root);
+				root.recreation = {
+					observedAt: new Date().toISOString(),
+					detail: `fixture root reappeared: ${recreated.join(", ") || "<empty>"}`,
+				};
 				root.phases.rootRemove = "pending";
 				root.phases.rootAbsent = "pending";
-				throw new Error("Fixture broker root was recreated after removal.");
+				throw new Error(`Fixture broker root was recreated after removal: ${recreated.join(", ") || "<empty>"}`);
 			}
 			observing = Date.now() < deadline;
 			if (observing) await Bun.sleep(Math.min(pollMs, Math.max(0, deadline - Date.now())));
