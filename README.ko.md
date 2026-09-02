@@ -115,6 +115,9 @@ vib update                  # 최신 릴리즈로 업데이트
 - [커스텀 프로바이더와 다중 계정 라우팅](docs/custom-providers-and-multi-account.md)
 - [스킬](docs/skills.md)
 - [디자인 시스템](docs/design-system.md)
+- [외부 컨트롤러 / 봇 연동](docs/bot-integration.md): Telegram, Discord, Slack 또는 자체 봇으로 Vibrato 제어
+- [외부 제어 준비도](docs/external-control-readiness.md)
+- [Aside 검색/컨텍스트 사이드카](docs/aside-integration.md)
 - [코드베이스 개요](docs/codebase-overview.md) 및 [docs/](docs/)의 나머지 문서
 
 ## 라이선스

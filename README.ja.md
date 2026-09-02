@@ -115,6 +115,9 @@ vib update                  # 最新リリースに更新
 - [カスタムプロバイダーと複数アカウントのルーティング](docs/custom-providers-and-multi-account.md)
 - [スキル](docs/skills.md)
 - [デザインシステム](docs/design-system.md)
+- [外部コントローラー / ボット連携](docs/bot-integration.md): Telegram、Discord、Slack、または自作ボットから Vibrato を操作
+- [外部制御の準備状況](docs/external-control-readiness.md)
+- [Aside 検索/コンテキストサイドカー](docs/aside-integration.md)
 - [コードベース概要](docs/codebase-overview.md) と [docs/](docs/) のその他の文書
 
 ## ライセンス

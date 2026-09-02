@@ -114,6 +114,9 @@ The default dark TUI identity is the lig-blue theme, which applies the LIG Syste
 - [Custom providers and multi-account routing](docs/custom-providers-and-multi-account.md)
 - [Skills](docs/skills.md)
 - [Design system](docs/design-system.md)
+- [External controller / bot integration](docs/bot-integration.md): drive Vibrato from Telegram, Discord, Slack, or your own bot, with provider-independent smokes
+- [External control readiness](docs/external-control-readiness.md)
+- [Aside search/context sidecar](docs/aside-integration.md)
 - [Codebase overview](docs/codebase-overview.md) and the rest of [docs/](docs/)
 
 ## License

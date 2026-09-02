@@ -115,6 +115,9 @@ vib update                  # 更新到最新版本
 - [自定义提供商与多账户路由](docs/custom-providers-and-multi-account.md)
 - [技能](docs/skills.md)
 - [设计系统](docs/design-system.md)
+- [外部控制器 / 机器人集成](docs/bot-integration.md): 通过 Telegram、Discord、Slack 或自建机器人驱动 Vibrato
+- [外部控制就绪度](docs/external-control-readiness.md)
+- [Aside 搜索/上下文边车](docs/aside-integration.md)
 - [代码库概览](docs/codebase-overview.md) 以及 [docs/](docs/) 中的其他文档
 
 ## 许可证
