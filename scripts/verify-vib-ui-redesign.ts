@@ -35,7 +35,6 @@ async function verifyThemeDefaults(): Promise<GateResult> {
 	const themeRuntime = await readText("packages/coding-agent/src/modes/theme/theme.ts");
 	const ligBlue = await readJson("packages/coding-agent/src/modes/theme/defaults/lig-blue.json");
 	const ligWhite = await readJson("packages/coding-agent/src/modes/theme/defaults/lig-white.json");
-	const ouroboros = await readJson("packages/coding-agent/src/modes/theme/defaults/ouroboros.json");
 	const defaultIndex = await readText("packages/coding-agent/src/modes/theme/defaults/index.ts");
 	const colors = isRecord(ligBlue.colors) ? ligBlue.colors : {};
 	const vars = isRecord(ligBlue.vars) ? ligBlue.vars : {};
@@ -53,22 +52,22 @@ async function verifyThemeDefaults(): Promise<GateResult> {
 		.filter(([left, right]) => resolveColor(colors[left], vars) === resolveColor(colors[right], vars))
 		.map(([left, right]) => `${left} matches ${right}`);
 
-	const expectedBuiltIns = ["blue-crab", "claude-code", "codex", "gruvbox-dark", "lig-blue", "lig-white", "opencode", "ouroboros", "red-claw"];
+	// The pre-rebrand red-claw, blue-crab, and ouroboros skins were removed; this
+	// gate is what keeps them from drifting back in.
+	const expectedBuiltIns = ["claude-code", "codex", "gruvbox-dark", "lig-blue", "lig-white", "opencode"];
+	const removedBuiltIns = ["blue-crab", "red-claw", "ouroboros"];
 	const retainedBuiltIns =
 		[...defaultIndex.matchAll(/^import /gm)].length === expectedBuiltIns.length &&
 		[...defaultIndex.matchAll(/^\t/gm)].length === expectedBuiltIns.length &&
-		defaultIndex.includes('"blue-crab": blue_crab') &&
 		defaultIndex.includes('"claude-code": claude_code') &&
 		defaultIndex.includes("\tcodex,") &&
 		defaultIndex.includes('"gruvbox-dark": gruvbox_dark') &&
 		defaultIndex.includes('"lig-blue": lig_blue') &&
 		defaultIndex.includes('"lig-white": lig_white') &&
 		defaultIndex.includes("\topencode,") &&
-		defaultIndex.includes("\touroboros,") &&
-		defaultIndex.includes('"red-claw": red_claw') &&
+		removedBuiltIns.every(name => !defaultIndex.includes(name)) &&
 		!defaultIndex.includes("dark_") &&
-		!defaultIndex.includes("light_") &&
-		isRecord(ouroboros.colors);
+		!defaultIndex.includes("light_");
 	const ligPalette =
 		vars.brandBlue === "#002F6D" &&
 		vars.brandGray === "#BCBEC0" &&
