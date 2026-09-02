@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.17.0] - 2026-09-02
+
 - **Breaking:** The pre-rebrand `red-claw`, `blue-crab`, and `ouroboros` themes are removed. `lig-blue` and `lig-white` remain the defaults, alongside the `claude-code`, `codex`, `opencode`, and `gruvbox-dark` migration themes. A config pinned to one of the removed names falls back to `lig-blue`, which was already the hardcoded fallback despite comments that still named `red-claw`.
 - Status-line usage segments name themselves in words instead of glyphs: `in 5.1K`, `out 149`, `70.1 tok/s`, `cache read 8.2K`, `cache write 1.2K`. An arrow left the reader guessing which direction was the prompt and which the reply, and a disk glyph said nothing about read versus write.
 

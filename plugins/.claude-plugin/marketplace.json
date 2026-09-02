@@ -5,14 +5,14 @@
   },
   "metadata": {
     "description": "Vibrato delegation plugin with advisory SDK skills",
-    "version": "0.16.1"
+    "version": "0.17.0"
   },
   "plugins": [
     {
       "name": "vib-rato",
       "source": "./vib-rato",
       "description": "Delegate Vibrato planning/execution workflows via coordinator MCP, plus advisory SDK session CLI and guide skills.",
-      "version": "0.16.1",
+      "version": "0.17.0",
       "author": {
         "name": "Vibrato"
       },

@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.17.0] - 2026-09-02
+
 ## [0.16.1] - 2026-09-02
 
 - **Breaking:** Package renamed from `vib-rato` to `vibrato-cli`; npm rejects `vib-rato` as too similar to the existing `vibrato` package. Install with `bun install -g vibrato-cli`.
