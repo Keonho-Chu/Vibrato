@@ -360,7 +360,6 @@
     "resolveResumableSession",
     "resolveSessionContextBudgetBytes",
     "resolveSkillSlashCommands",
-    "resolveWelcomeIntroTickMs",
     "restore",
     "restoreThemePreview",
     "router",

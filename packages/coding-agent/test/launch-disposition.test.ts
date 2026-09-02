@@ -145,7 +145,8 @@ describe("non-TTY CLI startup", () => {
 			});
 
 			expect(result.exitCode).not.toBe(0);
-			expect(result.stderr).toContain("No models available");
+			expect(result.stderr).toContain("사용 가능한 모델이 없습니다");
+			expect(result.stderr).toContain("vib setup provider --preset local --base-url http://HOST:PORT/v1");
 		} finally {
 			await fs.rm(root, { recursive: true, force: true });
 		}

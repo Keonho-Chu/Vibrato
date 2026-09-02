@@ -43,7 +43,7 @@ import type { NotificationSessionReconcileResult, NotificationSessionStatus } fr
 import type { AgentSession, AgentSessionEvent } from "../session/agent-session";
 import type { HistoryStorage } from "../session/history-storage";
 import type { SessionContext, SessionManager } from "../session/session-manager";
-import { getRecentSessions, getSessionMessageEntryId } from "../session/session-manager";
+import { getSessionMessageEntryId } from "../session/session-manager";
 import type { LspStartupServerInfo } from "../tools";
 import { formatPhaseDisplayName } from "../tools/todo-write";
 import { copyToClipboard } from "../utils/clipboard";
@@ -78,12 +78,7 @@ import type { ToolExecutionHandle } from "./components/tool-execution";
 import { StatusLineComponent } from "./components/tool-status-header";
 import { composeToolText } from "./components/tool-transcript-format";
 import { type PetMode, VibratoPetWidget } from "./components/vibrato-pet-widget";
-import {
-	type RecentSession,
-	WelcomeComponent,
-	type WelcomeLogoMode,
-	type LspServerInfo as WelcomeLspServerInfo,
-} from "./components/welcome";
+import { WelcomeComponent, type LspServerInfo as WelcomeLspServerInfo } from "./components/welcome";
 import { BtwController } from "./controllers/btw-controller";
 import { CommandController } from "./controllers/command-controller";
 import { EventController } from "./controllers/event-controller";
@@ -306,21 +301,6 @@ function formatHudNoteMarker(count: number): string {
 	return theme.fg("dim", chalk.italic(` \u207a${sub}`));
 }
 
-export type WelcomeBannerSettingMode = "auto" | "unicode" | "square" | "ascii";
-
-export function resolveWelcomeLogoMode(
-	mode: WelcomeBannerSettingMode,
-	env: Record<string, string | undefined> = Bun.env,
-	platform: NodeJS.Platform = process.platform,
-): WelcomeLogoMode {
-	void env;
-	void platform;
-	if (mode === "unicode") return "unicode";
-	if (mode === "square") return "square";
-	if (mode === "ascii") return "ascii";
-	return "unicode";
-}
-
 /** Options for creating an InteractiveMode instance (for future API use) */
 export interface InteractiveModeOptions {
 	/** Providers that were migrated during startup */
@@ -487,7 +467,6 @@ export class InteractiveMode implements InteractiveModeContext {
 	/** Cancels a startup pet-unavailable warning still awaiting probe settlement. */
 	#petUnavailableWarningDisposer?: () => void;
 	readonly #version: string;
-	readonly #changelogMarkdown: string | undefined;
 	readonly #keyDisplayContext: KeyDisplayContext;
 
 	readonly lspServers: LspStartupServerInfo[] | undefined = undefined;
@@ -548,6 +527,10 @@ export class InteractiveMode implements InteractiveModeContext {
 		eventBus?: EventBus,
 		keyDisplayContext: KeyDisplayContext = { platform: process.platform },
 	) {
+		// The launch surface no longer renders changelog content, but the startup
+		// caller still resolves it and the positional signature is pinned by the
+		// sticky-viewport evidence oracle, so accept and drop it here.
+		void changelogMarkdown;
 		this.session = session;
 		this.sessionManager = session.sessionManager;
 		this.session.setSdkPlanModeHandler(async on => {
@@ -580,7 +563,6 @@ export class InteractiveMode implements InteractiveModeContext {
 		this.keybindings = KeybindingsManager.inMemory();
 		this.agent = session.agent;
 		this.#version = version;
-		this.#changelogMarkdown = changelogMarkdown;
 		this.#toolUiContextSetter = setToolUIContext;
 		this.lspServers = lspServers;
 		this.mcpManager = mcpManager;
@@ -805,12 +787,7 @@ export class InteractiveMode implements InteractiveModeContext {
 		const modelName = this.session.model?.name ?? "Unknown";
 		const providerName = this.session.model?.provider ?? "Unknown";
 
-		// Session history is display-only. Never hold the editor and keyboard behind
-		// transcript I/O; populate the welcome trail after the interactive surface exists.
-		const recentSessions: RecentSession[] = [];
-
 		const startupQuiet = settings.get("startup.quiet");
-		const welcomeLogoMode = resolveWelcomeLogoMode(settings.get("startup.welcomeBannerMode"));
 		this.#welcomeComponent = undefined;
 
 		for (const warning of this.session.configWarnings) {
@@ -826,17 +803,12 @@ export class InteractiveMode implements InteractiveModeContext {
 				this.#version,
 				modelName,
 				providerName,
-				recentSessions,
 				this.#getWelcomeLspServers(),
-				welcomeLogoMode,
 				{
 					getViewportRows: () => this.ui.terminal.rows,
 					getReservedBottomRows: getWelcomeReservedBottomRows,
-					changelogMarkdown: this.#changelogMarkdown,
 					rightGutterWidth: COMPOSER_RIGHT_GUTTER_WIDTH,
-					collapseChangelog: settings.get("collapseChangelog"),
 					keyDisplayContext: this.#keyDisplayContext,
-					reducedMotion: settings.get("startup.skipLogoAnimation") === true,
 				},
 			);
 
@@ -953,33 +925,6 @@ export class InteractiveMode implements InteractiveModeContext {
 		if (this.settings.get("tasksPane.defaultVisible")) this.showTasksPane();
 		this.#syncIrcSidebarAvailabilityFromSettings();
 		this.ui.requestRender(true);
-		if (this.#welcomeComponent) {
-			const welcomeComponent = this.#welcomeComponent;
-			const recentSessionsTimer = setTimeout(() => {
-				void logger
-					.time("InteractiveMode.init:recentSessions", () =>
-						getRecentSessions(this.sessionManager.getSessionDir()),
-					)
-					.then(sessions => {
-						if (this.#stopped) return;
-						if (this.#welcomeComponent !== welcomeComponent) return;
-						welcomeComponent.setRecentSessions(
-							sessions.map(session => ({
-								name: session.name,
-								timeAgo: session.timeAgo,
-							})),
-						);
-						this.ui.requestRender();
-					})
-					.catch(error => {
-						logger.debug("Failed to load recent sessions for welcome screen", {
-							error: error instanceof Error ? error.message : String(error),
-						});
-					});
-			}, 0);
-			recentSessionsTimer.unref?.();
-		}
-
 		// Crash nudge (interactive-only, local-only). Runs after the first render
 		// and routes through the centralized status surface — never `console.*`.
 		if (crashNudgeGate({ enabled: settings.get("crashReport.nudge"), interactive: true, quiet: startupQuiet })) {

@@ -5,61 +5,82 @@ export const MODEL_ONBOARDING_API_PROVIDER_COMMAND =
 export const MODEL_ONBOARDING_PROVIDER_PRESET_COMMAND = "/provider add --preset <id>";
 
 export const MODEL_ONBOARDING_SETUP_COMMAND = "vib setup provider";
-export const MODEL_ONBOARDING_OAUTH_COMMAND = "/provider login [provider-id] or /login [provider-id]";
 
 /** Primary connection path: any OpenAI-compatible local LLM server. */
-export const MODEL_ONBOARDING_LOCAL_ENDPOINT_MENU = '/provider → "Connect a local LLM endpoint"';
 export const MODEL_ONBOARDING_LOCAL_ENDPOINT_COMMAND = `${MODEL_ONBOARDING_SETUP_COMMAND} --preset local --base-url http://HOST:PORT/v1`;
 export const MODEL_ONBOARDING_CODEX_LOGIN_COMMAND = "/login openai-codex";
 export const MODEL_ONBOARDING_CLAUDE_LOGIN_COMMAND = "/login anthropic";
 
-function localEndpointFirstLines(): string[] {
-	return [
-		`1. Local LLM endpoint (vLLM, SGLang, Ollama, LM Studio, llama.cpp, …): ${MODEL_ONBOARDING_LOCAL_ENDPOINT_MENU}, or ${MODEL_ONBOARDING_LOCAL_ENDPOINT_COMMAND}.`,
-		`2. OpenAI Codex login: ${MODEL_ONBOARDING_CODEX_LOGIN_COMMAND}.`,
-		`3. Claude login: ${MODEL_ONBOARDING_CLAUDE_LOGIN_COMMAND}.`,
-	];
+/**
+ * These "no model yet" surfaces are the only Korean strings in the product: they are read
+ * by operators at a Korean site before anything is connected. Everything else stays English,
+ * and command names, flags, provider ids, and URLs are never translated.
+ *
+ * Routes that do not belong on a first-run screen live where they are actually used:
+ * assignment targets in the `/model` usage lines, and provider presets, custom
+ * API-compatible providers, and OAuth logins in the `/provider` usage text.
+ */
+const ROUTE_LABEL_WIDTH = 21;
+
+function routeLine(command: string, description: string): string {
+	return `  ${command.padEnd(ROUTE_LABEL_WIDTH)}${description}`;
 }
 
+const LOCAL_ENDPOINT_ROUTE = routeLine("/provider", "로컬 LLM 엔드포인트 연결 (권장)");
+const CODEX_ROUTE = routeLine(MODEL_ONBOARDING_CODEX_LOGIN_COMMAND, "OpenAI Codex 로그인");
+const CLAUDE_ROUTE = routeLine(MODEL_ONBOARDING_CLAUDE_LOGIN_COMMAND, "Claude 로그인");
+const SELECT_MODEL_LINE = "연결한 뒤 /model 로 모델을 고르십시오.";
+
 export function formatModelOnboardingGuidance(): string {
-	return [
-		"Model selection only shows configured providers.",
-		"Assignment targets are DEFAULT plus the Vibrato role agents: EXECUTOR, ARCHITECT, PLANNER, and CRITIC.",
-		"Legacy model-role aliases are compatibility-only and are not shown as assignment targets.",
-		...localEndpointFirstLines(),
-		`Other provider presets: ${MODEL_ONBOARDING_PROVIDER_PRESET_COMMAND} (or ${MODEL_ONBOARDING_SETUP_COMMAND} --preset <preset>).`,
-		`API-compatible custom providers: ${MODEL_ONBOARDING_API_PROVIDER_COMMAND}.`,
-		`Other OAuth/subscription providers: ${MODEL_ONBOARDING_OAUTH_COMMAND}.`,
-		"Then run /model to select a configured model or assign it to a target.",
-	].join("\n");
+	return [LOCAL_ENDPOINT_ROUTE, CODEX_ROUTE, CLAUDE_ROUTE, "", SELECT_MODEL_LINE].join("\n");
 }
 
 export function formatModelOnboardingInlineHint(): string {
-	return `Connect a local LLM endpoint with ${MODEL_ONBOARDING_LOCAL_ENDPOINT_MENU} (or ${MODEL_ONBOARDING_LOCAL_ENDPOINT_COMMAND}); log in with ${MODEL_ONBOARDING_CODEX_LOGIN_COMMAND} or ${MODEL_ONBOARDING_CLAUDE_LOGIN_COMMAND}; add other presets with ${MODEL_ONBOARDING_PROVIDER_PRESET_COMMAND}; custom API providers with ${MODEL_ONBOARDING_API_PROVIDER_COMMAND} (or ${MODEL_ONBOARDING_SETUP_COMMAND}); other OAuth/subscription with ${MODEL_ONBOARDING_OAUTH_COMMAND}; then run /model for DEFAULT, EXECUTOR, ARCHITECT, PLANNER, and CRITIC.`;
+	return `/provider 로 로컬 LLM 엔드포인트를 연결하거나 ${MODEL_ONBOARDING_CODEX_LOGIN_COMMAND} 또는 ${MODEL_ONBOARDING_CLAUDE_LOGIN_COMMAND} 으로 로그인하십시오.`;
 }
 
 export function formatNoModelOnboardingError(): string {
-	return `No model selected.\n\n${formatModelOnboardingGuidance()}`;
+	return `설정된 모델이 없습니다.\n\n${formatModelOnboardingGuidance()}`;
 }
 
 export function formatNoCredentialOnboardingError(providerId: string): string {
+	// The two login routes below already cover Codex and Claude; only another provider
+	// needs its own line, and that line is honest that /login serves OAuth providers.
+	const providerLogin =
+		providerId === "openai-codex" || providerId === "anthropic"
+			? []
+			: [
+					routeLine(
+						`/login ${providerId}`,
+						`${providerId} 로그인 (OAuth·구독 공급자 한정, 대화형 전용이라 headless/print 모드에서는 쓸 수 없습니다)`,
+					),
+				];
 	const lines = [
-		`No credentials found for ${providerId}.`,
+		`${providerId} 자격 증명을 찾을 수 없습니다.`,
 		"",
-		...localEndpointFirstLines(),
+		LOCAL_ENDPOINT_ROUTE,
+		...providerLogin,
+		CODEX_ROUTE,
+		CLAUDE_ROUTE,
 		"",
-		`For other presets, configure credentials with ${MODEL_ONBOARDING_PROVIDER_PRESET_COMMAND} (or ${MODEL_ONBOARDING_SETUP_COMMAND} --preset <preset>).`,
-		`For custom API-compatible providers, use ${MODEL_ONBOARDING_API_PROVIDER_COMMAND}.`,
-		`For OAuth/subscription providers, use ${MODEL_ONBOARDING_OAUTH_COMMAND} (interactive; not available in headless/print mode).`,
 	];
 	const headlessHint = formatProviderCredentialHint(providerId);
-	if (headlessHint) lines.push(headlessHint);
-	lines.push(
-		"Then run /model to select a configured model or assign it to DEFAULT, EXECUTOR, ARCHITECT, PLANNER, or CRITIC.",
-	);
+	if (headlessHint) lines.push(headlessHint, "");
+	lines.push(SELECT_MODEL_LINE);
 	return lines.join("\n");
 }
 
+/**
+ * Non-interactive variant: slash commands do not exist in headless/print launches, so this
+ * one names the shell command instead.
+ */
 export function formatNoModelsAvailableFallback(): string {
-	return `No models available. ${formatModelOnboardingGuidance()}`;
+	return [
+		"사용 가능한 모델이 없습니다.",
+		"",
+		`  로컬 LLM 엔드포인트: ${MODEL_ONBOARDING_LOCAL_ENDPOINT_COMMAND}`,
+		`  Codex·Claude 로그인: vib 를 대화형으로 실행한 뒤 ${MODEL_ONBOARDING_CODEX_LOGIN_COMMAND} 또는 ${MODEL_ONBOARDING_CLAUDE_LOGIN_COMMAND}`,
+		"",
+		"연결한 뒤 다시 실행하십시오.",
+	].join("\n");
 }

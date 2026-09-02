@@ -76,7 +76,7 @@ import {
 	shouldOfferAutomaticOnboarding,
 	shouldOfferOnboarding,
 } from "./setup/frictionless-onboarding";
-import { formatModelOnboardingGuidance } from "./setup/model-onboarding-guidance";
+import { formatNoModelOnboardingError, formatNoModelsAvailableFallback } from "./setup/model-onboarding-guidance";
 import { executeBuiltinSlashCommand } from "./slash-commands/builtin-registry";
 import { resolvePromptInput } from "./system-prompt";
 import { persistTaskTokenLog, resolveTaskTokenLogDir, taskTokenLogFromUsage } from "./task/token-log";
@@ -1825,7 +1825,7 @@ export async function runRootCommand(
 		!sessionOptions.modelPattern &&
 		modelRegistry.getAvailable().length === 0
 	) {
-		process.stderr.write(`${chalk.red(`No models available. ${formatModelOnboardingGuidance()}`)}\n`);
+		process.stderr.write(`${chalk.red(formatNoModelsAvailableFallback())}\n`);
 		process.stderr.write(
 			`${chalk.yellow(`\nAdvanced manual config remains available at ${ModelsConfigFile.path()}`)}\n`,
 		);
@@ -1955,16 +1955,14 @@ export async function runRootCommand(
 		if (isInteractive && !session.model && !modelFallbackMessage) {
 			notifs.push({
 				kind: "info",
-				message: `No usable model is configured yet. ${formatModelOnboardingGuidance()}`,
+				message: formatNoModelOnboardingError(),
 			});
 		}
 
 		applyExtensionFlagValues(session, rawArgs);
 
 		if (!isInteractive && !session.model) {
-			process.stderr.write(
-				`${chalk.red(modelFallbackMessage ?? `No models available. ${formatModelOnboardingGuidance()}`)}\n`,
-			);
+			process.stderr.write(`${chalk.red(modelFallbackMessage ?? formatNoModelsAvailableFallback())}\n`);
 			process.stderr.write(
 				`${chalk.yellow(`\nAdvanced manual config remains available at ${ModelsConfigFile.path()}`)}\n`,
 			);

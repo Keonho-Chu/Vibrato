@@ -50,19 +50,37 @@ function createSessionOptions(agentDir: string, options?: { modelPattern?: strin
 	};
 }
 
-function expectProviderOnboardingGuidance(text: string): void {
-	expect(text).toContain("/provider add --compat <openai|anthropic>");
-	expect(text).toContain("vib setup provider");
-	expect(text).toContain("/provider login [provider-id]");
-	expect(text).toContain("/login [provider-id]");
-	expect(text).toContain("/model");
-	// The local LLM endpoint is the primary connection path, then Codex, then Claude.
-	expect(text).toContain('Connect a local LLM endpoint"');
+/** The old nine-line English block moved to /provider and /model help; it must not come back. */
+function expectNoStaleOnboardingCopy(text: string): void {
+	expect(text).not.toContain("README");
+	expect(text).not.toContain("ANTHROPIC_API_KEY, OPENAI_API_KEY");
+	expect(text).not.toContain("Model selection only shows configured providers");
+	expect(text).not.toContain("Assignment targets are");
+	expect(text).not.toContain("Legacy model-role aliases");
+	expect(text).not.toContain("/provider add --compat");
+	expect(text).not.toContain("/provider add --preset");
+}
+
+/** Interactive surfaces route through slash commands: local endpoint, then Codex, then Claude. */
+function expectInteractiveOnboardingGuidance(text: string): void {
+	expect(text).toContain("/provider");
+	expect(text).toContain("로컬 LLM 엔드포인트");
+	expect(text).toContain("/login openai-codex");
+	expect(text).toContain("/login anthropic");
+	expect(text.indexOf("로컬 LLM 엔드포인트")).toBeLessThan(text.indexOf("/login openai-codex"));
+	expect(text.indexOf("/login openai-codex")).toBeLessThan(text.indexOf("/login anthropic"));
+	expectNoStaleOnboardingCopy(text);
+}
+
+/** Headless launches cannot run slash commands, so they keep the shell setup command. */
+function expectNonInteractiveOnboardingGuidance(text: string): void {
+	expect(text).toContain("로컬 LLM 엔드포인트");
 	expect(text).toContain("vib setup provider --preset local --base-url http://HOST:PORT/v1");
 	expect(text).toContain("/login openai-codex");
 	expect(text).toContain("/login anthropic");
 	expect(text.indexOf("--preset local")).toBeLessThan(text.indexOf("/login openai-codex"));
 	expect(text.indexOf("/login openai-codex")).toBeLessThan(text.indexOf("/login anthropic"));
+	expectNoStaleOnboardingCopy(text);
 }
 
 function createRuntime(outputs: string[], availableModels = [] as Model[]): SlashCommandRuntime {
@@ -92,18 +110,32 @@ describe("model onboarding guidance", () => {
 			formatModelOnboardingInlineHint(),
 			formatNoModelOnboardingError(),
 			formatNoCredentialOnboardingError("local-openai"),
-			formatNoModelsAvailableFallback(),
 		]) {
-			expectProviderOnboardingGuidance(text);
-			expect(text).not.toContain("README");
-			expect(text).not.toContain("ANTHROPIC_API_KEY, OPENAI_API_KEY");
+			expectInteractiveOnboardingGuidance(text);
 		}
+		expectNonInteractiveOnboardingGuidance(formatNoModelsAvailableFallback());
+	});
+
+	it("renders the no-model error as a short Korean block", () => {
+		expect(formatNoModelOnboardingError()).toBe(
+			[
+				"설정된 모델이 없습니다.",
+				"",
+				"  /provider            로컬 LLM 엔드포인트 연결 (권장)",
+				"  /login openai-codex  OpenAI Codex 로그인",
+				"  /login anthropic     Claude 로그인",
+				"",
+				"연결한 뒤 /model 로 모델을 고르십시오.",
+			].join("\n"),
+		);
 	});
 
 	it("adds headless-aware credential guidance for OpenCode Go subscription providers (#755)", () => {
 		const text = formatNoCredentialOnboardingError("opencode-go");
-		expectProviderOnboardingGuidance(text);
-		expect(text).toContain("interactive; not available in headless/print mode");
+		expectInteractiveOnboardingGuidance(text);
+		expect(text).toContain("opencode-go 자격 증명을 찾을 수 없습니다.");
+		expect(text).toContain("/login opencode-go");
+		expect(text).toContain("대화형 전용이라 headless/print 모드에서는 쓸 수 없습니다");
 		expect(text).toContain("OpenCode subscriptions authenticate with an API key");
 		expect(text).toContain("https://opencode.ai/auth");
 		expect(text).toContain("OPENCODE_API_KEY");
@@ -120,7 +152,7 @@ describe("model onboarding guidance", () => {
 
 		const output = outputs.join("\n");
 		expect(output).toContain("No model is currently selected");
-		expectProviderOnboardingGuidance(output);
+		expectInteractiveOnboardingGuidance(output);
 	});
 
 	it("routes unknown /model selectors to provider onboarding instead of stale picker-only help", async () => {
@@ -135,7 +167,7 @@ describe("model onboarding guidance", () => {
 
 		const output = outputs.join("\n");
 		expect(output).toContain("Unknown model: missing-provider/missing-model");
-		expectProviderOnboardingGuidance(output);
+		expectInteractiveOnboardingGuidance(output);
 		expect(output).not.toContain("Use ACP `session/setModel`");
 	});
 
@@ -146,7 +178,7 @@ describe("model onboarding guidance", () => {
 		try {
 			expect(session.model).toBeUndefined();
 			expect(modelFallbackMessage).toBeDefined();
-			expectProviderOnboardingGuidance(modelFallbackMessage ?? "");
+			expectNonInteractiveOnboardingGuidance(modelFallbackMessage ?? "");
 		} finally {
 			await session.dispose();
 		}
@@ -163,8 +195,8 @@ describe("model onboarding guidance", () => {
 			} catch (error) {
 				noModelMessage = error instanceof Error ? error.message : String(error);
 			}
-			expect(noModelMessage).toContain("No model selected");
-			expectProviderOnboardingGuidance(noModelMessage ?? "");
+			expect(noModelMessage).toContain("설정된 모델이 없습니다.");
+			expectInteractiveOnboardingGuidance(noModelMessage ?? "");
 		} finally {
 			await noModelSession.session.dispose();
 		}
@@ -195,8 +227,8 @@ describe("model onboarding guidance", () => {
 			} catch (error) {
 				noCredentialMessage = error instanceof Error ? error.message : String(error);
 			}
-			expect(noCredentialMessage).toContain("No credentials found for xai");
-			expectProviderOnboardingGuidance(noCredentialMessage ?? "");
+			expect(noCredentialMessage).toContain("xai 자격 증명을 찾을 수 없습니다.");
+			expectInteractiveOnboardingGuidance(noCredentialMessage ?? "");
 		} finally {
 			await noCredentialSession.dispose();
 		}

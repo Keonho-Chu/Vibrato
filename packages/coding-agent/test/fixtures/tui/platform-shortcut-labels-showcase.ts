@@ -208,12 +208,12 @@ function renderStatus(entry: PlatformShortcutLabelsShowcaseEntry, context: KeyDi
 }
 
 function renderWelcome(entry: PlatformShortcutLabelsShowcaseEntry, context: KeyDisplayContext): string[] {
-	const welcome = new WelcomeComponent("0.0.0-showcase", "deterministic-model", "fixture", [], [], "unicode", {
+	const welcome = new WelcomeComponent("0.0.0-showcase", "deterministic-model", "fixture", [], {
 		keyDisplayContext: context,
 		getViewportRows: () => entry.viewport.rows - 2,
 		getReservedBottomRows: () => 2,
-		changelogMarkdown: "### Width evidence\n한국어 日本語 中文 shortcut labels remain visible.",
 		buildLabel: "fixture clock",
+		cwd: "/showcase/workspace",
 	});
 	return [...welcome.render(entry.viewport.columns), theme.fg("dim", `Clock ${new Date(CLOCK.now()).toISOString()}`)];
 }

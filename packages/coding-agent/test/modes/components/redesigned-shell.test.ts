@@ -9,7 +9,6 @@ import { FooterComponent } from "@vib-rato/coding-agent/modes/components/footer"
 import { STATUS_LINE_PRESETS } from "@vib-rato/coding-agent/modes/components/status-line/presets";
 import { UserMessageComponent } from "@vib-rato/coding-agent/modes/components/user-message";
 import { WelcomeComponent } from "@vib-rato/coding-agent/modes/components/welcome";
-import { resolveWelcomeLogoMode } from "@vib-rato/coding-agent/modes/interactive-mode";
 import { getEditorTheme, initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
 import type { AgentSession } from "@vib-rato/coding-agent/session/agent-session";
 import { type TUI, visibleWidth } from "@vib-rato/tui";
@@ -145,70 +144,34 @@ describe("redesigned interactive shell chrome", () => {
 		}
 	});
 
-	it("keeps the Vibrato forge launch surface responsive", () => {
+	it("keeps the minimal launch surface responsive", () => {
 		const component = new WelcomeComponent("1.2.3", "gpt-5.5", "openai");
 		const lines = component.render(54);
 		const rendered = Bun.stripANSI(lines.join("\n"));
 
-		expect(rendered).toContain("Vibrato Forge");
-		expect(rendered).toContain("╭──╮        ╭──╮  ╭────╮  ╭───────╮");
-		expect(rendered).toContain("╰──────╯      ╰────╯  ╰───────╯");
-		expect(rendered).not.toContain("●");
+		expect(rendered).toContain("▌ vib");
+		expect(rendered).toContain("▌ Vibrato · LIG System");
+		// No block-letter mark, and no box chrome around it.
+		expect(rendered).not.toContain("╭──╮        ╭──╮  ╭────╮  ╭───────╮");
+		expect(rendered).not.toMatch(/[╭╰╯╮│]/);
 		for (const line of lines) {
 			expect(visibleWidth(line)).toBeLessThanOrEqual(54);
 		}
 	});
 
-	it("uses a wider forge splash box on wide terminals", () => {
+	it("right-aligns the version to the terminal edge on wide terminals", () => {
 		const component = new WelcomeComponent("1.2.3", "gpt-5.5", "openai");
-		const narrowLines = component.render(100);
+		const narrowTop = Bun.stripANSI(component.render(100)[0] ?? "");
 		const wideLines = component.render(160);
-		const narrowTop = Bun.stripANSI(narrowLines[0] ?? "");
 		const wideTop = Bun.stripANSI(wideLines[0] ?? "");
 
 		expect(visibleWidth(narrowTop)).toBe(100);
 		expect(visibleWidth(wideTop)).toBe(160);
-		expect(visibleWidth(wideTop)).toBeGreaterThan(visibleWidth(narrowTop));
-		expect(wideTop).toContain("Vibrato Forge");
+		expect(wideTop).toStartWith("▌ vib");
+		expect(wideTop).toContain("1.2.3");
 		for (const line of wideLines) {
 			expect(visibleWidth(line)).toBeLessThanOrEqual(160);
 		}
-	});
-
-	it("renders an ASCII-safe welcome logo when requested", () => {
-		const component = new WelcomeComponent("1.2.3", "gpt-5.5", "openai", [], [], "ascii");
-		const lines = component.render(54);
-		const rendered = Bun.stripANSI(lines.join("\n"));
-
-		expect(rendered).toContain("+--+        +--+  +----+  +-------+");
-		expect(rendered).toContain("+----+       +----+  +-------+");
-		expect(rendered).not.toContain("╭──╮        ╭──╮");
-		for (const line of lines) {
-			expect(visibleWidth(line)).toBeLessThanOrEqual(54);
-		}
-	});
-
-	it("renders a square-corner Unicode welcome logo when requested", () => {
-		const component = new WelcomeComponent("1.2.3", "gpt-5.5", "openai", [], [], "square");
-		const lines = component.render(54);
-		const rendered = Bun.stripANSI(lines.join("\n"));
-
-		expect(rendered).toContain("┌──┐        ┌──┐  ┌────┐  ┌───────┐");
-		expect(rendered).toContain("└──────┘      └────┘  └───────┘");
-		expect(rendered).not.toContain("╭──╮        ╭──╮");
-		expect(rendered).not.toContain("+--+        +--+");
-		for (const line of lines) {
-			expect(visibleWidth(line)).toBeLessThanOrEqual(54);
-		}
-	});
-
-	it("resolves welcome banner auto and manual override modes", () => {
-		expect(resolveWelcomeLogoMode("auto", { WT_SESSION: "session-id" }, "win32")).toBe("unicode");
-		expect(resolveWelcomeLogoMode("auto", { WT_SESSION: "session-id" }, "linux")).toBe("unicode");
-		expect(resolveWelcomeLogoMode("auto", {}, "win32")).toBe("unicode");
-		expect(resolveWelcomeLogoMode("unicode", { WT_SESSION: "session-id" }, "win32")).toBe("unicode");
-		expect(resolveWelcomeLogoMode("square", { WT_SESSION: "session-id" }, "win32")).toBe("square");
-		expect(resolveWelcomeLogoMode("ascii", {}, "linux")).toBe("ascii");
 	});
 
 	it("renders the live composer as a borderless opencode-style prompt", () => {
@@ -354,9 +317,9 @@ describe("redesigned interactive shell chrome", () => {
 		expect(STATUS_LINE_PRESETS["default-usage"].segmentOptions).toEqual(STATUS_LINE_PRESETS.default.segmentOptions);
 	});
 
-	it("keeps forge launch rendering on the bounded-work path", () => {
+	it("keeps launch rendering on the bounded-work path", () => {
 		const component = new WelcomeComponent("1.2.3", "gpt-5.5", "openai", [
-			{ name: "very-long-session-name".repeat(10), timeAgo: "2h" },
+			{ name: "very-long-server-name".repeat(10), status: "ready", fileTypes: ["ts"] },
 		]);
 		const first = component.render(96);
 		const second = component.render(96);

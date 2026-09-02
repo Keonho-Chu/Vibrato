@@ -1,7 +1,9 @@
 import { afterEach, beforeAll, describe, expect, it } from "bun:test";
+import os from "node:os";
+import path from "node:path";
 import { stripVTControlCharacters } from "node:util";
 import { visibleWidth } from "@vib-rato/tui";
-import { resolveWelcomeIntroTickMs, WelcomeComponent } from "../src/modes/components/welcome";
+import { WelcomeComponent } from "../src/modes/components/welcome";
 import { getThemeByName, setThemeInstance } from "../src/modes/theme/theme";
 
 const originalBuildChannel = process.env.VIB_BUILD_CHANNEL;
@@ -19,313 +21,225 @@ beforeAll(async () => {
 	setThemeInstance(theme);
 });
 
-describe("welcome intro cadence", () => {
-	it("reduces frame pressure only for native Windows multiplexers", () => {
-		expect(resolveWelcomeIntroTickMs("win32", "psmux,1,0")).toBe(100);
-		expect(resolveWelcomeIntroTickMs("win32", "")).toBe(33);
-		expect(resolveWelcomeIntroTickMs("linux", "tmux,1,0")).toBe(33);
-	});
-
-	it("skips the animated sweep and settles on the resting frame under reduced motion", () => {
-		const welcome = new WelcomeComponent("1.2.3", "test-model", "test-provider", [], [], "ascii", {
-			reducedMotion: true,
-		});
-		let renders = 0;
-
-		welcome.playIntro(() => {
-			renders += 1;
-		});
-
-		// One settling render, and no interval left behind to drive more.
-		expect(renders).toBe(1);
-		const duringIntro = welcome.render(120).map(stripRenderControls);
-		welcome.dispose();
-		expect(duringIntro).toEqual(welcome.render(120).map(stripRenderControls));
-	});
-
-	it("animates by default, driving repeated renders from a live timer", () => {
-		const welcome = new WelcomeComponent("1.2.3", "test-model", "test-provider", [], [], "ascii");
-		let renders = 0;
-
-		welcome.playIntro(() => {
-			renders += 1;
-		});
-
-		try {
-			expect(renders).toBe(1);
-			// The default path leaves a running interval, which the reduced-motion
-			// path must not: the resting render only matches after dispose().
-			expect(welcome.render(120).map(stripRenderControls)).not.toEqual(
-				(() => {
-					const resting = new WelcomeComponent("1.2.3", "test-model", "test-provider", [], [], "ascii", {
-						reducedMotion: true,
-					});
-					resting.playIntro(() => {});
-					return resting.render(120).map(stripRenderControls);
-				})(),
-			);
-		} finally {
-			welcome.dispose();
-		}
-	});
-});
+/** Brand rule glyph (U+258C) that opens the wordmark and identity rows. */
+const BRAND_RULE = "▌";
+// `shortenPath` abbreviates against the real home directory, so anchor there.
+const CWD = path.join(os.homedir(), "Documents", "GitHub", "LGJ", "gajae-code");
 
 function stripRenderControls(line: string): string {
 	return stripVTControlCharacters(line);
 }
 
-function renderedColumnWidths(lines: string[]): { left: number; right: number } {
-	for (const line of lines.map(stripRenderControls)) {
-		const separators = Array.from(line.matchAll(/│/g), match => match.index ?? -1);
-		if (separators.length >= 3) {
-			const [leftEdge, divider, rightEdge] = separators;
-			return {
-				left: visibleWidth(line.slice(leftEdge + 1, divider)),
-				right: visibleWidth(line.slice(divider + 1, rightEdge)),
-			};
-		}
-	}
-	throw new Error("Expected two-column welcome layout");
+function welcome(options: ConstructorParameters<typeof WelcomeComponent>[4] = {}): WelcomeComponent {
+	return new WelcomeComponent("1.2.3", "qwen3-coder-30b", "vllm", [], { cwd: CWD, ...options });
 }
 
-function renderedRightColumn(lines: string[]): string[] {
-	return lines.map(stripRenderControls).flatMap(line => {
-		const separators = Array.from(line.matchAll(/│/g), match => match.index ?? -1);
-		if (separators.length < 3) return [];
-		const [, divider, rightEdge] = separators;
-		return [line.slice(divider + 1, rightEdge)];
-	});
+function plain(component: WelcomeComponent, width: number): string[] {
+	return component.render(width).map(stripRenderControls);
 }
 
-function flowKeyContentRows(lines: string[]): string[] {
-	const rightColumn = renderedRightColumn(lines);
-	const start = rightColumn.findIndex(line => line.includes("Flow keys"));
-	const end = rightColumn.findIndex((line, index) => index > start && line.includes("Project pulse"));
-	if (start === -1 || end === -1) throw new Error("Expected Flow keys and Project pulse sections");
-	return rightColumn.slice(start + 1, end).filter(line => {
-		const text = line.trim();
-		return text.length > 0 && !/[─━-]{3,}/.test(text);
+describe("welcome launch surface", () => {
+	it("renders the brand rule, a plain-text wordmark, the version, model and workspace", () => {
+		const lines = plain(welcome({ buildLabel: "release build" }), 80);
+
+		expect(lines[0]).toStartWith(`${BRAND_RULE} vib`);
+		expect(lines[0]).toEndWith("1.2.3 · release build");
+		expect(lines[1]).toBe(`${BRAND_RULE} Vibrato · LIG System`);
+
+		const text = lines.join("\n");
+		expect(text).toContain("qwen3-coder-30b · vllm");
+		expect(text).toContain("~/Documents/GitHub/LGJ/gajae-code");
+		expect(text).toContain("No LSP servers");
 	});
-}
 
-describe("WelcomeComponent viewport sizing", () => {
-	it("uses the full terminal width on wide initial forge viewports", () => {
-		const welcome = new WelcomeComponent("1.2.3", "test-model", "test-provider", [], [], "ascii");
-		const lines = welcome.render(200);
+	it("draws no block-letter mark and emits no gradient sweep escapes", () => {
+		const component = welcome();
+		let renders = 0;
+		component.playIntro(() => {
+			renders += 1;
+		});
 
-		expect(lines.length).toBeGreaterThan(0);
-		for (const line of lines) {
-			expect(visibleWidth(line)).toBe(200);
+		// A single settling render, and no interval left behind to drive more.
+		expect(renders).toBe(1);
+		const first = component.render(120);
+		component.dispose();
+		expect(component.render(120)).toEqual(first);
+
+		const raw = first.join("\n");
+		// The sweep coloured the mark one glyph at a time, so an escape landed
+		// between every pair of letters. The wordmark must now be one plain run.
+		expect(first[0]).toContain("vib");
+		// And the whole surface stays in single-digit escapes per row rather than
+		// the hundreds a per-character gradient over block art emitted.
+		expect(raw.match(/\x1b\[/g)?.length ?? 0).toBeLessThanOrEqual(64);
+		// Block-letter art and box chrome are gone for good.
+		expect(stripRenderControls(raw)).not.toMatch(/[╭╰╯╮┌┐└┘│]/);
+	});
+
+	it("drops every panel the old two-column launch screen carried", () => {
+		const text = plain(
+			new WelcomeComponent(
+				"1.2.3",
+				"qwen3-coder-30b",
+				"vllm",
+				[{ name: "tsserver", status: "ready", fileTypes: ["ts"] }],
+				{
+					cwd: CWD,
+				},
+			),
+			160,
+		).join("\n");
+
+		for (const removed of [
+			"Vibrato Forge",
+			"shape · act · prove",
+			"What's New",
+			"Flow keys",
+			"Project pulse",
+			"Session trail",
+		]) {
+			expect(text).not.toContain(removed);
 		}
+		// LSP state stays one summary line; servers are never enumerated.
+		expect(text).toContain("1 LSP server");
+		expect(text).not.toContain("tsserver");
 	});
 
-	it("reserves the composer gutter for normal and one-row welcome layouts", () => {
-		const normal = new WelcomeComponent("1.2.3", "test-model", "test-provider", [], [], "ascii", {
-			rightGutterWidth: 1,
-		});
-		for (const line of normal.render(100).map(stripRenderControls)) {
-			expect(visibleWidth(line)).toBe(100);
-			expect(line.endsWith(" ")).toBe(true);
-			expect(visibleWidth(line.trimEnd())).toBe(99);
-		}
+	it("summarises LSP servers on one line", () => {
+		const servers = Array.from({ length: 2 }, (_, index) => ({
+			name: `server-${index}`,
+			status: "ready" as const,
+			fileTypes: ["ts"],
+		}));
+		const component = welcome();
+		expect(plain(component, 80).join("\n")).toContain("No LSP servers");
 
-		const constrained = new WelcomeComponent("1.2.3", "test-model", "test-provider", [], [], "ascii", {
-			rightGutterWidth: 1,
-			getViewportRows: () => 1,
-			getReservedBottomRows: () => 0,
-		});
-		const lines = constrained.render(100).map(stripRenderControls);
-		expect(lines).toHaveLength(1);
-		expect(visibleWidth(lines[0]!)).toBe(100);
-		expect(lines[0]!.endsWith(" ")).toBe(true);
-		expect(visibleWidth(lines[0]!.trimEnd())).toBe(99);
+		component.setLspServers(servers);
+		expect(plain(component, 80).join("\n")).toContain("2 LSP servers");
 	});
 
-	it("renders the build label from metadata instead of defaulting to dev", () => {
-		const welcome = new WelcomeComponent("1.2.3", "test-model", "test-provider", [], [], "ascii", {
-			buildLabel: "release build",
-		});
-		const rendered = welcome.render(120).map(stripRenderControls).join("\n");
-
-		expect(rendered).toContain("vib v1.2.3 · release build · Vibrato Forge");
-		expect(rendered).not.toContain("dev build");
-	});
-
-	it("renders the production metadata resolver label when no override is provided", () => {
+	it("renders the production build metadata label when no override is provided", () => {
 		process.env.VIB_BUILD_CHANNEL = "release";
-		const welcome = new WelcomeComponent("1.2.3", "test-model", "test-provider", [], [], "ascii");
-		const rendered = welcome.render(120).map(stripRenderControls).join("\n");
+		const rendered = plain(welcome(), 120).join("\n");
 
-		expect(rendered).toContain("vib v1.2.3 · release build · Vibrato Forge");
+		expect(rendered).toContain("1.2.3 · release build");
 		expect(rendered).not.toContain("dev build");
 	});
 
-	it("splits the forge and details columns evenly on wide viewports", () => {
-		const welcome = new WelcomeComponent("1.2.3", "test-model", "test-provider", [], [], "ascii");
-		const columns = renderedColumnWidths(welcome.render(140));
+	it("keeps the four canonical key hints and honours remapped display context", () => {
+		const rendered = plain(welcome({ keyDisplayContext: { platform: "linux" } }), 120).join("\n");
 
-		expect(Math.abs(columns.left - columns.right)).toBeLessThanOrEqual(1);
+		expect(rendered).toContain("/  commands");
+		expect(rendered).toContain("#  actions");
+		expect(rendered).toContain("!  shell");
+		expect(rendered).toContain("?  keymap");
+		// The long flow-key rail is gone: no model/reasoning/newline entries.
+		expect(rendered).not.toContain("reasoning");
+		expect(rendered).not.toContain("newline");
 	});
 
-	it("degrades gracefully on tiny terminal widths", () => {
-		const welcome = new WelcomeComponent("1.2.3", "test-model", "test-provider", [], [], "ascii");
+	it("updates the model row through setModel", () => {
+		const component = welcome();
+		component.setModel("claude-opus", "anthropic");
 
-		expect(welcome.render(5).every(line => visibleWidth(line) <= 5)).toBe(true);
-		expect(welcome.render(3)).toEqual([]);
-		expect(welcome.render(24).every(line => visibleWidth(line) <= 24)).toBe(true);
+		expect(plain(component, 80).join("\n")).toContain("claude-opus · anthropic");
 	});
+});
 
-	it("fills available terminal rows while reserving the pinned composer and HUD", () => {
-		const welcome = new WelcomeComponent("1.2.3", "test-model", "test-provider", [], [], "ascii", {
-			getViewportRows: () => 24,
-			getReservedBottomRows: () => 6,
-		});
-		const lines = welcome.render(100);
-
-		expect(lines).toHaveLength(18);
-		for (const line of lines) {
-			expect(visibleWidth(line)).toBe(100);
-		}
-		expect(lines.some(line => line.includes("Vibrato Forge"))).toBe(true);
-		expect(lines.some(line => line.includes("What's New"))).toBe(true);
-	});
-	it("integrates changelog highlights without overflowing narrow CJK content", () => {
-		const welcome = new WelcomeComponent("1.2.3", "test-model", "test-provider", [], [], "ascii", {
-			getViewportRows: () => 16,
-			getReservedBottomRows: () => 5,
-			changelogMarkdown: [
-				"## [1.2.3]",
-				"",
-				"### Fixed",
-				"",
-				"- 한국어와 English가 섞인 긴 업데이트 내용을 시작 화면 안에서 안전하게 줄입니다.",
-				"- Added fullscreen startup framing.",
-			].join("\n"),
-		});
-		const lines = welcome.render(60);
-
-		expect(lines).toHaveLength(11);
-		expect(lines.some(line => line.includes("한국어와 English"))).toBe(true);
-		for (const line of lines) {
-			expect(visibleWidth(line)).toBeLessThanOrEqual(60);
+describe("welcome width behaviour", () => {
+	it("never exceeds the terminal width at any width", () => {
+		for (const width of [4, 5, 12, 24, 40, 60, 80, 120, 200]) {
+			for (const line of plain(welcome(), width)) {
+				expect(visibleWidth(line)).toBeLessThanOrEqual(width);
+			}
 		}
 	});
 
-	it("expands What's New highlights when the viewport has spare rows", () => {
-		const changelogMarkdown = [
-			"## [1.2.3]",
-			"",
-			"### Added",
-			"",
-			...Array.from({ length: 8 }, (_, index) => `- Dynamic changelog item ${index + 1}`),
-		].join("\n");
-		const compact = new WelcomeComponent("1.2.3", "test-model", "test-provider", [], [], "ascii", {
-			getViewportRows: () => 24,
-			getReservedBottomRows: () => 4,
-			changelogMarkdown,
-		});
-		const roomy = new WelcomeComponent("1.2.3", "test-model", "test-provider", [], [], "ascii", {
-			getViewportRows: () => 40,
-			getReservedBottomRows: () => 4,
-			changelogMarkdown,
-		});
-
-		const compactText = compact.render(100).join("\n");
-		const roomyText = roomy.render(100).join("\n");
-
-		expect(compactText).toContain("Dynamic changelog item 1");
-		expect(compactText).not.toContain("Dynamic changelog item 4");
-		expect(roomyText).toContain("Dynamic changelog item 8");
+	it("returns nothing when there is no room to draw", () => {
+		expect(welcome().render(3)).toEqual([]);
 	});
 
-	it("does not steal rows when the pinned composer already fills the viewport", () => {
-		const hidden = new WelcomeComponent("1.2.3", "test-model", "test-provider", [], [], "ascii", {
-			getViewportRows: () => 5,
-			getReservedBottomRows: () => 5,
-		});
-		expect(hidden.render(80)).toEqual([]);
+	it("reserves the composer gutter instead of drawing into it", () => {
+		const gutterless = plain(welcome(), 80);
+		const gutter = plain(welcome({ rightGutterWidth: 3 }), 80);
 
-		const oneRow = new WelcomeComponent("1.2.3", "test-model", "test-provider", [], [], "ascii", {
-			getViewportRows: () => 5,
-			getReservedBottomRows: () => 4,
-		});
-		const lines = oneRow.render(80);
+		for (const line of gutter) expect(visibleWidth(line)).toBeLessThanOrEqual(77);
+		// The right-aligned version moves left by exactly the reserved gutter.
+		expect(visibleWidth(gutterless[0] ?? "")).toBe(80);
+		expect(visibleWidth(gutter[0] ?? "")).toBe(77);
+	});
+
+	it("drops right-aligned values rather than wrapping them", () => {
+		const narrow = plain(welcome(), 30);
+
+		for (const line of narrow) expect(visibleWidth(line)).toBeLessThanOrEqual(30);
+		// No room for the workspace beside the model, so it is dropped whole.
+		expect(narrow.join("\n")).not.toContain("gajae-code");
+		expect(narrow.join("\n")).toContain("qwen3-coder-30b");
+	});
+
+	it("elides a long workspace path in the middle", () => {
+		const long = plain(
+			welcome({ cwd: path.join(os.homedir(), "very/deeply/nested/workspace/directory/target-project") }),
+			60,
+		).join("\n");
+
+		expect(long).toContain("~/…/target-project");
+	});
+
+	it("sheds key hints from the right before overflowing", () => {
+		const hints = plain(welcome({ keyDisplayContext: { platform: "linux" } }), 26).join("\n");
+
+		expect(hints).toContain("/  commands");
+		expect(hints).not.toContain("?  keymap");
+	});
+});
+
+describe("welcome viewport row budget", () => {
+	const sized = (rows: number, reserved: number) =>
+		welcome({ getViewportRows: () => rows, getReservedBottomRows: () => reserved });
+
+	it("renders the full seven-row surface when the viewport allows it", () => {
+		const lines = plain(sized(24, 6), 100);
+
+		expect(lines).toHaveLength(7);
+		expect(lines[2]).toBe("");
+		expect(lines[5]).toBe("");
+		expect(lines[6]).toContain("/  commands");
+	});
+
+	it("never pads past its natural height on a roomy viewport", () => {
+		expect(plain(sized(60, 2), 100)).toHaveLength(7);
+		expect(plain(welcome(), 100)).toHaveLength(7);
+	});
+
+	it("degrades tier by tier as the row budget shrinks", () => {
+		expect(plain(sized(8, 2), 100)).toHaveLength(6);
+		expect(plain(sized(7, 2), 100)).toHaveLength(5);
+		expect(plain(sized(6, 2), 100)).toHaveLength(4);
+		expect(plain(sized(5, 2), 100)).toHaveLength(3);
+	});
+
+	it("falls back to a two-line tier of brand rule plus model", () => {
+		const lines = plain(sized(4, 2), 100);
+
+		expect(lines).toHaveLength(2);
+		expect(lines[0]).toStartWith(`${BRAND_RULE} vib`);
+		expect(lines[1]).toContain("qwen3-coder-30b · vllm");
+	});
+
+	it("falls back to a one-line tier of the brand rule alone", () => {
+		const lines = plain(
+			welcome({ getViewportRows: () => 3, getReservedBottomRows: () => 2, buildLabel: "release build" }),
+			100,
+		);
+
 		expect(lines).toHaveLength(1);
-		expect(visibleWidth(lines[0] ?? "")).toBeLessThanOrEqual(80);
+		expect(lines[0]).toStartWith(`${BRAND_RULE} vib`);
+		expect(lines[0]).toEndWith("1.2.3 · release build");
 	});
 
-	it("expands the session trail when the viewport has spare rows", () => {
-		const recentSessions = Array.from({ length: 8 }, (_, index) => ({
-			name: `trail-session-${index + 1}`,
-			timeAgo: `${index + 1}m ago`,
-		}));
-		const compact = new WelcomeComponent("1.2.3", "test-model", "test-provider", recentSessions, [], "ascii", {
-			getViewportRows: () => 24,
-			getReservedBottomRows: () => 4,
-		});
-		const roomy = new WelcomeComponent("1.2.3", "test-model", "test-provider", recentSessions, [], "ascii", {
-			getViewportRows: () => 40,
-			getReservedBottomRows: () => 4,
-		});
-
-		const compactText = compact.render(100).join("\n");
-		const roomyText = roomy.render(100).join("\n");
-
-		expect(compactText).toContain("trail-session-4");
-		expect(compactText).not.toContain("trail-session-5");
-		expect(roomyText).toContain("trail-session-8");
-	});
-
-	it("packs Flow keys across the available section width", () => {
-		const narrow = new WelcomeComponent("1.2.3", "test-model", "test-provider", [], [], "ascii", {
-			keyDisplayContext: { platform: "linux" },
-		});
-		const wide = new WelcomeComponent("1.2.3", "test-model", "test-provider", [], [], "ascii", {
-			keyDisplayContext: { platform: "linux" },
-		});
-
-		const narrowFlowRows = flowKeyContentRows(narrow.render(70));
-		const wideFlowRows = flowKeyContentRows(wide.render(160));
-		const wideText = wideFlowRows.join("\n");
-
-		expect(wideFlowRows.length).toBeLessThan(narrowFlowRows.length);
-		expect(wideText).toContain("/ commands");
-		expect(wideText).toContain("Ctrl+C clear");
-	});
-
-	it.each([
-		["darwin", ["⌃L model", "⇧⇥ reasoning", "⇥ complete", "⌃J newline", "⌃C clear"]],
-		["win32", ["Ctrl+L model", "Shift+Tab reasoning", "Tab complete", "Alt+Enter newline", "Ctrl+C clear"]],
-		["linux", ["Ctrl+L model", "Shift+Tab reasoning", "Tab complete", "Ctrl+J newline", "Ctrl+C clear"]],
-	] as const)("renders platform-aware canonical Flow keys for %s", (platform, expected) => {
-		const welcome = new WelcomeComponent("1.2.3", "test-model", "test-provider", [], [], "ascii", {
-			keyDisplayContext: { platform },
-		});
-		const flowText = flowKeyContentRows(welcome.render(160)).join("\n");
-
-		let previousIndex = -1;
-		for (const label of expected) {
-			const index = flowText.indexOf(label);
-			expect(index).toBeGreaterThan(previousIndex);
-			previousIndex = index;
-		}
-	});
-
-	it("clips Flow keys to the viewport row budget before session trail rows", () => {
-		const recentSessions = Array.from({ length: 6 }, (_, index) => ({
-			name: `trail-session-${index + 1}`,
-			timeAgo: `${index + 1}m ago`,
-		}));
-		const compact = new WelcomeComponent("1.2.3", "test-model", "test-provider", recentSessions, [], "ascii", {
-			getViewportRows: () => 18,
-			getReservedBottomRows: () => 4,
-		});
-
-		const lines = compact.render(80);
-		const flowRows = flowKeyContentRows(lines);
-
-		expect(lines).toHaveLength(14);
-		expect(flowRows.length).toBeLessThanOrEqual(2);
-		expect(lines.join("\n")).toContain("/help");
+	it("yields the surface entirely when the pinned composer fills the viewport", () => {
+		expect(sized(5, 5).render(80)).toEqual([]);
 	});
 });

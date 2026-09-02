@@ -1666,34 +1666,6 @@ export const SETTINGS_SCHEMA = {
 		},
 	},
 
-	"startup.welcomeBannerMode": {
-		type: "enum",
-		values: ["auto", "unicode", "square", "ascii"] as const,
-		default: "auto",
-		ui: {
-			tab: "interaction",
-			label: "Welcome Banner Mode",
-			description: "Logo style for the startup welcome screen",
-			options: [
-				{ value: "auto", label: "Auto", description: "Use the rounded Unicode logo" },
-				{ value: "unicode", label: "Unicode", description: "Force the rounded Unicode logo" },
-				{ value: "square", label: "Square Unicode", description: "Force the square-corner Unicode fallback" },
-				{ value: "ascii", label: "ASCII", description: "Force the ASCII-safe logo" },
-			],
-		},
-	},
-
-	"startup.skipLogoAnimation": {
-		type: "boolean",
-		default: false,
-		ui: {
-			tab: "interaction",
-			label: "Skip Startup Logo Animation",
-			description:
-				"Skip the animated startup logo sweep; the welcome surface, its resting logo, and all information rows still render. Applies at the next interactive start.",
-		},
-	},
-
 	"startup.checkUpdate": {
 		type: "boolean",
 		default: true,
@@ -1762,12 +1734,6 @@ export const SETTINGS_SCHEMA = {
 			description:
 				"Global-only Sentry DSN for the opted-in upstream; ignored while Crash Report Upstream is off, and no default destination exists. Only fields approved by `sanitizeExternalCrashV1` are sent; prompt text, source code, file contents, and credentials are excluded.",
 		},
-	},
-
-	collapseChangelog: {
-		type: "boolean",
-		default: false,
-		ui: { tab: "interaction", label: "Collapse Changelog", description: "Show condensed changelog after updates" },
 	},
 
 	// Notifications
