@@ -6,7 +6,7 @@ Prebuilt standalone binaries are the supported end-user install. Bun is not requ
 
 ```sh
 # Tagged installer (recommended): pin the ref, then run locally.
-curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.15.3/scripts/install.sh -o vib-install.sh
+curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.16.0/scripts/install.sh -o vib-install.sh
 sh vib-install.sh
 vib --version
 vib --smoke-test
@@ -21,7 +21,7 @@ curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/main/scripts/ins
 Windows (PowerShell), tagged:
 
 ```powershell
-Invoke-WebRequest -UseBasicParsing https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.15.3/scripts/install.ps1 -OutFile vib-install.ps1
+Invoke-WebRequest -UseBasicParsing https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.16.0/scripts/install.ps1 -OutFile vib-install.ps1
 powershell -File vib-install.ps1
 ```
 

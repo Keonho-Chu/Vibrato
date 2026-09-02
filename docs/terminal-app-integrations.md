@@ -120,12 +120,12 @@ agent below.
 1. Install and authenticate Vibrato on the machine Orca runs agents on:
 
    ```sh
-   curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.15.3/scripts/install.sh -o vib-install.sh
+   curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.16.0/scripts/install.sh -o vib-install.sh
    sh vib-install.sh
    vib auth
    ```
 
-   To pick a newer installer, change `v0.15.3` to the release tag you want (see [docs/install.md](install.md)).
+   To pick a newer installer, change `v0.16.0` to the release tag you want (see [docs/install.md](install.md)).
 
 2. In Orca, open **Settings → Agents** and add a custom agent:
 

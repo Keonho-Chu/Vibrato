@@ -3,284 +3,122 @@
 </p>
 
 <p align="center">
-  <img src="assets/hero.png" alt="Vibrato 自主编码代理主视觉插图" width="100%" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/lig-system-w.png">
+    <img src="assets/lig-system.png" alt="LIG System" width="260" />
+  </picture>
 </p>
 
-<h1 align="center">G A J A E - C O D E</h1>
+<h1 align="center">Vibrato</h1>
 
 <p align="center">
-  <strong>Encode intention. Decode software.</strong>
-  <br/>
-  <sub>跑在<strong>你已经在付费的订阅</strong>上、还能在手机上回复你的编码代理。</sub>
+  <sub>面向 Claude、OpenAI Codex 以及自托管 vLLM / SGLang 端点的终端编码代理。</sub>
 </p>
 
 <p align="center">
   <a href="https://github.com/Keonho-Chu/Vibrato"><img alt="Repository" src="https://img.shields.io/badge/github-Keonho--Chu%2FVibrato-002F6D?style=flat-square"></a>
   <a href="https://www.npmjs.com/package/vib-rato"><img alt="npm package" src="https://img.shields.io/npm/v/vib-rato?style=flat-square"></a>
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-green?style=flat-square"></a>
-  <a href="https://discord.gg/wSyUQYfhAw"><img alt="Discord" src="https://img.shields.io/badge/Discord-join-5865F2?style=flat-square&logo=discord&logoColor=white"></a>
 </p>
 
-<p align="center">
-  <a href="#快速开始">快速开始</a> ·
-  <a href="#为什么选-vib-rato">为什么</a> ·
-  <a href="#带上你的编程订阅">编程订阅</a> ·
-  <a href="#用手机回复">手机</a> ·
-  <a href="#先计划后修改">工作流</a> ·
-  <a href="#花更少的-token">Token 瘦身</a> ·
-  <a href="#让-openclaw--hermes-驱动-vib">控制器</a> ·
-  <a href="#文档">文档</a>
-</p>
+> 本文档是英文 [README.md](README.md) 的翻译。如有出入，以英文版为准。
 
-**用你已有的订阅登录，在任何文件被修改之前先计划，带着证据执行 — 代理的提问在终端、手机或你自己的 bot 上随时回复。**
+## 安装
 
-Vibrato（`vib`）是一个外置编码代理 harness：丢进任意仓库或 worktree 就能跑。没有额外 API 计费。没有按 token 的焦虑。不用守在终端前。
-
-> Vibrato 是实验性的 beta 阶段项目。可能存在粗糙之处，重要工作请先验证输出再依赖。
->
-> 本文档是英文 [README.md](README.md) 的译本。若内容有出入，以英文版为准（SSOT）。
-
----
-
-## 为什么选 Vibrato？
-
-大多数编码代理在三个地方翻车：向你收两次钱、没搞懂就改代码、你一离开键盘就沉默。
-
-| 问题 | 后果 | Vibrato 的解法 |
-| :--- | :--- | :--- |
-| 额外 API 计费 | 订阅费*加上*按 token 的 API 费用 | 用你已在付费的编程订阅（Claude 或 Codex）`/login` — 或指向自托管的 vLLM/SGLang 端点,完全没有按 token 计费 |
-| 上来就改代码的代理 | 没理解就动手，你来返工 | 计划门控工作流：访谈 → 计划 → 评审 → *然后才*修改，带审批门 |
-| 绑死终端的会话 | 凌晨两点代理提问，工作停到早上 | 提问路由到 Telegram/Discord/Slack，随时随地回复 |
-| 上下文膨胀 | 整文件读取和日志洪水烧掉窗口 | 结构化摘要、artifact 溢出、缓存感知路由、压缩 |
-
----
-
-## 快速开始
-
-**安装** — 提供 Linux（x64/arm64）、macOS（arm64/x64）、Windows（x64）预编译二进制。不需要 Bun：
+提供 Linux (x64/arm64)、macOS (arm64/x64) 和 Windows (x64) 的预编译二进制文件。不需要 Bun。
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.15.3/scripts/install.sh -o vib-install.sh
+curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.16.0/scripts/install.sh -o vib-install.sh
 sh vib-install.sh
-vib
+vib --version
 ```
 
-从 `main` 管道执行会运行可变安装脚本。仅在需要最新安装器时使用。
-
-Windows（PowerShell，固定标签）：
+Windows (PowerShell):
 
 ```powershell
-Invoke-WebRequest -UseBasicParsing https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.15.3/scripts/install.ps1 -OutFile vib-install.ps1
+Invoke-WebRequest -UseBasicParsing https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.16.0/scripts/install.ps1 -OutFile vib-install.ps1
 powershell -File vib-install.ps1
 ```
 
-**首次使用** — 选好订阅就出发：
-
-```text
-/login                       选择提供商 / 编程订阅
-/skill:deep-interview        澄清模糊需求
-/skill:ralplan               制定并评审计划
-vib ultragoal create-goals --brief-file <已批准的计划>
-```
-
-**运行模式：**
+其他安装方式:
 
 ```sh
-vib                                # 在当前 checkout 中运行
-vib --tmux                         # tmux 领导会话
-vib --tmux --worktree my-task      # 高风险工作用隔离 worktree
-vib @screenshot.png "该改什么？"      # 图片输入
+# 始终使用最新安装脚本 (执行 main 分支上的可变内容)
+curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/main/scripts/install.sh | sh
+
+# 通过 npm (PATH 中需要 Bun 1.4 或更高版本)
+bun install -g vib-rato
+
+# 就地更新现有安装
+vib update
 ```
 
-Nightly 渠道：`sh vib-install.sh --channel nightly`（使用上面下载的 tagged 安装器）。完整安装矩阵、Windows 设置、更新渠道与 shell 补全：[docs/install.md](docs/install.md)。Bun 仅用于从源码构建。
+完整平台列表、nightly 渠道、Shell 补全和源码构建: [docs/install.md](docs/install.md)。
 
----
+## 首次运行
 
-## 带上你的编程订阅
+在任意 git 检出目录中运行 `vib`。首次启动且未配置任何提供商时，Vibrato 会自动打开提供商菜单。随时可用 `/provider` 打开同一菜单。
 
-<p align="center">
-  <img src="assets/coding-plans-banner.png" alt="Vibrato 支持的提供商：Claude、ChatGPT/Codex，以及自托管的 vLLM/SGLang 端点" width="100%" />
-</p>
+- **vLLM / SGLang** (自托管，兼容 OpenAI): 选择 *Connect a vLLM endpoint* 或 *Connect an SGLang endpoint*，输入服务器 URL 和可选的 API 密钥，Vibrato 会从服务器发现模型。本地无鉴权服务器可将密钥留空。
+- **Claude** 或 **OpenAI Codex** (订阅计划): 运行 `/login`，选择 `anthropic`、`openai-codex` (浏览器) 或 `openai-codex-device` (无头模式)。
 
-Vibrato 只暴露四个可选提供商：Claude、OpenAI Codex、vLLM、SGLang。登录一次，Vibrato 就跑在你已经付费的订阅上。两个基于 OAuth 的订阅在会话内运行 `/login`：
-
-| 订阅 / 计划 | OAuth 登录 |
-| :--- | :--- |
-| Claude Pro / Max | `anthropic` |
-| ChatGPT Plus / Pro（Codex） | `openai-codex`（浏览器）· `openai-codex-device`（无头） |
-
-### 用 vLLM 快速开始
-
-vLLM 和 SGLang 是自托管的 OpenAI 兼容运行时 — 不需要订阅，也不需要 OAuth，API key 是可选的（未鉴权的本地服务器留空即可）。首次交互式启动且没有可用提供商时，Vibrato 会自动打开提供商引导菜单；第一项 **Connect a vLLM endpoint** 只会询问服务器 URL（默认 `http://127.0.0.1:8000/v1`）和 API key（未鉴权的本地 vLLM 留空即可），随后直接从服务器发现模型。第二项对 SGLang（`http://127.0.0.1:30000/v1`）做同样的事。同一个菜单随时可以用 `/provider` 打开。
-
-对应的 CLI 命令：
+在 Shell 中完成同样的设置:
 
 ```sh
-vib setup provider --preset vllm --base-url http://HOST:8000/v1     # 密钥来自 VLLM_API_KEY（如有）
-vib setup provider --preset sglang --base-url http://HOST:30000/v1  # 密钥来自 SGLANG_API_KEY（如有）
+vib setup provider --preset vllm --base-url http://HOST:8000/v1      # 密钥来自 VLLM_API_KEY (如有)
+vib setup provider --preset sglang --base-url http://HOST:30000/v1   # 密钥来自 SGLANG_API_KEY (如有)
 ```
 
-纯 `http://` 的 base URL 仅对 localhost、loopback 和私网主机（`10/8`、`172.16/12`、`192.168/16`、link-local、`.local`/`.internal`/`.lan` 名称，以及裸 LAN 主机名）放行；公网主机仍需 `https://`。
+localhost、私有网络主机以及 `.local` / `.internal` / `.lan` 名称允许明文 `http://`；公网主机需要 `https://`。
 
-<details>
-<summary><strong>默认四个之外：自定义端点与高级路由</strong></summary>
+## 使用
 
-其他内置提供商（OpenAI API、Google、Bedrock、OpenRouter、xAI、Mistral、MiniMax、GLM、Kimi、Cursor、Copilot、OpenCode Go、Ollama/LM Studio 等本地运行时等等）会从 `/login`、`/model` 和预设选择器中隐藏，但对应的传输层依然内置。在 `models.yml` 里用自定义 id 注册端点——包括复用某个被隐藏提供商 API 形态的情况——它依然完全可选，可按用量在每个提供商的多账户间池化路由，也可以用模型预设/配置按代理角色混搭厂商。团队凭据依然可以用 auth broker/gateway 集中管理。
-
-- [模型、提供商与认证解析](docs/models.md)
-- [自定义提供商与多账户路由](docs/custom-providers-and-multi-account.md)
-- [多厂商角色配置](docs/multi-vendor-profiles.md)
-- [Auth broker 与 gateway（团队共享凭据）](docs/auth-broker-gateway.md)
-
-</details>
-
----
-
-## 用手机回复
-
-<p align="center">
-  <img src="assets/telegram-mobile-hero.png" alt="Vibrato 移动端回复主视觉插图" width="100%" />
-</p>
-
-代理需要决策时会 ping 你的 Telegram — 你在任何地方都能回复：
-
-- **仅限协调器/生命周期会话的论坛话题**：实时/最终输出、上下文更新、图片附件、内联按钮、自由文本回复、输入中指示。
-- **一次配置**：在运行中会话的 `/settings` → Notifications，或无头方式 `vib notify setup|status|health|test|recovery`。令牌输入即打码，之后永不显示。
-- **`vib daemon`** 为每个 bot 令牌维持唯一的安全 long-poll 所有者，新会话干净接入，不会触发 Telegram 409 冲突。
-- Discord 与 Slack 投递同步提供；通用 `action_needed`/`reply` 协议让任何 bot 或移动应用都能把回答路由回来，无需抓取终端。
-
-[Telegram 上手](docs/telegram-onboarding.md) · [Discord](docs/discord-onboarding.md) · [Slack](docs/slack-onboarding.md)
-
----
-
-## 先计划，后修改
-
-刻意收窄的工作流表面 — 四个技能、四个角色代理，仅此而已：
-
-```text
-deep-interview -> ralplan -> ultragoal
-               └─ 研究必须为计划奠基时可选 autoresearch 任务
+```sh
+vib                                        # 在当前检出目录中启动交互会话
+vib "列出 src/ 下所有 .ts 文件"              # 带初始提示的交互会话
+vib @prompt.md @screenshot.png "解释一下"    # 用 @ 附加文件或图片
+vib -p "总结这个仓库"                        # 非交互: 输出答案后退出
+vib --continue                             # 继续上一个会话
+vib --resume                               # 选择更早的会话
+vib --worktree my-task                     # 在隔离的 git worktree 中工作
+vib --tmux                                 # 在 tmux 会话中运行
+vib --model opus "重构这个模块"               # 按模糊名称选择模型
+vib --list-models                          # 显示可用模型
 ```
 
-| 表面 | 作用 |
+会话内命令:
+
+| 命令 | 作用 |
 | :--- | :--- |
-| `deep-interview` | 把模糊请求变成具体需求。 |
-| `ralplan` | 在改代码之前制定并评审实现计划。 |
-| `ultragoal` | 跟踪目标贯穿执行、修订、验证与证据。 |
-| `autoresearch` | 执行目标导向的研究任务，并以结构化结论收尾。 |
-| `executor` / `architect` / `planner` / `critic` | 内置角色代理，覆盖实现与只读评审通道。 |
+| `/provider` | 连接 vLLM 或 SGLang 端点 |
+| `/login` | 登录 Claude 或 OpenAI Codex |
+| `/model` | 切换当前模型 |
+| `/theme` | 切换 TUI 主题 |
+| `/skill:deep-interview` | 规划前澄清模糊需求 |
+| `/skill:ralplan` | 修改文件前制定并评审计划 |
+| `/help` | 列出所有斜杠命令 |
 
-可选启用：**`computer-use`**（实验性桌面控制）。见 [Python REPL](docs/python-repl.md) 与 [docs/tools/computer.md](docs/tools/computer.md)。
+常用 CLI 命令:
 
----
-
-## 花更少的 token
-
-Vibrato 同时优化 token 账单的两端：
-
-- **缓存命中** — 按提供商的 `cacheRetention` 控制；Anthropic 默认长效（1 小时）缓存，因为短缓存对长代理运行太脆弱；提供商排序优先廉价的 `cacheRead` 路径；可选的 session-affinity 头让 OpenAI 兼容中继复用服务端提示缓存。
-- **上下文节省** — 文件读取返回结构化摘要而非整个文件；超大 shell 输出被最小化并溢出为可取回的 `artifact://` 引用，不冲垮上下文；压缩与分支摘要让长会话留在窗口内且不丢先前工作。
-
-[缓存保留与提供商兼容](docs/models.md) · [压缩与分支摘要](docs/compaction.md)
-
----
-
-## 让 OpenClaw / Hermes 驱动 Vibrato
-
-Vibrato 内置原生 Coordinator MCP 桥，OpenClaw 或 Hermes 等外部控制器通过持久 turn 编排真实的 Vibrato 会话 — 绝不抓取终端。
-
-不用读指南 — 把这段提示词粘贴进你的 OpenClaw/Hermes 控制器，它会自己接好线：
-
-<details>
-<summary><strong>复制粘贴的控制器配置提示词</strong></summary>
-
-```text
-Set up Vibrato (vib) as your coding-agent backend on this machine. vib is already installed.
-
-1. Render and install the coordinator MCP setup package (replace the paths):
-   vib setup hermes --root <ABS_REPO_PATH> --profile <PROFILE_NAME> --repo <REPO_NAME> \
-     --mutation sessions,questions,reports --profile-dir <YOUR_PROFILE_DIR> --install
-   Without --install the command is render-only; re-run with --install to write files.
-
-2. Verify the contract (non-mutating, no LLM call). Both must report ok:
-   vib setup hermes --root <ABS_REPO_PATH> --smoke
-   vib mcp-serve coordinator --check --json
-
-3. Register the MCP server from the installed config. It is equivalent to:
-   command: vib, args: ["mcp-serve", "coordinator"]
-   env: VIB_COORDINATOR_MCP_WORKDIR_ROOTS=<ABS_REPO_PATH>,
-        VIB_COORDINATOR_MCP_PROFILE=<PROFILE_NAME>,
-        VIB_COORDINATOR_MCP_REPO=<REPO_NAME>,
-        VIB_COORDINATOR_MCP_SESSION_COMMAND="vib --worktree",
-        VIB_COORDINATOR_MCP_MUTATIONS=sessions,questions,reports
-
-4. To delegate coding work, prefer one call per workflow:
-   vib_delegate_plan / vib_delegate_execute
-   with { cwd, task, allow_mutation: true, idempotency_key: <fresh-uuid> }.
-   Each starts an isolated worktree session and returns a durable turn_id and artifacts.
-
-5. For finer control: vib_coordinator_start_session -> vib_coordinator_send_prompt ->
-   poll vib_coordinator_read_turn or bounded vib_coordinator_await_turn ->
-   answer vib_coordinator_list_questions rows via vib_coordinator_submit_question_answer ->
-   close with vib_coordinator_report_status.
-
-Rules: every mutating call needs allow_mutation: true plus a fresh idempotency_key.
-Treat durable turn state as authoritative; never scrape terminal output.
-The session command selector accepts only "vib" or "vib --worktree [name]".
+```sh
+vib --help                  # 所有参数
+vib setup --help            # 提供商与凭据设置
+vib customize doctor        # 诊断工具、技能、钩子或 MCP 服务器为何未加载
+vib config set <key> <val>  # 在 Shell 中修改设置
+vib update                  # 更新到最新版本
 ```
 
-</details>
-
-若控制器要直接驱动单个在线会话，每个会话还暴露回环 **SDK WebSocket** 端点、`vib sdk session` CLI（`list|inspect|send|status|tail`）以及内置 `sdk-skills/`（`vib-sdk-discover` · `vib-sdk-operate` · `vib-sdk-author`）— 任何控制器托管的代理都能遵循的、经过审阅且带审批门的流程。
-
-- [外部控制器集成指南](docs/bot-integration.md) · [Coordinator MCP 桥](docs/hermes-mcp-bridge.md)
-- [外部控制器 / 机器人](docs/bot-integration.md) — 提供商无关冒烟测试；[`docs/aside-integration.md`](docs/aside-integration.md) 涵盖可选的搜索/上下文边车和 `/aside` 编辑器命令
-- [SDK 与线协议](docs/sdk.md) · [SDK 会话 CLI](docs/sdk-session-cli.md) · [外部控制就绪度](docs/external-control-readiness.md)
-
----
+深色终端的默认 TUI 主题是应用 LIG System 企业识别的 `lig-blue`，浅色终端默认使用内置的 `lig-white`。显式的主题设置始终优先。
 
 ## 文档
 
-从 [docs/](docs/) 或 `docs/` 开始：
-
-- [安装与更新](docs/install.md) · [环境变量](docs/environment-variables.md) · [快捷键](docs/keybindings.md) · [主题](docs/theme.md)
-- [模型与提供商](docs/models.md) · [自定义提供商与多账户路由](docs/custom-providers-and-multi-account.md) · [多厂商配置](docs/multi-vendor-profiles.md) · [Auth broker](docs/auth-broker-gateway.md)
-- [Telegram](docs/telegram-onboarding.md) · [Bot 集成](docs/bot-integration.md) · [SDK](docs/sdk.md) · [SDK 会话 CLI](docs/sdk-session-cli.md)
-- [会话](docs/session.md) · [压缩](docs/compaction.md) · [记忆](docs/memory.md) · [密钥](docs/secrets.md)
-- [代码库概览](docs/codebase-overview.md) · [贡献 / 开发环境](CONTRIBUTING.md)
-- [macOS Option/Alt 键设置（iTerm2）](docs/macos-option-key.md) · [GEO 可见性基准](docs/geobench.md)
-
-默认深色 TUI 标识是应用 LIG System 企业识别（CI）的 lig-blue 主题；浅色外观终端默认使用内置 lig-white 主题。换主题或自建主题见[主题](docs/theme.md)。
-
-## SDK 扩展
-
-- [vib-remote](https://github.com/kogangdon/vib-remote) — 从 Discord 控制远程主机上白名单内的 Vibrato 会话。
-- [oh-my-vib-rato](https://github.com/devswha/oh-my-vib-rato) — 提供额外技能与斜杠命令的社区插件市场。
-- [Vibrato 多厂商配置指南](https://github.com/project820/vib-multivendor-setup-guide) — 面向多厂商配置的角色化提供商方案。写作时间早于当前的四提供商许可名单；Claude/Codex/vLLM/SGLang 之外的角色需要用相应的自定义 `models.yml` 条目自行还原。
-
-## 开发
-
-```sh
-bun install
-bun run build:native
-bun run dev:link       # 全局 `vib` 运行本 checkout 的源码
-bun run dev:doctor     # 验证链接
-```
-
-包结构图与门禁见 [CONTRIBUTING.md](CONTRIBUTING.md) 与 [docs/codebase-overview.md](docs/codebase-overview.md)。
-
-## 贡献者与谱系
-
-感谢 [Yeachan-Heo](https://github.com/Yeachan-Heo)、[IYENTeam](https://github.com/IYENTeam)、[HaD0Yun](https://github.com/HaD0Yun) 和 [probepark](https://github.com/probepark)。Vibrato 建立在一小族代理 harness 的经验之上；历史归属见 [NOTICE.md](NOTICE.md)。
+- [安装、更新渠道、平台说明](docs/install.md)
+- [模型、提供商与认证](docs/models.md)
+- [自定义提供商与多账户路由](docs/custom-providers-and-multi-account.md)
+- [技能](docs/skills.md)
+- [设计系统](docs/design-system.md)
+- [代码库概览](docs/codebase-overview.md) 以及 [docs/](docs/) 中的其他文档
 
 ## 许可证
 
-MIT。见 [LICENSE](LICENSE)。
-
----
-
-<p align="center">
-  <em>"Encode intention. Decode software."</em>
-  <br/><br/>
-  <strong>计划在前。修改要自己挣得位置。</strong>
-</p>
+MIT。参见 [LICENSE](LICENSE)。历史署名见 [NOTICE.md](NOTICE.md)。
