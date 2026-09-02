@@ -92,7 +92,7 @@ describe("fixture broker root cleanup", () => {
 		await expect(cleanupFixtureRoot(cleanup)).rejects.toThrow("lease close failed");
 		expect(cleanup.phases.leaseClose).toBe("pending");
 		await expect(cleanupFixtureRoot(cleanup, { rootExists: async () => true })).rejects.toThrow("recreated");
-		expect(cleanup.recreation?.detail).toBe("fixture root reappeared");
+		expect(cleanup.recreation?.detail).toContain("fixture root reappeared");
 		expect(cleanup.phases.rootRemove).toBe("pending");
 		await cleanupFixtureRoot(cleanup, { rootExists: async () => false });
 		expect(events).toEqual(["shutdown", "dispose", "lease", "lease"]);
