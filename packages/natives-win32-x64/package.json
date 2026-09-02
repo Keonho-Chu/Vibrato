@@ -1,6 +1,6 @@
 {
 	"name": "@vib-rato/natives-win32-x64",
-	"version": "0.16.0",
+	"version": "0.16.1",
 	"description": "Windows x64 native addon for @vib-rato/natives",
 	"type": "module",
 	"homepage": "https://github.com/Keonho-Chu/Vibrato",

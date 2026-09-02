@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.16.1] - 2026-09-02
+
 ## [0.16.0] - 2026-09-02
 
 - **Breaking:** Provider selection is now limited to four providers: Anthropic (Claude), OpenAI Codex (browser and device-code login), vLLM, and SGLang; every other built-in provider is hidden from `/login`, `/model`, provider ordering, model-profile presets, `vib setup provider --preset`, and the CLI setup help, though its transport still ships and remains reachable through a user-authored custom provider in `models.yml`. First-run onboarding with no usable provider now opens a provider menu whose first two entries connect a local or remote vLLM or SGLang endpoint by URL and optional key, discovering models live from the server; the same menu is reachable any time via `/provider`. `vib setup provider --preset` is reduced to the parameterized `vllm` and `sglang` presets (`--base-url` required, key from `VLLM_API_KEY`/`SGLANG_API_KEY` or pasted). Plain `http://` base URLs are now accepted for localhost, loopback, and private-network hosts (10/8, 172.16/12, 192.168/16, link-local, `.local`/`.internal`/`.lan` names, and bare LAN hostnames); public hosts still require `https://`.
