@@ -21,7 +21,7 @@ function normalizeRenderedText(text: string): string {
 		.trim();
 }
 
-let testTheme = await getThemeByName("red-claw");
+let testTheme = await getThemeByName("lig-blue");
 
 function installTestTheme(): void {
 	if (!testTheme) throw new Error("Failed to load test theme");
@@ -383,7 +383,7 @@ describe("model selector profiles", () => {
 	});
 
 	beforeAll(async () => {
-		testTheme = await getThemeByName("red-claw");
+		testTheme = await getThemeByName("lig-blue");
 		installTestTheme();
 	});
 

@@ -5,7 +5,7 @@ import { QueuedMessageSelectorComponent } from "@vib-rato/coding-agent/modes/com
 import { initTheme } from "@vib-rato/coding-agent/modes/theme/theme";
 
 beforeAll(async () => {
-	await initTheme(false, undefined, undefined, "red-claw", "blue-crab");
+	await initTheme(false, undefined, undefined, "lig-blue", "lig-white");
 });
 
 describe("QueuePaneComponent", () => {

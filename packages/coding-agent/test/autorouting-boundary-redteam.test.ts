@@ -1202,7 +1202,7 @@ describe("autorouting boundary red-team generation 2 delta re-attacks", () => {
 	});
 
 	it("fresh B1 seam: panel preview does not remain stale after controller silently substitutes a raced payload", async () => {
-		const loadedTheme = await getThemeByName("red-claw");
+		const loadedTheme = await getThemeByName("lig-blue");
 		if (loadedTheme) setThemeInstance(loadedTheme);
 		const catalogA = [
 			model("anthropic", "claude-haiku-4-5"),

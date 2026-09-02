@@ -379,7 +379,7 @@ describe("autorouting red-team adversarial suite", () => {
 	});
 
 	it("strips control sequences and bounds width when the TUI renders routing evidence", async () => {
-		const theme = await getThemeByName("red-claw");
+		const theme = await getThemeByName("lig-blue");
 		if (!theme) throw new Error("Failed to load test theme");
 		const hostile = "\x1b]0;pwned\x07\x1b[2Jprovider/model\x07\tx\nINJECTED-RESULT-ROW\r\nINJECTED-CRLF-ROW";
 		const evidence: TaskRoutingEvidence = {

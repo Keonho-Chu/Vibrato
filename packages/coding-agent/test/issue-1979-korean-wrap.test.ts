@@ -18,7 +18,7 @@ let previousMultiplexerEnv: Map<string, string | undefined>;
 beforeAll(async () => {
 	resetSettingsForTest();
 	await Settings.init({ inMemory: true, cwd: process.cwd() });
-	const themeInstance = await getThemeByName("red-claw");
+	const themeInstance = await getThemeByName("lig-blue");
 	if (!themeInstance) throw new Error("Failed to load test theme");
 	setThemeInstance(themeInstance);
 });

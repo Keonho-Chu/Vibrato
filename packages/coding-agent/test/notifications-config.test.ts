@@ -702,7 +702,7 @@ describe("notifications config", () => {
 		try {
 			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("vib_notify_daemon_invalid_configuration");
 
-			settings.set("theme.dark", "red-claw");
+			settings.set("theme.dark", "lig-blue");
 			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("vib_notify_daemon_invalid_configuration");
 
 			settings.set("notifications.enabled", true);
@@ -826,7 +826,7 @@ describe("notifications config", () => {
 		});
 		await lockAcquired.promise;
 		try {
-			settings.set("theme.dark", "red-claw");
+			settings.set("theme.dark", "lig-blue");
 			const firstFlush = settings.flushOrThrow();
 			await Promise.resolve();
 			settings.set("notifications.enabled", true);
@@ -854,7 +854,7 @@ describe("notifications config", () => {
 		try {
 			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("vib_notify_daemon_invalid_configuration");
 
-			settings.set("theme.dark", "red-claw");
+			settings.set("theme.dark", "lig-blue");
 			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("vib_notify_daemon_invalid_configuration");
 
 			settings.set("notifications.enabled", true);
@@ -904,7 +904,7 @@ describe("notifications config", () => {
 			]);
 			fs.writeFileSync(configPath, `${JSON.stringify({ notifications: { enabled: "invalid", redact: true } })}\n`);
 
-			settings.set("theme.dark", "red-claw");
+			settings.set("theme.dark", "lig-blue");
 			await settings.flushOrThrow();
 			expect(await receipt.restore()).toMatchObject({ status: "restored" });
 			expect(settings.getNotificationSettingsSnapshot()).toMatchObject({ enabled: false, redact: true });
@@ -1182,31 +1182,31 @@ describe("notifications config", () => {
 					},
 				],
 			});
-			expect(() => settings.set("theme.dark", "blue-crab")).toThrow("Repair config.yml");
+			expect(() => settings.set("theme.dark", "lig-white")).toThrow("Repair config.yml");
 			expect(() => settings.unset("theme.dark")).toThrow("Repair config.yml");
 			await expect(
-				settings.commitAtomicBatch([{ path: "theme.dark", op: "set", value: "blue-crab" }]),
+				settings.commitAtomicBatch([{ path: "theme.dark", op: "set", value: "lig-white" }]),
 			).rejects.toThrow("Repair config.yml");
 			await expect(
-				settings.commitAtomicBatchWithCurrent(() => [{ path: "theme.dark", op: "set", value: "blue-crab" }]),
+				settings.commitAtomicBatchWithCurrent(() => [{ path: "theme.dark", op: "set", value: "lig-white" }]),
 			).rejects.toThrow("Repair config.yml");
 			expect(settings.get("theme.dark")).toBe("lig-blue");
 			await settings.flush();
 			expect(fs.readFileSync(configPath, "utf8")).toBe(malformed);
 
-			fs.writeFileSync(configPath, "theme:\n  dark: blue-crab\n");
+			fs.writeFileSync(configPath, "theme:\n  dark: lig-white\n");
 			await settings.flush();
 			expect(settings.getSchemaReport()).toEqual({ issues: [], valid: true });
-			settings.set("theme.dark", "red-claw");
+			settings.set("theme.dark", "lig-blue");
 			await settings.flushOrThrow();
-			expect(YAML.parse(fs.readFileSync(configPath, "utf8"))).toMatchObject({ theme: { dark: "red-claw" } });
+			expect(YAML.parse(fs.readFileSync(configPath, "utf8"))).toMatchObject({ theme: { dark: "lig-blue" } });
 		} finally {
 			settings.getStorage()?.close();
 		}
 
 		const isolated = Settings.isolated();
-		isolated.set("theme.dark", "blue-crab");
-		expect(isolated.get("theme.dark")).toBe("blue-crab");
+		isolated.set("theme.dark", "lig-white");
+		expect(isolated.get("theme.dark")).toBe("lig-white");
 	});
 
 	test("project notification settings are ignored without leaking credentials", async () => {

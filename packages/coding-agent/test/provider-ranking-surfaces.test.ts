@@ -17,7 +17,7 @@ import type { TUI } from "@vib-rato/tui";
 const model = (provider: string, id: string): Model =>
 	({ provider, id, name: id, api: "openai-responses", contextWindow: 1000, maxTokens: 1000 }) as Model;
 
-let testTheme = await getThemeByName("red-claw");
+let testTheme = await getThemeByName("lig-blue");
 
 function installTestTheme(): void {
 	if (!testTheme) throw new Error("Failed to load test theme");
@@ -142,7 +142,7 @@ async function createModelSelector(
 
 beforeEach(async () => {
 	clearTrackedProviderAuthHealth();
-	testTheme = await getThemeByName("red-claw");
+	testTheme = await getThemeByName("lig-blue");
 	installTestTheme();
 });
 

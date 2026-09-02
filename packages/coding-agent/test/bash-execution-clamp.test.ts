@@ -10,7 +10,7 @@ describe("BashExecutionComponent #clampDisplayLine", () => {
 	const ui = { requestRender: () => {} } as unknown as TUI;
 
 	beforeEach(async () => {
-		const theme = await getThemeByName("red-claw");
+		const theme = await getThemeByName("lig-blue");
 		expect(theme).toBeDefined();
 		setThemeInstance(theme!);
 	});

@@ -26,7 +26,7 @@ function bareSelectedPrefix(): string {
 }
 
 beforeAll(async () => {
-	const themeInstance = await getThemeByName("red-claw");
+	const themeInstance = await getThemeByName("lig-blue");
 	if (!themeInstance) {
 		throw new Error("Failed to load dark theme for tests");
 	}

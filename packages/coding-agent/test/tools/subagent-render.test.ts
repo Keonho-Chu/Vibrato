@@ -12,7 +12,7 @@ import {
 let theme: Theme;
 
 beforeAll(async () => {
-	theme = (await getThemeByName("red-claw"))!;
+	theme = (await getThemeByName("lig-blue"))!;
 	expect(theme).toBeDefined();
 	setThemeInstance(theme);
 });
@@ -628,7 +628,7 @@ describe("subagent await renderer body cache (PR2)", () => {
 	});
 
 	it("invalidates the body cache when the Theme instance changes (no stale ANSI)", async () => {
-		const altTheme = (await getThemeByName("blue-crab"))!;
+		const altTheme = (await getThemeByName("lig-white"))!;
 		expect(altTheme).toBeDefined();
 		const details = live("0-A");
 		const renderTheme = (t: Theme): string[] =>

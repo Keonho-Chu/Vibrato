@@ -57,7 +57,7 @@ function createTuiRuntime() {
 
 describe("/fast status TUI rendering", () => {
 	beforeAll(async () => {
-		const installed = await getThemeByName("red-claw");
+		const installed = await getThemeByName("lig-blue");
 		if (!installed) throw new Error("Failed to load theme for /fast status TUI test");
 		setThemeInstance(installed);
 	});

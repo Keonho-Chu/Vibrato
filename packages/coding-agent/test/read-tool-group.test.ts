@@ -7,7 +7,7 @@ import type { InteractiveModeContext } from "../src/modes/types";
 
 describe("ReadToolGroupComponent", () => {
 	beforeEach(async () => {
-		await themeModule.initTheme(false, undefined, undefined, "red-claw", "blue-crab");
+		await themeModule.initTheme(false, undefined, undefined, "lig-blue", "lig-white");
 	});
 
 	afterEach(async () => {

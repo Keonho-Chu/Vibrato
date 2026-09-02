@@ -406,7 +406,7 @@ describe("SubagentTool", () => {
 
 		// Cached renderer path: body renders the summary and the await cache
 		// signature participates (rendering twice must not break).
-		const theme = await getThemeByName("red-claw");
+		const theme = await getThemeByName("lig-blue");
 		if (!theme) throw new Error("Expected test theme");
 		const render = (value: SubagentToolDetails) =>
 			Bun.stripANSI(
@@ -487,7 +487,7 @@ describe("SubagentTool", () => {
 		// Streaming/dynamic render (isPartial: true) and terminal cached render
 		// both carry the real summary; every rendered line stays within the
 		// requested width and contains no raw tabs.
-		const theme = await getThemeByName("red-claw");
+		const theme = await getThemeByName("lig-blue");
 		if (!theme) throw new Error("Expected test theme");
 		const details = result.details as SubagentToolDetails;
 		for (const isPartial of [true, false]) {
@@ -508,7 +508,7 @@ describe("SubagentTool", () => {
 	});
 
 	it("renders local_snapshot_failure with serialization-defect guidance, not staging-limit guidance (#4618)", async () => {
-		const theme = await getThemeByName("red-claw");
+		const theme = await getThemeByName("lig-blue");
 		if (!theme) throw new Error("Expected test theme");
 		const details: SubagentToolDetails = {
 			subagents: [
@@ -540,7 +540,7 @@ describe("SubagentTool", () => {
 		expect(rendered).not.toContain("staging-buffer limit");
 	});
 	it("renders setup failures and invalidates the static body cache when the cause changes", async () => {
-		const theme = await getThemeByName("red-claw");
+		const theme = await getThemeByName("lig-blue");
 		if (!theme) throw new Error("Expected test theme");
 		const details = (setupFailureSummary: string): SubagentToolDetails => ({
 			subagents: [

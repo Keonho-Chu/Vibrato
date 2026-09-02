@@ -9,7 +9,7 @@ import { ImageProtocol, TERMINAL, type TUI } from "@vib-rato/tui";
 beforeAll(async () => {
 	resetSettingsForTest();
 	await Settings.init({ inMemory: true, cwd: process.cwd() });
-	await themeModule.initTheme(false, undefined, undefined, "red-claw", "blue-crab");
+	await themeModule.initTheme(false, undefined, undefined, "lig-blue", "lig-white");
 });
 
 const uiStub = { requestRender() {} } as unknown as TUI;

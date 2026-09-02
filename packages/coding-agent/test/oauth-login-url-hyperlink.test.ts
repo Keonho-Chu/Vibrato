@@ -139,7 +139,7 @@ describe("OAuth login row emission", () => {
 		resetSettingsForTest();
 		await Settings.init({ inMemory: true });
 		settings.override("tui.hyperlinks", "always");
-		const theme = await getThemeByName("red-claw");
+		const theme = await getThemeByName("lig-blue");
 		if (!theme) throw new Error("Failed to load test theme");
 		setThemeInstance(theme);
 	});

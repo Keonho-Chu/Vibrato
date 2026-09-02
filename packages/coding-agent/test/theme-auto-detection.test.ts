@@ -46,7 +46,7 @@ const withThemeTestGlobals = (globals: ThemeTestGlobals = {}) => {
 describe("theme auto-detection", () => {
 	beforeEach(async () => {
 		themeModule.stopThemeWatcher();
-		const darkTheme = await themeModule.getThemeByName("red-claw");
+		const darkTheme = await themeModule.getThemeByName("lig-blue");
 		if (!darkTheme) {
 			throw new Error("Failed to load dark theme for tests");
 		}
@@ -63,9 +63,9 @@ describe("theme auto-detection", () => {
 		using _globals = withThemeTestGlobals({ zellij: "1", colorfgbg: "15;0" });
 		const detectSpy = vi.spyOn(nativesModule, "detectMacOSAppearance").mockReturnValue(MacOSAppearance.Light);
 
-		await themeModule.initTheme(false, undefined, undefined, "red-claw", "blue-crab");
+		await themeModule.initTheme(false, undefined, undefined, "lig-blue", "lig-white");
 
-		expect(themeModule.getCurrentThemeName()).toBe("red-claw");
+		expect(themeModule.getCurrentThemeName()).toBe("lig-blue");
 		expect(detectSpy).not.toHaveBeenCalled();
 	});
 
@@ -75,9 +75,9 @@ describe("theme auto-detection", () => {
 		const observerSpy = vi.spyOn(nativesModule.MacAppearanceObserver, "start");
 
 		themeModule.onTerminalAppearanceChange("dark");
-		await themeModule.initTheme(true, undefined, undefined, "red-claw", "blue-crab");
+		await themeModule.initTheme(true, undefined, undefined, "lig-blue", "lig-white");
 
-		expect(themeModule.getCurrentThemeName()).toBe("red-claw");
+		expect(themeModule.getCurrentThemeName()).toBe("lig-blue");
 		expect(detectSpy).not.toHaveBeenCalled();
 		expect(observerSpy).not.toHaveBeenCalled();
 	});
@@ -94,16 +94,16 @@ describe("theme auto-detection", () => {
 			return { stop };
 		}) as any);
 
-		await themeModule.initTheme(true, undefined, undefined, "red-claw", "blue-crab");
+		await themeModule.initTheme(true, undefined, undefined, "lig-blue", "lig-white");
 
 		expect(observerSpy).toHaveBeenCalledTimes(1);
-		expect(themeModule.getCurrentThemeName()).toBe("blue-crab");
+		expect(themeModule.getCurrentThemeName()).toBe("lig-white");
 		expect(onAppearanceChange).toBeDefined();
 
 		onAppearanceChange!("dark");
 		await Bun.sleep(0);
 
-		expect(themeModule.getCurrentThemeName()).toBe("red-claw");
+		expect(themeModule.getCurrentThemeName()).toBe("lig-blue");
 		themeModule.stopThemeWatcher();
 		expect(stop).toHaveBeenCalledTimes(1);
 	});
@@ -111,7 +111,7 @@ describe("theme auto-detection", () => {
 	it("routes theme selection persistence to the detected appearance slot", async () => {
 		using _globals = withThemeTestGlobals({ colorfgbg: "15;0" });
 		themeModule.onTerminalAppearanceChange("light");
-		await themeModule.initTheme(false, undefined, undefined, "red-claw", "blue-crab");
+		await themeModule.initTheme(false, undefined, undefined, "lig-blue", "lig-white");
 
 		expect(themeModule.getDetectedThemeSettingsPath()).toBe("theme.light");
 
@@ -122,46 +122,46 @@ describe("theme auto-detection", () => {
 
 	it("restores previewed themes without leaving preview mode active", async () => {
 		using _globals = withThemeTestGlobals({ colorfgbg: "15;0" });
-		await themeModule.initTheme(false, undefined, undefined, "red-claw", "blue-crab");
+		await themeModule.initTheme(false, undefined, undefined, "lig-blue", "lig-white");
 		const darkAccent = themeModule.theme.getFgAnsi("accent");
 
-		await themeModule.previewTheme("blue-crab");
+		await themeModule.previewTheme("lig-white");
 		expect(themeModule.theme.getFgAnsi("accent")).not.toBe(darkAccent);
 
-		await themeModule.restoreThemePreview("red-claw");
-		expect(themeModule.getCurrentThemeName()).toBe("red-claw");
+		await themeModule.restoreThemePreview("lig-blue");
+		expect(themeModule.getCurrentThemeName()).toBe("lig-blue");
 		expect(themeModule.theme.getFgAnsi("accent")).toBe(darkAccent);
 
-		themeModule.setAutoThemeMapping("dark", "red-claw");
+		themeModule.setAutoThemeMapping("dark", "lig-blue");
 		await Bun.sleep(0);
-		expect(themeModule.getCurrentThemeName()).toBe("red-claw");
+		expect(themeModule.getCurrentThemeName()).toBe("lig-blue");
 		expect(themeModule.theme.getFgAnsi("accent")).toBe(darkAccent);
 	});
 
 	it("restores the latest detected auto theme when terminal appearance changes during preview", async () => {
 		using _globals = withThemeTestGlobals({ colorfgbg: "15;0" });
-		await themeModule.initTheme(false, undefined, undefined, "red-claw", "blue-crab");
+		await themeModule.initTheme(false, undefined, undefined, "lig-blue", "lig-white");
 		const darkAccent = themeModule.theme.getFgAnsi("accent");
 
-		await themeModule.previewTheme("red-claw");
+		await themeModule.previewTheme("lig-blue");
 		themeModule.onTerminalAppearanceChange("light");
 		await Bun.sleep(0);
-		await themeModule.restoreThemePreview("red-claw");
+		await themeModule.restoreThemePreview("lig-blue");
 
-		expect(themeModule.getCurrentThemeName()).toBe("blue-crab");
+		expect(themeModule.getCurrentThemeName()).toBe("lig-white");
 		expect(themeModule.theme.getFgAnsi("accent")).not.toBe(darkAccent);
 	});
 
 	it("restores the resolved auto theme after saving the inactive theme slot from preview", async () => {
 		using _globals = withThemeTestGlobals({ colorfgbg: "15;0" });
-		await themeModule.initTheme(false, undefined, undefined, "red-claw", "blue-crab");
+		await themeModule.initTheme(false, undefined, undefined, "lig-blue", "lig-white");
 		const darkAccent = themeModule.theme.getFgAnsi("accent");
 
-		await themeModule.previewTheme("blue-crab");
-		themeModule.setAutoThemeMapping("light", "blue-crab");
+		await themeModule.previewTheme("lig-white");
+		themeModule.setAutoThemeMapping("light", "lig-white");
 		await Bun.sleep(0);
 
-		expect(themeModule.getCurrentThemeName()).toBe("red-claw");
+		expect(themeModule.getCurrentThemeName()).toBe("lig-blue");
 		expect(themeModule.theme.getFgAnsi("accent")).toBe(darkAccent);
 	});
 
@@ -184,9 +184,9 @@ describe("theme auto-detection", () => {
 		const detectSpy = vi.spyOn(nativesModule, "detectMacOSAppearance").mockReturnValue(MacOSAppearance.Light);
 
 		themeModule.onTerminalAppearanceChange("dark");
-		await themeModule.initTheme(false, undefined, undefined, "red-claw", "blue-crab");
+		await themeModule.initTheme(false, undefined, undefined, "lig-blue", "lig-white");
 
-		expect(themeModule.getCurrentThemeName()).toBe("red-claw");
+		expect(themeModule.getCurrentThemeName()).toBe("lig-blue");
 		expect(detectSpy).not.toHaveBeenCalled();
 	});
 
@@ -195,9 +195,9 @@ describe("theme auto-detection", () => {
 		const detectSpy = vi.spyOn(nativesModule, "detectMacOSAppearance").mockReturnValue(MacOSAppearance.Light);
 
 		themeModule.onTerminalAppearanceChange("light");
-		await themeModule.initTheme(false, undefined, undefined, "red-claw", "blue-crab");
+		await themeModule.initTheme(false, undefined, undefined, "lig-blue", "lig-white");
 
-		expect(themeModule.getCurrentThemeName()).toBe("blue-crab");
+		expect(themeModule.getCurrentThemeName()).toBe("lig-white");
 		expect(detectSpy).not.toHaveBeenCalled();
 	});
 
@@ -205,7 +205,7 @@ describe("theme auto-detection", () => {
 		using _globals = withThemeTestGlobals();
 		const previousTheme = themeModule.getCurrentThemeName();
 
-		const result = await themeModule.setTheme("blue-crab", false, { shouldApply: () => false });
+		const result = await themeModule.setTheme("lig-white", false, { shouldApply: () => false });
 
 		expect(result).toEqual({ success: false, error: "Theme change cancelled" });
 		expect(themeModule.getCurrentThemeName()).toBe(previousTheme);

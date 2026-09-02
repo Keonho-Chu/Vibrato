@@ -225,7 +225,7 @@ export async function renderPlatformShortcutLabelsShowcase(
 	const oldLevel = chalk.level;
 	chalk.level = 3;
 	await Settings.init({ inMemory: true });
-	await initTheme(false, entry.renderMode === "ascii-no-color" ? "ascii" : "unicode", false, "red-claw", "red-claw");
+	await initTheme(false, entry.renderMode === "ascii-no-color" ? "ascii" : "unicode", false, "lig-blue", "lig-blue");
 	try {
 		const lines = entry.surface.startsWith("composer")
 			? renderComposer(entry, context)

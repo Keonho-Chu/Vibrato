@@ -243,7 +243,7 @@ function selector(operations: NotificationsEditorOperations): SettingsSelectorCo
 		{
 			availableThinkingLevels: [],
 			thinkingLevel: undefined,
-			availableThemes: ["red-claw"],
+			availableThemes: ["lig-blue"],
 			availableModelProfiles: [],
 			cwd: "/workspace",
 		},

@@ -6,10 +6,10 @@ import { getThemeByName, setThemeInstance } from "@vib-rato/coding-agent/modes/t
 import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
 import { getSelectableOAuthProviders } from "../src/config/provider-allowlist";
 
-let testTheme = await getThemeByName("red-claw");
+let testTheme = await getThemeByName("lig-blue");
 
 function installTestTheme(): void {
-	if (!testTheme) throw new Error("Failed to load red-claw test theme");
+	if (!testTheme) throw new Error("Failed to load lig-blue test theme");
 	setThemeInstance(testTheme);
 }
 
@@ -34,7 +34,7 @@ async function flushValidation(): Promise<void> {
 }
 
 beforeEach(async () => {
-	testTheme = await getThemeByName("red-claw");
+	testTheme = await getThemeByName("lig-blue");
 	installTestTheme();
 });
 

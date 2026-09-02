@@ -26,7 +26,7 @@ beforeEach(async () => {
 	await fs.mkdir(projectDir, { recursive: true });
 	await fs.mkdir(homeDir, { recursive: true });
 	savedAgentDir = getAgentDir();
-	const themeInstance = await getThemeByName("red-claw");
+	const themeInstance = await getThemeByName("lig-blue");
 	if (!themeInstance) throw new Error("Failed to load theme for tests");
 	setThemeInstance(themeInstance);
 	setAgentDir(path.join(homeDir, ".vib", "agent"));

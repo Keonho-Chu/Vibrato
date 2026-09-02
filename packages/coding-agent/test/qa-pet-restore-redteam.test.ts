@@ -44,7 +44,7 @@ type PetRestore = {
 };
 
 beforeAll(async () => {
-	const loadedTheme = await getThemeByName("red-claw");
+	const loadedTheme = await getThemeByName("lig-blue");
 	if (!loadedTheme) {
 		throw new Error("Failed to load dark theme for tests");
 	}

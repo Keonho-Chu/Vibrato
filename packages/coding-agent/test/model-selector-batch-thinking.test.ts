@@ -139,7 +139,7 @@ function createXaiGrokReasoningModel(id: "grok-4.5" | "grok-4.6"): Model {
 	} as Model;
 }
 
-let testTheme = await getThemeByName("red-claw");
+let testTheme = await getThemeByName("lig-blue");
 
 function installTestTheme(): void {
 	if (!testTheme) throw new Error("Failed to load test theme");
@@ -160,7 +160,7 @@ const ALL_TARGETS_ROW = 7;
 
 describe("ModelSelector batch assignment thinking menu", () => {
 	beforeAll(async () => {
-		testTheme = await getThemeByName("red-claw");
+		testTheme = await getThemeByName("lig-blue");
 		installTestTheme();
 	});
 

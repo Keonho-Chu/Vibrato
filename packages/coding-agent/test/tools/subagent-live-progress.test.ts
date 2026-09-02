@@ -823,7 +823,7 @@ describe("subagent await progress visibility boundary", () => {
 		expect(String(telemetryInput)).not.toContain("secret-marker-text");
 		await tracerProvider.shutdown();
 
-		const theme = (await getThemeByName("red-claw"))!;
+		const theme = (await getThemeByName("lig-blue"))!;
 		setThemeInstance(theme);
 		const rendered = Bun.stripANSI(
 			subagentToolRenderer

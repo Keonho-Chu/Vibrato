@@ -11,7 +11,7 @@ import {
 beforeAll(async () => {
 	resetSettingsForTest();
 	await Settings.init({ inMemory: true, cwd: process.cwd() });
-	await themeModule.initTheme(false, undefined, undefined, "red-claw", "blue-crab");
+	await themeModule.initTheme(false, undefined, undefined, "lig-blue", "lig-white");
 });
 
 function makeMessage(details: SkillPromptDetails, content: string): CustomMessage<SkillPromptDetails> {

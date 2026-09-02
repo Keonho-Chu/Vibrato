@@ -85,7 +85,7 @@ async function renderSessionInfo(costBreakdown?: Usage["cost"], model?: Model): 
 }
 
 beforeAll(async () => {
-	const installed = await getThemeByName("red-claw");
+	const installed = await getThemeByName("lig-blue");
 	if (!installed) throw new Error("Expected dark theme");
 	setThemeInstance(installed);
 });

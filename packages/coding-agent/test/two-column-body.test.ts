@@ -14,8 +14,8 @@ class StaticPane implements Component {
 }
 
 beforeAll(async () => {
-	const theme = await getThemeByName("red-claw");
-	if (!theme) throw new Error("Failed to load red-claw theme");
+	const theme = await getThemeByName("lig-blue");
+	if (!theme) throw new Error("Failed to load lig-blue theme");
 	setThemeInstance(theme);
 });
 

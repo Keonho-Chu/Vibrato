@@ -34,7 +34,7 @@ function report(email: string, fiveHour: number, sevenDay: number): UsageReport 
 
 describe("usage report column ordering", () => {
 	beforeAll(async () => {
-		const loaded = await getThemeByName("red-claw");
+		const loaded = await getThemeByName("lig-blue");
 		if (loaded) setThemeInstance(loaded);
 	});
 
@@ -119,7 +119,7 @@ describe("usage report column ordering", () => {
 
 describe("usage report reset visibility", () => {
 	beforeAll(async () => {
-		const loaded = await getThemeByName("red-claw");
+		const loaded = await getThemeByName("lig-blue");
 		if (loaded) setThemeInstance(loaded);
 	});
 

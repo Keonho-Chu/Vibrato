@@ -18,7 +18,7 @@ const previews: ReadonlyArray<{
 
 describe("InspectorPanel narrow widths", () => {
 	beforeAll(async () => {
-		await themeModule.initTheme(false, undefined, undefined, "red-claw", "blue-crab");
+		await themeModule.initTheme(false, undefined, undefined, "lig-blue", "lig-white");
 	});
 
 	it("renders every preview separator when the right pane is narrower than its padding", () => {

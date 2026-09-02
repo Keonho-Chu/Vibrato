@@ -24,11 +24,11 @@ const oauthCredential = (suffix: string) => ({
 	accountId: `account-${suffix}`,
 });
 
-let testTheme = await getThemeByName("red-claw");
+let testTheme = await getThemeByName("lig-blue");
 const trackedAuthStorages = new Set<AuthStorageType>();
 
 function installTestTheme(): void {
-	if (!testTheme) throw new Error("Failed to load red-claw test theme");
+	if (!testTheme) throw new Error("Failed to load lig-blue test theme");
 	setThemeInstance(testTheme);
 }
 
@@ -128,7 +128,7 @@ async function observeGeneration(
 }
 
 beforeEach(async () => {
-	testTheme = await getThemeByName("red-claw");
+	testTheme = await getThemeByName("lig-blue");
 	installTestTheme();
 });
 

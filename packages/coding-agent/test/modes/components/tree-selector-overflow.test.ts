@@ -44,7 +44,7 @@ function renderSelector(tree: SessionTreeNode, leafId: string, width: number): s
 
 describe("TreeSelectorComponent deep branching overflow", () => {
 	beforeAll(async () => {
-		await themeModule.initTheme(false, undefined, undefined, "red-claw", "blue-crab");
+		await themeModule.initTheme(false, undefined, undefined, "lig-blue", "lig-white");
 	});
 
 	it("keeps the selected entry text visible when branching exceeds the viewport width", () => {

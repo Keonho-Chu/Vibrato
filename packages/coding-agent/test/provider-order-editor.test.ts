@@ -19,7 +19,7 @@ interface Fixture {
 }
 
 beforeAll(async () => {
-	await initTheme(false, undefined, undefined, "red-claw", "blue-crab");
+	await initTheme(false, undefined, undefined, "lig-blue", "lig-white");
 });
 
 afterEach(() => {
@@ -90,7 +90,7 @@ describe("ProviderOrderContext", () => {
 			expect.objectContaining({ id: "beta", available: true, inOrder: false }),
 		]);
 
-		settingsInstance.set("theme.dark", "red-claw");
+		settingsInstance.set("theme.dark", "lig-blue");
 		expect(changed).not.toHaveBeenCalled();
 		settingsInstance.set("modelProviderOrder", ["beta"]);
 		expect(changed).toHaveBeenCalledTimes(1);
@@ -376,7 +376,7 @@ describe("SettingsSelectorComponent provider order integration", () => {
 			{
 				availableThinkingLevels: [],
 				thinkingLevel: undefined,
-				availableThemes: ["red-claw", "blue-crab"],
+				availableThemes: ["lig-blue", "lig-white"],
 				availableModelProfiles: [],
 				cwd: process.cwd(),
 			},

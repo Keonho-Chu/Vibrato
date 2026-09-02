@@ -479,7 +479,7 @@ describe("Settings", () => {
 					}),
 				);
 
-				settings.set("theme.dark", "red-claw");
+				settings.set("theme.dark", "lig-blue");
 				await settings.flush();
 				expect((await readSettings()).providers).toEqual(providers);
 				expect(error).toHaveBeenCalledWith(
@@ -530,7 +530,7 @@ describe("Settings", () => {
 						detail: expect.stringContaining("cannot be migrated"),
 					}),
 				);
-				settings.set("theme.light", "blue-crab");
+				settings.set("theme.light", "lig-white");
 				await settings.flush();
 				expect((await readSettings()).providers).toEqual(providers);
 
@@ -654,13 +654,13 @@ describe("Settings", () => {
 		it("fails closed after an atomic read failure", async () => {
 			for (const commit of [
 				(settings: Settings) =>
-					settings.commitAtomicBatch([{ path: "theme.dark", op: "set" as const, value: "red-claw" }]),
+					settings.commitAtomicBatch([{ path: "theme.dark", op: "set" as const, value: "lig-blue" }]),
 				(settings: Settings) =>
 					settings.commitAtomicBatchWithCurrent(() => [
-						{ path: "theme.dark", op: "set" as const, value: "red-claw" },
+						{ path: "theme.dark", op: "set" as const, value: "lig-blue" },
 					]),
 			]) {
-				await writeSettings({ theme: { dark: "blue-crab" } });
+				await writeSettings({ theme: { dark: "lig-white" } });
 				const settings = await Settings.loadForScope({ cwd: projectDir, agentDir });
 				await Bun.write(getConfigPath(), "notifications: [");
 
@@ -673,7 +673,7 @@ describe("Settings", () => {
 				});
 				expect(() => settings.getNotificationSettingsSnapshot()).toThrow("vib_notify_daemon_invalid_configuration");
 				await expect(
-					settings.commitAtomicBatch([{ path: "theme.dark", op: "set", value: "red-claw" }]),
+					settings.commitAtomicBatch([{ path: "theme.dark", op: "set", value: "lig-blue" }]),
 				).rejects.toThrow("Repair config.yml");
 				settings.getStorage()?.close();
 			}
@@ -687,7 +687,7 @@ describe("Settings", () => {
 						{ path: "notifications.enabled", op: "set" as const, value: true },
 					]),
 			]) {
-				await writeSettings({ theme: { dark: "blue-crab" } });
+				await writeSettings({ theme: { dark: "lig-white" } });
 				const settings = await Settings.loadForScope({ cwd: projectDir, agentDir });
 				await Bun.write(getConfigPath(), "malformed-root\n");
 
@@ -815,7 +815,7 @@ describe("Settings", () => {
 		try {
 			expect(settings.canWriteDurableConfig()).toBe(false);
 			expect(settings.getSchemaReport()).toMatchObject({ valid: false });
-			expect(() => settings.set("theme.dark", "red-claw")).toThrow("Repair config.yml");
+			expect(() => settings.set("theme.dark", "lig-blue")).toThrow("Repair config.yml");
 			expect(await Bun.file(getConfigPath()).text()).toBe(malformed);
 
 			await Bun.write(getConfigPath(), "");
@@ -855,18 +855,18 @@ describe("Settings", () => {
 	it("persists a retained dirty patch on the first flush after YAML repair", async () => {
 		const settings = await Settings.init({ cwd: projectDir, agentDir });
 		try {
-			settings.set("theme.dark", "blue-crab");
+			settings.set("theme.dark", "lig-white");
 			await Bun.write(getConfigPath(), "theme: [");
 			await settings.flush();
 
 			expect(settings.canWriteDurableConfig()).toBe(false);
-			expect(settings.get("theme.dark")).toBe("blue-crab");
+			expect(settings.get("theme.dark")).toBe("lig-white");
 
 			await Bun.write(getConfigPath(), "");
 			await settings.flushOrThrow();
 
 			expect(settings.canWriteDurableConfig()).toBe(true);
-			expect((await readSettings()).theme).toEqual({ dark: "blue-crab" });
+			expect((await readSettings()).theme).toEqual({ dark: "lig-white" });
 		} finally {
 			settings.getStorage()?.close();
 		}
@@ -874,15 +874,15 @@ describe("Settings", () => {
 	it("enters syntax recovery after a debounced save encounters malformed YAML", async () => {
 		const settings = await Settings.init({ cwd: projectDir, agentDir });
 		try {
-			settings.set("theme.dark", "blue-crab");
+			settings.set("theme.dark", "lig-white");
 			await Bun.write(getConfigPath(), "theme: [");
 			await Bun.sleep(300);
 
 			expect(settings.canWriteDurableConfig()).toBe(false);
-			expect(settings.get("theme.dark")).toBe("blue-crab");
+			expect(settings.get("theme.dark")).toBe("lig-white");
 			expect(settings.getSchemaReport()).toMatchObject({ valid: false });
 			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("vib_notify_daemon_invalid_configuration");
-			expect(() => settings.set("theme.light", "blue-crab")).toThrow("Repair config.yml");
+			expect(() => settings.set("theme.light", "lig-white")).toThrow("Repair config.yml");
 		} finally {
 			settings.getStorage()?.close();
 		}
@@ -891,19 +891,19 @@ describe("Settings", () => {
 		const settings = await Settings.init({ cwd: projectDir, agentDir });
 		try {
 			settings.set("notifications.redact", true);
-			settings.set("theme.dark", "blue-crab");
+			settings.set("theme.dark", "lig-white");
 			await Bun.write(getConfigPath(), "notifications: [");
 			await settings.flush();
 
 			expect(() => settings.getNotificationSettingsSnapshot()).toThrow("vib_notify_daemon_invalid_configuration");
-			expect(settings.get("theme.dark")).toBe("blue-crab");
+			expect(settings.get("theme.dark")).toBe("lig-white");
 
 			await Bun.write(getConfigPath(), "");
 			await settings.flushOrThrow();
 
 			expect(await readSettings()).toMatchObject({
 				notifications: { redact: true },
-				theme: { dark: "blue-crab" },
+				theme: { dark: "lig-white" },
 			});
 		} finally {
 			settings.getStorage()?.close();
@@ -933,17 +933,17 @@ describe("Settings", () => {
 		const warning = vi.spyOn(logger, "warn").mockImplementation(message => {
 			if (message !== "Settings: background save failed" || queuedNewestSave) return;
 			queuedNewestSave = true;
-			fs.writeFileSync(getConfigPath(), YAML.stringify({ theme: { dark: "red-claw" } }, null, 2));
-			settings.set("theme.dark", "red-claw");
+			fs.writeFileSync(getConfigPath(), YAML.stringify({ theme: { dark: "lig-blue" } }, null, 2));
+			settings.set("theme.dark", "lig-blue");
 		});
 		try {
-			settings.set("theme.dark", "blue-crab");
+			settings.set("theme.dark", "lig-white");
 			await Bun.write(getConfigPath(), "theme: [");
 			await expect(settings.flushOrThrow()).rejects.toThrow();
 
 			expect(queuedNewestSave).toBe(true);
-			expect(settings.get("theme.dark")).toBe("red-claw");
-			expect((await readSettings()).theme).toEqual({ dark: "red-claw" });
+			expect(settings.get("theme.dark")).toBe("lig-blue");
+			expect((await readSettings()).theme).toEqual({ dark: "lig-blue" });
 		} finally {
 			warning.mockRestore();
 			settings.getStorage()?.close();
@@ -973,21 +973,21 @@ describe("Settings", () => {
 		fs.mkdirSync(clonedCwd, { recursive: true });
 		const source = await Settings.init({ cwd: projectDir, agentDir });
 		try {
-			source.set("theme.dark", "blue-crab");
+			source.set("theme.dark", "lig-white");
 			await Bun.write(getConfigPath(), "theme: [");
 			await Bun.sleep(300);
 
 			const cloned = await source.cloneForCwd(clonedCwd);
 			expect(cloned.canWriteDurableConfig()).toBe(false);
-			expect(cloned.get("theme.dark")).toBe("blue-crab");
+			expect(cloned.get("theme.dark")).toBe("lig-white");
 
 			await Bun.write(getConfigPath(), "");
 			await source.flushOrThrow();
-			expect((await readSettings()).theme).toEqual({ dark: "blue-crab" });
+			expect((await readSettings()).theme).toEqual({ dark: "lig-white" });
 
-			await Bun.write(getConfigPath(), YAML.stringify({ theme: { dark: "red-claw" } }, null, 2));
+			await Bun.write(getConfigPath(), YAML.stringify({ theme: { dark: "lig-blue" } }, null, 2));
 			await cloned.flushOrThrow();
-			expect((await readSettings()).theme).toEqual({ dark: "red-claw" });
+			expect((await readSettings()).theme).toEqual({ dark: "lig-blue" });
 		} finally {
 			source.getStorage()?.close();
 		}

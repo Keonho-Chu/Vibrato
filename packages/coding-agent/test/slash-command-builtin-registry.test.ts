@@ -35,7 +35,7 @@ const mutableTerminal = TERMINAL as unknown as { imageProtocol: ImageProtocol | 
 const originalImageProtocol = mutableTerminal.imageProtocol;
 
 beforeAll(async () => {
-	await initTheme(false, undefined, undefined, "red-claw", "blue-crab");
+	await initTheme(false, undefined, undefined, "lig-blue", "lig-white");
 });
 
 afterEach(() => {
@@ -446,14 +446,14 @@ describe("builtin /theme slash command", () => {
 	it("changes the theme immediately when a valid theme name is given", async () => {
 		const { runtime, showThemeSelector, showStatus, settingsSet } = createThemeTuiRuntime();
 
-		const result = await executeBuiltinSlashCommand("/theme blue-crab", runtime);
+		const result = await executeBuiltinSlashCommand("/theme lig-white", runtime);
 
 		expect(result).toBe(true);
 		expect(showThemeSelector).not.toHaveBeenCalled();
 		expect(settingsSet).toHaveBeenCalledTimes(1);
-		expect(settingsSet.mock.calls[0]?.[1]).toBe("blue-crab");
-		expect(getCurrentThemeName()).toBe("blue-crab");
-		expect(showStatus).toHaveBeenCalledWith("Theme changed to blue-crab");
+		expect(settingsSet.mock.calls[0]?.[1]).toBe("lig-white");
+		expect(getCurrentThemeName()).toBe("lig-white");
+		expect(showStatus).toHaveBeenCalledWith("Theme changed to lig-white");
 	});
 
 	it("rejects an unknown theme name without touching settings", async () => {

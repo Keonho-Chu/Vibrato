@@ -22,7 +22,7 @@ interface SelectorOptions {
 }
 
 beforeAll(async () => {
-	await initTheme(false, undefined, undefined, "red-claw", "blue-crab");
+	await initTheme(false, undefined, undefined, "lig-blue", "lig-white");
 });
 
 beforeEach(async () => {
@@ -39,7 +39,7 @@ function createSelector(options: SelectorOptions = {}) {
 		{
 			availableThinkingLevels: [],
 			thinkingLevel: undefined,
-			availableThemes: ["red-claw", "blue-crab"],
+			availableThemes: ["lig-blue", "lig-white"],
 			availableModelProfiles: [],
 			cwd: process.cwd(),
 		},

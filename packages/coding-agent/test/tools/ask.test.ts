@@ -1559,7 +1559,7 @@ describe("AskTool custom input", () => {
 		expect(result.content[0].text).toContain("alpha");
 		expect(result.content[0].text).toContain("custom detail");
 
-		const theme = await getThemeByName("red-claw");
+		const theme = await getThemeByName("lig-blue");
 		expect(theme).toBeDefined();
 		const rendered = askToolRenderer.renderResult(result, { expanded: true, isPartial: false }, theme!);
 		const renderedText = stripAnsi(rendered.render(120).join("\n"));
@@ -1644,7 +1644,7 @@ describe("AskTool custom input", () => {
 
 describe("AskTool option rendering", () => {
 	it("wraps long single-question option labels without ellipsis", async () => {
-		const theme = await getThemeByName("red-claw");
+		const theme = await getThemeByName("lig-blue");
 		expect(theme).toBeDefined();
 		const longLabel =
 			"Wrap this long option label across multiple indented lines so the entire choice remains visible to the user";
@@ -1666,7 +1666,7 @@ describe("AskTool option rendering", () => {
 	});
 
 	it("wraps long multi-question option labels under their option prefix", async () => {
-		const theme = await getThemeByName("red-claw");
+		const theme = await getThemeByName("lig-blue");
 		expect(theme).toBeDefined();
 		const longLabel =
 			"Keep every multi question option fully readable by wrapping continuation text under the checkbox prefix";
@@ -1721,7 +1721,7 @@ describe("AskTool multiline custom input rendering", () => {
 
 		expect(result.details?.customInput).toBe(multilineText);
 
-		const theme = await getThemeByName("red-claw");
+		const theme = await getThemeByName("lig-blue");
 		expect(theme).toBeDefined();
 		const rendered = askToolRenderer.renderResult(result, { expanded: true, isPartial: false }, theme!);
 		const renderedText = stripAnsi(rendered.render(120).join("\n"));
@@ -1776,7 +1776,7 @@ describe("AskTool multiline custom input rendering", () => {
 			context,
 		);
 
-		const theme = await getThemeByName("red-claw");
+		const theme = await getThemeByName("lig-blue");
 		expect(theme).toBeDefined();
 		const rendered = askToolRenderer.renderResult(result, { expanded: true, isPartial: false }, theme!);
 		const renderedText = stripAnsi(rendered.render(120).join("\n"));
@@ -2534,7 +2534,7 @@ describe("AskTool deep-interview rendering middleware", () => {
 			"Round 0 | Topology confirmation | Ambiguity: not scored yet",
 			"",
 			"I'm currently reading the scope as these 2 top-level components.",
-			"1. Brand and theme system: red-claw/Vibrato default theme and semantic color separation.",
+			"1. Brand and theme system: lig-blue/Vibrato default theme and semantic color separation.",
 			"2. Tool card UX: readability of ask/approval cards and tool output styling.",
 			"",
 			"Is that topology right? Should any component be added, removed, merged, split, or explicitly deferred?",
@@ -2564,7 +2564,7 @@ describe("AskTool deep-interview rendering middleware", () => {
 		expect(prompt).toContain("Reading:");
 		expect(prompt).toContain("I'm currently reading the scope as these 2 top-level components.");
 		expect(prompt).toContain(
-			"1. Brand and theme system — red-claw/Vibrato default theme and semantic color separation.",
+			"1. Brand and theme system — lig-blue/Vibrato default theme and semantic color separation.",
 		);
 		expect(prompt).toContain("Question:");
 		expect(prompt).not.toContain("Context:");
@@ -2573,7 +2573,7 @@ describe("AskTool deep-interview rendering middleware", () => {
 	});
 
 	it("renders round questions as structured cards in history", async () => {
-		const theme = await getThemeByName("red-claw");
+		const theme = await getThemeByName("lig-blue");
 		expect(theme).toBeDefined();
 		const rawQuestion = [
 			"Round 2 | Component: Export | Targeting: Constraints | Why now: output boundaries are unclear | Ambiguity: 42%",

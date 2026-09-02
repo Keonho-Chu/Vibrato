@@ -290,7 +290,7 @@ function createRuntime() {
 
 describe("ACP builtin slash commands", () => {
 	it("consumes fast status without returning prompt text", async () => {
-		const installed = await getThemeByName("red-claw");
+		const installed = await getThemeByName("lig-blue");
 		if (!installed) throw new Error("Failed to load theme for fast status test");
 		setThemeInstance(installed);
 		const { output, runtime } = createRuntime();
@@ -306,7 +306,7 @@ describe("ACP builtin slash commands", () => {
 	});
 
 	it("renders a provider-aware multiline fast status report and never calls isFastModeEnabled", async () => {
-		const installed = await getThemeByName("red-claw");
+		const installed = await getThemeByName("lig-blue");
 		if (!installed) throw new Error("Failed to load theme for fast status test");
 		setThemeInstance(installed);
 		const { output, runtime } = createRuntime();

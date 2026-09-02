@@ -392,7 +392,7 @@ describe("CLI help single source of truth", () => {
 		const fastHelpSource = await Bun.file(fastHelpPath).text();
 
 		// The old product name tagline must not leak into live help output.
-		expect(fastHelpSource).not.toContain("red-claw");
+		expect(fastHelpSource).not.toContain("lig-blue");
 	});
 
 	it("args.ts no longer carries the dead duplicate help exports or stale tagline", async () => {
@@ -403,7 +403,7 @@ describe("CLI help single source of truth", () => {
 		// and the chalk/import bindings only they used.
 		expect(argsSource).not.toContain("export function getExtraHelpText");
 		expect(argsSource).not.toContain("export function printHelp");
-		expect(argsSource).not.toContain("red-claw");
+		expect(argsSource).not.toContain("lig-blue");
 		expect(argsSource).not.toContain("chalk");
 	});
 });

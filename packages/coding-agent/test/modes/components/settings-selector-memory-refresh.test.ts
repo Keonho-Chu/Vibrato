@@ -81,7 +81,7 @@ describe("SettingsSelectorComponent memory tab", () => {
 				{
 					availableThinkingLevels: [],
 					thinkingLevel: undefined,
-					availableThemes: ["blue-crab"],
+					availableThemes: ["lig-white"],
 					availableModelProfiles: [],
 					cwd: testDir,
 				},

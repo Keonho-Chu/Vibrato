@@ -31,9 +31,9 @@ function createSession(initialPhases: TodoPhase[] = []): ToolSession {
 }
 
 async function getUiTheme() {
-	await themeModule.initTheme(false, undefined, undefined, "red-claw", "blue-crab");
-	const theme = await themeModule.getThemeByName("red-claw");
-	if (!theme) throw new Error("Expected red-claw theme");
+	await themeModule.initTheme(false, undefined, undefined, "lig-blue", "lig-white");
+	const theme = await themeModule.getThemeByName("lig-blue");
+	if (!theme) throw new Error("Expected lig-blue theme");
 	return theme;
 }
 

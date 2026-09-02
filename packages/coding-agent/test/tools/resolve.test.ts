@@ -105,7 +105,7 @@ describe("ResolveTool", () => {
 });
 
 it("renders a highlighted apply summary", async () => {
-	const theme = await getThemeByName("red-claw");
+	const theme = await getThemeByName("lig-blue");
 	expect(theme).toBeDefined();
 	const uiTheme = theme!;
 

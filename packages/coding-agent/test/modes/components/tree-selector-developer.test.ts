@@ -30,7 +30,7 @@ function render(tree: SessionTreeNode[], width = 120): string {
 
 describe("TreeSelectorComponent developer message rendering", () => {
 	beforeAll(async () => {
-		await themeModule.initTheme(false, undefined, undefined, "red-claw", "blue-crab");
+		await themeModule.initTheme(false, undefined, undefined, "lig-blue", "lig-white");
 	});
 
 	it("renders developer messages with their content, not just [developer]", () => {

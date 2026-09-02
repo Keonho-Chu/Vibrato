@@ -5,7 +5,7 @@ import { CURSOR_MARKER, type TUI } from "@vib-rato/tui";
 import type { AutocompleteItem, AutocompleteProvider } from "@vib-rato/tui/autocomplete";
 
 beforeAll(async () => {
-	const themeInstance = await getThemeByName("red-claw");
+	const themeInstance = await getThemeByName("lig-blue");
 	if (!themeInstance) {
 		throw new Error("Failed to load dark theme for tests");
 	}

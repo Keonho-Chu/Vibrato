@@ -28,7 +28,7 @@ import type { CredentialDiscoveryResult, DiscoveryOptions, ImportableCredential 
 import * as credentialImport from "../src/setup/credential-import";
 import { executeBuiltinSlashCommand } from "../src/slash-commands/builtin-registry";
 
-const testTheme = await getThemeByName("red-claw");
+const testTheme = await getThemeByName("lig-blue");
 
 function installTestTheme(): void {
 	if (!testTheme) throw new Error("Failed to load test theme");

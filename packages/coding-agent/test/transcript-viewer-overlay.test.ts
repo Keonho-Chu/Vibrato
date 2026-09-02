@@ -676,7 +676,7 @@ describe("PR2a: render/refresh separation and layout cache", () => {
 			viewer.render(80);
 			__transcriptViewerPerfCounters.enable();
 			__transcriptViewerPerfCounters.reset();
-			const other = await getThemeByName("blue-crab");
+			const other = await getThemeByName("lig-white");
 			expect(other).toBeDefined();
 			setThemeInstance(other!);
 			viewer.render(80);

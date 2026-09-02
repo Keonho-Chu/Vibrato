@@ -261,7 +261,7 @@ export async function renderStickyViewportShowcase(
 ): Promise<StickyViewportShowcaseRender> {
 	const oldLevel = chalk.level;
 	chalk.level = entry.renderMode === "ascii-no-color" ? 0 : 3;
-	await initTheme(false, entry.renderMode === "ascii-no-color" ? "ascii" : "unicode", false, "red-claw", "red-claw");
+	await initTheme(false, entry.renderMode === "ascii-no-color" ? "ascii" : "unicode", false, "lig-blue", "lig-blue");
 	const harness = await createMode(entry);
 	const { mode, terminal } = harness;
 	try {

@@ -1168,7 +1168,7 @@ async function configureDeterministicTheme(renderMode: NotificationsSettingsShow
 	Bun.env.COLORTERM = "truecolor";
 	chalk.level = 3;
 	try {
-		await initTheme(false, renderMode === "ascii-no-color" ? "ascii" : "unicode", false, "red-claw", "red-claw");
+		await initTheme(false, renderMode === "ascii-no-color" ? "ascii" : "unicode", false, "lig-blue", "lig-blue");
 	} catch (error) {
 		chalk.level = originalChalkLevel;
 		throw error;
@@ -1214,7 +1214,7 @@ export async function renderNotificationsSettingsShowcase(
 			{
 				availableThinkingLevels: [],
 				thinkingLevel: undefined,
-				availableThemes: ["red-claw"],
+				availableThemes: ["lig-blue"],
 				availableModelProfiles: [],
 				cwd: "/showcase",
 			},

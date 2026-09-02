@@ -27,8 +27,8 @@ import { TasksAggregator } from "../src/modes/tasks-aggregator";
 import { getCurrentThemeName, getThemeByName, initTheme, setTheme, setThemeInstance } from "../src/modes/theme/theme";
 import type { InteractiveModeContext } from "../src/modes/types";
 
-const testTheme = await getThemeByName("red-claw");
-if (!testTheme) throw new Error("Failed to load red-claw test theme");
+const testTheme = await getThemeByName("lig-blue");
+if (!testTheme) throw new Error("Failed to load lig-blue test theme");
 
 /**
  * Issue #4657 regression harness: mount a real CustomEditor in a real

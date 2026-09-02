@@ -12,7 +12,7 @@ import { parseUiLanguage, resolveUiLanguage, uiString } from "@vib-rato/coding-a
 import { executeBuiltinSlashCommand } from "@vib-rato/coding-agent/slash-commands/builtin-registry";
 
 beforeAll(async () => {
-	await initTheme(false, undefined, undefined, "red-claw", "blue-crab");
+	await initTheme(false, undefined, undefined, "lig-blue", "lig-white");
 });
 
 beforeEach(async () => {
@@ -25,7 +25,7 @@ function createSelector(): SettingsSelectorComponent {
 		{
 			availableThinkingLevels: [],
 			thinkingLevel: undefined,
-			availableThemes: ["red-claw", "blue-crab"],
+			availableThemes: ["lig-blue", "lig-white"],
 			availableModelProfiles: [],
 			cwd: process.cwd(),
 		},

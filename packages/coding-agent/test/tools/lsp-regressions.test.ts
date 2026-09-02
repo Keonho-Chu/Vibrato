@@ -257,7 +257,7 @@ describe("lsp regressions", () => {
 	});
 
 	it("sanitizes symbol metadata in renderer output", async () => {
-		const theme = await getThemeByName("red-claw");
+		const theme = await getThemeByName("lig-blue");
 		expect(theme).toBeDefined();
 		const uiTheme = theme!;
 		const renderOptions: RenderResultOptions = { expanded: false, isPartial: false };
@@ -295,7 +295,7 @@ describe("lsp regressions", () => {
 	});
 
 	it("sanitizes tabs in rendered diagnostic output", async () => {
-		const theme = await getThemeByName("red-claw");
+		const theme = await getThemeByName("lig-blue");
 		expect(theme).toBeDefined();
 		const uiTheme = theme!;
 		const renderOptions: RenderResultOptions = { expanded: false, isPartial: false };

@@ -174,7 +174,7 @@ describe("config-root workflow settings migration", () => {
 		const home = await tempDir();
 		// cwd = home -> the project .vib/settings.json IS the config-root source.
 		await fs.mkdir(path.join(home, ".vib"), { recursive: true });
-		const original = JSON.stringify({ "vib.ralplan.maxIterations": 7, theme: { dark: "red-claw" } });
+		const original = JSON.stringify({ "vib.ralplan.maxIterations": 7, theme: { dark: "lig-blue" } });
 		await fs.writeFile(path.join(home, ".vib", "settings.json"), original);
 
 		const result = await runProbe(home, { home, configDir: ".vib" });
@@ -214,7 +214,7 @@ describe("config-root workflow settings migration", () => {
 		// The agent dir IS the config root; the agent config.yml already exists, so
 		// the agent-dir migration skips and would leave the orphan source's
 		// workflow keys unmigrated.
-		await fs.writeFile(path.join(configRoot, "config.yml"), YAML.stringify({ theme: { dark: "red-claw" } }, null, 2));
+		await fs.writeFile(path.join(configRoot, "config.yml"), YAML.stringify({ theme: { dark: "lig-blue" } }, null, 2));
 		await fs.writeFile(path.join(configRoot, "settings.json"), JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
 
 		const result = await runProbe(cwd, { home, configDir: ".myconfig", codingAgentDir: configRoot });
@@ -285,7 +285,7 @@ describe("config-root workflow settings migration", () => {
 		// Legacy agent-dir settings.json with a workflow key and a non-workflow key.
 		await fs.writeFile(
 			path.join(agentDir, "settings.json"),
-			JSON.stringify({ "vib.ralplan.maxIterations": 5, theme: { dark: "red-claw" } }),
+			JSON.stringify({ "vib.ralplan.maxIterations": 5, theme: { dark: "lig-blue" } }),
 		);
 		// Config-root source with a workflow key.
 		await fs.writeFile(source, JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
@@ -299,7 +299,7 @@ describe("config-root workflow settings migration", () => {
 			theme?: Record<string, unknown>;
 		};
 		expect(config.vib?.ralplan?.maxIterations).toBe(5); // agent-dir value landed first
-		expect(config.theme?.dark).toBe("red-claw");
+		expect(config.theme?.dark).toBe("lig-blue");
 		// The config-root source was still migrated and retired.
 		expect(result.markerStatus).toBe("complete");
 	});
@@ -326,7 +326,7 @@ describe("config-root workflow settings migration", () => {
 		db.run("INSERT INTO settings (key, value, updated_at) VALUES ('vib', ?, 0)", [
 			JSON.stringify({ ultragoal: { nudgeBudget: 10 } }),
 		]);
-		db.run("INSERT INTO settings (key, value, updated_at) VALUES ('theme.dark', ?, 0)", [JSON.stringify("red-claw")]);
+		db.run("INSERT INTO settings (key, value, updated_at) VALUES ('theme.dark', ?, 0)", [JSON.stringify("lig-blue")]);
 		db.close();
 
 		await runProbe(cwd, { home, configDir: ".myconfig" });
@@ -336,7 +336,7 @@ describe("config-root workflow settings migration", () => {
 		};
 		expect(config.vib?.ralplan?.maxIterations).toBe(7); // pre-existing value preserved
 		expect(config.vib?.ultragoal?.nudgeBudget).toBe(10); // nested db sibling merged at the leaf
-		expect(config.theme?.dark).toBe("red-claw");
+		expect(config.theme?.dark).toBe("lig-blue");
 	});
 
 	test("flat dotted database keys do not overwrite nested modern config values", async () => {
@@ -347,7 +347,7 @@ describe("config-root workflow settings migration", () => {
 		// config.yml already has NESTED modern values for the same settings.
 		await fs.writeFile(
 			path.join(agentDir, "config.yml"),
-			YAML.stringify({ theme: { dark: "red-claw" }, vib: { ralplan: { maxIterations: 7 } } }, null, 2),
+			YAML.stringify({ theme: { dark: "lig-blue" }, vib: { ralplan: { maxIterations: 7 } } }, null, 2),
 		);
 		const db = new Database(path.join(agentDir, "agent.db"));
 		db.run(
@@ -369,7 +369,7 @@ describe("config-root workflow settings migration", () => {
 		};
 		// The absent-only merge compares the flat keys against the NESTED paths, so
 		// the modern values survive (the legacy rows are then cleared).
-		expect(config.theme?.dark).toBe("red-claw");
+		expect(config.theme?.dark).toBe("lig-blue");
 		expect(config.vib?.ralplan?.maxIterations).toBe(7);
 	});
 
@@ -515,7 +515,7 @@ describe("config-root workflow settings migration", () => {
 		);
 		db.run("CREATE TABLE schema_version (version INTEGER PRIMARY KEY)");
 		db.run("INSERT INTO schema_version (version) VALUES (5)");
-		db.run("INSERT INTO settings (key, value, updated_at) VALUES ('theme.dark', ?, 0)", [JSON.stringify("red-claw")]);
+		db.run("INSERT INTO settings (key, value, updated_at) VALUES ('theme.dark', ?, 0)", [JSON.stringify("lig-blue")]);
 		db.close();
 
 		await runProbe(cwd, { home, configDir: ".myconfig" });
@@ -545,7 +545,7 @@ describe("config-root workflow settings migration", () => {
 		);
 		db.run("CREATE TABLE schema_version (version INTEGER PRIMARY KEY)");
 		db.run("INSERT INTO schema_version (version) VALUES (5)");
-		db.run("INSERT INTO settings (key, value, updated_at) VALUES ('theme.dark', ?, 0)", [JSON.stringify("red-claw")]);
+		db.run("INSERT INTO settings (key, value, updated_at) VALUES ('theme.dark', ?, 0)", [JSON.stringify("lig-blue")]);
 		db.close();
 
 		await runProbe(cwd, { home, configDir: ".myconfig" });
@@ -567,7 +567,7 @@ describe("config-root workflow settings migration", () => {
 		);
 		db.run("CREATE TABLE schema_version (version INTEGER PRIMARY KEY)");
 		db.run("INSERT INTO schema_version (version) VALUES (5)");
-		db.run("INSERT INTO settings (key, value, updated_at) VALUES ('theme.dark', ?, 0)", [JSON.stringify("red-claw")]);
+		db.run("INSERT INTO settings (key, value, updated_at) VALUES ('theme.dark', ?, 0)", [JSON.stringify("lig-blue")]);
 		// One malformed row makes the whole legacy read fail: the load must fail
 		// (actionable) instead of silently continuing without the valid rows.
 		db.run("INSERT INTO settings (key, value, updated_at) VALUES ('vib.ralplan.maxIterations', '{broken', 0)");
@@ -590,7 +590,7 @@ describe("config-root workflow settings migration", () => {
 		// BOTH legacy sources exist: agentDir/settings.json (retired via the
 		// .bak rename only after the combined migration commits) and agent.db
 		// with a malformed row that aborts the load.
-		await fs.writeFile(path.join(agentDir, "settings.json"), JSON.stringify({ "theme.dark": "red-claw" }));
+		await fs.writeFile(path.join(agentDir, "settings.json"), JSON.stringify({ "theme.dark": "lig-blue" }));
 		const db = new Database(path.join(agentDir, "agent.db"));
 		db.run(
 			"CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at INTEGER NOT NULL DEFAULT 0)",
@@ -671,7 +671,7 @@ describe("config-root workflow settings migration", () => {
 		const cwd = await tempDir();
 		const { source, agentDir } = await setupHome(home, ".myconfig");
 		await fs.mkdir(agentDir, { recursive: true });
-		await fs.writeFile(path.join(agentDir, "config.yml"), YAML.stringify({ theme: { dark: "red-claw" } }, null, 2));
+		await fs.writeFile(path.join(agentDir, "config.yml"), YAML.stringify({ theme: { dark: "lig-blue" } }, null, 2));
 		await fs.writeFile(source, JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
 
 		const result = await runProbe(cwd, { home, configDir: ".myconfig" });
@@ -929,7 +929,7 @@ describe("config-root workflow settings migration", () => {
 		await fs.mkdir(agentDir, { recursive: true });
 		// Target exists but the patch never applied (e.g. a user-created backup
 		// with identical content): the source must NOT be dropped.
-		await fs.writeFile(path.join(agentDir, "config.yml"), YAML.stringify({ theme: { dark: "red-claw" } }, null, 2));
+		await fs.writeFile(path.join(agentDir, "config.yml"), YAML.stringify({ theme: { dark: "lig-blue" } }, null, 2));
 		await fs.writeFile(source, sourceRaw);
 		await fs.writeFile(`${source}.bak`, sourceRaw);
 		await fs.writeFile(
@@ -1137,7 +1137,7 @@ describe("config-root workflow settings migration", () => {
 		await fs.mkdir(agentDir, { recursive: true });
 		await fs.writeFile(
 			path.join(agentDir, "config.yml"),
-			YAML.stringify({ configSchemaVersion: 999, theme: { dark: "red-claw" } }, null, 2),
+			YAML.stringify({ configSchemaVersion: 999, theme: { dark: "lig-blue" } }, null, 2),
 		);
 		await fs.writeFile(source, JSON.stringify({ "vib.ralplan.maxIterations": 7 }));
 
@@ -2208,7 +2208,7 @@ describe("project workflow settings migration", () => {
 	test("does not write a config.yml when the source has no workflow keys", async () => {
 		const cwd = await tempDir();
 		await fs.mkdir(path.join(cwd, ".vib"), { recursive: true });
-		await fs.writeFile(path.join(cwd, ".vib", "settings.json"), JSON.stringify({ theme: { dark: "red-claw" } }));
+		await fs.writeFile(path.join(cwd, ".vib", "settings.json"), JSON.stringify({ theme: { dark: "lig-blue" } }));
 
 		const result = await runProjectProbe(cwd);
 		expect(result.sourceExists).toBe(true);
@@ -2404,7 +2404,7 @@ describe("project workflow settings migration", () => {
 		// is removed while the legacy source is retained.
 		await fs.writeFile(
 			path.join(cwd, ".vib", "config.yml"),
-			YAML.stringify({ theme: { dark: "red-claw" } }, null, 2),
+			YAML.stringify({ theme: { dark: "lig-blue" } }, null, 2),
 		);
 
 		const second = await runProjectProbe(cwd);
@@ -2434,7 +2434,7 @@ describe("project workflow settings migration", () => {
 		// vib.ralplan.maxIterations`): it was never copied by this run.
 		await fs.writeFile(
 			path.join(cwd, ".vib", "config.yml"),
-			YAML.stringify({ theme: { dark: "red-claw" } }, null, 2),
+			YAML.stringify({ theme: { dark: "lig-blue" } }, null, 2),
 		);
 
 		const second = await runProjectProbe(cwd);
@@ -2786,7 +2786,7 @@ describe("project workflow settings migration", () => {
 		const cwd = await tempDir();
 		const { agentDir } = await setupHome(home, ".myconfig");
 		await fs.mkdir(agentDir, { recursive: true });
-		const sourceRaw = JSON.stringify({ theme: { dark: "red-claw" } });
+		const sourceRaw = JSON.stringify({ theme: { dark: "lig-blue" } });
 		// The source holds ONLY a non-workflow setting: the publication proof
 		// must verify the migrated path itself (an empty workflow-key filter
 		// would make the proof vacuously true and retire the source even though
@@ -2870,7 +2870,7 @@ describe("project workflow settings migration", () => {
 		// Simulate `vib config unset vib.ralplan.maxIterations`.
 		await fs.writeFile(
 			path.join(cwd, ".vib", "config.yml"),
-			YAML.stringify({ theme: { dark: "red-claw" } }, null, 2),
+			YAML.stringify({ theme: { dark: "lig-blue" } }, null, 2),
 		);
 
 		const second = await runProjectProbe(cwd, { home });
@@ -3128,7 +3128,7 @@ describe("project workflow settings migration", () => {
 		// Remove the key (simulate `vib config unset vib.ralplan.maxIterations`).
 		await fs.writeFile(
 			path.join(cwd, ".vib", "config.yml"),
-			YAML.stringify({ theme: { dark: "red-claw" } }, null, 2),
+			YAML.stringify({ theme: { dark: "lig-blue" } }, null, 2),
 		);
 
 		const second = await runProjectProbe(cwd);

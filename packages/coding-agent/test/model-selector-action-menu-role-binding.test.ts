@@ -55,7 +55,7 @@ function createSelector(
 	);
 }
 
-let testTheme = await getThemeByName("red-claw");
+let testTheme = await getThemeByName("lig-blue");
 
 function installTestTheme(): void {
 	if (!testTheme) throw new Error("Failed to load theme for ModelSelector tests");
@@ -75,7 +75,7 @@ async function renderActionMenu(model: Model, settings: Settings, knownModels: M
 
 describe("ModelSelector assignment menu role bindings", () => {
 	beforeAll(async () => {
-		testTheme = await getThemeByName("red-claw");
+		testTheme = await getThemeByName("lig-blue");
 		if (!testTheme) throw new Error("Failed to load theme for ModelSelector tests");
 	});
 

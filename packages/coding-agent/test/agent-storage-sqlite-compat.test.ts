@@ -101,7 +101,7 @@ describe("AgentStorage SQLite compatibility", () => {
 
 		const storage = await AgentStorage.open(dbPath);
 		const raw = new Database(dbPath);
-		raw.prepare("INSERT INTO settings (key, value) VALUES (?, ?)").run("theme.dark", '"red-claw"');
+		raw.prepare("INSERT INTO settings (key, value) VALUES (?, ?)").run("theme.dark", '"lig-blue"');
 		raw.prepare("INSERT INTO settings (key, value) VALUES (?, ?)").run("vib.ralplan.maxIterations", "7");
 		raw.close();
 
@@ -116,7 +116,7 @@ describe("AgentStorage SQLite compatibility", () => {
 
 		const storage = await AgentStorage.open(dbPath);
 		const raw = new Database(dbPath);
-		raw.prepare("INSERT INTO settings (key, value) VALUES (?, ?)").run("theme.dark", '"red-claw"');
+		raw.prepare("INSERT INTO settings (key, value) VALUES (?, ?)").run("theme.dark", '"lig-blue"');
 		raw.close();
 		// A closed database makes the DELETE fail permanently (non-SQLITE_BUSY),
 		// so clearSettings must THROW instead of logging and reporting success:
@@ -132,7 +132,7 @@ describe("AgentStorage SQLite compatibility", () => {
 
 		const storage = await AgentStorage.open(dbPath);
 		const raw = new Database(dbPath);
-		raw.prepare("INSERT INTO settings (key, value) VALUES (?, ?)").run("theme.dark", '"red-claw"');
+		raw.prepare("INSERT INTO settings (key, value) VALUES (?, ?)").run("theme.dark", '"lig-blue"');
 		raw.prepare("INSERT INTO settings (key, value) VALUES (?, ?)").run("vib.ralplan.maxIterations", "{ not json");
 		raw.close();
 

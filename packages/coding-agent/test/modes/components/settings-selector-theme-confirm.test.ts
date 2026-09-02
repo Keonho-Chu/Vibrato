@@ -4,7 +4,7 @@ import { resetSettingsForTest, Settings, settings } from "@vib-rato/coding-agent
 import { SettingsSelectorComponent } from "@vib-rato/coding-agent/modes/components/settings-selector";
 import { initTheme, previewTheme, restoreThemePreview, theme } from "@vib-rato/coding-agent/modes/theme/theme";
 
-const THEMES = ["red-claw", "blue-crab"];
+const THEMES = ["lig-blue", "lig-white"];
 const ORIGINAL_COLORTERM = Bun.env.COLORTERM;
 
 type ChangedSetting = {
@@ -22,7 +22,7 @@ type SelectorHarness = {
 
 beforeAll(async () => {
 	Bun.env.COLORTERM = "truecolor";
-	await initTheme(false, undefined, undefined, "red-claw", "blue-crab");
+	await initTheme(false, undefined, undefined, "lig-blue", "lig-white");
 });
 
 afterAll(() => {
@@ -36,8 +36,8 @@ afterAll(() => {
 beforeEach(async () => {
 	resetSettingsForTest();
 	await Settings.init({ inMemory: true });
-	settings.set("theme.dark", "red-claw");
-	settings.set("theme.light", "blue-crab");
+	settings.set("theme.dark", "lig-blue");
+	settings.set("theme.light", "lig-white");
 });
 
 afterEach(() => {
@@ -85,13 +85,13 @@ describe("SettingsSelectorComponent theme selection", () => {
 	it("previews a dark theme while browsing without persisting it", () => {
 		const { component, previewedThemes, restoredThemes, changedSettings } = createSelector();
 
-		component.handleInput("\n"); // Open Dark Theme submenu; red-claw is preselected.
-		component.handleInput("\x1b[B"); // Browse to blue-crab.
+		component.handleInput("\n"); // Open Dark Theme submenu; lig-blue is preselected.
+		component.handleInput("\x1b[B"); // Browse to lig-white.
 
-		expect(previewedThemes).toEqual(["blue-crab"]);
+		expect(previewedThemes).toEqual(["lig-white"]);
 		expect(restoredThemes).toEqual([]);
 		expect(changedSettings).toEqual([]);
-		expect(settings.get("theme.dark")).toBe("red-claw");
+		expect(settings.get("theme.dark")).toBe("lig-blue");
 	});
 
 	it("recolors the open Settings theme submenu while previewing", async () => {
@@ -118,38 +118,40 @@ describe("SettingsSelectorComponent theme selection", () => {
 
 		const title = component.render(120).find(line => Bun.stripANSI(line).includes("Dark Theme"));
 		expect(title).toContain(theme.getFgAnsi("accent"));
-		expect(theme.getFgAnsi("accent")).toBe("\u001b[38;2;94;200;255m");
-		await restoreThemePreview("red-claw");
+		// The previewed theme's accent, proving the preview actually took effect:
+		// LIG Innovative Blue #002F6D.
+		expect(theme.getFgAnsi("accent")).toBe("\u001b[38;2;0;47;109m");
+		await restoreThemePreview("lig-blue");
 	});
 
 	it("restores the pre-preview rendered theme on cancel and leaves dark settings unchanged", () => {
 		const { component, previewedThemes, restoredThemes, changedSettings } = createSelector();
 
-		component.handleInput("\n"); // Open Dark Theme submenu; red-claw is preselected.
-		component.handleInput("\x1b[B"); // Browse to blue-crab.
+		component.handleInput("\n"); // Open Dark Theme submenu; lig-blue is preselected.
+		component.handleInput("\x1b[B"); // Browse to lig-white.
 		component.handleInput("\x1b"); // Cancel submenu.
 
-		expect(previewedThemes).toEqual(["blue-crab"]);
-		expect(restoredThemes).toEqual(["red-claw"]);
+		expect(previewedThemes).toEqual(["lig-white"]);
+		expect(restoredThemes).toEqual(["lig-blue"]);
 		expect(changedSettings).toEqual([]);
-		expect(settings.get("theme.dark")).toBe("red-claw");
-		expect(component.render(120).join("\n")).toContain("red-claw");
+		expect(settings.get("theme.dark")).toBe("lig-blue");
+		expect(component.render(120).join("\n")).toContain("lig-blue");
 	});
 
 	it("persists and displays the selected dark theme only after confirmation", () => {
 		const { component, previewedThemes, restoredThemes, changedSettings } = createSelector();
 
 		component.handleInput("\n"); // Open Dark Theme submenu.
-		component.handleInput("\x1b[B"); // Browse to blue-crab.
+		component.handleInput("\x1b[B"); // Browse to lig-white.
 		component.handleInput("\n"); // Confirm.
 
-		expect(previewedThemes).toEqual(["blue-crab"]);
+		expect(previewedThemes).toEqual(["lig-white"]);
 		expect(restoredThemes).toEqual([]);
-		expect(changedSettings).toEqual([{ path: "theme.dark", value: "blue-crab" }]);
-		expect(settings.get("theme.dark")).toBe("blue-crab");
+		expect(changedSettings).toEqual([{ path: "theme.dark", value: "lig-white" }]);
+		expect(settings.get("theme.dark")).toBe("lig-white");
 		const rendered = component.render(120).join("\n");
 		expect(rendered).toContain("Dark Theme");
-		expect(rendered).toContain("blue-crab");
+		expect(rendered).toContain("lig-white");
 	});
 
 	it("keeps the submenu and persisted mapping unchanged when theme confirmation fails", async () => {
@@ -177,7 +179,7 @@ describe("SettingsSelectorComponent theme selection", () => {
 		component.handleInput("\n");
 		await Bun.sleep(1);
 
-		expect(settings.get("theme.dark")).toBe("red-claw");
+		expect(settings.get("theme.dark")).toBe("lig-blue");
 		expect(component.render(120).join("\n")).toContain("Enter to select");
 	});
 
@@ -185,22 +187,22 @@ describe("SettingsSelectorComponent theme selection", () => {
 		const { component, previewedThemes, restoredThemes, changedSettings } = createSelector();
 
 		component.handleInput("\x1b[B"); // Move from Dark Theme to Light Theme.
-		component.handleInput("\n"); // Open Light Theme submenu; blue-crab is preselected.
-		component.handleInput("\x1b[B"); // Wrap to red-claw.
+		component.handleInput("\n"); // Open Light Theme submenu; lig-white is preselected.
+		component.handleInput("\x1b[B"); // Wrap to lig-blue.
 		component.handleInput("\x1b"); // Cancel.
 
-		expect(previewedThemes).toEqual(["red-claw"]);
-		expect(restoredThemes).toEqual(["red-claw"]);
+		expect(previewedThemes).toEqual(["lig-blue"]);
+		expect(restoredThemes).toEqual(["lig-blue"]);
 		expect(changedSettings).toEqual([]);
-		expect(settings.get("theme.light")).toBe("blue-crab");
+		expect(settings.get("theme.light")).toBe("lig-white");
 
 		component.handleInput("\n"); // Reopen Light Theme submenu.
-		component.handleInput("\x1b[B"); // Wrap to red-claw.
+		component.handleInput("\x1b[B"); // Wrap to lig-blue.
 		component.handleInput("\n"); // Confirm.
 
-		expect(previewedThemes).toEqual(["red-claw", "red-claw"]);
-		expect(restoredThemes).toEqual(["red-claw"]);
-		expect(changedSettings).toEqual([{ path: "theme.light", value: "red-claw" }]);
-		expect(settings.get("theme.light")).toBe("red-claw");
+		expect(previewedThemes).toEqual(["lig-blue", "lig-blue"]);
+		expect(restoredThemes).toEqual(["lig-blue"]);
+		expect(changedSettings).toEqual([{ path: "theme.light", value: "lig-blue" }]);
+		expect(settings.get("theme.light")).toBe("lig-blue");
 	});
 });

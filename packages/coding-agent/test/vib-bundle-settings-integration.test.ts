@@ -18,7 +18,7 @@ import { getThemeByName, setThemeInstance } from "../src/modes/theme/theme";
 
 beforeAll(async () => {
 	await Settings.init({ inMemory: true, cwd: process.cwd() });
-	const theme = await getThemeByName("red-claw");
+	const theme = await getThemeByName("lig-blue");
 	if (!theme) throw new Error("Failed to load test theme");
 	setThemeInstance(theme);
 });
@@ -33,7 +33,7 @@ function baseContext(cwd: string): {
 	return {
 		availableThinkingLevels: [],
 		thinkingLevel: undefined,
-		availableThemes: ["red-claw"],
+		availableThemes: ["lig-blue"],
 		availableModelProfiles: [],
 		cwd,
 	};

@@ -14,7 +14,7 @@ import type { SessionContext } from "@vib-rato/coding-agent/session/session-mana
 import { Container, type TUI } from "@vib-rato/tui";
 
 beforeAll(async () => {
-	const theme = await getThemeByName("red-claw");
+	const theme = await getThemeByName("lig-blue");
 	expect(theme).toBeDefined();
 	setThemeInstance(theme!);
 });

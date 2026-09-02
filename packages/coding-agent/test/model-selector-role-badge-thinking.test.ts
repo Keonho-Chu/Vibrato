@@ -159,7 +159,7 @@ function createAnthropicReasoningModel(id: string): Model {
  * differs from its provider id ("openai-codex"), which is what the refresh path
  * has to get right.
  */
-let testTheme = await getThemeByName("red-claw");
+let testTheme = await getThemeByName("lig-blue");
 
 function installTestTheme(): void {
 	if (!testTheme) {
@@ -170,7 +170,7 @@ function installTestTheme(): void {
 
 describe("ModelSelector canonical model selection", () => {
 	beforeAll(async () => {
-		testTheme = await getThemeByName("red-claw");
+		testTheme = await getThemeByName("lig-blue");
 		if (!testTheme) {
 			throw new Error("Failed to load dark theme for ModelSelector tests");
 		}
@@ -1068,7 +1068,7 @@ function createFastSelector(args: {
 
 describe("ModelSelector fast-mode indicator", () => {
 	beforeAll(async () => {
-		testTheme = await getThemeByName("red-claw");
+		testTheme = await getThemeByName("lig-blue");
 		if (!testTheme) {
 			throw new Error("Failed to load theme for fast-mode indicator tests");
 		}
@@ -1202,7 +1202,7 @@ describe("ModelSelector fast-mode indicator", () => {
 	});
 
 	test("AC-7: fast glyph uses theme.icon.fast variant, not a hardcoded emoji", async () => {
-		await setTheme("red-claw");
+		await setTheme("lig-blue");
 		await setSymbolPreset("ascii");
 		try {
 			const asciiIcon = theme.icon.fast;

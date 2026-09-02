@@ -45,7 +45,7 @@ const placeholderProfile: ModelProfileDefinition = {
 beforeEach(async () => {
 	tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "vib-custom-preset-"));
 	authStorage = await AuthStorage.create(path.join(tempDir, "auth.db"));
-	setThemeInstance((await getThemeByName("red-claw"))!);
+	setThemeInstance((await getThemeByName("lig-blue"))!);
 });
 
 afterEach(async () => {

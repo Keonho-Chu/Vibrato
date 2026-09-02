@@ -11,7 +11,7 @@ import type { ModelSelectorComponent } from "@vib-rato/coding-agent/modes/compon
 import { SelectorController } from "@vib-rato/coding-agent/modes/controllers/selector-controller";
 import { getThemeByName, setThemeInstance } from "@vib-rato/coding-agent/modes/theme/theme";
 
-let testTheme = await getThemeByName("red-claw");
+let testTheme = await getThemeByName("lig-blue");
 
 function installTestTheme(): void {
 	if (!testTheme) throw new Error("Failed to load test theme");
@@ -170,7 +170,7 @@ function selectMenuAction(selector: ModelSelectorComponent, actionIndex: number)
 
 describe("SelectorController model batch assignments", () => {
 	beforeAll(async () => {
-		testTheme = await getThemeByName("red-claw");
+		testTheme = await getThemeByName("lig-blue");
 		installTestTheme();
 	});
 	test("all role agents selection writes every role-agent override and leaves DEFAULT unchanged", async () => {

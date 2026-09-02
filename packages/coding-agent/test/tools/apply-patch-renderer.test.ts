@@ -10,8 +10,8 @@ import { toolRenderers } from "@vib-rato/coding-agent/tools/renderers";
 import type { TUI } from "@vib-rato/tui";
 
 async function getUiTheme() {
-	await themeModule.initTheme(false, undefined, undefined, "red-claw", "blue-crab");
-	const theme = await themeModule.getThemeByName("red-claw");
+	await themeModule.initTheme(false, undefined, undefined, "lig-blue", "lig-white");
+	const theme = await themeModule.getThemeByName("lig-blue");
 	expect(theme).toBeDefined();
 	return theme!;
 }
