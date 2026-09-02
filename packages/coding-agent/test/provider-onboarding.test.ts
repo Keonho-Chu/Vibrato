@@ -3,7 +3,7 @@ import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 import { clampThinkingLevelForModel, Effort, getSupportedEfforts } from "@vib-rato/ai";
-import { getAgentDbPath, getAgentDir, setAgentDir } from "@vib-rato/utils";
+import { getAgentDbPath, getAgentDir, hookFetch, setAgentDir } from "@vib-rato/utils";
 import { YAML } from "bun";
 import { parseSetupArgs } from "../src/cli/setup-cli";
 import { ModelRegistry } from "../src/config/model-registry";
@@ -181,6 +181,97 @@ describe("provider onboarding setup core", () => {
 		expect(parsed.providers?.sglang?.discovery?.type).toBe("sglang");
 		expect(findProviderPreset("sglang-endpoint")?.id).toBe("sglang");
 		expect(formatProviderPresetList()).toContain("sglang");
+	});
+
+	it("discovers models from a local endpoint added through the local preset", async () => {
+		const modelsPath = await tempModelsPath();
+		const result = await addApiCompatibleProvider({
+			preset: "local-llm",
+			baseUrl: "http://127.0.0.1:11434/v1",
+			// The wizard sends this token when the user leaves the key empty.
+			apiKey: "local",
+			modelsPath,
+		});
+		expect(result.providerId).toBe("local");
+		expect(result.presetName).toBe("Local LLM endpoint");
+
+		const requested: string[] = [];
+		using _hook = hookFetch(input => {
+			const url = String(input);
+			requested.push(url);
+			if (url !== "http://127.0.0.1:11434/v1/models") return new Response(null, { status: 404 });
+			return new Response(JSON.stringify({ data: [{ id: "qwen3-30b" }, { id: "gemma3-12b" }] }), {
+				status: 200,
+				headers: { "Content-Type": "application/json" },
+			});
+		});
+
+		const authStorage = await AuthStorage.create(getAgentDbPath());
+		try {
+			const registry = new ModelRegistry(authStorage, modelsPath);
+			await registry.refreshProvider("local");
+
+			// The preset's `openai-models-list` discovery reads the plain OpenAI
+			// listing at the base URL the user supplied.
+			expect(requested).toContain("http://127.0.0.1:11434/v1/models");
+			expect(registry.getProviderDiscoveryState("local")?.status).toBe("ok");
+			expect(
+				registry
+					.getAll()
+					.filter(model => model.provider === "local")
+					.map(model => model.id)
+					.sort(),
+			).toEqual(["gemma3-12b", "qwen3-30b"]);
+			expect(registry.find("local", "qwen3-30b")?.api).toBe("openai-completions");
+			expect(registry.find("local", "qwen3-30b")?.baseUrl).toBe("http://127.0.0.1:11434/v1");
+		} finally {
+			authStorage.close();
+		}
+	});
+
+	it("discovers models for a keyless local endpoint, and sends the env key once it is set", async () => {
+		const previousKey = Bun.env.LOCAL_LLM_API_KEY;
+		delete Bun.env.LOCAL_LLM_API_KEY;
+		try {
+			for (const envKey of [undefined, "sk-local-from-env"]) {
+				const modelsPath = await tempModelsPath();
+				// The bare documented command: no key anywhere.
+				await addApiCompatibleProvider({ preset: "local", baseUrl: "http://127.0.0.1:8000/v1", modelsPath });
+				if (envKey) Bun.env.LOCAL_LLM_API_KEY = envKey;
+				else delete Bun.env.LOCAL_LLM_API_KEY;
+
+				const authHeaders: Array<string | null | undefined> = [];
+				using _hook = hookFetch((input, init) => {
+					if (String(input) !== "http://127.0.0.1:8000/v1/models") return new Response(null, { status: 404 });
+					const headers = init?.headers as Headers | Record<string, string> | undefined;
+					authHeaders.push(
+						(headers instanceof Headers ? headers.get("Authorization") : headers?.Authorization) ?? undefined,
+					);
+					return new Response(JSON.stringify({ data: [{ id: "llama4-scout" }] }), {
+						status: 200,
+						headers: { "Content-Type": "application/json" },
+					});
+				});
+
+				const authStorage = await AuthStorage.create(getAgentDbPath());
+				try {
+					const registry = new ModelRegistry(authStorage, modelsPath);
+					await registry.refreshProvider("local");
+					expect(registry.getProviderDiscoveryState("local")?.status).toBe("ok");
+					expect(registry.getAvailable().map(model => `${model.provider}/${model.id}`)).toEqual([
+						"local/llama4-scout",
+					]);
+					// Unauthenticated by default; the exported key is picked up with no
+					// second `setup provider` run.
+					expect(authHeaders).toEqual([envKey ? `Bearer ${envKey}` : undefined]);
+				} finally {
+					authStorage.close();
+				}
+			}
+		} finally {
+			if (previousKey === undefined) delete Bun.env.LOCAL_LLM_API_KEY;
+			else Bun.env.LOCAL_LLM_API_KEY = previousKey;
+		}
 	});
 
 	it("rejects presets whose provider the allowlist hides and names the remaining ones", async () => {

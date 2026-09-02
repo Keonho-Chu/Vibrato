@@ -53,7 +53,7 @@ describe("rankProvider", () => {
 	});
 
 	test("agrees with the comparator it backs", () => {
-		const left = provider("openai-codex", "none");
+		const left = provider("local", "none");
 		const right = provider("sglang", "none");
 		const leftRank = rankProvider(left);
 		const rightRank = rankProvider(right);
@@ -110,7 +110,7 @@ describe("famous provider list", () => {
 	});
 
 	test("every selectable provider that can rank famous is on the list", () => {
-		for (const id of ["openai-codex", "openai-codex-device", "anthropic", "vllm", "sglang"]) {
+		for (const id of ["local", "vllm", "sglang", "openai-codex", "openai-codex-device", "anthropic"]) {
 			expect(famousProviderIndex(id)).toBeDefined();
 			expect(providerRankTier("none", id)).toBe(PROVIDER_RANK_TIER.famous);
 		}
@@ -123,7 +123,7 @@ describe("famous provider list", () => {
 	test("matches the agreed curated order exactly", () => {
 		// Written out independently of FAMOUS_PROVIDER_ORDER so an accidental
 		// reorder or removal of the constant cannot validate itself.
-		const agreedOrder = ["openai-codex", "openai-codex-device", "anthropic", "vllm", "sglang"];
+		const agreedOrder = ["local", "vllm", "sglang", "openai-codex", "openai-codex-device", "anthropic"];
 		expect([...FAMOUS_PROVIDER_ORDER]).toEqual(agreedOrder);
 
 		// The same order must survive an actual sort of shuffled input.
@@ -149,6 +149,7 @@ describe("compareRankedProviders", () => {
 			provider("minimax-code", "none", "MiniMax Coding Plan (International)"),
 			provider("sglang", "none", "SGLang (Local OpenAI-compatible)"),
 			provider("vllm", "none", "vLLM (Local OpenAI-compatible)"),
+			provider("local", "none", "Local LLM endpoint"),
 		];
 
 		expect(sortRankedProviders(fixture).map(entry => entry.id)).toEqual([
@@ -159,9 +160,10 @@ describe("compareRankedProviders", () => {
 			// tier 1: problematic credentials
 			"kagi",
 			// tier 2: famous, curated order with variants behind their primary
-			"openai-codex",
+			"local",
 			"vllm",
 			"sglang",
+			"openai-codex",
 			// tier 3: everything else (including providers the allowlist hides),
 			// alphabetical by label
 			"cerebras",

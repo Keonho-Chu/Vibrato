@@ -33,6 +33,8 @@ export interface ProviderSetupResult {
 	modelsPath: string;
 	redactedApiKey: string;
 	credentialSource: "literal" | "env";
+	/** The endpoint is reachable without the key; it is sent only if present. */
+	apiKeyOptional?: boolean;
 	preset?: string;
 	presetName?: string;
 }
@@ -60,6 +62,32 @@ interface ProviderPreset {
 	 * override `--api-key-env`. `baseUrl` is absent for these presets.
 	 */
 	parameterized?: boolean;
+	/**
+	 * The endpoint usually needs no credential at all — a local LLM server such
+	 * as Ollama, LM Studio, or llama.cpp. See `writesOptionalAuthProvider` for
+	 * what this changes in the generated `models.yml` entry.
+	 */
+	optionalApiKey?: boolean;
+}
+
+/**
+ * Whether the generated entry should treat its API key as optional.
+ *
+ * A local endpoint is usually unauthenticated, so an explicit
+ * `auth: apiKey` + `apiKeyEnv` entry is the wrong shape: with the variable
+ * unset the registry reports the provider unauthenticated and discovers
+ * nothing, which is exactly the state a user lands in after
+ * `setup provider --preset local --base-url ...` with no key to give. The
+ * registry's `openaiCompat` form makes the credential optional instead —
+ * discovery runs unauthenticated, and the key is sent as soon as the user
+ * exports the variable. A pasted key means the user does have one, so that
+ * path keeps the explicit shape.
+ */
+function writesOptionalAuthProvider(
+	preset: ProviderPreset | undefined,
+	credentialSource: ProviderSetupResult["credentialSource"],
+): boolean {
+	return preset?.optionalApiKey === true && credentialSource === "env";
 }
 
 const PROVIDER_ID_PATTERN = /^[a-z0-9][a-z0-9._-]*$/;
@@ -350,23 +378,31 @@ export async function addApiCompatibleProvider(input: ProviderSetupInput): Promi
 	if (existing.providers?.[validated.providerId] && !input.force) {
 		throw new Error(`Provider '${validated.providerId}' already exists. Use --force to replace it.`);
 	}
-	const provider: ProviderConfig = {
-		baseUrl: validated.baseUrl,
-		api: validated.api,
-		auth: "apiKey",
-		...(validated.models.length > 0
-			? {
-					models: validated.models.map(id => {
-						const api = validated.modelApi?.[id];
-						return api ? { id, api } : { id };
-					}),
-				}
-			: {}),
-	};
-	if (validated.compat) provider.compat = validated.compat;
-	if (validated.discovery) provider.discovery = validated.discovery;
+	const optionalAuth = writesOptionalAuthProvider(validated.preset, validated.credentialSource);
+	// `openaiCompat` already implies openai-completions and an
+	// `openai-models-list` discovery against its own base URL, so the explicit
+	// api/auth/discovery fields would only restate it.
+	const provider: ProviderConfig = optionalAuth
+		? { openaiCompat: { baseUrl: validated.baseUrl, apiKeyEnv: validated.apiKey } }
+		: {
+				baseUrl: validated.baseUrl,
+				api: validated.api,
+				auth: "apiKey",
+				...(validated.models.length > 0
+					? {
+							models: validated.models.map(id => {
+								const api = validated.modelApi?.[id];
+								return api ? { id, api } : { id };
+							}),
+						}
+					: {}),
+			};
+	if (!optionalAuth) {
+		if (validated.compat) provider.compat = validated.compat;
+		if (validated.discovery) provider.discovery = validated.discovery;
+	}
 	if (validated.credentialSource === "env") {
-		provider.apiKeyEnv = validated.apiKey;
+		if (!optionalAuth) provider.apiKeyEnv = validated.apiKey;
 	} else {
 		const authStorage = await AuthStorage.create(getAgentDbPath());
 		try {
@@ -392,6 +428,7 @@ export async function addApiCompatibleProvider(input: ProviderSetupInput): Promi
 		modelsPath,
 		redactedApiKey: redactSecret(validated.apiKey),
 		credentialSource: validated.credentialSource,
+		...(optionalAuth ? { apiKeyOptional: true } : {}),
 		preset: validated.preset?.id,
 		presetName: validated.preset?.name,
 	};
@@ -426,7 +463,11 @@ export function formatProviderSetupResult(result: ProviderSetupResult): string {
 		...(result.presetName ? [`Preset: ${result.presetName}`] : []),
 		`Models: ${result.modelIds.length > 0 ? result.modelIds.join(", ") : "discovered automatically"}`,
 		`Base URL: ${result.baseUrl}`,
-		`API key: ${result.credentialSource === "env" ? `${result.redactedApiKey} (environment variable)` : result.redactedApiKey}`,
+		`API key: ${
+			result.credentialSource === "env"
+				? `${result.redactedApiKey} (environment variable${result.apiKeyOptional ? ", optional — the endpoint is used unauthenticated until it is set" : ""})`
+				: result.redactedApiKey
+		}`,
 		`Config: ${result.modelsPath}`,
 	].join("\n");
 }

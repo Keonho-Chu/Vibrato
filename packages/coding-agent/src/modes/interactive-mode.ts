@@ -39,11 +39,6 @@ import type { CompactOptions } from "../extensibility/extensions/types";
 import { resolveSkillSlashCommands, type Skill } from "../extensibility/skills";
 import { BUILTIN_SLASH_COMMANDS, loadSlashCommands } from "../extensibility/slash-commands";
 import { getLspStartupWarningMessage, LSP_STARTUP_EVENT_CHANNEL, type LspStartupEvent } from "../lsp/startup-events";
-import {
-	createStarReminderBeforeAgentStartContributor,
-	scheduleLaunchStarReminderAfterFirstRender,
-	starReminderLaunchGate,
-} from "../reminders/star-reminder";
 import type { NotificationSessionReconcileResult, NotificationSessionStatus } from "../sdk/bus/session-control";
 import type { AgentSession, AgentSessionEvent } from "../session/agent-session";
 import type { HistoryStorage } from "../session/history-storage";
@@ -59,6 +54,7 @@ import type { AssistantMessageComponent } from "./components/assistant-message";
 import type { BashExecutionComponent } from "./components/bash-execution";
 import type { CommandPaletteAction } from "./components/command-palette";
 import { CustomEditor } from "./components/custom-editor";
+import type { CustomProviderWizardOptions } from "./components/custom-provider-wizard";
 import type { EvalExecutionComponent } from "./components/eval-execution";
 import type { HookEditorComponent } from "./components/hook-editor";
 import type { HookInputComponent } from "./components/hook-input";
@@ -985,20 +981,6 @@ export class InteractiveMode implements InteractiveModeContext {
 			recentSessionsTimer.unref?.();
 		}
 
-		// GitHub star reminder (interactive-only). Register the decline-driven
-		// injection contributor and schedule the launch nudge after the first
-		// render so the networked gh check never blocks startup.
-		const starReminderGate = starReminderLaunchGate({
-			enabled: settings.get("starReminder.enabled"),
-			quiet: startupQuiet,
-		});
-		if (starReminderGate.register) {
-			this.session.registerBeforeAgentStartContributor(
-				createStarReminderBeforeAgentStartContributor({
-					getSessionId: () => this.sessionManager.getSessionId(),
-				}),
-			);
-		}
 		// Crash nudge (interactive-only, local-only). Runs after the first render
 		// and routes through the centralized status surface — never `console.*`.
 		if (crashNudgeGate({ enabled: settings.get("crashReport.nudge"), interactive: true, quiet: startupQuiet })) {
@@ -1039,14 +1021,6 @@ export class InteractiveMode implements InteractiveModeContext {
 				})();
 			}, 0);
 			crashRelayTimer.unref?.();
-		}
-
-		if (starReminderGate.schedule) {
-			scheduleLaunchStarReminderAfterFirstRender({
-				confirm: (title, message) =>
-					this.#stopped ? Promise.resolve(false) : this.showHookConfirm(title, message),
-				isIdle: () => !this.session.isStreaming && !this.isBackgrounded && !this.hookSelector,
-			});
 		}
 
 		// Initialize hooks with TUI-based UI context
@@ -2465,6 +2439,12 @@ export class InteractiveMode implements InteractiveModeContext {
 
 	showProviderOnboarding(): void {
 		this.#selectorController.showProviderOnboarding();
+	}
+	showCustomProviderWizard(options: CustomProviderWizardOptions = {}): void {
+		this.#selectorController.showCustomProviderWizard(options);
+	}
+	showLocalEndpointOnboarding(): Promise<void> {
+		return this.#selectorController.showLocalEndpointOnboarding();
 	}
 	showFrictionlessOnboarding(): Promise<void> {
 		return this.#selectorController.showFrictionlessOnboarding();

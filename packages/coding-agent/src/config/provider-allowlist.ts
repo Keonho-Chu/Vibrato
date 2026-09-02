@@ -1,8 +1,10 @@
 /**
  * Product-level provider allowlist.
  *
- * Vibrato exposes exactly four model providers for selection: Anthropic
- * (Claude), OpenAI Codex (browser and device-code login), vLLM, and SGLang.
+ * Vibrato exposes one generic local endpoint plus a small set of named
+ * providers for selection: a generic local LLM endpoint (`local`, any
+ * OpenAI-compatible server), the named self-hosted endpoints vLLM and SGLang,
+ * OpenAI Codex (browser and device-code login), and Anthropic (Claude).
  * Every other built-in provider stays compiled in (transports, tests, and
  * explicit `models.yml` overrides keep working) but is hidden from every
  * selection surface: `/login`, `/model`, provider ordering, presets, and the
@@ -18,11 +20,12 @@ import { getOAuthProviders } from "@vib-rato/ai/utils/oauth";
 
 /** Provider ids a user may pick anywhere in the product. */
 export const SELECTABLE_PROVIDER_IDS: readonly string[] = Object.freeze([
-	"anthropic",
-	"openai-codex",
-	"openai-codex-device",
+	"local",
 	"vllm",
 	"sglang",
+	"openai-codex",
+	"openai-codex-device",
+	"anthropic",
 ]);
 
 /**

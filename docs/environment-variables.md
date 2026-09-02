@@ -39,7 +39,7 @@ Keys are used exactly as written. A `PI_`-prefixed key in a `.env` file is not m
 
 These are consumed via `getEnvApiKey()` (`packages/ai/src/stream.ts`) unless noted otherwise.
 
-> **Selection note:** Vibrato's built-in provider picker (`/login`, `/model`, provider ordering, presets) is limited to four providers — see [Supported providers](./models.md#supported-providers). `ANTHROPIC_*`, `OPENAI_API_KEY`/Codex auth, `VLLM_API_KEY`, `VLLM_BASE_URL`, `SGLANG_API_KEY`, and `SGLANG_BASE_URL` back those. Every other row in the table below still works exactly as documented, but only for a provider reachable through a custom `models.yml` entry — hidden from selection (advanced / `models.yml`-only) rather than removed.
+> **Selection note:** Vibrato's built-in provider picker (`/login`, `/model`, `/provider`, provider ordering, presets) is limited to five providers — see [Supported providers](./models.md#supported-providers). `ANTHROPIC_*`, `OPENAI_API_KEY`/Codex auth, `LOCAL_LLM_API_KEY`, `VLLM_API_KEY`, `VLLM_BASE_URL`, `SGLANG_API_KEY`, and `SGLANG_BASE_URL` back those. Every other row in the table below still works exactly as documented, but only for a provider reachable through a custom `models.yml` entry — hidden from selection (advanced / `models.yml`-only) rather than removed.
 
 ### Core provider credentials
 
@@ -86,6 +86,7 @@ These are consumed via `getEnvApiKey()` (`packages/ai/src/stream.ts`) unless not
 | `OPENGATEWAY_API_KEY`           | OpenGateway (by Sionic AI) auth                  | Using `opengateway` provider                                  | OpenAI-compatible gateway; models discovered via `/v1/models`                                       |
 | `BIZROUTER_API_KEY`             | BizRouter auth                                    | Using `bizrouter` provider                                    | Korean enterprise LLM gateway; OpenAI-compatible, models discovered via `/v1/models`                |
 | `MARA_API_KEY`                  | Mara Cloud auth                                 | Using `mara` provider                                          | OpenAI-compatible enterprise inference platform; models discovered via `/v1/models`                 |
+| `LOCAL_LLM_API_KEY`             | Optional bearer-token auth for the `local` (local LLM endpoint) provider | Using `local` provider with an authenticated server | Empty/unset on the interactive wizard stores a placeholder `local` token for unauthenticated servers |
 | `VLLM_API_KEY`                  | Optional vLLM bearer-token auth                  | Using `vllm` provider                                          | Not required for credentialless loopback discovery                                                  |
 | `SGLANG_API_KEY`                | Optional SGLang bearer-token auth                | Using `sglang` provider                                        | Not required for credentialless loopback discovery                                                  |
 | `CURSOR_ACCESS_TOKEN`           | Cursor provider auth                             | Using Cursor provider                                          |                                                                                                     |

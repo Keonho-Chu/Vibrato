@@ -1297,7 +1297,8 @@ describe("bare /login external credential import gate", () => {
 			if (!(selector instanceof ProviderOnboardingSelectorComponent)) {
 				throw new Error("Expected provider onboarding selector");
 			}
-			// Import existing credentials is the sixth entry (after the two endpoint options).
+			// Import existing credentials is the sixth entry, after the local endpoint,
+			// the Codex and Claude logins, the OAuth selector, and the custom provider.
 			for (let step = 0; step < 5; step++) selector.handleInput("\x1b[B");
 			selector.handleInput("\n");
 			await importCompleted;

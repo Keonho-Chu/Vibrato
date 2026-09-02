@@ -28,7 +28,7 @@ interface WizardState {
 export type CustomProviderWizardSubmit = ProviderSetupInput;
 
 /** Endpoint presets that collapse the wizard to "base URL + API key". */
-export type CustomProviderWizardPreset = "vllm" | "sglang";
+export type CustomProviderWizardPreset = "local" | "vllm" | "sglang";
 
 interface WizardPresetSpec {
 	providerId: string;
@@ -40,6 +40,14 @@ interface WizardPresetSpec {
 }
 
 const WIZARD_PRESETS: Record<CustomProviderWizardPreset, WizardPresetSpec> = {
+	local: {
+		providerId: "local",
+		title: "Connect a local LLM endpoint",
+		subtitle:
+			"  Enter the local LLM server URL (OpenAI-compatible) and an optional API key. Models are discovered from the server.",
+		defaultBaseUrl: "http://127.0.0.1:8000/v1",
+		localToken: "local",
+	},
 	vllm: {
 		providerId: "vllm",
 		title: "Connect a vLLM endpoint",

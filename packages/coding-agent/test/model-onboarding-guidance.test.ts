@@ -56,6 +56,13 @@ function expectProviderOnboardingGuidance(text: string): void {
 	expect(text).toContain("/provider login [provider-id]");
 	expect(text).toContain("/login [provider-id]");
 	expect(text).toContain("/model");
+	// The local LLM endpoint is the primary connection path, then Codex, then Claude.
+	expect(text).toContain('Connect a local LLM endpoint"');
+	expect(text).toContain("vib setup provider --preset local --base-url http://HOST:PORT/v1");
+	expect(text).toContain("/login openai-codex");
+	expect(text).toContain("/login anthropic");
+	expect(text.indexOf("--preset local")).toBeLessThan(text.indexOf("/login openai-codex"));
+	expect(text.indexOf("/login openai-codex")).toBeLessThan(text.indexOf("/login anthropic"));
 }
 
 function createRuntime(outputs: string[], availableModels = [] as Model[]): SlashCommandRuntime {

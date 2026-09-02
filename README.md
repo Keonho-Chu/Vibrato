@@ -7,7 +7,7 @@
 <h1 align="center">Vibrato</h1>
 
 <p align="center">
-  <sub>Terminal coding agent for Claude, OpenAI Codex, and self-hosted vLLM / SGLang endpoints.</sub>
+  <sub>Terminal coding agent for local LLM endpoints, Claude, and OpenAI Codex.</sub>
 </p>
 
 <p align="center">
@@ -54,12 +54,18 @@ Full platform matrix, nightly channel, shell completion, and source builds: [doc
 
 ## First run
 
-Start `vib` inside any git checkout. On the first launch with no configured provider, Vibrato opens the provider menu automatically. The same menu is available any time with `/provider`.
+Start `vib` inside any git checkout. On the first launch with no usable model, Vibrato asks you to connect a local LLM endpoint first; press Esc to fall through to the full provider menu. The same menu is available any time with `/provider`.
 
-- **vLLM / SGLang** (self-hosted, OpenAI-compatible): pick *Connect a vLLM endpoint* or *Connect an SGLang endpoint*, enter the server URL and an optional API key, and Vibrato discovers the models from the server. Leave the key empty for an unauthenticated local server.
+- **Local LLM endpoint** (vLLM, SGLang, Ollama, LM Studio, llama.cpp, or any other OpenAI-compatible server): pick *Connect a local LLM endpoint*, enter the server URL and an optional API key, and Vibrato discovers the models from the server. Leave the key empty for an unauthenticated local server.
 - **Claude** or **OpenAI Codex** (subscription plans): run `/login` and pick `anthropic`, `openai-codex` (browser), or `openai-codex-device` (headless).
 
 The same setup from the shell:
+
+```sh
+vib setup provider --preset local --base-url http://HOST:PORT/v1     # key from LOCAL_LLM_API_KEY, if any
+```
+
+The `vllm` and `sglang` presets are still available for scripts and CI that already target them:
 
 ```sh
 vib setup provider --preset vllm --base-url http://HOST:8000/v1      # key from VLLM_API_KEY, if any
@@ -87,7 +93,7 @@ Inside a session:
 
 | Command | What it does |
 | :--- | :--- |
-| `/provider` | Connect a vLLM or SGLang endpoint |
+| `/provider` | Connect a local LLM endpoint (or vLLM/SGLang/OpenAI Codex/Claude) |
 | `/login` | Sign in to Claude or OpenAI Codex |
 | `/model` | Switch the active model |
 | `/theme` | Switch the TUI theme |

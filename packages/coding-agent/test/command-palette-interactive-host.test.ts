@@ -50,7 +50,6 @@ type PartialInteractivePaletteHost = Partial<InteractivePaletteHost>;
 
 const STARTUP_OVERRIDES = {
 	"pet.mode": "off",
-	"starReminder.enabled": false,
 	"startup.quiet": true,
 	"tasksPane.defaultVisible": false,
 };

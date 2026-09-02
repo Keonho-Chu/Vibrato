@@ -5,8 +5,9 @@ import { formatModelOnboardingGuidance } from "../../setup/model-onboarding-guid
 import { DynamicBorder } from "./dynamic-border";
 
 export type ProviderOnboardingAction =
-	| "vllm-endpoint"
-	| "sglang-endpoint"
+	| "local-endpoint"
+	| "codex-login"
+	| "claude-login"
 	| "custom-provider-wizard"
 	| "oauth-login"
 	| "import-credentials"
@@ -20,14 +21,25 @@ interface ProviderOnboardingOption {
 
 const PROVIDER_ONBOARDING_OPTIONS: ProviderOnboardingOption[] = [
 	{
-		label: "Connect a vLLM endpoint",
-		description: "Enter the vLLM server URL and API key and start right away; models are discovered.",
-		action: "vllm-endpoint",
+		label: "Connect a local LLM endpoint",
+		description:
+			"Enter the URL of an OpenAI-compatible local LLM server (vLLM, SGLang, Ollama, LM Studio, llama.cpp, …) and an optional API key; models are discovered and registered.",
+		action: "local-endpoint",
 	},
 	{
-		label: "Connect an SGLang endpoint",
-		description: "Enter the SGLang server URL and API key; models are discovered.",
-		action: "sglang-endpoint",
+		label: "Login with OpenAI Codex",
+		description: "Authorize the OpenAI Codex subscription in the browser.",
+		action: "codex-login",
+	},
+	{
+		label: "Login with Claude",
+		description: "Authorize the Anthropic Claude subscription in the browser.",
+		action: "claude-login",
+	},
+	{
+		label: "Login with OAuth/subscription",
+		description: "Open the interactive OAuth provider selector for every other login.",
+		action: "oauth-login",
 	},
 	{
 		label: "Add custom provider",
@@ -35,19 +47,14 @@ const PROVIDER_ONBOARDING_OPTIONS: ProviderOnboardingOption[] = [
 		action: "custom-provider-wizard",
 	},
 	{
-		label: "Login with OAuth/subscription",
-		description: "Open the interactive OAuth provider selector.",
-		action: "oauth-login",
+		label: "Import existing credentials",
+		description: "Detect and import Claude Code / Codex CLI logins already on this machine.",
+		action: "import-credentials",
 	},
 	{
 		label: "Add API-compatible provider",
 		description: "Show the /provider add and vib setup provider commands.",
 		action: "api-guide",
-	},
-	{
-		label: "Import existing credentials",
-		description: "Detect and import Claude Code / Codex CLI logins already on this machine.",
-		action: "import-credentials",
 	},
 ];
 

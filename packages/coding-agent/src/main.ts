@@ -758,18 +758,20 @@ export async function runInteractiveMode(
 			resumeAction,
 		})
 	) {
+		// Nothing usable yet (no credentials, no discovered endpoint): the local
+		// LLM endpoint is the primary connection path, so its wizard comes first —
+		// before the frictionless onboarding. Escaping it falls through to the
+		// provider menu, where the Codex and Claude logins live.
+		// Test harnesses stub the registry and mode, so probe both before calling.
+		const availableModels =
+			typeof session.modelRegistry?.getAvailable === "function" ? session.modelRegistry.getAvailable() : undefined;
+		if (availableModels?.length === 0 && typeof mode.showLocalEndpointOnboarding === "function") {
+			await mode.showLocalEndpointOnboarding();
+		}
 		const agentDir = session.getSessionAgentDir?.() ?? session.settings?.getAgentDir?.();
 		if (agentDir) {
 			const onboardingState = await readOnboardingState(agentDir);
 			if (shouldOfferOnboarding(onboardingState)) await mode.showFrictionlessOnboarding();
-		}
-		// Nothing usable yet (no credentials, no discovered endpoint): open the
-		// provider onboarding menu, whose first entry is the vLLM endpoint setup.
-		// Test harnesses stub the registry and mode, so probe both before calling.
-		const availableModels =
-			typeof session.modelRegistry?.getAvailable === "function" ? session.modelRegistry.getAvailable() : undefined;
-		if (availableModels?.length === 0 && typeof mode.showProviderOnboarding === "function") {
-			mode.showProviderOnboarding();
 		}
 	}
 	mode.renderInitialMessages(undefined, { preserveExistingChat: true });

@@ -6,7 +6,7 @@
 <h1 align="center">Vibrato</h1>
 
 <p align="center">
-  <sub>Claude, OpenAI Codex, 자체 호스팅 vLLM / SGLang 엔드포인트에서 동작하는 터미널 코딩 에이전트.</sub>
+  <sub>로컬 LLM 엔드포인트, Claude, OpenAI Codex에서 동작하는 터미널 코딩 에이전트.</sub>
 </p>
 
 <p align="center">
@@ -55,12 +55,18 @@ vib update
 
 ## 첫 실행
 
-아무 git 체크아웃 안에서 `vib`를 실행하세요. 설정된 프로바이더가 없는 첫 실행에서는 프로바이더 메뉴가 자동으로 열립니다. 같은 메뉴는 언제든 `/provider`로 열 수 있습니다.
+아무 git 체크아웃 안에서 `vib`를 실행하세요. 사용 가능한 모델이 없는 첫 실행에서는 먼저 로컬 LLM 엔드포인트 연결을 물어봅니다. Esc를 누르면 전체 프로바이더 메뉴로 넘어갑니다. 같은 메뉴는 언제든 `/provider`로 열 수 있습니다.
 
-- **vLLM / SGLang** (자체 호스팅, OpenAI 호환): *Connect a vLLM endpoint* 또는 *Connect an SGLang endpoint*를 고르고 서버 URL과 API 키(선택)를 입력하면 서버에서 모델 목록을 가져옵니다. 인증 없는 로컬 서버라면 키를 비워 두세요.
+- **로컬 LLM 엔드포인트** (vLLM, SGLang, Ollama, LM Studio, llama.cpp 등 OpenAI 호환 서버라면 무엇이든): *Connect a local LLM endpoint*를 고르고 서버 URL과 API 키(선택)를 입력하면 서버에서 모델 목록을 가져옵니다. 인증 없는 로컬 서버라면 키를 비워 두세요.
 - **Claude** 또는 **OpenAI Codex** (구독 플랜): `/login`에서 `anthropic`, `openai-codex`(브라우저), `openai-codex-device`(헤드리스) 중 하나를 고릅니다.
 
 셸에서 같은 설정을 하려면:
+
+```sh
+vib setup provider --preset local --base-url http://HOST:PORT/v1     # 키는 LOCAL_LLM_API_KEY에서 읽음(있을 때)
+```
+
+`vllm`과 `sglang` 프리셋은 이미 이를 사용하는 스크립트나 CI를 위해 계속 제공됩니다:
 
 ```sh
 vib setup provider --preset vllm --base-url http://HOST:8000/v1      # 키는 VLLM_API_KEY에서 읽음(있을 때)
@@ -88,7 +94,7 @@ vib --list-models                          # 사용 가능한 모델 표시
 
 | 명령 | 역할 |
 | :--- | :--- |
-| `/provider` | vLLM 또는 SGLang 엔드포인트 연결 |
+| `/provider` | 로컬 LLM 엔드포인트 연결(또는 vLLM/SGLang/OpenAI Codex/Claude) |
 | `/login` | Claude 또는 OpenAI Codex 로그인 |
 | `/model` | 활성 모델 전환 |
 | `/theme` | TUI 테마 전환 |

@@ -280,62 +280,65 @@ describe("provider onboarding wizard red-team", () => {
 		});
 	});
 
-	it("keeps the vLLM endpoint at index 0 while OAuth and API-guide actions still route", () => {
+	it("keeps the local LLM endpoint at index 0 while the login and API-guide actions still route", () => {
 		const actions: ProviderOnboardingAction[] = [];
 		const selector = new ProviderOnboardingSelectorComponent(
 			action => actions.push(action),
 			() => undefined,
 		);
 		const rendered = visibleText(selector);
-		expect(rendered.indexOf("Connect a vLLM endpoint")).toBeLessThan(rendered.indexOf("Add custom provider"));
-		expect(rendered.indexOf("Add custom provider")).toBeLessThan(rendered.indexOf("Login with OAuth/subscription"));
+		expect(rendered.indexOf("Connect a local LLM endpoint")).toBeLessThan(
+			rendered.indexOf("Login with OpenAI Codex"),
+		);
+		expect(rendered.indexOf("Login with OpenAI Codex")).toBeLessThan(rendered.indexOf("Login with Claude"));
+		expect(rendered.indexOf("Login with Claude")).toBeLessThan(rendered.indexOf("Add custom provider"));
 		selector.handleInput("\n");
-		expect(actions).toEqual(["vllm-endpoint"]);
+		expect(actions).toEqual(["local-endpoint"]);
 		// Wrapping backwards from the top reaches the last option, not a stale index.
 		selector.handleInput("\x1b[A");
 		selector.handleInput("\n");
-		expect(actions).toEqual(["vllm-endpoint", "import-credentials"]);
+		expect(actions).toEqual(["local-endpoint", "api-guide"]);
 
 		const ctx = createControllerContext({ refresh: async () => undefined } as unknown as ModelRegistry);
 		const controller = new SelectorController(ctx);
 		const showOAuth = mock(() => undefined);
 		controller.showOAuthSelector = showOAuth as unknown as SelectorController["showOAuthSelector"];
 
-		controller.showProviderOnboarding();
-		let routed = ctx.ui.focused as ProviderOnboardingSelectorComponent;
-		for (let i = 0; i < 3; i++) routed.handleInput("\x1b[B");
-		routed.handleInput("\n");
-		expect(showOAuth).toHaveBeenCalledWith("login");
+		for (const [downs, expected] of [
+			[1, ["login", "openai-codex"]],
+			[2, ["login", "anthropic"]],
+			[3, ["login"]],
+		] as const) {
+			controller.showProviderOnboarding();
+			const routed = ctx.ui.focused as ProviderOnboardingSelectorComponent;
+			for (let i = 0; i < downs; i++) routed.handleInput("\x1b[B");
+			routed.handleInput("\n");
+			expect(showOAuth).toHaveBeenLastCalledWith(...expected);
+		}
 
 		controller.showProviderOnboarding();
-		routed = ctx.ui.focused as ProviderOnboardingSelectorComponent;
-		for (let i = 0; i < 4; i++) routed.handleInput("\x1b[B");
+		const routed = ctx.ui.focused as ProviderOnboardingSelectorComponent;
+		for (let i = 0; i < 6; i++) routed.handleInput("\x1b[B");
 		routed.handleInput("\n");
 		expect(ctx.statuses.join("\n")).toContain("Custom API-compatible provider setup:");
 	});
 
-	it("routes both endpoint options into the matching preset wizard", () => {
+	it("routes the first entry into the generic local endpoint preset wizard", () => {
 		const ctx = createControllerContext({ refresh: async () => undefined } as unknown as ModelRegistry);
 		const controller = new SelectorController(ctx);
 
-		for (const [downs, title, defaultUrl] of [
-			[0, "Connect a vLLM endpoint", "http://127.0.0.1:8000/v1"],
-			[1, "Connect an SGLang endpoint", "http://127.0.0.1:30000/v1"],
-		] as const) {
-			controller.showProviderOnboarding();
-			const selector = ctx.ui.focused as ProviderOnboardingSelectorComponent;
-			for (let i = 0; i < downs; i++) selector.handleInput("\x1b[B");
-			selector.handleInput("\n");
+		controller.showProviderOnboarding();
+		const selector = ctx.ui.focused as ProviderOnboardingSelectorComponent;
+		selector.handleInput("\n");
 
-			const wizard = ctx.ui.focused as CustomProviderWizardComponent;
-			const rendered = visibleText(wizard);
-			expect(rendered).toContain(title);
-			expect(rendered).toContain("Step 1: Server URL");
-			expect(rendered).toContain(defaultUrl);
-			// The preset path never asks for compatibility or a provider id.
-			expect(rendered).not.toContain("Step 1: Compatibility");
-			expect(rendered).not.toContain("Enter a provider id:");
-		}
+		const wizard = ctx.ui.focused as CustomProviderWizardComponent;
+		const rendered = visibleText(wizard);
+		expect(rendered).toContain("Connect a local LLM endpoint");
+		expect(rendered).toContain("Step 1: Server URL");
+		expect(rendered).toContain("http://127.0.0.1:8000/v1");
+		// The preset path never asks for compatibility or a provider id.
+		expect(rendered).not.toContain("Step 1: Compatibility");
+		expect(rendered).not.toContain("Enter a provider id:");
 	});
 });
 

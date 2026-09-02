@@ -927,6 +927,8 @@ ${chalk.bold("Components:")}
 
 
 ${chalk.bold("Provider example:")}
+  ${APP_NAME} setup provider --preset local --base-url http://127.0.0.1:8000/v1      # any OpenAI-compatible local server; key from LOCAL_LLM_API_KEY
+  LOCAL_LLM_API_KEY=sk-... ${APP_NAME} setup provider --preset local --base-url http://10.0.0.5:11434/v1
   ${APP_NAME} setup provider --preset vllm --base-url http://10.0.0.5:8000/v1        # key from VLLM_API_KEY
   VLLM_API_KEY=sk-... ${APP_NAME} setup provider --preset vllm --base-url http://127.0.0.1:8000/v1
   ${APP_NAME} setup provider --preset sglang --base-url http://127.0.0.1:30000/v1     # key from SGLANG_API_KEY
@@ -949,7 +951,7 @@ ${chalk.bold("Options:")}
   --preset          Provider preset id (run setup provider --help to list available presets)
   --compat          Provider compatibility: openai or anthropic
   --provider        Provider id to add to models.yml
-  --base-url        Provider API base URL (required for the vllm and sglang presets)
+  --base-url        Provider API base URL (required for the local, vllm, and sglang presets)
   --api-key-env     Read provider API key from this environment variable
   --model, --models Model id to add (repeat or comma-separate)
   --models-path     Override models config path

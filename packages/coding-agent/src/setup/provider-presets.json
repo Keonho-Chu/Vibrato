@@ -1,4 +1,5 @@
 [
+  {"id":"local","aliases":["local-llm","local-endpoint","endpoint"],"name":"Local LLM endpoint","description":"OpenAI-compatible local LLM server (vLLM, SGLang, Ollama, LM Studio, llama.cpp, …) at a user-supplied base URL with live model discovery","compatibility":"openai","api":"openai-completions","providerId":"local","parameterized":true,"optionalApiKey":true,"apiKeyEnv":"LOCAL_LLM_API_KEY","discovery":{"type":"openai-models-list"}},
   {"id":"vllm","aliases":["vllm-endpoint"],"name":"vLLM endpoint","description":"OpenAI-compatible vLLM server (user-supplied base URL) with live model discovery","compatibility":"openai","api":"openai-completions","providerId":"vllm","parameterized":true,"apiKeyEnv":"VLLM_API_KEY","discovery":{"type":"vllm"}},
   {"id":"sglang","aliases":["sglang-endpoint"],"name":"SGLang endpoint","description":"OpenAI-compatible SGLang server (user-supplied base URL) with live model discovery","compatibility":"openai","api":"openai-completions","providerId":"sglang","parameterized":true,"apiKeyEnv":"SGLANG_API_KEY","discovery":{"type":"sglang"}}
 ]

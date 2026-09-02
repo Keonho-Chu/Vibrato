@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- **Breaking:** Provider onboarding is now local-endpoint-first. A new `local` preset (`vib setup provider --preset local --base-url http://HOST:PORT/v1`, aliases `local-llm`, `local-endpoint`, `endpoint`) connects any OpenAI-compatible local LLM server (vLLM, SGLang, Ollama, LM Studio, llama.cpp, …), discovers models live from `GET /v1/models`, and registers them under provider id `local` in `models.yml`; the credential comes from `LOCAL_LLM_API_KEY` or a pasted value, an empty key in the wizard stores a placeholder `local` token, and the keyless CLI path writes the optional-credential `openaiCompat` form so unauthenticated servers still discover models. The selectable provider set is now `local`, `vllm`, `sglang`, `openai-codex`/`openai-codex-device`, and `anthropic`, ranked in that order (local endpoint → OpenAI Codex → Claude) across `/login`, `/model`, `/provider`, and presets. On the first interactive launch with no usable model, Vibrato now asks for the local LLM endpoint before the frictionless onboarding; Esc falls through to the `/provider` menu, whose entries are Connect a local LLM endpoint, Login with OpenAI Codex, Login with Claude, the OAuth selector, Add custom provider, Import existing credentials, and the API-compatible provider guide. The `vllm` and `sglang` presets remain available.
+- **Breaking:** Removed the GitHub star reminder. The launch nudge, the decline-driven persuasion prompt injected into sessions, the `starReminder.enabled` setting, and the `star-reminder.json` state file are gone.
+
 ## [0.16.1] - 2026-09-02
 
 ## [0.16.0] - 2026-09-02

@@ -34,11 +34,12 @@ export type ProviderRankTier = (typeof PROVIDER_RANK_TIER)[keyof typeof PROVIDER
  * immediately behind their primary so related entries stay grouped.
  */
 export const FAMOUS_PROVIDER_ORDER: readonly string[] = [
+	"local",
+	"vllm",
+	"sglang",
 	"openai-codex",
 	"openai-codex-device",
 	"anthropic",
-	"vllm",
-	"sglang",
 ];
 
 const FAMOUS_PROVIDER_INDEX = new Map(FAMOUS_PROVIDER_ORDER.map((id, index) => [id, index]));

@@ -4,6 +4,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { getAgentDbPath, getAgentDir, setAgentDir } from "@vib-rato/utils";
 import { YAML } from "bun";
+import { ModelsConfigSchema } from "../src/config/models-config-schema";
 import {
 	getSelectableOAuthProviders,
 	hiddenBuiltInProviderIds,
@@ -13,7 +14,7 @@ import {
 	selectableModels,
 } from "../src/config/provider-allowlist";
 import { SqliteAuthCredentialStore } from "../src/session/auth-storage";
-import { addApiCompatibleProvider, PROVIDER_PRESETS } from "../src/setup/provider-onboarding";
+import { addApiCompatibleProvider, findProviderPreset, PROVIDER_PRESETS } from "../src/setup/provider-onboarding";
 
 let tempRoot: string | undefined;
 const originalAgentDir = getAgentDir();
@@ -45,9 +46,12 @@ describe("product provider allowlist", () => {
 	it("offers exactly the allowlisted model providers plus the web-search OAuth entries", () => {
 		const ids = getSelectableOAuthProviders().map(provider => provider.id);
 
+		// `local` is allowlisted but has no OAuth registry entry (it authenticates
+		// with an optional API key), so it never appears in the `/login` picker.
 		expect(ids.filter(id => !NON_MODEL_OAUTH_PROVIDER_IDS.includes(id)).sort()).toEqual(
 			["anthropic", "openai-codex", "openai-codex-device", "sglang", "vllm"].sort(),
 		);
+		expect(ids).not.toContain("local");
 		// Web-search credentials are not model access, so they survive the allowlist.
 		expect(ids).toEqual(expect.arrayContaining([...NON_MODEL_OAUTH_PROVIDER_IDS]));
 		// Every id offered is either allowlisted or a web-search entry.
@@ -103,15 +107,95 @@ describe("product provider allowlist", () => {
 		expect(models).toHaveLength(5);
 	});
 
-	it("keeps only the self-hosted endpoint presets", () => {
-		expect(PROVIDER_PRESETS.map(preset => preset.id)).toEqual(["vllm", "sglang"]);
-		expect(PROVIDER_PRESETS.map(preset => preset.providerId)).toEqual(["vllm", "sglang"]);
-		expect(PROVIDER_PRESETS.map(preset => preset.apiKeyEnv)).toEqual(["VLLM_API_KEY", "SGLANG_API_KEY"]);
+	it("keeps the generic local endpoint preset plus the named self-hosted ones", () => {
+		expect(PROVIDER_PRESETS.map(preset => preset.id)).toEqual(["local", "vllm", "sglang"]);
+		expect(PROVIDER_PRESETS.map(preset => preset.providerId)).toEqual(["local", "vllm", "sglang"]);
+		expect(PROVIDER_PRESETS.map(preset => preset.apiKeyEnv)).toEqual([
+			"LOCAL_LLM_API_KEY",
+			"VLLM_API_KEY",
+			"SGLANG_API_KEY",
+		]);
 		for (const preset of PROVIDER_PRESETS) {
 			expect(preset.parameterized).toBe(true);
 			expect(preset.baseUrl).toBeUndefined();
-			expect(preset.discovery?.type as string).toBe(preset.providerId);
+			expect(preset.compatibility).toBe("openai");
+			expect(preset.api).toBe("openai-completions");
 		}
+		// The named endpoints keep their own discovery descriptor; the generic
+		// preset speaks the plain OpenAI `GET /v1/models` listing.
+		expect(PROVIDER_PRESETS.map(preset => preset.discovery?.type as string)).toEqual([
+			"openai-models-list",
+			"vllm",
+			"sglang",
+		]);
+	});
+
+	it("looks the local preset up by id and by every documented alias", () => {
+		for (const value of ["local", "local-llm", "local-endpoint", "endpoint", "  LOCAL  ", "Local-LLM"]) {
+			expect(findProviderPreset(value)?.id).toBe("local");
+		}
+		expect(findProviderPreset("local-llm")?.name).toBe("Local LLM endpoint");
+		expect(findProviderPreset("not-a-preset")).toBeUndefined();
+	});
+
+	it("writes an optional-credential local endpoint entry for the local preset", async () => {
+		const modelsPath = await tempModelsPath();
+		const result = await addApiCompatibleProvider({
+			preset: "local-endpoint",
+			baseUrl: "http://127.0.0.1:8000/v1",
+			modelsPath,
+		});
+
+		expect(result.providerId).toBe("local");
+		expect(result.preset).toBe("local");
+		expect(result.presetName).toBe("Local LLM endpoint");
+		expect(result.modelIds).toEqual([]);
+		expect(result.credentialSource).toBe("env");
+
+		// Most local servers are unauthenticated, so the credential has to be
+		// optional: an explicit `auth: apiKey` entry would leave the provider
+		// unauthenticated and model-less until the variable is exported.
+		const provider = (await readProviders(modelsPath)).local;
+		expect(provider).toEqual({
+			openaiCompat: { baseUrl: "http://127.0.0.1:8000/v1", apiKeyEnv: "LOCAL_LLM_API_KEY" },
+		});
+		// The generated entry is the registry's own schema shape, so a config
+		// written here loads back without a validation error.
+		expect(ModelsConfigSchema.safeParse(YAML.parse(await Bun.file(modelsPath).text())).success).toBe(true);
+	});
+
+	it("stores the unauthenticated local token the wizard sends for an empty key", async () => {
+		const modelsPath = await tempModelsPath();
+		const result = await addApiCompatibleProvider({
+			preset: "local",
+			baseUrl: "http://127.0.0.1:11434/v1",
+			apiKey: "local",
+			modelsPath,
+		});
+
+		expect(result.credentialSource).toBe("literal");
+		expect((await readProviders(modelsPath)).local?.apiKeyEnv).toBeUndefined();
+		const store = await SqliteAuthCredentialStore.open(getAgentDbPath());
+		try {
+			expect(store.listAuthCredentials("local")[0]?.credential).toEqual({ type: "api_key", key: "local" });
+		} finally {
+			store.close();
+		}
+	});
+
+	it("requires a base URL for the local preset and rejects a public plain-http endpoint", async () => {
+		const modelsPath = await tempModelsPath();
+		await expect(addApiCompatibleProvider({ preset: "local", modelsPath })).rejects.toThrow("requires --base-url");
+		await expect(
+			addApiCompatibleProvider({ preset: "local", baseUrl: "http://llm.example.com/v1", modelsPath }),
+		).rejects.toThrow("https");
+		// A private-network LLM box over plain http is the common case and stays allowed.
+		const lan = await addApiCompatibleProvider({
+			preset: "local",
+			baseUrl: "http://192.168.1.42:8000/v1",
+			modelsPath,
+		});
+		expect(lan.baseUrl).toBe("http://192.168.1.42:8000/v1");
 	});
 
 	it("treats a pasted key as taking precedence over the preset's env-var name", async () => {

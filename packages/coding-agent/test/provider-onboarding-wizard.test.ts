@@ -61,7 +61,7 @@ function driveEnvWizard(
 }
 
 describe("provider onboarding wizard", () => {
-	it("shows the endpoint options first, ahead of the custom provider and OAuth entries", () => {
+	it("shows the local endpoint first, then the Codex and Claude logins", () => {
 		const actions: ProviderOnboardingAction[] = [];
 		const selector = new ProviderOnboardingSelectorComponent(
 			action => actions.push(action),
@@ -69,21 +69,30 @@ describe("provider onboarding wizard", () => {
 		);
 
 		const rendered = visibleText(selector);
-		expect(rendered.indexOf("Connect a vLLM endpoint")).toBeLessThan(rendered.indexOf("Connect an SGLang endpoint"));
-		expect(rendered.indexOf("Connect an SGLang endpoint")).toBeLessThan(rendered.indexOf("Add custom provider"));
-		expect(rendered.indexOf("Add custom provider")).toBeLessThan(rendered.indexOf("Login with OAuth/subscription"));
-		expect(rendered).toContain("Add API-compatible provider");
+		expect(rendered.indexOf("Connect a local LLM endpoint")).toBeLessThan(
+			rendered.indexOf("Login with OpenAI Codex"),
+		);
+		expect(rendered.indexOf("Login with OpenAI Codex")).toBeLessThan(rendered.indexOf("Login with Claude"));
+		expect(rendered.indexOf("Login with Claude")).toBeLessThan(rendered.indexOf("Login with OAuth/subscription"));
+		expect(rendered.indexOf("Login with OAuth/subscription")).toBeLessThan(rendered.indexOf("Add custom provider"));
+		expect(rendered.indexOf("Add custom provider")).toBeLessThan(rendered.indexOf("Import existing credentials"));
+		expect(rendered.indexOf("Import existing credentials")).toBeLessThan(
+			rendered.indexOf("Add API-compatible provider"),
+		);
+		// The named self-hosted presets stay reachable by command, not by menu entry.
+		expect(rendered).not.toContain("Connect a vLLM endpoint");
+		expect(rendered).not.toContain("Connect an SGLang endpoint");
 
 		selector.handleInput("\n");
-		expect(actions).toEqual(["vllm-endpoint"]);
+		expect(actions).toEqual(["local-endpoint"]);
 
 		selector.handleInput("\x1b[B");
 		selector.handleInput("\n");
-		expect(actions).toEqual(["vllm-endpoint", "sglang-endpoint"]);
+		expect(actions).toEqual(["local-endpoint", "codex-login"]);
 
 		selector.handleInput("\x1b[B");
 		selector.handleInput("\n");
-		expect(actions).toEqual(["vllm-endpoint", "sglang-endpoint", "custom-provider-wizard"]);
+		expect(actions).toEqual(["local-endpoint", "codex-login", "claude-login"]);
 	});
 
 	it("collapses the vLLM preset wizard to base URL, key, confirm", () => {
@@ -138,6 +147,62 @@ describe("provider onboarding wizard", () => {
 
 		expect(submissions).toEqual([
 			{ preset: "vllm", baseUrl: "http://127.0.0.1:8000/v1", apiKey: "vllm-local", force: false },
+		]);
+	});
+
+	it("collapses the generic local-endpoint preset wizard to base URL, key, confirm", () => {
+		const submissions: CustomProviderWizardSubmit[] = [];
+		const wizard = new CustomProviderWizardComponent(
+			input => submissions.push(input),
+			() => undefined,
+			() => undefined,
+			{ preset: "local" },
+		);
+
+		const opening = visibleText(wizard);
+		expect(opening).toContain("Connect a local LLM endpoint");
+		// The subtitle names the servers this preset covers, so a user running
+		// Ollama or LM Studio recognizes the entry as theirs.
+		expect(opening).toContain("Enter the local LLM server URL (OpenAI-compatible)");
+		expect(opening).toContain("Step 1: Server URL");
+		clearInput(wizard, "http://127.0.0.1:8000/v1".length);
+		typeText(wizard, "http://127.0.0.1:11434/v1");
+		wizard.handleInput("\n");
+
+		expect(visibleText(wizard)).toContain("Step 2: API key");
+		typeText(wizard, "sk-local-secret");
+		expect(visibleText(wizard)).not.toContain("sk-local-secret");
+		wizard.handleInput("\n");
+
+		const confirm = visibleText(wizard);
+		expect(confirm).toContain("Provider: local");
+		expect(confirm).toContain("Base URL: http://127.0.0.1:11434/v1");
+		expect(confirm).toContain("Models: discovered from the server");
+		wizard.handleInput("\n");
+
+		expect(submissions).toEqual([
+			{ preset: "local", baseUrl: "http://127.0.0.1:11434/v1", apiKey: "sk-local-secret", force: false },
+		]);
+	});
+
+	it("stores the local token when the local-endpoint key is left empty", () => {
+		const submissions: CustomProviderWizardSubmit[] = [];
+		const wizard = new CustomProviderWizardComponent(
+			input => submissions.push(input),
+			() => undefined,
+			() => undefined,
+			{ preset: "local" },
+		);
+
+		wizard.handleInput("\n"); // accept the default server URL
+		expect(visibleText(wizard)).toContain("Leave empty for an unauthenticated local server.");
+		wizard.handleInput("\n"); // empty key
+
+		expect(visibleText(wizard)).toContain("Credential: none (unauthenticated local server)");
+		wizard.handleInput("\n");
+
+		expect(submissions).toEqual([
+			{ preset: "local", baseUrl: "http://127.0.0.1:8000/v1", apiKey: "local", force: false },
 		]);
 	});
 
@@ -312,24 +377,49 @@ describe("provider onboarding wizard", () => {
 		}
 	});
 
-	it("keeps OAuth and API guide onboarding actions routed", () => {
+	it("keeps direct login, OAuth, and API guide onboarding actions routed", () => {
 		const ctx = createControllerContext({ refresh: async () => undefined } as unknown as ModelRegistry);
 		const controller = new SelectorController(ctx);
 		const showOAuth = mock(() => undefined);
 		controller.showOAuthSelector = showOAuth as unknown as SelectorController["showOAuthSelector"];
 
-		controller.showProviderOnboarding();
-		let selector = ctx.ui.focused as ProviderOnboardingSelectorComponent;
-		// vLLM, SGLang, Add custom provider, then Login with OAuth/subscription.
-		for (let i = 0; i < 3; i++) selector.handleInput("\x1b[B");
-		selector.handleInput("\n");
-		expect(showOAuth).toHaveBeenCalledWith("login");
+		// Local endpoint, Codex login, Claude login, OAuth selector, custom
+		// provider, import credentials, API guide.
+		for (const [downs, expected] of [
+			[1, ["login", "openai-codex"]],
+			[2, ["login", "anthropic"]],
+			[3, ["login"]],
+		] as const) {
+			controller.showProviderOnboarding();
+			const selector = ctx.ui.focused as ProviderOnboardingSelectorComponent;
+			for (let i = 0; i < downs; i++) selector.handleInput("\x1b[B");
+			selector.handleInput("\n");
+			expect(showOAuth).toHaveBeenLastCalledWith(...expected);
+		}
 
 		controller.showProviderOnboarding();
-		selector = ctx.ui.focused as ProviderOnboardingSelectorComponent;
-		for (let i = 0; i < 4; i++) selector.handleInput("\x1b[B");
+		const selector = ctx.ui.focused as ProviderOnboardingSelectorComponent;
+		for (let i = 0; i < 6; i++) selector.handleInput("\x1b[B");
 		selector.handleInput("\n");
 		expect(ctx.statuses.join("\n")).toContain("Custom API-compatible provider setup:");
+	});
+
+	it("falls back to the provider menu when the first-launch local endpoint wizard is cancelled", async () => {
+		const ctx = createControllerContext({ refresh: async () => undefined } as unknown as ModelRegistry);
+		const controller = new SelectorController(ctx);
+
+		const settled = controller.showLocalEndpointOnboarding();
+		const wizard = ctx.ui.focused as CustomProviderWizardComponent;
+		expect(visibleText(wizard)).toContain("Connect a local LLM endpoint");
+
+		wizard.handleInput("\x1b");
+		const menu = ctx.ui.focused as ProviderOnboardingSelectorComponent;
+		expect(menu).toBeInstanceOf(ProviderOnboardingSelectorComponent);
+
+		// The promise only settles once the fallback menu itself is dismissed, so
+		// the caller does not clobber it with the next startup overlay.
+		menu.handleInput("\x1b");
+		await settled;
 	});
 });
 

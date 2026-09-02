@@ -69,7 +69,6 @@ async function createHarness(): Promise<Harness> {
 		"goal.enabled": true,
 		"goal.continuationModes": ["interactive"],
 		"pet.mode": "off",
-		"starReminder.enabled": false,
 		"startup.quiet": true,
 	});
 	const toolSession: ToolSession = {

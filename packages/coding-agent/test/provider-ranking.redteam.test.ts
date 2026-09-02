@@ -330,9 +330,10 @@ describe("/provider preset CLI surface", () => {
 			return `${preset.id}${aliases}: ${preset.description}`;
 		});
 		expect(lines).toEqual(expectedLines);
-		// The allowlist leaves exactly the two self-hosted endpoint presets, ordered
-		// by the shared famous-provider ranking (vllm before sglang).
-		expect(lines.map(line => line.match(/^([a-z0-9][a-z0-9._-]*)/)?.[1])).toEqual(["vllm", "sglang"]);
+		// The allowlist leaves the generic local endpoint preset plus the two named
+		// self-hosted ones, ordered by the shared famous-provider ranking
+		// (local before vllm before sglang).
+		expect(lines.map(line => line.match(/^([a-z0-9][a-z0-9._-]*)/)?.[1])).toEqual(["local", "vllm", "sglang"]);
 	});
 
 	test("drops every preset whose provider the allowlist hides", () => {
@@ -349,7 +350,7 @@ describe("/provider preset CLI surface", () => {
 			expect(presetIds.has(removed)).toBe(false);
 		}
 		for (const preset of PROVIDER_PRESETS) {
-			expect(["vllm", "sglang"]).toContain(preset.providerId);
+			expect(["local", "vllm", "sglang"]).toContain(preset.providerId);
 		}
 	});
 });

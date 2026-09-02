@@ -187,9 +187,12 @@ describe("provider auth health state attacks", () => {
 
 	test("isolates OAuth validation health between unrelated AuthStorage instances", async () => {
 		// The `/login` selector only validates providers it actually lists, so the
-		// probe has to target one the product allowlist keeps selectable.
-		const target = getSelectableOAuthProviders().find(provider => provider.id === "sglang");
-		if (!target) throw new Error("Expected sglang OAuth provider");
+		// probe has to target one the product allowlist keeps selectable. It also
+		// has to be the provider the famous list ranks *behind* the other one, so a
+		// leaked "invalid" hint would visibly promote it into the problematic tier
+		// ahead of its partner rather than leaving the order unchanged.
+		const target = getSelectableOAuthProviders().find(provider => provider.id === "anthropic");
+		if (!target) throw new Error("Expected anthropic OAuth provider");
 
 		const oauthStorage = trackAuthStorage(await AuthStorage.create(":memory:"));
 		const modelStorage = trackAuthStorage(await AuthStorage.create(":memory:"));
@@ -211,10 +214,12 @@ describe("provider auth health state attacks", () => {
 			const anthropicModel = model("anthropic", "anthropic-model");
 			const selector = await createModelSelector([anthropicModel, sglangModel], { authStorage: modelStorage });
 			try {
-				// The model selector's storage has no validation hint, so famous-list order remains anthropic before sglang.
+				// The model selector's storage has no validation hint, so plain
+				// famous-list order holds: sglang, a self-hosted endpoint, before
+				// anthropic. A leaked hint would put anthropic first.
 				expect(modelRows(selector, [sglangModel, anthropicModel])).toEqual([
-					"anthropic/anthropic-model",
 					"sglang/sglang-model",
+					"anthropic/anthropic-model",
 				]);
 			} finally {
 				selector.dispose();

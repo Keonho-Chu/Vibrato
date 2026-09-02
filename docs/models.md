@@ -4,14 +4,17 @@ This document describes how the coding-agent currently loads models, applies ove
 
 ## Supported providers
 
-Vibrato exposes exactly four providers on every selection surface — `/login`, `/model`, `/provider`, provider ordering, model-profile presets, and `vib setup provider --preset` — plus `vib setup provider`'s CLI help:
+Vibrato exposes exactly five providers on every selection surface — `/login`, `/model`, `/provider`, provider ordering, model-profile presets, and `vib setup provider --preset` — plus `vib setup provider`'s CLI help:
 
 | Provider id | What it is |
 | --- | --- |
+| `local` | Any OpenAI-compatible local LLM server — vLLM, SGLang, Ollama, LM Studio, llama.cpp, or anything else that speaks the same API. Keyless by default. |
 | `anthropic` | Claude, via Claude Pro/Max OAuth (`/login anthropic`) or `ANTHROPIC_API_KEY`. |
 | `openai-codex` / `openai-codex-device` | OpenAI Codex, via ChatGPT Plus/Pro OAuth (browser or device-code login). |
-| `vllm` | A self-hosted vLLM server, OpenAI-compatible, keyless by default. |
-| `sglang` | A self-hosted SGLang server, OpenAI-compatible, keyless by default. |
+| `vllm` | A self-hosted vLLM server, OpenAI-compatible, keyless by default. Kept for backwards compatibility; `local` covers the same servers. |
+| `sglang` | A self-hosted SGLang server, OpenAI-compatible, keyless by default. Kept for backwards compatibility; `local` covers the same servers. |
+
+Provider ranking / menu order is: `local` → `openai-codex` (+ device) → `anthropic`. The `vllm` and `sglang` presets remain selectable for CLI compatibility but are no longer surfaced as separate first-class menu entries.
 
 The allowlist lives in `packages/coding-agent/src/config/provider-allowlist.ts` and is not user-configurable. Every other built-in provider (OpenAI API, Google, Bedrock, OpenRouter, xAI, Mistral, MiniMax, GLM, Kimi, Cursor, Copilot, OpenCode Go, GOAT, ClinePass, LM Studio, Ollama, oMLX, and the rest of the catalog below) still ships and can still be reached, but only through a user-authored custom provider entry in `~/.vib/agent/models.yml` — its transport, discovery, and auth-resolution machinery are unchanged; only the built-in id is hidden from the pickers described above. This document otherwise describes the full underlying `models.yml` mechanism, including provider ids and presets that are no longer offered as built-in selections — treat any section that names a hidden provider as "how to reproduce this yourself with a custom `models.yml` entry," not as a built-in option you can pick from a menu.
 
@@ -202,21 +205,23 @@ providers:
 
 ### Coding-plan provider presets
 
-`vib setup provider --preset` is reduced to the two self-hosted runtime presets, `vllm` and `sglang`. Both are parameterized: `--base-url` is required, and the credential comes from `VLLM_API_KEY` / `SGLANG_API_KEY` (or a pasted value during interactive setup) rather than from a hardcoded env-var name per plan.
+`vib setup provider --preset` is reduced to three self-hosted runtime presets: `local` (aliases `local-llm`, `local-endpoint`, `endpoint`), and the legacy `vllm` and `sglang` presets kept for backwards compatibility. All three are parameterized: `--base-url` is required, and the credential comes from `LOCAL_LLM_API_KEY` / `VLLM_API_KEY` / `SGLANG_API_KEY` (or a pasted value during interactive setup) rather than from a hardcoded env-var name per plan.
 
 ```sh
+vib setup provider --preset local --base-url http://127.0.0.1:8000/v1
 vib setup provider --preset vllm --base-url http://127.0.0.1:8000/v1
 vib setup provider --preset sglang --base-url http://127.0.0.1:30000/v1
 ```
 
-The same presets are available inside the TUI, either through the automatic first-run provider onboarding menu or any time via `/provider`:
+The same presets are available inside the TUI, either through the automatic first-run local-endpoint onboarding step or any time via `/provider`:
 
 ```text
+/provider add --preset local --base-url http://127.0.0.1:8000/v1
 /provider add --preset vllm --base-url http://127.0.0.1:8000/v1
 /provider add --preset sglang --base-url http://127.0.0.1:30000/v1
 ```
 
-Both presets write an OpenAI-compatible provider entry with live model discovery against the server's `/v1/models`, including `max_model_len`; see [Implicit vLLM discovery](#implicit-vllm-discovery) and [Implicit SGLang discovery](#implicit-sglang-discovery) below for the equivalent zero-config behavior when the server is already running on its default loopback address.
+All three presets write an OpenAI-compatible provider entry with live model discovery against the server's `/v1/models`, including `max_model_len`; see [Local LLM endpoint](#local-llm-endpoint), [Implicit vLLM discovery](#implicit-vllm-discovery), and [Implicit SGLang discovery](#implicit-sglang-discovery) below for the equivalent zero-config behavior when the server is already running on its default loopback address.
 
 Every other coding-plan preset that used to ship here (`minimax`, `minimax-cn`, `glm`, `alibaba-token-plan`, `cline-pass`, `commandcode-goat`, and the rest) has been removed from `vib setup provider --preset` and `/provider add --preset` because its target provider is outside the current [allowlist](#supported-providers). The underlying provider transports are unaffected — hand-author the equivalent `providers:` block in `models.yml` yourself (see the [OpenAI-compatible proxy configuration](#openai-compatible-proxy-configuration) examples below) if you need one of them; it will work exactly as it did before, it will simply never appear in a picker or preset list.
 
@@ -345,7 +350,7 @@ Both paths configure live model discovery. The chosen `--provider` id must not r
 
 The `/model` command opens to a preset landing view: presets are grouped by provider with live auth marks (✓/✗), highlighting a group expands its tiers, and selecting a tier shows the full role→model preview before applying for the session or as default. Typing jumps straight to model search, and `Browse all models` opens the classic tabbed model selector. Only allowlisted providers surface auth marks and grouped tiers by default; a hidden provider's profile shows as unauthenticated until you configure it yourself under a custom `models.yml` id.
 
-`/login` now opens directly on the two OAuth-based allowlisted providers (`anthropic`, `openai-codex`/`openai-codex-device`); it no longer lists every built-in OAuth provider. `Add custom provider` remains the first option for configuring credentials needed by a custom or profile-required provider — including one that reproduces a hidden built-in provider under your own id — and after a successful login, the matching preset (if any) is still recommended automatically. vLLM and SGLang are not OAuth providers, so they are configured through `/provider` (or `vib setup provider --preset vllm|sglang`) rather than `/login`. Custom providers participate in provider-agnostic alias resolution but require manual preset selection.
+`/login` now opens directly on the two OAuth-based allowlisted providers (`anthropic`, `openai-codex`/`openai-codex-device`); it no longer lists every built-in OAuth provider. `Add custom provider` remains the first option for configuring credentials needed by a custom or profile-required provider — including one that reproduces a hidden built-in provider under your own id — and after a successful login, the matching preset (if any) is still recommended automatically. The local endpoint, vLLM, and SGLang are not OAuth providers, so they are configured through `/provider` (or `vib setup provider --preset local|vllm|sglang`) rather than `/login`. Custom providers participate in provider-agnostic alias resolution but require manual preset selection.
 
 External SDK/ACP clients (e.g. the Paseo TUI) can select profiles like ordinary models: the SDK `models.list/current` (Q10) catalog exposes every usable profile as a synthetic `vib-rato/<profile>` entry (e.g. `vib-rato/codex-eco`), and selecting one through `model.set` (or the ACP Model picker) activates the profile for the live session only. Persisting a profile remains an explicit TUI choice, mirroring `vib --mpreset <name> --default`. See [SDK model profiles](./sdk.md#model-profiles-as-synthetic-models-vib-ratoprofile).
 
@@ -721,9 +726,15 @@ If `omlx` is not explicitly configured, registry adds an implicit discoverable p
 
 Runtime discovery fetches models (`GET /v1/models`) and synthesizes model entries with local defaults and `max_model_len` support.
 
+### Local LLM endpoint
+
+`local` (aliases `local-llm`, `local-endpoint`, `endpoint`) is the primary self-hosted provider in the default [allowlist](#supported-providers): any OpenAI-compatible local LLM server — vLLM, SGLang, Ollama, LM Studio, llama.cpp, or anything else that speaks the same API. On first launch, if Vibrato has no usable model configured, it asks to connect a local LLM endpoint ("Connect a local LLM endpoint") before falling through to the rest of the provider menu (Esc skips it); the same entry is the first item in `/provider` at any time.
+
+`vib setup provider --preset local --base-url <url>` writes an explicit `providers:` entry with discovery type `openai-models-list`, registered under provider id `local` in `models.yml`. The credential comes from `LOCAL_LLM_API_KEY` or a pasted value entered during setup; leaving the key empty in the interactive wizard stores a placeholder `local` token so unauthenticated servers still work. Models are discovered live from the server's `GET /v1/models` and registered under the `local` provider id — there is no separate implicit/loopback-default behavior the way there is for `vllm`/`sglang` below, since `--base-url` is always required for `local`.
+
 ### Implicit vLLM discovery
 
-vLLM is one of the two self-hosted providers in the default [allowlist](#supported-providers), with a dedicated first entry ("Connect a vLLM endpoint") in the automatic first-run provider onboarding menu and in `/provider` at any time. Both surfaces, and the `vllm` preset (`vib setup provider --preset vllm --base-url <url>`), are thin UI over the same implicit discovery described here — they ask for the server URL and an optional key, then call `/v1/models`.
+vLLM is one of the self-hosted providers in the default [allowlist](#supported-providers); it is no longer a dedicated first entry in the automatic first-run onboarding menu (that role now belongs to the generic [local LLM endpoint](#local-llm-endpoint) above, which covers vLLM servers too), but the `vllm` preset and provider id remain available at any time in `/provider` for backwards compatibility. Both surfaces, and the `vllm` preset (`vib setup provider --preset vllm --base-url <url>`), are thin UI over the same implicit discovery described here — they ask for the server URL and an optional key, then call `/v1/models`.
 
 If `vllm` is not explicitly configured, its bundled provider descriptor discovers the local server implicitly:
 
@@ -736,7 +747,7 @@ Runtime discovery fetches models (`GET /v1/models`) and synthesizes model entrie
 
 ### Implicit SGLang discovery
 
-SGLang is the other self-hosted provider in the default [allowlist](#supported-providers), with the second entry in the automatic first-run provider onboarding menu and in `/provider` at any time. Both surfaces, and the `sglang` preset (`vib setup provider --preset sglang --base-url <url>`), are thin UI over the same implicit discovery described here — they ask for the server URL and an optional key, then call `/v1/models`.
+SGLang is another self-hosted provider in the default [allowlist](#supported-providers); like vLLM, it is covered by the generic [local LLM endpoint](#local-llm-endpoint) onboarding entry, but the `sglang` preset and provider id remain available at any time in `/provider` for backwards compatibility. Both surfaces, and the `sglang` preset (`vib setup provider --preset sglang --base-url <url>`), are thin UI over the same implicit discovery described here — they ask for the server URL and an optional key, then call `/v1/models`.
 
 If `sglang` is not explicitly configured, its bundled provider descriptor discovers the local server implicitly:
 

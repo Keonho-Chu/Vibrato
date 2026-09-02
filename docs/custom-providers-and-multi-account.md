@@ -1,6 +1,6 @@
 # Custom providers and multi-account routing
 
-Vibrato's built-in provider *selection* is limited to four providers — `anthropic`, `openai-codex`/`openai-codex-device`, `vllm`, `sglang` — see [Supported providers](./models.md#supported-providers). Every other built-in provider transport (OpenAI, Google, Bedrock, OpenRouter, xAI, Mistral, MiniMax, GLM, Kimi, Cursor, Copilot, OpenCode Go, local runtimes, and more) is hidden from `/login`, `/model`, and preset pickers, but still works exactly as documented below once you register it under your own id in `models.yml`.
+Vibrato's built-in provider *selection* is limited to five providers — `local`, `anthropic`, `openai-codex`/`openai-codex-device`, `vllm`, `sglang` — see [Supported providers](./models.md#supported-providers). Every other built-in provider transport (OpenAI, Google, Bedrock, OpenRouter, xAI, Mistral, MiniMax, GLM, Kimi, Cursor, Copilot, OpenCode Go, local runtimes, and more) is hidden from `/login`, `/model`, and preset pickers, but still works exactly as documented below once you register it under your own id in `models.yml`.
 
 Practical setup recipes for two power-user needs:
 

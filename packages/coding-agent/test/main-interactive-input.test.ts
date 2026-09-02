@@ -258,6 +258,106 @@ describe("submitInteractiveInput", () => {
 });
 
 describe("interactive startup input ordering", () => {
+	it("offers the local LLM endpoint before the frictionless onboarding when no models are available", async () => {
+		const events: string[] = [];
+		const stop = new Error("stop interactive input");
+		const session = {
+			modelRegistry: { getAvailable: () => [] },
+			getSessionAgentDir: () => path.join(os.tmpdir(), `vib-onboarding-order-${process.pid}-missing`),
+		} as unknown as AgentSession;
+		const createMode = (): InteractiveMode =>
+			({
+				init: async () => events.push("init"),
+				showNewVersionNotification: () => {},
+				renderInitialMessages: () => events.push("render"),
+				showError: () => {},
+				showLocalEndpointOnboarding: async () => {
+					events.push("local-endpoint");
+				},
+				showFrictionlessOnboarding: async () => {
+					events.push("frictionless");
+				},
+				getUserInput: async () => {
+					throw stop;
+				},
+			}) as unknown as InteractiveMode;
+
+		await expect(
+			runInteractiveMode(
+				session,
+				"test",
+				undefined,
+				[],
+				new StartupUpdateOrchestrator(
+					"interactive",
+					() => false,
+					async () => undefined,
+				),
+				[],
+				() => {},
+				undefined,
+				undefined,
+				undefined,
+				undefined,
+				undefined,
+				createMode,
+				undefined,
+			),
+		).rejects.toBe(stop);
+
+		expect(events).toEqual(["init", "local-endpoint", "frictionless", "render"]);
+	});
+
+	it("skips the local LLM endpoint wizard when models are already available", async () => {
+		const events: string[] = [];
+		const stop = new Error("stop interactive input");
+		const session = {
+			modelRegistry: { getAvailable: () => [{ id: "configured-model" }] },
+			getSessionAgentDir: () => path.join(os.tmpdir(), `vib-onboarding-order-${process.pid}-missing`),
+		} as unknown as AgentSession;
+		const createMode = (): InteractiveMode =>
+			({
+				init: async () => events.push("init"),
+				showNewVersionNotification: () => {},
+				renderInitialMessages: () => events.push("render"),
+				showError: () => {},
+				showLocalEndpointOnboarding: async () => {
+					events.push("local-endpoint");
+				},
+				showFrictionlessOnboarding: async () => {
+					events.push("frictionless");
+				},
+				getUserInput: async () => {
+					throw stop;
+				},
+			}) as unknown as InteractiveMode;
+
+		await expect(
+			runInteractiveMode(
+				session,
+				"test",
+				undefined,
+				[],
+				new StartupUpdateOrchestrator(
+					"interactive",
+					() => false,
+					async () => undefined,
+				),
+				[],
+				() => {},
+				undefined,
+				undefined,
+				undefined,
+				undefined,
+				undefined,
+				createMode,
+				undefined,
+			),
+		).rejects.toBe(stop);
+
+		expect(events).toEqual(["init", "frictionless", "render"]);
+	});
+
 	it("runs queued startup messages once after UI initialization instead of continuing the persisted tail", async () => {
 		const events: string[] = [];
 		const stop = new Error("stop interactive input");

@@ -6,7 +6,7 @@
 <h1 align="center">Vibrato</h1>
 
 <p align="center">
-  <sub>面向 Claude、OpenAI Codex 以及自托管 vLLM / SGLang 端点的终端编码代理。</sub>
+  <sub>面向本地 LLM 端点、Claude 以及 OpenAI Codex 的终端编码代理。</sub>
 </p>
 
 <p align="center">
@@ -55,12 +55,18 @@ vib update
 
 ## 首次运行
 
-在任意 git 检出目录中运行 `vib`。首次启动且未配置任何提供商时，Vibrato 会自动打开提供商菜单。随时可用 `/provider` 打开同一菜单。
+在任意 git 检出目录中运行 `vib`。首次启动且没有可用模型时，Vibrato 会先询问是否连接本地 LLM 端点，按 Esc 可跳转到完整的提供商菜单。随时可用 `/provider` 打开同一菜单。
 
-- **vLLM / SGLang** (自托管，兼容 OpenAI): 选择 *Connect a vLLM endpoint* 或 *Connect an SGLang endpoint*，输入服务器 URL 和可选的 API 密钥，Vibrato 会从服务器发现模型。本地无鉴权服务器可将密钥留空。
+- **本地 LLM 端点** (vLLM、SGLang、Ollama、LM Studio、llama.cpp，或任何其他兼容 OpenAI 的服务器): 选择 *Connect a local LLM endpoint*，输入服务器 URL 和可选的 API 密钥，Vibrato 会从服务器发现模型。本地无鉴权服务器可将密钥留空。
 - **Claude** 或 **OpenAI Codex** (订阅计划): 运行 `/login`，选择 `anthropic`、`openai-codex` (浏览器) 或 `openai-codex-device` (无头模式)。
 
 在 Shell 中完成同样的设置:
+
+```sh
+vib setup provider --preset local --base-url http://HOST:PORT/v1     # 密钥来自 LOCAL_LLM_API_KEY (如有)
+```
+
+`vllm` 和 `sglang` 预设仍然保留，供已经使用它们的脚本和 CI 继续使用:
 
 ```sh
 vib setup provider --preset vllm --base-url http://HOST:8000/v1      # 密钥来自 VLLM_API_KEY (如有)
@@ -88,7 +94,7 @@ vib --list-models                          # 显示可用模型
 
 | 命令 | 作用 |
 | :--- | :--- |
-| `/provider` | 连接 vLLM 或 SGLang 端点 |
+| `/provider` | 连接本地 LLM 端点 (或 vLLM/SGLang/OpenAI Codex/Claude) |
 | `/login` | 登录 Claude 或 OpenAI Codex |
 | `/model` | 切换当前模型 |
 | `/theme` | 切换 TUI 主题 |

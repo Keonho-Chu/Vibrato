@@ -261,6 +261,12 @@ export function buildStatusLineSettings(settingsInstance: Settings): StatusLineS
 	};
 }
 
+/** Close callbacks for the custom provider wizard, used to chain startup overlays. */
+export interface CustomProviderWizardLifecycle {
+	onSubmitted?: () => void;
+	onCancelled?: () => void;
+}
+
 function formatProviderOnboardingCommandGuide(): string {
 	return [
 		"Provider preset setup:",
@@ -1452,25 +1458,47 @@ export class SelectorController {
 			return { component: selector, focus: selector };
 		});
 	}
-	showProviderOnboarding(): void {
+	showProviderOnboarding(onClose?: () => void): void {
 		this.showSelector(done => {
 			const selector = new ProviderOnboardingSelectorComponent(
 				(action: ProviderOnboardingAction) => {
 					done();
-					if (action === "vllm-endpoint") this.showCustomProviderWizard({ preset: "vllm" });
-					else if (action === "sglang-endpoint") this.showCustomProviderWizard({ preset: "sglang" });
+					if (action === "local-endpoint") this.showCustomProviderWizard({ preset: "local" });
+					else if (action === "codex-login") void this.showOAuthSelector("login", "openai-codex");
+					else if (action === "claude-login") void this.showOAuthSelector("login", "anthropic");
 					else if (action === "custom-provider-wizard") this.showCustomProviderWizard();
 					else if (action === "oauth-login") void this.showOAuthSelector("login");
 					else if (action === "import-credentials") void this.#handleCredentialImport();
 					else this.ctx.showStatus(formatProviderOnboardingCommandGuide());
+					onClose?.();
 				},
 				() => {
 					done();
 					this.ctx.ui.requestRender();
+					onClose?.();
 				},
 			);
 			return { component: selector, focus: selector };
 		});
+	}
+
+	/**
+	 * First-launch entry point: open the local LLM endpoint wizard directly.
+	 * Escaping the wizard falls through to the full provider onboarding menu so
+	 * the user can still reach the Codex and Claude logins. The promise resolves
+	 * once the onboarding surface is closed, so callers can chain the next
+	 * startup overlay without clobbering it.
+	 */
+	showLocalEndpointOnboarding(): Promise<void> {
+		const { promise, resolve } = Promise.withResolvers<void>();
+		this.showCustomProviderWizard(
+			{ preset: "local" },
+			{
+				onSubmitted: () => resolve(),
+				onCancelled: () => this.showProviderOnboarding(() => resolve()),
+			},
+		);
+		return promise;
 	}
 
 	async showFrictionlessOnboarding(): Promise<void> {
@@ -1758,7 +1786,10 @@ export class SelectorController {
 		}
 	}
 
-	showCustomProviderWizard(options: CustomProviderWizardOptions = {}): void {
+	showCustomProviderWizard(
+		options: CustomProviderWizardOptions = {},
+		lifecycle: CustomProviderWizardLifecycle = {},
+	): void {
 		this.showSelector(done => {
 			let wizard: CustomProviderWizardComponent;
 			const submit = async (input: CustomProviderWizardSubmit): Promise<void> => {
@@ -1770,6 +1801,7 @@ export class SelectorController {
 					wizard.complete();
 					done();
 					this.ctx.ui.requestRender();
+					lifecycle.onSubmitted?.();
 				} catch (err) {
 					const message = err instanceof Error ? err.message : String(err);
 					wizard.setSubmitError(`Provider setup failed: ${message}`);
@@ -1782,6 +1814,7 @@ export class SelectorController {
 				() => {
 					done();
 					this.ctx.ui.requestRender();
+					lifecycle.onCancelled?.();
 				},
 				() => this.ctx.ui.requestRender(),
 				options,
