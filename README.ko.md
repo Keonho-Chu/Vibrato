@@ -25,7 +25,14 @@
 
 ## 설치
 
-Linux(x64/arm64), macOS(arm64/x64), Windows(x64)용 프리빌드 바이너리를 제공합니다. Bun은 필요 없습니다.
+**Bun으로 설치** (PATH에 Bun 1.4 이상 필요):
+
+```sh
+bun install -g vib-rato
+vib --version
+```
+
+**독립 실행 바이너리** (Bun 불필요), Linux(x64/arm64), macOS(arm64/x64), Windows(x64) 지원:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.16.0/scripts/install.sh -o vib-install.sh
@@ -45,9 +52,6 @@ powershell -File vib-install.ps1
 ```sh
 # 항상 최신 설치기 (main 브랜치의 변경 가능한 스크립트를 실행)
 curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/main/scripts/install.sh | sh
-
-# npm 경유 (PATH에 Bun 1.4 이상 필요)
-bun install -g vib-rato
 
 # 기존 설치를 제자리에서 업데이트
 vib update

@@ -23,7 +23,14 @@
 
 ## Install
 
-Prebuilt binaries for Linux (x64/arm64), macOS (arm64/x64), and Windows (x64). Bun is not required.
+**With Bun** (Bun 1.4 or newer on PATH):
+
+```sh
+bun install -g vib-rato
+vib --version
+```
+
+**Standalone binary** (no Bun needed) for Linux (x64/arm64), macOS (arm64/x64), and Windows (x64):
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.16.0/scripts/install.sh -o vib-install.sh
@@ -43,9 +50,6 @@ Other ways to install:
 ```sh
 # always the latest installer (runs mutable content from main)
 curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/main/scripts/install.sh | sh
-
-# via npm (requires Bun 1.4 or newer on PATH)
-bun install -g vib-rato
 
 # update an existing install in place
 vib update

@@ -25,7 +25,14 @@
 
 ## 安装
 
-提供 Linux (x64/arm64)、macOS (arm64/x64) 和 Windows (x64) 的预编译二进制文件。不需要 Bun。
+**使用 Bun 安装** (PATH 中需要 Bun 1.4 或更高版本):
+
+```sh
+bun install -g vib-rato
+vib --version
+```
+
+**独立二进制文件** (无需 Bun)，支持 Linux (x64/arm64)、macOS (arm64/x64) 和 Windows (x64):
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.16.0/scripts/install.sh -o vib-install.sh
@@ -45,9 +52,6 @@ powershell -File vib-install.ps1
 ```sh
 # 始终使用最新安装脚本 (执行 main 分支上的可变内容)
 curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/main/scripts/install.sh | sh
-
-# 通过 npm (PATH 中需要 Bun 1.4 或更高版本)
-bun install -g vib-rato
 
 # 就地更新现有安装
 vib update

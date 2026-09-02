@@ -25,7 +25,14 @@
 
 ## インストール
 
-Linux (x64/arm64)、macOS (arm64/x64)、Windows (x64) 向けのビルド済みバイナリを提供しています。Bun は不要です。
+**Bun でインストール** (PATH に Bun 1.4 以上が必要):
+
+```sh
+bun install -g vib-rato
+vib --version
+```
+
+**スタンドアロンバイナリ** (Bun 不要)、Linux (x64/arm64)、macOS (arm64/x64)、Windows (x64) 対応:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.16.0/scripts/install.sh -o vib-install.sh
@@ -45,9 +52,6 @@ powershell -File vib-install.ps1
 ```sh
 # 常に最新のインストーラー (main ブランチの可変スクリプトを実行)
 curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/main/scripts/install.sh | sh
-
-# npm 経由 (PATH に Bun 1.4 以上が必要)
-bun install -g vib-rato
 
 # 既存インストールをその場で更新
 vib update
