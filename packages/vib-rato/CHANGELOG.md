@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-09-02
+
 - **Breaking:** Package renamed from `gajae-code` to `vib-rato`; it now exposes only the `vib` bin (the `가재씨` alias was removed) and depends on `@vib-rato/coding-agent`.
 
 ## [0.15.6] - 2026-08-30
