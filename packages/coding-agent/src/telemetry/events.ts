@@ -134,9 +134,25 @@ export async function getTelemetryInstallId(
 		return generated;
 	} catch (error) {
 		if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
-		const existing = (await Bun.file(filePath).text()).trim();
+		// Lost the creation race: the winner may still be writing the UUID, so an
+		// empty read is "not ready yet", not corruption. Poll briefly before
+		// treating non-empty, non-UUID content as malformed.
+		const existing = await readSettledInstallId(filePath);
 		if (!UUID_V4.test(existing)) throw new Error("telemetry install ID is malformed");
 		await fs.chmod(filePath, 0o600);
 		return existing;
 	}
+}
+
+const INSTALL_ID_SETTLE_ATTEMPTS = 50;
+const INSTALL_ID_SETTLE_DELAY_MS = 4;
+
+async function readSettledInstallId(filePath: string): Promise<string> {
+	let content = "";
+	for (let attempt = 0; attempt < INSTALL_ID_SETTLE_ATTEMPTS; attempt++) {
+		content = (await Bun.file(filePath).text()).trim();
+		if (content.length > 0) break;
+		await Bun.sleep(INSTALL_ID_SETTLE_DELAY_MS);
+	}
+	return content;
 }
