@@ -29,10 +29,10 @@ const MARK_ROWS = 6;
 const MARK_MIN_WIDTH = 41; // 2-column border + 3-column indent + 36-column mark
 /** Rows the border costs: the title rail and the bottom edge. */
 const BORDER_ROWS = 2;
-/** Rows of the full tier: the border, the mark, and nine surrounding rows. */
-const FULL_TIER_ROWS = BORDER_ROWS + MARK_ROWS + 9;
+/** Rows of the full tier: the border, the mark, and ten surrounding rows. */
+const FULL_TIER_ROWS = BORDER_ROWS + MARK_ROWS + 10;
 /** Rows of the widest markless tier, border included. */
-const MARKLESS_TIER_ROWS = BORDER_ROWS + 8;
+const MARKLESS_TIER_ROWS = BORDER_ROWS + 9;
 /** Index of the first content row: everything below the title rail. */
 const FIRST_CONTENT_ROW = 1;
 /** Index of the mark's first row, and of the identity row under it. */
@@ -124,7 +124,7 @@ describe("welcome launch surface", () => {
 		expect(lines[0]).toStartWith("╭─── vib v1.2.3 · release build ───");
 		expect(lines[MARK_START]).toContain(MARK_TOP);
 		expect(lines[MARK_START + MARK_ROWS - 1]).toContain(MARK_BOTTOM);
-		expect(lines[IDENTITY_ROW]).toStartWith("│   Vibrato · LIG System");
+		expect(lines[IDENTITY_ROW]).toStartWith("│   Vibrato · LIG System · AI Tech Research Lab");
 
 		const text = lines.join("\n");
 		expect(text).toContain("qwen3-coder-30b · vllm");
@@ -492,9 +492,11 @@ describe("welcome viewport row budget", () => {
 		expect(rows[1]).toContain(MARK_TOP);
 		expect(rows[MARK_ROWS + 1]?.trim()).toBe("");
 		expect(rows[MARK_ROWS + 2]).toContain("Vibrato · LIG System");
-		expect(rows[MARK_ROWS + 4]).toContain("qwen3-coder-30b · vllm");
-		expect(rows[MARK_ROWS + 5]).toContain("No LSP servers");
-		expect(rows[MARK_ROWS + 7]).toContain("/  commands");
+		expect(rows[MARK_ROWS + 3]).toContain("Research Support Tool");
+		expect(rows[MARK_ROWS + 4]?.trim()).toBe("");
+		expect(rows[MARK_ROWS + 5]).toContain("qwen3-coder-30b · vllm");
+		expect(rows[MARK_ROWS + 6]).toContain("No LSP servers");
+		expect(rows[MARK_ROWS + 8]).toContain("/  commands");
 	});
 
 	it("never pads past its natural height on a roomy viewport", () => {
@@ -521,18 +523,20 @@ describe("welcome viewport row budget", () => {
 		expect(rows.join("\n")).not.toMatch(/[╭╰╯╮]/);
 		expect(rows[0]?.trim()).toBe("");
 		expect(rows[1]).toStartWith("   Vibrato · LIG System");
-		expect(rows[2]?.trim()).toBe("");
-		expect(rows[3]).toContain("qwen3-coder-30b · vllm");
-		expect(rows[4]).toContain("No LSP servers");
-		expect(rows[5]?.trim()).toBe("");
-		expect(rows[6]).toContain("/  commands");
-		expect(rows[7]?.trim()).toBe("");
+		expect(rows[2]).toContain("Research Support Tool");
+		expect(rows[3]?.trim()).toBe("");
+		expect(rows[4]).toContain("qwen3-coder-30b · vllm");
+		expect(rows[5]).toContain("No LSP servers");
+		expect(rows[6]?.trim()).toBe("");
+		expect(rows[7]).toContain("/  commands");
+		expect(rows[8]?.trim()).toBe("");
 	});
 
 	it("degrades tier by tier as the row budget shrinks", () => {
 		// Each budget spends two rows on the border and the rest on content.
 		for (const [budget, rows] of [
-			[10, MARKLESS_TIER_ROWS],
+			[11, MARKLESS_TIER_ROWS],
+			[10, 8],
 			[9, 8],
 			[8, 8],
 			[7, 7],

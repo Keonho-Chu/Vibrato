@@ -35,8 +35,9 @@ const BORDER_WIDTH = 2;
 /** Rows the border itself costs: the title rail and the bottom edge. */
 const BORDER_ROWS = 2;
 
-/** Identity line under the mark. */
-const BRAND_IDENTITY = "Vibrato · LIG System";
+/** Identity line under the mark, and the one-line purpose statement under it. */
+const BRAND_IDENTITY = "Vibrato · LIG System · AI Tech Research Lab";
+const BRAND_TAGLINE = "Research Support Tool";
 
 /** Minimum gap between a row's left content and its right-aligned value. */
 const RIGHT_VALUE_GAP = 2;
@@ -48,10 +49,10 @@ const KEY_HINT_GAP = "    ";
 const MIN_WORKSPACE_WIDTH = 8;
 
 /** Content rows the mark tier carries besides the mark itself (blanks included). */
-const MARK_TIER_SURROUNDING_ROWS = 9;
+const MARK_TIER_SURROUNDING_ROWS = 10;
 
 /** Content rows of the widest markless tier: the same rows, blank-padded. */
-const PADDED_MARKLESS_ROWS = 8;
+const PADDED_MARKLESS_ROWS = 9;
 
 /** The four affordances worth naming on the launch surface. */
 const KEY_HINTS: ReadonlyArray<{ key: string; label: string }> = [
@@ -195,6 +196,7 @@ export class WelcomeComponent implements Component {
 	/** Content column: the widest tier that fits `budget` rows. */
 	#bodyRows(width: number, budget: number): string[] {
 		const identityRow = this.#clip(`${INDENT}${theme.fg("muted", BRAND_IDENTITY)}`, width);
+		const taglineRow = this.#clip(`${INDENT}${theme.fg("dim", BRAND_TAGLINE)}`, width);
 		const modelRow = this.#modelRow(width);
 
 		if (budget < 2) return [identityRow];
@@ -208,10 +210,12 @@ export class WelcomeComponent implements Component {
 		// The mark goes whole or not at all: no horizontal clip, no partial rows.
 		if (INDENT_WIDTH + markWidth <= width && budget >= logoLines.length + MARK_TIER_SURROUNDING_ROWS) {
 			const mark = this.#currentLogoFrame(logoLines).map(line => `${INDENT}${line}`);
-			return ["", ...mark, "", identityRow, "", modelRow, lspRow, "", keysRow, ""];
+			return ["", ...mark, "", identityRow, taglineRow, "", modelRow, lspRow, "", keysRow, ""];
 		}
 
-		if (budget >= PADDED_MARKLESS_ROWS) return ["", identityRow, "", modelRow, lspRow, "", keysRow, ""];
+		// The tagline rides only the two roomiest tiers; every tighter budget
+		// spends its rows on the model, LSP, and key-hint information instead.
+		if (budget >= PADDED_MARKLESS_ROWS) return ["", identityRow, taglineRow, "", modelRow, lspRow, "", keysRow, ""];
 		if (budget >= 6) return [identityRow, "", modelRow, lspRow, "", keysRow];
 		if (budget >= 5) return [identityRow, "", modelRow, lspRow, keysRow];
 		if (budget >= 4) return [identityRow, modelRow, lspRow, keysRow];
