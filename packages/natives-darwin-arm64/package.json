@@ -1,6 +1,6 @@
 {
 	"name": "@vib-rato/natives-darwin-arm64",
-	"version": "0.17.1",
+	"version": "0.17.2",
 	"description": "Darwin arm64 native addon for @vib-rato/natives",
 	"type": "module",
 	"homepage": "https://github.com/Keonho-Chu/Vibrato",

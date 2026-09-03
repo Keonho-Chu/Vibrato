@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.17.2] - 2026-09-03
+
 - An explicit `http://` base URL is now accepted for any host when adding a provider, whether through the local endpoint connect screen, the custom provider wizard, `/provider add`, or `vib setup provider`. Scheme inference for a bare `host:port` is unchanged (plain http only for private-network and `.local`-style hosts, https otherwise), but typing the scheme is now respected instead of being rejected with "Plain http is only accepted for localhost or a private-network host": a corporate network that serves LLM endpoints over plain http on public-range addresses previously had no way through the UI at all.
 
 ## [0.17.1] - 2026-09-03
