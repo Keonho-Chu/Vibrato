@@ -38,6 +38,7 @@ import {
 	ensureManagedDirectory,
 	fsyncManagedArtifactTree,
 	inspectManagedFileNoFollow,
+	isStartupRepairableSecurityFailure,
 	MANAGED_ARTIFACT_COPY_BATCH_SIZE,
 	MANAGED_ARTIFACT_MAX_FILES,
 	MANAGED_ARTIFACT_MAX_TOTAL_BYTES,
@@ -608,11 +609,12 @@ function resolveManagedScopeInternal(
 			"verify",
 			"directory",
 		);
-		if (!security.ok && (!allowRepairableAclFailure || security.code !== "acl_verify_failed")) {
+		if (!security.ok && (!allowRepairableAclFailure || !isStartupRepairableSecurityFailure(security.code))) {
 			return {
 				kind: "error",
 				code: "binding_invalid",
 				message: "The managed scope security could not be verified.",
+				cause: { classification: security.code },
 			};
 		}
 	} catch (error) {

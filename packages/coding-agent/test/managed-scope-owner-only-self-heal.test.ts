@@ -105,6 +105,18 @@ describe("managed scope write resolver", () => {
 		expect(repair).not.toHaveBeenCalled();
 	});
 
+	it.skipIf(process.platform === "win32")("keeps an owner mismatch closed for writes outside Windows", () => {
+		const input = fixture();
+		const verify = mockScopeVerifier({ ok: false, code: "owner_mismatch" });
+		const repair = vi.spyOn(native, "repairOwnerOnlyPathSecurityExpected");
+
+		const write = resolveManagedScopeForWrite(input);
+		expect(write.kind).toBe("error");
+		if (write.kind === "error") expect(write.cause).toEqual({ classification: "owner_mismatch" });
+		expect(verify).toHaveBeenCalled();
+		expect(repair).not.toHaveBeenCalled();
+	});
+
 	it("fails closed on malformed verifier output without applying security", () => {
 		const input = fixture();
 		const verify = mockScopeVerifier({ ok: false } as unknown as NativeOwnerOnlySecurityResult);

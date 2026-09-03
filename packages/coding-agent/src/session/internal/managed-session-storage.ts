@@ -918,6 +918,32 @@ function windowsExistingVerifyFirst(policy: ManagedSessionSecurityPolicy): boole
 	return process.platform === "win32" && policy === "windows-existing-verify-first";
 }
 
+/**
+ * True when a native security failure on an existing managed directory is one
+ * that startup heals itself instead of failing closed.
+ *
+ * Two callers share this rule. `secureExistingManagedDirectory` (Windows
+ * verify-first policy) calls the native repair for these codes. The write
+ * resolver in managed-session-scope tolerates them without repairing, because
+ * the prepare step that always follows either repairs the directory through
+ * that same path or fails closed with the native classification.
+ *
+ * `acl_verify_failed` is DACL drift (a non-owner-only or inherited ACL).
+ * `owner_mismatch` on Windows is a directory owned by another principal even
+ * though it sits under this user's agent directory — typically one created
+ * from an elevated ("Run as administrator") terminal, which Windows assigns to
+ * `BUILTIN\Administrators`. The native repair sets the owner back to the user
+ * SID only when the directory's DACL grants this user `WRITE_OWNER`, and it
+ * revalidates the directory identity (volume + file index) before and after
+ * mutating, so a directory this user cannot legitimately own still fails
+ * closed. On POSIX an owner mismatch is a genuinely different uid with no
+ * benign explanation, so it stays closed there.
+ */
+export function isStartupRepairableSecurityFailure(code: string): boolean {
+	if (code === "acl_verify_failed") return true;
+	return process.platform === "win32" && code === "owner_mismatch";
+}
+
 function assertManagedPathIdentity(pathname: string, kind: "directory" | "file", expected: fs.BigIntStats): void {
 	const current = fs.lstatSync(pathname, { bigint: true });
 	if (current.isSymbolicLink()) throw new Error("reparse_point");
@@ -951,7 +977,7 @@ function secureExistingManagedDirectory(pathname: string, kind: "directory" | "f
 	);
 	assertManagedPathIdentity(pathname, kind, named);
 	if (verified.ok) return;
-	if (verified.code !== "acl_verify_failed") throw securityError(pathname, verified);
+	if (!isStartupRepairableSecurityFailure(verified.code)) throw securityError(pathname, verified);
 	const repaired = validateNativeSecurityResult(
 		nativeSessionStorage().repairOwnerOnlyPathSecurityExpected(pathname, kind, named.dev, named.ino),
 		"verify",
