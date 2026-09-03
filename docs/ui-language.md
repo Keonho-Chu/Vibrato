@@ -21,7 +21,7 @@ The settings Appearance tab exposes the same `en` / `ko` / `ja` selector.
 
 ## Onboarding detection
 
-`/tutorial` and first-run onboarding may still choose copy from a larger catalog (`en`, `ko`, `ja`, `zh`, `es`, `fr`, `de`) based on transcript evidence and the OS locale. An explicit `ui.language: ja` selection also pins onboarding copy to Japanese, like `en` and `ko`. The remaining catalog entries are display-only for onboarding and are not added to the persisted `ui.language` enum.
+First-run onboarding may still choose copy from a larger catalog (`en`, `ko`, `ja`, `zh`, `es`, `fr`, `de`) based on transcript evidence and the OS locale. An explicit `ui.language: ja` selection also pins onboarding copy to Japanese, like `en` and `ko`. The remaining catalog entries are display-only for onboarding and are not added to the persisted `ui.language` enum.
 
 Detection rules:
 
