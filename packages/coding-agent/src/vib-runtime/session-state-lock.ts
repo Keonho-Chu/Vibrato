@@ -1389,6 +1389,7 @@ async function releaseOwnerLock(file: string, held: LockOwnerSnapshot): Promise<
 type SessionStateLockReclaimResult =
 	| "absent_or_changed"
 	| "legacy_directory_unprovenanced"
+	| "owner_removed"
 	| "owner_live_or_unverifiable"
 	| "owner_record_fresh"
 	| "owner_unprovenanced"
@@ -1427,7 +1428,8 @@ async function reclaimStaleOwnerRecord(
 	// A successor that took the path in the final window keeps it; this call just loses.
 	if (outcome === "refused")
 		throw new SessionStateLockUnavailableError(new Error("Stale owner record could not be reclaimed."));
-	return outcome === "removed" || outcome === "absent" ? "reclaimed" : "absent_or_changed";
+	if (outcome === "removed") return "owner_removed";
+	return "absent_or_changed";
 }
 
 /**
@@ -1570,7 +1572,7 @@ async function reclaimStaleTransitionClaim(transitionDir: string, quarantineName
 	// exact-identity stale path; released PID-1 tombstones deliberately require
 	// explicit cleanup before this atomic-directory protocol can take over.
 	if (stat.isFile()) {
-		await reclaimStaleOwnerRecord(
+		const reclaimed = await reclaimStaleOwnerRecord(
 			transitionDir,
 			{
 				afterInspection: SessionStateLockTestHooks.afterTransitionStaleInspection,
@@ -1578,7 +1580,7 @@ async function reclaimStaleTransitionClaim(transitionDir: string, quarantineName
 			},
 			quarantineName,
 		);
-		return false;
+		return reclaimed === "owner_removed";
 	}
 	if (!stat.isDirectory()) throw new SessionStateLockUnavailableError();
 	const ownerSnapshot = await captureRegularLockOwner(`${transitionDir}.owner`);
