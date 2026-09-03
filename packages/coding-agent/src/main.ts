@@ -339,6 +339,14 @@ async function readPipedInputIfReady(): Promise<string | undefined> {
 export interface InteractiveModeNotify {
 	kind: "warn" | "error" | "info";
 	message: string;
+	/**
+	 * Only meaningful while the session still has no model when the notice is
+	 * finally shown. The startup notices are collected before the first-run
+	 * onboarding runs, and a successful local endpoint connect sets a model in
+	 * between, so a "no model configured" notice queued earlier would otherwise be
+	 * printed right under a working connection.
+	 */
+	onlyWhileNoModel?: boolean;
 }
 
 export async function submitInteractiveInput(
@@ -783,6 +791,9 @@ export async function runInteractiveMode(
 
 	for (const notify of notifs) {
 		if (!notify) {
+			continue;
+		}
+		if (notify.onlyWhileNoModel && session.model) {
 			continue;
 		}
 		if (notify.kind === "warn") {
@@ -1965,6 +1976,7 @@ export async function runRootCommand(
 			notifs.push({
 				kind: "info",
 				message: formatNoModelOnboardingError(),
+				onlyWhileNoModel: true,
 			});
 		}
 

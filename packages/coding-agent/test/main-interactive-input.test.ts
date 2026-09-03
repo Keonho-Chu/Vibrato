@@ -308,6 +308,61 @@ describe("interactive startup input ordering", () => {
 		expect(events).toEqual(["init", "local-endpoint", "frictionless", "render"]);
 	});
 
+	it("drops the queued no-model notice once the first-run local endpoint connect sets a model", async () => {
+		const statuses: string[] = [];
+		const stop = new Error("stop interactive input");
+		const session = {
+			model: undefined as { id: string } | undefined,
+			modelRegistry: { getAvailable: () => [] },
+			getSessionAgentDir: () => path.join(os.tmpdir(), `vib-onboarding-order-${process.pid}-missing`),
+		};
+		const createMode = (): InteractiveMode =>
+			({
+				init: async () => {},
+				showNewVersionNotification: () => {},
+				renderInitialMessages: () => {},
+				showError: () => {},
+				showWarning: () => {},
+				showStatus: (message: string) => statuses.push(message),
+				showLocalEndpointOnboarding: async () => {
+					// The connect screen registered an endpoint and picked its model.
+					session.model = { id: "local-model" };
+				},
+				showFrictionlessOnboarding: async () => {},
+				getUserInput: async () => {
+					throw stop;
+				},
+			}) as unknown as InteractiveMode;
+
+		await expect(
+			runInteractiveMode(
+				session as unknown as AgentSession,
+				"test",
+				undefined,
+				[
+					{ kind: "info", message: "설정된 모델이 없습니다.", onlyWhileNoModel: true },
+					{ kind: "info", message: "unrelated notice" },
+				],
+				new StartupUpdateOrchestrator(
+					"interactive",
+					() => false,
+					async () => undefined,
+				),
+				[],
+				() => {},
+				undefined,
+				undefined,
+				undefined,
+				undefined,
+				undefined,
+				createMode,
+				undefined,
+			),
+		).rejects.toBe(stop);
+
+		expect(statuses).toEqual(["unrelated notice"]);
+	});
+
 	it("still asks for the local LLM endpoint on the first run when credentials were imported", async () => {
 		const events: string[] = [];
 		const stop = new Error("stop interactive input");

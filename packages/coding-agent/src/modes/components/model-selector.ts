@@ -380,6 +380,7 @@ export class ModelSelectorComponent extends Container {
 	#headerContainer: Container;
 	#tabBar: TabBar | null = null;
 	#listContainer: Container;
+	#onboardingHintContainer: Container;
 	#allModels: ModelItem[] = [];
 	#filteredModels: ModelItem[] = [];
 	#canonicalModels: CanonicalModelItem[] = [];
@@ -499,11 +500,10 @@ export class ModelSelectorComponent extends Container {
 		this.addChild(new DynamicBorder());
 		this.addChild(new Spacer(1));
 
-		// Add hint about model filtering
-		const hintText =
-			scopedModels.length > 0 ? "Showing models from --models scope" : formatModelOnboardingInlineHint();
-		this.addChild(new Text(theme.fg("warning", hintText), 0, 0));
-		this.addChild(new Spacer(1));
+		// Filled in once the catalog is known; see #renderOnboardingHint.
+		this.#onboardingHintContainer = new Container();
+		this.addChild(this.#onboardingHintContainer);
+		this.#renderOnboardingHint(undefined);
 
 		// Create header container for tab bar
 		this.#headerContainer = new Container();
@@ -932,7 +932,29 @@ export class ModelSelectorComponent extends Container {
 		return { models, canonicalModels, roles };
 	}
 
+	/**
+	 * The line above the tab bar. A scoped session names its scope; a session
+	 * with nothing usable gets the onboarding routes; a session that already has
+	 * models gets no line at all — telling someone with a working local endpoint
+	 * to log in to Codex or Claude read as a nag, not a hint. Driven by the
+	 * committed catalog rather than a separate registry read so it costs nothing
+	 * and follows every refresh.
+	 */
+	#renderOnboardingHint(modelCount: number | undefined): void {
+		this.#onboardingHintContainer.clear();
+		const hintText =
+			this.#scopedModels.length > 0
+				? "Showing models from --models scope"
+				: modelCount === 0
+					? formatModelOnboardingInlineHint()
+					: undefined;
+		if (!hintText) return;
+		this.#onboardingHintContainer.addChild(new Text(theme.fg("warning", hintText), 0, 0));
+		this.#onboardingHintContainer.addChild(new Spacer(1));
+	}
+
 	#commitMaterializedCatalog(catalog: MaterializedCatalog): void {
+		this.#renderOnboardingHint(catalog.models.length);
 		this.#roles = catalog.roles;
 		this.#allModels = catalog.models;
 		this.#filteredModels = catalog.models;
