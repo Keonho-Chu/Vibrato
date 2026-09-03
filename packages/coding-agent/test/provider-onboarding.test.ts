@@ -446,18 +446,28 @@ describe("provider onboarding setup core", () => {
 		expect(await Bun.file(path.join(path.dirname(modelsPath), "agent.db")).exists()).toBe(false);
 	});
 
-	it("rejects remote plaintext HTTP and existing providers unless forced", async () => {
+	it("rejects unsupported schemes and existing providers unless forced", async () => {
 		const modelsPath = await tempModelsPath();
 		await expect(
 			addApiCompatibleProvider({
 				compatibility: "openai",
-				providerId: "remote-http",
-				baseUrl: "http://api.example.test/v1",
-				apiKeyEnv: "REMOTE_HTTP_KEY",
+				providerId: "remote-ftp",
+				apiKeyEnv: "REMOTE_FTP_KEY",
+				baseUrl: "ftp://api.example.test/v1",
 				models: ["gpt-example"],
 				modelsPath,
 			}),
-		).rejects.toThrow("https");
+		).rejects.toThrow("http or https");
+		// An explicit plain-http remote base URL is kept as typed; the scheme is
+		// the operator's call, not the setup helper's.
+		await addApiCompatibleProvider({
+			compatibility: "openai",
+			providerId: "remote-http",
+			baseUrl: "http://api.example.test/v1",
+			apiKeyEnv: "REMOTE_HTTP_KEY",
+			models: ["gpt-example"],
+			modelsPath,
+		});
 
 		await addApiCompatibleProvider({
 			compatibility: "openai",

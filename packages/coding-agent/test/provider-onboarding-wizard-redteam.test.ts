@@ -95,15 +95,17 @@ describe("provider onboarding wizard red-team", () => {
 		await expect(
 			addApiCompatibleProvider({
 				compatibility: "openai",
-				providerId: "insecure-url",
-				baseUrl: "http://api.example.com/v1",
-				apiKeyEnv: "INSECURE_URL_KEY",
+				providerId: "bad-scheme",
+				baseUrl: "ftp://api.example.com/v1",
+				apiKeyEnv: "BAD_SCHEME_KEY",
 				models: ["bad-model"],
 			}),
-		).rejects.toThrow("Base URL must use https unless it targets localhost");
+		).rejects.toThrow("Base URL must use http or https");
 
-		// A private-network host over plain http is the supported vLLM/SGLang case
-		// and must not be caught by the same guard.
+		// An explicit plain-http base URL is kept as typed whatever the host: a
+		// private-network vLLM/SGLang box is the common case, and a corporate
+		// network on public-range addresses (172.170.0.0/16, say) is the case the
+		// old private-range guard wrongly rejected.
 		await withRegistry(async () => {
 			const lan = await addApiCompatibleProvider({
 				compatibility: "openai",
@@ -113,13 +115,21 @@ describe("provider onboarding wizard red-team", () => {
 				models: ["lan-model"],
 			});
 			expect(lan.baseUrl).toBe("http://192.168.1.20:8000/v1");
+			const corporate = await addApiCompatibleProvider({
+				compatibility: "openai",
+				providerId: "corporate-url",
+				baseUrl: "http://172.170.0.52:8000/v1",
+				apiKeyEnv: "CORPORATE_URL_KEY",
+				models: ["corporate-model"],
+			});
+			expect(corporate.baseUrl).toBe("http://172.170.0.52:8000/v1");
 		});
 
 		const ctx = createControllerContext({ refresh: async () => undefined } as unknown as ModelRegistry);
 		const controller = new SelectorController(ctx);
 		controller.showCustomProviderWizard();
 		const wizard = ctx.ui.focused as CustomProviderWizardComponent;
-		driveWizard(wizard, { providerId: "insecure-wizard", baseUrl: "http://api.example.com/v1" });
+		driveWizard(wizard, { providerId: "bad-scheme-wizard", baseUrl: "ftp://api.example.com/v1" });
 		const errorRendered = Promise.withResolvers<void>();
 		ctx.ui.requestRender = () => errorRendered.resolve();
 		wizard.handleInput("\n");
@@ -127,7 +137,7 @@ describe("provider onboarding wizard red-team", () => {
 
 		const rendered = visibleText(wizard);
 		expect(rendered).toContain("Provider setup failed");
-		expect(rendered).toContain("Base URL must use https unless it targets localhost");
+		expect(rendered).toContain("Base URL must use http or https");
 	});
 
 	it("does not report success when config notification rejects and renders the wizard error", async () => {

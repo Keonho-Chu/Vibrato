@@ -83,6 +83,15 @@ describe("normalizeLocalEndpointInput", () => {
 		expect(expectBaseUrl("https://llm.example.com")).toBe("https://llm.example.com/v1");
 	});
 
+	it("keeps an explicit http:// for a host outside the well-known private ranges", () => {
+		// 172.170.0.0/16 is not RFC 1918, so the bare form infers https; typing
+		// the scheme is how a corporate network on public-range addresses opts
+		// into plain http.
+		expect(expectBaseUrl("172.170.0.52:8000")).toBe("https://172.170.0.52:8000/v1");
+		expect(expectBaseUrl("http://172.170.0.52:8000")).toBe("http://172.170.0.52:8000/v1");
+		expect(expectBaseUrl("http://llm.example.com:8000/v1")).toBe("http://llm.example.com:8000/v1");
+	});
+
 	it("appends /v1 only when no path was given", () => {
 		expect(expectBaseUrl("http://gpu-box:8000")).toBe("http://gpu-box:8000/v1");
 		expect(expectBaseUrl("http://gpu-box:8000/")).toBe("http://gpu-box:8000/v1");
@@ -111,10 +120,9 @@ describe("normalizeLocalEndpointInput", () => {
 		expect(expectError("ftp://gpu-box:8000")).toMatch(/http/i);
 	});
 
-	it("rejects plain http for a public host", () => {
-		const error = expectError("http://llm.example.com:8000/v1");
-		expect(error).toMatch(/https/i);
-		expect(error).toContain("llm.example.com");
+	it("still rejects a scheme that is neither http nor https", () => {
+		const error = expectError("ftp://llm.example.com:8000/v1");
+		expect(error).toContain("http:// or https://");
 	});
 });
 
@@ -397,13 +405,13 @@ describe("discoverLoopbackEndpoints", () => {
 	});
 
 	it("falls back to the loopback default when an env base URL is unusable", async () => {
-		setDiscoveryEnv({ VLLM_BASE_URL: "http://llm.example.com:8000" });
+		setDiscoveryEnv({ VLLM_BASE_URL: "not a url at all" });
 		const { fetchImpl, urls } = recordingFetch({});
 
 		await discoverLoopbackEndpoints({ fetchImpl });
 
 		expect(urls).toContain("http://127.0.0.1:8000/v1/models");
-		expect(urls).not.toContain("http://llm.example.com:8000/v1/models");
+		expect(urls.some(url => url.includes("not%20a%20url"))).toBe(false);
 	});
 
 	it("never throws when every probe fails", async () => {

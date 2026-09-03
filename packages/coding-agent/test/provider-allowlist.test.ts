@@ -183,19 +183,27 @@ describe("product provider allowlist", () => {
 		}
 	});
 
-	it("requires a base URL for the local preset and rejects a public plain-http endpoint", async () => {
+	it("requires a base URL for the local preset and keeps an explicit plain-http endpoint as typed", async () => {
 		const modelsPath = await tempModelsPath();
 		await expect(addApiCompatibleProvider({ preset: "local", modelsPath })).rejects.toThrow("requires --base-url");
 		await expect(
-			addApiCompatibleProvider({ preset: "local", baseUrl: "http://llm.example.com/v1", modelsPath }),
-		).rejects.toThrow("https");
-		// A private-network LLM box over plain http is the common case and stays allowed.
+			addApiCompatibleProvider({ preset: "local", baseUrl: "ftp://llm.example.com/v1", modelsPath }),
+		).rejects.toThrow("http or https");
+		// A private-network LLM box over plain http is the common case; a box on a
+		// corporate network outside the RFC 1918 ranges is spelled out the same way.
 		const lan = await addApiCompatibleProvider({
 			preset: "local",
 			baseUrl: "http://192.168.1.42:8000/v1",
 			modelsPath,
 		});
 		expect(lan.baseUrl).toBe("http://192.168.1.42:8000/v1");
+		const corporate = await addApiCompatibleProvider({
+			preset: "local",
+			baseUrl: "http://172.170.0.52:8000/v1",
+			modelsPath,
+			force: true,
+		});
+		expect(corporate.baseUrl).toBe("http://172.170.0.52:8000/v1");
 	});
 
 	it("treats a pasted key as taking precedence over the preset's env-var name", async () => {
@@ -231,12 +239,13 @@ describe("product provider allowlist", () => {
 		expect((await readProviders(modelsPath)).sglang?.apiKeyEnv).toBe("SGLANG_API_KEY");
 	});
 
-	it("accepts plain http for private-network hosts and still requires https in public", async () => {
+	it("accepts an explicit plain-http base URL for private, bare, and public hosts alike", async () => {
 		const modelsPath = await tempModelsPath();
 
 		for (const [providerId, host] of [
 			["rfc1918-box", "10.0.0.5:8000"],
 			["bare-lan-host", "gpu-box:8000"],
+			["public-host", "example.com"],
 		] as const) {
 			const result = await addApiCompatibleProvider({
 				compatibility: "openai",
@@ -249,17 +258,7 @@ describe("product provider allowlist", () => {
 			expect(result.baseUrl).toBe(`http://${host}/v1`);
 		}
 
-		await expect(
-			addApiCompatibleProvider({
-				compatibility: "openai",
-				providerId: "public-host",
-				baseUrl: "http://example.com/v1",
-				apiKeyEnv: "PUBLIC_KEY",
-				models: ["remote-model"],
-				modelsPath,
-			}),
-		).rejects.toThrow("https");
-		expect(Object.keys(await readProviders(modelsPath))).toEqual(["rfc1918-box", "bare-lan-host"]);
+		expect(Object.keys(await readProviders(modelsPath))).toEqual(["rfc1918-box", "bare-lan-host", "public-host"]);
 	});
 
 	it("gives vLLM and SGLang implicit discovery when no models are listed", async () => {
