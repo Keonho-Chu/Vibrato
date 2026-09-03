@@ -5,6 +5,7 @@ import * as os from "node:os";
 import path from "node:path";
 import type { NativeDirectoryTreeSnapshot } from "@vib-rato/natives";
 import { logger } from "@vib-rato/utils";
+import packageJson from "../../../package.json" with { type: "json" };
 import type { ModelProfileErrorDetails } from "../../config/model-profile-contract";
 import { planLaunchWorktree } from "../../vib-runtime/launch-worktree";
 import { createDefaultSdkHostModelResolver, type SdkHostModelResolver } from "../host/model-pin";
@@ -57,6 +58,10 @@ type ResolvedBrokerSettings = {
 	heartbeatTtlMs: number;
 	resolveDirectoryMigration: (_cwd: string) => Promise<DirectoryMigrationPolicy>;
 };
+export function resolveBrokerPackageGeneration(): string {
+	const v = (packageJson as { version?: unknown }).version;
+	return typeof v === "string" && v.length > 0 ? v : "unknown";
+}
 
 function modelResolutionCwd(input: Record<string, unknown>): string | undefined {
 	const cwd = typeof input.cwd === "string" ? input.cwd : undefined;
@@ -870,7 +875,7 @@ export class Broker {
 	constructor(settings: BrokerSettings) {
 		this.settings = {
 			agentDir: settings.agentDir,
-			packageGeneration: settings.packageGeneration ?? "unknown",
+			packageGeneration: settings.packageGeneration ?? resolveBrokerPackageGeneration(),
 			port: settings.port ?? 0,
 			heartbeatTtlMs: settings.heartbeatTtlMs ?? BROKER_HEARTBEAT_TTL_MS,
 			resolveDirectoryMigration: settings.resolveDirectoryMigration ?? (async () => "copy-retain"),
