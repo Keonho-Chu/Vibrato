@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.17.3] - 2026-09-03
+
 - The launch screen identity line now reads `Vibrato · LIG System · AI Tech Research Lab`, with `Research Support Tool` beneath it on the two roomiest layouts.
 - The model selector no longer opens with the orange "connect a local LLM endpoint or log in with /login openai-codex or /login anthropic" line when models are already configured; that hint is reserved for a session with nothing usable. The same routes were also printed on the start screen right after a successful first-run local endpoint connect, because the "no model configured" notice was queued before the connect screen ran; it is now dropped when a model exists by the time it would be shown.
 - **Breaking:** The `/tutorial` slash command is removed. First-run onboarding itself is unchanged.

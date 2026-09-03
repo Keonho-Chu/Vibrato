@@ -1,7 +1,7 @@
 {
 	"type": "module",
 	"name": "@vib-rato/stats",
-	"version": "0.17.2",
+	"version": "0.17.3",
 	"description": "Local observability dashboard for pi AI usage statistics",
 	"homepage": "https://github.com/Keonho-Chu/Vibrato",
 	"author": "Yeachan-Heo",

@@ -1,7 +1,7 @@
 {
 	"type": "module",
 	"name": "@vib-rato/utils",
-	"version": "0.17.2",
+	"version": "0.17.3",
 	"description": "Shared utilities for pi packages",
 	"homepage": "https://github.com/Keonho-Chu/Vibrato",
 	"author": "Yeachan-Heo",

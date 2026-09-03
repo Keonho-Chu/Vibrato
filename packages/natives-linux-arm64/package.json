@@ -1,6 +1,6 @@
 {
 	"name": "@vib-rato/natives-linux-arm64",
-	"version": "0.17.2",
+	"version": "0.17.3",
 	"description": "Linux arm64 native addon for @vib-rato/natives",
 	"type": "module",
 	"homepage": "https://github.com/Keonho-Chu/Vibrato",
