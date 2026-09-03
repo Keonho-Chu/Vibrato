@@ -19,26 +19,28 @@
 
 ## インストール
 
-**Bun でインストール** (PATH に Bun 1.4 以上が必要):
+**スタンドアロンバイナリ** (推奨、Bun 不要)、Linux (x64/arm64)、macOS (arm64/x64)、Windows (x64) 対応:
 
 ```sh
-bun install -g vibrato-cli
-vib --version
-```
-
-**スタンドアロンバイナリ** (Bun 不要)、Linux (x64/arm64)、macOS (arm64/x64)、Windows (x64) 対応:
-
-```sh
-curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.16.0/scripts/install.sh -o vib-install.sh
+curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.17.2/scripts/install.sh -o vib-install.sh
 sh vib-install.sh
 vib --version
 ```
 
-Windows (PowerShell):
+Windows (PowerShell、「管理者として実行」ではなく通常のターミナルで):
 
 ```powershell
-Invoke-WebRequest -UseBasicParsing https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.16.0/scripts/install.ps1 -OutFile vib-install.ps1
+Invoke-WebRequest -UseBasicParsing https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.17.2/scripts/install.ps1 -OutFile vib-install.ps1
 powershell -File vib-install.ps1
+```
+
+Vibrato はセッションを `%USERPROFILE%\.vib` 以下に保存しますが、管理者権限のターミナルで作られたディレクトリは自分ではなく Administrators グループの所有になります。Vibrato は起動時に所有権を取り戻しますが、最初から通常のターミナルで実行すればその手間はかかりません。詳細と Git Bash の要件は [Windows notes](docs/install.md#windows-notes) を参照してください。
+
+**Bun でインストール** (PATH に Bun 1.4 以上が既にあること。`bun install -g` は Bun を代わりにインストールしません):
+
+```sh
+bun install -g vibrato-cli
+vib --version
 ```
 
 その他のインストール方法:
@@ -57,7 +59,7 @@ vib update
 
 任意の git チェックアウト内で `vib` を実行します。使用可能なモデルがない初回起動では、単一の接続画面がそのまま開きます。Esc を押すとプロバイダーメニュー全体に切り替わります。同じ画面は `/provider` でいつでも開けます。
 
-- **ローカル LLM エンドポイント** (vLLM、SGLang、Ollama、LM Studio、llama.cpp など、OpenAI 互換サーバーであれば何でも): LLM サーバーは多くの場合、ネットワーク上の別マシン、たとえば LAN 上の GPU マシンです。そのアドレスを入力して接続するだけです。`192.168.0.10:8000` や `gpu-server.lan:8000` のような省略形で十分で、スキームと `/v1` パスは Vibrato が補います。プライベートネットワークのアドレスと `.local` / `.internal` / `.lan` アドレスは平文の `http://` で動作し、公開ホストには `https://` が必要です。API キーの入力は別ステップではありません。Vibrato がまずエンドポイントを probe し、サーバーが 401 か 403 を返したときだけキー入力欄を表示します。ちょっとした便利機能として、自分のマシン上でよく使われるループバックポート(Ollama、llama.cpp、LM Studio、oMLX、vLLM、SGLang)で既にサーバーが動いていれば、同じ画面に選択可能な行としても表示されます。接続後はサーバーが報告したモデルから選べ、見つかったモデルが1つだけなら自動的に選択されます。
+- **ローカル LLM エンドポイント** (vLLM、SGLang、Ollama、LM Studio、llama.cpp など、OpenAI 互換サーバーであれば何でも): LLM サーバーは多くの場合、ネットワーク上の別マシン、たとえば LAN 上の GPU マシンです。そのアドレスを入力して接続するだけです。`192.168.0.10:8000` や `gpu-server.lan:8000` のような省略形で十分で、スキームと `/v1` パスは Vibrato が補います。プライベートネットワークのアドレスと `.local` / `.internal` / `.lan` アドレスは平文の `http://`、それ以外は `https://` と推定します。これはあくまで既定値で、スキームを自分で書けばそのまま使われるため、社内ネットワークが他のアドレス帯で GPU サーバーを平文 http で提供している場合は `http://172.170.0.52:8000` のように書けば動きます。API キーの入力は別ステップではありません。Vibrato がまずエンドポイントを probe し、サーバーが 401 か 403 を返したときだけキー入力欄を表示します。ちょっとした便利機能として、自分のマシン上でよく使われるループバックポート(Ollama、llama.cpp、LM Studio、oMLX、vLLM、SGLang)で既にサーバーが動いていれば、同じ画面に選択可能な行としても表示されます。接続後はサーバーが報告したモデルから選べ、見つかったモデルが1つだけなら自動的に選択されます。
 - **Claude** または **OpenAI Codex** (サブスクリプション。ローカルエンドポイントの代替): `/login` で `anthropic`、`openai-codex` (ブラウザ)、`openai-codex-device` (ヘッドレス) のいずれかを選びます。
 
 シェルから同じ設定を行うには:
@@ -73,7 +75,7 @@ vib setup provider --preset vllm --base-url http://192.168.0.10:8000/v1    # キ
 vib setup provider --preset sglang --base-url http://192.168.0.10:30000/v1 # キーは SGLANG_API_KEY から (あれば)
 ```
 
-localhost、プライベートネットワークのホスト、素のホスト名、`.local` / `.internal` / `.lan` 名では平文の `http://` を許可します。公開ホストには `https://` が必要です。
+明示的に書いた `http://` や `https://` はどのホストでもそのまま使われます。スキームなしの `host:port` だけを書いたときのみ推定し、localhost、プライベートネットワークのホスト、素のホスト名、`.local` / `.internal` / `.lan` 名は平文の `http://`、それ以外は `https://` です。
 
 ## 使い方
 

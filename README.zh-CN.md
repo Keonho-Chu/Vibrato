@@ -19,26 +19,28 @@
 
 ## 安装
 
-**使用 Bun 安装** (PATH 中需要 Bun 1.4 或更高版本):
+**独立二进制文件** (推荐，无需 Bun)，支持 Linux (x64/arm64)、macOS (arm64/x64) 和 Windows (x64):
 
 ```sh
-bun install -g vibrato-cli
-vib --version
-```
-
-**独立二进制文件** (无需 Bun)，支持 Linux (x64/arm64)、macOS (arm64/x64) 和 Windows (x64):
-
-```sh
-curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.16.0/scripts/install.sh -o vib-install.sh
+curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.17.2/scripts/install.sh -o vib-install.sh
 sh vib-install.sh
 vib --version
 ```
 
-Windows (PowerShell):
+Windows (PowerShell，请在普通终端中运行，而不是"以管理员身份运行"):
 
 ```powershell
-Invoke-WebRequest -UseBasicParsing https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.16.0/scripts/install.ps1 -OutFile vib-install.ps1
+Invoke-WebRequest -UseBasicParsing https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.17.2/scripts/install.ps1 -OutFile vib-install.ps1
 powershell -File vib-install.ps1
+```
+
+Vibrato 把会话保存在 `%USERPROFILE%\.vib` 下，而在提升权限的终端里创建的目录归 Administrators 组所有，而不是归你所有。Vibrato 会在启动时把它收回来，但从普通终端运行可以省掉这一步。详情以及 Git Bash 要求见 [Windows notes](docs/install.md#windows-notes)。
+
+**使用 Bun 安装** (PATH 中需要已有 Bun 1.4 或更高版本；`bun install -g` 不会替你安装 Bun):
+
+```sh
+bun install -g vibrato-cli
+vib --version
 ```
 
 其他安装方式:
@@ -57,7 +59,7 @@ vib update
 
 在任意 git 检出目录中运行 `vib`。首次启动且没有可用模型时，Vibrato 会直接打开一个连接屏幕，按 Esc 可跳转到完整的提供商菜单。随时可用 `/provider` 打开同一屏幕。
 
-- **本地 LLM 端点** (vLLM、SGLang、Ollama、LM Studio、llama.cpp，或任何其他兼容 OpenAI 的服务器): LLM 服务器通常是网络中的另一台机器，例如局域网里的 GPU 主机，输入它的地址并连接即可。`192.168.0.10:8000` 或 `gpu-server.lan:8000` 这样的简写就够了，Vibrato 会自动补上协议和 `/v1` 路径。私有网络地址以及 `.local` / `.internal` / `.lan` 地址可以直接用明文 `http://`；公网主机则需要 `https://`。不再需要单独的 API 密钥步骤：Vibrato 会先探测端点，只有当服务器返回 401 或 403 时才会显示密钥输入框。作为一个附带的便利功能，如果本机上已经有兼容服务器运行在常见回环端口(Ollama、llama.cpp、LM Studio、oMLX、vLLM、SGLang)，也会作为可选择的一行出现在同一屏幕上。连接后，从服务器报告的模型中选择；如果只发现一个模型，会自动选中它。
+- **本地 LLM 端点** (vLLM、SGLang、Ollama、LM Studio、llama.cpp，或任何其他兼容 OpenAI 的服务器): LLM 服务器通常是网络中的另一台机器，例如局域网里的 GPU 主机，输入它的地址并连接即可。`192.168.0.10:8000` 或 `gpu-server.lan:8000` 这样的简写就够了，Vibrato 会自动补上协议和 `/v1` 路径：私有网络地址以及 `.local` / `.internal` / `.lan` 地址推断为明文 `http://`，其他地址推断为 `https://`。这只是默认值——自己写上协议就会按原样使用，因此如果公司网络在其他地址段上用明文 http 提供 GPU 服务器，写成 `http://172.170.0.52:8000` 即可。不再需要单独的 API 密钥步骤：Vibrato 会先探测端点，只有当服务器返回 401 或 403 时才会显示密钥输入框。作为一个附带的便利功能，如果本机上已经有兼容服务器运行在常见回环端口(Ollama、llama.cpp、LM Studio、oMLX、vLLM、SGLang)，也会作为可选择的一行出现在同一屏幕上。连接后，从服务器报告的模型中选择；如果只发现一个模型，会自动选中它。
 - **Claude** 或 **OpenAI Codex** (订阅计划，作为本地端点的替代方案): 运行 `/login`，选择 `anthropic`、`openai-codex` (浏览器) 或 `openai-codex-device` (无头模式)。
 
 在 Shell 中完成同样的设置:
@@ -73,7 +75,7 @@ vib setup provider --preset vllm --base-url http://192.168.0.10:8000/v1    # 密
 vib setup provider --preset sglang --base-url http://192.168.0.10:30000/v1 # 密钥来自 SGLANG_API_KEY (如有)
 ```
 
-localhost、私有网络主机、裸主机名以及 `.local` / `.internal` / `.lan` 名称允许明文 `http://`；公网主机需要 `https://`。
+显式写出的 `http://` 或 `https://` 对任何主机都按原样使用。只有裸的 `host:port` 才会推断协议：localhost、私有网络主机、裸主机名以及 `.local` / `.internal` / `.lan` 名称为明文 `http://`，其他为 `https://`。
 
 ## 使用
 
