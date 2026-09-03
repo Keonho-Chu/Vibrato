@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.17.1] - 2026-09-03
+
 - Windows startup no longer crashes with `Could not prepare managed session scope (owner_mismatch: prepare:root_authority)` when the agent directory was created from an elevated ("Run as administrator") terminal or on a machine with UAC disabled, where Windows assigns the directory to `BUILTIN\Administrators`. An existing managed directory owned by another principal is now taken back at startup through the identity-checked native repair, which sets the owner to the user, instead of failing closed. When ownership genuinely cannot be recovered, the CLI prints the recovery steps (`takeown`, or delete on a fresh install, then a non-elevated terminal) instead of an uncaught exception; the same message covers a `sudo`-created directory on Linux and macOS.
 
 ## [0.17.0] - 2026-09-02
