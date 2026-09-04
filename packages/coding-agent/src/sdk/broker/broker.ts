@@ -1496,8 +1496,11 @@ export class Broker {
 		if (stored && requestedLimit !== undefined && stored.limit !== requestedLimit)
 			return error("invalid_input", "limit must match the cursor page shape");
 		const limit = stored?.limit ?? requestedLimit ?? SESSION_LIST_DEFAULT_LIMIT;
+		const resolveSessionId = typeof input.resolveSessionId === "string" ? input.resolveSessionId : undefined;
 		const snapshot = stored ?? {
-			sessions: [...result.sessions],
+			sessions: [...result.sessions].filter(
+				session => resolveSessionId === undefined || session.sessionId === resolveSessionId,
+			),
 			indexSeq: result.indexSeq,
 			warnings: [...result.warnings],
 			limit,
