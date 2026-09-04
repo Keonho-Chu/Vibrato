@@ -1521,7 +1521,7 @@ export async function runSdkSessionCli(
 				"Expected one of: list, inspect, send, status, tail, retire, raw (control|query|global).",
 				2,
 			);
-		const agentDir = args.agentDir ?? getAgentDir();
+		const agentDir = path.resolve(args.agentDir ?? getAgentDir());
 		if (action === "list") {
 			writeOutput(stripSecretFields(await runList(agentDir, args)));
 			return;
