@@ -1,6 +1,9 @@
 # Changelog
 
 ## [Unreleased]
+### Fixed
+
+- When every auto-compaction candidate fails, the reported error now leads with the first candidate's failure and lists each candidate that was tried with its own error. The chain starts at the session model and ends on a same-provider largest-context fallback, so surfacing only the final error named a model the user never chose (e.g. `openai-codex/gpt-5.4` on an `astra` preset session) and hid that their own model had already failed the same way.
 
 - `/model` provider-tab refreshes now reuse the already loaded static catalog and update only the selected provider's discovery state, avoiding repeated signed preset registry work while retaining full-catalog refresh behavior for static configuration changes.
 - The interactive TUI now warns when a turn ends with `stopReason: "length"` before producing any visible text or tool call — a reasoning model whose thinking alone consumed the budget — instead of returning to the prompt with no explanation, and the completion notification for that turn no longer reports success. Other surfaces (SDK, ACP, print mode, telemetry) already reported this state; no length-specific automatic continuation is added and existing continuation policies are unchanged.
