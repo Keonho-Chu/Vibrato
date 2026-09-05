@@ -230,7 +230,6 @@ export function modelSupportsReasoningControl<TApi extends Api>(
 	resolvedBaseUrl?: string,
 ): boolean {
 	if (!model.reasoning) return false;
-
 	if (model.api === "openai-completions") {
 		const completionsModel = model as ApiModel<"openai-completions">;
 		const explicitSupport = completionsModel.compat?.supportsReasoningEffort;
@@ -344,6 +343,18 @@ export function clampThinkingLevelForModel<TApi extends Api>(
 		return requested;
 	}
 	if (!modelSupportsReasoningControl(model) || requested === undefined) {
+		return undefined;
+	}
+	if (model.api === "anthropic-messages" && model.provider === "anthropic") {
+		const baseUrl = model.baseUrl;
+		try {
+			const url = new URL(baseUrl || "https://api.anthropic.com");
+			if (url.protocol !== "https:" || url.hostname !== "api.anthropic.com") return undefined;
+		} catch {
+			return undefined;
+		}
+	}
+	if (!model.thinking) {
 		return undefined;
 	}
 
