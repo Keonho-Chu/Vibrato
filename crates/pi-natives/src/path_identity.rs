@@ -724,7 +724,7 @@ const fn is_retryable_exact_replace_status(status: i32) -> bool {
 	status == STATUS_SHARING_VIOLATION
 }
 
-#[cfg(any(windows, test))]
+#[cfg(windows)]
 /// STATUS_INVALID_PARAMETER: the synthetic NTSTATUS used for early,
 /// pre-syscall name validation rejections in the status-returning open path
 /// (e.g. an embedded NUL or an oversized name), which never reach
@@ -3451,7 +3451,7 @@ pub(crate) mod platform {
 	}
 
 	#[cfg(not(target_os = "linux"))]
-	fn rename_directory_no_replace_at(
+	const fn rename_directory_no_replace_at(
 		_: libc::c_int,
 		_: libc::c_int,
 		_: &CString,
