@@ -1439,6 +1439,7 @@ describe("chat daemon worker", () => {
 						url: host.endpoint.url,
 						token: host.endpoint.token,
 						endpointIdentity: {
+							dev: endpointIdentity.dev,
 							mtimeMs: host.endpointMtimeMs,
 							mtimeNs: endpointIdentity.mtimeNs,
 							ctimeNs: endpointIdentity.ctimeNs,

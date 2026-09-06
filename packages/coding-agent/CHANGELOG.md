@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- SDK session routing now uses the Broker's endpoint timestamp comparison, accepting sub-millisecond representation differences while retaining device/inode and exact file-replacement checks. Valid live sessions no longer become unavailable solely because timestamp conversions round differently.
 - File locks now use a descriptor-relative exclusive directory-publication fallback
 ### Fixed
 

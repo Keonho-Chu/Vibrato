@@ -25,6 +25,7 @@ import {
 import { ACP_SESSION_RECONNECT, SESSION_REQUEST_TIMEOUT_MS } from "../session-reconnect";
 
 export interface SessionEndpointIdentity {
+	readonly dev: bigint;
 	readonly mtimeMs: number;
 	readonly mtimeNs: bigint;
 	readonly ctimeNs: bigint;
@@ -54,6 +55,7 @@ export function sessionAttachmentAuthorityId(input: {
 		.digest("hex");
 	const endpointIdentity = input.endpointIdentity
 		? {
+				dev: input.endpointIdentity.dev.toString(),
 				mtimeMs: input.endpointIdentity.mtimeMs,
 				mtimeNs: input.endpointIdentity.mtimeNs.toString(),
 				ctimeNs: input.endpointIdentity.ctimeNs.toString(),
@@ -438,6 +440,7 @@ async function lstatEndpoint(file: string): Promise<SessionEndpointIdentity | un
 	)
 		return undefined;
 	return {
+		dev: identity.dev,
 		mtimeMs: stat.mtimeMs,
 		mtimeNs: identity.mtimeNs,
 		ctimeNs: identity.ctimeNs,
@@ -446,8 +449,27 @@ async function lstatEndpoint(file: string): Promise<SessionEndpointIdentity | un
 	};
 }
 
+/**
+ * Match a filesystem endpoint read to the indexed timestamp at index precision.
+ * Broker registration and Router lstat reads can round the same mtime
+ * differently; upstream compares through the Broker's indexed-file comparator
+ * (`matchesIndexedEndpointFile`), which in this tree reduces to the timestamp
+ * tolerance because the index carries no separate endpoint file id.
+ */
+function matchesIndexedEndpointFile(
+	file: Pick<SessionEndpointIdentity, "mtimeMs">,
+	indexed: { readonly endpointMtimeMs: number | undefined },
+): boolean {
+	return (
+		indexed.endpointMtimeMs !== undefined &&
+		Number.isFinite(indexed.endpointMtimeMs) &&
+		Math.abs(file.mtimeMs - indexed.endpointMtimeMs) <= 0.001
+	);
+}
+
 function sameEndpointIdentity(expected: SessionEndpointIdentity, current: SessionEndpointIdentity): boolean {
 	return (
+		expected.dev === current.dev &&
 		expected.mtimeMs === current.mtimeMs &&
 		expected.mtimeNs === current.mtimeNs &&
 		expected.ctimeNs === current.ctimeNs &&
@@ -1322,7 +1344,7 @@ export class SessionRouter {
 		// cannot keep the old attachment authorized.
 		const identityBefore = await lstatEndpoint(attached.endpoint.path);
 		if (!identityBefore || !sameEndpointIdentity(attached.endpointIdentity, identityBefore)) return false;
-		if (identityBefore.mtimeMs !== indexed.endpointMtimeMs) return false;
+		if (!matchesIndexedEndpointFile(identityBefore, indexed)) return false;
 		let raw: Record<string, unknown>;
 		try {
 			const parsed = JSON.parse(await Bun.file(attached.endpoint.path).text());
@@ -1346,7 +1368,7 @@ export class SessionRouter {
 		const identityAfter = await lstatEndpoint(attached.endpoint.path);
 		return (
 			identityAfter !== undefined &&
-			identityAfter.mtimeMs === indexed.endpointMtimeMs &&
+			matchesIndexedEndpointFile(identityAfter, indexed) &&
 			sameEndpointIdentity(attached.endpointIdentity, identityAfter)
 		);
 	}
@@ -1382,7 +1404,7 @@ export class SessionRouter {
 		const endpointIdentity = await lstatEndpoint(endpointPath);
 		const endpoint = await readSdkSessionEndpoint(repo, indexed.sessionId, scope);
 		if (!endpoint || endpoint.stale || endpoint.pid !== indexed.pid) return null;
-		if (!endpointIdentity || endpointIdentity.mtimeMs !== indexed.endpointMtimeMs) return null;
+		if (!endpointIdentity || !matchesIndexedEndpointFile(endpointIdentity, indexed)) return null;
 		// Identity is proven INSIDE this authority read (#4730 review): sampling it
 		// afterwards would let an identical rename between the read and the sample
 		// install the replacement's inode as the trusted baseline.
@@ -1407,7 +1429,7 @@ export class SessionRouter {
 		const endpointIdentityAfterRead = await lstatEndpoint(endpoint.path);
 		if (
 			!endpointIdentityAfterRead ||
-			endpointIdentityAfterRead.mtimeMs !== indexed.endpointMtimeMs ||
+			!matchesIndexedEndpointFile(endpointIdentityAfterRead, indexed) ||
 			!sameEndpointIdentity(endpointIdentity, endpointIdentityAfterRead)
 		)
 			return null;
