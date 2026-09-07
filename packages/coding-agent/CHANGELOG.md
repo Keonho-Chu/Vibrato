@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- Broker `session.list` pagination cursors now evict the oldest entry when the 32-cursor budget is full instead of failing new paginations with `cursor capacity is exhausted` (#5370). Abandoned or partial paginations degrade gracefully (the evicted cursor reports `cursor is expired or invalid` on next use) so unrelated session ops never fail once the index exceeds one page; the obsolete capacity-exhausted path is removed.
 - SDK session routing now uses the Broker's endpoint timestamp comparison, accepting sub-millisecond representation differences while retaining device/inode and exact file-replacement checks. Valid live sessions no longer become unavailable solely because timestamp conversions round differently.
 - File locks now use a descriptor-relative exclusive directory-publication fallback
 ### Fixed
