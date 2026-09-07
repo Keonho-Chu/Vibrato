@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Interrupted standalone-binary installs now reclaim an installer lock only when its recorded process ID is no longer running. Live or malformed locks remain protected and fail closed, so a cancelled `gjc update` no longer permanently blocks the next update while concurrent installers remain serialized.
 - Native Windows external editors now launch executable commands directly instead of through `cmd.exe` and reassert runtime raw input for ConPTY-backed terminals, preventing the shell or cooked-mode handoff from swallowing the first editor keystroke; `.cmd` and `.bat` editor commands retain shell execution.
 - Native Windows external editors now launch executable commands directly instead of through `cmd.exe`, preventing the shell handoff from swallowing the first editor keystroke; `.cmd` and `.bat` editor commands retain shell execution.
 ||||||| parent of 84bd690f8 (fix(editor): bypass cmd for native Windows editors)
