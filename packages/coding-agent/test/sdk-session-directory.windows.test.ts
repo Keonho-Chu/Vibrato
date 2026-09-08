@@ -336,4 +336,54 @@ describe.skipIf(process.platform !== "win32")("Windows managed session directory
 			"Could not prepare managed session scope (owner_mismatch: prepare:tombstones_directory).",
 		);
 	});
+	it("probe: owner repair wiring on this runner (diagnostic only)", async () => {
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-session-directory-windows-owner-probe-"));
+		temporaryDirectories.push(root);
+		const cwd = path.join(root, "workspace");
+		const agentDir = path.join(root, "agent");
+		await fs.mkdir(cwd);
+		const required = require("@vib-rato/natives") as typeof native;
+		const first = SessionManager.managedDestination(cwd, agentDir);
+		const tombstones = path.join(first.directory, ".vib-managed-session-internal", "tombstones");
+		const realVerify = native.verifyOwnerOnlyPathSecurityExpected;
+		const stat = await fs.lstat(tombstones, { bigint: true });
+		console.log("PROBE same-module:", required === (native as unknown), "user:", os.userInfo().username);
+		console.log("PROBE real verify tombstones:", JSON.stringify(realVerify(tombstones, "directory", stat.dev, stat.ino)));
+		console.log("PROBE real verify scope dir:", JSON.stringify(native.verifyOwnerOnlyPathSecurity(first.directory, "directory")));
+		const verifyCalls: string[] = [];
+		let reported = false;
+		const verify = vi
+			.spyOn(native, "verifyOwnerOnlyPathSecurityExpected")
+			.mockImplementation((pathname, kind, expectedDev, expectedIno) => {
+				verifyCalls.push(`${kind}:${path.relative(root, pathname)}`);
+				if (!reported && path.resolve(pathname) === path.resolve(tombstones)) {
+					reported = true;
+					return { ok: false, code: "owner_mismatch" };
+				}
+				return realVerify(pathname, kind, expectedDev, expectedIno);
+			});
+		const repair = vi.spyOn(native, "repairOwnerOnlyPathSecurityExpected").mockReturnValue({ ok: true });
+		console.log(
+			"PROBE verify-wired:",
+			required.verifyOwnerOnlyPathSecurityExpected === (verify as unknown),
+			"repair-wired:",
+			required.repairOwnerOnlyPathSecurityExpected === (repair as unknown),
+		);
+		let outcome = "ok";
+		try {
+			const second = SessionManager.managedDestination(cwd, agentDir);
+			outcome = `resolved kind=${second.kind} same=${path.resolve(second.directory) === path.resolve(first.directory)}`;
+		} catch (error) {
+			outcome = `threw ${(error as Error).message} cause=${JSON.stringify((error as Error).cause)}`;
+		} finally {
+			verify.mockRestore();
+			repair.mockRestore();
+		}
+		console.log("PROBE outcome:", outcome);
+		console.log("PROBE reported:", reported, "verify calls:", JSON.stringify(verifyCalls));
+		console.log(
+			"PROBE repair calls:",
+			JSON.stringify(repair.mock.calls.map(([pathname, kind]) => `${kind}:${path.relative(root, String(pathname))}`)),
+		);
+	});
 });

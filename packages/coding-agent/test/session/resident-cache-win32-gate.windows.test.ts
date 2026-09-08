@@ -55,3 +55,5 @@ describe.skipIf(process.platform !== "win32")("Windows resident-cache disk gate"
 		}
 	});
 });
+
+// ci-probe: trigger the Windows session-path job (no behavior change)
