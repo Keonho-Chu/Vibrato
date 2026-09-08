@@ -68,6 +68,16 @@ function buildRail(overrides: SessionOverrides = {}, goalActive = true): StatusL
 
 const CONTEXT_TOKEN = /\d+(?:\.\d+)?%/;
 
+/**
+ * Ceiling for the width-sweep tests. Not a slow-assertion allowance: each
+ * iteration builds a fresh component on purpose, since a cold git cache is what
+ * keeps the sweep deterministic, and every construction issues the
+ * unconditional branch and status lookups in `#buildSegmentContext`. Over a
+ * hundred-odd widths that is a hundred-odd git subprocesses, which a CI runner
+ * walks far more slowly than a laptop; bun's 5s default killed them mid-sweep.
+ */
+const SWEEP_TIMEOUT_MS = 60_000;
+
 beforeAll(async () => {
 	resetSettingsForTest();
 	await Settings.init({ inMemory: true });
@@ -106,37 +116,49 @@ describe("shortenModelId", () => {
 });
 
 describe("status rail survives very small widths", () => {
-	it("keeps a context percentage at every width from 4 to 120", () => {
-		for (let width = 4; width <= 120; width += 1) {
-			const rendered = buildRail().render(width);
-			const text = strip(rendered.join(" "));
+	it(
+		"keeps a context percentage at every width from 4 to 120",
+		() => {
+			for (let width = 4; width <= 120; width += 1) {
+				const rendered = buildRail().render(width);
+				const text = strip(rendered.join(" "));
 
-			expect({ width, text }).toMatchObject({ text: expect.stringMatching(CONTEXT_TOKEN) });
-			for (const row of rendered) expect(visibleWidth(row)).toBeLessThanOrEqual(width);
-		}
-	});
+				expect({ width, text }).toMatchObject({ text: expect.stringMatching(CONTEXT_TOKEN) });
+				for (const row of rendered) expect(visibleWidth(row)).toBeLessThanOrEqual(width);
+			}
+		},
+		SWEEP_TIMEOUT_MS,
+	);
 
-	it("never drops the model before the goal, nor the goal before the context", () => {
-		const goalGlyph = theme.icon.goal || "G";
-		const modelName = shortenModelId(MODEL_ID);
+	it(
+		"never drops the model before the goal, nor the goal before the context",
+		() => {
+			const goalGlyph = theme.icon.goal || "G";
+			const modelName = shortenModelId(MODEL_ID);
 
-		for (let width = 4; width <= 120; width += 1) {
-			const text = strip(buildRail().render(width).join(" "));
-			const hasContext = CONTEXT_TOKEN.test(text);
-			const hasGoal = text.includes(goalGlyph) || text.includes("Goal");
-			const hasModel = text.includes(modelName);
+			for (let width = 4; width <= 120; width += 1) {
+				const text = strip(buildRail().render(width).join(" "));
+				const hasContext = CONTEXT_TOKEN.test(text);
+				const hasGoal = text.includes(goalGlyph) || text.includes("Goal");
+				const hasModel = text.includes(modelName);
 
-			// Priority order is an invariant of every width, not just the narrow end.
-			expect({ width, ok: hasContext || !hasGoal }).toEqual({ width, ok: true });
-			expect({ width, ok: hasGoal || !hasModel }).toEqual({ width, ok: true });
-		}
-	});
+				// Priority order is an invariant of every width, not just the narrow end.
+				expect({ width, ok: hasContext || !hasGoal }).toEqual({ width, ok: true });
+				expect({ width, ok: hasGoal || !hasModel }).toEqual({ width, ok: true });
+			}
+		},
+		SWEEP_TIMEOUT_MS,
+	);
 
-	it("suppresses the overflow marker once the rail is narrow", () => {
-		for (let width = 4; width <= 30; width += 1) {
-			expect(strip(buildRail().render(width).join(" "))).not.toContain("…+");
-		}
-	});
+	it(
+		"suppresses the overflow marker once the rail is narrow",
+		() => {
+			for (let width = 4; width <= 30; width += 1) {
+				expect(strip(buildRail().render(width).join(" "))).not.toContain("…+");
+			}
+		},
+		SWEEP_TIMEOUT_MS,
+	);
 
 	it("keeps the context window while it fits and falls back to an integer percentage", () => {
 		const wide = strip(buildRail().render(28).join(" "));
@@ -266,26 +288,30 @@ describe("gateway quota window on a narrow rail", () => {
 		return component;
 	}
 
-	it("drops the token and cache counters before the quota window", () => {
-		const wide = strip(buildUsageRail().render(120)[0]);
-		expect(wide).toContain("vug 75%");
-		expect(wide).toContain("in 1K");
-		expect(wide).toContain("cache read 8.2K");
+	it(
+		"drops the token and cache counters before the quota window",
+		() => {
+			const wide = strip(buildUsageRail().render(120)[0]);
+			expect(wide).toContain("vug 75%");
+			expect(wide).toContain("in 1K");
+			expect(wide).toContain("cache read 8.2K");
 
-		// A counter says what has been spent; the window says how much is left
-		// before the gateway stops answering. On a rail with room for one, the
-		// window is the one worth keeping.
-		let sawWindowWithoutCounters = false;
-		for (let width = 20; width <= 60; width += 1) {
-			const row = strip(buildUsageRail().render(width)[0]);
-			const hasWindow = row.includes("vug");
-			const hasCounter = row.includes("in 1K") || row.includes("out 500") || row.includes("cache read");
-			// Never the inversion: a counter surviving a dropped window.
-			expect({ width, ok: hasWindow || !hasCounter }).toEqual({ width, ok: true });
-			if (hasWindow && !hasCounter) sawWindowWithoutCounters = true;
-		}
-		expect(sawWindowWithoutCounters).toBe(true);
-	});
+			// A counter says what has been spent; the window says how much is left
+			// before the gateway stops answering. On a rail with room for one, the
+			// window is the one worth keeping.
+			let sawWindowWithoutCounters = false;
+			for (let width = 20; width <= 60; width += 1) {
+				const row = strip(buildUsageRail().render(width)[0]);
+				const hasWindow = row.includes("vug");
+				const hasCounter = row.includes("in 1K") || row.includes("out 500") || row.includes("cache read");
+				// Never the inversion: a counter surviving a dropped window.
+				expect({ width, ok: hasWindow || !hasCounter }).toEqual({ width, ok: true });
+				if (hasWindow && !hasCounter) sawWindowWithoutCounters = true;
+			}
+			expect(sawWindowWithoutCounters).toBe(true);
+		},
+		SWEEP_TIMEOUT_MS,
+	);
 
 	it("carries no priority when the segment has observed nothing", () => {
 		// Without an observation the segment renders nothing, so eviction must be
