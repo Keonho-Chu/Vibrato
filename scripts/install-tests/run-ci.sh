@@ -74,7 +74,7 @@ section "Tarball install smoke"
 TARBALL_DIR="$WORK_DIR/tarballs"
 mkdir -p "$TARBALL_DIR"
 stage_linux_x64_optional_package
-for pkg in utils natives-linux-x64 natives ai agent tui stats coding-agent vib-rato; do
+for pkg in utils natives-linux-x64 natives ai agent tui stats coding-agent vibrato-cli; do
 	(
 		cd "$ROOT_DIR/packages/$pkg"
 		bun pm pack --destination "$TARBALL_DIR" --quiet >/dev/null
@@ -89,7 +89,7 @@ agent_tgz="$(find_tarball "$TARBALL_DIR"/vib-rato-agent-core-*.tgz)"
 tui_tgz="$(find_tarball "$TARBALL_DIR"/vib-rato-tui-*.tgz)"
 stats_tgz="$(find_tarball "$TARBALL_DIR"/vib-rato-stats-*.tgz)"
 coding_agent_tgz="$(find_tarball "$TARBALL_DIR"/vib-rato-coding-agent-*.tgz)"
-wrapper_tgz="$(find_tarball "$TARBALL_DIR"/vib-rato-[0-9]*.tgz)"
+wrapper_tgz="$(find_tarball "$TARBALL_DIR"/vibrato-cli-[0-9]*.tgz)"
 
 TARBALL_APP_DIR="$WORK_DIR/tarball-install"
 mkdir -p "$TARBALL_APP_DIR"
