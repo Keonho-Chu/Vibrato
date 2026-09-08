@@ -1324,26 +1324,33 @@ function attachRetryableAtHint(errorMessage: string | undefined, retryableAt: nu
 
 /**
  * A `quota` failure carrying a Retry-After at or above this threshold is a
- * DAILY allowance that has been spent, not a moment of congestion. Below it the
- * upstream is asking for a short pause, which the ordinary retry budget already
- * handles correctly; at or above it, sleeping is useless and retrying is the
- * behavior issue #14 forbids. 60s is deliberately generous: every realistic
- * daily-limit reset (hours) clears it, and no realistic congestion hint reaches it.
+ * spent allowance for the upstream's current quota window, not a moment of
+ * congestion. Below it the upstream is asking for a short pause, which the
+ * ordinary retry budget already handles correctly; at or above it, sleeping is
+ * useless and retrying is the behavior issue #14 forbids.
+ *
+ * 60s is deliberately generous, and stays correct however long the window is.
+ * The gateway's window length is operator-configured (`VUG_QUOTA_WINDOW_HOURS`,
+ * 24 by default and 3 in production), so a reset is hours away at the short end
+ * and a day away at the long end; both clear this threshold, and no realistic
+ * congestion hint reaches it. The wire contract keeps its "daily" names
+ * (`daily_token_limit`, `x-vug-daily-*`) for stability, so this code deliberately
+ * describes the state in window-neutral terms instead of echoing them.
  */
 const QUOTA_TERMINAL_RETRY_AFTER_MS = 60_000;
 
 /**
- * Backoff used when a daily-quota failure names no reset instant. Mirrors
+ * Backoff used when a token-limit failure names no reset instant. Mirrors
  * `AuthStorage`'s own default so the session-side hold reports the same instant
  * the credential block used to report.
  */
 const QUOTA_HOLD_DEFAULT_BACKOFF_MS = 60_000;
 
-/** Suppression-reason phrasing for the daily-limit hold, shown where a model explains its unavailability. */
+/** Suppression-reason phrasing for the token-limit hold, shown where a model explains its unavailability. */
 function describeQuotaHold(resetAtMs: number): string | undefined {
 	if (!Number.isFinite(resetAtMs)) return undefined;
 	try {
-		return `daily usage limit reached; resets at ${new Date(resetAtMs).toISOString()}`;
+		return `token limit reached; resets at ${new Date(resetAtMs).toISOString()}`;
 	} catch {
 		return undefined;
 	}
@@ -1363,8 +1370,8 @@ function attachQuotaHoldHint(errorMessage: string | undefined, resetAtMs: number
 	} catch {
 		return current || "";
 	}
-	if (current?.includes("daily usage limit reached")) return current;
-	const hint = `daily usage limit reached; retryable at ${iso}`;
+	if (current?.includes("token limit reached")) return current;
+	const hint = `token limit reached; retryable at ${iso}`;
 	return current ? `${current}; ${hint}` : hint;
 }
 
@@ -20191,7 +20198,7 @@ export class AgentSession {
 		return remaining ? "unchanged" : "exhausted";
 	}
 	/**
-	 * Session-scoped daily-quota holds for API-key pools, keyed by provider.
+	 * Session-scoped token-limit holds for API-key pools, keyed by provider.
 	 *
 	 * These exist because the policy forbids reaching a different stored key, so
 	 * the credential row is deliberately NOT blocked in auth storage (a blocked
@@ -20376,10 +20383,11 @@ export class AgentSession {
 				? this.#managedFallbackExhaustionDecision(message, message.errorMessage || "Model fallback attempt failed")
 				: false;
 		}
-		// Daily-quota hold (issue #14). A `quota` class carrying a long Retry-After
-		// is a spent allowance, not congestion: the same model cannot succeed
-		// before the reset, and the legacy delay path would cap a 12h hint at
-		// `retry.maxDelayMs` and re-issue the request seconds later. Recover the
+		// Token-limit hold (issue #14). A `quota` class carrying a long Retry-After
+		// is an allowance spent for the upstream's current quota window, not
+		// congestion: the same model cannot succeed before the reset, and the
+		// legacy delay path would cap a multi-hour hint at `retry.maxDelayMs` and
+		// re-issue the request seconds later. Recover the
 		// hint the same way the delay computation below does, so a prose-only
 		// Retry-After on the legacy path is honored too.
 		//
@@ -20488,7 +20496,7 @@ export class AgentSession {
 				outcome = controller.advance() ? "advance" : "exhausted";
 			}
 			// Never spend the entry's remaining attempts on a model that is held
-			// until its daily reset. Advancing walks `controller.chain.entries`,
+			// until its quota window resets. Advancing walks `controller.chain.entries`,
 			// which is exactly the chain the user configured, so this can only ever
 			// reach an entry the user listed — never an unlisted provider or endpoint.
 			if (quotaHoldIsTerminal && outcome === "retry") {

@@ -15,23 +15,26 @@ import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
 import { TempDir } from "@vib-rato/utils";
 
 /**
- * Issue #14 — daily-quota retry, credential-rotation, and fallback policy.
+ * Issue #14 — token-limit retry, credential-rotation, and fallback policy.
  *
  * The scenario is a shared gateway (issue #8) that answers with 429 and a
- * Retry-After measured in hours once the day's allowance is spent. Every test
+ * Retry-After measured in hours once its quota window's allowance is spent.
+ * The window length is operator-configured (`VUG_QUOTA_WINDOW_HOURS`, 24 by
+ * default and 3 in production), so these tests assert on the shape of the
+ * failure rather than on any particular window. Every test
  * here drives that with a fake transport and asserts on the number of upstream
  * requests, because "one more request" is the only observable form the forbidden
  * behaviors take: a same-model retry, or a retry carrying a different stored
  * credential for the same baseUrl.
  *
- * No test waits real time. The 12h hold is asserted through the recorded
+ * No test waits real time. The hold is asserted through the recorded
  * suppression window and the surfaced reset instant, never by sleeping.
  */
 
-/** A full day of hold, expressed the way a gateway sends it: `retry-after` in seconds. */
+/** A hold measured in hours, expressed the way a gateway sends it: `retry-after` in seconds. */
 const QUOTA_RETRY_AFTER_SECONDS = 43_200;
 const QUOTA_RETRY_AFTER_MS = QUOTA_RETRY_AFTER_SECONDS * 1000;
-const QUOTA_ERROR_MESSAGE = "Daily allowance exhausted for this key";
+const QUOTA_ERROR_MESSAGE = "Token allowance exhausted for this key";
 
 type AutoRetryStartEvent = Extract<AgentSessionEvent, { type: "auto_retry_start" }>;
 
@@ -78,9 +81,10 @@ function errorStream(
 }
 
 /**
- * 429 + `insufficient_quota` + a 12h `retry-after`. `insufficient_quota` is an
- * existing quota code; issue #12 adds `daily_token_limit` to the same class, so
- * this scenario keeps holding once that lands.
+ * 429 + `insufficient_quota` + a multi-hour `retry-after`. `insufficient_quota`
+ * is an existing quota code; issue #12 adds `daily_token_limit` to the same
+ * class, so this scenario keeps holding once that lands. The wire contract
+ * keeps its "daily" names even though the gateway's window is configurable.
  */
 function quotaStream(model: Model): AssistantMessageEventStream {
 	return errorStream(model, QUOTA_ERROR_MESSAGE, 429, {
@@ -121,7 +125,7 @@ function lastAssistant(session: AgentSession): AssistantMessage {
 
 /** Stand-in for the reason the session records; the exact wording is asserted elsewhere. */
 function describeHold(): string {
-	return "daily usage limit reached; resets at (expired)";
+	return "token limit reached; resets at (expired)";
 }
 
 /** Assert the error names its reset instant once, and return that instant. */
@@ -131,7 +135,7 @@ function expectSingleRetryableAt(errorMessage: string): number {
 	return Date.parse(matches[0]![1]!);
 }
 
-describe("issue #14 daily-quota retry, rotation, and fallback policy", () => {
+describe("issue #14 token-limit retry, rotation, and fallback policy", () => {
 	let tempDir: TempDir;
 	let authStorage: AuthStorage;
 	let modelRegistry: ModelRegistry;
@@ -197,7 +201,7 @@ describe("issue #14 daily-quota retry, rotation, and fallback policy", () => {
 			const calls: string[] = [];
 			// `retry.maxRetries` is what makes this a regression test: with a legacy
 			// budget configured, the quota failure used to be retried up to four
-			// times, each after `retry.maxDelayMs` rather than the 12h the gateway
+			// times, each after `retry.maxDelayMs` rather than the hours the gateway
 			// asked for. The hold now ends the turn on the first failure.
 			const live = createSession(
 				[primary],
@@ -213,7 +217,7 @@ describe("issue #14 daily-quota retry, rotation, and fallback policy", () => {
 				if (event.type === "auto_retry_start") retryStarts.push(event);
 			});
 
-			await live.prompt("daily limit reached");
+			await live.prompt("token limit reached");
 			await live.waitForIdle();
 
 			expect(calls).toEqual([selector(primary)]);
@@ -235,27 +239,27 @@ describe("issue #14 daily-quota retry, rotation, and fallback policy", () => {
 				return quotaStream(model);
 			});
 
-			await live.prompt("daily limit reached on a stock install");
+			await live.prompt("token limit reached on a stock install");
 			await live.waitForIdle();
 			const after = Date.now();
 
 			expect(calls).toEqual([selector(primary)]);
 			expect(modelRegistry.getSelectorSuppressionStatus(selector(primary))).toBe("active");
-			expect(modelRegistry.getSelectorSuppressionReason(selector(primary))).toContain("daily usage limit reached");
+			expect(modelRegistry.getSelectorSuppressionReason(selector(primary))).toContain("token limit reached");
 			const errorMessage = lastAssistant(live).errorMessage ?? "";
 			expect(errorMessage).toContain(QUOTA_ERROR_MESSAGE);
-			expect(errorMessage).toContain("daily usage limit reached");
+			expect(errorMessage).toContain("token limit reached");
 			const resetAtMs = expectSingleRetryableAt(errorMessage);
 			expect(resetAtMs).toBeGreaterThanOrEqual(before + QUOTA_RETRY_AFTER_MS - 5_000);
 			expect(resetAtMs).toBeLessThanOrEqual(after + QUOTA_RETRY_AFTER_MS + 5_000);
 		});
 
-		it("names the daily limit and its reset instant exactly once on the surfaced error", async () => {
+		it("names the token limit and its reset instant exactly once on the surfaced error", async () => {
 			await authStorage.set("anthropic", [{ type: "api_key", key: "gateway-key-1" }]);
 			const before = Date.now();
 			const live = createSession([primary], model => quotaStream(model), { "retry.maxRetries": 3 });
 
-			await live.prompt("daily limit reached");
+			await live.prompt("token limit reached");
 			await live.waitForIdle();
 			const after = Date.now();
 
@@ -263,7 +267,7 @@ describe("issue #14 daily-quota retry, rotation, and fallback policy", () => {
 			expect(errorMessage).toContain(QUOTA_ERROR_MESSAGE);
 			// The user must read "the limit is spent until <instant>", not a bare 429
 			// that looks like a rejected key.
-			expect(errorMessage).toContain("daily usage limit reached");
+			expect(errorMessage).toContain("token limit reached");
 			// The hold hint and the pre-existing retryable-at hint name the same
 			// instant, so exactly one of them may land.
 			const resetAtMs = expectSingleRetryableAt(errorMessage);
@@ -286,7 +290,7 @@ describe("issue #14 daily-quota retry, rotation, and fallback policy", () => {
 				{ "fallback.maxAttempts": 3 },
 			);
 
-			await live.prompt("daily limit reached on every chain entry");
+			await live.prompt("token limit reached on every chain entry");
 			await live.waitForIdle();
 
 			expect(calls).toEqual([selector(primary), selector(fallback)]);
@@ -312,7 +316,7 @@ describe("issue #14 daily-quota retry, rotation, and fallback policy", () => {
 				return quotaStream(model);
 			});
 
-			await live.prompt("daily limit reached with two keys stored");
+			await live.prompt("token limit reached with two keys stored");
 			await live.waitForIdle();
 
 			expect(calls).toEqual([selector(primary)]);
@@ -336,7 +340,7 @@ describe("issue #14 daily-quota retry, rotation, and fallback policy", () => {
 			const keyBefore = await modelRegistry.getApiKey(primary, live.credentialSessionId);
 			expect(keyBefore).toBeDefined();
 
-			await live.prompt("daily limit reached");
+			await live.prompt("token limit reached");
 			await live.waitForIdle();
 			const keyAfterFirstTurn = await modelRegistry.getApiKey(primary, live.credentialSessionId);
 
@@ -363,7 +367,7 @@ describe("issue #14 daily-quota retry, rotation, and fallback policy", () => {
 			const before = Date.now();
 			const live = createSession([primary], model => quotaStream(model));
 
-			await live.prompt("daily limit reached");
+			await live.prompt("token limit reached");
 			await live.waitForIdle();
 			const after = Date.now();
 
@@ -453,7 +457,7 @@ describe("issue #14 daily-quota retry, rotation, and fallback policy", () => {
 				{ "retry.rotateCredentialsOnQuota": true },
 			);
 
-			await live.prompt("daily limit reached with rotation opted in");
+			await live.prompt("token limit reached with rotation opted in");
 			await live.waitForIdle();
 
 			// The second request is the rotated credential. It exists only because the
@@ -468,18 +472,18 @@ describe("issue #14 daily-quota retry, rotation, and fallback policy", () => {
 			await authStorage.set("anthropic", [{ type: "api_key", key: "gateway-key-1" }]);
 			const live = createSession([primary], model => quotaStream(model));
 
-			await live.prompt("daily limit reached");
+			await live.prompt("token limit reached");
 			await live.waitForIdle();
 
 			expect(modelRegistry.getSelectorSuppressionStatus(selector(primary))).toBe("active");
 			const reason = modelRegistry.getSelectorSuppressionReason(selector(primary));
-			expect(reason).toContain("daily usage limit reached");
+			expect(reason).toContain("token limit reached");
 			expect(reason).toMatch(/resets at \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z/);
 		});
 
 		it("reports the reason while the window is active", () => {
-			modelRegistry.suppressSelector(selector(primary), Date.now() + 60_000, "daily usage limit reached");
-			expect(modelRegistry.getSelectorSuppressionReason(selector(primary))).toBe("daily usage limit reached");
+			modelRegistry.suppressSelector(selector(primary), Date.now() + 60_000, "token limit reached");
+			expect(modelRegistry.getSelectorSuppressionReason(selector(primary))).toBe("token limit reached");
 		});
 
 		it("reading the reason does not consume the one-shot expiry the revert policy needs", () => {
@@ -488,7 +492,7 @@ describe("issue #14 daily-quota retry, rotation, and fallback policy", () => {
 			// before deleting the entry. A read-only reason lookup from the UI must
 			// not swallow that observation. Expiry is read from the recorded instant,
 			// so no test waits for it.
-			modelRegistry.suppressSelector(selector(primary), Date.now() - 1, "daily usage limit reached");
+			modelRegistry.suppressSelector(selector(primary), Date.now() - 1, "token limit reached");
 
 			expect(modelRegistry.getSelectorSuppressionReason(selector(primary))).toBeUndefined();
 			expect(modelRegistry.getSelectorSuppressionReason(selector(primary))).toBeUndefined();
@@ -519,7 +523,7 @@ describe("issue #14 daily-quota retry, rotation, and fallback policy", () => {
 				turns.push(current);
 			};
 
-			await runTurn("head hits its daily limit");
+			await runTurn("head hits its token limit");
 			await runTurn("second turn while the head is still held");
 
 			// Turn 1 advanced past the held head; turn 2 stayed on the fallback

@@ -24,7 +24,7 @@ export function formatDiscoveryErrorHint(error: string | undefined): string | un
 	if (statusCode === "404") {
 		return `  Discovery endpoint ${url} returned 404. Point baseUrl at the host that serves /models (usually .../v1).`;
 	}
-	// A gateway that has spent its daily allowance answers /v1/models with 429
+	// A gateway that has spent its quota-window allowance answers /v1/models with 429
 	// exactly as it answers a completion (issue #8 §4). Reported as a bare
 	// "Discovery failed", that reads like a bad key or a deleted model and sends
 	// the user to re-authenticate. Name the limit instead, and say plainly that

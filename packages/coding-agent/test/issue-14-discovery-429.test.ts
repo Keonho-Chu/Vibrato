@@ -4,7 +4,7 @@ import { formatDiscoveryErrorHint } from "../src/config/discovery-failure-messag
 import { ModelDiscoveryManager } from "../src/config/model-discovery-manager";
 
 /**
- * Issue #14 policy 4 — a gateway that has spent its daily allowance answers
+ * Issue #14 policy 4 — a gateway that has spent its quota-window allowance answers
  * `/v1/models` with 429 exactly as it answers a completion (issue #8 §4).
  * Discovery must then keep serving what is already approved and cached, and the
  * message the user reads must name the limit rather than the key.

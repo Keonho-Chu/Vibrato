@@ -5820,7 +5820,7 @@ export class ModelRegistry {
 	 * Suppress a specific model selector (e.g., "provider/id") until a specific timestamp.
 	 *
 	 * `reason` is a short, user-facing explanation of WHY the selector is hidden
-	 * ("daily usage limit reached; resets at …"). A rate-limit suppression has
+	 * ("token limit reached; resets at …"). A rate-limit suppression has
 	 * always been reasonless, so the parameter is optional and a call that omits
 	 * it keeps the previous behavior exactly.
 	 */

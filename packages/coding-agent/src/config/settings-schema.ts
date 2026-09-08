@@ -1526,7 +1526,7 @@ export const SETTINGS_SCHEMA = {
 		},
 	},
 	/**
-	 * Escape hatch for the daily-quota API-key-switching ban. A `quota` failure
+	 * Escape hatch for the token-limit API-key-switching ban. A `quota` failure
 	 * means the account's allowance for this endpoint is spent, so reaching
 	 * another stored API key for the SAME provider (and therefore the same
 	 * baseUrl) walks around the gateway's audit and quota boundary rather than
