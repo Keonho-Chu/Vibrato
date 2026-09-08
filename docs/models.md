@@ -455,6 +455,26 @@ Use provider-level `headers` for proxy-required headers. Keep the provider `api`
 
 For an unknown custom endpoint, `reasoning: true` declares model capability but does not prove the proxy accepts a control parameter. A familiar provider id or model-family name is not transport evidence: configurable LiteLLM/vLLM/local endpoints still fail closed. Add `thinking` and `compat.supportsReasoningEffort: true` only when the endpoint documents OpenAI-style `reasoning_effort`; set `compat.thinkingFormat` as well when it uses a different documented request shape. Otherwise Vibrato keeps reasoning-level controls unavailable and omits the parameter.
 
+#### Server-advertised model hints
+
+A server that fronts the model (a gateway or proxy) can advertise those same facts itself, so that a discovered endpoint needs no `models.yml` declaration: any entry in its `/v1/models` response may carry a `vibrato` object. This applies to every provider whose models come from an OpenAI-style models list, which includes the `local` endpoint the connect screen registers and any `discovery.type: openai-models-list | vllm | sglang` provider.
+
+```json
+{
+  "id": "VIB",
+  "max_model_len": 212144,
+  "vibrato": {
+    "reasoning": true,
+    "thinking": { "minLevel": "low", "maxLevel": "xhigh", "levels": ["low", "medium", "xhigh"], "defaultLevel": "medium", "mode": "effort" },
+    "compat": { "supportsReasoningEffort": true, "reasoningContentField": "reasoning" }
+  }
+}
+```
+
+The hint may set `name`, `reasoning`, `thinking`, and three `compat` fields: `supportsReasoningEffort`, `reasoningContentField`, `thinkingFormat`. Nothing else is read, so a hint cannot redirect a request or change its credentials; unknown keys are dropped rather than rejected, and a hint that fails validation is ignored whole with a warning. Validation covers meaning as well as shape: `thinking.minLevel` must not be above `maxLevel`, `levels` (when given) must be non-empty and lie inside that range, and `defaultLevel` must be one of the advertised levels. `levels` is normalized to ascending order without duplicates.
+
+The hint lifts only what the registry assumed on its own, such as the `supportsReasoningEffort: false` default every bare endpoint starts with. Anything you declared stays ahead of it: a provider-level `compat` in `models.yml`, a same-id entry under `models:` (its `name`, `reasoning`, `thinking`, and `compat`), and `modelOverrides`, in that order of increasing precedence. Fields a declaration leaves unset are still filled from the hint. Hinted models are cached like any other discovered model, so the thinking-level picker is available at the next start without a request, and the same precedence applies to the cached copy.
+
 `auth` selects the transport scheme only; it never supplies a credential. A provider that declares `models:` must therefore also declare where its key comes from, and `models.yml` validation rejects the config before model discovery otherwise:
 
 | Intent | Required keys |
