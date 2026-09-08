@@ -876,7 +876,10 @@ describe("Settings", () => {
 		try {
 			settings.set("theme.dark", "lig-white");
 			await Bun.write(getConfigPath(), "theme: [");
-			await Bun.sleep(300);
+			// The debounced save is what trips recovery; wait for it to land rather
+			// than assuming it fires within a fixed sleep on a loaded CI runner.
+			const recoveryDeadline = Date.now() + 5_000;
+			while (settings.canWriteDurableConfig() && Date.now() < recoveryDeadline) await Bun.sleep(25);
 
 			expect(settings.canWriteDurableConfig()).toBe(false);
 			expect(settings.get("theme.dark")).toBe("lig-white");

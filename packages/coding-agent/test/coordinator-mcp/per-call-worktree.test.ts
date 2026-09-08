@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
+import packageJson from "../../package.json" with { type: "json" };
 import { createCoordinatorMcpServer } from "../../src/coordinator-mcp/server";
 import { writeBrokerDiscovery } from "../../src/sdk/broker/discovery";
 import type { SdkClient } from "../../src/sdk/client/client";
@@ -24,7 +25,7 @@ async function createServer(root: string, sessionCommand: string | null, require
 	await writeBrokerDiscovery(agentDir, {
 		version: 1,
 		protocolVersion: 3,
-		packageGeneration: "test",
+		packageGeneration: packageJson.version,
 		ownerId: "test",
 		pid: process.pid,
 		host: "127.0.0.1",
