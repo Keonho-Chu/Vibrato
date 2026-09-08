@@ -2,6 +2,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from "bu
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import { getEnvApiKey } from "@vib-rato/ai";
 import type { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
 import {
 	findProvidersWithEmptyApiKeyEnv,
@@ -51,6 +52,7 @@ describe("empty apiKeyEnv is recorded as the cause of a hidden provider", () => 
 	let modelsPath: string;
 	let authStorage: AuthStorage;
 	let previousEnvValue: string | undefined;
+	let previousVllmKey: string | undefined;
 
 	beforeAll(async () => {
 		testTheme = await getThemeByName("lig-blue");
@@ -63,9 +65,16 @@ describe("empty apiKeyEnv is recorded as the cause of a hidden provider", () => 
 		authStorage = await AuthStorage.create(path.join(tempDir, "auth.db"));
 		previousEnvValue = Bun.env[HIDDEN_ENV_NAME];
 		delete Bun.env[HIDDEN_ENV_NAME];
+		// `vllm` has a built-in VLLM_API_KEY fallback, which would authenticate the
+		// fixture provider and make the hidden-provider cases vacuous on a machine
+		// that happens to have it set.
+		previousVllmKey = Bun.env.VLLM_API_KEY;
+		delete Bun.env.VLLM_API_KEY;
 	});
 
 	afterEach(() => {
+		if (previousVllmKey === undefined) delete Bun.env.VLLM_API_KEY;
+		else Bun.env.VLLM_API_KEY = previousVllmKey;
 		if (previousEnvValue === undefined) delete Bun.env[HIDDEN_ENV_NAME];
 		else Bun.env[HIDDEN_ENV_NAME] = previousEnvValue;
 		authStorage.close();
@@ -105,6 +114,45 @@ describe("empty apiKeyEnv is recorded as the cause of a hidden provider", () => 
 		});
 
 		expect(hidden).toEqual([]);
+	});
+
+	test("says nothing about a bundled provider that its own environment variable still authenticates", () => {
+		// `models.yml` is not the whole credential story: `openai` reads
+		// OPENAI_API_KEY on its own, so an empty `apiKeyEnv` beside it hides
+		// nothing and naming the provider would point at models that are listed.
+		const previousOpenAiKey = Bun.env.OPENAI_API_KEY;
+		Bun.env.OPENAI_API_KEY = "sk-test-builtin-fallback";
+		try {
+			expect(getEnvApiKey("openai")).toBeDefined();
+
+			const hidden = findProvidersWithEmptyApiKeyEnv({
+				providers: { openai: { apiKeyEnv: HIDDEN_ENV_NAME } },
+			});
+
+			expect(hidden).toEqual([]);
+		} finally {
+			if (previousOpenAiKey === undefined) delete Bun.env.OPENAI_API_KEY;
+			else Bun.env.OPENAI_API_KEY = previousOpenAiKey;
+		}
+	});
+
+	test("the registry and the config-only helper agree about a provider its own variable authenticates", () => {
+		const previousOpenAiKey = Bun.env.OPENAI_API_KEY;
+		Bun.env.OPENAI_API_KEY = "sk-test-builtin-fallback";
+		fs.writeFileSync(modelsPath, ["providers:", "  openai:", `    apiKeyEnv: ${HIDDEN_ENV_NAME}`].join("\n"));
+		try {
+			const registry = new ModelRegistryImpl(authStorage, modelsPath);
+
+			// The provider is not hidden at all: its models are in the list.
+			expect(registry.getAvailable().some(model => model.provider === "openai")).toBe(true);
+			expect(registry.getProvidersHiddenByMissingApiKeyEnv()).toEqual([]);
+			// The config-only helper `vib local-provider status` uses must not
+			// disagree with the registry and name a provider the user can see.
+			expect(findProvidersWithEmptyApiKeyEnv({ providers: { openai: { apiKeyEnv: HIDDEN_ENV_NAME } } })).toEqual([]);
+		} finally {
+			if (previousOpenAiKey === undefined) delete Bun.env.OPENAI_API_KEY;
+			else Bun.env.OPENAI_API_KEY = previousOpenAiKey;
+		}
 	});
 
 	test("treats a variable set to whitespace as unset", () => {

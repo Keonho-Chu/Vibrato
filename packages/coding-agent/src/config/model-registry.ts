@@ -956,20 +956,42 @@ function soleApiKeyEnvSource(providerConfig: ConfiguredProviderEntry): string | 
 }
 
 /**
+ * Whether the empty `apiKeyEnv` on this provider entry actually decides
+ * anything, judged from the config plus the environment alone.
+ *
+ * `models.yml` is not the whole credential story. A bundled provider also has a
+ * built-in environment variable of its own — `openai` reads `OPENAI_API_KEY`,
+ * `vllm` reads `VLLM_API_KEY` — and that key authenticates the provider whether
+ * or not the config's own `apiKeyEnv` resolves. Reporting such a provider as
+ * hidden would name a provider whose models are right there in the list.
+ */
+function isHiddenByEmptyApiKeyEnv(provider: string, providerConfig: ConfiguredProviderEntry): string | undefined {
+	const envName = soleApiKeyEnvSource(providerConfig);
+	if (!envName) return undefined;
+	if (resolveApiKeyEnvConfig(envName) !== undefined) return undefined;
+	if (getEnvApiKey(provider) !== undefined) return undefined;
+	return envName;
+}
+
+/**
  * Providers in a parsed `models.yml` whose only credential source is an
  * `apiKeyEnv` variable that is currently unset or empty.
  *
  * Exported for callers that hold a config but no registry — `vib
  * local-provider status` reads the file directly — so both surfaces name the
  * same cause from the same rule.
+ *
+ * This reads config and environment only. A credential stored by `vib auth
+ * login` lives in `agent.db` and is invisible here, so a provider carrying one
+ * would still be named; {@link ModelRegistry.getProvidersHiddenByMissingApiKeyEnv}
+ * is the accurate report, because it additionally requires the provider to have
+ * no usable models.
  */
 export function findProvidersWithEmptyApiKeyEnv(config: ModelsConfig | undefined): HiddenProviderApiKeyEnv[] {
 	const hidden: HiddenProviderApiKeyEnv[] = [];
 	for (const [provider, providerConfig] of Object.entries(config?.providers ?? {})) {
-		const envName = soleApiKeyEnvSource(providerConfig);
-		if (!envName) continue;
-		if (resolveApiKeyEnvConfig(envName) !== undefined) continue;
-		hidden.push({ provider, envName });
+		const envName = isHiddenByEmptyApiKeyEnv(provider, providerConfig);
+		if (envName) hidden.push({ provider, envName });
 	}
 	return hidden;
 }
@@ -5089,6 +5111,11 @@ export class ModelRegistry {
 		for (const [provider, envName] of this.#apiKeyEnvOnlyProviders) {
 			if (providersWithModels.has(provider)) continue;
 			if (resolveApiKeyEnvConfig(envName) !== undefined) continue;
+			// A bundled provider's own environment variable authenticates it
+			// regardless of the config's `apiKeyEnv`, so the empty one decided
+			// nothing. Checked here as well as in the config-only helper so the two
+			// reports can never disagree about the same provider.
+			if (getEnvApiKey(provider) !== undefined) continue;
 			hidden.push({ provider, envName });
 		}
 		return hidden;

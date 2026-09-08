@@ -12,6 +12,7 @@ import {
 	type GatewayQuotaState,
 	hasGatewayQuotaHeaders,
 } from "../session/gateway-quota-observer";
+import { formatHoldCountdown } from "../session/quota-hold-text";
 
 export interface LocalProviderSmokeCommandArgs {
 	model?: string;
@@ -338,15 +339,18 @@ function gatewayObservationKey(config: LocalOpenAICompatConfig): GatewayQuotaKey
 	};
 }
 
-/** `2h 30m`, `45m`, `20s`. Approximate on purpose: the gateway's own reset is a whole instant, not a countdown. */
+/**
+ * `1d 3h`, `2h 30m`, `45m`, `20s`.
+ *
+ * The minute-and-above wording is the shared one every other surface draws a
+ * quota countdown with, so a reset shown here reads exactly as it does in
+ * `/model` and the status line. That helper reports nothing below a minute,
+ * which is right for a reset instant hours away but not for the seconds-long
+ * `retry-after` of a congested gateway, so seconds are the fallback rather than
+ * a second convention.
+ */
 function formatApproximateDuration(ms: number): string {
-	const seconds = Math.max(0, Math.round(ms / 1000));
-	if (seconds < 60) return `${seconds}s`;
-	const minutes = Math.round(seconds / 60);
-	if (minutes < 60) return `${minutes}m`;
-	const hours = Math.floor(minutes / 60);
-	const remainder = minutes % 60;
-	return remainder === 0 ? `${hours}h` : `${hours}h ${remainder}m`;
+	return formatHoldCountdown(ms) ?? `${Math.max(0, Math.round(ms / 1000))}s`;
 }
 
 /**

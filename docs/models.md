@@ -1170,8 +1170,13 @@ Every figure shown comes from the gateway. Its quota window is an operator setti
 ```
 gateway tokens: limit 200000, used 12345, remaining 187655
 gateway resets: in 2h 30m (2026-09-08T15:00:00.000Z)
-gateway queue: depth 3, inflight 8
 gateway wait: 1200ms for an upstream slot
+```
+
+A served request reports the budget, the reset, and how long it waited for an upstream slot. Queue depth and in-flight count are not part of that: the gateway sends them only when it refuses a request for congestion, so they appear beside a `gateway_busy` rejection instead.
+
+```
+gateway queue: depth 3, inflight 8
 ```
 
 Each line appears only when the gateway sent the values behind it, so an endpoint that is not behind a gateway prints none of them. `--json` carries the same values under `gateway`. A `status`/`diagnose` run without `--smoke` or `--model` makes no chat request and therefore reports no gateway facts; the command never issues a request of its own to collect them.

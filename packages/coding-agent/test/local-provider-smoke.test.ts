@@ -351,14 +351,22 @@ describe("local provider streaming smoke", () => {
 describe("local provider gateway facts and hidden providers", () => {
 	let tempDir: string;
 	let modelsPath: string;
+	let previousVllmKey: string | undefined;
 
 	beforeEach(() => {
 		tempDir = path.join(os.tmpdir(), `vib-local-provider-gateway-${crypto.randomUUID()}`);
 		fs.mkdirSync(tempDir, { recursive: true });
 		modelsPath = path.join(tempDir, "models.json");
+		// `vllm` has a built-in VLLM_API_KEY fallback that authenticates the
+		// fixture provider, so the hidden-provider cases would be vacuous on a
+		// machine that happens to have it set.
+		previousVllmKey = Bun.env.VLLM_API_KEY;
+		delete Bun.env.VLLM_API_KEY;
 	});
 
 	afterEach(() => {
+		if (previousVllmKey === undefined) delete Bun.env.VLLM_API_KEY;
+		else Bun.env.VLLM_API_KEY = previousVllmKey;
 		if (tempDir && fs.existsSync(tempDir)) {
 			fs.rmSync(tempDir, { recursive: true, force: true });
 		}
