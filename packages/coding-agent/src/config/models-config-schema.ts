@@ -85,6 +85,28 @@ const ModelThinkingSchema = z.object({
 	levels: z.array(EffortSchema).optional(),
 });
 
+/**
+ * What an OpenAI-compatible models-list entry may advertise about itself
+ * under a `vibrato` key. A server in front of a model (a gateway, a proxy)
+ * knows which reasoning levels the model accepts and where it puts the
+ * reasoning text; `/v1/models` carries none of that, so this is the channel.
+ * Only capability fields are accepted: nothing here can redirect a request
+ * or change its credentials, and unknown keys are dropped so a newer server
+ * cannot break an older client. A hint that fails validation is ignored whole.
+ */
+export const DiscoveredModelHintSchema = z.object({
+	name: z.string().min(1).optional(),
+	reasoning: z.boolean().optional(),
+	thinking: ModelThinkingSchema.optional(),
+	compat: z
+		.object({
+			supportsReasoningEffort: z.boolean().optional(),
+			reasoningContentField: ModelCompatSchema.shape.reasoningContentField,
+			thinkingFormat: ModelCompatSchema.shape.thinkingFormat,
+		})
+		.optional(),
+});
+
 const RequestTransformSchema = z
 	.object({
 		profile: z.enum(["openai-proxy"]).optional(),

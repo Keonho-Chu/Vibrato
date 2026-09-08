@@ -13,6 +13,7 @@ import {
 	type Context,
 	codexContextOverrideKey,
 	createModelManager,
+	type DiscoveredModelHint,
 	Effort,
 	enrichModelThinking,
 	getBundledModels,
@@ -94,6 +95,7 @@ import {
 } from "./model-profiles";
 import { normalizeModelSelectorValue } from "./model-selector-value";
 import {
+	DiscoveredModelHintSchema,
 	type ModelOverride,
 	type ModelProfileConfig,
 	type ModelsConfig,
@@ -1072,6 +1074,39 @@ function mergeRequestTransform(
 				? { ...(base.extraBody ?? {}), ...(override.extraBody ?? {}) }
 				: undefined,
 	};
+}
+
+/**
+ * Validate the `vibrato` hint on a models-list entry. Anything but a valid
+ * hint object is ignored (with a warning for a malformed one), so a server
+ * that advertises nothing, or advertises it wrongly, leaves the model exactly
+ * as discovery would have built it.
+ */
+function readDiscoveredModelHint(provider: string, modelId: string, raw: unknown): DiscoveredModelHint | undefined {
+	if (raw === undefined || raw === null) return undefined;
+	const parsed = DiscoveredModelHintSchema.safeParse(raw);
+	if (parsed.success) return parsed.data as DiscoveredModelHint;
+	logger.warn("ignoring malformed model hint from discovery", {
+		provider,
+		model: modelId,
+		issues: parsed.error.issues.map(issue => `${issue.path.join(".") || "<root>"}: ${issue.message}`),
+	});
+	return undefined;
+}
+
+/**
+ * Apply a server-advertised hint to a discovered model. It can turn a plainly
+ * discovered model into a reasoning model with a level set; the registry runs
+ * it after provider overrides and re-applies the user's `modelOverrides` on
+ * top, so `models.yml` keeps the last word.
+ */
+function applyDiscoveredModelHint(model: Model<Api>, hint: DiscoveredModelHint): Model<Api> {
+	const result = { ...model };
+	if (hint.name !== undefined) result.name = hint.name;
+	if (hint.reasoning !== undefined) result.reasoning = hint.reasoning;
+	if (hint.thinking !== undefined) result.thinking = hint.thinking;
+	if (hint.compat !== undefined) result.compat = mergeCompat(model.compat, hint.compat);
+	return result;
 }
 
 function applyModelOverride(model: Model<Api>, override: ModelOverride): Model<Api> {
@@ -3953,57 +3988,62 @@ export class ModelRegistry {
 				item.max_output_tokens,
 			);
 			const api = this.#resolveDiscoveredModelApi(providerConfig, id);
-			discovered.push(
-				enrichModelThinking({
-					id,
-					name: typeof item.name === "string" ? item.name : (referenceModel?.name ?? id),
-					api,
-					provider: providerConfig.provider,
-					baseUrl: requestBaseUrl,
-					reasoning: providerConfig.provider === "omlx" ? true : (referenceModel?.reasoning ?? false),
-					thinking: referenceModel?.thinking,
-					input: referenceModel?.input ?? ["text"],
-					output: referenceModel?.output,
-					cost: referenceModel?.cost ?? { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-					contextWindow:
-						firstPositiveDiscoveryNumber(
-							item.max_model_len,
-							item.context_length,
-							item.context_window,
-							item.max_context_length,
-							referenceModel?.contextWindow,
-							UNK_CONTEXT_WINDOW,
-						) ?? UNK_CONTEXT_WINDOW,
-					maxTokens: discoveredMaxTokens ?? referenceModel?.maxTokens ?? UNK_MAX_TOKENS,
-					maxTokensSource: discoveredMaxTokens === undefined ? referenceModel?.maxTokensSource : "discovered",
-					headers: providerConfig.headers,
-					compat: mergeCompat(
-						{
-							supportsStore: false,
-							supportsDeveloperRole: false,
-							supportsReasoningEffort: providerConfig.provider === "omlx",
-							...(providerConfig.provider === "omlx"
-								? {
-										thinkingFormat: "qwen-chat-template" as const,
-										reasoningContentField: "reasoning_content" as const,
-									}
-								: {}),
-						},
-						mergeProviderCompat(providerConfig.compat, referenceModel?.compat),
-					),
-					...(providerConfig.provider === "omlx"
-						? {
-								reasoning: true,
-								thinking: {
-									mode: "effort" as const,
-									minLevel: Effort.Low,
-									maxLevel: Effort.High,
-									defaultLevel: Effort.Medium,
-								},
-							}
-						: {}),
-				}),
-			);
+			// A `vibrato` key on the entry is the server telling us what the model
+			// can do (reasoning levels, reasoning field). It travels on the model,
+			// through the cache too, and is applied when the catalog is finalized:
+			// after the provider override that pins reasoning off for a configured
+			// endpoint, and before the user's modelOverrides.
+			const hint = readDiscoveredModelHint(providerConfig.provider, id, item.vibrato);
+			const base: Model<Api> = {
+				id,
+				name: typeof item.name === "string" ? item.name : (referenceModel?.name ?? id),
+				api,
+				provider: providerConfig.provider,
+				baseUrl: requestBaseUrl,
+				reasoning: providerConfig.provider === "omlx" ? true : (referenceModel?.reasoning ?? false),
+				thinking: referenceModel?.thinking,
+				input: referenceModel?.input ?? ["text"],
+				output: referenceModel?.output,
+				cost: referenceModel?.cost ?? { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+				contextWindow:
+					firstPositiveDiscoveryNumber(
+						item.max_model_len,
+						item.context_length,
+						item.context_window,
+						item.max_context_length,
+						referenceModel?.contextWindow,
+						UNK_CONTEXT_WINDOW,
+					) ?? UNK_CONTEXT_WINDOW,
+				maxTokens: discoveredMaxTokens ?? referenceModel?.maxTokens ?? UNK_MAX_TOKENS,
+				maxTokensSource: discoveredMaxTokens === undefined ? referenceModel?.maxTokensSource : "discovered",
+				headers: providerConfig.headers,
+				compat: mergeCompat(
+					{
+						supportsStore: false,
+						supportsDeveloperRole: false,
+						supportsReasoningEffort: providerConfig.provider === "omlx",
+						...(providerConfig.provider === "omlx"
+							? {
+									thinkingFormat: "qwen-chat-template" as const,
+									reasoningContentField: "reasoning_content" as const,
+								}
+							: {}),
+					},
+					mergeProviderCompat(providerConfig.compat, referenceModel?.compat),
+				),
+				...(providerConfig.provider === "omlx"
+					? {
+							reasoning: true,
+							thinking: {
+								mode: "effort" as const,
+								minLevel: Effort.Low,
+								maxLevel: Effort.High,
+								defaultLevel: Effort.Medium,
+							},
+						}
+					: {}),
+			};
+			discovered.push(enrichModelThinking(hint === undefined ? base : { ...base, discoveryHint: hint }));
 		}
 		return this.#applyProviderModelOverrides(providerConfig.provider, discovered);
 	}
@@ -4266,7 +4306,9 @@ export class ModelRegistry {
 		});
 	}
 	#finalizeModels(models: Model<Api>[]): Model<Api>[] {
-		const finalized = models.map(model => enrichModelThinking({ ...this.#restoreDeclaredThinking(model) }));
+		const finalized = models.map(model =>
+			enrichModelThinking({ ...this.#restoreDeclaredThinking(this.#applyDiscoveryHint(model)) }),
+		);
 		const result = applyFinalCodexGpt56ContextCap(finalized, undefined, this.#codexContextWindowOverrides);
 		for (let index = 0; index < result.length; index++) {
 			if (
@@ -4289,6 +4331,18 @@ export class ModelRegistry {
 			if (generated) this.#generatedAuthHeaders.set(result[index]!, generated);
 		}
 		return result;
+	}
+	/**
+	 * Apply what the endpoint advertised for a discovered model. This runs after
+	 * the provider override, which pins `supportsReasoningEffort: false` onto
+	 * every model of a configured endpoint, and re-applies the user's
+	 * `modelOverrides` so they keep the last word.
+	 */
+	#applyDiscoveryHint(model: Model<Api>): Model<Api> {
+		if (model.discoveryHint === undefined) return model;
+		const hinted = applyDiscoveredModelHint(model, model.discoveryHint);
+		const override = this.#modelOverrides.get(model.provider.toLowerCase())?.get(model.id.toLowerCase());
+		return override === undefined ? hinted : applyModelOverride(hinted, override);
 	}
 	#restoreDeclaredThinking(model: Model<Api>): Model<Api> {
 		const overrideThinking = this.#modelOverrides
