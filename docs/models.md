@@ -1138,6 +1138,18 @@ The opt-in matters: `sendSessionHeaders` defaults to `false`, so a `models.yml` 
 
 Bulk-deployment scripts that generate `models.yml` for a fleet of machines must include the `compat.sendSessionHeaders: true` line for every gateway provider entry they write; that requirement, along with the full gateway-side client setup, is documented in `LGJ/vib-usage-gateway`'s `docs/client-setup.md`.
 
+### The connect screen's gateway summary
+
+Connecting an endpoint through **Connect a local LLM endpoint** ends at the model picker for an ordinary server. When the endpoint turns out to be fronted by a gateway, one summary is shown first, and Enter continues to the picker exactly as before. It exists because a gateway meters the key rather than merely accepting it, so "the server answered" is not the confirmation it is for a plain vLLM box.
+
+Whether a gateway answered is decided from the model-list response alone, never from the address or the provider name, so a plain vLLM, SGLang, Ollama, or llama.cpp endpoint never sees this step. Two things count as the gateway announcing itself: any `x-vug-*` quota header on the response, and a `vibrato` object on a models-list entry (see [Server-advertised model hints](#server-advertised-model-hints)).
+
+The summary reports the address, how many models the endpoint serves and how many of them the server described, and whether a key was used. It adds the token budget only when the gateway sent one. A gateway that meters per key does not attach its quota headers to a successful `GET /v1/models` — that route is passed through unrecorded — so in the usual case the summary says the model list carried no budget figures and that usage appears in the status line after the first request. Nothing is sent to obtain a figure the response did not carry: no probe of a health or admin route, and above all no throwaway completion, which would spend tokens against the very budget being asked about. The status-line `usage` segment then reports the budget from the responses to real requests.
+
+A gateway checks the key's budget before it routes anything, the model list included, so a key whose budget is spent gets a 429 on the connect screen too. That is reported as what it is — a valid key with nothing left in the current window, with the figures and the reset instant the gateway sent — rather than as an unreachable server. A 429 with no gateway headers is some other server's throttle and is still reported as a plain HTTP failure.
+
+Every figure shown comes from the gateway. Its quota window is an operator setting (`VUG_QUOTA_WINDOW_HOURS`, 24 by default and 3 in the LIG deployment) that is never sent to the client, so the wording names no window length and no day or midnight boundary: a reset appears only as the instant the gateway reported, and disappears once that instant has passed.
+
 ## Practical examples
 
 ### Local OpenAI-compatible endpoint (no auth)

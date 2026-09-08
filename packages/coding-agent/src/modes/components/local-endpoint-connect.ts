@@ -5,13 +5,32 @@ import { DynamicBorder } from "./dynamic-border";
 import { formatModelContextLength, type LocalModelChoice } from "./local-model-picker";
 
 /**
+ * Token budget a gateway reported about the key that probed it. Every field is
+ * optional: the screen shows what was sent and never fills a gap with a
+ * plausible number.
+ */
+export interface LocalEndpointQuotaFacts {
+	limit?: number;
+	remaining?: number;
+	used?: number;
+	resetAt?: number;
+}
+
+/** How a server in front of the endpoint announced itself on the model list. */
+export interface LocalEndpointGatewayFacts {
+	hintedModels: number;
+	quota?: LocalEndpointQuotaFacts;
+}
+
+/**
  * Outcome of probing one endpoint. Structurally identical to the result of
  * `probeLocalEndpoint` in `setup/local-endpoint.ts`; declared here so this
  * component depends on the setup module only through the injected callbacks.
  */
 export type LocalEndpointProbeOutcome =
-	| { status: "ok"; models: LocalModelChoice[] }
+	| { status: "ok"; models: LocalModelChoice[]; gateway?: LocalEndpointGatewayFacts }
 	| { status: "unauthorized" }
+	| { status: "quota-exhausted"; quota: LocalEndpointQuotaFacts }
 	| { status: "no-models" }
 	| { status: "unreachable"; detail: string };
 
@@ -20,6 +39,7 @@ export interface LocalEndpointSuggestion {
 	baseUrl: string;
 	label: string;
 	models: LocalModelChoice[];
+	gateway?: LocalEndpointGatewayFacts;
 }
 
 /** What the screen hands back once an endpoint answered with models. */
@@ -38,7 +58,20 @@ export interface LocalEndpointConnectDeps {
 }
 
 /** Where the ↑/↓ cursor currently sits. */
-type ConnectFocus = { kind: "input" } | { kind: "api-key" } | { kind: "suggestion"; index: number };
+type ConnectFocus =
+	| { kind: "input" }
+	| { kind: "api-key" }
+	| { kind: "suggestion"; index: number }
+	/** The gateway summary owns the whole screen while it is shown. */
+	| { kind: "summary" };
+
+/** The connection a shown summary will hand over once Enter is pressed. */
+export interface PendingGatewaySummary {
+	connection: LocalEndpointConnection;
+	gateway: LocalEndpointGatewayFacts;
+	/** Whether the endpoint was probed with a key at all. */
+	authenticated: boolean;
+}
 
 /**
  * One screen to connect a local (usually LAN) LLM server.
@@ -48,6 +81,13 @@ type ConnectFocus = { kind: "input" } | { kind: "api-key" } | { kind: "suggestio
  * never becomes a step of its own. There is no API key step and no confirm
  * step: the key field is revealed only when the server answers 401/403, and a
  * successful probe goes straight to the model picker.
+ *
+ * The one exception is an endpoint that turns out to be fronted by a gateway.
+ * That is worth a beat, because a gateway meters the key rather than merely
+ * accepting it, so the screen shows what the gateway reported about the key
+ * once and continues on Enter. A plain server never sees this step: the
+ * decision is made from signals only a gateway puts on the response, never from
+ * the address or the provider name.
  */
 export class LocalEndpointConnectComponent extends Container {
 	#apiKey = "";
@@ -65,6 +105,7 @@ export class LocalEndpointConnectComponent extends Container {
 	#probeInFlight = false;
 	#status: string | null = null;
 	#submitInFlight = false;
+	#summary: PendingGatewaySummary | null = null;
 	#suggestions: LocalEndpointSuggestion[] = [];
 	#suggestionsPending = true;
 
@@ -136,6 +177,15 @@ export class LocalEndpointConnectComponent extends Container {
 			this.#onCancel();
 			return;
 		}
+		// The summary owns the screen while it is up, so nothing may reach the
+		// address field or the suggestion rows behind it. Enter is the only key
+		// that does anything; Esc still leaves the screen the way it always has.
+		if (this.#focus.kind === "summary") {
+			if (matchesKey(keyData, "enter") || matchesKey(keyData, "return") || keyData === "\n") {
+				this.#acceptSummary();
+			}
+			return;
+		}
 		if (matchesKey(keyData, "up")) {
 			this.#moveFocus(-1);
 			return;
@@ -192,8 +242,39 @@ export class LocalEndpointConnectComponent extends Container {
 		const suggestion = this.#suggestions[this.#focus.index];
 		if (!suggestion) return;
 		// The discovery probe already listed this server's models, so it connects
-		// without a second round trip.
-		this.#emitConnection({ baseUrl: suggestion.baseUrl, models: suggestion.models });
+		// without a second round trip. Loopback discovery runs unauthenticated,
+		// so a gateway found this way was answering without a key.
+		this.#continueWith({ baseUrl: suggestion.baseUrl, models: suggestion.models }, suggestion.gateway, false);
+	}
+
+	/**
+	 * Hand the connection over, or hold it behind the gateway summary first.
+	 *
+	 * The summary is a beat, not a gate: it never asks a question, never sends a
+	 * request of its own, and Enter continues to exactly where a plain endpoint
+	 * would already be.
+	 */
+	#continueWith(
+		connection: LocalEndpointConnection,
+		gateway: LocalEndpointGatewayFacts | undefined,
+		authenticated: boolean,
+	): void {
+		if (!gateway) {
+			this.#emitConnection(connection);
+			return;
+		}
+		this.#summary = { connection, gateway, authenticated };
+		this.#focus = { kind: "summary" };
+		this.#error = null;
+		this.#status = null;
+		this.#render();
+		this.#onRender();
+	}
+
+	#acceptSummary(): void {
+		const summary = this.#summary;
+		if (!summary) return;
+		this.#emitConnection(summary.connection);
 	}
 
 	/** Hand the connection to the caller, ignoring a second Enter while it runs. */
@@ -271,7 +352,20 @@ export class LocalEndpointConnectComponent extends Container {
 		this.#status = null;
 		if (outcome.status === "ok") {
 			const apiKey = this.#apiKey || undefined;
-			this.#emitConnection({ baseUrl, ...(apiKey ? { apiKey } : {}), models: outcome.models });
+			this.#continueWith(
+				{ baseUrl, ...(apiKey ? { apiKey } : {}), models: outcome.models },
+				outcome.gateway,
+				apiKey !== undefined,
+			);
+			return;
+		}
+		if (outcome.status === "quota-exhausted") {
+			// Not a broken connection: the key is good and the gateway said so by
+			// reporting the budget it just refused to spend.
+			this.#error = describeExhaustedQuota(outcome.quota, Date.now());
+			this.#focus = { kind: "input" };
+			this.#render();
+			this.#onRender();
 			return;
 		}
 		if (outcome.status === "unauthorized") {
@@ -327,6 +421,7 @@ export class LocalEndpointConnectComponent extends Container {
 
 	/** Focus order: address field, the key field when shown, then each suggestion. */
 	#focusTargets(): ConnectFocus[] {
+		if (this.#focus.kind === "summary") return [{ kind: "summary" }];
 		const targets: ConnectFocus[] = [{ kind: "input" }];
 		if (this.#apiKeyRequired) targets.push({ kind: "api-key" });
 		for (let i = 0; i < this.#suggestions.length; i++) targets.push({ kind: "suggestion", index: i });
@@ -354,6 +449,10 @@ export class LocalEndpointConnectComponent extends Container {
 	 */
 	#render(): void {
 		this.#contentContainer.detachAll();
+		if (this.#focus.kind === "summary" && this.#summary) {
+			this.#renderGatewaySummary(this.#summary);
+			return;
+		}
 		const inputFocused = this.#focus.kind === "input";
 		this.#contentContainer.addChild(
 			new Text(inputFocused ? theme.fg("accent", "Server address") : theme.fg("muted", "Server address"), 0, 0),
@@ -400,7 +499,11 @@ export class LocalEndpointConnectComponent extends Container {
 		}
 		if (this.#error) {
 			this.#contentContainer.addChild(new Spacer(1));
-			this.#contentContainer.addChild(new TruncatedText(theme.fg("error", this.#error), 0, 0));
+			// One row per line: `TruncatedText` cuts rather than wraps, so a message
+			// that needs two rows has to arrive already split.
+			for (const line of this.#error.split("\n")) {
+				this.#contentContainer.addChild(new TruncatedText(theme.fg("error", line), 0, 0));
+			}
 		}
 
 		this.#renderSuggestions();
@@ -408,6 +511,40 @@ export class LocalEndpointConnectComponent extends Container {
 		this.#contentContainer.addChild(new Spacer(1));
 		this.#contentContainer.addChild(
 			new Text(theme.fg("muted", "[↑↓ to move, Enter to connect, Esc for other providers]"), 0, 0),
+		);
+	}
+
+	/**
+	 * The gateway beat: what the gateway said about this key, and nothing the
+	 * client had to ask for. Every line is a fact from the model-list response,
+	 * so a gateway that reports no budget says so plainly rather than showing a
+	 * zero or a guessed window.
+	 */
+	#renderGatewaySummary(summary: PendingGatewaySummary): void {
+		const gateway = summary.gateway;
+		this.#contentContainer.addChild(new TruncatedText(theme.bold("Usage gateway"), 0, 0));
+		this.#contentContainer.addChild(
+			new TruncatedText(
+				theme.fg("muted", "  This endpoint is fronted by a server that meters requests per key."),
+				0,
+				0,
+			),
+		);
+		this.#contentContainer.addChild(new Spacer(1));
+		for (const row of gatewaySummaryRows(summary, Date.now())) {
+			this.#contentContainer.addChild(
+				new TruncatedText(`  ${theme.fg("muted", row.label.padEnd(SUMMARY_LABEL_WIDTH))}${row.value}`, 0, 0),
+			);
+		}
+		if (!gateway.quota) {
+			this.#contentContainer.addChild(new Spacer(1));
+			for (const line of NO_QUOTA_ON_MODEL_LIST) {
+				this.#contentContainer.addChild(new TruncatedText(theme.fg("dim", `  ${line}`), 0, 0));
+			}
+		}
+		this.#contentContainer.addChild(new Spacer(1));
+		this.#contentContainer.addChild(
+			new Text(theme.fg("muted", "[Enter to continue, Esc for other providers]"), 0, 0),
 		);
 	}
 
@@ -438,6 +575,119 @@ export class LocalEndpointConnectComponent extends Container {
 			);
 		}
 	}
+}
+
+/** Label column of the summary rows. Wide enough for the longest label below. */
+const SUMMARY_LABEL_WIDTH = 14;
+
+/**
+ * Said only when the gateway reported no budget on the model list. It is a
+ * statement about this response, not a promise about the gateway's design, and
+ * it names no window length: the window is the operator's setting and the client
+ * is never told what it is.
+ */
+const NO_QUOTA_ON_MODEL_LIST = [
+	"The model list carries no budget figures. Your key's usage appears in the",
+	"status line once the first request comes back.",
+] as const;
+
+/** One `label  value` line of the summary. */
+interface GatewaySummaryRow {
+	label: string;
+	value: string;
+}
+
+/**
+ * The summary's content, separated from its rendering so a test reads the same
+ * strings the screen draws.
+ */
+export function gatewaySummaryRows(summary: PendingGatewaySummary, now: number): GatewaySummaryRow[] {
+	const { connection, gateway, authenticated } = summary;
+	const rows: GatewaySummaryRow[] = [
+		{ label: "Address", value: connection.baseUrl },
+		{ label: "Models", value: describeModelCount(connection.models.length, gateway.hintedModels) },
+		{
+			label: "API key",
+			value: authenticated ? "accepted by the gateway" : "not required by this endpoint",
+		},
+	];
+	const budget = describeBudget(gateway.quota);
+	if (budget) rows.push({ label: "Token budget", value: budget });
+	const reset = gateway.quota ? describeReset(gateway.quota.resetAt, now) : undefined;
+	if (reset) rows.push({ label: "Resets", value: reset });
+	return rows;
+}
+
+function describeModelCount(total: number, hinted: number): string {
+	const models = `${total} available`;
+	// A hinted entry is the server describing what the model supports, which is
+	// why the endpoint needs no models.yml block. Worth naming, briefly.
+	return hinted > 0 ? `${models}, ${hinted} described by the server` : models;
+}
+
+/**
+ * Remaining against the limit, using only the halves the gateway actually sent.
+ * A lone limit is still worth showing; a lone remaining is not, because
+ * "142,000 left" of an unknown budget says nothing.
+ */
+function describeBudget(quota: LocalEndpointQuotaFacts | undefined): string | undefined {
+	if (!quota || quota.limit === undefined) return undefined;
+	const limit = formatTokens(quota.limit);
+	if (quota.remaining !== undefined) return `${formatTokens(quota.remaining)} of ${limit} tokens left`;
+	if (quota.used !== undefined) return `${formatTokens(quota.used)} of ${limit} tokens used`;
+	return `${limit} tokens per window`;
+}
+
+function formatTokens(count: number): string {
+	return count.toLocaleString("en-US");
+}
+
+/**
+ * Countdown plus the wall-clock instant it lands on, e.g. `2h 30m (21:00)`.
+ *
+ * Nothing here names the window: the gateway reports when the budget comes back
+ * and never how long the window is, so the client says when and not how often. A
+ * reset already in the past describes a window that has closed and is dropped
+ * rather than shown as `0m`.
+ */
+export function describeReset(resetAt: number | undefined, now: number): string | undefined {
+	if (resetAt === undefined || !Number.isFinite(resetAt) || resetAt <= now) return undefined;
+	const minutes = Math.round((resetAt - now) / 60_000);
+	const hours = Math.floor(minutes / 60);
+	const relative = hours > 0 ? `${hours}h ${minutes % 60}m` : `${minutes}m`;
+	return `${relative} (${formatResetClock(new Date(resetAt), new Date(now))})`;
+}
+
+/** Local `HH:MM`, dated only when the reset falls on another local day. */
+function formatResetClock(reset: Date, now: Date): string {
+	const clock = `${pad2(reset.getHours())}:${pad2(reset.getMinutes())}`;
+	const sameDay =
+		reset.getFullYear() === now.getFullYear() &&
+		reset.getMonth() === now.getMonth() &&
+		reset.getDate() === now.getDate();
+	return sameDay ? clock : `${pad2(reset.getMonth() + 1)}-${pad2(reset.getDate())} ${clock}`;
+}
+
+function pad2(value: number): string {
+	return String(value).padStart(2, "0");
+}
+
+/**
+ * The inline message for a gateway that refused the model list because the key's
+ * budget is spent. Two rows, because the screen truncates rather than wraps.
+ */
+export function describeExhaustedQuota(quota: LocalEndpointQuotaFacts, now: number): string {
+	const spent =
+		quota.used !== undefined && quota.limit !== undefined
+			? ` (${formatTokens(quota.used)}/${formatTokens(quota.limit)})`
+			: quota.limit !== undefined
+				? ` (limit ${formatTokens(quota.limit)})`
+				: "";
+	const reset = describeReset(quota.resetAt, now);
+	return [
+		`The key is valid; its token budget for this window is spent${spent}.`,
+		reset ? `It comes back in ${reset}. Press Enter to try again then.` : "Press Enter to try again later.",
+	].join("\n");
 }
 
 function describeSuggestionModels(models: readonly LocalModelChoice[]): string {
