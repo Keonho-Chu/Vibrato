@@ -16,8 +16,10 @@ import { readVisibleSkillActiveState, type SkillActiveEntry } from "../../skill-
 import * as git from "../../utils/git";
 import { getSessionAccentAnsi, getSessionAccentHex } from "../../utils/session-color";
 import type { ActionRegistry, FocusDomain } from "../action-registry";
+import type { ExecutionStatusSnapshot } from "../execution-status";
 import { EMPTY_JOBS_SNAPSHOT, type JobsSnapshot } from "../jobs-observer";
 import { sanitizeStatusText } from "../shared";
+import { renderExecutionStatus } from "./execution-status";
 import { renderSkillHudBar } from "./skill-hud/render";
 import { lookupCurrentPrCached } from "./status-line/gh";
 import {
@@ -61,6 +63,7 @@ export interface StatusLineComponentOptions {
 	getKeybindings?: () => KeybindingsManager;
 	focusDomain?: FocusDomain;
 	keyDisplayContext?: KeyDisplayContext;
+	executionStatus?: () => { snapshot: ExecutionStatusSnapshot; workingMessage?: string; hints?: readonly string[] };
 }
 
 export interface StatusLineActionHint {
@@ -194,6 +197,7 @@ export class StatusLineComponent implements Component {
 	#cachedUsage: SegmentContext["usage"] = null;
 	#usageFetchedAt = 0;
 	#usageInFlight = false;
+	#executionStatus?: StatusLineComponentOptions["executionStatus"];
 
 	constructor(
 		private readonly session: AgentSession,
@@ -215,6 +219,7 @@ export class StatusLineComponent implements Component {
 		this.#getKeybindings = options.getKeybindings;
 		this.#focusDomain = options.focusDomain ?? "composer";
 		this.#keyDisplayContext = options.keyDisplayContext;
+		this.#executionStatus = options.executionStatus;
 	}
 
 	updateSettings(settings: StatusLineSettings): void {
@@ -1159,6 +1164,8 @@ export class StatusLineComponent implements Component {
 				if (skillHudRow) lines.push(truncateToWidth(skillHudRow, width));
 			}
 		}
+		const executionStatus = this.#executionStatus?.();
+		if (executionStatus) lines.push(...renderExecutionStatus(executionStatus.snapshot, width, executionStatus));
 
 		const statusRows = this.#buildStatusRows(width, this.#resolveMaxRows());
 		for (const statusRow of statusRows) {

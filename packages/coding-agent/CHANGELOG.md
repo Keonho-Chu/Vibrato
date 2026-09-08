@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 - A server that fronts a model can now tell Vibrato what the model supports. Any entry in an OpenAI-style `/v1/models` response may carry a `vibrato` object with `name`, `reasoning`, `thinking`, and the `compat` fields `supportsReasoningEffort`, `reasoningContentField`, and `thinkingFormat`; a discovered endpoint, including the `local` one the connect screen registers, then gets a working `/effort` picker and `:medium`-style level selection without a hand-written `modelOverrides` block. Nothing in the hint can redirect a request or change its credentials, unknown keys are dropped, and a hint that fails validation (including a level range that runs downward, an empty or out-of-range `levels` list, or a `defaultLevel` the server did not advertise) is ignored whole with a warning. What you declared yourself stays ahead of the hint: a provider-level `compat`, a same-id `models:` entry, and `modelOverrides`. See "Server-advertised model hints" in `docs/models.md`.
+- Added a pinned execution summary that distinguishes model waiting, response streaming, tool execution, retry, context maintenance, and user-input waits while reviewing earlier output. It shows current-prompt tool counts and session-owned background/queued work without estimating completion or inferring approvals.
 
 ## [0.17.3] - 2026-09-03
 

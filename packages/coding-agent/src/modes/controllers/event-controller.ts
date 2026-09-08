@@ -1,7 +1,6 @@
 import { INTENT_FIELD } from "@vib-rato/agent-core";
 import { calculatePromptTokens } from "@vib-rato/agent-core/compaction/compaction";
 import type { AssistantMessage, ImageContent } from "@vib-rato/ai/core";
-import { parseRateLimitReason } from "@vib-rato/ai/core";
 import { type Component, Loader, TERMINAL, Text } from "@vib-rato/tui";
 import { logger } from "@vib-rato/utils";
 import { settings } from "../../config/settings";
@@ -29,6 +28,7 @@ import { type CustomMessage, isSilentAbort, readPendingDisplayTag } from "../../
 import { transferSessionMessageIdentity } from "../../session/session-manager";
 import type { ResolveToolDetails } from "../../tools/resolve";
 import { computeIrcSplitWidths, getIrcSidebarSemanticToken } from "../components/irc-sidebar";
+import { friendlyRetryReason } from "../execution-status";
 import type { IrcObservationRecord } from "../irc-observation-ledger";
 import { interruptHint } from "../shared";
 import { buildAbortDisplayMessage } from "../utils/abort-message";
@@ -93,24 +93,6 @@ function buildCompletionNotifyEnv(payload: CompletionNotifyPayload): Record<stri
 		VIB_NOTIFICATION_STOP_REASON: cleanNotificationEnvValue(payload.stopReason, 100),
 		VIB_NOTIFICATION_JSON: cleanNotificationEnvValue(JSON.stringify(payload), 8000),
 	};
-}
-
-function friendlyRetryReason(errorMessage: string | undefined): string {
-	if (!errorMessage) return "";
-	switch (parseRateLimitReason(errorMessage)) {
-		case "RATE_LIMIT_EXCEEDED":
-			return "rate limited";
-		case "QUOTA_EXHAUSTED":
-			return "usage limit";
-		case "MODEL_CAPACITY_EXHAUSTED":
-			return "overloaded";
-		case "SERVER_ERROR":
-			return "server error";
-		default:
-			return /network|connection|socket|fetch failed|terminated|timeout|timed out|stream/i.test(errorMessage)
-				? "connection error"
-				: "transient error";
-	}
 }
 
 type AgentSessionEventHandlers = {
@@ -265,7 +247,7 @@ export class EventController {
 		const trimmed = intent.trim();
 		if (!trimmed || trimmed === this.#lastIntent) return;
 		this.#lastIntent = trimmed;
-		this.ctx.setWorkingMessage(`${trimmed}${interruptHint()}`);
+		this.ctx.setWorkingMessage(`${trimmed}${interruptHint()}`, "tool");
 	}
 
 	subscribeToAgent(): void {
@@ -284,6 +266,15 @@ export class EventController {
 		if (this.ctx.isStopped?.()) return;
 		if (!this.ctx.isInitialized) await this.ctx.init();
 		if (this.ctx.isStopped?.()) return;
+		this.ctx.syncExecutionStatusIdentity?.();
+		this.ctx.executionStatus?.handleEvent(event);
+		if (
+			(event.type === "message_start" && event.message.role === "assistant") ||
+			(event.type === "tool_execution_end" && this.ctx.executionStatus?.getSnapshot().runningTools === 0)
+		) {
+			this.#lastIntent = undefined;
+			this.ctx.clearToolWorkingMessage?.();
+		}
 		this.#visibleTranscriptChanged = false;
 		this.#handlingEvent = true;
 		try {

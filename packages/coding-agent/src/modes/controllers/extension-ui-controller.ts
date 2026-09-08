@@ -126,6 +126,8 @@ export class ExtensionUiController {
 	#activeHookCustomComponent?: Component & { dispose?(): void };
 	#activeHookCustomOverlay?: OverlayHandle;
 	#activeHookCustomCancel?: () => void;
+	#activeHookDialogCancel?: () => void;
+	#activeHookDialogKind?: "selector" | "input" | "editor";
 
 	#hookSelectorResizeHandler?: () => void;
 	constructor(private ctx: InteractiveModeContext) {}
@@ -145,6 +147,8 @@ export class ExtensionUiController {
 		const widgetsBelow = [...this.#hookWidgetsBelow.entries()];
 		const activeHookCustomComponent = this.#activeHookCustomComponent;
 		const activeHookCustomOverlay = this.#activeHookCustomOverlay;
+		const activeHookCustomCancel = this.#activeHookCustomCancel;
+		const activeHookDialogCancel = this.#activeHookDialogCancel;
 		return () => {
 			for (const unsubscribe of terminalInputUnsubscribers) {
 				unsubscribe();
@@ -164,10 +168,15 @@ export class ExtensionUiController {
 				widgetsChanged = true;
 			}
 			if (
+				this.#activeHookCustomCancel === activeHookCustomCancel &&
 				this.#activeHookCustomComponent === activeHookCustomComponent &&
 				this.#activeHookCustomOverlay === activeHookCustomOverlay
 			) {
+				activeHookCustomCancel?.();
 				this.#clearActiveHookCustom();
+			}
+			if (this.#activeHookDialogCancel === activeHookDialogCancel) {
+				activeHookDialogCancel?.();
 			}
 			if (widgetsChanged) this.#rebuildHookWidgets();
 		};
@@ -441,7 +450,7 @@ export class ExtensionUiController {
 		// Create and set hook & tool UI context
 		const uiContext: ExtensionUIContext = {
 			select: (title, options, dialogOptions) => this.showHookSelector(title, options, dialogOptions),
-			confirm: (title, message, _dialogOptions) => this.showHookConfirm(title, message),
+			confirm: (title, message, dialogOptions) => this.showHookConfirm(title, message, dialogOptions),
 			input: (title, placeholder, dialogOptions) => this.showHookInput(title, placeholder, dialogOptions),
 			notify: (message, type) => this.showHookNotify(message, type),
 			onTerminalInput: handler => this.addExtensionTerminalInputListener(handler),
@@ -1031,6 +1040,7 @@ export class ExtensionUiController {
 	): Promise<string | undefined> {
 		if (this.#isStopped()) return Promise.resolve(undefined);
 		const { promise, finish, attachAbort } = this.#createHookDialogState(
+			"selector",
 			() => this.hideHookSelector(),
 			dialogOptions?.signal,
 		);
@@ -1112,26 +1122,20 @@ export class ExtensionUiController {
 			title,
 			options,
 			option => {
-				this.hideHookSelector();
 				finish(option);
 			},
 			() => {
-				this.hideHookSelector();
 				finish(undefined);
 			},
 			{
 				onLeft: dialogOptions?.onLeft
 					? () => {
-							this.hideHookSelector();
-							dialogOptions.onLeft?.();
-							finish(undefined);
+							if (finish(undefined)) dialogOptions.onLeft?.();
 						}
 					: undefined,
 				onRight: dialogOptions?.onRight
 					? () => {
-							this.hideHookSelector();
-							dialogOptions.onRight?.();
-							finish(undefined);
+							if (finish(undefined)) dialogOptions.onRight?.();
 						}
 					: undefined,
 				onExternalEditor: dialogOptions?.onExternalEditor,
@@ -1157,9 +1161,7 @@ export class ExtensionUiController {
 							allowEmpty: (dialogOptions.customInput as { allowEmpty?: boolean }).allowEmpty,
 							onSubmit: text => {
 								const optionLabel = dialogOptions.customInput?.optionLabel;
-								this.hideHookSelector();
-								dialogOptions.customInput?.onSubmit(text);
-								finish(optionLabel);
+								if (finish(optionLabel)) dialogOptions.customInput?.onSubmit(text);
 							},
 						}
 					: undefined,
@@ -1169,9 +1171,7 @@ export class ExtensionUiController {
 							allowEmpty: dialogOptions.clarificationInput.allowEmpty,
 							onSubmit: text => {
 								const optionLabel = dialogOptions.clarificationInput?.optionLabel;
-								this.hideHookSelector();
-								dialogOptions.clarificationInput?.onSubmit(text);
-								finish(optionLabel);
+								if (finish(optionLabel)) dialogOptions.clarificationInput?.onSubmit(text);
 							},
 						}
 					: undefined,
@@ -1210,6 +1210,10 @@ export class ExtensionUiController {
 	 * Hide the hook selector.
 	 */
 	hideHookSelector(): void {
+		if (this.#activeHookDialogKind === "selector") {
+			this.#activeHookDialogCancel?.();
+			return;
+		}
 		this.#removeHookSelectorResizeHandler();
 		this.ctx.hookSelector?.dispose();
 		this.ctx.hookSelector = undefined;
@@ -1222,8 +1226,8 @@ export class ExtensionUiController {
 	/**
 	 * Show a confirmation dialog for hooks.
 	 */
-	async showHookConfirm(title: string, message: string): Promise<boolean> {
-		const result = await this.showHookSelector(`${title}\n${message}`, ["Yes", "No"]);
+	async showHookConfirm(title: string, message: string, dialogOptions?: ExtensionUIDialogOptions): Promise<boolean> {
+		const result = await this.showHookSelector(`${title}\n${message}`, ["Yes", "No"], dialogOptions);
 		return result === "Yes";
 	}
 
@@ -1238,6 +1242,7 @@ export class ExtensionUiController {
 	): Promise<string | undefined> {
 		if (this.#isStopped()) return Promise.resolve(undefined);
 		const { promise, finish, attachAbort } = this.#createHookDialogState(
+			"input",
 			() => this.hideHookInput(),
 			dialogOptions?.signal,
 		);
@@ -1245,11 +1250,9 @@ export class ExtensionUiController {
 			title,
 			placeholder,
 			value => {
-				this.hideHookInput();
 				finish(value);
 			},
 			() => {
-				this.hideHookInput();
 				finish(undefined);
 			},
 			{
@@ -1274,6 +1277,10 @@ export class ExtensionUiController {
 	 * Hide the hook input.
 	 */
 	hideHookInput(): void {
+		if (this.#activeHookDialogKind === "input") {
+			this.#activeHookDialogCancel?.();
+			return;
+		}
 		this.ctx.hookInput?.dispose();
 		this.ctx.hookInput = undefined;
 		if (this.#isStopped()) return;
@@ -1293,6 +1300,7 @@ export class ExtensionUiController {
 	): Promise<string | undefined> {
 		if (this.#isStopped()) return Promise.resolve(undefined);
 		const { promise, finish, attachAbort } = this.#createHookDialogState(
+			"editor",
 			() => this.hideHookEditor(),
 			dialogOptions?.signal,
 		);
@@ -1301,11 +1309,9 @@ export class ExtensionUiController {
 			title,
 			prefill,
 			value => {
-				this.hideHookEditor();
 				finish(value);
 			},
 			() => {
-				this.hideHookEditor();
 				finish(undefined);
 			},
 			editorOptions,
@@ -1326,6 +1332,10 @@ export class ExtensionUiController {
 	 * Hide the hook editor.
 	 */
 	hideHookEditor(): void {
+		if (this.#activeHookDialogKind === "editor") {
+			this.#activeHookDialogCancel?.();
+			return;
+		}
 		if (this.#isStopped()) {
 			this.ctx.hookEditor?.dispose();
 			this.ctx.hookEditor = undefined;
@@ -1367,15 +1377,21 @@ export class ExtensionUiController {
 		const savedText = this.ctx.editor.getText();
 		const keybindings = KeybindingsManager.inMemory();
 
-		const { promise, resolve } = Promise.withResolvers<T>();
+		const { promise, resolve, reject } = Promise.withResolvers<T>();
+		const releaseInput = this.ctx.executionStatus?.beginInput();
 		let component: (Component & { dispose?(): void }) | undefined;
 		let closed = false;
+		let ownsActiveCustom = false;
+		let cancel: () => void;
 
 		const close = (result: T) => {
 			if (closed) return;
 			closed = true;
-			this.#activeHookCustomCancel = undefined;
-			this.#clearActiveHookCustom();
+			releaseInput?.();
+			if (ownsActiveCustom && this.#activeHookCustomCancel === cancel) {
+				this.#activeHookCustomCancel = undefined;
+				this.#clearActiveHookCustom();
+			}
 			if (this.#isStopped()) {
 				resolve(result);
 				return;
@@ -1391,35 +1407,47 @@ export class ExtensionUiController {
 
 		this.#activeHookCustomCancel?.();
 		this.#clearActiveHookCustom();
-		this.#activeHookCustomCancel = () => close(undefined as T);
-		Promise.try(() => factory(this.ctx.ui, theme, keybindings, close)).then(c => {
-			if (closed || this.#isStopped()) {
-				c.dispose?.();
-				if (!closed) {
-					closed = true;
-					resolve(undefined as T);
+		ownsActiveCustom = true;
+		cancel = () => close(undefined as T);
+		this.#activeHookCustomCancel = cancel;
+		Promise.try(() => factory(this.ctx.ui, theme, keybindings, close)).then(
+			c => {
+				if (closed || this.#isStopped()) {
+					c.dispose?.();
+					if (!closed) {
+						closed = true;
+						releaseInput?.();
+						resolve(undefined as T);
+					}
+					return;
 				}
-				return;
-			}
-			component = c;
-			this.#activeHookCustomComponent = c;
-			if (options?.overlay) {
-				this.#activeHookCustomOverlay = this.ctx.ui.showOverlay(component, {
-					anchor: "bottom-center",
-					width: "100%",
-					maxHeight: "100%",
-					margin: 0,
-				});
-				return;
-			}
-			// Detach (not dispose) the reusable editor before mounting the transient hook UI, so the
-			// disposing clear() only tears down a prior transient — the editor is re-added intact on close.
-			this.ctx.editorContainer.detachChild(this.ctx.editor);
-			this.ctx.editorContainer.clear();
-			this.ctx.editorContainer.addChild(component);
-			this.ctx.ui.setFocus(component);
-			this.ctx.ui.requestRender();
-		});
+				component = c;
+				this.#activeHookCustomComponent = c;
+				if (options?.overlay) {
+					this.#activeHookCustomOverlay = this.ctx.ui.showOverlay(component, {
+						anchor: "bottom-center",
+						width: "100%",
+						maxHeight: "100%",
+						margin: 0,
+					});
+					return;
+				}
+				// Detach (not dispose) the reusable editor before mounting the transient hook UI, so the
+				// disposing clear() only tears down a prior transient — the editor is re-added intact on close.
+				this.ctx.editorContainer.detachChild(this.ctx.editor);
+				this.ctx.editorContainer.clear();
+				this.ctx.editorContainer.addChild(component);
+				this.ctx.ui.setFocus(component);
+				this.ctx.ui.requestRender();
+			},
+			error => {
+				if (closed) return;
+				closed = true;
+				releaseInput?.();
+				if (this.#activeHookCustomCancel === cancel) this.#activeHookCustomCancel = undefined;
+				reject(error);
+			},
+		);
 		return promise;
 	}
 
@@ -1437,6 +1465,7 @@ export class ExtensionUiController {
 	}
 
 	clearHookWidgets(): void {
+		this.#activeHookCustomCancel?.();
 		this.#clearActiveHookCustom();
 		for (const widget of this.#hookWidgetsAbove.values()) {
 			widget.dispose?.();
@@ -1457,6 +1486,7 @@ export class ExtensionUiController {
 	}
 
 	dispose(): void {
+		this.#activeHookDialogCancel?.();
 		this.#removeHookSelectorResizeHandler();
 		this.#extensionErrorUnsubscribe?.();
 		this.#extensionErrorUnsubscribe = undefined;
@@ -1527,30 +1557,47 @@ export class ExtensionUiController {
 	}
 
 	#createHookDialogState(
+		kind: "selector" | "input" | "editor",
 		hide: () => void,
 		signal: AbortSignal | undefined,
 	): {
 		promise: Promise<string | undefined>;
-		finish: (value: string | undefined) => void;
+		finish: (value: string | undefined) => boolean;
 		attachAbort: () => void;
 	} {
+		this.#activeHookDialogCancel?.();
 		const { promise, resolve } = Promise.withResolvers<string | undefined>();
+		const releaseInput = this.ctx.executionStatus?.beginInput();
 		let settled = false;
 		let unregisterStop: (() => void) | undefined;
+		let cancel: () => void;
 		const finish = (value: string | undefined) => {
-			if (settled) return;
+			if (settled) return false;
 			settled = true;
+			const ownsDialog = this.#activeHookDialogCancel === cancel;
+			if (ownsDialog) {
+				this.#activeHookDialogCancel = undefined;
+				this.#activeHookDialogKind = undefined;
+			}
+			releaseInput?.();
 			signal?.removeEventListener("abort", onAbort);
 			unregisterStop?.();
+			if (ownsDialog) hide();
 			resolve(value);
+			return true;
 		};
 		const onAbort = () => {
-			hide();
 			finish(undefined);
 		};
+		cancel = onAbort;
+		this.#activeHookDialogCancel = cancel;
+		this.#activeHookDialogKind = kind;
 		const attachAbort = () => {
 			unregisterStop = this.ctx.onStop?.(onAbort);
-			if (settled) unregisterStop?.();
+			if (settled) {
+				unregisterStop?.();
+				return;
+			}
 			if (!signal) return;
 			if (signal.aborted) {
 				onAbort();

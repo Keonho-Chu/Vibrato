@@ -95,6 +95,7 @@ import { SelectorController } from "./controllers/selector-controller";
 import { SSHCommandController } from "./controllers/ssh-command-controller";
 import type { SttModeController } from "./controllers/stt-controller";
 import { TodoCommandController } from "./controllers/todo-command-controller";
+import { ExecutionStatusTracker } from "./execution-status";
 import { IrcObservationLedger } from "./irc-observation-ledger";
 import { JobsObserver } from "./jobs-observer";
 import { OAuthManualInputManager } from "./oauth-manual-input";
@@ -378,6 +379,11 @@ export class InteractiveMode implements InteractiveModeContext {
 	petFloorContainer: Container = new Container();
 	petWidget: VibratoPetWidget | undefined;
 	statusLine: StatusLineComponent;
+	readonly executionStatus = new ExecutionStatusTracker(() => {
+		this.#refreshExecutionStatus();
+	});
+	#executionStatusRepaintTimer: NodeJS.Timeout | undefined;
+	#executionStatusSessionId: string | undefined;
 
 	isInitialized = false;
 	isBackgrounded = false;
@@ -401,6 +407,7 @@ export class InteractiveMode implements InteractiveModeContext {
 	autoCompactionLoader: Loader | undefined = undefined;
 	retryLoader: Loader | undefined = undefined;
 	#pendingWorkingMessage: string | undefined;
+	#workingMessageSource: "tool" | undefined;
 	get #defaultWorkingMessage(): string {
 		return `Working…${interruptHint()}`;
 	}
@@ -552,6 +559,7 @@ export class InteractiveMode implements InteractiveModeContext {
 		void changelogMarkdown;
 		this.session = session;
 		this.sessionManager = session.sessionManager;
+		this.#executionStatusSessionId = this.sessionManager.getSessionId();
 		this.session.setSdkPlanModeHandler(async on => {
 			if (on && (this.#goalModeController.enabled || this.#goalModeController.paused)) {
 				throw Object.assign(new Error("mode.plan.set could not enter plan mode while goal mode is active."), {
@@ -717,6 +725,14 @@ export class InteractiveMode implements InteractiveModeContext {
 			version: this.#version,
 			focusDomain: "composer",
 			keyDisplayContext: this.#keyDisplayContext,
+			executionStatus: () => {
+				const snapshot = this.executionStatus.getSnapshot(this.#executionStatusContext());
+				return {
+					snapshot,
+					workingMessage: this.#workingMessageSource === "tool" ? undefined : this.#pendingWorkingMessage,
+					hints: snapshot.backgroundTasks > 0 ? ["/jobs: details"] : undefined,
+				};
+			},
 		});
 		this.statusLine.setAutoCompactEnabled(session.autoCompactionEnabled);
 
@@ -1188,6 +1204,7 @@ export class InteractiveMode implements InteractiveModeContext {
 			started: false,
 		};
 		this.#pendingSubmittedInput = submission;
+		this.executionStatus.start();
 		if (!submission.customType) {
 			this.#goalModeController.onUserSubmission();
 			const imageCount = submission.images?.length ?? 0;
@@ -1225,6 +1242,7 @@ export class InteractiveMode implements InteractiveModeContext {
 		this.#pendingWorkingMessage = undefined;
 		this.#goalModeController.onPendingSubmissionFinished(submission.customType);
 		this.stopLoadingAnimation();
+		this.executionStatus.stop();
 		if (!submission.customType) {
 			this.pendingImages = submission.images ? [...submission.images] : [];
 			this.rebuildChatFromMessages("reconcile-same-transcript");
@@ -1264,6 +1282,7 @@ export class InteractiveMode implements InteractiveModeContext {
 			pendingSubmissionDispose?.();
 			this.#pendingWorkingMessage = undefined;
 			this.stopLoadingAnimation();
+			this.executionStatus.stop();
 		}
 	}
 
@@ -1579,6 +1598,8 @@ export class InteractiveMode implements InteractiveModeContext {
 		}
 		this.#stopListeners.clear();
 		this.#stopLoadingAnimation();
+		this.executionStatus.reset();
+		this.#clearExecutionStatusRepaintTimer();
 		this.#suspendedActivityIndicator = undefined;
 		this.#petProtocolUnsubscribe?.();
 		this.#petProtocolUnsubscribe = undefined;
@@ -1874,6 +1895,46 @@ export class InteractiveMode implements InteractiveModeContext {
 		return this.session.getAsyncJobSnapshot()?.running.length ?? 0;
 	}
 
+	#executionStatusContext(): { backgroundTasks: number; queuedMessages: number; backgroundStartedAt?: number } {
+		const jobs = this.session.getAsyncJobSnapshot();
+		const backgroundStartedAt = jobs?.running.reduce<number | undefined>(
+			(earliest, job) => (earliest === undefined ? job.startTime : Math.min(earliest, job.startTime)),
+			undefined,
+		);
+		return {
+			backgroundTasks: jobs?.running.length ?? 0,
+			queuedMessages: this.session.drainableQueuedMessageCount + this.compactionQueuedMessages.length,
+			backgroundStartedAt,
+		};
+	}
+
+	syncExecutionStatusIdentity(): void {
+		const sessionId = this.sessionManager?.getSessionId();
+		if (sessionId === undefined || sessionId === this.#executionStatusSessionId) return;
+		this.#executionStatusSessionId = sessionId;
+		this.#clearExecutionStatusRepaintTimer();
+		this.#pendingWorkingMessage = undefined;
+		this.#workingMessageSource = undefined;
+		this.executionStatus.reset();
+	}
+
+	#refreshExecutionStatus(): void {
+		if (this.#stopped || !this.ui) return;
+		const phase = this.executionStatus.getSnapshot(this.#executionStatusContext()).phase;
+		if (phase === "idle" || phase === "queued") this.#clearExecutionStatusRepaintTimer();
+		else if (!this.#executionStatusRepaintTimer) {
+			this.#executionStatusRepaintTimer = setInterval(() => this.#refreshExecutionStatus(), 1000);
+			this.#executionStatusRepaintTimer.unref();
+		}
+		this.ui.requestLayoutRender("execution-status");
+	}
+
+	#clearExecutionStatusRepaintTimer(): void {
+		if (!this.#executionStatusRepaintTimer) return;
+		clearInterval(this.#executionStatusRepaintTimer);
+		this.#executionStatusRepaintTimer = undefined;
+	}
+
 	#stopLoadingAnimation(): void {
 		this.loadingAnimation?.stop();
 		this.loadingAnimation = undefined;
@@ -1881,6 +1942,8 @@ export class InteractiveMode implements InteractiveModeContext {
 	}
 
 	syncActivityIndicator(): void {
+		this.syncExecutionStatusIdentity();
+		this.#refreshExecutionStatus();
 		if (this.#stopped || this.#activityIndicatorSuspensions > 0 || this.autoCompactionLoader || this.retryLoader)
 			return;
 		const foregroundActive = this.#foregroundActivity || (!this.#foregroundTurnSettled && this.session.isStreaming);
@@ -1916,12 +1979,15 @@ export class InteractiveMode implements InteractiveModeContext {
 	}
 
 	ensureLoadingAnimation(): void {
+		this.syncExecutionStatusIdentity();
+		if (!this.#stopped) this.executionStatus.start();
 		this.#foregroundTurnSettled = false;
 		this.#foregroundActivity = true;
 		this.syncActivityIndicator();
 	}
 
 	stopLoadingAnimation(options?: ActivityIndicatorStopOptions): void {
+		this.executionStatus.stop();
 		this.#foregroundActivity = false;
 		if (options?.foregroundSettled) this.#foregroundTurnSettled = true;
 		if (options?.restoreBackground === false) {
@@ -1960,9 +2026,14 @@ export class InteractiveMode implements InteractiveModeContext {
 		};
 	}
 
-	setWorkingMessage(message?: string): void {
+	setWorkingMessage(message?: string, source?: "tool"): void {
 		this.#pendingWorkingMessage = message;
+		this.#workingMessageSource = source;
 		if (this.#foregroundActivity) this.syncActivityIndicator();
+	}
+
+	clearToolWorkingMessage(): void {
+		if (this.#workingMessageSource === "tool") this.setWorkingMessage(undefined);
 	}
 
 	applyPendingWorkingMessage(): void {
@@ -2030,6 +2101,7 @@ export class InteractiveMode implements InteractiveModeContext {
 		sessionContext: SessionContext,
 		options?: { updateFooter?: boolean; populateHistory?: boolean },
 	): void {
+		this.syncExecutionStatusIdentity();
 		this.#uiHelpers.renderSessionContext(sessionContext, options);
 		this.#eventController.reconcileIrcExpiryTimers(this.#uiHelpers.getRenderedIrcInlineComponents());
 	}

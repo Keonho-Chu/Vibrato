@@ -11,6 +11,19 @@ Package-specific references:
 - [DEVELOPMENT](./DEVELOPMENT.md)
 - [RenderMermaid guide](../../docs/render-mermaid.md)
 
+## Execution status
+
+The interactive status rail keeps a compact execution summary visible while you
+scroll through earlier output. It distinguishes model response waiting, streamed
+responses, executing tools, retry backoff, context maintenance, pending user input,
+background work, and queued messages. Idle sessions do not reserve summary rows.
+
+Tool success/failure counts belong to the current prompt. Background work is scoped
+to the current session owner, and queued messages exclude hidden agent context.
+Elapsed time describes the observed state; it is not an estimated completion time.
+Generic dialogs are labelled user input, not approvals. Detailed tool output and
+existing retry/cancellation controls remain in their original surfaces.
+
 ## External lifecycle notifications
 
 Vibrato already exposes public lifecycle events through the extension/hook event contract. External notification integrations for Discord, Hermes, clawhip, or similar channels should be opt-in and subscribe to these events instead of scraping transcripts or logs:
