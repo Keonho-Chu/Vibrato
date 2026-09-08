@@ -20523,8 +20523,11 @@ export class AgentSession {
 		// One clock read for one instant. The suppression window, the suppression
 		// reason, and the error text all describe the SAME reset; recomputing
 		// `Date.now() + quotaHoldMs` per surface would let them disagree by the
-		// milliseconds between reads.
-		const quotaResetAtMs = quotaHoldMs === undefined ? undefined : Date.now() + quotaHoldMs;
+		// milliseconds between reads. The instant itself is passed on to the error
+		// text too, so its `resets in …` countdown is measured from the same read
+		// rather than from a second one taken a few statements later.
+		const quotaObservedAtMs = Date.now();
+		const quotaResetAtMs = quotaHoldMs === undefined ? undefined : quotaObservedAtMs + quotaHoldMs;
 		if (quotaResetAtMs !== undefined) {
 			// The selector is the one that actually failed, so a single-entry chain
 			// (one model on one gateway, the deployment this policy exists for) also
@@ -20541,7 +20544,7 @@ export class AgentSession {
 			// phrase lands once; `#stampQuotaRetryableAt` then finds its own
 			// `retryable at` marker already present and leaves the message alone.
 			if (quotaHoldIsTerminal) {
-				message.errorMessage = attachQuotaHoldHint(message.errorMessage, quotaResetAtMs);
+				message.errorMessage = attachQuotaHoldHint(message.errorMessage, quotaResetAtMs, quotaObservedAtMs);
 			}
 		}
 		const attemptsUsed = managedFallback ? controller.attemptsUsed || 1 : this.#retryAttempt + 1;
@@ -20669,7 +20672,7 @@ export class AgentSession {
 					}
 				}
 				if (quotaHoldIsTerminal && quotaResetAtMs !== undefined) {
-					errorMessage = attachQuotaHoldHint(errorMessage, quotaResetAtMs);
+					errorMessage = attachQuotaHoldHint(errorMessage, quotaResetAtMs, quotaObservedAtMs);
 				}
 				this.emitNotice("error", errorMessage, "fallback");
 				this.#defaultFallbackExhaustedLastTurn = true;
