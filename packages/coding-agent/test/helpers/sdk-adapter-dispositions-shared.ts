@@ -11,6 +11,7 @@ import { expect } from "bun:test";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import path from "node:path";
+import packageJson from "../../package.json" with { type: "json" };
 import { AcpSdkAdapter } from "../../src/sdk/acp";
 import { Broker } from "../../src/sdk/broker";
 import { brokerOwnerForTest } from "../../src/sdk/broker/ensure";
@@ -314,7 +315,7 @@ export async function fixture(): Promise<AdapterFixture> {
 	const productionHost = await startProductionSdkHost(repo, { acceptPromptPreflightWithoutExecution: true });
 	const sessionId = productionHost.sessionId;
 	const observed: ObservedRequest[] = productionHost.observed;
-	const broker = new Broker({ agentDir, packageGeneration: "adapter-dispositions" });
+	const broker = new Broker({ agentDir, packageGeneration: packageJson.version });
 	const brokerEndpoint = await broker.start();
 	const handleRequest = broker.handleRequest.bind(broker);
 	broker.handleRequest = async (operation, input, idempotencyKey) => {
