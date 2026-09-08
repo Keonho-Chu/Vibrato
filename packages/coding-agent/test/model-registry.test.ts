@@ -887,6 +887,22 @@ describe("ModelRegistry", () => {
 			expect(variants.some(variant => variant.selector === "proxy-anthropic/corp-sonnet")).toBe(true);
 		});
 
+		test("provider-level pi-native transport reaches custom models", () => {
+			writeRawModelsConfig({
+				providers: {
+					gateway: {
+						...providerConfig("http://127.0.0.1:4000", [{ id: "upstream/custom-model" }], "openai-completions"),
+						transport: "pi-native",
+					},
+				},
+			});
+
+			const registry = new ModelRegistry(authStorage, modelsJsonPath);
+			const model = registry.find("gateway", "upstream/custom-model");
+
+			expect(model?.transport).toBe("pi-native");
+		});
+
 		test("exclusions keep variants out of canonical grouping", () => {
 			writeRawModelsConfig({
 				providers: {
@@ -8616,7 +8632,7 @@ describe("ModelRegistry", () => {
 			writeRawModelsJson({ vllm: { baseUrl: "http://127.0.0.1:9000/v1", apiKey: "fresh-vllm-key" } });
 			const updatedAt = new Date(Date.now() + 1000);
 			fs.utimesSync(modelsJsonPath, updatedAt, updatedAt);
-			await registry.refreshProvider("openai", "offline");
+			await registry.refresh("offline");
 
 			expect(activeRowsFor(registry, ["vllm"])).toEqual([]);
 		});
