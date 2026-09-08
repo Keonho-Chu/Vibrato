@@ -412,7 +412,11 @@ describe("local provider gateway facts and hidden providers", () => {
 		} finally {
 			process.stdout.write = originalStdout;
 			process.stderr.write = originalStderr;
-			process.exitCode = originalExitCode;
+			// The command sets `process.exitCode = 1` on a failing diagnostic, which
+			// would otherwise fail the whole bun process after every test here.
+			// `process.exitCode = undefined` does not clear it in bun 1.4.0, so an
+			// unset original has to be restored as an explicit 0.
+			process.exitCode = originalExitCode ?? 0;
 		}
 		return captured.join("");
 	}
