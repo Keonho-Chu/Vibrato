@@ -59,9 +59,17 @@ export interface SegmentContext {
 	usage: {
 		windows: Array<{
 			label: string;
-			percent: number;
+			/**
+			 * Used share of the window. Optional because an observed gateway can
+			 * report a condition (congestion) without ever having reported a
+			 * budget; the segment then draws the condition alone rather than a
+			 * `0%` the provider never sent.
+			 */
+			percent?: number;
 			resetValue?: number;
 			resetUnit?: "m" | "h";
+			/** Short condition wording, e.g. a limit-reached or congested gateway. */
+			note?: string;
 		}>;
 	} | null;
 }

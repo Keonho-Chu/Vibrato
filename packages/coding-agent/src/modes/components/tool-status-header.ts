@@ -12,6 +12,7 @@ import { settings } from "../../config/settings";
 import type { StatusLinePreset, StatusLineSegmentId, StatusLineSeparatorStyle } from "../../config/settings-schema";
 import { theme } from "../../modes/theme/theme";
 import type { AgentSession } from "../../session/agent-session";
+import { gatewayQuotaWindow } from "../../session/gateway-quota-observer";
 import { readVisibleSkillActiveState, type SkillActiveEntry } from "../../skill-state/active-state";
 import * as git from "../../utils/git";
 import { getSessionAccentAnsi, getSessionAccentHex } from "../../utils/session-color";
@@ -655,8 +656,24 @@ export class StatusLineComponent implements Component {
 				status: this.#getGitStatus(),
 				pr: prSegmentActive ? this.#lookupPr() : null,
 			},
-			usage: this.#cachedUsage,
+			usage: this.#usageWindows(),
 		};
+	}
+
+	/**
+	 * Usage windows for this render: the polled OAuth/subscription windows plus
+	 * the gateway window observed from response headers.
+	 *
+	 * The gateway window is read live rather than cached on a TTL. There is no
+	 * endpoint to poll for it — it only exists because a response carried it —
+	 * so the freshest value is whatever the session last observed. A gateway
+	 * that has never reported a quota header contributes nothing, which keeps
+	 * the segment hidden instead of showing an invented zero.
+	 */
+	#usageWindows(): SegmentContext["usage"] {
+		const gateway = gatewayQuotaWindow(this.session.gatewayQuotaState ?? null);
+		if (!gateway) return this.#cachedUsage;
+		return { windows: [...(this.#cachedUsage?.windows ?? []), gateway] };
 	}
 
 	#settingsFingerprint(): string {
