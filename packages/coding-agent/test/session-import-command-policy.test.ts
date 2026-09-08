@@ -5,6 +5,7 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import type { AgentSideConnection, SessionNotification } from "@agentclientprotocol/sdk";
 import { TempDir } from "@vib-rato/utils";
+import packageJson from "../package.json" with { type: "json" };
 import { AcpAgent } from "../src/modes/acp/acp-agent";
 import { writeBrokerDiscovery } from "../src/sdk/broker/discovery";
 import { processIncarnation } from "../src/sdk/broker/process-incarnation";
@@ -195,7 +196,7 @@ async function createAcpPromptFixture(): Promise<AcpPromptFixture> {
 	await writeBrokerDiscovery(agentDir, {
 		version: 1,
 		protocolVersion: 3,
-		packageGeneration: "test",
+		packageGeneration: packageJson.version,
 		ownerId: "test-owner",
 		pid: process.pid,
 		host: "127.0.0.1",
