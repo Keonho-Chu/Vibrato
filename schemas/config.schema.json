@@ -1314,6 +1314,10 @@
 					],
 					"description": "When to return to the primary model after a fallback",
 					"default": "cooldown-expiry"
+				},
+				"rotateCredentialsOnQuota": {
+					"type": "boolean",
+					"default": false
 				}
 			},
 			"additionalProperties": false
