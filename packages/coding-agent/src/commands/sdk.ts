@@ -988,7 +988,7 @@ export default class Sdk extends Command {
 		try {
 			broker = await withBrokerStartupLock(agentDir, async deadline => {
 				const remainingMs = Math.max(1, deadline - Date.now());
-				const testWatchdogMs = Number(process.env.GJC_SDK_TEST_BROKER_STARTUP_WATCHDOG_MS ?? 0);
+				const testWatchdogMs = Number(process.env.VIB_SDK_TEST_BROKER_STARTUP_WATCHDOG_MS ?? 0);
 				const watchdogMs =
 					Number.isSafeInteger(testWatchdogMs) && testWatchdogMs > 0 && testWatchdogMs <= remainingMs
 						? testWatchdogMs
@@ -999,11 +999,11 @@ export default class Sdk extends Command {
 				}, watchdogMs);
 				try {
 					if (await reconcileBrokerGenerationForStartup({ agentDir }, deadline)) return undefined;
-					if (process.env.GJC_SDK_TEST_BROKER_STARTUP_STALL === "1") {
+					if (process.env.VIB_SDK_TEST_BROKER_STARTUP_STALL === "1") {
 						const stalled = Promise.withResolvers<void>();
 						await stalled.promise;
 					}
-					const startupDelayMs = Number(process.env.GJC_SDK_TEST_BROKER_STARTUP_DELAY_MS ?? 0);
+					const startupDelayMs = Number(process.env.VIB_SDK_TEST_BROKER_STARTUP_DELAY_MS ?? 0);
 					if (Number.isSafeInteger(startupDelayMs) && startupDelayMs > 0 && startupDelayMs <= 10_000)
 						await Bun.sleep(startupDelayMs);
 					const candidate = new Broker({

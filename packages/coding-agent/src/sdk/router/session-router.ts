@@ -458,7 +458,7 @@ async function lstatEndpoint(file: string): Promise<SessionEndpointIdentity | un
  */
 function matchesIndexedEndpointFile(
 	file: Pick<SessionEndpointIdentity, "mtimeMs">,
-	indexed: { readonly endpointMtimeMs: number | undefined },
+	indexed: { readonly endpointMtimeMs?: number | undefined },
 ): boolean {
 	return (
 		indexed.endpointMtimeMs !== undefined &&

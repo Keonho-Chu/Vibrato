@@ -55,8 +55,8 @@ function daemonStateJson(pid: number, opts: Record<string, unknown> = {}) {
 
 describe("notify health stale-lock diagnostic (#5227 secondary)", () => {
 	test("does not advise recovery when dead owner has no lock", async () => {
-		const agentDir = "/tmp/gjc-health-test";
-		const stateRoot = "/tmp/gjc-health-state";
+		const agentDir = "/tmp/vib-health-test";
+		const stateRoot = "/tmp/vib-health-state";
 		const paths = daemonPaths(agentDir);
 		const deadPid = 999999;
 		const stateJson = daemonStateJson(deadPid);
@@ -81,8 +81,8 @@ describe("notify health stale-lock diagnostic (#5227 secondary)", () => {
 	});
 
 	test("advises recovery when dead owner has a lock", async () => {
-		const agentDir = "/tmp/gjc-health-test2";
-		const stateRoot = "/tmp/gjc-health-state2";
+		const agentDir = "/tmp/vib-health-test2";
+		const stateRoot = "/tmp/vib-health-state2";
 		const paths = daemonPaths(agentDir);
 		const deadPid = 999999;
 		const stateJson = daemonStateJson(deadPid);

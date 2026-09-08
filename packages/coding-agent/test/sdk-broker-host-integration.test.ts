@@ -181,7 +181,7 @@ test("broker session.list evicts the oldest cursor instead of failing new pagina
 });
 
 test("broker session.list with more than one page of sessions survives abandoned paginations", async () => {
-	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "gjc-broker-cursor-overflow-"));
+	const agentDir = await fs.mkdtemp(path.join(process.env.TMPDIR ?? "/tmp", "vib-broker-cursor-overflow-"));
 	const stateRoot = path.join(agentDir, "state");
 	const broker = new Broker({ agentDir });
 	await broker.start();

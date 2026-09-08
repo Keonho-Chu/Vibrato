@@ -5,7 +5,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { inspectFileLockStagingDir, reapOrphanedLockStagingDirs, withFileLock } from "../src/config/file-lock";
 import { collectFileLocksForGc, fileLocksGcAdapter } from "../src/config/file-lock-gc";
-import type { GcContext } from "../src/gjc-runtime/gc-runtime";
+import type { GcContext } from "../src/vib-runtime/gc-runtime";
 
 const DEAD_PID = 525252;
 const roots: string[] = [];

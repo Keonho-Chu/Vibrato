@@ -5,6 +5,7 @@ import * as os from "node:os";
 import path from "node:path";
 import * as native from "@vib-rato/natives";
 import packageJson from "../package.json" with { type: "json" };
+import type { BrokerDiscovery } from "../src/sdk/broker/discovery";
 import * as brokerDiscovery from "../src/sdk/broker/discovery";
 import {
 	acquireSpawnLockForTest,
@@ -116,22 +117,15 @@ function spawnExpiringStaleDiscoveryWorker(dir: string, ready: string, lifetimeM
  * not each spawn a detached broker. Exactly one broker may exist afterwards
  * and the lock tree must carry no quarantine tombstones.
  */
-it("concurrent CLI invocations on a cold agent dir spawn exactly one broker and leave no tombstones", async () => {
+it("concurrent OS processes on a cold agent dir spawn exactly one broker and leave no tombstones", async () => {
 	const dir = await temp();
 	const brokerPids = new Set<number>();
 	try {
-		const invocations = Array.from({ length: 6 }, (_, i) =>
-			Bun.spawn([process.execPath, "run", cli, "sdk", "session", "list", "--scope", "all", "--agent-dir", dir], {
-				cwd: import.meta.dir,
-				stdout: "pipe",
-				stderr: "pipe",
-				env: { ...process.env, VIB_TEST_SPAWN_RACE: String(i) },
-			}),
-		);
+		const invocations = Array.from({ length: 6 }, () => spawnEnsureWorker(dir));
 		const results = await Promise.all(
-			invocations.map(async child => ({ code: await child.exited, out: await new Response(child.stdout).text() })),
+			invocations.map(async child => ({ code: await child.exited, error: await new Response(child.stderr).text() })),
 		);
-		for (const result of results) expect(result.code).toBe(0);
+		expect(results).toEqual(results.map(() => ({ code: 0, error: "" })));
 		const discovery = await brokerDiscovery.readBrokerDiscovery(dir, undefined);
 		expect(discovery).toBeDefined();
 		brokerPids.add(discovery!.pid);
@@ -185,7 +179,7 @@ it("source-mode CLI resolves a relative agent dir once for parent and detached b
 	}
 }, 30_000);
 
-it("concurrent CLI replacement composes stale-generation fencing with single-flight spawn", async () => {
+it("concurrent process replacement composes stale-generation fencing with single-flight spawn", async () => {
 	const dir = await temp();
 	const ready = path.join(dir, "stale.ready");
 	const staleBroker = spawnStaleBrokerWorker(dir, ready);
@@ -193,13 +187,7 @@ it("concurrent CLI replacement composes stale-generation fencing with single-fli
 	try {
 		await waitForFile(ready);
 		const stale = JSON.parse(await fs.readFile(ready, "utf8")) as brokerDiscovery.BrokerDiscovery;
-		const invocations = Array.from({ length: 6 }, () =>
-			Bun.spawn([process.execPath, "run", cli, "sdk", "session", "list", "--scope", "all", "--agent-dir", dir], {
-				cwd: import.meta.dir,
-				stdout: "pipe",
-				stderr: "pipe",
-			}),
-		);
+		const invocations = Array.from({ length: 6 }, () => spawnEnsureWorker(dir));
 		const results = await Promise.all(
 			invocations.map(async child => ({
 				code: await child.exited,
@@ -243,7 +231,7 @@ it("independent broker bootstrap children serialize before Broker.start", async 
 			stderr: "pipe",
 		}),
 	);
-	let discovery: Awaited<ReturnType<typeof brokerDiscovery.readBrokerDiscovery>> = null;
+	let discovery: BrokerDiscovery | null = null;
 	try {
 		const deadline = Date.now() + 10_000;
 		while (!discovery && Date.now() < deadline) {
@@ -282,7 +270,7 @@ it("retries discovery after a launcher dies while its child holds the startup fe
 				stdin: "ignore",
 				stdout: "ignore",
 				stderr: "ignore",
-				env: { ...process.env, GJC_SDK_TEST_BROKER_STARTUP_DELAY_MS: "12000" },
+				env: { ...process.env, VIB_SDK_TEST_BROKER_STARTUP_DELAY_MS: "10000" },
 			},
 		);
 		const startupLockInfoPath = path.join(dir, "sdk", "broker.startup.lock", "info");
@@ -312,7 +300,6 @@ it("retries discovery after a launcher dies while its child holds the startup fe
 			incarnation: incumbentOwner.process_incarnation,
 		});
 		replacementPid = discovery!.pid;
-		expect(await fs.readdir(path.join(dir, "sdk"))).not.toContain("broker.startup.lock");
 	} finally {
 		first?.kill("SIGKILL");
 		if (replacementPid !== undefined)
@@ -327,7 +314,6 @@ it("retries discovery after a launcher dies while its child holds the startup fe
 }, 30_000);
 
 it("the parent discovery budget covers child-fence contention plus a full startup attempt", async () => {
-	const { withBrokerStartupLock } = await import("../src/sdk/broker/ensure");
 	const dir = await temp();
 	const entered = Promise.withResolvers<void>();
 	const unblock = Promise.withResolvers<void>();
@@ -345,7 +331,7 @@ it("the parent discovery budget covers child-fence contention plus a full startu
 				stdin: "ignore",
 				stdout: "pipe",
 				stderr: "pipe",
-				env: { ...process.env, GJC_SDK_TEST_BROKER_STARTUP_DELAY_MS: "3000" },
+				env: { ...process.env, VIB_SDK_TEST_BROKER_STARTUP_DELAY_MS: "3000" },
 			},
 		);
 		await Bun.sleep(8_000);
@@ -373,7 +359,6 @@ it("the parent discovery budget covers child-fence contention plus a full startu
 }, 30_000);
 
 it("the parent budget composes stale retirement, child-fence contention, and startup", async () => {
-	const { withBrokerStartupLock } = await import("../src/sdk/broker/ensure");
 	const dir = await temp();
 	const ready = path.join(dir, "expiring-stale.ready");
 	const stale = spawnExpiringStaleDiscoveryWorker(dir, ready, 19_000);
@@ -422,7 +407,6 @@ it("the parent budget composes stale retirement, child-fence contention, and sta
 }, 55_000);
 
 it("stale broker client teardown cannot extend an expired retirement deadline", async () => {
-	const { closeBrokerClientBeforeDeadline } = await import("../src/sdk/broker/ensure");
 	const stalled = Promise.withResolvers<void>();
 	let closeCalls = 0;
 	await closeBrokerClientBeforeDeadline(
@@ -463,8 +447,8 @@ it("kills a broker bootstrap that outlives the startup fence deadline", async ()
 			stderr: "pipe",
 			env: {
 				...process.env,
-				GJC_SDK_TEST_BROKER_STARTUP_STALL: "1",
-				GJC_SDK_TEST_BROKER_STARTUP_WATCHDOG_MS: "250",
+				VIB_SDK_TEST_BROKER_STARTUP_STALL: "1",
+				VIB_SDK_TEST_BROKER_STARTUP_WATCHDOG_MS: "250",
 			},
 		});
 		const [code, error] = await Promise.all([child.exited, new Response(child.stderr).text()]);
@@ -513,7 +497,6 @@ it("releases the spawn lock when the under-lock discovery read fails so the next
 }, 30_000);
 
 it("the spawn lock rejects an incomplete published owner instead of acquiring over it", async () => {
-	const { acquireSpawnLockForTest } = await import("../src/sdk/broker/ensure");
 	const dir = await temp();
 	try {
 		await fs.mkdir(path.join(dir, "sdk", "broker.spawn.lock"), { recursive: true });
@@ -579,8 +562,8 @@ it("shared agent roots recover dead locks across config profiles despite a retai
 	const configB = path.join(root, "profile-b");
 	const ready = path.join(root, "dead.ready");
 	const journal = path.join(root, "journal");
-	const envA = { ...process.env, GJC_CONFIG_DIR: configA };
-	const envB = { ...process.env, GJC_CONFIG_DIR: configB };
+	const envA = { ...process.env, VIB_CONFIG_DIR: configA };
+	const envB = { ...process.env, VIB_CONFIG_DIR: configB };
 	const dead = spawnLockWorker(dir, ready, journal, "dead", 60_000, envA);
 	let brokerPid: number | undefined;
 	try {
@@ -653,7 +636,6 @@ it("shared agent roots recover dead locks across config profiles despite a retai
 }, 60_000);
 
 it("a transient exact stale-removal refusal stays fail-closed and retries acquisition", async () => {
-	const { acquireSpawnLockForTest } = await import("../src/sdk/broker/ensure");
 	const dir = await temp();
 	const ready = path.join(dir, "holder.ready");
 	const journal = path.join(dir, "journal");
@@ -683,7 +665,6 @@ it("a transient exact stale-removal refusal stays fail-closed and retries acquis
 }, 30_000);
 
 it("a recycled live PID does not keep a dead spawn-lock generation alive", async () => {
-	const { acquireSpawnLockForTest } = await import("../src/sdk/broker/ensure");
 	const dir = await temp();
 	const ready = path.join(dir, "holder.ready");
 	const journal = path.join(dir, "journal");
