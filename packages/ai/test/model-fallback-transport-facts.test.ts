@@ -453,6 +453,50 @@ describe("fallback transport facts", () => {
 		).toEqual({ class: "server" });
 	});
 
+	it("materializes facts from x-vug-* headers alone, with no status and no code", () => {
+		// The existence gate's `headers === undefined` condition is satisfied by
+		// any retained header, not only retry-after/-ms, so a gateway error that
+		// carries only queue/quota headers (no HTTP status, no provider code) now
+		// materializes facts where it previously produced none. Unreachable from
+		// any production call site today — every site that attaches headers also
+		// attaches a status — but facts existence is load-bearing elsewhere, so
+		// this pins the coupling deliberately.
+		const facts = transportFailureFacts({
+			headers: new Headers({ "x-vug-queue-depth": "3", "x-vug-inflight": "1" }),
+		});
+		expect(facts).toEqual({
+			kind: "transport",
+			status: undefined,
+			providerCode: undefined,
+			headers: { "x-vug-queue-depth": "3", "x-vug-inflight": "1" },
+		});
+		expect(() => structuredClone(facts)).not.toThrow();
+	});
+
+	it("classifies the real gateway 429 shape (rate_limit_error type + daily_token_limit code) as quota, and the old shape without a code as rate_limit", () => {
+		// The real gateway 429 carries a rate-limit `error.type` and a quota
+		// `error.code` side by side, so the trigger class depends on the
+		// openaiErrorCode ?? anthropicErrorType ?? providerCode precedence:
+		// openaiErrorCode reads `error.code` and wins over anthropicErrorType's
+		// `error.type`, so `daily_token_limit` classifies before `rate_limit_error`
+		// is ever consulted.
+		const gatewayShape = transportFailureFacts({
+			status: 429,
+			error: { type: "rate_limit_error", code: "daily_token_limit" },
+			headers: { "retry-after": "43200" },
+		});
+		expect(classifyFallbackTrigger(gatewayShape)).toEqual({ class: "quota", retryAfterMs: 43200000 });
+
+		// Old-gateway shape: same rate-limit type, no code at all, must still
+		// classify as rate_limit — the code, not the type, decides quota.
+		const oldGatewayShape = transportFailureFacts({
+			status: 429,
+			error: { type: "rate_limit_error" },
+			headers: { "retry-after": "43200" },
+		});
+		expect(classifyFallbackTrigger(oldGatewayShape)).toEqual({ class: "rate_limit", retryAfterMs: 43200000 });
+	});
+
 	it("issues an opaque marker for exactly one managed invocation", () => {
 		const token = beginAttempt("provider/model", 3);
 		expect(token).toMatchObject({ modelKey: "provider/model", attemptId: 3 });
