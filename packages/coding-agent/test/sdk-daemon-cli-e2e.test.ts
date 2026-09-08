@@ -3,6 +3,7 @@ import { closeSync, openSync } from "node:fs";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import path from "node:path";
+import packageJson from "../package.json" with { type: "json" };
 import { Broker } from "../src/sdk/broker/broker";
 import { scanRetainedTranscriptTail } from "../src/sdk/cli/session-cli";
 import { SessionManager } from "../src/session/session-manager";
@@ -320,7 +321,7 @@ describe("SDK session CLI", () => {
 			JSON.stringify({ sessionId: "live", pid: process.pid, url: `ws://127.0.0.1:${endpointServer.port}`, token }),
 		);
 		const endpointMtimeMs = (await fs.stat(endpointPath)).mtimeMs;
-		broker = new Broker({ agentDir, packageGeneration: "test" });
+		broker = new Broker({ agentDir, packageGeneration: packageJson.version });
 		await broker.start();
 		await broker.index.append({
 			type: "host_registered",
@@ -1332,7 +1333,7 @@ describe("SDK session CLI", () => {
 
 	it("selects the broker specified by --agent-dir over the ambient agent directory", async () => {
 		const alternateAgentDir = path.join(root, "alternate-agent");
-		const alternateBroker = new Broker({ agentDir: alternateAgentDir, packageGeneration: "test" });
+		const alternateBroker = new Broker({ agentDir: alternateAgentDir, packageGeneration: packageJson.version });
 		await alternateBroker.start();
 		try {
 			await alternateBroker.index.append({

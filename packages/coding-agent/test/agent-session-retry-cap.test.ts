@@ -118,14 +118,21 @@ describe("AgentSession retry delay cap", () => {
 		expect(session.isRetrying).toBe(false);
 	});
 
-	it("bounds unknown model-limit errors instead of entering an unbounded retry", async () => {
+	it("holds a model-limit 429 with a multi-hour Retry-After instead of retrying it", async () => {
+		// Before the token-limit hold (issue #14) this case asserted a single
+		// capped retry: the multi-hour hint was clamped to `retry.maxDelayMs` and
+		// the same model was re-asked seconds later. A usage limit is an allowance
+		// spent for the provider's current quota window, so the turn now ends on
+		// the first failure, the selector is held until the reset instant, and the
+		// surfaced error names the limit and that instant exactly once. The
+		// selector hold itself is covered by issue-14-quota-retry-policy.test.ts.
 		const model = getBundledModel("anthropic", "claude-sonnet-4-5");
 		if (!model) {
 			throw new Error("Expected bundled Anthropic test model to exist");
 		}
 
-		const modelLimitError =
-			'429 {"type":"error","error":{"type":"rate_limit_error","message":"model_limit_reached: limit for this model reached"}} retry-after-ms=11180000';
+		const retryAfterMs = 11_180_000;
+		const modelLimitError = `429 {"type":"error","error":{"type":"rate_limit_error","message":"model_limit_reached: limit for this model reached"}} retry-after-ms=${retryAfterMs}`;
 
 		const mock = createMockModel({
 			responses: [{ throw: modelLimitError }, { content: ["unexpected retry"] }],
@@ -159,7 +166,6 @@ describe("AgentSession retry delay cap", () => {
 			modelRegistry,
 		});
 
-		const waitSpy = vi.spyOn(scheduler, "wait").mockResolvedValue(undefined);
 		const retryStartEvents: AutoRetryStartEvent[] = [];
 		const retryEndEvents: AutoRetryEndEvent[] = [];
 		session.subscribe(event => {
@@ -167,17 +173,28 @@ describe("AgentSession retry delay cap", () => {
 			if (event.type === "auto_retry_end") retryEndEvents.push(event);
 		});
 
+		const before = Date.now();
 		await session.prompt("Trigger model limit with long retry-after");
 		await session.waitForIdle();
+		const after = Date.now();
 
-		expect(requestedModels).toEqual([`${model.provider}/${model.id}`, `${model.provider}/${model.id}`]);
-		expect(retryStartEvents).toHaveLength(1);
-		expect(retryEndEvents).toHaveLength(1);
-		expect(retryEndEvents[0]).toMatchObject({ success: true });
-		expect(waitSpy).toHaveBeenCalled();
+		const selector = `${model.provider}/${model.id}`;
+		expect(requestedModels).toEqual([selector]);
+		expect(retryStartEvents).toEqual([]);
+		expect(retryEndEvents).toEqual([]);
 
 		const last = lastAssistant(session);
-		expect(last.stopReason).toBe("stop");
+		expect(last.stopReason).toBe("error");
+		const errorMessage = last.errorMessage ?? "";
+		expect(errorMessage).toContain("model_limit_reached");
+		expect(errorMessage).toContain("token limit reached");
+		const retryableAt = [...errorMessage.matchAll(/retryable at (\d{4}-\d{2}-\d{2}T[0-9:.]+Z)/g)].map(match =>
+			Date.parse(match[1] ?? ""),
+		);
+		expect(retryableAt).toHaveLength(1);
+		expect(retryableAt[0]).toBeGreaterThanOrEqual(before + retryAfterMs - 5_000);
+		expect(retryableAt[0]).toBeLessThanOrEqual(after + retryAfterMs + 5_000);
+
 		expect(session.isStreaming).toBe(false);
 		expect(session.isRetrying).toBe(false);
 	});
