@@ -206,6 +206,24 @@ export interface GatewayUsageWindow {
 	note?: string;
 }
 
+/**
+ * What the status line calls the gateway window.
+ *
+ * Deliberately fixed, and deliberately not `key.provider`. The provider key is
+ * whatever the operator happened to name the entry in `models.yml` — the
+ * deployment guide registers the gateway as `vllm`, because that is what sits
+ * behind it — so keying the label off it renders `vllm 75%` and reads as the
+ * GPU box's own budget rather than the allowance the gateway is holding. The
+ * quota is the gateway's: it is the party that counts it, enforces it, and
+ * reports it under its own `x-vug-*` names, so the window is named after the
+ * gateway no matter which provider entry the request went out through.
+ *
+ * `provider` stays in {@link GatewayQuotaKey}, where it does a different job:
+ * binding an observation to one identity so a different provider entry can
+ * never inherit this one's budget.
+ */
+const GATEWAY_LABEL = "vug";
+
 /** Below this an integer cannot be an epoch instant in either seconds or ms. */
 const MIN_EPOCH_SECONDS = 1_000_000_000;
 const MIN_EPOCH_MILLISECONDS = 100_000_000_000;
@@ -460,7 +478,7 @@ function resetHasPassed(resetAt: number | undefined, now: number): boolean {
  */
 export function gatewayQuotaWindow(state: GatewayQuotaState | null, now = Date.now()): GatewayUsageWindow | null {
 	if (!state) return null;
-	const label = state.key.provider;
+	const label = GATEWAY_LABEL;
 
 	if (state.exhausted) {
 		const exhaustedResetAt = state.exhausted.resetAt ?? state.resetAt;

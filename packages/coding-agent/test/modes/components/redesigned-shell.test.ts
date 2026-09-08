@@ -357,24 +357,23 @@ describe("redesigned interactive shell chrome", () => {
 			"token_out",
 			"token_rate",
 			"cache_read",
-			"cost",
-		]);
-		expect(STATUS_LINE_PRESETS.default.segmentOptions?.path?.maxLength).toBe(32);
-	});
-
-	it("adds a default plus usage status preset without changing default", () => {
-		expect(STATUS_LINE_PRESETS["default-usage"].leftSegments).toEqual(STATUS_LINE_PRESETS.default.leftSegments);
-		expect(STATUS_LINE_PRESETS["default-usage"].rightSegments).toEqual([
-			"session_name",
-			"jobs",
-			"token_in",
-			"token_out",
-			"token_rate",
-			"cache_read",
 			"usage",
 			"cost",
 		]);
-		expect(STATUS_LINE_PRESETS["default-usage"].segmentOptions).toEqual(STATUS_LINE_PRESETS.default.segmentOptions);
+		expect(STATUS_LINE_PRESETS.default.segmentOptions?.path?.maxLength).toBe(32);
+		// Scoped to the gateway window, which rides in on responses the session
+		// already receives. The polled subscription windows stay opt-in.
+		expect(STATUS_LINE_PRESETS.default.segmentOptions?.usage?.windows).toBe("gateway");
+	});
+
+	it("widens the usage segment in the default plus usage preset, changing nothing else", () => {
+		expect(STATUS_LINE_PRESETS["default-usage"].leftSegments).toEqual(STATUS_LINE_PRESETS.default.leftSegments);
+		expect(STATUS_LINE_PRESETS["default-usage"].rightSegments).toEqual(STATUS_LINE_PRESETS.default.rightSegments);
+		expect(STATUS_LINE_PRESETS["default-usage"].segmentOptions?.usage?.windows).toBe("all");
+		expect({ ...STATUS_LINE_PRESETS["default-usage"].segmentOptions, usage: undefined }).toEqual({
+			...STATUS_LINE_PRESETS.default.segmentOptions,
+			usage: undefined,
+		});
 	});
 
 	it("keeps launch rendering on the bounded-work path", () => {

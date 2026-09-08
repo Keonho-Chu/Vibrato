@@ -847,11 +847,15 @@ export const SETTINGS_SCHEMA = {
 			label: "Status Line Preset",
 			description: "Pre-built status line configurations",
 			options: [
-				{ value: "default", label: "Default", description: "Model, path, git, context, tokens, cost" },
+				{
+					value: "default",
+					label: "Default",
+					description: "Model, path, git, context, tokens, cost, and a usage gateway's quota window",
+				},
 				{
 					value: "default-usage",
 					label: "Default + Usage",
-					description: "Default layout with provider usage quota",
+					description: "Default layout, with provider subscription quota windows added",
 				},
 				{ value: "minimal", label: "Minimal", description: "Path and git only" },
 				{ value: "compact", label: "Compact", description: "Model, git, cost, context" },

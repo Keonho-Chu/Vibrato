@@ -5,17 +5,15 @@ export const STATUS_LINE_PRESETS: Record<StatusLinePreset, PresetDef> = {
 		// Every informational segment is on by default. Each one hides itself when
 		// it has no value, so a self-hosted model with no per-token price simply
 		// shows its token counts and omits the cost.
-		leftSegments: ["model", "mode", "git", "pr", "path"],
-		rightSegments: ["session_name", "jobs", "token_in", "token_out", "token_rate", "cache_read", "cost"],
-		separator: "slash",
-		segmentOptions: {
-			model: { showThinkingLevel: true },
-			path: { abbreviate: true, maxLength: 32, stripWorkPrefix: true },
-			git: { showBranch: true, showStaged: true, showUnstaged: true, showUntracked: true },
-		},
-	},
-
-	"default-usage": {
+		//
+		// `usage` is scoped to `gateway` here, which is what separates this preset
+		// from `default-usage`. A budget a usage gateway reports about your own key
+		// is a limit you are about to hit, and it arrives free: it rides on the
+		// responses the session already receives, so showing it costs no request
+		// and needs no account. The subscription windows in the same segment are
+		// the opposite — they exist only because the client polls a provider usage
+		// endpoint — so they stay behind the explicit `default-usage` opt-in and
+		// the poll stays off here. See `#usageWindows` in `tool-status-header.ts`.
 		leftSegments: ["model", "mode", "git", "pr", "path"],
 		rightSegments: ["session_name", "jobs", "token_in", "token_out", "token_rate", "cache_read", "usage", "cost"],
 		separator: "slash",
@@ -23,6 +21,21 @@ export const STATUS_LINE_PRESETS: Record<StatusLinePreset, PresetDef> = {
 			model: { showThinkingLevel: true },
 			path: { abbreviate: true, maxLength: 32, stripWorkPrefix: true },
 			git: { showBranch: true, showStaged: true, showUnstaged: true, showUntracked: true },
+			usage: { windows: "gateway" },
+		},
+	},
+
+	"default-usage": {
+		// The default layout with the `usage` segment widened to every window:
+		// the observed gateway budget plus the polled OAuth/subscription windows.
+		leftSegments: ["model", "mode", "git", "pr", "path"],
+		rightSegments: ["session_name", "jobs", "token_in", "token_out", "token_rate", "cache_read", "usage", "cost"],
+		separator: "slash",
+		segmentOptions: {
+			model: { showThinkingLevel: true },
+			path: { abbreviate: true, maxLength: 32, stripWorkPrefix: true },
+			git: { showBranch: true, showStaged: true, showUnstaged: true, showUntracked: true },
+			usage: { windows: "all" },
 		},
 	},
 
