@@ -1127,7 +1127,7 @@ and the per-provider dispatcher mapping.
 
 ## Gateway connections
 
-A usage-tracking gateway (e.g. the VUG-style relay in `LGJ/vib-usage-gateway`) sits between the client and the real provider as an `openai-completions`-compatible endpoint. It attributes every call to a session by reading the `session_id` and `x-session-id` request headers that `compat.sendSessionHeaders` adds (see `sendSessionHeaders` under [Compatibility and routing fields](#compatibility-and-routing-fields)). Point `models.yml` at the gateway and opt in explicitly:
+A usage-tracking gateway (e.g. the VUG-style relay in [`Keonho-Chu/VIB-Gateway`](https://github.com/Keonho-Chu/VIB-Gateway)) sits between the client and the real provider as an `openai-completions`-compatible endpoint. It attributes every call to a session by reading the `session_id` and `x-session-id` request headers that `compat.sendSessionHeaders` adds (see `sendSessionHeaders` under [Compatibility and routing fields](#compatibility-and-routing-fields)). Point `models.yml` at the gateway and opt in explicitly:
 
 ```yaml
 providers:
@@ -1146,7 +1146,30 @@ providers:
 
 The opt-in matters: `sendSessionHeaders` defaults to `false`, so a `models.yml` entry that omits it still reaches the gateway and still gets a response, but the gateway cannot tie the call to a session and logs it as `no-session`. There is no client-side error or warning for this today, so a gateway provider missing the flag fails silently from the client's point of view — verify `compat.sendSessionHeaders: true` is present whenever `baseUrl` points at a usage gateway.
 
-Bulk-deployment scripts that generate `models.yml` for a fleet of machines must include the `compat.sendSessionHeaders: true` line for every gateway provider entry they write; that requirement, along with the full gateway-side client setup, is documented in `LGJ/vib-usage-gateway`'s `docs/client-setup.md`.
+Bulk-deployment scripts that generate `models.yml` for a fleet of machines must include the `compat.sendSessionHeaders: true` line for every gateway provider entry they write; that requirement, along with the full gateway-side client setup, is documented in [`Keonho-Chu/VIB-Gateway`](https://github.com/Keonho-Chu/VIB-Gateway)'s `docs/client-setup.md`.
+
+### What the gateway reports back
+
+A gateway that meters usage answers with headers the client reads and keeps. It attaches the budget only to the chat completions it records — `x-vug-daily-limit`, `x-vug-daily-remaining`, and `x-vug-daily-reset` — so the routes it merely passes through, `GET /v1/models` among them, carry none of it. `x-vug-queued-ms` rides on any response whose request waited for an upstream slot. When it refuses a request for a spent allowance it answers `429` with the stable error code `daily_token_limit` and sends `x-vug-daily-limit`, `x-vug-daily-used`, and `x-vug-daily-reset`. When it refuses for congestion it answers `503` with `queue_timeout` or `queue_full`, a short `Retry-After`, and `x-vug-queue-depth` / `x-vug-inflight`.
+
+Two contract details matter when reading these:
+
+- `remaining` is the balance the gateway measured when it admitted the request, not a live one. The tokens that request went on to spend are not subtracted, and with requests in flight in parallel the figures drift. Nothing decrements it locally.
+- The `daily` in every header and in the error code is a name the wire contract keeps for stability. A gateway counts its limit over an operator-configured window that can be shorter than a day, so `x-vug-daily-reset` is the only trustworthy statement of when the allowance returns. The client never assumes a midnight or a timezone.
+
+Only the listed headers are read; everything else the gateway sends is ignored rather than interpreted. Where they end up differs by outcome. The status-line observation is held in memory for the session and never persisted. A failed request is the exception: these headers are on the allowlist that transport failure facts retain, and those facts travel on the assistant message the failure produced, so a `429` or `503` leaves the gateway's own figures in the session file alongside `retry-after`.
+
+### Seeing your remaining budget
+
+The status line's `usage` segment renders whatever the gateway last reported, as a window labelled `vug`. It reads `75%` while a budget is known, `100% limit reached` after a `429`, and `busy queue 12` while the gateway is shedding load. A provider that has never sent one of these headers contributes no window at all rather than a misleading `0%`.
+
+The segment ships in the `default` status-line preset, so pointing `baseUrl` at a gateway is enough to see it; a layout that sets `statusLine.rightSegments` by hand has to include `usage` itself.
+
+The observation is bound together to the provider, the gateway URL, the credential the request actually used, and the session. Rotating a key or switching gateways mid-session discards it and starts over from the next response.
+
+### When the allowance runs out
+
+A `429` carrying a quota code and a `Retry-After` of a minute or more is treated as a spent allowance rather than congestion: the model is not retried, the selector is suppressed until the reset instant, and a managed fallback chain advances only to the next entry you listed. Stored API keys for the same provider are deliberately not rotated, because every one of them spends the same gateway allowance under a different identity. The full policy, including the `retry.rotateCredentialsOnQuota` escape hatch, is in [Token-limit holds](./non-compaction-retry-policy.md#token-limit-holds).
 
 ### The connect screen's endpoint summary
 

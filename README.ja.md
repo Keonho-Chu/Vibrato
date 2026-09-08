@@ -22,7 +22,7 @@
 **スタンドアロンバイナリ** (推奨、Bun 不要)、Linux (x64/arm64)、macOS (arm64/x64)、Windows (x64) 対応:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.17.2/scripts/install.sh -o vib-install.sh
+curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.17.3/scripts/install.sh -o vib-install.sh
 sh vib-install.sh
 vib --version
 ```
@@ -30,7 +30,7 @@ vib --version
 Windows (PowerShell、「管理者として実行」ではなく通常のターミナルで):
 
 ```powershell
-Invoke-WebRequest -UseBasicParsing https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.17.2/scripts/install.ps1 -OutFile vib-install.ps1
+Invoke-WebRequest -UseBasicParsing https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.17.3/scripts/install.ps1 -OutFile vib-install.ps1
 powershell -File vib-install.ps1
 ```
 

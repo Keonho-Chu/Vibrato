@@ -84,7 +84,7 @@ Runtime x64 candidate order also includes the unsuffixed default filename after 
 
 ## Runtime flags
 
-- `VIB_NATIVE_VARIANT`: x64 runtime override; valid values are `modern` and `baseline`.
+- `VIB_NATIVE_VARIANT`: x64 runtime override; valid values are `modern` and `baseline`. `PI_NATIVE_VARIANT` is the pre-rebrand fallback, consulted only when the canonical name is unset or blank.
 - `VIB_COMPILED`: legacy compiled-mode signal. A populated embedded-addon manifest is also a compiled-mode signal and is the authoritative signal for Bun standalone builds that do not preserve `process.env.VIB_COMPILED`.
 
 ## Build-time flags/options

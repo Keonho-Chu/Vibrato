@@ -72,7 +72,8 @@ export default class Setup extends Command {
 		compat: Flags.string({ description: "Provider compatibility: openai or anthropic" }),
 		provider: Flags.string({ description: "Provider id to add to models.yml" }),
 		"base-url": Flags.string({
-			description: "Provider API base URL (required for proxy presets: litellm, openai-compatible-proxy)",
+			description:
+				"Provider API base URL (required without --preset, alongside --compat/--provider/--api-key-env/--model; optional with one)",
 		}),
 		"api-key-env": Flags.string({ description: "Read provider API key from this environment variable" }),
 		model: Flags.string({ description: "Model id to add (repeat or comma-separate)", multiple: true }),

@@ -22,7 +22,7 @@
 **独立二进制文件** (推荐，无需 Bun)，支持 Linux (x64/arm64)、macOS (arm64/x64) 和 Windows (x64):
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.17.2/scripts/install.sh -o vib-install.sh
+curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.17.3/scripts/install.sh -o vib-install.sh
 sh vib-install.sh
 vib --version
 ```
@@ -30,7 +30,7 @@ vib --version
 Windows (PowerShell，请在普通终端中运行，而不是"以管理员身份运行"):
 
 ```powershell
-Invoke-WebRequest -UseBasicParsing https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.17.2/scripts/install.ps1 -OutFile vib-install.ps1
+Invoke-WebRequest -UseBasicParsing https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.17.3/scripts/install.ps1 -OutFile vib-install.ps1
 powershell -File vib-install.ps1
 ```
 
