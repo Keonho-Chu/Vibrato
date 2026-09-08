@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
+import packageJson from "../../package.json" with { type: "json" };
 import { buildCoordinatorMcpConfig } from "../../src/coordinator-mcp/policy";
 import { coordinatorStatePaths, readSessionTransaction } from "../../src/coordinator-mcp/question-state";
 import { createCoordinatorMcpServer } from "../../src/coordinator-mcp/server";
@@ -74,7 +75,7 @@ async function createServer(
 	const discovery: BrokerDiscovery = {
 		version: 1,
 		protocolVersion: 3,
-		packageGeneration: "test",
+		packageGeneration: packageJson.version,
 		ownerId: "test",
 		pid: process.pid,
 		incarnation: brokerProcessIncarnation(process.pid) ?? "test-incarnation",

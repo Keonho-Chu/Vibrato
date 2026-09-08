@@ -2,6 +2,7 @@ import { describe, expect, it } from "bun:test";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
+import packageJson from "../../package.json" with { type: "json" };
 import { createCoordinatorMcpServer } from "../../src/coordinator-mcp/server";
 import { writeBrokerDiscovery } from "../../src/sdk/broker/discovery";
 import type { SessionIndex } from "../../src/sdk/broker/session-index";
@@ -34,7 +35,7 @@ describe("send_prompt same-session concurrency", () => {
 			await writeBrokerDiscovery(agentDir, {
 				version: 1,
 				protocolVersion: 3,
-				packageGeneration: "test",
+				packageGeneration: packageJson.version,
 				ownerId: "test-owner",
 				pid: process.pid,
 				host: "127.0.0.1",
