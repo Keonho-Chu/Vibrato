@@ -265,7 +265,7 @@ export class EventController {
 		const trimmed = intent.trim();
 		if (!trimmed || trimmed === this.#lastIntent) return;
 		this.#lastIntent = trimmed;
-		this.ctx.setWorkingMessage(`${trimmed}${interruptHint()}`);
+		this.ctx.setWorkingMessage(`${trimmed}${interruptHint()}`, "tool");
 	}
 
 	subscribeToAgent(): void {
@@ -284,6 +284,15 @@ export class EventController {
 		if (this.ctx.isStopped?.()) return;
 		if (!this.ctx.isInitialized) await this.ctx.init();
 		if (this.ctx.isStopped?.()) return;
+		this.ctx.syncExecutionStatusIdentity?.();
+		this.ctx.executionStatus?.handleEvent(event);
+		if (
+			(event.type === "message_start" && event.message.role === "assistant") ||
+			(event.type === "tool_execution_end" && this.ctx.executionStatus?.getSnapshot().runningTools === 0)
+		) {
+			this.#lastIntent = undefined;
+			this.ctx.clearToolWorkingMessage?.();
+		}
 		this.#visibleTranscriptChanged = false;
 		this.#handlingEvent = true;
 		try {

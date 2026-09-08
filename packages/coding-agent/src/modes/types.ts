@@ -30,6 +30,7 @@ import type { HookSelectorComponent } from "./components/hook-selector";
 import type { ToolExecutionHandle } from "./components/tool-execution";
 import type { StatusLineComponent } from "./components/tool-status-header";
 import type { PetMode } from "./components/vibrato-pet-widget";
+import type { ExecutionStatusTracker } from "./execution-status";
 import type { IrcObservationLedger } from "./irc-observation-ledger";
 import type { OAuthManualInputManager } from "./oauth-manual-input";
 import type { PromptSuggestionController } from "./prompt-suggestion-controller";
@@ -186,6 +187,7 @@ export interface InteractiveModeContext {
 	hookWidgetContainerAbove: Container;
 	hookWidgetContainerBelow: Container;
 	statusLine: StatusLineComponent;
+	readonly executionStatus?: ExecutionStatusTracker;
 
 	// Session access
 	session: AgentSession;
@@ -280,7 +282,9 @@ export interface InteractiveModeContext {
 	queueCompactionMessage(text: string, mode: "steer" | "followUp", options?: ComposerSubmissionOptions): void;
 	flushCompactionQueue(options?: { willRetry?: boolean }): Promise<void>;
 	flushPendingBashComponents(): void;
-	setWorkingMessage(message?: string): void;
+	setWorkingMessage(message?: string, source?: "tool"): void;
+	clearToolWorkingMessage?(): void;
+	syncExecutionStatusIdentity?(): void;
 	applyPendingWorkingMessage(): void;
 	ensureLoadingAnimation(): void;
 	syncActivityIndicator(): void;

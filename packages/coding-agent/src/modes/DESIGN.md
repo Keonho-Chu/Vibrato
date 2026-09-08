@@ -364,6 +364,49 @@ The immutable matrix has exactly 20 keys: `live-overflow`, `manual-history`,
 `narrow-cjk/48x10/unicode-color`. Do not add or replace a manual-follow case.
 
 Each key has only `terminal.txt`, ANSI-preserving `terminal-ansi.txt`, `terminal.html`, and `metadata.json`; the manifest records SHA-256 and byte length. Per-key metadata binds immutable font/render assumptions and the ANSI-aware wrapping/truncation policy. `VirtualTerminal` reconstructs ANSI from visible xterm cells, including cell padding, palette/RGB colors, attributes, and inverse video; plain text is always the stripped reconstruction. The verifier owns an independent literal 20-key oracle and fails closed unless stripped ANSI equals text, `terminal.html` equals the exported canonical `ansiToHtml(terminal-ansi.txt)` byte-for-byte (including its complete document envelope and global CSS), HTML independently preserves the ANSI style-run text, every retained row has the exact `Bun.stringWidth` cell width (including trailing spaces), and `ansi_mode` agrees with required Unicode color SGR or ASCII/no-color output. Every metadata entry has exact CJK phrase-boundary metadata: the narrow-CJK key has only the three canonical boundaries in order and every other key has `[]`. Manual captures prove successful production wheel and PageUp paths and retain observable historical transcript-row evidence. It validates exact payload paths (no duplicates or traversal), immutable source/output revisions, state/status/suffix order, notice cardinality, capacity, actual mouse-copied transcript-only selection, composer, CJK, and provenance invariants. `review-input.json` binds the exact manifest digest, capture author/executor identity, acceptance/design versions, required artifacts, narrow-CJK boundaries, and deterministic host matrix. `--require-independent-review` requires an attestation with an exact root key set; exact per-key result and artifact-check key sets; exact defect `{ description, accepted }` keys with a trimmed, nonblank description; canonical trimmed reviewer identity distinct from both bound identities; the independent-terminal-reviewer role; fixture revision; expected and observed counts of 20; exact checked keys; accepted per-key artifact-check/notes results; accepted artifact/CJK/host decisions; bound digest; and final `accept`. Any malformed, incomplete, or extra attestation content fails closed.
+## Persistent execution summary
+
+This change follows the **existing design system** branch. The execution summary
+is a compact operational row inside `StatusLineComponent`, after the skill HUD
+and before configured telemetry. The root-child order and the `statusLine` pin
+boundary do not change. Existing transient loaders retain detailed operational
+messages and their cancellation ownership; the summary makes the current state
+visible while the user reads earlier transcript output.
+
+The first row names the observed state: waiting for a model response, receiving a
+response, executing tools, retry backoff, context maintenance, waiting for user
+input, background work, or queued messages. Idle sessions render no summary.
+Model response activity starts on actual assistant content, including populated
+non-streaming messages, not on an empty message placeholder.
+Tool counts come from execution-start/end events, not streamed tool cards. Tool
+success and failure counts cover the current prompt, not the whole session.
+Background counts are owner-scoped; queued-message counts exclude hidden agent
+context. Dialogs are labelled user input, never inferred to be approvals. No
+percentage complete, completion estimate, or unobserved approval count is shown.
+
+Elapsed time is measured from the current observed state, not claimed as model
+latency. Retry countdowns use the runtime deadline. Concurrent input requests use
+identity-scoped leases so an old callback cannot clear a newer request. Prompt
+termination, cancellation, session replacement, and disposal retire stale state.
+
+Use existing semantic `accent`, `muted`, `warning`, and `error` roles. Text labels
+remain meaningful without color or animation. Dynamic tool names/intents are
+sanitized and clipped with ANSI-aware terminal-cell helpers. Never display raw
+tool arguments, dialog content, provider error messages, or credentials.
+At most two rows are added: state/elapsed first, then whole count/action chunks
+that fit. At narrow widths retain the state ahead of optional detail; omit whole
+hints rather than printing a key with a clipped action. Existing effective
+keybindings and commands own all actions; the summary is not a new input target.
+Configured telemetry `maxRows` and preview APIs remain telemetry-only.
+
+The execution-status showcase covers idle, model wait, response, single and
+parallel tools, tool failure, retry, maintenance, user input, background work,
+queued messages, and long mixed CJK/Latin content at 80x24, 120x36, and 160x48,
+plus narrow-terminal and ANSI-stripped text readability probes (not a claim that
+the pre-existing theme implements `NO_COLOR`). Full-surface captures must demonstrate
+that the summary stays pinned during manual history, never steals composer focus,
+and does not overflow or introduce incorrect CJK semantic wrapping.
+
 ## Vibrato Bundles
 
 Vibrato Bundles is a directly hosted Settings surface using the existing framed-list

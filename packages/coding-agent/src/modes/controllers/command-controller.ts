@@ -1354,6 +1354,7 @@ export class CommandController {
 		this.ctx.ui.requestRender();
 
 		let outcome: CompactionOutcome = "ok";
+		const releaseMaintenance = this.ctx.executionStatus?.beginMaintenance();
 		try {
 			const instructions = typeof customInstructionsOrOptions === "string" ? customInstructionsOrOptions : undefined;
 			const options =
@@ -1377,6 +1378,7 @@ export class CommandController {
 				this.ctx.showError(`Compaction failed: ${message}`);
 			}
 		} finally {
+			releaseMaintenance?.();
 			compactingLoader.stop();
 			if (!this.ctx.isStopped?.()) {
 				this.ctx.statusContainer.clear();
@@ -1418,6 +1420,7 @@ export class CommandController {
 		this.ctx.statusContainer.addChild(handoffLoader);
 		this.ctx.ui.requestRender();
 
+		const releaseMaintenance = this.ctx.executionStatus?.beginMaintenance();
 		try {
 			// Handoff generation runs as a oneshot request; the new session is shown after it completes.
 			const result = await this.ctx.session.handoff(customInstructions);
@@ -1465,6 +1468,7 @@ export class CommandController {
 				this.#doCopy(retainedDocument, "Handoff document preserved on clipboard; current session is unchanged.");
 			}
 		} finally {
+			releaseMaintenance?.();
 			handoffLoader.stop();
 			if (!this.ctx.isStopped?.()) {
 				this.ctx.statusContainer.clear();

@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Added a pinned execution summary that distinguishes model waiting, response streaming, tool execution, retry, context maintenance, and user-input waits while reviewing earlier output. It shows current-prompt tool counts and session-owned background/queued work without estimating completion or inferring approvals.
+
 ## [0.17.0] - 2026-09-02
 
 - **Breaking:** The pre-rebrand `red-claw`, `blue-crab`, and `ouroboros` themes are removed. `lig-blue` and `lig-white` remain the defaults, alongside the `claude-code`, `codex`, `opencode`, and `gruvbox-dark` migration themes. A config pinned to one of the removed names falls back to `lig-blue`, which was already the hardcoded fallback despite comments that still named `red-claw`.

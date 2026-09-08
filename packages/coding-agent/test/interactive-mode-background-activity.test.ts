@@ -83,6 +83,129 @@ describe("interactive background activity indicator", () => {
 		expect(resolveActivityIndicatorMessage(true, 2, "Working…")).toBe("Working… · 2 background tasks");
 	});
 
+	it("keeps observed tool execution and completed counts in the pinned rail", async () => {
+		const controller = new EventController(mode);
+		const rail = () => stripVTControlCharacters(mode.statusLine.render(120).join("\n"));
+		await controller.handleEvent({ type: "agent_start" });
+		expect(rail()).toContain("Waiting for model");
+		await controller.handleEvent({
+			type: "tool_execution_start",
+			toolCallId: "status-read",
+			toolName: "read",
+			args: { path: "README.md" },
+			intent: "Inspecting the product overview",
+		});
+		expect(rail()).toContain("Running tools");
+		expect(rail()).toContain("Inspecting the product overview");
+		await controller.handleEvent({
+			type: "tool_execution_end",
+			toolCallId: "status-read",
+			toolName: "read",
+			result: { content: [{ type: "text", text: "overview" }] },
+			isError: false,
+		});
+		expect(rail()).toContain("1 tool done");
+		expect(rail()).not.toContain("Inspecting the product overview");
+		await controller.handleEvent({ type: "agent_end", messages: [] });
+		expect(rail()).not.toContain("Waiting for model");
+		expect(rail()).not.toContain("1 tool done");
+	});
+
+	it("does not clear extension-owned working messages when a tool finishes", async () => {
+		const controller = new EventController(mode);
+		await controller.handleEvent({ type: "agent_start" });
+		await controller.handleEvent({
+			type: "tool_execution_start",
+			toolCallId: "custom-read",
+			toolName: "read",
+			args: { path: "README.md" },
+			intent: "Reading context",
+		});
+		mode.setWorkingMessage("Extension-owned progress");
+		await controller.handleEvent({
+			type: "tool_execution_end",
+			toolCallId: "custom-read",
+			toolName: "read",
+			result: { content: [] },
+		});
+		expect(stripVTControlCharacters(mode.statusLine.render(120).join("\n"))).toContain("Extension-owned progress");
+	});
+
+	it("retains retry and input state without confusing them with model waiting", async () => {
+		const controller = new EventController(mode);
+		await controller.handleEvent({ type: "agent_start" });
+		await controller.handleEvent({
+			type: "auto_retry_start",
+			attempt: 1,
+			maxAttempts: 3,
+			delayMs: 30_000,
+			errorMessage: "connection timeout with private diagnostic",
+		});
+		expect(mode.executionStatus.getSnapshot().phase).toBe("retry");
+		const input = mode.showHookInput("User choice");
+		expect(mode.executionStatus.getSnapshot().phase).toBe("input");
+		mode.hideHookInput();
+		await expect(input).resolves.toBeUndefined();
+		expect(mode.executionStatus.getSnapshot().phase).toBe("retry");
+		await controller.handleEvent({ type: "agent_start" });
+		expect(mode.executionStatus.getSnapshot()).toMatchObject({ phase: "model", retryInMs: undefined });
+	});
+
+	it("shows visible queued messages and clears the summary after draining them", async () => {
+		await session.followUp("Follow up after the current request");
+		mode.queueCompactionMessage("Queued during maintenance", "followUp");
+		expect(stripVTControlCharacters(mode.statusLine.render(120).join("\n"))).toContain("2 queued");
+		session.clearQueue();
+		mode.compactionQueuedMessages = [];
+		mode.updatePendingMessagesDisplay();
+		expect(stripVTControlCharacters(mode.statusLine.render(120).join("\n"))).not.toContain("Messages queued");
+	});
+
+	it("shows manual context maintenance and clears it on failure", async () => {
+		const pending = Promise.withResolvers<never>();
+		const compact = vi.spyOn(session, "compact").mockImplementation(() => pending.promise);
+		const originalEscape = mode.editor.onEscape;
+		try {
+			const operation = mode.executeCompaction();
+			expect(mode.executionStatus.getSnapshot().phase).toBe("compaction");
+			expect(stripVTControlCharacters(mode.statusLine.render(120).join("\n"))).toContain("Context maintenance");
+			pending.reject(new Error("fixture compaction failure"));
+			await expect(operation).resolves.toBe("failed");
+			expect(mode.executionStatus.getSnapshot().phase).toBe("idle");
+			expect(mode.editor.onEscape).toBe(originalEscape);
+		} finally {
+			compact.mockRestore();
+		}
+	});
+
+	it("uses layout-only summary repaints and clears state on identity replacement and stop", () => {
+		const layout = vi.spyOn(mode.ui, "requestLayoutRender");
+		const full = vi.spyOn(mode.ui, "requestRender");
+		try {
+			mode.executionStatus.start();
+			expect(layout).toHaveBeenCalledWith("execution-status");
+			expect(full.mock.calls.some(([, source]) => source === "execution-status")).toBe(false);
+			const release = mode.executionStatus.beginInput();
+			const identity = vi.spyOn(mode.sessionManager, "getSessionId").mockReturnValue("replacement-session");
+			try {
+				mode.syncExecutionStatusIdentity();
+				expect(mode.executionStatus.getSnapshot().phase).toBe("idle");
+				const fresh = mode.executionStatus.beginInput();
+				release();
+				expect(mode.executionStatus.getSnapshot().inputRequests).toBe(1);
+				fresh();
+			} finally {
+				identity.mockRestore();
+			}
+			mode.executionStatus.start();
+			mode.stop();
+			expect(mode.executionStatus.getSnapshot().phase).toBe("idle");
+		} finally {
+			layout.mockRestore();
+			full.mockRestore();
+		}
+	});
+
 	it("uses layout-only repaints for the foreground activity indicator", () => {
 		const layoutRender = vi.spyOn(mode.ui, "requestLayoutRender");
 		const fullRender = vi.spyOn(mode.ui, "requestRender");
