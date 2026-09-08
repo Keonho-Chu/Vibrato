@@ -1507,6 +1507,17 @@ export const SETTINGS_SCHEMA = {
 		},
 	},
 	"retry.fallbackChains": { type: "record", default: {} as Record<string, string[]> },
+	/**
+	 * Escape hatch for the daily-quota rotation ban. A `quota` failure means the
+	 * account's allowance for this endpoint is spent, so retrying it with another
+	 * stored credential for the SAME provider (and therefore the same baseUrl)
+	 * walks around the gateway's audit and quota boundary rather than recovering
+	 * from congestion. Rotation is therefore off, and this key only exists for a
+	 * deployment that genuinely owns several independent quotas behind one
+	 * provider id. Deliberately has no `ui` block: it is an operator escape
+	 * hatch, not a user-facing preference.
+	 */
+	"retry.rotateCredentialsOnQuota": { type: "boolean", default: false },
 	"retry.fallbackRevertPolicy": {
 		type: "enum",
 		values: ["cooldown-expiry", "never"] as const,

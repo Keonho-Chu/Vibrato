@@ -88,7 +88,8 @@ Flow (`#handleRetryableError`):
 4. Create `#retryPromise` once (first attempt in a chain).
 5. In the legacy single-model path, ordinary transient errors retry without an attempt limit. Typed provider-overload replays, canonical idle-stream watchdog stalls, and unknown/no-code errors stop after `retry.maxRetries`. Managed fallback instead uses its controller's per-entry `fallback.maxAttempts` budget.
 6. Compute exponential full-jitter delay capped at `retry.maxDelayMs`; legacy parsed provider retry-after values override computed backoff and are capped at `retry.maxDelayMs`, while managed typed Retry-After values are intentionally uncapped.
-7. For usage-limit errors, call auth storage (`markUsageLimitReached(...)`); if credential switching succeeds, force delay to `0`, otherwise use the applicable backoff.
+7. For usage-limit errors, call auth storage (`markUsageLimitReached(...)`); if credential switching succeeds, force delay to `0`, otherwise use the applicable backoff. A `quota` failure never reports a switch unless `retry.rotateCredentialsOnQuota` is enabled — see "Daily-quota holds" below.
+7a. A `quota` failure whose Retry-After is at least 60 s is a daily-quota hold: the failed selector is suppressed until the reset instant with a reason, the same model is not retried, and a managed chain advances at most one entry instead of spending its per-entry budget.
 8. Eligible ordered role-array fallback chains advance on entry-budget exhaustion. A selected fallback entry remains sticky until the head selector's rate-limit cooldown expires, when `retry.fallbackRevertPolicy: cooldown-expiry` probes it again on a new turn.
 9. Emit `auto_retry_start`.
 10. Remove the trailing assistant error message from agent runtime state (kept in persisted session history).
@@ -132,6 +133,7 @@ Settings:
 - `retry.maxDelayMs` (default `300000`)
 - `retry.requestMaxRetries` (default `5`) — provider request retries before a stream is established; counts retries, not the initial request
 - `retry.streamMaxRetries` (default `5`) — provider stream replay retries for replay-safe transient stream failures; counts retries, not the initial stream attempt
+- `retry.rotateCredentialsOnQuota` (default `false`) — operator escape hatch that re-enables credential rotation on `quota` failures; see "Daily-quota holds"
 
 Attempt numbering:
 
@@ -146,6 +148,18 @@ Backoff uses capped exponential full jitter. With default settings the maximum j
 - attempt 3: 8000 ms
 
 `retry.maxDelayMs` caps every legacy session retry delay, including provider retry-after hints, which otherwise take precedence over computed backoff. Managed fallback intentionally does not cap typed Retry-After values because it retries within its separate per-entry `fallback.maxAttempts` budget. In the legacy single-model path, transient errors have unbounded attempts except canonical idle-stream watchdog stalls, which are bounded by `retry.maxRetries`; unknown/no-code errors use the same bound.
+
+## Daily-quota holds
+
+A `quota` trigger carrying a Retry-After of at least 60 s (`QUOTA_TERMINAL_RETRY_AFTER_MS`) is a spent daily allowance, not congestion. Capping such a hint at `retry.maxDelayMs` would re-issue the request seconds after a gateway asked for hours, so the hold is terminal for the failed model instead:
+
+- No same-model retry. In the legacy single-model path the turn ends; a managed chain advances at most one entry. Advance walks `FallbackChainController.chain.entries` only, so it can never reach a provider or endpoint the user did not list.
+- No credential rotation. Every stored credential of a provider shares that provider's baseUrl, so rotating retries the same gateway allowance under a different identity, which bypasses the gateway's audit and quota boundary. `#markFailedCredential` still marks the failed credential (that is how the reset instant is recovered) but never reports a rotation. `retry.rotateCredentialsOnQuota` (default `false`, no settings UI) restores the old behavior for a deployment that genuinely owns several independent quotas behind one provider id.
+- The failed selector is suppressed until the reset instant, with a reason recorded alongside the window and readable through `ModelRegistry.getSelectorSuppressionReason(...)`. The surfaced error names the daily limit and its reset time rather than leaving a bare 429 that reads like a rejected key.
+
+Discovery follows the same principle: a `/v1/models` 429 keeps the approved static `models:` entries and any still-valid discovery cache, and the model selector reports that the usage limit was reached rather than that discovery failed.
+
+503 queue pressure (`queue_timeout`, `queue_full`) is deliberately unaffected. It stays in the `server` class, honors its short Retry-After, and retries only within the existing budget.
 
 ## Abort mechanics
 

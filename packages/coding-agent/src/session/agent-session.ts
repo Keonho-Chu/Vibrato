@@ -1322,6 +1322,34 @@ function attachRetryableAtHint(errorMessage: string | undefined, retryableAt: nu
 	return current ? `${current}; ${hint}` : hint;
 }
 
+/**
+ * A `quota` failure carrying a Retry-After at or above this threshold is a
+ * DAILY allowance that has been spent, not a moment of congestion. Below it the
+ * upstream is asking for a short pause, which the ordinary retry budget already
+ * handles correctly; at or above it, sleeping is useless and retrying is the
+ * behavior issue #14 forbids. 60s is deliberately generous: every realistic
+ * daily-limit reset (hours) clears it, and no realistic congestion hint reaches it.
+ */
+const QUOTA_TERMINAL_RETRY_AFTER_MS = 60_000;
+
+/** One phrasing for the daily-limit hold, shared by the error text and the suppression reason. */
+function describeQuotaHold(resetAtMs: number): string | undefined {
+	if (!Number.isFinite(resetAtMs)) return undefined;
+	try {
+		return `daily usage limit reached; no retry until it resets at ${new Date(resetAtMs).toISOString()}`;
+	} catch {
+		return undefined;
+	}
+}
+
+function attachQuotaHoldHint(errorMessage: string | undefined, resetAtMs: number): string {
+	const hint = describeQuotaHold(resetAtMs);
+	const current = errorMessage?.trim();
+	if (!hint) return current || "";
+	if (current?.includes("daily usage limit reached")) return current;
+	return current ? `${current}; ${hint}` : hint;
+}
+
 function isMessageOnlyFirstEventTimeout(message: AssistantMessage): boolean {
 	if (hasBareDefaultRetryDisqualifyingFacts(message)) return false;
 	return (
@@ -20067,6 +20095,10 @@ export class AgentSession {
 	 *    session now uses a different credential" — with a single-row pool it is
 	 *    true while nothing rotated. Both branches therefore re-resolve and
 	 *    require the active key to have actually changed.
+	 * 4. **A `quota` failure never reports a rotation** (issue #14) unless
+	 *    `retry.rotateCredentialsOnQuota` is explicitly enabled. See the inline
+	 *    comment on that branch for why the same-provider pool is the same
+	 *    gateway allowance.
 	 */
 	async #markFailedCredential(trigger: {
 		class: FallbackTriggerClass;
@@ -20102,6 +20134,18 @@ export class AgentSession {
 				retryAfterMs: trigger.retryAfterMs,
 				owner: this.#modelRegistry.getAuthStorageOwner(),
 			});
+		}
+
+		// (4) Quota boundary. A `quota` failure says the account's allowance for
+		// this endpoint is spent; every stored credential of the same provider
+		// shares that provider's baseUrl, so "the next key" is the same gateway
+		// and the same allowance. Reporting a rotation here is what turns a
+		// spent daily limit into another request the gateway must account for,
+		// so the failed credential is still marked (that is how the reset instant
+		// and the suppression window are recovered) but the caller is never told
+		// a different credential is available to retry with.
+		if (trigger.class === "quota" && !this.settings.get("retry.rotateCredentialsOnQuota")) {
+			return remaining ? "unchanged" : "exhausted";
 		}
 
 		// (3) Distinct-row proof.
@@ -20321,18 +20365,49 @@ export class AgentSession {
 			!this.#isIdleStreamStallErrorMessage(message.errorMessage ?? "");
 
 		const failedSelector = managedFallback ? controller.currentSelector() : undefined;
+		// Daily-quota hold (issue #14). A `quota` class carrying a long Retry-After
+		// is a spent allowance, not congestion: the same model cannot succeed
+		// before the reset, and the legacy delay path would cap a 12h hint at
+		// `retry.maxDelayMs` and re-issue the request seconds later. Recover the
+		// hint the same way the delay computation below does, so a prose-only
+		// Retry-After on the legacy path is honored too.
+		const quotaHoldMs =
+			trigger.class === "quota"
+				? (trigger.retryAfterMs ??
+					(managedFallback ? undefined : this.#parseRetryAfterMsFromError(message.errorMessage ?? "")))
+				: undefined;
+		const quotaHoldIsTerminal = quotaHoldMs !== undefined && quotaHoldMs >= QUOTA_TERMINAL_RETRY_AFTER_MS;
+		// Suppression is applied BEFORE the outcome branches because a terminal
+		// quota hold usually exhausts the chain, and the exhaustion path returns
+		// early — past the rate-limit suppression at the bottom of this method.
+		// The selector is the one that actually failed, so a single-entry chain
+		// (one model on one gateway, the deployment this policy exists for) also
+		// records why it is unavailable.
+		const quotaSuppressedSelector = trigger.class === "quota" ? controller.currentSelector() : undefined;
+		if (quotaHoldMs !== undefined && quotaSuppressedSelector) {
+			const resetAtMs = Date.now() + quotaHoldMs;
+			this.#modelRegistry.suppressSelector(quotaSuppressedSelector, resetAtMs, describeQuotaHold(resetAtMs));
+		}
 		let outcome: "retry" | "advance" | "exhausted";
 		if (managedFallback) {
 			outcome = controller.onAttemptFailure(trigger.class, message.errorMessage || "Unknown error");
 			if (providerRetryCeilingReached && outcome === "retry") {
 				outcome = controller.advance() ? "advance" : "exhausted";
 			}
+			// Never spend the entry's remaining attempts on a model that is held
+			// until its daily reset. Advancing walks `controller.chain.entries`,
+			// which is exactly the chain the user configured, so this can only ever
+			// reach an entry the user listed — never an unlisted provider or endpoint.
+			if (quotaHoldIsTerminal && outcome === "retry") {
+				outcome = controller.advance() ? "advance" : "exhausted";
+			}
 		} else {
-			outcome = providerRetryCeilingReached
-				? "exhausted"
-				: legacyUnbounded || attemptsUsed <= retrySettings.maxRetries
-					? "retry"
-					: "exhausted";
+			outcome =
+				providerRetryCeilingReached || quotaHoldIsTerminal
+					? "exhausted"
+					: legacyUnbounded || attemptsUsed <= retrySettings.maxRetries
+						? "retry"
+						: "exhausted";
 		}
 		// Credential rotation is unbounded: a fresh credential is a different
 		// retry dimension from transient-error backoff, so it overrides maxRetries
@@ -20361,6 +20436,12 @@ export class AgentSession {
 		if (outcome === "advance") {
 			this.#providerRetryMaxAttempts = undefined;
 		}
+		// A terminal quota hold is the reason the turn stopped, so say so on the
+		// surfaced error instead of leaving the user with a bare 429 that reads
+		// like a key problem. Stamped before either exit builds its message.
+		if (quotaHoldIsTerminal && outcome === "exhausted" && quotaHoldMs !== undefined) {
+			message.errorMessage = attachQuotaHoldHint(message.errorMessage, Date.now() + quotaHoldMs);
+		}
 		if (outcome === "exhausted") {
 			if (managedFallback) {
 				let errorMessage = this.#fallbackExhaustionError(controller);
@@ -20372,6 +20453,9 @@ export class AgentSession {
 							errorMessage = this.#annotateQuotaRetryableAt(errorMessage);
 						}
 					}
+				}
+				if (quotaHoldIsTerminal && quotaHoldMs !== undefined) {
+					errorMessage = attachQuotaHoldHint(errorMessage, Date.now() + quotaHoldMs);
 				}
 				this.emitNotice("error", errorMessage, "fallback");
 				this.#defaultFallbackExhaustedLastTurn = true;

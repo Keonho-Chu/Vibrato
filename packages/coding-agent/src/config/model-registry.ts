@@ -1641,6 +1641,8 @@ export class ModelRegistry {
 	#registeredProviderSources: Set<string> = new Set();
 	#cacheDbPath?: string;
 	#suppressedSelectors: Map<string, number> = new Map();
+	/** Keyed exactly like `#suppressedSelectors`; entries are swept together. */
+	#suppressedSelectorReasons: Map<string, string> = new Map();
 	#backgroundRefresh?: Promise<void>;
 	#catalogMutationTail: Promise<void> = Promise.resolve();
 	#pendingCatalogMutations = 0;
@@ -1778,6 +1780,7 @@ export class ModelRegistry {
 			try {
 				this.#reloadStaticModels();
 				this.#suppressedSelectors.clear();
+				this.#suppressedSelectorReasons.clear();
 				await this.#refreshRuntimeDiscoveries(strategy, undefined, refreshGeneration, providerRefreshFence);
 				if (refreshGeneration === this.#catalogRefreshGeneration) this.#modelBindingsApplier.apply();
 			} finally {
@@ -1817,7 +1820,7 @@ export class ModelRegistry {
 				// Static catalog changes are serialized through refresh().
 				for (const selector of this.#suppressedSelectors.keys()) {
 					if (selector.startsWith(`${providerId}/`)) {
-						this.#suppressedSelectors.delete(selector);
+						this.#forgetSuppressedSelector(selector);
 					}
 				}
 				await this.#refreshRuntimeDiscoveries(strategy, new Set([providerId]), refreshGeneration, {
@@ -5815,9 +5818,17 @@ export class ModelRegistry {
 
 	/**
 	 * Suppress a specific model selector (e.g., "provider/id") until a specific timestamp.
+	 *
+	 * `reason` is a short, user-facing explanation of WHY the selector is hidden
+	 * ("daily usage limit reached; resets at …"). A rate-limit suppression has
+	 * always been reasonless, so the parameter is optional and a call that omits
+	 * it keeps the previous behavior exactly.
 	 */
-	suppressSelector(selector: string, untilMs: number): void {
-		this.#suppressedSelectors.set(normalizeSuppressedSelector(selector), untilMs);
+	suppressSelector(selector: string, untilMs: number, reason?: string): void {
+		const normalizedSelector = normalizeSuppressedSelector(selector);
+		this.#suppressedSelectors.set(normalizedSelector, untilMs);
+		if (reason) this.#suppressedSelectorReasons.set(normalizedSelector, reason);
+		else this.#suppressedSelectorReasons.delete(normalizedSelector);
 	}
 
 	/**
@@ -5828,7 +5839,7 @@ export class ModelRegistry {
 		const suppressedUntil = this.#suppressedSelectors.get(normalizedSelector);
 		if (!suppressedUntil) return false;
 		if (suppressedUntil <= Date.now()) {
-			this.#suppressedSelectors.delete(normalizedSelector);
+			this.#forgetSuppressedSelector(normalizedSelector);
 			return false;
 		}
 		return true;
@@ -5840,10 +5851,26 @@ export class ModelRegistry {
 		const suppressedUntil = this.#suppressedSelectors.get(normalizedSelector);
 		if (!suppressedUntil) return "none";
 		if (suppressedUntil <= Date.now()) {
-			this.#suppressedSelectors.delete(normalizedSelector);
+			this.#forgetSuppressedSelector(normalizedSelector);
 			return "expired";
 		}
 		return "active";
+	}
+
+	/**
+	 * Reason for an ACTIVE suppression, for surfaces that explain why a model is
+	 * unavailable. An expired window reports no reason and is swept, so the
+	 * reason can never outlive the suppression it describes.
+	 */
+	getSelectorSuppressionReason(selector: string): string | undefined {
+		const normalizedSelector = normalizeSuppressedSelector(selector);
+		if (this.getSelectorSuppressionStatus(selector) !== "active") return undefined;
+		return this.#suppressedSelectorReasons.get(normalizedSelector);
+	}
+
+	#forgetSuppressedSelector(normalizedSelector: string): void {
+		this.#suppressedSelectors.delete(normalizedSelector);
+		this.#suppressedSelectorReasons.delete(normalizedSelector);
 	}
 }
 
