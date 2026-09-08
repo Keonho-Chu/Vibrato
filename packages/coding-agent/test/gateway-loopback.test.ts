@@ -51,6 +51,13 @@ const VIB_HINT = {
 
 const MODELS_LIST_ENTRY = { id: MODEL_ID, max_model_len: 212_144, vibrato: VIB_HINT };
 
+/** What the gateway puts in `x-vug-daily-reset`. Opaque to the client. */
+const DAILY_RESET = "2026-09-09T00:00:00Z";
+/** Distinct from the inflight count, so a retained header cannot pass by accident. */
+const QUEUE_DEPTH = 3;
+const QUEUED_MS = 12;
+const DAILY_LIMIT = 100_000;
+
 const originalAgentDir = getAgentDir();
 let tempRoot: string | undefined;
 let gateway: FakeGateway | undefined;
@@ -112,7 +119,14 @@ const lastChat = () => chatRecords().at(-1)!;
 
 beforeEach(async () => {
 	resetSettingsForTest();
-	gateway = await startFakeGateway({ keys: [GOOD_KEY], models: [MODELS_LIST_ENTRY] });
+	gateway = await startFakeGateway({
+		keys: [GOOD_KEY],
+		models: [MODELS_LIST_ENTRY],
+		dailyLimit: DAILY_LIMIT,
+		dailyReset: DAILY_RESET,
+		queueDepth: QUEUE_DEPTH,
+		queuedMs: QUEUED_MS,
+	});
 });
 
 afterEach(async () => {
@@ -391,7 +405,7 @@ describe("gateway loopback: quota and congestion facts", () => {
 		expect(headers["x-vug-daily-reset"]).toBeUndefined();
 	});
 
-	it("classifies a daily_token_limit 429 the way dev classifies it today", async () => {
+	it("classifies a daily_token_limit 429 as quota and keeps the daily facts", async () => {
 		const { model, apiKey } = await connect();
 		gateway!.scriptChat({ kind: "daily_token_limit" });
 
@@ -402,14 +416,25 @@ describe("gateway loopback: quota and congestion facts", () => {
 		expect(gateway!.upstreamCalls).toBe(0);
 		expect(result.transportFailure?.status).toBe(429);
 		expect(result.transportFailure?.providerCode).toBe("daily_token_limit");
-		// Today `daily_token_limit` is not a quota code, so a daily limit reads as
-		// an ordinary 12-hour rate limit. #12 turns this into `quota`.
+		// A daily limit is an exhausted budget, not a short rate-limit window,
+		// even though the gateway's retry window is twelve hours long (#12).
 		expect(classifyFallbackTrigger(result.transportFailure)).toEqual({
-			class: "rate_limit",
+			class: "quota",
 			retryAfterMs: 43_200_000,
 		});
-		// Facts keep only the retry allowlist; the daily headers are dropped today.
-		expect(result.transportFailure?.headers).toEqual({ "retry-after": "43200" });
+		// Exact, so this also pins the allowlist boundary: the gateway sent
+		// `content-type` too, and nothing outside the allowlist survives.
+		expect(result.transportFailure?.headers).toEqual({
+			"retry-after": "43200",
+			"x-vug-daily-limit": String(DAILY_LIMIT),
+			"x-vug-daily-used": String(DAILY_LIMIT),
+			"x-vug-daily-remaining": "0",
+			"x-vug-daily-reset": DAILY_RESET,
+			"x-vug-queue-depth": String(QUEUE_DEPTH),
+			"x-vug-inflight": "0",
+			"x-vug-queued-ms": String(QUEUED_MS),
+		});
+		// Facts ride persisted messages and structuredClone snapshots.
 		expect(() => structuredClone(result.transportFailure)).not.toThrow();
 	});
 
@@ -423,7 +448,18 @@ describe("gateway loopback: quota and congestion facts", () => {
 		expect(gateway!.upstreamCalls).toBe(0);
 		expect(result.transportFailure?.status).toBe(503);
 		expect(result.transportFailure?.providerCode).toBe("queue_timeout");
+		// Congestion keeps the `server` class; the code and the queue facts are
+		// what a surface distinguishes it by, not a new class (#12).
 		expect(classifyFallbackTrigger(result.transportFailure)).toEqual({ class: "server", retryAfterMs: 5_000 });
+		// The gateway sent no daily headers here, so none appear: retention
+		// preserves what arrived rather than filling the allowlist in.
+		expect(result.transportFailure?.headers).toEqual({
+			"retry-after": "5",
+			"x-vug-queue-depth": String(QUEUE_DEPTH),
+			"x-vug-inflight": "0",
+			"x-vug-queued-ms": String(QUEUED_MS),
+		});
+		expect(() => structuredClone(result.transportFailure)).not.toThrow();
 	});
 
 	it("classifies a queue_full 503 the same way, distinguished only by the code", async () => {
@@ -436,34 +472,18 @@ describe("gateway loopback: quota and congestion facts", () => {
 		expect(result.transportFailure?.status).toBe(503);
 		expect(result.transportFailure?.openaiErrorCode).toBe("queue_full");
 		expect(classifyFallbackTrigger(result.transportFailure)).toEqual({ class: "server", retryAfterMs: 5_000 });
-	});
-
-	// The remaining checklist items in #16 need work that is not on dev yet.
-	// Each body asserts the target behaviour, so `bun test --todo` reports these
-	// as still pending rather than as unexpectedly passing, and the day the
-	// dependency lands the fix is to delete `.todo`.
-	it.todo("retains x-vug-daily-* on transport facts and classifies daily_token_limit as quota: waits for #12", async () => {
-		const { model, apiKey } = await connect();
-		gateway!.scriptChat({ kind: "daily_token_limit" });
-		const result = await streamSimple(model, userContext(), { apiKey, requestMaxRetries: 0 }).result();
-		expect(classifyFallbackTrigger(result.transportFailure).class).toBe("quota");
-		expect(result.transportFailure?.headers).toMatchObject({
-			"x-vug-daily-limit": expect.any(String),
-			"x-vug-daily-used": expect.any(String),
-			"x-vug-daily-remaining": expect.any(String),
+		expect(result.transportFailure?.headers).toEqual({
+			"retry-after": "5",
+			"x-vug-queue-depth": String(QUEUE_DEPTH),
+			"x-vug-inflight": "0",
+			"x-vug-queued-ms": String(QUEUED_MS),
 		});
 	});
 
-	it.todo("retains x-vug-queue-depth/inflight on 503 transport facts: waits for #12", async () => {
-		const { model, apiKey } = await connect();
-		gateway!.scriptChat({ kind: "queue_timeout" });
-		const result = await streamSimple(model, userContext(), { apiKey, requestMaxRetries: 0 }).result();
-		expect(result.transportFailure?.headers).toMatchObject({
-			"x-vug-queue-depth": expect.any(String),
-			"x-vug-inflight": expect.any(String),
-		});
-	});
-
+	// The last checklist item in #16 needs work that is not on dev yet. The body
+	// asserts the target behaviour, so `bun test --todo` reports it as still
+	// pending rather than as unexpectedly passing, and the day #13 lands the fix
+	// is to delete `.todo`.
 	it.todo("updates the gateway quota observer from success and failure headers: waits for #13", () => {
 		// #13 adds the observer that reads x-vug-daily-* off onResponse and off
 		// the #12 failure facts. There is no such module on dev to import yet, so

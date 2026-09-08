@@ -81,9 +81,9 @@ export interface FakeGatewayOptions {
 	/** Tokens already spent before the test starts. */
 	dailyUsed?: number;
 	/**
-	 * Value for `x-vug-daily-reset`, omitted from responses when unset. Kept
-	 * unset by every case today: the reset display is the #13 todo, and until
-	 * then the point being fixed is that the client invents no reset of its own.
+	 * Value for `x-vug-daily-reset`, omitted from responses when unset. Both
+	 * states are exercised: set, so the header is retained on quota facts;
+	 * unset, so a client that never received a reset invents none of its own.
 	 */
 	dailyReset?: string;
 	/** Reported in `x-vug-queue-depth`. */
