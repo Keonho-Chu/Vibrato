@@ -6,6 +6,7 @@
  * shorthand, and loopback discovery is only an extra convenience on the same
  * screen. Everything here is pure logic: no TUI, no prompts, no throwing.
  */
+import type { AuthStorage } from "../session/auth-storage";
 import { addApiCompatibleProvider, isLocalHttpHost, type ProviderSetupResult } from "./provider-onboarding";
 
 const DEFAULT_PROBE_TIMEOUT_MS = 5_000;
@@ -285,13 +286,40 @@ function resolveCandidateBaseUrls(candidate: LoopbackCandidate): string[] {
  * keyless endpoint gets the same optional-credential `openaiCompat` entry the
  * CLI path writes. Replaces an existing `local` provider: reconnecting to a
  * different box is the whole point of the screen.
+ *
+ * A key never lands in `models.yml`; it is stored as a credential. From inside
+ * a running session pass that session's `authStorage`, or the session keeps
+ * treating the endpoint as unauthenticated until the next start.
  */
-export async function registerLocalEndpoint(input: { baseUrl: string; apiKey?: string }): Promise<ProviderSetupResult> {
+export async function registerLocalEndpoint(input: {
+	baseUrl: string;
+	apiKey?: string;
+	authStorage?: AuthStorage;
+}): Promise<ProviderSetupResult> {
 	const apiKey = input.apiKey?.trim();
 	return addApiCompatibleProvider({
 		preset: "local",
 		baseUrl: input.baseUrl,
 		...(apiKey ? { apiKey } : {}),
+		...(input.authStorage ? { authStorage: input.authStorage } : {}),
 		force: true,
 	});
+}
+
+/**
+ * The inline error for an endpoint that was registered but is not usable. The
+ * screen has already proved the key against the server, so a discovery that
+ * ends anywhere but `ok` means the credential did not reach the session, or the
+ * server changed its answer between the probe and the refresh.
+ */
+export function describeUnusableEndpoint(
+	providerId: string,
+	state: { status: string; error?: string } | undefined,
+): string {
+	if (!state || state.status === "unauthenticated") {
+		return `The API key for '${providerId}' was not saved, so the endpoint would be used without it. Try connecting again.`;
+	}
+	if (state.status === "empty") return `'${providerId}' listed no models after setup.`;
+	const detail = state.error ? `: ${state.error}` : ".";
+	return `'${providerId}' could not list its models after setup${detail}`;
 }

@@ -1213,6 +1213,19 @@ export interface LongContextPricing {
 	cost: ModelCost;
 }
 
+/**
+ * Capability facts the serving endpoint advertised for a discovered model
+ * (the `vibrato` object on its OpenAI-style models-list entry). Only fields
+ * that describe what the model can do are carried: a hint can never redirect a
+ * request or change its credentials.
+ */
+export interface DiscoveredModelHint {
+	name?: string;
+	reasoning?: boolean;
+	thinking?: ThinkingConfig;
+	compat?: Pick<OpenAICompat, "supportsReasoningEffort" | "reasoningContentField" | "thinkingFormat">;
+}
+
 export interface Model<TApi extends Api = any> {
 	id: string;
 	name: string;
@@ -1238,6 +1251,12 @@ export interface Model<TApi extends Api = any> {
 	maxTokens: number;
 	/** Explicit models.yml/model-override authority; absent keeps the safe transport default. */
 	maxTokensSource?: ModelMaxTokensSource;
+	/**
+	 * What the endpoint advertised about this model at discovery time. Kept on
+	 * the model so a cached discovery restores it; the registry applies it after
+	 * provider overrides and before the user's model overrides.
+	 */
+	discoveryHint?: DiscoveredModelHint;
 	headers?: Record<string, string>;
 	/**
 	 * Streaming transport override. When `"pi-native"`, `streamSimple` routes

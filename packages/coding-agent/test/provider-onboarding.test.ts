@@ -421,6 +421,37 @@ describe("provider onboarding setup core", () => {
 		}
 	});
 
+	it("writes a literal key through the caller's AuthStorage when one is given", async () => {
+		const modelsPath = await tempModelsPath();
+		const live = await AuthStorage.create(getAgentDbPath());
+		try {
+			await addApiCompatibleProvider({
+				compatibility: "openai",
+				providerId: "live-store-provider",
+				baseUrl: "https://api.example.com/v1",
+				apiKey: "live-secret",
+				models: ["example-model"],
+				modelsPath,
+				authStorage: live,
+			});
+			// The instance the caller holds sees the credential without a reread ...
+			expect(await live.getApiKey("live-store-provider")).toBe("live-secret");
+			expect(await Bun.file(modelsPath).text()).not.toContain("live-secret");
+		} finally {
+			live.close();
+		}
+		// ... and the row is in the shared database for the next process.
+		const store = await SqliteAuthCredentialStore.open(getAgentDbPath());
+		try {
+			expect(store.listAuthCredentials("live-store-provider")[0]?.credential).toEqual({
+				type: "api_key",
+				key: "live-secret",
+			});
+		} finally {
+			store.close();
+		}
+	});
+
 	it("stores literal keys in the canonical agent database with a custom models path", async () => {
 		tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "vib-provider-onboarding-"));
 		setAgentDir(path.join(tempRoot, "agent"));

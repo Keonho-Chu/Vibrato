@@ -455,6 +455,26 @@ Use provider-level `headers` for proxy-required headers. Keep the provider `api`
 
 For an unknown custom endpoint, `reasoning: true` declares model capability but does not prove the proxy accepts a control parameter. A familiar provider id or model-family name is not transport evidence: configurable LiteLLM/vLLM/local endpoints still fail closed. Add `thinking` and `compat.supportsReasoningEffort: true` only when the endpoint documents OpenAI-style `reasoning_effort`; set `compat.thinkingFormat` as well when it uses a different documented request shape. Otherwise Vibrato keeps reasoning-level controls unavailable and omits the parameter.
 
+#### Server-advertised model hints
+
+A server that fronts the model (a gateway or proxy) can advertise those same facts itself, so that a discovered endpoint needs no `models.yml` declaration: any entry in its `/v1/models` response may carry a `vibrato` object. This applies to every provider whose models come from an OpenAI-style models list, which includes the `local` endpoint the connect screen registers and any `discovery.type: openai-models-list | vllm | sglang` provider.
+
+```json
+{
+  "id": "VIB",
+  "max_model_len": 212144,
+  "vibrato": {
+    "reasoning": true,
+    "thinking": { "minLevel": "low", "maxLevel": "xhigh", "levels": ["low", "medium", "xhigh"], "defaultLevel": "medium", "mode": "effort" },
+    "compat": { "supportsReasoningEffort": true, "reasoningContentField": "reasoning" }
+  }
+}
+```
+
+The hint may set `name`, `reasoning`, `thinking`, and three `compat` fields: `supportsReasoningEffort`, `reasoningContentField`, `thinkingFormat`. Nothing else is read, so a hint cannot redirect a request or change its credentials; unknown keys are dropped rather than rejected, and a hint that fails validation is ignored whole with a warning. Validation covers meaning as well as shape: `thinking.minLevel` must not be above `maxLevel`, `levels` (when given) must be non-empty and lie inside that range, and `defaultLevel` must be one of the advertised levels. `levels` is normalized to ascending order without duplicates.
+
+The hint lifts only what the registry assumed on its own, such as the `supportsReasoningEffort: false` default every bare endpoint starts with. Anything you declared stays ahead of it: a provider-level `compat` in `models.yml`, a same-id entry under `models:` (its `name`, `reasoning`, `thinking`, and `compat`), and `modelOverrides`, in that order of increasing precedence. Fields a declaration leaves unset are still filled from the hint. Hinted models are cached like any other discovered model, so the thinking-level picker is available at the next start without a request, and the same precedence applies to the cached copy.
+
 `auth` selects the transport scheme only; it never supplies a credential. A provider that declares `models:` must therefore also declare where its key comes from, and `models.yml` validation rejects the config before model discovery otherwise:
 
 | Intent | Required keys |
@@ -731,6 +751,8 @@ Runtime discovery fetches models (`GET /v1/models`) and synthesizes model entrie
 `local` (aliases `local-llm`, `local-endpoint`, `endpoint`) is the primary self-hosted provider in the default [allowlist](#supported-providers): any OpenAI-compatible LLM server — vLLM, SGLang, Ollama, LM Studio, llama.cpp, or anything else that speaks the same API. The common case is a server on another machine, such as a GPU box on the LAN, not a server on the same machine as Vibrato. On first launch, if Vibrato has no usable model configured, it opens a single connect screen before falling through to the rest of the provider menu (Esc skips it); the same screen opens any time via `/provider`. Claude and OpenAI Codex sign-in (`/login`) are alternatives to a local endpoint, not the primary path.
 
 The connect screen is one address field, not a wizard: type the server's address — for example `192.168.0.10:8000` or `gpu-server.lan:8000` — and it fills in the scheme and `/v1` path for you. The inferred scheme is plain `http://` for private-network (10/8, 172.16/12, 192.168/16, link-local) and `.local`/`.internal`/`.lan` addresses, and `https://` for anything else. That inference is only a default: type the scheme yourself and it is kept as typed, so a corporate network that serves its GPU boxes over plain http on addresses outside those ranges (`http://172.170.0.52:8000`, say) works by spelling out `http://`. There is no separate API-key screen: Vibrato probes the endpoint first and only reveals a key field inline, under the address, when the server answers 401 or 403. There is no confirmation step either; a bad address or a failed probe surfaces its error inline so you can edit and retry in place. As a minor convenience on the same screen, any OpenAI-compatible server already listening on a well-known loopback port on your own machine (see the implicit-discovery sections below) is found by a fast background probe and offered as a selectable row — it is never a separate step, and it does not change how you connect to a remote server. Once the connection succeeds, Vibrato lists the models the server reports so you can pick one immediately; if the server reports exactly one model, it is selected automatically.
+
+When the server answers `401` to the first probe, the screen reveals an API key field on the same screen. A key entered there is stored as a credential in the agent database (`agent.db`, mode 0600) under provider id `local`; it is never written into `models.yml`, whose entry stays `auth: apiKey` with `openai-models-list` discovery and no key. The key is written through the running session's credential store, so the session that connected uses it at once, and every later start reads it from the database. If the endpoint is still not usable after the connection is saved, the screen reports that inline instead of announcing success. `vib -p --model local/<id>` warms the endpoint's discovery before resolving the model, so a discovery-only provider works non-interactively without pinning `models:`.
 
 `vib setup provider --preset local --base-url <url>` is unchanged: it writes an explicit `providers:` entry with discovery type `openai-models-list`, registered under provider id `local` in `models.yml`.
 

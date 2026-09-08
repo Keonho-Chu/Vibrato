@@ -6,6 +6,7 @@ import {
 	managedCursorFallbackUnavailableReason,
 	parseModelPattern,
 	parseModelString,
+	refreshDiscoveryProviderForSelector,
 	resolveAgentModelPatterns,
 	resolveCliModel,
 	resolveModelChainWithAuth,
@@ -1355,5 +1356,75 @@ describe("preset-equivalent alias resolution", () => {
 
 		expect(result.model).toBe(aliasVariantModels[0]);
 		expect(result.warning).toBeUndefined();
+	});
+});
+
+describe("refreshDiscoveryProviderForSelector", () => {
+	function fakeRegistry(options: { models?: string[]; status?: string; discovered?: string[] }) {
+		let models = (options.models ?? []).map(provider => ({ provider }));
+		const refreshed: string[] = [];
+		return {
+			refreshed,
+			registry: {
+				getAll: () => models,
+				getProviderDiscoveryState: (provider: string) =>
+					options.status === undefined ? undefined : { provider, status: options.status },
+				refreshProvider: async (providerId: string) => {
+					refreshed.push(providerId);
+					models = [...models, ...(options.discovered ?? []).map(provider => ({ provider }))];
+				},
+			},
+		};
+	}
+
+	test("refreshes an undiscovered provider named by --model provider/id", async () => {
+		const { registry, refreshed } = fakeRegistry({ status: "idle", discovered: ["local"] });
+		expect(await refreshDiscoveryProviderForSelector(registry, { model: "local/VIB" })).toBe(true);
+		expect(refreshed).toEqual(["local"]);
+		expect(registry.getAll()).toEqual([{ provider: "local" }]);
+	});
+
+	test("takes the provider from --provider and ignores case and a thinking suffix", async () => {
+		const { registry, refreshed } = fakeRegistry({ status: "idle" });
+		expect(await refreshDiscoveryProviderForSelector(registry, { provider: "Local", model: "VIB:medium" })).toBe(
+			true,
+		);
+		expect(refreshed).toEqual(["local"]);
+	});
+
+	test("does nothing when the provider already has models, is not discoverable, or was already discovered", async () => {
+		const present = fakeRegistry({ models: ["local"], status: "idle" });
+		expect(await refreshDiscoveryProviderForSelector(present.registry, { model: "local/VIB" })).toBe(false);
+		const notDiscoverable = fakeRegistry({});
+		expect(await refreshDiscoveryProviderForSelector(notDiscoverable.registry, { model: "local/VIB" })).toBe(false);
+		const alreadyEmpty = fakeRegistry({ status: "empty" });
+		expect(await refreshDiscoveryProviderForSelector(alreadyEmpty.registry, { model: "local/VIB" })).toBe(false);
+		expect([present.refreshed, notDiscoverable.refreshed, alreadyEmpty.refreshed]).toEqual([[], [], []]);
+	});
+
+	test("leaves a usable cache to startup admission, which costs no request", async () => {
+		const { registry, refreshed } = fakeRegistry({ status: "cached" });
+		expect(await refreshDiscoveryProviderForSelector(registry, { model: "local/VIB" })).toBe(false);
+		expect(refreshed).toEqual([]);
+	});
+
+	test("cannot name a provider from a bare model id and leaves it to the lookup", async () => {
+		const { registry, refreshed } = fakeRegistry({ status: "idle" });
+		expect(await refreshDiscoveryProviderForSelector(registry, { model: "VIB" })).toBe(false);
+		expect(refreshed).toEqual([]);
+	});
+
+	test("swallows a discovery failure so the lookup reports the missing model", async () => {
+		const refreshed: string[] = [];
+		const registry = {
+			getAll: () => [],
+			getProviderDiscoveryState: () => ({ status: "idle" }),
+			refreshProvider: async (providerId: string) => {
+				refreshed.push(providerId);
+				throw new Error("HTTP 503");
+			},
+		};
+		expect(await refreshDiscoveryProviderForSelector(registry, { model: "local/VIB" })).toBe(true);
+		expect(refreshed).toEqual(["local"]);
 	});
 });

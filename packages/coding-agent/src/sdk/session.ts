@@ -60,6 +60,7 @@ import {
 	formatModelString,
 	parseModelPattern,
 	parseModelString,
+	refreshDiscoveryProviderForSelector,
 	resolveAllowedModels,
 	resolveModelChainWithAuth,
 	resolveModelRoleValue,
@@ -3385,6 +3386,11 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 
 		// Resolve deferred --model pattern now that extension models are registered.
 		if (!model && options.modelPattern && !startupCredentialModelRejected) {
+			// A provider whose models come only from discovery has none until a
+			// refresh runs. The cached admission above did not produce a model, so
+			// this is the last chance before "not found" for a `--model local/<id>`
+			// that the server does serve; a usable cache is left untouched.
+			await refreshDiscoveryProviderForSelector(modelRegistry, { model: options.modelPattern });
 			const availableModels = modelRegistry.getAll();
 			const matchPreferences = {
 				usageOrder: settings.getStorage()?.getModelUsageOrder(),

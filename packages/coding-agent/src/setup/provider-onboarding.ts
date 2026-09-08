@@ -22,6 +22,14 @@ export interface ProviderSetupInput {
 	models?: string[];
 	modelsPath?: string;
 	force?: boolean;
+	/**
+	 * The running session's credential store, when there is one. A literal key
+	 * is written through it, so the session sees the credential at once. Without
+	 * it the key goes into the agent database through a private store, which a
+	 * session that is already open never rereads: its registry then reports the
+	 * provider unauthenticated and skips discovery, even though the row is there.
+	 */
+	authStorage?: AuthStorage;
 }
 
 export interface ProviderSetupResult {
@@ -398,6 +406,8 @@ export async function addApiCompatibleProvider(input: ProviderSetupInput): Promi
 	}
 	if (validated.credentialSource === "env") {
 		if (!optionalAuth) provider.apiKeyEnv = validated.apiKey;
+	} else if (input.authStorage) {
+		await input.authStorage.set(validated.providerId, { type: "api_key", key: validated.apiKey });
 	} else {
 		const authStorage = await AuthStorage.create(getAgentDbPath());
 		try {
