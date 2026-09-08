@@ -1114,6 +1114,30 @@ plus the OpenAI strict-mode sanitize+enforce pipeline). See
 edge cases (local `$ref` inlining, single-item `allOf` collapse,
 `anyOf`-wrapper description hoist, enum/const primitive-type inference)
 and the per-provider dispatcher mapping.
+
+## Gateway connections
+
+A usage-tracking gateway (e.g. the VUG-style relay in `LGJ/vib-usage-gateway`) sits between the client and the real provider as an `openai-completions`-compatible endpoint. It attributes every call to a session by reading the `session_id` and `x-session-id` request headers that `compat.sendSessionHeaders` adds (see `sendSessionHeaders` under [Compatibility and routing fields](#compatibility-and-routing-fields)). Point `models.yml` at the gateway and opt in explicitly:
+
+```yaml
+providers:
+  usage-gateway:
+    baseUrl: https://gateway.internal.example.com/v1
+    apiKeyEnv: VIB_GATEWAY_API_KEY
+    api: openai-completions
+    compat:
+      sendSessionHeaders: true
+    models:
+      - id: relay-model
+        name: Relay Model
+        contextWindow: 128000
+        maxTokens: 8192
+```
+
+The opt-in matters: `sendSessionHeaders` defaults to `false`, so a `models.yml` entry that omits it still reaches the gateway and still gets a response, but the gateway cannot tie the call to a session and logs it as `no-session`. There is no client-side error or warning for this today, so a gateway provider missing the flag fails silently from the client's point of view — verify `compat.sendSessionHeaders: true` is present whenever `baseUrl` points at a usage gateway.
+
+Bulk-deployment scripts that generate `models.yml` for a fleet of machines must include the `compat.sendSessionHeaders: true` line for every gateway provider entry they write; that requirement, along with the full gateway-side client setup, is documented in `LGJ/vib-usage-gateway`'s `docs/client-setup.md`.
+
 ## Practical examples
 
 ### Local OpenAI-compatible endpoint (no auth)

@@ -556,14 +556,25 @@ const usageSegment: StatusLineSegment = {
 		}
 		const mode = ctx.options.usage?.mode === "remaining" ? "remaining" : "used";
 		const parts = u.windows.map(window => {
-			const displayPercent =
-				mode === "remaining" ? Math.max(0, Math.min(100, 100 - window.percent)) : window.percent;
-			const pctText = theme.fg(pickUsageColor(displayPercent, mode), `${Math.round(displayPercent)}%`);
+			// A window without a percent reported one only as a condition (an
+			// observed gateway that has sent congestion but never a budget). Draw
+			// the label and the condition rather than a percentage nobody sent.
+			const pctText =
+				window.percent === undefined
+					? ""
+					: (() => {
+							const displayPercent =
+								mode === "remaining"
+									? Math.max(0, Math.min(100, 100 - window.percent))
+									: Math.max(0, Math.min(100, window.percent));
+							return ` ${theme.fg(pickUsageColor(displayPercent, mode), `${Math.round(displayPercent)}%`)}`;
+						})();
 			const reset =
 				window.resetValue !== undefined && window.resetUnit !== undefined
 					? theme.fg("muted", ` (${formatUsageReset(window.resetValue, window.resetUnit)})`)
 					: "";
-			return `${window.label} ${pctText}${reset}`;
+			const note = window.note ? theme.fg("warning", ` ${window.note}`) : "";
+			return `${window.label}${pctText}${reset}${note}`;
 		});
 		const content = withIcon(theme.icon.time, parts.join(theme.sep.dot));
 		return { content, visible: true };
