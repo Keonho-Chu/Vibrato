@@ -147,8 +147,23 @@ function stringValue(value: unknown): string | undefined {
 	return typeof value === "string" ? value : undefined;
 }
 
-/** Retry-signal headers retained on transport facts; everything else is dropped. */
-const RETAINED_TRANSPORT_HEADERS = ["retry-after", "retry-after-ms"] as const;
+/**
+ * Retry-signal headers retained on transport facts; everything else is
+ * dropped. The `x-vug-*` entries are the Vibrato Usage Gateway's quota and
+ * queue-depth signals; their values are preserved as raw strings and
+ * interpreted by consumers, not by this module.
+ */
+const RETAINED_TRANSPORT_HEADERS = [
+	"retry-after",
+	"retry-after-ms",
+	"x-vug-daily-limit",
+	"x-vug-daily-used",
+	"x-vug-daily-remaining",
+	"x-vug-daily-reset",
+	"x-vug-queue-depth",
+	"x-vug-inflight",
+	"x-vug-queued-ms",
+] as const;
 
 const RETAINED_TRANSPORT_HEADER_SET: ReadonlySet<string> = new Set(RETAINED_TRANSPORT_HEADERS);
 
@@ -305,7 +320,12 @@ function isQuotaCode(code: string | undefined): boolean {
 		code === "quota_exhausted" ||
 		code === "usage_limit_reached" ||
 		code === "usage_not_included" ||
-		code === "out_of_credits"
+		code === "out_of_credits" ||
+		// Vibrato Usage Gateway daily-limit code: a 429 with this code is a
+		// quota exhaustion, not an ordinary rate limit, even though the
+		// gateway's retry-after window can be many hours long. A code-less
+		// 429 from an older gateway still falls through to `rate_limit`.
+		code === "daily_token_limit"
 	);
 }
 

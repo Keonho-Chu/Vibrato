@@ -369,6 +369,90 @@ describe("fallback transport facts", () => {
 		}
 	});
 
+	it("retains the gateway x-vug-* headers and drops other headers, for both Headers and plain-record inputs", () => {
+		const fromHeadersInstance = transportFailureFacts({
+			status: 429,
+			providerCode: "daily_token_limit",
+			headers: new Headers({
+				"x-vug-daily-limit": "1000000",
+				"x-vug-daily-used": "1000000",
+				"x-vug-daily-remaining": "0",
+				"x-vug-daily-reset": "2026-09-09T00:00:00.000Z",
+				"x-vug-queue-depth": "3",
+				"x-vug-inflight": "1",
+				"x-vug-queued-ms": "42",
+				"retry-after": "43200",
+				"set-cookie": "secret=1",
+				"x-request-id": "abc",
+			}),
+		});
+		expect(fromHeadersInstance?.headers).toEqual({
+			"x-vug-daily-limit": "1000000",
+			"x-vug-daily-used": "1000000",
+			"x-vug-daily-remaining": "0",
+			"x-vug-daily-reset": "2026-09-09T00:00:00.000Z",
+			"x-vug-queue-depth": "3",
+			"x-vug-inflight": "1",
+			"x-vug-queued-ms": "42",
+			"retry-after": "43200",
+		});
+		expect(() => structuredClone(fromHeadersInstance)).not.toThrow();
+
+		const fromPlainRecord = transportFailureFacts({
+			status: 429,
+			providerCode: "daily_token_limit",
+			headers: {
+				"X-Vug-Daily-Limit": "1000000",
+				"X-Vug-Queue-Depth": "3",
+				"Set-Cookie": "secret=1",
+			},
+		});
+		expect(fromPlainRecord?.headers).toEqual({
+			"x-vug-daily-limit": "1000000",
+			"x-vug-queue-depth": "3",
+		});
+		expect(() => structuredClone(fromPlainRecord)).not.toThrow();
+	});
+
+	it("classifies daily_token_limit as quota while a code-less 429 stays rate_limit and 503 gateway codes stay server", () => {
+		expect(
+			classifyFallbackTrigger({
+				kind: "transport",
+				status: 429,
+				providerCode: "daily_token_limit",
+				headers: { "retry-after-ms": String(12 * 60 * 60 * 1000) },
+			}),
+		).toEqual({ class: "quota", retryAfterMs: 12 * 60 * 60 * 1000 });
+
+		// Regression: an older gateway that sends a bare 429 with no code must
+		// keep classifying as rate_limit, not quota.
+		expect(
+			classifyFallbackTrigger({
+				kind: "transport",
+				status: 429,
+				headers: { "retry-after-ms": String(12 * 60 * 60 * 1000) },
+			}),
+		).toEqual({ class: "rate_limit", retryAfterMs: 12 * 60 * 60 * 1000 });
+
+		// 503 queue_timeout / queue_full stay `server`; the gateway distinguishes
+		// them via providerCode, not a new trigger class.
+		expect(
+			classifyFallbackTrigger({
+				kind: "transport",
+				status: 503,
+				providerCode: "queue_timeout",
+				headers: { "retry-after-ms": "5000" },
+			}),
+		).toEqual({ class: "server", retryAfterMs: 5000 });
+		expect(
+			classifyFallbackTrigger({
+				kind: "transport",
+				status: 503,
+				providerCode: "queue_full",
+			}),
+		).toEqual({ class: "server" });
+	});
+
 	it("issues an opaque marker for exactly one managed invocation", () => {
 		const token = beginAttempt("provider/model", 3);
 		expect(token).toMatchObject({ modelKey: "provider/model", attemptId: 3 });
