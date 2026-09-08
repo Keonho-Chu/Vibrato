@@ -1363,7 +1363,7 @@ describe("replacement cleanup receipt reconcile TOCTOU resilience", () => {
 		const predecessor = snapshot(predecessorPath);
 		const successor = snapshot(destination);
 		const signedIno = -7_984_882_139_327_873_970n;
-		const pending = path.join(root, `.gjc-replace-receipt-pending-${randomUUID()}.json`);
+		const pending = path.join(root, `.vib-replace-receipt-pending-${randomUUID()}.json`);
 		fs.writeFileSync(
 			pending,
 			JSON.stringify({
@@ -1392,14 +1392,14 @@ describe("replacement cleanup receipt reconcile TOCTOU resilience", () => {
 		const predecessorPath = path.join(root, "predecessor");
 		fs.writeFileSync(predecessorPath, "predecessor\n");
 		const predecessor = snapshot(predecessorPath);
-		const pending = path.join(root, `.gjc-replace-receipt-pending-${randomUUID()}.json`);
+		const pending = path.join(root, `.vib-replace-receipt-pending-${randomUUID()}.json`);
 		fs.writeFileSync(pending, JSON.stringify({ version: 3, legacy: "signed Windows file id" }));
 		const actualReceipt = snapshot(pending);
 		const signedIno = -7_984_882_139_327_873_970n;
 		const unsignedIno = BigInt.asUintN(64, signedIno);
 		const receipt = path.join(
 			root,
-			`.gjc-replace-cleanup-${BigInt(predecessor.dev).toString(16)}-${BigInt(predecessor.ino).toString(16)}-receipt-${BigInt(actualReceipt.dev).toString(16)}-${signedIno.toString(16)}.json`,
+			`.vib-replace-cleanup-${BigInt(predecessor.dev).toString(16)}-${BigInt(predecessor.ino).toString(16)}-receipt-${BigInt(actualReceipt.dev).toString(16)}-${signedIno.toString(16)}.json`,
 		);
 		fs.renameSync(pending, receipt);
 		const actualIno = BigInt(actualReceipt.ino);
@@ -1442,12 +1442,12 @@ describe("replacement cleanup receipt reconcile TOCTOU resilience", () => {
 		const unsignedIno = BigInt.asUintN(64, signedIno);
 		const predecessor = path.join(
 			root,
-			`.gjc-exact-replace-destination-${BigInt(actualPredecessor.dev).toString(16)}-${signedIno.toString(16)}`,
+			`.vib-exact-replace-destination-${BigInt(actualPredecessor.dev).toString(16)}-${signedIno.toString(16)}`,
 		);
 		fs.renameSync(predecessorSeed, predecessor);
 		const receipt = path.join(
 			root,
-			`.gjc-replace-cleanup-${BigInt(actualPredecessor.dev).toString(16)}-${signedIno.toString(16)}.json`,
+			`.vib-replace-cleanup-${BigInt(actualPredecessor.dev).toString(16)}-${signedIno.toString(16)}.json`,
 		);
 		fs.writeFileSync(
 			receipt,
@@ -1491,7 +1491,7 @@ describe("replacement cleanup receipt reconcile TOCTOU resilience", () => {
 
 	it("rejects non-canonical and out-of-range signed receipt file ids", () => {
 		for (const ino of ["-0", "-01", "-8000000000000001"]) {
-			const receipt = path.join(root, `.gjc-replace-cleanup-1-2-receipt-3-${ino}.json`);
+			const receipt = path.join(root, `.vib-replace-cleanup-1-2-receipt-3-${ino}.json`);
 			fs.writeFileSync(receipt, "receipt");
 
 			expect(() => replay(`invalid-signed-${ino}`)).toThrow("managed_replace_cleanup_receipt_invalid");
@@ -1506,7 +1506,7 @@ describe("replacement cleanup receipt reconcile TOCTOU resilience", () => {
 		fs.writeFileSync(destination, "successor\n");
 		fs.writeFileSync(staging, "prepared\n");
 		const identity = snapshot(destination);
-		const pending = path.join(root, `.gjc-replace-receipt-pending-${randomUUID()}.json`);
+		const pending = path.join(root, `.vib-replace-receipt-pending-${randomUUID()}.json`);
 		fs.writeFileSync(
 			pending,
 			JSON.stringify({

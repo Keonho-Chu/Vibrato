@@ -195,10 +195,6 @@ exec "${binDir}/mv" "$@"
 	}
 }
 
-interface InstallerOptions {
-	cwd?: string;
-	script?: string;
-}
 
 async function runInstaller(
 	args: string[],
@@ -524,27 +520,27 @@ describe("install.sh binary-first contract", () => {
 	});
 
 	test("reclaims a lock whose recorded owner is no longer running", async () => {
-		const payload = fakeGjcScript({ version: VERSION });
+		const payload = fakeVibScript({ version: VERSION });
 		writeCurlShim(sandbox.shimDir, {
 			assets: {
 				[hostBinaryName()]: payload,
-				"gajae-release-binaries.sha256": `${sha256(payload)}  ${hostBinaryName()}\n`,
+				"vibrato-release-binaries.sha256": `${sha256(payload)}  ${hostBinaryName()}\n`,
 			},
 		});
 		const lockFile = path.join(sandbox.installDir, ".vib-install.lock");
 		fs.writeFileSync(lockFile, "999999 stale-nonce\n");
 		const result = await runInstaller([]);
 		expect(result.exitCode).toBe(0);
-		expect(fs.readFileSync(path.join(sandbox.installDir, "gjc"), "utf8")).toBe(payload);
+		expect(fs.readFileSync(path.join(sandbox.installDir, "vib"), "utf8")).toBe(payload);
 		expect(fs.existsSync(lockFile)).toBe(false);
 	});
 
 	test("allows only one concurrent installer to reclaim the same stale lock", async () => {
-		const payload = fakeGjcScript({ version: VERSION });
+		const payload = fakeVibScript({ version: VERSION });
 		writeCurlShim(sandbox.shimDir, {
 			assets: {
 				[hostBinaryName()]: payload,
-				"gajae-release-binaries.sha256": `${sha256(payload)}  ${hostBinaryName()}\n`,
+				"vibrato-release-binaries.sha256": `${sha256(payload)}  ${hostBinaryName()}\n`,
 			},
 		});
 		const lockFile = path.join(sandbox.installDir, ".vib-install.lock");
@@ -558,7 +554,7 @@ describe("install.sh binary-first contract", () => {
 		const successful = results.filter(result => result.exitCode === 0);
 		expect(successful).toHaveLength(1);
 		expect(results.some(result => (result.stderr + result.stdout).includes("Another Vibrato installer is already running"))).toBe(true);
-		expect(fs.readFileSync(path.join(sandbox.installDir, "gjc"), "utf8")).toBe(payload);
+		expect(fs.readFileSync(path.join(sandbox.installDir, "vib"), "utf8")).toBe(payload);
 		expect(fs.existsSync(lockFile)).toBe(false);
 		expect(fs.existsSync(`${lockFile}.reclaim`)).toBe(false);
 	});

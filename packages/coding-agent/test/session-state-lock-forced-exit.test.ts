@@ -8,7 +8,7 @@ import {
 	SessionStateLockUnavailableError,
 	setSessionStateLockNativeBindings,
 	withSessionStateFileLock,
-} from "../src/gjc-runtime/session-state-lock";
+} from "../src/vib-runtime/session-state-lock";
 import { exactIdentityNativeBindings } from "./helpers/exact-identity-natives";
 
 const probe = path.join(import.meta.dir, "fixtures", "session-state-lock-forced-exit-probe.ts");
@@ -58,12 +58,12 @@ afterEach(async () => {
 
 describe("session-state lock forced-exit recovery", () => {
 	it("keeps SIGTERM bounded and immediately reclaims the dead cleanup owner", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-forced-exit-lock-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-forced-exit-lock-"));
 		roots.push(root);
 		const stateFile = path.join(root, "runtime-state.json");
 		const child = Bun.spawn([process.execPath, probe, root], {
 			cwd: path.resolve(import.meta.dir, "../../.."),
-			env: { ...process.env, GJC_CLEANUP_DEADLINE_MS: "100" },
+			env: { ...process.env, VIB_CLEANUP_DEADLINE_MS: "100" },
 			stdout: "pipe",
 			stderr: "pipe",
 		});
@@ -96,7 +96,7 @@ describe("session-state lock forced-exit recovery", () => {
 	}, 10_000);
 
 	it("keeps backoff when an EEXIST claim disappears before inspection", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-transition-disappeared-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-transition-disappeared-"));
 		roots.push(root);
 		const { stateFile, transitionDir } = await seedDeadTransition(root, "disappeared-before-inspection");
 		installLocalIdentityBindings();
@@ -115,7 +115,7 @@ describe("session-state lock forced-exit recovery", () => {
 	});
 
 	it("keeps backoff when exact removal reports a lost not_found race", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-transition-not-found-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-transition-not-found-"));
 		roots.push(root);
 		const { stateFile, transitionDir } = await seedDeadTransition(root, "native-not-found-race");
 		installLocalIdentityBindings();
@@ -135,7 +135,7 @@ describe("session-state lock forced-exit recovery", () => {
 	});
 
 	it("immediately retries after a durable cleanup_pending transition detach", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-transition-cleanup-pending-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-transition-cleanup-pending-"));
 		roots.push(root);
 		const { stateFile, transitionDir } = await seedDeadTransition(root, "cleanup-pending-reclaimed");
 		installLocalIdentityBindings();
@@ -160,7 +160,7 @@ describe("session-state lock forced-exit recovery", () => {
 	});
 
 	it("refuses a cleanup_pending transition receipt that is not durable", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-transition-cleanup-refused-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-transition-cleanup-refused-"));
 		roots.push(root);
 		const { stateFile, transitionDir } = await seedDeadTransition(root, "cleanup-pending-refused");
 		const detachedPath = `${transitionDir}.removing`;
@@ -186,7 +186,7 @@ describe("session-state lock forced-exit recovery", () => {
 	});
 
 	it("bounds repeated successful dead-claim reclaims without sleeping", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-transition-reclaim-loop-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-transition-reclaim-loop-"));
 		roots.push(root);
 		const { stateFile, transitionDir } = await seedDeadTransition(root, "reclaim-loop-0");
 		const ownerFile = `${transitionDir}.owner`;
@@ -232,7 +232,7 @@ describe("session-state lock forced-exit recovery", () => {
 	});
 
 	it("immediately retries after exact removal of a dead legacy transition record", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-legacy-transition-reclaimed-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-legacy-transition-reclaimed-"));
 		roots.push(root);
 		const stateFile = path.join(root, "runtime-state.json");
 		const transitionFile = `${stateFile}.lock.transition`;
@@ -253,7 +253,7 @@ describe("session-state lock forced-exit recovery", () => {
 	});
 
 	it("keeps backoff when a dead legacy transition record disappears during exact removal", async () => {
-		const root = await fs.mkdtemp(path.join(os.tmpdir(), "gjc-legacy-transition-not-found-"));
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-legacy-transition-not-found-"));
 		roots.push(root);
 		const stateFile = path.join(root, "runtime-state.json");
 		const transitionFile = `${stateFile}.lock.transition`;

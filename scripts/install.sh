@@ -408,7 +408,7 @@ acquire_lock() {
     LOCK_NONCE=$(od -An -N8 -tx1 /dev/urandom 2>/dev/null | tr -d ' \n')
     [ -n "$LOCK_NONCE" ] || LOCK_NONCE="$$.$RANDOM"
     if [ -e "$reclaim_claim" ]; then
-        die "Another GJC installer is already recovering the install lock in ${INSTALL_DIR} (claim: ${reclaim_claim}). Remove a leftover lock file only after confirming no installer is running."
+        die "Another Vibrato installer is already recovering the install lock in ${INSTALL_DIR} (claim: ${reclaim_claim}). Remove a leftover lock file only after confirming no installer is running."
     fi
     if try_publish_lock_file "$lock" 2>/dev/null; then
         LOCK_FILE="$lock"

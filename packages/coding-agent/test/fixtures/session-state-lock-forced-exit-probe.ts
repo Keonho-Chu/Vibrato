@@ -1,11 +1,11 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import "@gajae-code/utils";
+import "@vib-rato/utils";
 import {
 	SessionStateLockTestHooks,
 	setSessionStateLockNativeBindings,
 	withSessionStateFileLock,
-} from "../../src/gjc-runtime/session-state-lock";
+} from "../../src/vib-runtime/session-state-lock";
 import { exactIdentityNativeBindings } from "../helpers/exact-identity-natives";
 
 const root = process.argv[2];

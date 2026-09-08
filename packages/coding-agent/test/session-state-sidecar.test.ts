@@ -9,7 +9,7 @@ import { postmortem } from "@vib-rato/utils";
 import { FileLockTestHooks, processStartTime } from "../src/config/file-lock";
 import { loadInstallationHostId } from "../src/config/machine-identity";
 import { sessionRuntimeDir } from "../src/vib-runtime/session-layout";
-import { SessionStateLockUnavailableError, withSessionStateFileLock } from "../src/vib-runtime/session-state-lock";
+import { SessionStateLockUnavailableError } from "../src/vib-runtime/session-state-lock";
 import {
 	canonicalCoordinatorSidecarPayload,
 	classifyRuntimeToolActivity,
@@ -584,8 +584,8 @@ describe("coordinator runtime state sidecar", () => {
 	])("does not echo structurally invalid marker field %s into diagnostics", async field => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "invalid-field.json");
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "invalid-field";
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "invalid-field";
 		const evidence = JSON.stringify({
 			schema_version: 1,
 			session_id: "invalid-field",
@@ -612,8 +612,8 @@ describe("coordinator runtime state sidecar", () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "transition-timeout-state.json");
 		const transitionDir = `${stateFile}.lock.transition`;
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[GJC_COORDINATOR_SESSION_ID_ENV] = "transition-timeout";
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "transition-timeout";
 
 		await persistCoordinatorRuntimeStateFromEvent(
 			{ type: "turn_start" },
@@ -1288,7 +1288,7 @@ describe("coordinator runtime state sidecar", () => {
 		// refused as if the file were corrupt.
 		const root = await tempRoot();
 		const sessionId = "travelled-session";
-		const runtimeDir = path.join(root, ".gjc", `_session-${sessionId}`, "runtime");
+		const runtimeDir = path.join(root, ".vib", `_session-${sessionId}`, "runtime");
 		await fs.mkdir(runtimeDir, { recursive: true });
 		const stateFile = path.join(runtimeDir, "runtime-state.json");
 		await Bun.write(
@@ -1303,7 +1303,7 @@ describe("coordinator runtime state sidecar", () => {
 				session_file: null,
 			}),
 		);
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
 
 		await persistCoordinatorRuntimeStateFromEvent(
 			{ type: "turn_start" },
@@ -1329,7 +1329,7 @@ describe("coordinator runtime state sidecar", () => {
 			{ state: "running", live: false },
 		]) {
 			const root = await tempRoot();
-			const runtimeDir = path.join(root, ".gjc", `_session-${sessionId}`, "runtime");
+			const runtimeDir = path.join(root, ".vib", `_session-${sessionId}`, "runtime");
 			await fs.mkdir(runtimeDir, { recursive: true });
 			const stateFile = path.join(runtimeDir, "runtime-state.json");
 			await Bun.write(
@@ -1343,7 +1343,7 @@ describe("coordinator runtime state sidecar", () => {
 					...marker,
 				}),
 			);
-			process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+			process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
 			const before = await Bun.file(stateFile).text();
 
 			await expect(
@@ -1376,7 +1376,7 @@ describe("coordinator runtime state sidecar", () => {
 				session_file: null,
 			}),
 		);
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
 		const before = await Bun.file(stateFile).text();
 
 		await expect(
@@ -1401,12 +1401,16 @@ describe("coordinator runtime state sidecar", () => {
 				session_file: null,
 			}),
 		);
-		process.env[GJC_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
 
 		const failure = await persistCoordinatorRuntimeStateFromEvent(
 			{ type: "turn_start" },
 			{ sessionId, cwd: root, sessionFile: null },
-		).catch((error: unknown) => error as Error);
+		).then(
+			() => undefined,
+			(error: unknown) => error as Error,
+		);
+		if (!(failure instanceof Error)) throw new Error("expected the foreign-workspace marker to reject");
 
 		expect(failure).toBeInstanceOf(Error);
 		expect(failure.name).toBe("ForeignRuntimeStateError");
