@@ -957,6 +957,7 @@ export class StatusLineComponent implements Component {
 	#priorityItems(seg: CollectedStatusSegments): {
 		include: PriorityItemSet;
 		inlineContextPct: boolean;
+		usage: boolean;
 	} {
 		const collected = (id: StatusLineSegmentId): boolean =>
 			seg.leftSegIds.includes(id) || seg.rightSegIds.includes(id);
@@ -966,6 +967,11 @@ export class StatusLineComponent implements Component {
 
 		return {
 			inlineContextPct,
+			// A usage window is a limit the session is about to be stopped by, so
+			// it outranks the counters that merely say how much has been spent.
+			// Only a segment with something to draw counts: a `usage` segment that
+			// has observed nothing renders nothing and carries no priority.
+			usage: collected("usage") && (seg.ctx.usage?.windows.length ?? 0) > 0,
 			include: {
 				context:
 					seg.ctx.contextWindow > 0 && (collected("context_pct") || (collected("model") && inlineContextPct)),
@@ -979,10 +985,18 @@ export class StatusLineComponent implements Component {
 	 * Eviction rank: 0 is ordinary telemetry and goes first, 3 is context % and
 	 * goes last. The model name outranks telemetry but loses to the goal
 	 * indicator, matching context % > goal > model.
+	 *
+	 * A usage window shares the model's rank. It has to outrank the token and
+	 * cache counters, which sit beside it near the tail and would otherwise
+	 * survive it: a counter says how much has been spent, while the window says
+	 * how much is left before the gateway stops answering, and losing the second
+	 * to keep the first is the wrong trade on a rail with room for one. Sharing
+	 * a rank rather than taking a new one keeps the tie broken by the historical
+	 * right-then-left order, so nothing about the model's own eviction moves.
 	 */
 	#priorityRanker(seg: CollectedStatusSegments): (id: StatusLineSegmentId | null) => number {
-		const { include, inlineContextPct } = this.#priorityItems(seg);
-		const anyPriority = include.context || include.goal;
+		const { include, inlineContextPct, usage } = this.#priorityItems(seg);
+		const anyPriority = include.context || include.goal || usage;
 
 		return (id: StatusLineSegmentId | null): number => {
 			if (id === null || !anyPriority) return 0;
@@ -992,6 +1006,7 @@ export class StatusLineComponent implements Component {
 				return include.model ? 1 : 0;
 			}
 			if (id === "mode") return include.goal ? 2 : 0;
+			if (id === "usage") return usage ? 1 : 0;
 			return 0;
 		};
 	}

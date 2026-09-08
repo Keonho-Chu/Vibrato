@@ -6,6 +6,7 @@ import { shortenModelId } from "../src/modes/components/status-line/model-name";
 import { StatusLineComponent } from "../src/modes/components/tool-status-header";
 import { initTheme, theme } from "../src/modes/theme/theme";
 import type { AgentSession } from "../src/session/agent-session";
+import { GatewayQuotaObserver } from "../src/session/gateway-quota-observer";
 
 const CONTEXT_WINDOW = 200_000;
 const MODEL_ID = "anthropic/claude-sonnet-4-5-20250929";
@@ -223,6 +224,89 @@ describe("status rail survives very small widths", () => {
 		});
 
 		expect(strip(component.render(3)[0])).toContain("…");
+	});
+});
+
+describe("gateway quota window on a narrow rail", () => {
+	/** A rail carrying the token/cache counters and the gateway usage window. */
+	function buildUsageRail(): StatusLineComponent {
+		const observer = new GatewayQuotaObserver();
+		observer.observe({
+			key: { provider: "vllm", baseUrl: "https://gateway.internal/v1", credentialId: "c", sessionId: "s" },
+			kind: "success",
+			status: 200,
+			headers: { "x-vug-daily-limit": "1000", "x-vug-daily-remaining": "250" },
+		});
+		const session = createSession() as unknown as Record<string, unknown>;
+		Object.defineProperty(session, "gatewayQuotaState", { get: () => observer.state });
+		(session.sessionManager as { getUsageStatistics: () => unknown }).getUsageStatistics = () => ({
+			input: 1000,
+			output: 500,
+			cacheRead: 8200,
+			cacheWrite: 0,
+			premiumRequests: 0,
+			cost: 0.5,
+		});
+
+		const component = new StatusLineComponent(
+			session as unknown as ConstructorParameters<typeof StatusLineComponent>[0],
+			{ version: "9.9.9" },
+		);
+		component.updateSettings({
+			preset: "custom",
+			leftSegments: [],
+			rightSegments: ["token_in", "token_out", "cache_read", "usage", "cost"],
+			separator: "slash",
+			segmentOptions: { usage: { windows: "gateway" } },
+			showSkillHud: false,
+			showActionHints: false,
+			sessionAccent: false,
+			maxRows: 1,
+		});
+		return component;
+	}
+
+	it("drops the token and cache counters before the quota window", () => {
+		const wide = strip(buildUsageRail().render(120)[0]);
+		expect(wide).toContain("vug 75%");
+		expect(wide).toContain("in 1K");
+		expect(wide).toContain("cache read 8.2K");
+
+		// A counter says what has been spent; the window says how much is left
+		// before the gateway stops answering. On a rail with room for one, the
+		// window is the one worth keeping.
+		let sawWindowWithoutCounters = false;
+		for (let width = 20; width <= 60; width += 1) {
+			const row = strip(buildUsageRail().render(width)[0]);
+			const hasWindow = row.includes("vug");
+			const hasCounter = row.includes("in 1K") || row.includes("out 500") || row.includes("cache read");
+			// Never the inversion: a counter surviving a dropped window.
+			expect({ width, ok: hasWindow || !hasCounter }).toEqual({ width, ok: true });
+			if (hasWindow && !hasCounter) sawWindowWithoutCounters = true;
+		}
+		expect(sawWindowWithoutCounters).toBe(true);
+	});
+
+	it("carries no priority when the segment has observed nothing", () => {
+		// Without an observation the segment renders nothing, so eviction must be
+		// the plain tail-first order it has always been.
+		const component = new StatusLineComponent(createSession(), { version: "9.9.9" });
+		component.updateSettings({
+			preset: "custom",
+			leftSegments: [],
+			rightSegments: ["token_in", "usage", "cost"],
+			separator: "slash",
+			segmentOptions: { usage: { windows: "gateway" } },
+			showSkillHud: false,
+			showActionHints: false,
+			sessionAccent: false,
+			maxRows: 1,
+		});
+
+		const row = strip(component.render(20)[0]);
+
+		expect(row).not.toContain("vug");
+		expect(row).not.toContain("0%");
 	});
 });
 
