@@ -18,26 +18,28 @@
 
 ## Install
 
-**With Bun** (Bun 1.4 or newer on PATH):
+**Standalone binary** (recommended; no Bun needed) for Linux (x64/arm64), macOS (arm64/x64), and Windows (x64):
 
 ```sh
-bun install -g vibrato-cli
-vib --version
-```
-
-**Standalone binary** (no Bun needed) for Linux (x64/arm64), macOS (arm64/x64), and Windows (x64):
-
-```sh
-curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.16.0/scripts/install.sh -o vib-install.sh
+curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.17.2/scripts/install.sh -o vib-install.sh
 sh vib-install.sh
 vib --version
 ```
 
-Windows (PowerShell):
+Windows (PowerShell, from a normal terminal — not "Run as administrator"):
 
 ```powershell
-Invoke-WebRequest -UseBasicParsing https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.16.0/scripts/install.ps1 -OutFile vib-install.ps1
+Invoke-WebRequest -UseBasicParsing https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.17.2/scripts/install.ps1 -OutFile vib-install.ps1
 powershell -File vib-install.ps1
+```
+
+Vibrato keeps its sessions under `%USERPROFILE%\.vib`, and a directory created from an elevated terminal is owned by the Administrators group rather than by you. Vibrato takes such a directory back at startup, but running from a normal terminal avoids the round trip; see [Windows notes](docs/install.md#windows-notes) for the details and for the Git Bash requirement.
+
+**With Bun** (Bun 1.4 or newer already on PATH; `bun install -g` does not install Bun for you):
+
+```sh
+bun install -g vibrato-cli
+vib --version
 ```
 
 Other ways to install:
@@ -56,7 +58,7 @@ Full platform matrix, nightly channel, shell completion, and source builds: [doc
 
 Start `vib` inside any git checkout. On the first launch with no usable model, Vibrato opens a single connect screen; press Esc to fall through to the full provider menu. The same screen opens any time with `/provider`.
 
-- **Local LLM endpoint** (vLLM, SGLang, Ollama, LM Studio, llama.cpp, or any other OpenAI-compatible server): your LLM server is usually another machine on the network — a GPU box on your LAN — so just type its address and connect. Shorthand like `192.168.0.10:8000` or `gpu-server.lan:8000` is enough; Vibrato fills in the scheme and `/v1` path for you. Plain `http://` works for private-network and `.local` / `.internal` / `.lan` addresses; a public host needs `https://`. There's no separate API key step: Vibrato probes the endpoint first and only asks for a key if the server answers 401 or 403. As a minor convenience, a compatible server already running on your own machine on a well-known loopback port (Ollama, llama.cpp, LM Studio, oMLX, vLLM, SGLang) also shows up as a selectable row on the same screen. Once connected, pick a model from what the server reports; a single discovered model is selected automatically.
+- **Local LLM endpoint** (vLLM, SGLang, Ollama, LM Studio, llama.cpp, or any other OpenAI-compatible server): your LLM server is usually another machine on the network — a GPU box on your LAN — so just type its address and connect. Shorthand like `192.168.0.10:8000` or `gpu-server.lan:8000` is enough; Vibrato fills in the scheme and `/v1` path for you: plain `http://` for private-network and `.local` / `.internal` / `.lan` addresses, `https://` for anything else. That is only a default — type the scheme yourself and it is kept as typed, so a corporate network that serves its GPU boxes over plain http on other addresses works with `http://172.170.0.52:8000`. There's no separate API key step: Vibrato probes the endpoint first and only asks for a key if the server answers 401 or 403. As a minor convenience, a compatible server already running on your own machine on a well-known loopback port (Ollama, llama.cpp, LM Studio, oMLX, vLLM, SGLang) also shows up as a selectable row on the same screen. Once connected, pick a model from what the server reports; a single discovered model is selected automatically.
 - **Claude** or **OpenAI Codex** (subscription plans, as an alternative to a local endpoint): run `/login` and pick `anthropic`, `openai-codex` (browser), or `openai-codex-device` (headless).
 
 The same setup from the shell:
@@ -72,7 +74,7 @@ vib setup provider --preset vllm --base-url http://192.168.0.10:8000/v1    # key
 vib setup provider --preset sglang --base-url http://192.168.0.10:30000/v1 # key from SGLANG_API_KEY, if any
 ```
 
-Plain `http://` is accepted for localhost, private-network hosts, bare hostnames, and `.local` / `.internal` / `.lan` names; public hosts need `https://`.
+An explicit `http://` or `https://` is kept as typed for any host. Only a bare `host:port` has its scheme inferred: plain `http://` for localhost, private-network hosts, bare hostnames, and `.local` / `.internal` / `.lan` names, `https://` otherwise.
 
 ## Usage
 

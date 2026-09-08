@@ -18,7 +18,7 @@ import {
 	shouldPersistCompletion,
 	writeOnboardingState,
 } from "../src/setup/frictionless-onboarding";
-import { executeBuiltinSlashCommand, lookupBuiltinSlashCommand } from "../src/slash-commands/builtin-registry";
+import { lookupBuiltinSlashCommand } from "../src/slash-commands/builtin-registry";
 
 describe("frictionless onboarding", () => {
 	test("projects only validated state fields", () => {
@@ -352,16 +352,7 @@ describe("frictionless onboarding", () => {
 		await fs.rm(root, { recursive: true, force: true });
 	});
 
-	test("tutorial is registered and dispatches", async () => {
-		expect(lookupBuiltinSlashCommand("tutorial")?.name).toBe("tutorial");
-		let shown = false;
-		const ctx = {
-			editor: { setText: () => undefined },
-			showFrictionlessOnboarding: async () => {
-				shown = true;
-			},
-		} as never;
-		await executeBuiltinSlashCommand("/tutorial", { ctx } as never);
-		expect(shown).toBe(true);
+	test("the retired /tutorial command is no longer registered", () => {
+		expect(lookupBuiltinSlashCommand("tutorial")).toBeUndefined();
 	});
 });

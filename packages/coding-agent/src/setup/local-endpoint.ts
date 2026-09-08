@@ -42,7 +42,10 @@ export interface LocalEndpointProbeOptions {
  *
  * Accepts `192.168.0.10:8000`, `gpu-box:8000`, `http://host:8000/v1`, and
  * trailing slashes. The scheme is inferred when missing: plain http for the
- * hosts that {@link isLocalHttpHost} allows it for, https otherwise. `/v1` is
+ * hosts {@link isLocalHttpHost} recognizes as local, https otherwise. An
+ * explicit scheme is kept as typed: someone who writes `http://` for a host
+ * outside the well-known private ranges (a corporate network on public-range
+ * addresses, say) knows their server better than the heuristic does. `/v1` is
  * appended only when no path was given.
  */
 export function normalizeLocalEndpointInput(raw: string): { baseUrl: string } | { error: string } {
@@ -64,11 +67,6 @@ export function normalizeLocalEndpointInput(raw: string): { baseUrl: string } | 
 	if (!url.hostname) {
 		return { error: `'${trimmed}' is missing a host name.` };
 	}
-	if (url.protocol === "http:" && !isLocalHttpHost(url.hostname)) {
-		return {
-			error: `Plain http is only accepted for localhost or a private-network host; use https:// for ${url.hostname}.`,
-		};
-	}
 
 	// A query string or fragment cannot survive `${baseUrl}/models`, so drop both.
 	const path = url.pathname.replace(/\/+$/, "");
@@ -76,7 +74,7 @@ export function normalizeLocalEndpointInput(raw: string): { baseUrl: string } | 
 	return { baseUrl: `${url.protocol}//${credentials}${url.host}${path || "/v1"}` };
 }
 
-/** Plain http is inferred only where it is also accepted; everything else gets https. */
+/** Plain http is inferred only for hosts that are recognizably local; everything else gets https. */
 function inferScheme(hostAndRest: string): "http" | "https" {
 	let hostname: string;
 	try {

@@ -278,11 +278,6 @@ function validateSetupInput(input: ProviderSetupInput): {
 	if (url.protocol !== "https:" && url.protocol !== "http:") {
 		throw new Error("Base URL must use http or https.");
 	}
-	if (url.protocol === "http:" && !isLocalHttpHost(url.hostname)) {
-		throw new Error(
-			"Base URL must use https unless it targets localhost, a loopback address, or a private-network host (10/8, 172.16/12, 192.168/16, link-local, or a bare LAN hostname).",
-		);
-	}
 
 	const apiKeyEnv = resolved.apiKeyEnv?.trim();
 	if (apiKeyEnv) {

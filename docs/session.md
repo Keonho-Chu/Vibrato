@@ -53,6 +53,8 @@ Managed storage enforces owner-only directory/file security and refuses unsafe s
 
 On Linux filesystems where the exact POSIX ACL xattr operation returns `ENOTSUP`/`EOPNOTSUPP`, Vibrato treats that result only as proof that the filesystem cannot store that ACL attribute. The ACL gate still requires the same opened object to pass effective-owner, exact `0700` directory or `0600` file mode, safe-type, no-follow traversal, and identity/replacement checks. Permission denial, I/O errors, present or malformed ACL data, and unknown results remain failures. Managed descriptors use close-on-exec and are not delegated as authority to subprocesses. This compatibility rule does not change explicit `--session-dir`, macOS ACL, or Windows DACL policy.
 
+On Windows an existing managed directory owned by another principal is repaired at startup on the same path as DACL drift. Windows assigns objects created from an elevated ("Run as administrator") terminal — every process when UAC is disabled — to `BUILTIN\Administrators` rather than the user, so a directory vib itself created can carry that owner. The native repair sets the owner back to the user SID only when the directory's DACL grants the user `WRITE_OWNER`, and it revalidates the directory identity before and after mutating. A directory the user cannot legitimately own still fails closed with `owner_mismatch`, and the CLI prints platform-specific recovery steps for that classification. On POSIX an owner mismatch stays closed.
+
 Blob store location:
 
 ```text

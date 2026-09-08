@@ -4,6 +4,20 @@
 
 - Added a pinned execution summary that distinguishes model waiting, response streaming, tool execution, retry, context maintenance, and user-input waits while reviewing earlier output. It shows current-prompt tool counts and session-owned background/queued work without estimating completion or inferring approvals.
 
+## [0.17.3] - 2026-09-03
+
+- The launch screen identity line now reads `Vibrato · LIG System · AI Tech Research Lab`, with `Research Support Tool` beneath it on the two roomiest layouts.
+- The model selector no longer opens with the orange "connect a local LLM endpoint or log in with /login openai-codex or /login anthropic" line when models are already configured; that hint is reserved for a session with nothing usable. The same routes were also printed on the start screen right after a successful first-run local endpoint connect, because the "no model configured" notice was queued before the connect screen ran; it is now dropped when a model exists by the time it would be shown.
+- **Breaking:** The `/tutorial` slash command is removed. First-run onboarding itself is unchanged.
+
+## [0.17.2] - 2026-09-03
+
+- An explicit `http://` base URL is now accepted for any host when adding a provider, whether through the local endpoint connect screen, the custom provider wizard, `/provider add`, or `vib setup provider`. Scheme inference for a bare `host:port` is unchanged (plain http only for private-network and `.local`-style hosts, https otherwise), but typing the scheme is now respected instead of being rejected with "Plain http is only accepted for localhost or a private-network host": a corporate network that serves LLM endpoints over plain http on public-range addresses previously had no way through the UI at all.
+
+## [0.17.1] - 2026-09-03
+
+- Windows startup no longer crashes with `Could not prepare managed session scope (owner_mismatch: prepare:root_authority)` when the agent directory was created from an elevated ("Run as administrator") terminal or on a machine with UAC disabled, where Windows assigns the directory to `BUILTIN\Administrators`. An existing managed directory owned by another principal is now taken back at startup through the identity-checked native repair, which sets the owner to the user, instead of failing closed. When ownership genuinely cannot be recovered, the CLI prints the recovery steps (`takeown`, or delete on a fresh install, then a non-elevated terminal) instead of an uncaught exception; the same message covers a `sudo`-created directory on Linux and macOS.
+
 ## [0.17.0] - 2026-09-02
 
 - **Breaking:** The pre-rebrand `red-claw`, `blue-crab`, and `ouroboros` themes are removed. `lig-blue` and `lig-white` remain the defaults, alongside the `claude-code`, `codex`, `opencode`, and `gruvbox-dark` migration themes. A config pinned to one of the removed names falls back to `lig-blue`, which was already the hardcoded fallback despite comments that still named `red-claw`.

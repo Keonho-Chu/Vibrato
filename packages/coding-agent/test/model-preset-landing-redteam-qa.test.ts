@@ -118,18 +118,21 @@ function createRegistry(
 	authenticatedProviders: readonly string[],
 	profiles: ModelProfileDefinition[] = [codexEco, combo, claudeOpus, noSuffixProfile],
 	extraModels: readonly Model[] = [],
+	emptyCatalog = false,
 ) {
 	const profileMap = new Map(profiles.map(profile => [profile.name, profile]));
-	const catalog = [
-		codexModel,
-		anthropicModel,
-		minimaxModel,
-		noSuffixModel,
-		{ ...noSuffixModel, provider: "provider-b" },
-		...builtinCodexModels,
-		...builtinComboModels,
-		...extraModels,
-	];
+	const catalog = emptyCatalog
+		? []
+		: [
+				codexModel,
+				anthropicModel,
+				minimaxModel,
+				noSuffixModel,
+				{ ...noSuffixModel, provider: "provider-b" },
+				...builtinCodexModels,
+				...builtinComboModels,
+				...extraModels,
+			];
 	return {
 		refresh: vi.fn(async () => {}),
 		getError: () => undefined,
@@ -158,6 +161,7 @@ function createSelector(
 		onSelect?: (selection: ModelSelectorSelection) => void | Promise<void>;
 		profiles?: ModelProfileDefinition[];
 		extraModels?: readonly Model[];
+		emptyCatalog?: boolean;
 	} = {},
 ) {
 	const ui = { requestRender: vi.fn() } as unknown as TUI;
@@ -169,6 +173,7 @@ function createSelector(
 			options.authenticatedProviders ?? ["openai-codex", "anthropic", "minimax-code", "provider-a"],
 			options.profiles,
 			options.extraModels,
+			options.emptyCatalog,
 		) as never,
 		options.scopedModels ?? [],
 		options.onSelect ?? (() => {}),
@@ -269,6 +274,18 @@ describe("preset landing adversarial QA", () => {
 		const scoped = await rendered(createSelector({ scopedModels: [{ model: codexModel }] }));
 		expect(scoped).not.toContain("Model presets");
 		expect(scoped).toContain("Showing models from --models scope");
+	});
+
+	test("the onboarding login hint is shown only when no model is available", async () => {
+		// A working provider (a local LLM endpoint, say) must not open the selector
+		// with an orange line telling the user to log in to Codex or Claude.
+		const configured = await rendered(createSelector());
+		expect(configured).not.toContain("/login openai-codex");
+		expect(configured).not.toContain("/login anthropic");
+
+		const nothing = await rendered(createSelector({ emptyCatalog: true }));
+		expect(nothing).toContain("/login openai-codex");
+		expect(nothing).toContain("/login anthropic");
 	});
 
 	test("partial combo auth blocks selection and the login hint uses the canonical provider id only", async () => {

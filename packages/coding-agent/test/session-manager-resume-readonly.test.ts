@@ -299,6 +299,7 @@ describe("SessionManager read-only resume", () => {
 			kind: "error",
 			code: "binding_invalid",
 			message: "The managed scope security could not be verified.",
+			cause: { classification: "acl_verify_failed" },
 		});
 		expect(verify).toHaveBeenCalledWith(initial.scope.directoryPath, "directory");
 		expect(apply).not.toHaveBeenCalled();

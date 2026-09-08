@@ -375,7 +375,7 @@ export class LocalEndpointConnectComponent extends Container {
 			new TruncatedText(
 				theme.fg(
 					"muted",
-					"  Plain http:// is fine for private and .local addresses. The scheme and /v1 are filled in for you.",
+					"  http:// is assumed for private and .local addresses, https:// otherwise; type the scheme to override. /v1 is filled in for you.",
 				),
 				0,
 				0,

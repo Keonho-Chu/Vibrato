@@ -58,6 +58,7 @@ import { processIncarnation } from "./sdk/broker/process-incarnation";
 import { SessionIndex } from "./sdk/broker/session-index";
 import type { AgentSession } from "./session/agent-session";
 import { SessionMigrationBusyError } from "./session/internal/session-open-errors";
+import { managedScopeStartupRecoveryMessage } from "./session/managed-scope-startup-message";
 import {
 	type ResumeSessionIdentity,
 	resolveResumableSession,
@@ -338,6 +339,14 @@ async function readPipedInputIfReady(): Promise<string | undefined> {
 export interface InteractiveModeNotify {
 	kind: "warn" | "error" | "info";
 	message: string;
+	/**
+	 * Only meaningful while the session still has no model when the notice is
+	 * finally shown. The startup notices are collected before the first-run
+	 * onboarding runs, and a successful local endpoint connect sets a model in
+	 * between, so a "no model configured" notice queued earlier would otherwise be
+	 * printed right under a working connection.
+	 */
+	onlyWhileNoModel?: boolean;
 }
 
 export async function submitInteractiveInput(
@@ -782,6 +791,9 @@ export async function runInteractiveMode(
 
 	for (const notify of notifs) {
 		if (!notify) {
+			continue;
+		}
+		if (notify.onlyWhileNoModel && session.model) {
 			continue;
 		}
 		if (notify.kind === "warn") {
@@ -1442,19 +1454,25 @@ export async function runRootCommand(
 					resumeMigrationPolicy,
 				);
 			} catch (error) {
-				process.stderr.write(`${operatorFacingSessionOpenMessage(error) ?? BARE_RESUME_OPEN_ERROR}\n`);
+				process.stderr.write(
+					`${operatorFacingSessionOpenMessage(error) ?? managedScopeStartupRecoveryMessage(error, scopedSettings.getAgentDir()) ?? BARE_RESUME_OPEN_ERROR}\n`,
+				);
 				if (!deps.suppressProcessExit) process.exitCode = 1;
 				return;
 			}
 			if (opened.kind === "error") {
-				process.stderr.write(`${operatorFacingSessionOpenMessage(opened.reason) ?? BARE_RESUME_OPEN_ERROR}\n`);
+				process.stderr.write(
+					`${operatorFacingSessionOpenMessage(opened.reason) ?? managedScopeStartupRecoveryMessage(opened.reason, scopedSettings.getAgentDir()) ?? BARE_RESUME_OPEN_ERROR}\n`,
+				);
 				if (!deps.suppressProcessExit) process.exitCode = 1;
 				return;
 			}
 			bareResumeSessionManager = opened.manager;
 			bareResumeAction = selection.action;
 		} catch (error) {
-			process.stderr.write(`${operatorFacingSessionOpenMessage(error) ?? BARE_RESUME_OPEN_ERROR}\n`);
+			process.stderr.write(
+				`${operatorFacingSessionOpenMessage(error) ?? managedScopeStartupRecoveryMessage(error, scopedSettings.getAgentDir()) ?? BARE_RESUME_OPEN_ERROR}\n`,
+			);
 			if (!deps.suppressProcessExit) process.exitCode = 1;
 			return;
 		} finally {
@@ -1662,7 +1680,9 @@ export async function runRootCommand(
 				settingsInstance,
 			);
 		} catch (error) {
-			const message = operatorFacingSessionOpenMessage(error);
+			const message =
+				operatorFacingSessionOpenMessage(error) ??
+				managedScopeStartupRecoveryMessage(error, settingsInstance.getAgentDir());
 			if (!message) throw error;
 			process.stderr.write(`${message}\n`);
 			if (!deps.suppressProcessExit) process.exitCode = 1;
@@ -1956,6 +1976,7 @@ export async function runRootCommand(
 			notifs.push({
 				kind: "info",
 				message: formatNoModelOnboardingError(),
+				onlyWhileNoModel: true,
 			});
 		}
 

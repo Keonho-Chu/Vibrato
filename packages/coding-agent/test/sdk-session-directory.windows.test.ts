@@ -256,4 +256,84 @@ describe.skipIf(process.platform !== "win32")("Windows managed session directory
 			diagnostic: "prepare:tombstones_directory",
 		});
 	});
+
+	// A directory created from an elevated ("Run as administrator") terminal is
+	// owned by BUILTIN\Administrators. Startup must take it back through the
+	// native identity-checked repair instead of failing closed with owner_mismatch.
+	it("repairs an existing managed directory whose owner is another principal", async () => {
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-session-directory-windows-owner-"));
+		temporaryDirectories.push(root);
+		const cwd = path.join(root, "workspace");
+		const agentDir = path.join(root, "agent");
+		await fs.mkdir(cwd);
+
+		const first = SessionManager.managedDestination(cwd, agentDir);
+		const tombstones = path.join(first.directory, ".vib-managed-session-internal", "tombstones");
+		const verifyExpected = native.verifyOwnerOnlyPathSecurityExpected;
+		let reported = false;
+		const verify = vi
+			.spyOn(native, "verifyOwnerOnlyPathSecurityExpected")
+			.mockImplementation((pathname, kind, expectedDev, expectedIno) => {
+				if (!reported && path.resolve(pathname) === path.resolve(tombstones)) {
+					reported = true;
+					return { ok: false, code: "owner_mismatch" };
+				}
+				return verifyExpected(pathname, kind, expectedDev, expectedIno);
+			});
+		const repair = vi.spyOn(native, "repairOwnerOnlyPathSecurityExpected").mockReturnValue({ ok: true });
+
+		try {
+			const second = SessionManager.managedDestination(cwd, agentDir);
+			expect(second.kind).toBe("managed");
+			expect(path.resolve(second.directory)).toBe(path.resolve(first.directory));
+		} finally {
+			verify.mockRestore();
+			repair.mockRestore();
+		}
+
+		expect(reported).toBe(true);
+		expect(
+			repair.mock.calls.some(
+				([pathname, kind]) => kind === "directory" && path.resolve(pathname) === path.resolve(tombstones),
+			),
+		).toBe(true);
+	});
+
+	it("still fails closed when the owner repair itself is refused", async () => {
+		const root = await fs.mkdtemp(path.join(os.tmpdir(), "vib-session-directory-windows-owner-refused-"));
+		temporaryDirectories.push(root);
+		const cwd = path.join(root, "workspace");
+		const agentDir = path.join(root, "agent");
+		await fs.mkdir(cwd);
+
+		const first = SessionManager.managedDestination(cwd, agentDir);
+		const tombstones = path.join(first.directory, ".vib-managed-session-internal", "tombstones");
+		const verifyExpected = native.verifyOwnerOnlyPathSecurityExpected;
+		const verify = vi
+			.spyOn(native, "verifyOwnerOnlyPathSecurityExpected")
+			.mockImplementation((pathname, kind, expectedDev, expectedIno) =>
+				path.resolve(pathname) === path.resolve(tombstones)
+					? { ok: false, code: "owner_mismatch" }
+					: verifyExpected(pathname, kind, expectedDev, expectedIno),
+			);
+		const repair = vi
+			.spyOn(native, "repairOwnerOnlyPathSecurityExpected")
+			.mockReturnValue({ ok: false, code: "owner_mismatch" });
+
+		let failure: unknown;
+		try {
+			SessionManager.managedDestination(cwd, agentDir);
+		} catch (error) {
+			failure = error;
+		} finally {
+			verify.mockRestore();
+			repair.mockRestore();
+		}
+
+		expect(repair).toHaveBeenCalled();
+		expect(failure).toBeInstanceOf(Error);
+		expect((failure as Error).message).toBe(
+			"Could not prepare managed session scope (owner_mismatch: prepare:tombstones_directory).",
+		);
+	});
 });

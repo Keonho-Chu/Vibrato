@@ -172,6 +172,7 @@ import {
 	validateTailChain,
 } from "./internal/session-memory-sidecar";
 import { SessionMigrationBusyError } from "./internal/session-open-errors";
+import { managedScopeStartupErrorMessage } from "./managed-scope-startup-message";
 import {
 	hasOnlyKeys as hasOnlyMemoryGuardKeys,
 	isMemoryGuardDecimalString,
@@ -3136,11 +3137,7 @@ function managedScopeStartupError(
 	const classification = failure.cause?.classification ?? failure.code;
 	const diagnostic = failure.cause?.diagnostic;
 	const detail = diagnostic === undefined ? classification : `${classification}: ${diagnostic}`;
-	const message =
-		action === "prepare"
-			? `Could not prepare managed session scope (${detail}).`
-			: "Could not resolve managed session scope.";
-	return new Error(message, {
+	return new Error(managedScopeStartupErrorMessage(action, detail), {
 		cause: {
 			classification,
 			...(diagnostic === undefined ? {} : { diagnostic }),

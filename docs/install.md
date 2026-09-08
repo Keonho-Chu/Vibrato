@@ -78,6 +78,12 @@ Vibrato's shell tool requires a bash-compatible shell on Windows. After a binary
 
 Native Windows `vib --tmux` needs a tmux-compatible executable on `PATH`. For Vibrato-managed session guarantees, use WSL with real tmux. See [`environment-variables.md`](./environment-variables.md#interactive---tmux-startup-and-scrollmouse-profile).
 
+### Administrator terminals and UAC
+
+Vibrato keeps its sessions under `%USERPROFILE%\.vib\agent` and requires that directory tree to be owned by the account running `vib`. Windows assigns objects created from an elevated ("Run as administrator") terminal to `BUILTIN\Administrators` instead of the user, and on a machine with UAC disabled every process is elevated. When vib finds an existing session directory owned by another principal it takes ownership back at startup, as long as the directory's ACL grants the user `WRITE_OWNER`.
+
+If startup still stops with `Could not prepare managed session scope (owner_mismatch: ...)`, vib prints the recovery steps: run `takeown /F "%USERPROFILE%\.vib\agent" /R /D Y` (or delete the directory on a fresh install), then run `vib` again from a normal, non-elevated terminal (`whoami /groups | findstr S-1-16` prints `S-1-16-8192` there and `S-1-16-12288` when elevated). Prefer a normal terminal for day-to-day use.
+
 ## Shell completion
 
 Vibrato can generate a Fig/withfig-compatible spec for [Microsoft inshellisense](https://github.com/microsoft/inshellisense):

@@ -81,7 +81,7 @@ describe("local endpoint connect screen", () => {
 		// loopback URL to delete before typing.
 		expect(opening).toContain("e.g. 192.168.0.10:8000 or gpu-server.lan:8000");
 		expect(opening).toContain("usually another machine on your network");
-		expect(opening).toContain("Plain http:// is fine for private and .local addresses");
+		expect(opening).toContain("http:// is assumed for private and .local addresses");
 		expect(opening).not.toContain("127.0.0.1:8000/v1");
 		expect(opening).toContain("Also checking this machine for a local server");
 		// One screen only: no confirm step and no unprompted API key field.
