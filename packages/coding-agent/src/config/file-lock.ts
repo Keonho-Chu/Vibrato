@@ -42,7 +42,7 @@ export class FileLockAcquireError extends Error {
 	) {
 		super(
 			`Failed to acquire lock for ${filePath} after ${attempts} attempts: ${holder} (${lockPath}); ` +
-				`a live owner is never displaced — if this is an SDK broker (gjc sdk status), it must finish or be stopped before retrying`,
+				`a live owner is never displaced — if this is an SDK broker (vib sdk status), it must finish or be stopped before retrying`,
 		);
 		this.name = "FileLockAcquireError";
 	}
@@ -1262,7 +1262,7 @@ async function releaseOwnedLock(lockPath: string, owner: FileLockOwnerToken): Pr
 		if (!isTransientReleaseError(error)) throw error;
 	}
 	let lastTransientError: unknown;
-	let transitionReclaimAttempted = false;
+	let transitionReclaimAttempts = 0;
 	for (let attempt = 0; attempt < FILE_LOCK_RELEASE_RETRY_ATTEMPTS; attempt++) {
 		try {
 			if (await finishDetachedLockCleanup(owner)) return;
@@ -1276,10 +1276,13 @@ async function releaseOwnedLock(lockPath: string, owner: FileLockOwnerToken): Pr
 			if (!isTransientReleaseError(error)) throw error;
 			lastTransientError = error;
 			// A collision on the deterministic quarantine name is normally a live
-			// predecessor still scrubbing; wait it out. Once, check whether that
-			// predecessor is provably dead and finish its removal instead (#6).
-			if (!transitionReclaimAttempted) {
-				transitionReclaimAttempted = true;
+			// predecessor still scrubbing; wait it out. On the first and the last
+			// retry, check whether that predecessor is provably dead and finish its
+			// removal instead (#6): a predecessor can die during the wait, so the
+			// first probe alone would miss it.
+			const lastAttempt = attempt + 1 === FILE_LOCK_RELEASE_RETRY_ATTEMPTS;
+			if ((attempt === 0 || lastAttempt) && transitionReclaimAttempts < 2) {
+				transitionReclaimAttempts += 1;
 				if (await reclaimAbandonedRemovalTransition(lockPath)) continue;
 			}
 			if (attempt + 1 < FILE_LOCK_RELEASE_RETRY_ATTEMPTS) await Bun.sleep(FILE_LOCK_RELEASE_RETRY_DELAY_MS);

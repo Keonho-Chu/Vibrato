@@ -4,6 +4,7 @@ import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 import type { Model } from "@vib-rato/ai";
+import packageJson from "../package.json" with { type: "json" };
 import {
 	type CodexHandoffOriginV1,
 	readCodexHandoff,
@@ -228,7 +229,7 @@ function testBrokerDiscovery(): BrokerDiscovery {
 	return {
 		version: 1,
 		protocolVersion: 3,
-		packageGeneration: "test",
+		packageGeneration: packageJson.version,
 		ownerId: "test-owner",
 		pid: process.pid,
 		incarnation: brokerProcessIncarnation(process.pid) ?? "test-incarnation",
@@ -529,7 +530,7 @@ async function createSdkControlServer(
 	await writeBrokerDiscovery(agentDir, {
 		version: 1,
 		protocolVersion: 3,
-		packageGeneration: "test",
+		packageGeneration: packageJson.version,
 		ownerId: "test",
 		pid: process.pid,
 		incarnation: brokerProcessIncarnation(process.pid) ?? "test-incarnation",

@@ -109,6 +109,29 @@ describe("file lock release behind an occupied quarantine name (#6)", () => {
 		expect(await fs.readFile(path.join(transition, "info"), "utf8")).toContain('"pid"');
 	});
 
+	it("never displaces a transition owned by this process", async () => {
+		const { target, transition } = await fixture("vib-lock-transition-self-");
+		await writeForeignTransition(transition, { pid: process.pid });
+		const result = await inspectFileLockRemovalTransition(`${target}.lock`, undefined, true);
+		expect(result.status).toBe("alive");
+		expect(result.reason).toBe("in_process_transition_owner");
+		expect(result.removed).toBe(false);
+		expect(await fs.readFile(path.join(transition, "info"), "utf8")).toContain('"pid"');
+	});
+
+	it("never displaces a host-qualified transition, even when its pid is dead here", async () => {
+		const { target, transition } = await fixture("vib-lock-transition-host-");
+		await fs.mkdir(transition, { mode: 0o700 });
+		await fs.writeFile(
+			path.join(transition, "info"),
+			JSON.stringify({ pid: await deadPid(), timestamp: Date.now(), owner_host_id: "other-host" }),
+		);
+		const result = await inspectFileLockRemovalTransition(`${target}.lock`, undefined, true);
+		expect(result.reason).toBe("host_qualified_transition_owner");
+		expect(result.removed).toBe(false);
+		expect(await fs.readFile(path.join(transition, "info"), "utf8")).toContain("other-host");
+	});
+
 	it("leaves an unverifiable transition (no owner record) to the exact-removal replay", async () => {
 		const { target, transition } = await fixture("vib-lock-transition-unverified-");
 		await fs.mkdir(transition, { mode: 0o700 });
