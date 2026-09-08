@@ -117,6 +117,11 @@ function lastAssistant(session: AgentSession): AssistantMessage {
 	return message as AssistantMessage;
 }
 
+/** Stand-in for the reason the session records; the exact wording is asserted elsewhere. */
+function describeHold(): string {
+	return "daily usage limit reached; resets at (expired)";
+}
+
 /** Assert the error names its reset instant once, and return that instant. */
 function expectSingleRetryableAt(errorMessage: string): number {
 	const matches = [...errorMessage.matchAll(/retryable at (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)/g)];
@@ -421,6 +426,44 @@ describe("issue #14 daily-quota retry, rotation, and fallback policy", () => {
 			// Still available, and consumed by the status accessor rather than by the reason one.
 			expect(modelRegistry.getSelectorSuppressionStatus(selector(primary))).toBe("expired");
 			expect(modelRegistry.getSelectorSuppressionStatus(selector(primary))).toBe("none");
+		});
+
+		it("keeps the chain on the fallback until the hold expires, then probes the head again", async () => {
+			// Quota suppression feeds `retry.fallbackRevertPolicy: cooldown-expiry`,
+			// which reverts to the head model on the single "expired" the suppression
+			// reports. This is strictly better than before the policy existed: quota
+			// suppressed nothing, so the head never reported "expired" and a session
+			// that fell back stayed on the fallback model for good.
+			await authStorage.set("anthropic", [{ type: "api_key", key: "gateway-key-1" }]);
+			const turns: string[][] = [];
+			let current: string[] = [];
+			const live = createSession([primary, fallback], model => {
+				current.push(selector(model));
+				return selector(model) === selector(primary) ? quotaStream(model) : successStream(model);
+			});
+
+			const runTurn = async (prompt: string) => {
+				current = [];
+				await live.prompt(prompt);
+				await live.waitForIdle();
+				turns.push(current);
+			};
+
+			await runTurn("head hits its daily limit");
+			await runTurn("second turn while the head is still held");
+
+			// Turn 1 advanced past the held head; turn 2 stayed on the fallback
+			// because the head's suppression is still active.
+			expect(turns[0]).toEqual([selector(primary), selector(fallback)]);
+			expect(turns[1]).toEqual([selector(fallback)]);
+			expect(modelRegistry.getSelectorSuppressionStatus(selector(primary))).toBe("active");
+
+			// Expire the window by rewriting the recorded instant rather than waiting.
+			modelRegistry.suppressSelector(selector(primary), Date.now() - 1, describeHold());
+			await runTurn("third turn after the limit reset");
+
+			// The head is probed again exactly once the window is gone.
+			expect(turns[2]?.[0]).toBe(selector(primary));
 		});
 
 		it("leaves a reasonless rate-limit suppression exactly as it was", () => {

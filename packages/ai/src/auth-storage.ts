@@ -4568,21 +4568,7 @@ export class AuthStorage {
 		if (!sessionCredential) return false;
 
 		const providerKey = this.#getProviderTypeKey(provider, sessionCredential.type);
-		const now = Date.now();
-		let blockedUntil = now + (options?.retryAfterMs ?? AuthStorage.#defaultBackoffMs);
-
-		if (sessionCredential.type === "oauth" && this.#rankingStrategyResolver?.(provider)) {
-			const credential = this.#getCredentialsForProvider(provider)[sessionCredential.index];
-			if (credential?.type === "oauth") {
-				const report = await this.#getUsageReport(provider, credential, options);
-				if (report && this.#isUsageLimitReached(report)) {
-					const resetAtMs = this.#getUsageResetAtMs(report, Date.now());
-					if (resetAtMs && resetAtMs > blockedUntil) {
-						blockedUntil = resetAtMs;
-					}
-				}
-			}
-		}
+		const blockedUntil = await this.#computeUsageLimitResetAtMs(provider, sessionCredential, options);
 
 		this.#markCredentialBlocked(providerKey, sessionCredential.index, blockedUntil);
 
@@ -4594,6 +4580,52 @@ export class AuthStorage {
 			);
 
 		return remainingCredentials.some(candidate => !this.#isCredentialBlocked(providerKey, candidate.index));
+	}
+
+	/**
+	 * The instant a usage-limit failure on `sessionCredential` clears: the
+	 * provider's Retry-After hint, raised to the reset a subscription usage
+	 * report reports when that is later. Computes only; blocks nothing.
+	 */
+	async #computeUsageLimitResetAtMs(
+		resolvedProvider: string,
+		sessionCredential: { type: AuthCredential["type"]; index: number },
+		options?: { retryAfterMs?: number; baseUrl?: string; signal?: AbortSignal },
+	): Promise<number> {
+		let resetAtMs = Date.now() + (options?.retryAfterMs ?? AuthStorage.#defaultBackoffMs);
+		if (sessionCredential.type === "oauth" && this.#rankingStrategyResolver?.(resolvedProvider as Provider)) {
+			const credential = this.#getCredentialsForProvider(resolvedProvider)[sessionCredential.index];
+			if (credential?.type === "oauth") {
+				const report = await this.#getUsageReport(resolvedProvider as Provider, credential, options);
+				if (report && this.#isUsageLimitReached(report)) {
+					const reportResetAtMs = this.#getUsageResetAtMs(report, Date.now());
+					if (reportResetAtMs && reportResetAtMs > resetAtMs) resetAtMs = reportResetAtMs;
+				}
+			}
+		}
+		return resetAtMs;
+	}
+
+	/**
+	 * When a usage-limit failure on this session's credential would clear,
+	 * WITHOUT recording a block.
+	 *
+	 * {@link markUsageLimitReached} computes exactly this and then blocks the row
+	 * so selection moves on. A caller that must NOT move to another stored
+	 * credential — a gateway daily-quota hold, where every row is the same
+	 * allowance behind the same baseUrl — still needs the instant for its
+	 * suppression window and user-facing notice. Both paths therefore share one
+	 * computation. Returns undefined when the session has no credential.
+	 */
+	async getUsageLimitResetAtMs(
+		provider: string,
+		sessionId: string | undefined,
+		options?: { retryAfterMs?: number; baseUrl?: string; signal?: AbortSignal },
+	): Promise<number | undefined> {
+		const resolvedProvider = resolveOAuthStorageProvider(provider);
+		const sessionCredential = this.#getSessionCredential(resolvedProvider, sessionId);
+		if (!sessionCredential) return undefined;
+		return await this.#computeUsageLimitResetAtMs(resolvedProvider, sessionCredential, options);
 	}
 
 	/**

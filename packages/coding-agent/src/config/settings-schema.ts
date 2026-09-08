@@ -1507,18 +1507,6 @@ export const SETTINGS_SCHEMA = {
 		},
 	},
 	"retry.fallbackChains": { type: "record", default: {} as Record<string, string[]> },
-	/**
-	 * Escape hatch for the daily-quota key-switching ban. A `quota` failure means
-	 * the account's allowance for this endpoint is spent, so reaching another
-	 * stored API key for the SAME provider (and therefore the same baseUrl) walks
-	 * around the gateway's audit and quota boundary rather than recovering from
-	 * congestion. With this off, the failed key's row is left untouched so the
-	 * hold also survives into later turns. Enabling it restores the previous
-	 * behavior for a deployment that genuinely owns several independent quotas
-	 * behind one provider id. OAuth pools ignore this key: they are never held.
-	 * Deliberately has no `ui` block: an operator escape hatch, not a preference.
-	 */
-	"retry.rotateCredentialsOnQuota": { type: "boolean", default: false },
 	"retry.fallbackRevertPolicy": {
 		type: "enum",
 		values: ["cooldown-expiry", "never"] as const,
@@ -1537,6 +1525,20 @@ export const SETTINGS_SCHEMA = {
 			],
 		},
 	},
+	/**
+	 * Escape hatch for the daily-quota credential-switching ban. A `quota` failure
+	 * means the account's allowance for this endpoint is spent, so reaching
+	 * another stored credential for the SAME provider (and therefore the same
+	 * baseUrl) walks around the gateway's audit and quota boundary rather than
+	 * recovering from congestion. With this off the failed row is left untouched,
+	 * so the hold survives into later turns instead of handing the next turn to
+	 * the second identity. Enabling it restores the previous behavior, including
+	 * multi-account OAuth switching on a subscription usage limit, for a
+	 * deployment that genuinely owns several independent quotas behind one
+	 * provider id. Deliberately has no `ui` block: an operator escape hatch, not
+	 * a user-facing preference.
+	 */
+	"retry.rotateCredentialsOnQuota": { type: "boolean", default: false },
 
 	// ────────────────────────────────────────────────────────────────────────
 	// Interaction
