@@ -5859,12 +5859,18 @@ export class ModelRegistry {
 
 	/**
 	 * Reason for an ACTIVE suppression, for surfaces that explain why a model is
-	 * unavailable. An expired window reports no reason and is swept, so the
-	 * reason can never outlive the suppression it describes.
+	 * unavailable. An expired window reports no reason.
+	 *
+	 * Deliberately does NOT route through {@link getSelectorSuppressionStatus}:
+	 * that accessor reports "expired" exactly once and deletes the entry as it
+	 * does so, and `retry.fallbackRevertPolicy: cooldown-expiry` depends on
+	 * observing that single "expired". A read-only UI caller asking for the
+	 * reason must not consume it and silently disable the revert.
 	 */
 	getSelectorSuppressionReason(selector: string): string | undefined {
 		const normalizedSelector = normalizeSuppressedSelector(selector);
-		if (this.getSelectorSuppressionStatus(selector) !== "active") return undefined;
+		const suppressedUntil = this.#suppressedSelectors.get(normalizedSelector);
+		if (suppressedUntil === undefined || suppressedUntil <= Date.now()) return undefined;
 		return this.#suppressedSelectorReasons.get(normalizedSelector);
 	}
 

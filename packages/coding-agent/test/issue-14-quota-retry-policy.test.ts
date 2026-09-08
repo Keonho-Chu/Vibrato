@@ -117,6 +117,13 @@ function lastAssistant(session: AgentSession): AssistantMessage {
 	return message as AssistantMessage;
 }
 
+/** Assert the error names its reset instant once, and return that instant. */
+function expectSingleRetryableAt(errorMessage: string): number {
+	const matches = [...errorMessage.matchAll(/retryable at (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)/g)];
+	expect(matches).toHaveLength(1);
+	return Date.parse(matches[0]![1]!);
+}
+
 describe("issue #14 daily-quota retry, rotation, and fallback policy", () => {
 	let tempDir: TempDir;
 	let authStorage: AuthStorage;
@@ -141,7 +148,15 @@ describe("issue #14 daily-quota retry, rotation, and fallback policy", () => {
 		vi.restoreAllMocks();
 	});
 
-	/** One session over `chain`, with `streamFn` standing in for every upstream request. */
+	/**
+	 * One session over `chain`, with `streamFn` standing in for every upstream request.
+	 *
+	 * The base settings deliberately set NO `retry.*` key. Setting any of them
+	 * makes `legacyRetryConfigured` true, which routes the failure past the
+	 * bare-default admission gate — so a suite that always set a retry delay
+	 * would never exercise the default configuration these policies exist for.
+	 * Tests that want the legacy budget ask for it explicitly.
+	 */
 	function createSession(
 		chain: readonly Model[],
 		streamFn: AgentOptions["streamFn"],
@@ -156,8 +171,6 @@ describe("issue #14 daily-quota retry, rotation, and fallback policy", () => {
 		});
 		const settings = Settings.isolated({
 			"compaction.enabled": false,
-			"retry.baseDelayMs": 5,
-			"retry.maxDelayMs": 20,
 			...settingsOverrides,
 		});
 		settings.setModelRole("default", selector(head));
@@ -201,7 +214,36 @@ describe("issue #14 daily-quota retry, rotation, and fallback policy", () => {
 			expect(lastAssistant(live).stopReason).toBe("error");
 		});
 
-		it("names the daily limit and its reset instant on the surfaced error", async () => {
+		it("applies the whole policy in the DEFAULT configuration, with no retry.* key set", async () => {
+			// The bare-default admission gate surfaces a content-free 429 immediately
+			// and returns before the rest of `#handleRetryableError`. Everything this
+			// issue adds therefore has to run above that gate, or it would never
+			// reach the one deployment shape it was written for: a stock install
+			// talking to one gateway.
+			await authStorage.set("anthropic", [{ type: "api_key", key: "gateway-key-1" }]);
+			const calls: string[] = [];
+			const before = Date.now();
+			const live = createSession([primary], model => {
+				calls.push(selector(model));
+				return quotaStream(model);
+			});
+
+			await live.prompt("daily limit reached on a stock install");
+			await live.waitForIdle();
+			const after = Date.now();
+
+			expect(calls).toEqual([selector(primary)]);
+			expect(modelRegistry.getSelectorSuppressionStatus(selector(primary))).toBe("active");
+			expect(modelRegistry.getSelectorSuppressionReason(selector(primary))).toContain("daily usage limit reached");
+			const errorMessage = lastAssistant(live).errorMessage ?? "";
+			expect(errorMessage).toContain(QUOTA_ERROR_MESSAGE);
+			expect(errorMessage).toContain("daily usage limit reached");
+			const resetAtMs = expectSingleRetryableAt(errorMessage);
+			expect(resetAtMs).toBeGreaterThanOrEqual(before + QUOTA_RETRY_AFTER_MS - 5_000);
+			expect(resetAtMs).toBeLessThanOrEqual(after + QUOTA_RETRY_AFTER_MS + 5_000);
+		});
+
+		it("names the daily limit and its reset instant exactly once on the surfaced error", async () => {
 			await authStorage.set("anthropic", [{ type: "api_key", key: "gateway-key-1" }]);
 			const before = Date.now();
 			const live = createSession([primary], model => quotaStream(model), { "retry.maxRetries": 3 });
@@ -215,9 +257,9 @@ describe("issue #14 daily-quota retry, rotation, and fallback policy", () => {
 			// The user must read "the limit is spent until <instant>", not a bare 429
 			// that looks like a rejected key.
 			expect(errorMessage).toContain("daily usage limit reached");
-			const resetAt = /resets at (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)/.exec(errorMessage);
-			expect(resetAt?.[1]).toBeDefined();
-			const resetAtMs = Date.parse(resetAt![1]!);
+			// The hold hint and the pre-existing retryable-at hint name the same
+			// instant, so exactly one of them may land.
+			const resetAtMs = expectSingleRetryableAt(errorMessage);
 			expect(resetAtMs).toBeGreaterThanOrEqual(before + QUOTA_RETRY_AFTER_MS - 5_000);
 			expect(resetAtMs).toBeLessThanOrEqual(after + QUOTA_RETRY_AFTER_MS + 5_000);
 		});
@@ -269,6 +311,58 @@ describe("issue #14 daily-quota retry, rotation, and fallback policy", () => {
 			expect(calls).toEqual([selector(primary)]);
 		});
 
+		it("keeps the SAME key on the next turn instead of rotating one turn later", async () => {
+			// Declining to report a rotation is not enough on its own. Blocking the
+			// failed row leaves it in place but makes API-key selection skip it, so
+			// the next turn silently reaches the same gateway under the second key.
+			// The stored row must therefore be left untouched entirely.
+			await authStorage.set("anthropic", [
+				{ type: "api_key", key: "gateway-key-1" },
+				{ type: "api_key", key: "gateway-key-2" },
+			]);
+			const calls: string[] = [];
+			const live = createSession([primary], model => {
+				calls.push(selector(model));
+				return quotaStream(model);
+			});
+
+			const keyBefore = await modelRegistry.getApiKey(primary, live.credentialSessionId);
+			expect(keyBefore).toBeDefined();
+
+			await live.prompt("daily limit reached");
+			await live.waitForIdle();
+			const keyAfterFirstTurn = await modelRegistry.getApiKey(primary, live.credentialSessionId);
+
+			await live.prompt("second turn on the same held gateway");
+			await live.waitForIdle();
+			const keyAfterSecondTurn = await modelRegistry.getApiKey(primary, live.credentialSessionId);
+
+			expect(keyAfterFirstTurn).toBe(keyBefore);
+			expect(keyAfterSecondTurn).toBe(keyBefore);
+			// Two turns, one upstream request each, neither of them a rotation.
+			expect(calls).toEqual([selector(primary), selector(primary)]);
+		});
+
+		it("still reports the reset instant even though no credential row is blocked", async () => {
+			// The reset instant used to be a side effect of blocking the row. It now
+			// lives on the session, and this pins that the signal survived the move.
+			await authStorage.set("anthropic", [
+				{ type: "api_key", key: "gateway-key-1" },
+				{ type: "api_key", key: "gateway-key-2" },
+			]);
+			const before = Date.now();
+			const live = createSession([primary], model => quotaStream(model));
+
+			await live.prompt("daily limit reached");
+			await live.waitForIdle();
+			const after = Date.now();
+
+			expect(authStorage.getEarliestUnblockAt("anthropic", live.credentialSessionId)).toBeUndefined();
+			const resetAtMs = expectSingleRetryableAt(lastAssistant(live).errorMessage ?? "");
+			expect(resetAtMs).toBeGreaterThanOrEqual(before + QUOTA_RETRY_AFTER_MS - 5_000);
+			expect(resetAtMs).toBeLessThanOrEqual(after + QUOTA_RETRY_AFTER_MS + 5_000);
+		});
+
 		it("restores rotation only when the operator opts in explicitly", async () => {
 			await authStorage.set("anthropic", [
 				{ type: "api_key", key: "gateway-key-1" },
@@ -308,14 +402,25 @@ describe("issue #14 daily-quota retry, rotation, and fallback policy", () => {
 			expect(reason).toMatch(/resets at \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z/);
 		});
 
-		it("reports no reason once the suppression window has expired", () => {
+		it("reports the reason while the window is active", () => {
 			modelRegistry.suppressSelector(selector(primary), Date.now() + 60_000, "daily usage limit reached");
 			expect(modelRegistry.getSelectorSuppressionReason(selector(primary))).toBe("daily usage limit reached");
+		});
 
-			// Expiry is read from the recorded instant, so no test waits for it.
+		it("reading the reason does not consume the one-shot expiry the revert policy needs", () => {
+			// `retry.fallbackRevertPolicy: cooldown-expiry` reverts to the head model
+			// on the single "expired" that `getSelectorSuppressionStatus` reports
+			// before deleting the entry. A read-only reason lookup from the UI must
+			// not swallow that observation. Expiry is read from the recorded instant,
+			// so no test waits for it.
 			modelRegistry.suppressSelector(selector(primary), Date.now() - 1, "daily usage limit reached");
-			expect(modelRegistry.getSelectorSuppressionStatus(selector(primary))).toBe("expired");
+
 			expect(modelRegistry.getSelectorSuppressionReason(selector(primary))).toBeUndefined();
+			expect(modelRegistry.getSelectorSuppressionReason(selector(primary))).toBeUndefined();
+
+			// Still available, and consumed by the status accessor rather than by the reason one.
+			expect(modelRegistry.getSelectorSuppressionStatus(selector(primary))).toBe("expired");
+			expect(modelRegistry.getSelectorSuppressionStatus(selector(primary))).toBe("none");
 		});
 
 		it("leaves a reasonless rate-limit suppression exactly as it was", () => {
@@ -364,7 +469,7 @@ describe("issue #14 daily-quota retry, rotation, and fallback policy", () => {
 					}
 					return successStream(model);
 				},
-				{ "retry.maxRetries": 2 },
+				{ "retry.maxRetries": 2, "retry.baseDelayMs": 5, "retry.maxDelayMs": 20 },
 			);
 
 			await live.prompt("queue timeout then recovery");
@@ -388,7 +493,7 @@ describe("issue #14 daily-quota retry, rotation, and fallback policy", () => {
 						headers: { "retry-after": "5" },
 					});
 				},
-				{ "retry.maxRetries": 2 },
+				{ "retry.maxRetries": 2, "retry.baseDelayMs": 5, "retry.maxDelayMs": 20 },
 			);
 
 			await live.prompt("queue full for the whole budget");
