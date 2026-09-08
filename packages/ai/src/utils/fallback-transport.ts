@@ -40,8 +40,9 @@ export type TransportHeaders = Headers | Record<string, string | undefined>;
  * Structured facts from an upstream HTTP or transport failure. Retry decisions
  * must use these facts rather than provider- or application-owned error text.
  *
- * `headers` is always a plain record limited to the retained retry-signal
- * entries: facts travel on persisted `AssistantMessage`s and through
+ * `headers` is always a plain record limited to the retained retry and
+ * gateway quota/queue signal entries: facts travel on persisted
+ * `AssistantMessage`s and through
  * `structuredClone` snapshots (managed fallback attempt staging), so they must
  * never carry a live `Headers` instance — cloning one throws `DataCloneError`
  * ("The object can not be cloned.") and masks the real provider failure.
@@ -147,14 +148,29 @@ function stringValue(value: unknown): string | undefined {
 	return typeof value === "string" ? value : undefined;
 }
 
-/** Retry-signal headers retained on transport facts; everything else is dropped. */
-const RETAINED_TRANSPORT_HEADERS = ["retry-after", "retry-after-ms"] as const;
+/**
+ * Retry-signal headers retained on transport facts; everything else is
+ * dropped. The `x-vug-*` entries are the Vibrato Usage Gateway's quota and
+ * queue-depth signals; their values are preserved as raw strings and
+ * interpreted by consumers, not by this module.
+ */
+const RETAINED_TRANSPORT_HEADERS = [
+	"retry-after",
+	"retry-after-ms",
+	"x-vug-daily-limit",
+	"x-vug-daily-used",
+	"x-vug-daily-remaining",
+	"x-vug-daily-reset",
+	"x-vug-queue-depth",
+	"x-vug-inflight",
+	"x-vug-queued-ms",
+] as const;
 
 const RETAINED_TRANSPORT_HEADER_SET: ReadonlySet<string> = new Set(RETAINED_TRANSPORT_HEADERS);
 
 /**
- * Reduce transport headers to the retained retry-signal entries in a plain
- * record, so facts stay structured-cloneable and JSON-serializable and never
+ * Reduce transport headers to the retained retry and gateway quota/queue
+ * signal entries in a plain record, so facts stay structured-cloneable and JSON-serializable and never
  * persist arbitrary response headers into session files.
  *
  * Exception-safe by contract: inspection uses only `Headers.get()` results
@@ -276,9 +292,22 @@ export function transportFailureFacts(
 	};
 }
 
+/**
+ * Exception-safe by contract: `new Headers(record)` throws on an invalid
+ * header value (e.g. a CRLF in a gateway-supplied timestamp like
+ * `x-vug-daily-reset`), and the retained record is otherwise free-form
+ * provider input. A throw here falls through to `undefined` — the same
+ * "no retry hint" result as if no headers were retained at all — instead of
+ * propagating a TypeError out of classification.
+ */
 function headersOf(headers: TransportHeaders | undefined): Headers | undefined {
 	if (headers instanceof Headers) return headers;
-	return headers ? new Headers(headers as Record<string, string>) : undefined;
+	if (!headers) return undefined;
+	try {
+		return new Headers(headers as Record<string, string>);
+	} catch {
+		return undefined;
+	}
 }
 
 function parseRetryAfterSeconds(value: string | null, now = Date.now()): number | undefined {
@@ -305,7 +334,12 @@ function isQuotaCode(code: string | undefined): boolean {
 		code === "quota_exhausted" ||
 		code === "usage_limit_reached" ||
 		code === "usage_not_included" ||
-		code === "out_of_credits"
+		code === "out_of_credits" ||
+		// Vibrato Usage Gateway daily-limit code: a 429 with this code is a
+		// quota exhaustion, not an ordinary rate limit, even though the
+		// gateway's retry-after window can be many hours long. A code-less
+		// 429 from an older gateway still falls through to `rate_limit`.
+		code === "daily_token_limit"
 	);
 }
 
