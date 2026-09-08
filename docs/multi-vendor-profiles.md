@@ -134,12 +134,12 @@ Activation hard-blocks when any provider in `required_providers` lacks credentia
 
 ### Serving cross-vendor profiles through one OpenAI-compatible proxy
 
-When a single gateway (LiteLLM, OpenRouter, or a custom proxy) fronts several vendors, you do not need to configure every `required_providers` entry directly. Add the gateway as a provider — `vib setup provider --preset litellm --base-url <url>` or `vib setup provider --preset openai-compatible-proxy --base-url <url>` — and point `modelProfile.proxyProvider` at it in `config.yml`:
+When a single gateway (LiteLLM, OpenRouter, or a custom proxy) fronts several vendors, you do not need to configure every `required_providers` entry directly. Add the gateway through the custom-provider wizard, since the dedicated `litellm` and `openai-compatible-proxy` presets no longer ship: interactively via `/provider` → **Add custom provider**, or non-interactively with `vib setup provider --compat openai --provider <id> --base-url <url> --api-key-env <VAR>`. Pick an `<id>` that does not reuse a built-in provider name, because `litellm`, `openai`, and `openrouter` are reserved built-in ids that the [allowlist](./models.md#supported-providers) hides even as a custom entry. Then point `modelProfile.proxyProvider` at that id in `config.yml`:
 
 ```yaml
 modelProfile:
-  proxyProvider: litellm
+  proxyProvider: my-proxy
   proxyMode: always # route all supported built-in preset selectors through the gateway
 ```
 
-`proxyMode: fallback` is the default and uses the gateway only when the direct provider is unauthenticated. Set `proxyMode: always` when the gateway must be the single audit, quota, or spend-control surface: it routes all proxy-routable **built-in** preset selectors through the proxy even when direct credentials exist. The configured proxy must be authenticated and expose every routed model; activation fails closed for missing or ambiguous models. User-defined profiles are never rewritten — set their selectors to `litellm/…` explicitly if you want them proxied. Routing and fail-closed behavior are documented in [Routing built-in presets through a proxy](./models.md#routing-built-in-presets-through-a-proxy-modelprofileproxyprovider).
+`proxyMode: fallback` is the default and uses the gateway only when the direct provider is unauthenticated. Set `proxyMode: always` when the gateway must be the single audit, quota, or spend-control surface: it routes all proxy-routable **built-in** preset selectors through the proxy even when direct credentials exist. The configured proxy must be authenticated and expose every routed model; activation fails closed for missing or ambiguous models. User-defined profiles are never rewritten — set their selectors to `my-proxy/…` explicitly if you want them proxied. Routing and fail-closed behavior are documented in [Routing built-in presets through a proxy](./models.md#routing-built-in-presets-through-a-proxy-modelprofileproxyprovider).

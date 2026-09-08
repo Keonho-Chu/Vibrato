@@ -67,7 +67,7 @@ For x64, variant selection uses:
 - macOS: `sysctl -n machdep.cpu.leaf7_features`, then `machdep.cpu.features`
 - Windows: PowerShell check for `System.Runtime.Intrinsics.X86.Avx2`
 
-`VIB_NATIVE_VARIANT` can force `modern` or `baseline`; invalid values are ignored.
+`VIB_NATIVE_VARIANT` can force `modern` or `baseline`; invalid values are ignored. `PI_NATIVE_VARIANT` remains a fallback for pre-rebrand setups and is read only when the canonical name is unset or blank.
 
 ### Binary distribution and extraction model
 

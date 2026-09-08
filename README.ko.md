@@ -22,7 +22,7 @@
 **독립 실행 바이너리** (권장, Bun 불필요), Linux(x64/arm64), macOS(arm64/x64), Windows(x64) 지원:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.17.2/scripts/install.sh -o vib-install.sh
+curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.17.3/scripts/install.sh -o vib-install.sh
 sh vib-install.sh
 vib --version
 ```
@@ -30,7 +30,7 @@ vib --version
 Windows (PowerShell, "관리자 권한으로 실행"이 아닌 일반 터미널에서):
 
 ```powershell
-Invoke-WebRequest -UseBasicParsing https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.17.2/scripts/install.ps1 -OutFile vib-install.ps1
+Invoke-WebRequest -UseBasicParsing https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.17.3/scripts/install.ps1 -OutFile vib-install.ps1
 powershell -File vib-install.ps1
 ```
 

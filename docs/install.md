@@ -102,6 +102,8 @@ Interactive startup checks GitHub releases for a newer Vibrato version in the ba
 - Source checkout or `dev:link` executable → update, pull, build, and link through that checkout's original workflow. `vib update` refuses to self-overwrite it.
 - Unsupported platform or unknown target → rerun the documented platform installer.
 
+Standalone-binary installs and updates take a lock so two of them cannot replace the binary at once. The lock records the process that holds it, and a later run reclaims it only after confirming that process is gone, so an update killed partway through does not block the next one indefinitely. A run that finds a live holder reports it and stops rather than racing.
+
 Run `vib config set startup.checkUpdate false` to disable the launch-time check. Network failures are ignored so they do not block startup.
 
 `vib update` resolves `stable` from GitHub `/releases/latest` and `nightly` from the newest published GitHub prerelease. Optional `GITHUB_TOKEN` / `GH_TOKEN` raises API rate limits. `--check`, `--force`, and channel switch-back semantics are unchanged.

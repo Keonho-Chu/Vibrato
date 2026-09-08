@@ -41,7 +41,7 @@ At module initialization, `native/index.js` computes:
   - embedded-addon manifest is non-null,
   - `VIB_COMPILED` env var is set,
   - `import.meta.url` contains Bun embedded markers (`$bunfs`, `~BUN`, `%7EBUN`).
-- **Variant override**: `VIB_NATIVE_VARIANT` (`modern`/`baseline` only; invalid values ignored).
+- **Variant override**: `VIB_NATIVE_VARIANT` (`modern`/`baseline` only; invalid values ignored). The pre-rebrand `PI_NATIVE_VARIANT` is still read when the canonical name is unset or blank.
 - **Selected variant**: explicit override, otherwise runtime AVX2 detection on x64 (`modern` if AVX2, else `baseline`).
 
 ## Platform support and tag resolution
@@ -59,7 +59,7 @@ Unsupported platforms are not rejected before probing. The loader first tries th
 
 ### x64 behavior
 
-1. `VIB_NATIVE_VARIANT=modern|baseline` wins when valid.
+1. `VIB_NATIVE_VARIANT=modern|baseline` wins when valid; a blank or whitespace-only value falls through to `PI_NATIVE_VARIANT`, and an invalid value on either name is ignored entirely.
 2. Otherwise AVX2 support is detected:
    - Linux: scan `/proc/cpuinfo` for `avx2`.
    - macOS: `sysctl -n machdep.cpu.leaf7_features`, then `machdep.cpu.features`.
