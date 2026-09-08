@@ -37,21 +37,28 @@ const EMPTY_FILE_SHA256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca4959
  */
 const LOCK_ACQUIRE_RETRY_MS = 5;
 const LOCK_ACQUIRE_MAX_RETRY_MS = 100;
-const LOCK_ACQUIRE_TIMEOUT_MS = 2_000;
+const LOCK_ACQUIRE_TIMEOUT_MS = 5_000;
 const LOCK_STALE_MS = 30_000;
+const RELEASED_TRANSITION_GRACE_MS = 1_000;
+const SESSION_STATE_LOCK_BUSY = Symbol("session-state-lock-busy");
 
 interface LockRetryBudget {
 	startedAt: number;
 	nextDelayMs: number;
 	attempts: number;
+	nonBlocking: boolean;
 }
 
-function lockRetryBudget(): LockRetryBudget {
-	return { startedAt: performance.now(), nextDelayMs: LOCK_ACQUIRE_RETRY_MS, attempts: 0 };
+function lockRetryBudget(nonBlocking = false): LockRetryBudget {
+	return { startedAt: performance.now(), nextDelayMs: LOCK_ACQUIRE_RETRY_MS, attempts: 0, nonBlocking };
 }
 
 function lockRetryElapsedMs(budget: LockRetryBudget): number {
 	return Math.max(0, performance.now() - budget.startedAt);
+}
+
+function lockRetryExhausted(budget: LockRetryBudget): boolean {
+	return lockRetryElapsedMs(budget) >= LOCK_ACQUIRE_TIMEOUT_MS;
 }
 
 async function waitForLockRetry(budget: LockRetryBudget): Promise<boolean> {
@@ -77,8 +84,8 @@ async function waitForLockRetry(budget: LockRetryBudget): Promise<boolean> {
  * owner record is the sibling `<file>.lock.transition.owner`. `mkdir` admits exactly one
  * contender, while the held directory prevents a successor until release unlinks the
  * validated sidecar and atomically `rmdir`s the claim. A crash before either step leaves a
- * fail-closed directory for explicit recovery; concurrent automatic reclaim cannot prove
- * that a directory + sibling sidecar still name the claim it inspected.
+ * directory that a successor may reclaim only with proof: a host-qualified owner whose pid
+ * is proven dead, plus an exact directory-generation and tree match at removal time.
  *
  * The separate sidecar keeps the claim directory empty, which is what makes `rmdir` the
  * identity-safe portable release primitive. The path stays distinct from `<file>.lock`
@@ -141,7 +148,44 @@ interface PendingTransitionRelease {
 	recovery?: Promise<boolean>;
 }
 
+interface LocalTransitionQueue {
+	waiters: Array<() => void>;
+}
+
 const pendingTransitionReleases = new Map<string, PendingTransitionRelease>();
+const localTransitionQueues = new Map<string, LocalTransitionQueue>();
+
+async function joinLocalTransitionQueue(
+	key: string,
+	transitionDir: string,
+	retryBudget?: LockRetryBudget,
+): Promise<LocalTransitionQueue | undefined> {
+	const queue = localTransitionQueues.get(key);
+	if (!queue) return undefined;
+	if (retryBudget?.nonBlocking) throw SESSION_STATE_LOCK_BUSY;
+	const ready = Promise.withResolvers<void>();
+	const queuedAt = performance.now();
+	SessionStateLockTestHooks.afterLocalTransitionQueued?.(transitionDir);
+	queue.waiters.push(ready.resolve);
+	await ready.promise;
+	if (retryBudget) retryBudget.startedAt += Math.max(0, performance.now() - queuedAt);
+	return queue;
+}
+
+function claimLocalTransitionQueue(key: string): LocalTransitionQueue {
+	const queue: LocalTransitionQueue = { waiters: [] };
+	localTransitionQueues.set(key, queue);
+	return queue;
+}
+
+function releaseLocalTransitionQueue(key: string, queue: LocalTransitionQueue): void {
+	const next = queue.waiters.shift();
+	if (next) {
+		next();
+		return;
+	}
+	if (localTransitionQueues.get(key) === queue) localTransitionQueues.delete(key);
+}
 
 function clearPendingTransitionRelease(key: string, pending?: PendingTransitionRelease): void {
 	const current = pendingTransitionReleases.get(key);
@@ -236,8 +280,7 @@ function removeOwnedTransitionClaim(nativePath: string, generation: TransitionDi
 	if (!captured.ok || !captured.snapshot) return captured.code === "not_found";
 	const root = captured.snapshot.entries.find(entry => entry.relativePath === "");
 	if (
-		!root ||
-		root.kind !== "directory" ||
+		root?.kind !== "directory" ||
 		root.dev !== String(generation.dev) ||
 		root.ino !== String(generation.ino) ||
 		root.nlink !== String(generation.nlink) ||
@@ -409,6 +452,10 @@ export const SessionStateLockTestHooks: {
 	forcedQuarantineName?: string;
 	/** @internal Observes bounded acquisition retries without changing their timing. */
 	afterAcquireContention?: (lockFile: string, attempt: number, elapsedMs: number) => void;
+	/** @internal Observes process-local admission without altering on-disk ownership. */
+	afterLocalTransitionQueued?: (transitionDir: string) => void;
+	/** @internal Runs after transition mkdir contention and before stale-claim inspection. */
+	afterTransitionClaimContention?: (transitionDir: string) => void | Promise<void>;
 } = {};
 
 /** Raised when the lock could not be acquired; callers map it to their own refusal. */
@@ -462,6 +509,112 @@ export class SessionStateLockUnavailableError extends Error {
 			this.cause = causeOrDetails;
 		}
 	}
+}
+
+/**
+ * Log fields describing a persist failure: the error text plus, when a session state
+ * lock refusal sits anywhere in the cause chain, its typed `reason` and `lockPath`.
+ * Wrapping errors (`PreviousRuntimeStateReadError`, `AggregateError`) are searched
+ * so the actionable detail is never buried behind a generic message.
+ */
+export function sessionStateLockFailureFields(error: unknown): {
+	error: string;
+	reason?: SessionStateLockUnavailableReason;
+	lockPath?: string;
+} {
+	const fields: { error: string; reason?: SessionStateLockUnavailableReason; lockPath?: string } = {
+		error: String(error),
+	};
+	const seen = new Set<unknown>();
+	const queue: unknown[] = [error];
+	while (queue.length > 0) {
+		const current = queue.shift();
+		if (current === null || typeof current !== "object" || seen.has(current)) continue;
+		seen.add(current);
+		if (current instanceof SessionStateLockUnavailableError) {
+			if (current.reason !== undefined) fields.reason = current.reason;
+			if (current.lockPath !== undefined) fields.lockPath = current.lockPath;
+			if (fields.reason !== undefined && fields.lockPath !== undefined) return fields;
+		}
+		if (current instanceof AggregateError) queue.push(...current.errors);
+		if ("cause" in current) queue.push((current as { cause?: unknown }).cause);
+	}
+	return fields;
+}
+
+function boundedPersistFailureClassPart(value: unknown, fallback: string): string {
+	if (typeof value !== "string" && typeof value !== "number") return fallback;
+	const normalized = String(value)
+		.replace(/[^A-Za-z0-9_.-]/gu, "_")
+		.slice(0, 64);
+	return normalized || fallback;
+}
+
+function persistFailureProperty(value: unknown, name: string): unknown {
+	if (value === null || (typeof value !== "object" && typeof value !== "function")) return undefined;
+	try {
+		return Reflect.get(value, name);
+	} catch {
+		return undefined;
+	}
+}
+
+function persistFailureConstructorName(error: unknown): string {
+	if (error === null) return "null";
+	if (typeof error !== "object" && typeof error !== "function") return typeof error;
+	const ctor = persistFailureProperty(error, "constructor");
+	const name = persistFailureProperty(ctor, "name");
+	return typeof name === "string" && name.length > 0 ? name : "Object";
+}
+
+/**
+ * Build a bounded warn-window partition without including arbitrary error text. Typed lock
+ * refusals use their stable reason; all other failures use the root constructor and the
+ * first structured `code`/`errno` found in the error/cause chain.
+ */
+function persistFailureClass(error: unknown): string {
+	const lockFields = sessionStateLockFailureFields(error);
+	if (lockFields.reason !== undefined) return `reason:${lockFields.reason}`;
+	const seen = new Set<unknown>();
+	const queue: unknown[] = [error];
+	let code: unknown;
+	let errno: unknown;
+	while (queue.length > 0) {
+		const current = queue.shift();
+		if (current === null || typeof current !== "object" || seen.has(current)) continue;
+		seen.add(current);
+		code ??= persistFailureProperty(current, "code");
+		errno ??= persistFailureProperty(current, "errno");
+		if (code !== undefined && errno !== undefined) break;
+		if (current instanceof AggregateError) queue.push(...current.errors);
+		const cause = persistFailureProperty(current, "cause");
+		if (cause !== undefined) queue.push(cause);
+	}
+	return `error:${boundedPersistFailureClassPart(persistFailureConstructorName(error), "Object")}:code=${boundedPersistFailureClassPart(code, "none")}:errno=${boundedPersistFailureClassPart(errno, "none")}`;
+}
+
+export const PERSIST_FAILURE_WARN_WINDOW_MS = 30_000;
+const persistFailureLastWarnedAt = new Map<string, number>();
+
+/**
+ * Whether a persist failure should be logged at warn level. The first failure for each
+ * document and stable failure class in a 30s window warns; repeats are the caller's cue
+ * to log at debug instead.
+ */
+export function shouldWarnPersistFailure(key: string, error: unknown, now = Date.now()): boolean {
+	for (const [otherKey, warnedAt] of persistFailureLastWarnedAt) {
+		if (now - warnedAt >= PERSIST_FAILURE_WARN_WINDOW_MS) persistFailureLastWarnedAt.delete(otherKey);
+	}
+	const scopedKey = `${key}\u0000${persistFailureClass(error)}`;
+	const last = persistFailureLastWarnedAt.get(scopedKey);
+	if (last !== undefined && now - last < PERSIST_FAILURE_WARN_WINDOW_MS) return false;
+	persistFailureLastWarnedAt.set(scopedKey, now);
+	return true;
+}
+
+/** @internal Test seam: forget every persist-failure warn window. */
+export function resetPersistFailureWarnWindows(): void {
+	persistFailureLastWarnedAt.clear();
 }
 
 function lockUnavailable(
@@ -1307,7 +1460,13 @@ async function acquireOwnerLock(
 		} catch {
 			throw error;
 		}
-		if (!validLockOwner(observed) || observed.released !== true) throw error;
+		if (!validLockOwner(observed)) throw error;
+		if (observed.released !== true) {
+			if (await lockOwnerIsAlive(observed)) throw error;
+			const removed = exactUnlinkOwnerRecord(file, current, quarantineName);
+			if (removed !== "removed" && removed !== "absent") throw error;
+			return await createOwnerLock(file, owner, quarantineName);
+		}
 		try {
 			return await rewriteHeldOwnerRecord(file, current, owner);
 		} catch (error) {
@@ -1329,7 +1488,10 @@ async function acquireOwnerLock(
  *
  * Stale-owner reclaim still uses the native identity-bound detach protocol because no live
  * owner or transition claim can vouch for that pathname. A mismatch here likewise leaves a
- * successor strictly alone.
+ * successor strictly alone. A released tombstone is reclaimable on every platform when its
+ * owner host is this installation and the transition directory is proven empty and unchanged:
+ * the tombstone is the release marker, while the directory generation binds that marker to
+ * the exact claim that release failed to remove.
  */
 async function releaseOwnerLock(file: string, held: LockOwnerSnapshot): Promise<void> {
 	let owner: unknown;
@@ -1377,6 +1539,7 @@ async function releaseOwnerLock(file: string, held: LockOwnerSnapshot): Promise<
 type SessionStateLockReclaimResult =
 	| "absent_or_changed"
 	| "legacy_directory_unprovenanced"
+	| "owner_removed"
 	| "owner_live_or_unverifiable"
 	| "owner_record_fresh"
 	| "owner_unprovenanced"
@@ -1415,7 +1578,8 @@ async function reclaimStaleOwnerRecord(
 	// A successor that took the path in the final window keeps it; this call just loses.
 	if (outcome === "refused")
 		throw new SessionStateLockUnavailableError(new Error("Stale owner record could not be reclaimed."));
-	return outcome === "removed" || outcome === "absent" ? "reclaimed" : "absent_or_changed";
+	if (outcome === "removed") return "owner_removed";
+	return "absent_or_changed";
 }
 
 /**
@@ -1547,14 +1711,18 @@ async function releaseTransitionClaim(
 	}
 }
 
-async function reclaimStaleTransitionClaim(transitionDir: string, quarantineName: string): Promise<void> {
-	const stat = await fs.lstat(transitionDir).catch(() => null);
-	if (!stat) return;
+async function reclaimStaleTransitionClaim(transitionDir: string, quarantineName: string): Promise<boolean> {
+	let stat: fsSync.BigIntStats;
+	try {
+		stat = await fs.lstat(transitionDir, { bigint: true });
+	} catch {
+		return false;
+	}
 	// Regular-file claims belong to the superseded protocol. They retain the old
 	// exact-identity stale path; released PID-1 tombstones deliberately require
 	// explicit cleanup before this atomic-directory protocol can take over.
 	if (stat.isFile()) {
-		await reclaimStaleOwnerRecord(
+		const reclaimed = await reclaimStaleOwnerRecord(
 			transitionDir,
 			{
 				afterInspection: SessionStateLockTestHooks.afterTransitionStaleInspection,
@@ -1562,12 +1730,77 @@ async function reclaimStaleTransitionClaim(transitionDir: string, quarantineName
 			},
 			quarantineName,
 		);
-		return;
+		return reclaimed === "owner_removed";
 	}
 	if (!stat.isDirectory()) throw new SessionStateLockUnavailableError();
-	// No portable operation can atomically prove that this directory + sibling
-	// sidecar are still the dead claim two concurrent reclaimers inspected. A
-	// crashed atomic claim therefore stays fail-closed for explicit recovery.
+	const ownerSnapshot = await captureRegularLockOwner(`${transitionDir}.owner`);
+	if (!ownerSnapshot) return false;
+	let owner: unknown;
+	try {
+		owner = JSON.parse(ownerSnapshot.bytes);
+	} catch {
+		return false;
+	}
+	if (!validLockOwner(owner)) return false;
+	await SessionStateLockTestHooks.afterTransitionStaleInspection?.(transitionDir);
+	if (owner.released === true) {
+		// A released record is safe only when it is qualified by this installation.
+		// Never let a shared-volume tombstone, an absent identity, or a legacy foreign
+		// identity authorize removal of a claim this process cannot own.
+		if (owner.owner_host_id === undefined) return false;
+		const currentHost = await currentOwnerHostId();
+		const legacyHost = await currentLegacyOwnerHostId();
+		if (owner.owner_host_id !== currentHost && owner.owner_host_id !== legacyHost) return false;
+		if (Date.now() - Number(ownerSnapshot.mtimeNs / 1_000_000n) < RELEASED_TRANSITION_GRACE_MS) return false;
+	} else if (await lockOwnerIsAlive(owner)) {
+		// Only a host-qualified owner whose pid is PROVEN dead (ESRCH, or a live pid
+		// with a provably different incarnation) authorizes reclaim. The generation
+		// + exact-tree checks below then bind the removal to the very directory
+		// inspected here, on every platform; a claim stranded by a force-quit
+		// (`postmortem.quit`) would otherwise wall the session directory forever.
+		return false;
+	}
+	const generation = transitionGenerationFromStat(stat);
+	const nativePath = await canonicalOwnedTransitionPath(transitionDir).catch(() => null);
+	if (!nativePath) return false;
+	const captured = nativeSessionStateLock().snapshotDirectoryTree(nativePath);
+	if (!captured.ok || !captured.snapshot) return false;
+	const root = captured.snapshot.entries.find(entry => entry.relativePath === "");
+	if (
+		root?.kind !== "directory" ||
+		root.dev !== String(generation.dev) ||
+		root.ino !== String(generation.ino) ||
+		root.nlink !== String(generation.nlink) ||
+		root.mtimeNs !== String(generation.mtimeNs) ||
+		root.ctimeNs !== String(generation.ctimeNs)
+	)
+		return false;
+	if (captured.snapshot.entries.length !== 1) return false;
+	const removed = nativeSessionStateLock().exactRemoveDirectoryTree(nativePath, captured.snapshot);
+	if (removed.ok || removed.code === "not_found") {
+		exactUnlinkOwnerRecord(`${transitionDir}.owner`, ownerSnapshot, quarantineName);
+		return removed.ok;
+	}
+	if (
+		removed.code === "cleanup_pending" &&
+		removed.payloadDurable === true &&
+		removed.detachedPath === `${nativePath}.removing` &&
+		removed.retainedSuccessorPath === undefined &&
+		removed.retainedUnknownPath === undefined &&
+		removed.retainedPlaceholderPath === undefined
+	) {
+		// The captured claim is proven empty, so the native detach receipt leaves an
+		// empty directory at detachedPath. Remove that exact directory directly: calling
+		// the detach primitive again would deterministically create a second `.removing`
+		// collision on POSIX. rmdir never follows a directory's contents and refuses if a
+		// successor populated the detached path.
+		await removeTransitionDir(removed.detachedPath);
+		exactUnlinkOwnerRecord(`${transitionDir}.owner`, ownerSnapshot, quarantineName);
+		return true;
+	}
+	throw new SessionStateLockUnavailableError(
+		new Error(`Stale transition claim could not be reclaimed (${removed.code ?? "unknown"}).`),
+	);
 }
 
 /** Run one pathname transition under an atomic `mkdir`/`rmdir` claim. */
@@ -1588,6 +1821,7 @@ async function recoverPendingTransitionRelease(
 	transitionDir: string,
 	recoveryKey: string,
 	quarantineName: string,
+	nonBlocking = false,
 ): Promise<boolean> {
 	let pendingKey = recoveryKey;
 	let pending = pendingTransitionReleases.get(pendingKey);
@@ -1620,7 +1854,10 @@ async function recoverPendingTransitionRelease(
 	// for a contender while that release is still in progress. The owner that armed
 	// it flips this bit only when a phase actually throws.
 	if (!pending.recoverable) return false;
-	if (pending.recovery) return await pending.recovery;
+	if (pending.recovery) {
+		if (nonBlocking) throw SESSION_STATE_LOCK_BUSY;
+		return await pending.recovery;
+	}
 	const recovery = (async (): Promise<boolean> => {
 		const ownerFile = `${transitionDir}.owner`;
 		if (!pending.generation) {
@@ -1800,7 +2037,14 @@ async function recoverPendingTransitionRelease(
 	}
 }
 
-/** Run one pathname transition under an atomic `mkdir`/`rmdir` claim. */
+/**
+ * Run one pathname transition under an atomic `mkdir`/`rmdir` claim.
+ *
+ * Same-process contenders join the current claim owner's lifetime before consuming their
+ * bounded filesystem-contention budget. The on-disk protocol remains authoritative across
+ * processes; this queue only prevents a descheduled local owner from timing out its own
+ * successor while it still legitimately holds the claim.
+ */
 async function withLockPathTransition<T>(
 	lockFile: string,
 	transition: () => Promise<T>,
@@ -1810,24 +2054,79 @@ async function withLockPathTransition<T>(
 	if (ownerAccessStrategy() === "unsupported")
 		throw new SessionStateLockUnavailableError(new Error("Safe transition ownership is unsupported."));
 	const transitionDir = `${lockFile}${LOCK_TRANSITION_RESOURCE_SUFFIX}`;
-	const ownerFile = `${transitionDir}.owner`;
 	const recoveryKey = await transitionRecoveryKey(transitionDir);
+	const localKey = recoveryKey;
 	const owner = await newLockOwner();
 	const budget = retryBudget ?? lockRetryBudget();
+	let localTurn = await joinLocalTransitionQueue(localKey, transitionDir, budget);
+	const claimLocalTurn = (): void => {
+		localTurn ??= claimLocalTransitionQueue(localKey);
+	};
+	const joinLocalTurn = async (): Promise<boolean> => {
+		if (localTurn) return false;
+		const joined = await joinLocalTransitionQueue(localKey, transitionDir, budget);
+		if (!joined) return false;
+		localTurn = joined;
+		return true;
+	};
+	try {
+		return await runLockPathTransition(
+			lockFile,
+			recoveryKey,
+			owner,
+			budget,
+			claimLocalTurn,
+			joinLocalTurn,
+			transition,
+			quarantineName,
+		);
+	} finally {
+		if (localTurn) releaseLocalTransitionQueue(localKey, localTurn);
+	}
+}
+
+async function runLockPathTransition<T>(
+	lockFile: string,
+	recoveryKey: string,
+	owner: SessionStateLockOwner,
+	budget: LockRetryBudget,
+	claimLocalTurn: () => void,
+	joinLocalTurn: () => Promise<boolean>,
+	transition: () => Promise<T>,
+	quarantineName = lockQuarantineName(),
+): Promise<T> {
+	if (ownerAccessStrategy() === "unsupported")
+		throw new SessionStateLockUnavailableError(new Error("Safe transition ownership is unsupported."));
+	const transitionDir = `${lockFile}${LOCK_TRANSITION_RESOURCE_SUFFIX}`;
+	const ownerFile = `${transitionDir}.owner`;
+
 	for (;;) {
 		if (ownerAccessStrategy() === "unsupported" && fsSync.existsSync(transitionDir))
 			throw new SessionStateLockUnavailableError(new Error("Safe transition ownership is unsupported."));
-		if (await recoverPendingTransitionRelease(transitionDir, recoveryKey, quarantineName)) {
+		if (await recoverPendingTransitionRelease(transitionDir, recoveryKey, quarantineName, budget.nonBlocking)) {
 			// The claim this process stranded in an earlier failed release is gone;
 			// fall through and retry the mkdir immediately.
 		}
+		if (await joinLocalTurn()) continue;
 		try {
 			await fs.mkdir(transitionDir, { mode: 0o700 });
+			claimLocalTurn();
 			await fs.chmod(transitionDir, 0o700);
 		} catch (error) {
 			const code = (error as NodeJS.ErrnoException).code;
-			if (code !== "EEXIST" && !isTransientLockError(error)) throw new SessionStateLockUnavailableError(error);
-			await reclaimStaleTransitionClaim(transitionDir, quarantineName);
+			if (code !== "EEXIST" && (budget.nonBlocking || !isTransientLockError(error)))
+				throw new SessionStateLockUnavailableError(error);
+			if (await joinLocalTurn()) continue;
+			await SessionStateLockTestHooks.afterTransitionClaimContention?.(transitionDir);
+			const reclaimed = await reclaimStaleTransitionClaim(transitionDir, quarantineName);
+			// One safe reclaim may make progress, but a try-acquire never follows a
+			// succession of contenders. A later maintenance pass can take the freed claim.
+			if (budget.nonBlocking) throw SESSION_STATE_LOCK_BUSY;
+			if (reclaimed) {
+				if (lockRetryExhausted(budget))
+					throw lockUnavailable(transitionDir, "transition_claim_timeout", budget, error);
+				continue;
+			}
 			if (!(await waitForLockRetry(budget)))
 				throw lockUnavailable(transitionDir, "transition_claim_timeout", budget, error);
 			continue;
@@ -2263,8 +2562,33 @@ export async function reclaimStaleSessionStateLock(lockFile: string, quarantineN
  * lock file itself and may run for as long as it needs.
  */
 export async function withSessionStateFileLock<T>(stateFile: string, operation: () => Promise<T>): Promise<T> {
+	return await runWithSessionStateFileLock(stateFile, operation, lockRetryBudget());
+}
+
+/**
+ * Try one admission without joining a live owner's queue or backing off on contention.
+ * A stale reclaim may return `acquired: false` after making the next attempt possible.
+ * Once admitted, the operation and identity-safe release use the normal lock protocol;
+ * their failures propagate rather than being reported as contention.
+ */
+export async function tryWithSessionStateFileLock<T>(
+	stateFile: string,
+	operation: () => Promise<T>,
+): Promise<{ acquired: true; value: T } | { acquired: false }> {
+	try {
+		return { acquired: true, value: await runWithSessionStateFileLock(stateFile, operation, lockRetryBudget(true)) };
+	} catch (error) {
+		if (error === SESSION_STATE_LOCK_BUSY) return { acquired: false };
+		throw error;
+	}
+}
+
+async function runWithSessionStateFileLock<T>(
+	stateFile: string,
+	operation: () => Promise<T>,
+	budget: LockRetryBudget,
+): Promise<T> {
 	const lockFile = `${stateFile}.lock`;
-	const budget = lockRetryBudget();
 	let owner: SessionStateLockOwner;
 	try {
 		owner = await newLockOwner();
@@ -2320,6 +2644,11 @@ export async function withSessionStateFileLock<T>(stateFile: string, operation: 
 			if (callbackFailure && error === callbackError) throw error;
 			// A fault after the lock was taken belongs to the operation, not to acquisition.
 			if (held) throw lockDiagnostic(error, lockFile, "lock_release_failed");
+			if (error === SESSION_STATE_LOCK_BUSY) throw error;
+			// Typed protocol failures include transition setup/release faults. A
+			// try-acquire must not downgrade those into a successful busy response.
+			if (budget.nonBlocking && error instanceof SessionStateLockUnavailableError)
+				throw lockDiagnostic(error, lockFile, "lock_inspection_failed", budget);
 			// Without a safe owner-record access strategy, retrying cannot make the
 			// transition claim removable. Preserve it as a fail-closed fence instead
 			// of spinning until the acquisition budget expires.
@@ -2342,6 +2671,7 @@ export async function withSessionStateFileLock<T>(stateFile: string, operation: 
 			);
 			if (reclaim === "owner_unprovenanced")
 				throw lockUnavailable(lockFile, "lock_owner_record_unprovenanced", budget);
+			if (budget.nonBlocking) throw SESSION_STATE_LOCK_BUSY;
 			if (reclaim === "legacy_directory_unprovenanced") lastReason = "legacy_directory_owner_unprovenanced";
 			else if (reclaim === "owner_live_or_unverifiable") lastReason = "lock_owner_live_or_unverifiable";
 			else if (reclaim === "owner_record_fresh") lastReason = "lock_owner_record_fresh";

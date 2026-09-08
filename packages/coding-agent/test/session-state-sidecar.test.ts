@@ -1,13 +1,15 @@
 import { afterEach, describe, expect, it, setSystemTime, spyOn } from "bun:test";
 import { generateKeyPairSync, verify } from "node:crypto";
+import type { PathLike, StatOptions } from "node:fs";
 import * as fsSync from "node:fs";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 import { postmortem } from "@vib-rato/utils";
-import { FileLockTestHooks } from "../src/config/file-lock";
+import { FileLockTestHooks, processStartTime } from "../src/config/file-lock";
 import { loadInstallationHostId } from "../src/config/machine-identity";
 import { sessionRuntimeDir } from "../src/vib-runtime/session-layout";
+import { SessionStateLockUnavailableError } from "../src/vib-runtime/session-state-lock";
 import {
 	canonicalCoordinatorSidecarPayload,
 	classifyRuntimeToolActivity,
@@ -575,6 +577,73 @@ describe("coordinator runtime state sidecar", () => {
 		expect(await Bun.file(stateFile).text()).toBe(evidence);
 	});
 
+	it.each([
+		"state",
+		"ready_for_input",
+		"live",
+	])("does not echo structurally invalid marker field %s into diagnostics", async field => {
+		const root = await tempRoot();
+		const stateFile = path.join(root, "invalid-field.json");
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "invalid-field";
+		const evidence = JSON.stringify({
+			schema_version: 1,
+			session_id: "invalid-field",
+			state: "completed",
+			ready_for_input: true,
+			live: false,
+			[field]: "untrusted-marker-text\x1b[2J",
+		});
+		await Bun.write(stateFile, evidence);
+		const failure = await persistCoordinatorRuntimeStateFromEvent(assistantEnd("done"), {
+			sessionId: "invalid-field",
+			cwd: root,
+			sessionFile: null,
+		}).catch((error: unknown) => error);
+		expect(failure).toBeInstanceOf(Error);
+		expect(failure).toMatchObject({
+			name: "PreviousRuntimeStateReadError",
+			message: "Existing runtime state marker is invalid or unreadable; refusing to overwrite.",
+		});
+		expect(await Bun.file(stateFile).text()).toBe(evidence);
+	});
+
+	it("reports a live transition timeout without misclassifying or changing runtime state", async () => {
+		const root = await tempRoot();
+		const stateFile = path.join(root, "transition-timeout-state.json");
+		const transitionDir = `${stateFile}.lock.transition`;
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "transition-timeout";
+
+		await persistCoordinatorRuntimeStateFromEvent(
+			{ type: "turn_start" },
+			{ sessionId: "fallback", cwd: root, sessionFile: null },
+		);
+		const before = await Bun.file(stateFile).bytes();
+		await fs.mkdir(transitionDir);
+		await fs.writeFile(
+			`${transitionDir}.owner`,
+			JSON.stringify({
+				pid: process.pid,
+				start_time: processStartTime(process.pid) ?? "unknown",
+				token: "live-transition-timeout",
+				owner_host_id: await loadInstallationHostId(),
+			}),
+		);
+
+		const failure = await persistCoordinatorRuntimeStateFromEvent(
+			{ type: "turn_start" },
+			{ sessionId: "fallback", cwd: root, sessionFile: null },
+		).catch(error => error);
+
+		expect(failure).toBeInstanceOf(SessionStateLockUnavailableError);
+		expect(failure).toMatchObject({
+			lockPath: transitionDir,
+			reason: "transition_claim_timeout",
+		});
+		expect(await Bun.file(stateFile).bytes()).toEqual(before);
+	}, 30000);
+
 	it("preserves directory runtime-state evidence and refuses event and postmortem writes", async () => {
 		const root = await tempRoot();
 		const stateFile = path.join(root, "unreadable-state");
@@ -608,7 +677,11 @@ describe("coordinator runtime state sidecar", () => {
 		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "permission-denied-state";
 		await Bun.write(stateFile, evidence);
 		const denied = Object.assign(new Error("permission denied"), { code: "EACCES" });
-		const stat = spyOn(fs, "stat").mockRejectedValue(denied);
+		const originalStat = fs.stat;
+		const stat = spyOn(fs, "stat").mockImplementation((async (file: PathLike, options?: StatOptions) => {
+			if (String(file) === stateFile) return Promise.reject(denied);
+			return Reflect.apply(originalStat, fs, [file, options]) as never;
+		}) as typeof fs.stat);
 		try {
 			await expect(
 				persistCoordinatorRuntimeStateFromEvent(
@@ -621,8 +694,10 @@ describe("coordinator runtime state sidecar", () => {
 		}
 		expect(await Bun.file(stateFile).text()).toBe(evidence);
 
-		const readFileSync = spyOn(fsSync, "readFileSync").mockImplementation(() => {
-			throw denied;
+		const originalReadFileSync = fsSync.readFileSync;
+		const readFileSync = spyOn(fsSync, "readFileSync").mockImplementation((file, options) => {
+			if (String(file) === stateFile) throw denied;
+			return Reflect.apply(originalReadFileSync, fsSync, [file, options]) as never;
 		});
 		try {
 			await expect(
@@ -1176,7 +1251,7 @@ describe("coordinator runtime state sidecar", () => {
 				cwd: "D:\\Users\\Operator\\Repo",
 				sessionFile: "D:\\Users\\Operator\\Repo\\.vib\\session.jsonl",
 			}),
-		).rejects.toThrow("invalid or unreadable");
+		).rejects.toThrow("belongs to a different workspace");
 		expect(await Bun.file(stateFile).text()).toBe(beforeRejectedWrite);
 	});
 	it("rejects case-different POSIX runtime-state identities", async () => {
@@ -1202,8 +1277,146 @@ describe("coordinator runtime state sidecar", () => {
 					sessionFile: path.join(root, "WORKSPACE", "session.jsonl"),
 				},
 			),
-		).rejects.toThrow("invalid or unreadable");
+		).rejects.toThrow("belongs to a different workspace");
 		expect(await Bun.file(stateFile).text()).toBe(beforeRejectedWrite);
+	});
+
+	it("adopts a terminal foreign-workspace marker that travelled inside the current workspace", async () => {
+		// A session directory committed to version control reaches a second machine with a
+		// marker whose recorded cwd is the other platform's path. The marker is readable and
+		// terminal, and it now lives inside this workspace, so resuming here must not be
+		// refused as if the file were corrupt.
+		const root = await tempRoot();
+		const sessionId = "travelled-session";
+		const runtimeDir = path.join(root, ".vib", `_session-${sessionId}`, "runtime");
+		await fs.mkdir(runtimeDir, { recursive: true });
+		const stateFile = path.join(runtimeDir, "runtime-state.json");
+		await Bun.write(
+			stateFile,
+			JSON.stringify({
+				schema_version: 1,
+				session_id: sessionId,
+				state: "completed",
+				live: false,
+				cwd: "D:\\Users\\Operator\\Repo",
+				workdir: "D:\\Users\\Operator\\Repo",
+				session_file: null,
+			}),
+		);
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+
+		await persistCoordinatorRuntimeStateFromEvent(
+			{ type: "turn_start" },
+			{ sessionId, cwd: root, sessionFile: null },
+		);
+
+		expect(JSON.parse(await Bun.file(stateFile).text())).toMatchObject({
+			session_id: sessionId,
+			cwd: root,
+			workdir: root,
+		});
+	});
+
+	it("refuses a foreign-workspace marker that is live, non-terminal, or outside this workspace", async () => {
+		const sessionId = "foreign-session";
+		const foreign = "D:\\Users\\Operator\\Repo";
+
+		// Valid foreign markers report workspace ownership; contradictory lifecycle
+		// fields are diagnosed earlier, before adoption can be considered.
+		for (const marker of [
+			{ state: "running", live: true },
+			{ state: "completed" }, // `live` absent says nothing about the owner
+			{ state: "running", live: false },
+		]) {
+			const root = await tempRoot();
+			const runtimeDir = path.join(root, ".vib", `_session-${sessionId}`, "runtime");
+			await fs.mkdir(runtimeDir, { recursive: true });
+			const stateFile = path.join(runtimeDir, "runtime-state.json");
+			await Bun.write(
+				stateFile,
+				JSON.stringify({
+					schema_version: 1,
+					session_id: sessionId,
+					cwd: foreign,
+					workdir: foreign,
+					session_file: null,
+					...marker,
+				}),
+			);
+			process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+			const before = await Bun.file(stateFile).text();
+
+			await expect(
+				persistCoordinatorRuntimeStateFromEvent(
+					{ type: "turn_start" },
+					{ sessionId, cwd: root, sessionFile: null },
+				),
+			).rejects.toThrow(
+				marker.live === false
+					? "live must be true when state is running (received false)"
+					: "belongs to a different workspace",
+			);
+			expect(await Bun.file(stateFile).text()).toBe(before);
+		}
+
+		// A terminal marker stored outside this workspace belongs to a different checkout on
+		// the same machine, so being terminal is not enough to adopt it.
+		const root = await tempRoot();
+		const elsewhere = await tempRoot();
+		const stateFile = path.join(elsewhere, "runtime-state.json");
+		await Bun.write(
+			stateFile,
+			JSON.stringify({
+				schema_version: 1,
+				session_id: sessionId,
+				state: "completed",
+				live: false,
+				cwd: elsewhere,
+				workdir: elsewhere,
+				session_file: null,
+			}),
+		);
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+		const before = await Bun.file(stateFile).text();
+
+		await expect(
+			persistCoordinatorRuntimeStateFromEvent({ type: "turn_start" }, { sessionId, cwd: root, sessionFile: null }),
+		).rejects.toThrow("belongs to a different workspace");
+		expect(await Bun.file(stateFile).text()).toBe(before);
+	});
+
+	it("names both workspaces so the mismatch is not mistaken for file corruption", async () => {
+		const root = await tempRoot();
+		const sessionId = "diagnostic-session";
+		const stateFile = path.join(root, "runtime-state.json");
+		await Bun.write(
+			stateFile,
+			JSON.stringify({
+				schema_version: 1,
+				session_id: sessionId,
+				state: "running",
+				live: true,
+				cwd: "D:\\Users\\Operator\\Repo",
+				workdir: "D:\\Users\\Operator\\Repo",
+				session_file: null,
+			}),
+		);
+		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
+
+		const failure = await persistCoordinatorRuntimeStateFromEvent(
+			{ type: "turn_start" },
+			{ sessionId, cwd: root, sessionFile: null },
+		).then(
+			() => undefined,
+			(error: unknown) => error as Error,
+		);
+		if (!(failure instanceof Error)) throw new Error("expected the foreign-workspace marker to reject");
+
+		expect(failure).toBeInstanceOf(Error);
+		expect(failure.name).toBe("ForeignRuntimeStateError");
+		expect(failure.message).toContain("D:\\Users\\Operator\\Repo");
+		expect(failure.message).toContain(root);
+		expect(failure.message).not.toContain("invalid or unreadable");
 	});
 
 	it("rejects non-terminal and mismatched runtime markers", async () => {
@@ -1598,7 +1811,7 @@ describe("coordinator runtime state sidecar", () => {
 					cwd: root,
 					sessionFile: path.join(root, "session.jsonl"),
 				}),
-			).rejects.toThrow("invalid or unreadable");
+			).rejects.toThrow("belongs to a different workspace");
 			expect(await Bun.file(stateFile).text()).toBe(before);
 		}
 	});
@@ -2576,38 +2789,42 @@ describe("coordinator runtime state sidecar", () => {
 		expect(payload.live).toBe(false);
 	});
 
-	it("issue-4351: validation rejects a stale completed+ready_for_input:true marker", async () => {
+	it.each([
+		["completed", true, false, "ready_for_input must be false when state is completed (received true)"],
+		["ready_for_input", false, false, "ready_for_input must be true when state is ready_for_input (received false)"],
+		["running", false, false, "live must be true when state is running (received false)"],
+		["completed", false, true, "live must be false when state is completed (received true)"],
+	] as const)("diagnoses contradictory lifecycle fields: %s / ready=%s / live=%s", async (state, ready, live, detail) => {
 		const root = await tempRoot();
-		const stateFile = path.join(root, "issue-4351-stale.json");
+		const sessionId = "contradictory-marker";
+		const stateFile = path.join(sessionRuntimeDir(root, sessionId), "runtime-state.json");
 		process.env[VIB_COORDINATOR_SESSION_STATE_FILE_ENV] = stateFile;
-		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = "issue-4351-stale";
-		// A pre-fix marker with the contradictory completed + ready_for_input: true.
-		await Bun.write(
-			stateFile,
-			`${JSON.stringify({
-				schema_version: 1,
-				session_id: "issue-4351-stale",
-				state: "completed",
-				ready_for_input: true,
-				cwd: root,
-				workdir: root,
-				session_file: null,
-				current_turn_id: null,
-				last_turn_id: null,
-				live: false,
-				updated_at: "2026-08-11T00:00:00.000Z",
-				reason: null,
-			})}\n`,
-		);
+		process.env[VIB_COORDINATOR_SESSION_ID_ENV] = sessionId;
+		// Like a pre-4351 marker carried from Windows: a readable payload must still
+		// pass lifecycle validation before foreign-workspace adoption is considered.
+		const evidence = `${JSON.stringify({
+			schema_version: 1,
+			session_id: sessionId,
+			state,
+			ready_for_input: ready,
+			cwd: "D:\\work\\project",
+			workdir: "D:\\work\\project",
+			session_file: null,
+			live,
+			updated_at: "2026-08-11T00:00:00.000Z",
+		})}\n`;
+		await Bun.write(stateFile, evidence);
+		const context = { sessionId, cwd: root, sessionFile: null };
+		const message = `Existing runtime state marker violates the lifecycle contract: ${detail}; refusing to overwrite.`;
 
-		// The stale marker must be rejected; the runtime must not silently preserve it.
 		await expect(
-			persistCoordinatorRuntimeStateFromEvent(assistantEnd("re-assert completion"), {
-				sessionId: "issue-4351-stale",
-				cwd: root,
-				sessionFile: null,
-			}),
-		).rejects.toThrow();
+			persistCoordinatorRuntimeStateFromEvent(assistantEnd("re-assert completion"), context),
+		).rejects.toThrow(message);
+		expect(await Bun.file(stateFile).text()).toBe(evidence);
+		await expect(persistCoordinatorRuntimeStateFromPostmortem(postmortem.Reason.SIGTERM, context)).rejects.toThrow(
+			message,
+		);
+		expect(await Bun.file(stateFile).text()).toBe(evidence);
 	});
 });
 
@@ -2828,7 +3045,9 @@ describe("coordinator runtime tool activity", () => {
 
 		// Far more concurrent calls than the public list holds. The private set is
 		// current state, not history, so none of them may be silently dropped.
-		const LIVE_CALLS = 65;
+		// Two full public windows plus one proves overflow without turning this
+		// correctness test into a benchmark of synced atomic state-file writes.
+		const LIVE_CALLS = 17;
 		for (let index = 0; index < LIVE_CALLS; index++) {
 			await toolEvent(stateFile, "start", {
 				at: new Date(Date.UTC(2026, 2, 1, 0, 0, index + 1)).toISOString(),
@@ -2843,22 +3062,33 @@ describe("coordinator runtime tool activity", () => {
 
 		// A duplicate start for a live call is idempotent; it never double-counts.
 		await toolEvent(stateFile, "start", { at: "2026-03-01T00:02:00.000Z", callId: "call-0", label: "bash" });
-		expect(await activityOf(stateFile)).toMatchObject({ seq: 66, active_tool_count: LIVE_CALLS });
+		expect(await activityOf(stateFile)).toMatchObject({ seq: LIVE_CALLS + 1, active_tool_count: LIVE_CALLS });
 
 		// call-0 is far outside the public top 8, but ending it still removes exactly
 		// one entry from the exact total.
 		await toolEvent(stateFile, "end", { at: "2026-03-01T00:02:01.000Z", callId: "call-0", label: "bash" });
-		expect(await activityOf(stateFile)).toMatchObject({ seq: 67, active_tool_count: 64, elapsed_ms: 120_000 });
+		expect(await activityOf(stateFile)).toMatchObject({
+			seq: LIVE_CALLS + 2,
+			active_tool_count: LIVE_CALLS - 1,
+			elapsed_ms: 120_000,
+		});
 
 		// A duplicate end and an unmatched end change nothing but the snapshot header.
 		await toolEvent(stateFile, "end", { at: "2026-03-01T00:02:02.000Z", callId: "call-0", label: "bash" });
 		await toolEvent(stateFile, "end", { at: "2026-03-01T00:02:03.000Z", callId: "never-started", label: "bash" });
-		expect(await activityOf(stateFile)).toMatchObject({ seq: 69, active_tool_count: 64, elapsed_ms: null });
+		expect(await activityOf(stateFile)).toMatchObject({
+			seq: LIVE_CALLS + 4,
+			active_tool_count: LIVE_CALLS - 1,
+			elapsed_ms: null,
+		});
 
 		// A missing call id cannot correlate, so it must not corrupt accounting.
 		await toolEvent(stateFile, "start", { at: "2026-03-01T00:02:04.000Z", label: "bash" });
 		await toolEvent(stateFile, "end", { at: "2026-03-01T00:02:05.000Z", callId: "   ", label: "bash" });
-		expect(await activityOf(stateFile)).toMatchObject({ seq: 71, active_tool_count: 64 });
+		expect(await activityOf(stateFile)).toMatchObject({
+			seq: LIVE_CALLS + 6,
+			active_tool_count: LIVE_CALLS - 1,
+		});
 
 		// Ending every remaining live call drains the set to exactly zero.
 		for (let index = 1; index < LIVE_CALLS; index++) {

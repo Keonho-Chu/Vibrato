@@ -139,6 +139,63 @@ function writeFailingBun(dir: string): void {
 	fs.chmodSync(bunPath, 0o755);
 }
 
+function writeLockRaceShims(dir: string): void {
+	const binDir = process.platform === "darwin" ? "/bin" : "/usr/bin";
+	const psShim = `#!/bin/sh
+barrier="$VIB_LOCK_RACE_DIR"
+if [ "\${1:-}" = "-p" ] && [ -n "$barrier" ]; then
+  if mkdir "$barrier/ps-first" 2>/dev/null; then
+    while [ ! -f "$barrier/ps-release" ]; do sleep 0.01; done
+  else
+    : > "$barrier/ps-release"
+  fi
+fi
+exit 1
+`;
+	const catShim = `#!/bin/sh
+barrier="$VIB_LOCK_RACE_DIR"
+lock="$VIB_INSTALL_DIR/.vib-install.lock"
+if [ "\${1:-}" = "$lock" ] && [ -n "$barrier" ]; then
+  if mkdir "$barrier/cat-first" 2>/dev/null; then
+    while [ ! -f "$barrier/cat-release" ]; do sleep 0.01; done
+  else
+    : > "$barrier/cat-release"
+  fi
+fi
+exec "${binDir}/cat" "$@"
+`;
+	const mvShim = `#!/bin/sh
+barrier="$VIB_LOCK_RACE_DIR"
+lock="$VIB_INSTALL_DIR/.vib-install.lock"
+source="$1"
+destination="$2"
+if [ "$source" = "$lock" ]; then
+  case "$destination" in
+    "$source.stale."*)
+      if [ -n "$barrier" ] && mkdir "$barrier/mv-first" 2>/dev/null; then
+        "${binDir}/mv" "$@"
+        exit $?
+      fi
+      if [ -n "$barrier" ]; then
+        while [ ! -f "$source" ]; do sleep 0.01; done
+      fi
+      ;;
+  esac
+fi
+exec "${binDir}/mv" "$@"
+`;
+	for (const [name, content] of [
+		["ps", psShim],
+		["cat", catShim],
+		["mv", mvShim],
+	] as const) {
+		const shimPath = path.join(dir, name);
+		fs.writeFileSync(shimPath, content);
+		fs.chmodSync(shimPath, 0o755);
+	}
+}
+
+
 async function runInstaller(
 	args: string[],
 	env: Record<string, string> = {},
@@ -462,14 +519,55 @@ describe("install.sh binary-first contract", () => {
 		}
 	});
 
-	test("fails closed when an installer lock already exists", async () => {
-		writeCurlShim(sandbox.shimDir, { assets: {} });
+	test("reclaims a lock whose recorded owner is no longer running", async () => {
+		const payload = fakeVibScript({ version: VERSION });
+		writeCurlShim(sandbox.shimDir, {
+			assets: {
+				[hostBinaryName()]: payload,
+				"vibrato-release-binaries.sha256": `${sha256(payload)}  ${hostBinaryName()}\n`,
+			},
+		});
 		const lockFile = path.join(sandbox.installDir, ".vib-install.lock");
 		fs.writeFileSync(lockFile, "999999 stale-nonce\n");
 		const result = await runInstaller([]);
+		expect(result.exitCode).toBe(0);
+		expect(fs.readFileSync(path.join(sandbox.installDir, "vib"), "utf8")).toBe(payload);
+		expect(fs.existsSync(lockFile)).toBe(false);
+	});
+
+	test("allows only one concurrent installer to reclaim the same stale lock", async () => {
+		const payload = fakeVibScript({ version: VERSION });
+		writeCurlShim(sandbox.shimDir, {
+			assets: {
+				[hostBinaryName()]: payload,
+				"vibrato-release-binaries.sha256": `${sha256(payload)}  ${hostBinaryName()}\n`,
+			},
+		});
+		const lockFile = path.join(sandbox.installDir, ".vib-install.lock");
+		const raceDir = path.join(sandbox.root, "lock-race");
+		fs.mkdirSync(raceDir);
+		fs.writeFileSync(lockFile, "999999 stale-nonce\n");
+		writeLockRaceShims(sandbox.shimDir);
+
+		const env = { VIB_LOCK_RACE_DIR: raceDir };
+		const results = await Promise.all([runInstaller([], env), runInstaller([], env)]);
+		const successful = results.filter(result => result.exitCode === 0);
+		expect(successful).toHaveLength(1);
+		expect(results.some(result => (result.stderr + result.stdout).includes("Another Vibrato installer is already running"))).toBe(true);
+		expect(fs.readFileSync(path.join(sandbox.installDir, "vib"), "utf8")).toBe(payload);
+		expect(fs.existsSync(lockFile)).toBe(false);
+		expect(fs.existsSync(`${lockFile}.reclaim`)).toBe(false);
+	});
+
+	test("fails closed when an installer lock owner cannot be proven stale", async () => {
+		writeCurlShim(sandbox.shimDir, { assets: {} });
+		const lockFile = path.join(sandbox.installDir, ".vib-install.lock");
+		const claim = "not-a-pid malformed-lock\n";
+		fs.writeFileSync(lockFile, claim);
+		const result = await runInstaller([]);
 		expect(result.exitCode).not.toBe(0);
 		expect(result.stderr + result.stdout).toContain("Another Vibrato installer is already running");
-		expect(fs.readFileSync(lockFile, "utf8")).toBe("999999 stale-nonce\n");
+		expect(fs.readFileSync(lockFile, "utf8")).toBe(claim);
 	});
 
 	test("refuses to replace a destination symlink", async () => {
