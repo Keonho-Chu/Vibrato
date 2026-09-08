@@ -5820,9 +5820,12 @@ export class ModelRegistry {
 	 * Suppress a specific model selector (e.g., "provider/id") until a specific timestamp.
 	 *
 	 * `reason` is a short, user-facing explanation of WHY the selector is hidden
-	 * ("token limit reached; resets at …"). A rate-limit suppression has
-	 * always been reasonless, so the parameter is optional and a call that omits
-	 * it keeps the previous behavior exactly.
+	 * ("token limit reached"). It carries the condition only: `untilMs` is stored
+	 * beside it, so a surface that wants to say how long the wait still is reads
+	 * that instant back through {@link getSelectorSuppressionUntil} and renders a
+	 * countdown as it draws, rather than freezing one into the reason here. A
+	 * rate-limit suppression has always been reasonless, so the parameter is
+	 * optional and a call that omits it keeps the previous behavior exactly.
 	 */
 	suppressSelector(selector: string, untilMs: number, reason?: string): void {
 		const normalizedSelector = normalizeSuppressedSelector(selector);
