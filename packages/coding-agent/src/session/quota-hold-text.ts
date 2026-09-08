@@ -36,8 +36,17 @@ const MINUTES_PER_DAY = 24 * MINUTES_PER_HOUR;
  * Returns `undefined` rather than `0m` for a delta that has run out or rounds
  * away: an expired hold is not "resetting any moment now", it is simply over,
  * and the caller drops the phrase instead of drawing a zero.
+ *
+ * Deliberately not merged with the two neighbouring countdown formatters, whose
+ * rules differ where it matters to their own surfaces: the status line's
+ * `formatUsageReset` takes minutes already rounded by the observer and has no
+ * day case at all, and the `/usage` panel's own `formatResetCountdown` floors
+ * instead of rounding, renders a sub-minute wait as `<1m`, and stays in hours
+ * up to 48. Sharing one implementation would silently change what those two
+ * draw; this one matches the status line's wording, which is the surface a held
+ * model sits beside.
  */
-export function formatResetCountdown(msRemaining: number): string | undefined {
+export function formatHoldCountdown(msRemaining: number): string | undefined {
 	if (!Number.isFinite(msRemaining) || msRemaining <= 0) return undefined;
 	const minutes = Math.round(msRemaining / MS_PER_MINUTE);
 	if (minutes < 1) return undefined;
@@ -53,9 +62,9 @@ export function formatResetCountdown(msRemaining: number): string | undefined {
 }
 
 /** `resets in 2h 30m`, or nothing when the instant is unknown or already past. */
-export function formatResetPhrase(untilMs: number | undefined, now = Date.now()): string | undefined {
+function formatResetPhrase(untilMs: number | undefined, now: number): string | undefined {
 	if (untilMs === undefined) return undefined;
-	const countdown = formatResetCountdown(untilMs - now);
+	const countdown = formatHoldCountdown(untilMs - now);
 	return countdown === undefined ? undefined : `resets in ${countdown}`;
 }
 
