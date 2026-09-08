@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [0.18.0] - 2026-09-08
 ### Fixed
 
 - `vib local-provider status --smoke`, `diagnose --smoke`, and `smoke` no longer throw away what the endpoint said about the quota. The smoke request already reaches a usage gateway and already receives its quota headers, so the command now reports them: the token budget for the current window, how much of it is used and left, when it resets (as a countdown and the instant itself), and the queue depth, in-flight count and slot wait when the gateway sent them. Each line appears only when the gateway actually sent that value, so an endpoint that is not behind a gateway prints nothing extra, and a run without `--smoke` or `--model` makes no chat request and reports nothing — the facts are read off the request the command was already making, never a new one. A refused smoke is now named by what refused it: a 429 carrying the gateway's token-limit code reports `token limit reached; resets in 2h 30m` from the gateway's own reset instant, and a 503 carrying its queue codes reports `gateway busy (queue 3)` with the retry hint it asked for. Any other 429 or 503, including an ordinary local server still loading a model, keeps the existing not-ready output. The wording stays neutral about how long the quota window is, because that window is operator-configured and the header names only say "daily" for wire stability.

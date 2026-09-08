@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.18.0] - 2026-09-08
+
 - Transport failure facts now retain the Vibrato Usage Gateway's `x-vug-daily-limit`, `x-vug-daily-used`, `x-vug-daily-remaining`, `x-vug-daily-reset`, `x-vug-queue-depth`, `x-vug-inflight`, and `x-vug-queued-ms` headers (raw string values, allowlisted like the existing `retry-after`/`retry-after-ms` entries), and classify a gateway `daily_token_limit` provider code as a `quota` fallback trigger instead of `rate_limit`. Previously the gateway's daily-limit 429 was treated as an ordinary rate limit with a 12-hour retry window, and the `x-vug-daily-*` headers were dropped before reaching consumers. A code-less 429 still classifies as `rate_limit`, and 503 `queue_timeout`/`queue_full` still classify as `server`.
 - OpenAI Codex HTTP failures with an empty response body and empty status text now include the HTTP status in the surfaced message instead of the opaque `Request failed`, while structured provider errors retain their existing messages and classification.
 - OAuth callback responses now serialize provider-controlled result fields as safe JSON script data, preventing callback values from terminating the embedded state element while preserving exact JSON values and callback behavior.
