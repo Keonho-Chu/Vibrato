@@ -449,6 +449,12 @@ import {
 import { canonicalCoordinatorToolLabel } from "./coordinator-tool-label";
 import { pruneStaleFileMentions } from "./file-mention-pruning";
 import { describeFoldReceipt, FOLD_WAKE_MERGE_WINDOW_MS, type FoldAdapter, FoldCoordinator } from "./fold-coordinator";
+import {
+	fingerprintCredential,
+	GatewayQuotaObserver,
+	type GatewayQuotaState,
+	hasGatewayQuotaHeaders,
+} from "./gateway-quota-observer";
 import type { MemoryGuardRestoreResult } from "./memory-guard-checkpoint-participant";
 import {
 	type BashExecutionMessage,
@@ -2968,6 +2974,11 @@ export class AgentSession {
 	#onPayload: SimpleStreamOptions["onPayload"] | undefined;
 	#onResponse: SimpleStreamOptions["onResponse"] | undefined;
 	#onSseEvent: SimpleStreamOptions["onSseEvent"] | undefined;
+	/**
+	 * In-memory gateway quota/congestion observation for this session. Fed from
+	 * response headers only; never persisted and never polled.
+	 */
+	readonly #gatewayQuota = new GatewayQuotaObserver();
 	#convertToLlm: (messages: AgentMessage[]) => Message[] | Promise<Message[]>;
 	#rebuildSystemPrompt:
 		| ((
@@ -4143,10 +4154,12 @@ export class AgentSession {
 		this.#onResponse = configuredOnResponse
 			? async (response, model, scope) => {
 					this.rawSseDebugBuffer.recordResponse(response, model);
+					void this.#observeGatewayQuota("success", response.status, response.headers, model);
 					await configuredOnResponse(response, model, scope);
 				}
 			: (response, model, _scope) => {
 					this.rawSseDebugBuffer.recordResponse(response, model);
+					void this.#observeGatewayQuota("success", response.status, response.headers, model);
 				};
 		const configuredOnSseEvent = config.onSseEvent;
 		this.#onSseEvent = configuredOnSseEvent
@@ -10148,6 +10161,90 @@ export class AgentSession {
 	/** Credential selection identity; defaults to the provider-facing session identity. */
 	get credentialSessionId(): string {
 		return this.#credentialSessionId ?? this.sessionId;
+	}
+
+	/**
+	 * Latest gateway quota/congestion observation, or `null` when this session
+	 * has never seen a gateway quota header. Read live by the status line; the
+	 * value is in-memory only and is never written to a session file.
+	 */
+	get gatewayQuotaState(): GatewayQuotaState | null {
+		return this.#gatewayQuota.state;
+	}
+
+	/**
+	 * Fold one provider response into the gateway quota observation.
+	 *
+	 * Called from the success interceptor with the normalized (lower-cased)
+	 * response headers, and from the transport-failure path with the retained
+	 * failure facts headers. `kind` says which of those two boundaries called,
+	 * because a transport failure can arrive with no status and must not be read
+	 * as a served request. It reads only the selected `x-vug-*` names plus
+	 * `retry-after`, and ignores every other header.
+	 *
+	 * Private: both callers are this session's own transport boundaries, and
+	 * nothing outside can supply headers the session did not receive. Tests reach
+	 * the same code through the real interceptor that
+	 * `prepareSimpleStreamOptions` installs, or by prompting.
+	 *
+	 * The credential half of the key is a digest of the credential resolved for
+	 * this provider right now, not the session-scoped selector: the selector
+	 * never changes once the session is constructed, so keying on it would let a
+	 * mid-session credential rotation carry the exhausted key's budget and reset
+	 * instant onto the next key. Resolution is asynchronous, so the observation
+	 * instant is stamped synchronously before the await and the observer's
+	 * newest-wins rule keeps out-of-order folds from rolling the display back.
+	 * Production call sites fire this and move on; the promise is returned so
+	 * tests can await the fold.
+	 */
+	async #observeGatewayQuota(
+		kind: "success" | "failure",
+		status: number | undefined,
+		headers: Readonly<Record<string, string | undefined>> | undefined,
+		model?: { provider?: string; baseUrl?: string },
+	): Promise<boolean> {
+		const at = Date.now();
+		// Synchronous gate, before anything else touches the session's state.
+		// Every response from every provider reaches this method, but only a
+		// gateway response is ours to look at, and deciding that costs one pass
+		// over the header names.
+		if (!hasGatewayQuotaHeaders(headers)) return false;
+		const provider = model?.provider ?? this.model?.provider;
+		const baseUrl = model?.baseUrl ?? this.model?.baseUrl;
+		if (typeof provider !== "string" || typeof baseUrl !== "string") return false;
+		const credentialId = fingerprintCredential(await this.#peekGatewayCredential(provider), this.credentialSessionId);
+		return this.#gatewayQuota.observe({
+			key: { provider, baseUrl, credentialId, sessionId: this.sessionId },
+			kind,
+			status,
+			headers,
+			at,
+		});
+	}
+
+	/**
+	 * The credential currently backing this provider, for fingerprinting only.
+	 *
+	 * Deliberately `AuthStorage.peekApiKey` rather than `ModelRegistry.getApiKey`.
+	 * Observation must not change what it observes, and `getApiKey` is a mutating
+	 * resolve: it refreshes rotating config keys, rewrites the model's effective
+	 * `Authorization` header, and refreshes an expired OAuth token. `peekApiKey`
+	 * reads the stored credential and returns nothing for an expired token.
+	 *
+	 * Never throws and never surfaces the value. When no credential can be read,
+	 * the fingerprint falls back to the session scope, which keeps sessions apart
+	 * instead of merging them into one bucket.
+	 */
+	async #peekGatewayCredential(provider: string): Promise<string | undefined> {
+		const authStorage = this.#modelRegistry?.authStorage;
+		if (!authStorage || typeof authStorage.peekApiKey !== "function") return undefined;
+		try {
+			const owner = this.#modelRegistry.getAuthStorageOwner?.();
+			const resolved = await authStorage.peekApiKey(provider, owner ? { owner } : undefined);
+			return typeof resolved === "string" ? resolved : undefined;
+		} catch {
+			return undefined;
+		}
 	}
 
 	/** Pin one OAuth credential for this session scope and persist the minimal intent. */
@@ -20265,6 +20362,17 @@ export class AgentSession {
 		scope?: AttemptScope,
 		scopeWasClean = this.#isRetryScopeClean(scope),
 	): Promise<boolean | ManagedAttemptDecision> {
+		// A gateway token-limit 429 and an admission 503 arrive as provider SDK
+		// errors, so the success interceptor never runs for them. Observe the
+		// retained failure headers here, before any retry or fallback decision,
+		// so the status line can distinguish a spent budget from congestion.
+		if (transportFailure?.headers) {
+			void this.#observeGatewayQuota(
+				"failure",
+				transportFailure.status ?? message.errorStatus,
+				transportFailure.headers,
+			);
+		}
 		const controller = this.#defaultFallbackChain();
 		const managedFallback = controller.chain.entries.length > 1;
 		const retrySettings = this.settings.getGroup("retry");
