@@ -363,6 +363,55 @@ describe("interactive startup input ordering", () => {
 		expect(statuses).toEqual(["unrelated notice"]);
 	});
 
+	it("shows the hidden-provider warning once, naming the variable and not its value", async () => {
+		const warnings: string[] = [];
+		const stop = new Error("stop interactive input");
+		const session = {
+			model: { id: "local-model" } as { id: string } | undefined,
+			modelRegistry: { getAvailable: () => [] },
+			getSessionAgentDir: () => path.join(os.tmpdir(), `vib-onboarding-order-${process.pid}-hidden`),
+		};
+		const createMode = (): InteractiveMode =>
+			({
+				init: async () => {},
+				showNewVersionNotification: () => {},
+				renderInitialMessages: () => {},
+				showError: () => {},
+				showStatus: () => {},
+				showWarning: (message: string) => warnings.push(message),
+				showLocalEndpointOnboarding: async () => {},
+				showFrictionlessOnboarding: async () => {},
+				getUserInput: async () => {
+					throw stop;
+				},
+			}) as unknown as InteractiveMode;
+
+		await expect(
+			runInteractiveMode(
+				session as unknown as AgentSession,
+				"test",
+				undefined,
+				[{ kind: "warn", message: 'provider "vllm": VUG_API_KEY is not set, its models are hidden' }],
+				new StartupUpdateOrchestrator(
+					"interactive",
+					() => false,
+					async () => undefined,
+				),
+				[],
+				() => {},
+				undefined,
+				undefined,
+				undefined,
+				undefined,
+				undefined,
+				createMode,
+				undefined,
+			),
+		).rejects.toBe(stop);
+
+		expect(warnings).toEqual(['provider "vllm": VUG_API_KEY is not set, its models are hidden']);
+	});
+
 	it("still asks for the local LLM endpoint on the first run when credentials were imported", async () => {
 		const events: string[] = [];
 		const stop = new Error("stop interactive input");

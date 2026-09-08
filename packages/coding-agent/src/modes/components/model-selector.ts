@@ -2003,7 +2003,28 @@ export class ModelSelectorComponent extends Container {
 
 	#getProviderEmptyStateMessage(): string | undefined {
 		const activeProviderId = this.#getActiveProviderId();
-		if (!activeProviderId || this.#searchInput.getValue().trim()) {
+		if (this.#searchInput.getValue().trim()) {
+			return undefined;
+		}
+		// An unset or empty `apiKeyEnv` variable removes the provider's models
+		// before discovery ever runs, so it explains the empty list better than
+		// any discovery state and is checked first. Only the variable's name is
+		// shown. On the combined tab, where a hidden provider is the usual reason
+		// nothing is listed at all, the same causes are named together.
+		const hiddenProviders =
+			typeof this.#modelRegistry.getProvidersHiddenByMissingApiKeyEnv === "function"
+				? this.#modelRegistry.getProvidersHiddenByMissingApiKeyEnv()
+				: [];
+		if (activeProviderId) {
+			const hidden = hiddenProviders.find(entry => entry.provider === activeProviderId);
+			if (hidden) {
+				return `  ${hidden.envName} is not set, so this provider's models are hidden. Set it and restart vib.`;
+			}
+		} else if (hiddenProviders.length > 0) {
+			const causes = hiddenProviders.map(entry => `${entry.provider} needs ${entry.envName}`).join(", ");
+			return `  No models. Hidden by an unset key: ${causes}. Set the variable and restart vib.`;
+		}
+		if (!activeProviderId) {
 			return undefined;
 		}
 		const state = this.#modelRegistry.getProviderDiscoveryState(activeProviderId);

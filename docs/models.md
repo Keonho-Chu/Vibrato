@@ -859,6 +859,16 @@ When `VIB_AUTH_BROKER_URL` (or `auth.broker.url`) is set, the local SQLite crede
 
 So a model can exist in registry but not be selectable until auth is available.
 
+### Providers hidden by an empty `apiKeyEnv`
+
+A provider whose only credential source is `apiKeyEnv` is dropped from `getAvailable()` when the named environment variable is unset, empty, or whitespace. Its models disappear entirely, so the symptom is an empty model list rather than an auth error. That exclusion is unchanged; what the client adds is the cause, named in three places:
+
+- The interactive TUI queues one startup warning per affected provider: `provider "vllm": VUG_API_KEY is not set, its models are hidden`.
+- `vib local-provider status` prints the same line per affected provider — including when there is no `providers.local.openaiCompat` block at all — and reports the list as `hiddenProviders` under `--json`.
+- The model selector's empty state names the variable on that provider's tab, and lists every hidden provider on the `ALL` tab.
+
+Only the variable's name is ever printed; its value is never read out. A provider with a literal `apiKey`, with `auth: none`, or on OAuth is never reported, because an empty `apiKeyEnv` does not decide whether it is usable.
+
 ## Runtime model resolution
 
 ### CLI and pattern parsing
@@ -1152,6 +1162,34 @@ The summary reports the address, how many models the endpoint serves and how man
 A gateway checks the key's budget before it routes anything, the model list included, so a key whose budget is spent gets a 429 on the connect screen too. That is reported as what it is — a valid key with nothing left in the current window, with the figures and the reset instant the gateway sent — rather than as an unreachable server. A 429 with no gateway headers is some other server's throttle and is still reported as a plain HTTP failure.
 
 Every figure shown comes from the gateway. Its quota window is an operator setting (`VUG_QUOTA_WINDOW_HOURS`, 24 by default and 3 in the LIG deployment) that is never sent to the client, so the wording names no window length and no day or midnight boundary: a reset appears only as the instant the gateway reported, and disappears once that instant has passed.
+
+### Reading the gateway's quota from `vib local-provider`
+
+`vib local-provider status --smoke`, `vib local-provider diagnose --smoke`, and `vib local-provider smoke` send one real streaming chat request — one of the requests the section above says the budget appears after. When the endpoint answers as a usage gateway, that response carries the key's quota headers, and the command prints what they say after the ordinary diagnostic lines:
+
+```
+gateway tokens: limit 200000, used 12345, remaining 187655
+gateway resets: in 2h 30m (2026-09-08T15:00:00.000Z)
+gateway wait: 1200ms for an upstream slot
+```
+
+A served request reports the budget, the reset, and how long it waited for an upstream slot. Queue depth and in-flight count are not part of that: the gateway sends them only when it refuses a request for congestion, so they appear beside a `gateway_busy` rejection instead.
+
+```
+gateway queue: depth 3, inflight 8
+```
+
+Each line appears only when the gateway sent the values behind it, so an endpoint that is not behind a gateway prints none of them. `--json` carries the same values under `gateway`. A `status`/`diagnose` run without `--smoke` or `--model` makes no chat request and therefore reports no gateway facts; the command never issues a request of its own to collect them.
+
+A request the gateway refuses is reported by what it refused for, rather than as a generic "server not ready":
+
+| Rejection | Reported as |
+| --- | --- |
+| `429` with `error.code: daily_token_limit` | `token limit reached; resets in 2h 30m`, category `token_limit` |
+| `503` with `error.code: queue_timeout` or `queue_full` | `gateway busy (queue 3)`, category `gateway_busy` |
+| Any other `429`/`503`, including a plain local server's | unchanged `not_ready` output |
+
+The countdown comes from the gateway's own reset instant (`x-vug-daily-reset`), and the busy retry hint from its `retry-after`. The `daily` in the header names is historical: the gateway counts against a window the operator configures (`VUG_QUOTA_WINDOW_HOURS`), so none of this output names a day or a midnight.
 
 ## Practical examples
 
