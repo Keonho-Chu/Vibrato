@@ -1229,6 +1229,7 @@ type CustomModelOverlay = {
 	wireModelId?: string;
 	requestTransform?: ModelRequestTransform;
 	cacheRetention?: CacheRetention;
+	transport?: Model<Api>["transport"];
 	isOAuth?: boolean;
 };
 
@@ -1340,6 +1341,7 @@ function buildCustomModelOverlay(
 	providerRequestTransform: ModelRequestTransform | undefined,
 	providerAuth: ProviderAuthMode | undefined,
 	providerCacheRetention: CacheRetention | undefined,
+	providerTransport: Model<Api>["transport"] | undefined,
 	modelDef: CustomModelDefinitionLike,
 ): CustomModelOverlay | undefined {
 	const api = modelDef.api ?? providerApi;
@@ -1368,6 +1370,7 @@ function buildCustomModelOverlay(
 		contextPromotionTarget: modelDef.contextPromotionTarget,
 		premiumMultiplier: modelDef.premiumMultiplier,
 		cacheRetention: modelDef.cacheRetention ?? providerCacheRetention,
+		transport: providerTransport,
 		isOAuth: resolveCustomModelIsOAuth(api, providerAuth),
 	};
 }
@@ -1503,6 +1506,7 @@ function finalizeCustomModel(model: CustomModelOverlay, options: CustomModelBuil
 		wireModelId: resolvedModel.wireModelId,
 		requestTransform: resolvedModel.requestTransform,
 		cacheRetention: resolvedModel.cacheRetention ?? reference?.cacheRetention,
+		transport: resolvedModel.transport,
 		premiumMultiplier: resolvedModel.premiumMultiplier,
 		isOAuth: resolvedModel.isOAuth,
 	} as Model<Api>);
@@ -1809,7 +1813,8 @@ export class ModelRegistry {
 			const refreshGeneration = this.#catalogRefreshGeneration;
 			this.#suspendRebuild();
 			try {
-				this.#reloadStaticModels();
+				// A provider refresh only updates discovery for this provider.
+				// Static catalog changes are serialized through refresh().
 				for (const selector of this.#suppressedSelectors.keys()) {
 					if (selector.startsWith(`${providerId}/`)) {
 						this.#suppressedSelectors.delete(selector);
@@ -2332,6 +2337,7 @@ export class ModelRegistry {
 					// re-merge bundled transport metadata here.
 					headers: customModel.headers,
 					compat: customModel.compat,
+					transport: customModel.transport,
 					contextPromotionTarget: customModel.contextPromotionTarget ?? existingModel.contextPromotionTarget,
 					wireModelId: customModel.wireModelId,
 					requestTransform: customModel.requestTransform,
@@ -4545,6 +4551,7 @@ export class ModelRegistry {
 					providerConfig.requestTransform,
 					(providerConfig.auth as ProviderAuthMode | undefined) ?? undefined,
 					providerConfig.cacheRetention,
+					providerConfig.transport,
 					modelDef as CustomModelDefinitionLike,
 				);
 				if (!model) continue;
@@ -5701,6 +5708,7 @@ export class ModelRegistry {
 					config.requestTransform,
 					undefined,
 					undefined,
+					config.transport,
 					modelDef as CustomModelDefinitionLike,
 				);
 				if (!overlay) {

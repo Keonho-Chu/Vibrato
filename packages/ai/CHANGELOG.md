@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+- OpenAI Codex HTTP failures with an empty response body and empty status text now include the HTTP status in the surfaced message instead of the opaque `Request failed`, while structured provider errors retain their existing messages and classification.
+- OAuth callback responses now serialize provider-controlled result fields as safe JSON script data, preventing callback values from terminating the embedded state element while preserving exact JSON values and callback behavior.
+- Bundled `anthropic/claude-fable-5-1` (Claude Fable 5.1): 1M context, 128K output, `anthropic-adaptive` thinking clamped to `xhigh` on the Messages API, matching the Fable 5 effort ladder exactly. The model is served only by Anthropic's first-party API and requires a Claude Code compatibility version of at least `2.1.251`; older fingerprints are answered with an HTTP 400 `claude_code_version_too_old`, which the `2.1.257` attribution bump clears. Verified live: `2.1.219` returns the 400, `2.1.257` returns 200, `low`/`high`/`xhigh` all stream, and adaptive thinking returns visible summarized content rather than signature-only billed thinking.
+- OpenAI Codex WebSockets are now opt-in on Windows. Bun 1.4.0 can segfault in its Windows TLS WebSocket handshake, so the automatic model preference uses SSE on Windows while the explicit WebSocket setting remains available for operators who have a newer safe runtime.
 ## [0.17.3] - 2026-09-03
 
 ## [0.17.2] - 2026-09-03
