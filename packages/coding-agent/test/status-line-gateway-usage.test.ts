@@ -263,6 +263,99 @@ describe("status line gateway usage window", () => {
 	});
 });
 
+describe("usage window scope", () => {
+	const anthropicReport = (now: number) => [
+		{
+			provider: "anthropic",
+			fetchedAt: now,
+			limits: [
+				{
+					id: "anthropic:5h",
+					scope: { provider: "anthropic", windowId: "5h" },
+					window: { id: "5h", resetsAt: now + 180 * 60_000 },
+					amount: { usedFraction: 0.24, unit: "percent" },
+				},
+			],
+		},
+	];
+
+	it("gives a hand-placed usage segment its polled windows", async () => {
+		// A `custom` preset that lists `usage` carries no `windows` option, so it
+		// keeps the meaning the segment has always had: the polled subscription
+		// windows as well as the observed gateway one. Only a layout that asks
+		// for the gateway scope narrows it.
+		let calls = 0;
+		const now = Date.now();
+		const component = usageOnly(
+			makeSession({
+				observer: servedGateway("vllm", 1000, 250),
+				fetchUsageReports: async () => {
+					calls++;
+					return anthropicReport(now);
+				},
+			}),
+		);
+
+		const text = await waitFor(component, /5h 24%/, 200);
+
+		expect(calls).toBeGreaterThan(0);
+		expect(text).toContain("5h 24%");
+		expect(text).toContain("vug 75%");
+		component.dispose();
+	});
+
+	it("draws nothing and polls nothing for the none scope", async () => {
+		let calls = 0;
+		const now = Date.now();
+		const component = usageOnly(
+			makeSession({
+				observer: servedGateway("vllm", 1000, 250),
+				fetchUsageReports: async () => {
+					calls++;
+					return anthropicReport(now);
+				},
+			}),
+			{ usage: { windows: "none" } },
+		);
+
+		stripAnsi(component.getTopBorder(200).content);
+		await Bun.sleep(20);
+		const text = stripAnsi(component.getTopBorder(200).content);
+
+		expect(calls).toBe(0);
+		expect(text).not.toContain("vug");
+		expect(text).not.toContain("5h");
+		component.dispose();
+	});
+
+	it("falls back to the gateway scope for an unrecognized value rather than polling", async () => {
+		// A misspelling must not switch on a five-minute network poll nobody
+		// asked for. The status line has nowhere to show a settings error, so the
+		// mistake goes to the log and the scope that costs nothing is used.
+		let calls = 0;
+		const now = Date.now();
+		const component = usageOnly(
+			makeSession({
+				observer: servedGateway("vllm", 1000, 250),
+				fetchUsageReports: async () => {
+					calls++;
+					return anthropicReport(now);
+				},
+			}),
+			{ usage: { windows: "gatway" } },
+		);
+
+		stripAnsi(component.getTopBorder(200).content);
+		await Bun.sleep(20);
+		const text = stripAnsi(component.getTopBorder(200).content);
+
+		expect(calls).toBe(0);
+		expect(text).toContain("vug 75%");
+		expect(text).not.toContain("5h");
+		component.dispose();
+	});
+});
+
 describe("default preset with a gateway", () => {
 	// The gateway deployment guide only edits `models.yml`, so every machine it
 	// covers is on the stock preset. A budget nobody is on the right preset to

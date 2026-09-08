@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 
 import { type Component, truncateToWidth, visibleWidth } from "@vib-rato/tui";
-import { formatCount, getProjectDir } from "@vib-rato/utils";
+import { formatCount, getProjectDir, logger } from "@vib-rato/utils";
 import {
 	type AppKeybinding,
 	KEYBINDINGS,
@@ -44,12 +44,33 @@ export interface StatusLineSegmentOptions {
 	time?: { format?: "12h" | "24h"; showSeconds?: boolean };
 	/**
 	 * `mode` picks used-share or remaining-share wording. `windows` picks which
-	 * windows the segment may draw: `all` (the default) includes the polled
-	 * OAuth/subscription windows, `gateway` restricts it to the budget observed
-	 * on gateway response headers and, with it, keeps the poll switched off.
+	 * windows the segment may draw: `all` (the default when the key is absent)
+	 * includes the polled OAuth/subscription windows, `gateway` restricts it to
+	 * the budget observed on gateway response headers and, with it, keeps the
+	 * poll switched off, and `none` draws nothing at all.
+	 *
+	 * The value reaches this type from a free-form settings record, so anything
+	 * can arrive here at runtime. See {@link USAGE_WINDOW_SCOPE_FALLBACK} for
+	 * what an unrecognized value does.
 	 */
-	usage?: { mode?: "used" | "remaining"; windows?: "all" | "gateway" };
+	usage?: { mode?: "used" | "remaining"; windows?: UsageWindowScope };
 }
+
+/** Which usage windows a `usage` segment may draw. */
+export type UsageWindowScope = "all" | "gateway" | "none";
+
+/**
+ * Where an unrecognized `windows` value lands.
+ *
+ * Deliberately not `all`, which is where an *absent* value lands. `all` is the
+ * only scope that starts a five-minute network poll of the provider's usage
+ * endpoint, so treating a typo as `all` would let a misspelling switch on
+ * traffic the user never asked for — silently, since a status line has nowhere
+ * to show a settings error. Falling back to `gateway` costs nothing, still
+ * draws the observed gateway budget, and the mistake is reported through the
+ * log rather than through a behavior change.
+ */
+const USAGE_WINDOW_SCOPE_FALLBACK: UsageWindowScope = "gateway";
 
 export interface StatusLineSettings {
 	preset?: StatusLinePreset;
@@ -202,6 +223,9 @@ export class StatusLineComponent implements Component {
 	#defaultBranch?: string;
 	#lastTokensPerSecond: number | null = null;
 	#lastTokensPerSecondTimestamp: number | null = null;
+
+	/** Unrecognized `segmentOptions.usage.windows` values already reported. */
+	#warnedUsageScopes = new Set<string>();
 
 	// Provider usage caching (5-min TTL, OAuth/sub only)
 	#cachedUsage: SegmentContext["usage"] = null;
@@ -683,17 +707,42 @@ export class StatusLineComponent implements Component {
 	 * Which usage windows the active layout may draw.
 	 *
 	 * `none` when no `usage` segment is rendered at all. Otherwise the segment's
-	 * own `windows` option decides, defaulting to `all` so an explicitly placed
-	 * segment keeps its historical meaning; only a layout that asks for the
-	 * gateway scope narrows it.
+	 * own `windows` option decides. An absent option means `all`, so a segment
+	 * someone placed by hand keeps its historical meaning; an unrecognized one
+	 * means {@link USAGE_WINDOW_SCOPE_FALLBACK} and is reported once.
 	 */
 	#usageScope(
 		effectiveSettings: Required<Pick<StatusLineSettings, "leftSegments" | "rightSegments">> & StatusLineSettings,
-	): "none" | "gateway" | "all" {
+	): UsageWindowScope {
 		const active =
 			effectiveSettings.leftSegments.includes("usage") || effectiveSettings.rightSegments.includes("usage");
 		if (!active) return "none";
-		return effectiveSettings.segmentOptions?.usage?.windows === "gateway" ? "gateway" : "all";
+
+		// Read as `unknown`: the declared type says what is supported, not what a
+		// hand-edited settings file actually contains.
+		const configured: unknown = effectiveSettings.segmentOptions?.usage?.windows;
+		if (configured === undefined) return "all";
+		if (configured === "all" || configured === "gateway" || configured === "none") return configured;
+
+		this.#warnUnknownUsageScope(configured);
+		return USAGE_WINDOW_SCOPE_FALLBACK;
+	}
+
+	/**
+	 * Report an unrecognized `windows` value once per distinct value.
+	 *
+	 * `#usageScope` runs on every render, so an unconditional warning would
+	 * write a line per frame for as long as the typo stands.
+	 */
+	#warnUnknownUsageScope(value: unknown): void {
+		const seen = typeof value === "string" ? value : (JSON.stringify(value) ?? String(value));
+		if (this.#warnedUsageScopes.has(seen)) return;
+		this.#warnedUsageScopes.add(seen);
+		logger.warn("statusLine: ignoring unknown segmentOptions.usage.windows value", {
+			value: seen,
+			expected: ["all", "gateway", "none"],
+			using: USAGE_WINDOW_SCOPE_FALLBACK,
+		});
 	}
 
 	/**
@@ -706,13 +755,19 @@ export class StatusLineComponent implements Component {
 	 * that has never reported a quota header contributes nothing, which keeps
 	 * the segment hidden instead of showing an invented zero.
 	 *
-	 * The gateway window is drawn in every scope. It costs nothing to obtain —
-	 * it is already on responses this session received — so there is no opt-in
-	 * to justify, and it reports a limit the user is about to be stopped by.
-	 * The polled windows are dropped outside the `all` scope, which also covers
-	 * the case of a scope narrowed mid-session after a poll had already landed.
+	 * The `none` scope draws nothing, and nothing is computed for it: either no
+	 * `usage` segment is in the layout or the option asked for an empty one, so
+	 * there is no reader for the result.
+	 *
+	 * In the two scopes that do draw, the gateway window is always among them.
+	 * It costs nothing to obtain — it is already on responses this session
+	 * received — so there is no opt-in to justify, and it reports a limit the
+	 * user is about to be stopped by. The polled windows are dropped outside
+	 * `all`, which also covers a scope narrowed mid-session after a poll had
+	 * already landed.
 	 */
-	#usageWindows(scope: "none" | "gateway" | "all"): SegmentContext["usage"] {
+	#usageWindows(scope: UsageWindowScope): SegmentContext["usage"] {
+		if (scope === "none") return null;
 		const polled = scope === "all" ? this.#cachedUsage : null;
 		const gateway = gatewayQuotaWindow(this.session.gatewayQuotaState ?? null);
 		if (!gateway) return polled;
