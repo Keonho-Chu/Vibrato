@@ -469,6 +469,7 @@ import {
 	SKILL_PROMPT_MESSAGE_TYPE,
 } from "./messages";
 import { isLegacyProviderSafetyStopMessage } from "./provider-safety-stop";
+import { QUOTA_HOLD_REASON, suppressionHoldParts } from "./quota-hold-text";
 import { readSdkRunCapability } from "./sdk-run-capability";
 import { formatSessionDumpText } from "./session-dump-format";
 import type {
@@ -1352,22 +1353,32 @@ const QUOTA_TERMINAL_RETRY_AFTER_MS = 60_000;
  */
 const QUOTA_HOLD_DEFAULT_BACKOFF_MS = 60_000;
 
-/** Suppression-reason phrasing for the token-limit hold, shown where a model explains its unavailability. */
+/**
+ * Suppression-reason phrasing for the token-limit hold, shown where a model
+ * explains its unavailability.
+ *
+ * The recorded reason is the bare condition, with no time in it. The reset
+ * instant is already stored beside it on the suppression entry, and every
+ * surface composes `resets in <countdown>` from that instant as it draws — a
+ * reason frozen at suppression time would keep promising the original wait
+ * hours into it. The `resetAtMs` argument therefore only decides whether a hold
+ * is describable at all.
+ */
 function describeQuotaHold(resetAtMs: number): string | undefined {
-	if (!Number.isFinite(resetAtMs)) return undefined;
-	try {
-		return `token limit reached; resets at ${new Date(resetAtMs).toISOString()}`;
-	} catch {
-		return undefined;
-	}
+	return Number.isFinite(resetAtMs) ? QUOTA_HOLD_REASON : undefined;
 }
 
 /**
- * Error-text phrasing for the same hold. It deliberately carries the exact
- * `retryable at <ISO>` phrase {@link attachRetryableAtHint} looks for, so the
- * two hints never both land and name the same instant twice.
+ * Error-text phrasing for the same hold: the countdown a reader wants, then the
+ * instant a parser needs.
+ *
+ * The parenthetical carries the exact `retryable at <ISO>` phrase
+ * {@link attachRetryableAtHint} looks for, so the two hints never both land and
+ * name the same instant twice. Unlike a suppression reason, this text is stamped
+ * onto one terminal message and read immediately, so freezing the countdown in
+ * it is correct.
  */
-function attachQuotaHoldHint(errorMessage: string | undefined, resetAtMs: number): string {
+function attachQuotaHoldHint(errorMessage: string | undefined, resetAtMs: number, now = Date.now()): string {
 	const current = errorMessage?.trim();
 	if (!Number.isFinite(resetAtMs)) return current || "";
 	let iso: string;
@@ -1376,8 +1387,8 @@ function attachQuotaHoldHint(errorMessage: string | undefined, resetAtMs: number
 	} catch {
 		return current || "";
 	}
-	if (current?.includes("token limit reached")) return current;
-	const hint = `token limit reached; retryable at ${iso}`;
+	if (current?.includes(QUOTA_HOLD_REASON)) return current;
+	const hint = `${suppressionHoldParts(QUOTA_HOLD_REASON, resetAtMs, now).join("; ")} (retryable at ${iso})`;
 	return current ? `${current}; ${hint}` : hint;
 }
 

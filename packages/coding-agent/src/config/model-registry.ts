@@ -5874,6 +5874,22 @@ export class ModelRegistry {
 		return this.#suppressedSelectorReasons.get(normalizedSelector);
 	}
 
+	/**
+	 * Instant an ACTIVE suppression lifts, for surfaces that render the wait as a
+	 * countdown instead of a stored timestamp. An expired window reports nothing.
+	 *
+	 * Shares {@link getSelectorSuppressionReason}'s read-only contract for the
+	 * same reason: `retry.fallbackRevertPolicy: cooldown-expiry` reverts on the
+	 * single "expired" that {@link getSelectorSuppressionStatus} reports, and a
+	 * redraw asking when the hold lifts must never consume it.
+	 */
+	getSelectorSuppressionUntil(selector: string): number | undefined {
+		const normalizedSelector = normalizeSuppressedSelector(selector);
+		const suppressedUntil = this.#suppressedSelectors.get(normalizedSelector);
+		if (suppressedUntil === undefined || suppressedUntil <= Date.now()) return undefined;
+		return suppressedUntil;
+	}
+
 	#forgetSuppressedSelector(normalizedSelector: string): void {
 		this.#suppressedSelectors.delete(normalizedSelector);
 		this.#suppressedSelectorReasons.delete(normalizedSelector);

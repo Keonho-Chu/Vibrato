@@ -61,6 +61,7 @@ import { getProviderAuthHealth } from "../../config/provider-auth-health";
 import { compareRankedProviders, type ProviderAuthState } from "../../config/provider-ranking";
 import type { Settings } from "../../config/settings";
 import { type ThemeColor, theme } from "../../modes/theme/theme";
+import { suppressionHoldParts } from "../../session/quota-hold-text";
 import { formatModelOnboardingInlineHint } from "../../setup/model-onboarding-guidance";
 import { formatClampedModelSelector, getThinkingLevelMetadata, parseThinkingLevel } from "../../thinking";
 import { getTabBarTheme } from "../shared";
@@ -303,6 +304,13 @@ function isInheritedRoleSelector(value: string): boolean {
 
 /** Width bound for an unresolvable selector echoed back into the assignment menu. */
 const ROLE_BINDING_MAX_WIDTH = 48;
+
+/**
+ * Width bound for a held model's continuation line. Its four-space indent plus
+ * this bound fits an 80-column terminal, which is the width the LIG machines
+ * running behind the usage gateway actually get.
+ */
+const MODEL_HOLD_NOTICE_MAX_WIDTH = 74;
 
 function getDefaultAliasThinkingLevel(value: string | undefined): ThinkingLevel | undefined {
 	const normalized = value?.trim();
@@ -1717,6 +1725,11 @@ export class ModelSelectorComponent extends Container {
 		}
 		if (this.#currentModel) {
 			parts.push(this.#formatAssignedModelLabel(this.#currentModel, this.#currentThinkingLevel));
+			// The session's own model being held is the case a user hits mid-turn,
+			// so it is called out in warning colour on the line that claims what the
+			// session is running, not only down in the list.
+			const holdNotice = this.#formatModelHoldNotice(this.#currentModel);
+			if (holdNotice) parts.push(theme.fg("warning", holdNotice));
 		}
 		if (parts.length > 0) lines.push(theme.fg("muted", `Current: ${parts.join(" · ")}`));
 		for (const role of PROFILE_ROLE_PREVIEW_ORDER) {
@@ -2019,6 +2032,32 @@ export class ModelSelectorComponent extends Container {
 		}
 	}
 
+	/**
+	 * One-line explanation for a model the registry is currently holding back,
+	 * or `undefined` when it is selectable right now.
+	 *
+	 * A held model stays in the list and stays selectable: the hold belongs to
+	 * one upstream window, the user may well be about to bind the model to a
+	 * different role, and hiding a row the user picked yesterday reads as the
+	 * model having disappeared. The row says why instead.
+	 *
+	 * Composed at draw time from the recorded instant rather than from a stored
+	 * phrase, so a list left open counts down instead of repeating the wait the
+	 * hold started with. Both reads are map lookups on a normalized selector and
+	 * neither consumes the one-shot "expired" observation the fallback revert
+	 * policy depends on, so running this per visible row costs nothing and
+	 * changes no retry behavior.
+	 */
+	#formatModelHoldNotice(model: Model): string | undefined {
+		const registry = this.#modelRegistry;
+		if (typeof registry.getSelectorSuppressionUntil !== "function") return undefined;
+		const selector = `${model.provider}/${model.id}`;
+		const untilMs = registry.getSelectorSuppressionUntil(selector);
+		if (untilMs === undefined) return undefined;
+		const reason = registry.getSelectorSuppressionReason?.(selector);
+		return ["held", ...suppressionHoldParts(reason, untilMs)].join(" · ");
+	}
+
 	#updateList(): void {
 		this.#listContainer.clear();
 		const isCanonicalTab = this.#isCanonicalTab();
@@ -2119,6 +2158,16 @@ export class ModelSelectorComponent extends Container {
 			}
 
 			this.#listContainer.addChild(new Text(line, 0, 0));
+
+			// A held model keeps its row and its selectability; the state goes on a
+			// dim continuation line so the id above it stays readable and the list
+			// still lines up at 80 columns.
+			const holdNotice = this.#formatModelHoldNotice(item.model);
+			if (holdNotice) {
+				this.#listContainer.addChild(
+					new Text(theme.fg("dim", `    ${truncateToWidth(holdNotice, MODEL_HOLD_NOTICE_MAX_WIDTH)}`), 0, 0),
+				);
+			}
 		}
 
 		// Add scroll indicator if needed
