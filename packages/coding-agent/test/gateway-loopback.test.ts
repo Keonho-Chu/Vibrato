@@ -232,6 +232,8 @@ describe("gateway loopback: explicit openai-completions contract", () => {
 
 		expect(result.usage.input).toBe(60);
 		expect(result.usage.output).toBe(10);
+		// `ok` is produced only by the fixture's metering path, never by default.
+		expect(lastChat().outcome).toBe("ok");
 		expect(lastChat().accounted).toEqual({ input: 60, output: 10 });
 		expect(gateway!.dailyUsed).toBe(70);
 	});
@@ -274,8 +276,6 @@ describe("gateway loopback: credentials", () => {
 		await streamSimple(model, userContext(), { apiKey, requestMaxRetries: 0 }).result();
 		expect(lastChat().headers.authorization).toBe(`Bearer ${GOOD_KEY}`);
 		expect(JSON.stringify(lastChat().body)).not.toContain(GOOD_KEY);
-		// The fixture substitutes its own upstream credential, as VUG does.
-		expect(lastChat().upstreamAuthorization).not.toBe(`Bearer ${GOOD_KEY}`);
 	});
 });
 
@@ -439,23 +439,52 @@ describe("gateway loopback: quota and congestion facts", () => {
 	});
 
 	// The remaining checklist items in #16 need work that is not on dev yet.
-	// They are named here so the gap is visible in the suite rather than in prose.
-	it.todo("retains x-vug-daily-* on transport facts and classifies daily_token_limit as quota: waits for #12", () => {});
-	it.todo("retains x-vug-queue-depth/inflight on 503 transport facts: waits for #12", () => {});
-	it.todo("updates the gateway quota observer from success and failure headers: waits for #13", () => {});
+	// Each body asserts the target behaviour, so `bun test --todo` reports these
+	// as still pending rather than as unexpectedly passing, and the day the
+	// dependency lands the fix is to delete `.todo`.
+	it.todo("retains x-vug-daily-* on transport facts and classifies daily_token_limit as quota: waits for #12", async () => {
+		const { model, apiKey } = await connect();
+		gateway!.scriptChat({ kind: "daily_token_limit" });
+		const result = await streamSimple(model, userContext(), { apiKey, requestMaxRetries: 0 }).result();
+		expect(classifyFallbackTrigger(result.transportFailure).class).toBe("quota");
+		expect(result.transportFailure?.headers).toMatchObject({
+			"x-vug-daily-limit": expect.any(String),
+			"x-vug-daily-used": expect.any(String),
+			"x-vug-daily-remaining": expect.any(String),
+		});
+	});
+
+	it.todo("retains x-vug-queue-depth/inflight on 503 transport facts: waits for #12", async () => {
+		const { model, apiKey } = await connect();
+		gateway!.scriptChat({ kind: "queue_timeout" });
+		const result = await streamSimple(model, userContext(), { apiKey, requestMaxRetries: 0 }).result();
+		expect(result.transportFailure?.headers).toMatchObject({
+			"x-vug-queue-depth": expect.any(String),
+			"x-vug-inflight": expect.any(String),
+		});
+	});
+
+	it.todo("updates the gateway quota observer from success and failure headers: waits for #13", () => {
+		// #13 adds the observer that reads x-vug-daily-* off onResponse and off
+		// the #12 failure facts. There is no such module on dev to import yet, so
+		// this body cannot be written against a real API.
+		throw new Error("no gateway quota observer exists on dev yet; see #13");
+	});
 });
 
-describe("gateway loopback: /v1/responses passthrough", () => {
-	// Diagnostic only. A 200 here is not evidence that the Responses wire API is
-	// supported by the gateway; it is evidence that HTTP success and gateway
-	// accounting are different things (#8 §5).
+describe("fake-gateway self-check: /v1/responses passthrough", () => {
+	// NOT client coverage. This case exercises no vib code at all: it drives the
+	// fixture with a plain request and asserts the fixture's own accounting.
 	//
-	// This is the one case that does not go through the client stream adapter.
-	// The client holds an explicit `openai-completions` contract for this
-	// provider and has no path that emits a Responses request against it, so the
-	// property under test — the gateway meters nothing on a non-captured path —
-	// is exercised with a plain request instead.
-	it("answers 200 with usage yet adds nothing to the daily total", async () => {
+	// It is here because the fixture has to reproduce the shape #8 §5 recorded —
+	// a non-captured path answering 200 with a usage block while the gateway's
+	// token total does not move — and that property is what the client-facing
+	// cases above rely on when they assert nothing but `/v1/chat/completions` is
+	// ever metered. The client holds an explicit `openai-completions` contract
+	// for this provider and has no path that emits a Responses request, so there
+	// is no client path to drive here. A 200 is not evidence that the Responses
+	// wire API is supported.
+	it("fixture: answers 200 with usage yet adds nothing to the daily total", async () => {
 		await connect();
 		const before = gateway!.dailyUsed;
 

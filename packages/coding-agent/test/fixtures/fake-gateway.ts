@@ -35,11 +35,11 @@
  *
  * WHAT IT DOES NOT MIMIC — do not read a passing test here as evidence for any
  * of it: the real VUG admission queue and its timing, SQLite request rows and
- * their schema, key issuance/expiry, `/metrics`, `/admin`, `/healthz`, `/readyz`,
- * upstream key substitution beyond the `upstreamAuthorization` field recorded
- * below, retry policy, and any real model inference. The gateway's own handler is
- * tested in its own repository; this fixture deliberately has no dependency on
- * that source, so a change on either side has to be reflected here by hand.
+ * their schema, key issuance/expiry, upstream key substitution, `/metrics`,
+ * `/admin`, `/healthz`, `/readyz`, retry policy, and any real model inference.
+ * The gateway's own handler is tested in its own repository; this fixture
+ * deliberately has no dependency on that source, so a change on either side has
+ * to be reflected here by hand.
  *
  * Hermetic by construction: `Bun.serve` on 127.0.0.1 with an ephemeral port, no
  * DNS, no outbound socket. `stop()` must run in `afterAll`/`afterEach`.
@@ -61,8 +61,7 @@ export interface ChatStreamScript {
 	/** A single tool call, emitted as one complete arguments delta. */
 	toolCall?: { id: string; name: string; argumentsJson: string };
 	/** The final usage chunk. This is what the gateway meters. */
-	usage?: { input: number; output: number; cachedInput?: number };
-	finishReason?: string;
+	usage?: { input: number; output: number };
 	/** Delay before each chunk; lets a test observe an abort mid-stream. */
 	chunkDelayMs?: number;
 	/**
@@ -81,20 +80,16 @@ export interface FakeGatewayOptions {
 	dailyLimit?: number;
 	/** Tokens already spent before the test starts. */
 	dailyUsed?: number;
-	/** Value for `x-vug-daily-reset`; omitted from responses when unset. */
+	/**
+	 * Value for `x-vug-daily-reset`, omitted from responses when unset. Kept
+	 * unset by every case today: the reset display is the #13 todo, and until
+	 * then the point being fixed is that the client invents no reset of its own.
+	 */
 	dailyReset?: string;
 	/** Reported in `x-vug-queue-depth`. */
 	queueDepth?: number;
 	/** Reported in `x-vug-queued-ms`: the previous request's wait, per #8 §6. */
 	queuedMs?: number;
-	/** `retry-after` seconds on a `daily_token_limit` 429. */
-	dailyRetryAfterSeconds?: number;
-	/** Field the fake upstream puts reasoning text on. */
-	reasoningContentField?: "reasoning" | "reasoning_content" | "reasoning_text";
-	/** The key the gateway would present to the real model server. */
-	upstreamKey?: string;
-	/** Default script when the outcome queue is empty. */
-	defaultStream?: ChatStreamScript;
 }
 
 /** One request as the gateway saw it. Tests assert on these, not on logs. */
@@ -105,38 +100,55 @@ export interface GatewayRequestRecord {
 	body?: Record<string, unknown>;
 	/** `no-session` when the client sent no session id anywhere. */
 	sessionId: string;
-	outcome: "ok" | "aborted" | "unauthorized" | "daily_token_limit" | "queue_timeout" | "queue_full" | "not_found";
+	/**
+	 * `pending` until the request settles, so an in-flight or wedged request can
+	 * never be mistaken for a success. Only the metering path produces `ok`.
+	 */
+	outcome:
+		| "pending"
+		| "ok"
+		| "aborted"
+		| "unauthorized"
+		| "daily_token_limit"
+		| "queue_timeout"
+		| "queue_full"
+		| "not_found";
 	/** False when the key check rejected the request before any upstream work. */
 	reachedUpstream: boolean;
-	/** True only for a captured path that adds to the daily total. */
+	/**
+	 * True when the path is one the gateway captures for metering. Whether this
+	 * particular request was actually metered is `accounted`: a captured request
+	 * that is refused or aborted stays `counted` with no `accounted`.
+	 */
 	counted: boolean;
 	/** Tokens the gateway metered from the final usage chunk. */
 	accounted?: { input: number; output: number };
 	/** SSE chunks the fake upstream actually produced. */
 	upstreamChunks: number;
-	/** The Authorization the gateway would have sent upstream, never the client's. */
-	upstreamAuthorization?: string;
-	/** The daily remaining observed at admission, before this call was metered. */
-	remainingAtAdmission?: number;
 }
 
 export interface FakeGateway {
 	/** Base URL for `models.yml`, e.g. `http://127.0.0.1:1234/v1`. */
 	readonly url: string;
-	readonly records: readonly GatewayRequestRecord[];
 	/** Requests that got past the key check and reached the fake upstream. */
 	readonly upstreamCalls: number;
 	/** Slots currently held. Must be 0 once every request has settled. */
 	readonly inflight: number;
 	readonly dailyUsed: number;
-	readonly dailyLimit: number;
 	/** Queue an outcome for the next captured chat request. */
 	scriptChat(outcome: ChatOutcomeScript): void;
-	/** Replace the `/v1/models` payload between refreshes. */
-	setModels(models: Array<Record<string, unknown>>): void;
 	recordsFor(path: string): GatewayRequestRecord[];
 	stop(): Promise<void>;
 }
+
+/** `Retry-After` the gateway sends with a daily-limit 429, in seconds. */
+const DAILY_RETRY_AFTER_SECONDS = 43_200;
+
+/** The field the hinted LIG model puts reasoning text on. */
+const REASONING_CONTENT_FIELD = "reasoning";
+
+/** What an unscripted captured chat request produces. */
+const DEFAULT_STREAM: ChatStreamScript = { text: ["ok"], usage: { input: 60, output: 10 } };
 
 const encoder = new TextEncoder();
 
@@ -168,14 +180,8 @@ export async function startFakeGateway(options: FakeGatewayOptions): Promise<Fak
 	const dailyLimit = options.dailyLimit ?? 100_000;
 	const queueDepth = options.queueDepth ?? 0;
 	const queuedMs = options.queuedMs ?? 12;
-	const reasoningField = options.reasoningContentField ?? "reasoning";
-	const upstreamKey = options.upstreamKey ?? "fixture-upstream-key";
-	const defaultStream: ChatStreamScript = options.defaultStream ?? {
-		text: ["ok"],
-		usage: { input: 60, output: 10 },
-	};
 
-	let models = options.models ?? [];
+	const models = options.models ?? [];
 	let dailyUsed = options.dailyUsed ?? 0;
 	let inflight = 0;
 	let upstreamCalls = 0;
@@ -215,7 +221,6 @@ export async function startFakeGateway(options: FakeGatewayOptions): Promise<Fak
 	): ReadableStream<Uint8Array> {
 		upstreamCalls += 1;
 		record.reachedUpstream = true;
-		record.upstreamAuthorization = `Bearer ${upstreamKey}`;
 		const chunks: unknown[] = [];
 		const envelope = (delta: Record<string, unknown>, finishReason?: string) => ({
 			id: "chatcmpl-fake-gateway",
@@ -224,7 +229,7 @@ export async function startFakeGateway(options: FakeGatewayOptions): Promise<Fak
 			model: modelId,
 			choices: [{ index: 0, delta, ...(finishReason === undefined ? {} : { finish_reason: finishReason }) }],
 		});
-		for (const piece of script.reasoning ?? []) chunks.push(envelope({ [reasoningField]: piece }));
+		for (const piece of script.reasoning ?? []) chunks.push(envelope({ [REASONING_CONTENT_FIELD]: piece }));
 		for (const piece of script.text ?? []) chunks.push(envelope({ content: piece }));
 		if (script.toolCall) {
 			chunks.push(
@@ -240,7 +245,7 @@ export async function startFakeGateway(options: FakeGatewayOptions): Promise<Fak
 				}),
 			);
 		}
-		chunks.push(envelope({}, script.finishReason ?? (script.toolCall ? "tool_calls" : "stop")));
+		chunks.push(envelope({}, script.toolCall ? "tool_calls" : "stop"));
 		const usage = script.usage;
 		if (usage) {
 			chunks.push({
@@ -253,9 +258,6 @@ export async function startFakeGateway(options: FakeGatewayOptions): Promise<Fak
 					prompt_tokens: usage.input,
 					completion_tokens: usage.output,
 					total_tokens: usage.input + usage.output,
-					...(usage.cachedInput === undefined
-						? {}
-						: { prompt_tokens_details: { cached_tokens: usage.cachedInput } }),
 				},
 			});
 		}
@@ -326,7 +328,7 @@ export async function startFakeGateway(options: FakeGatewayOptions): Promise<Fak
 				path: url.pathname,
 				headers: headerRecord(request.headers),
 				sessionId: "no-session",
-				outcome: "ok",
+				outcome: "pending",
 				reachedUpstream: false,
 				counted: false,
 				upstreamChunks: 0,
@@ -354,6 +356,7 @@ export async function startFakeGateway(options: FakeGatewayOptions): Promise<Fak
 
 			if (url.pathname === "/v1/models" && request.method === "GET") {
 				// Not a captured path: no quota headers here (#8 §3).
+				record.outcome = "ok";
 				return Response.json({ object: "list", data: models });
 			}
 
@@ -362,6 +365,7 @@ export async function startFakeGateway(options: FakeGatewayOptions): Promise<Fak
 				// metered — HTTP success is not gateway accounting (#8 §5).
 				record.reachedUpstream = true;
 				record.counted = false;
+				record.outcome = "ok";
 				return Response.json(
 					{
 						id: "resp_fake_gateway",
@@ -384,7 +388,6 @@ export async function startFakeGateway(options: FakeGatewayOptions): Promise<Fak
 
 			record.counted = true;
 			const remainingAtAdmission = dailyLimit - dailyUsed;
-			record.remainingAtAdmission = remainingAtAdmission;
 			const outcome: ChatOutcomeScript = scripted.shift() ?? { kind: "stream" };
 
 			if (outcome.kind === "daily_token_limit") {
@@ -393,7 +396,7 @@ export async function startFakeGateway(options: FakeGatewayOptions): Promise<Fak
 					status: 429,
 					headers: {
 						"content-type": "application/json",
-						"retry-after": String(options.dailyRetryAfterSeconds ?? 43_200),
+						"retry-after": String(DAILY_RETRY_AFTER_SECONDS),
 						...quotaHeaders(0),
 						...congestionHeaders(),
 					},
@@ -413,7 +416,7 @@ export async function startFakeGateway(options: FakeGatewayOptions): Promise<Fak
 
 			inflight += 1;
 			const stream = upstreamStream(
-				outcome.stream ?? defaultStream,
+				outcome.stream ?? DEFAULT_STREAM,
 				typeof body?.model === "string" ? body.model : "unknown",
 				request.signal,
 				record,
@@ -432,7 +435,6 @@ export async function startFakeGateway(options: FakeGatewayOptions): Promise<Fak
 
 	return {
 		url: `http://127.0.0.1:${server.port}/v1`,
-		records,
 		get upstreamCalls() {
 			return upstreamCalls;
 		},
@@ -442,12 +444,8 @@ export async function startFakeGateway(options: FakeGatewayOptions): Promise<Fak
 		get dailyUsed() {
 			return dailyUsed;
 		},
-		dailyLimit,
 		scriptChat(outcome) {
 			scripted.push(outcome);
-		},
-		setModels(next) {
-			models = next;
 		},
 		recordsFor(path) {
 			return records.filter(record => record.path === path);
