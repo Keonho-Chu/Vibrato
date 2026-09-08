@@ -5,6 +5,7 @@ import * as path from "node:path";
 import { getAgentDir, setAgentDir } from "@vib-rato/utils";
 import { YAML } from "bun";
 import {
+	describeUnusableEndpoint,
 	discoverLoopbackEndpoints,
 	type LocalEndpointProbeOptions,
 	normalizeLocalEndpointInput,
@@ -488,5 +489,27 @@ describe("registerLocalEndpoint", () => {
 
 		expect(result.baseUrl).toBe("http://192.168.0.10:8000/v1");
 		expect(await Bun.file(modelsPath).text()).toContain("192.168.0.10");
+	});
+});
+
+describe("describeUnusableEndpoint", () => {
+	it("names a credential that did not reach the session", () => {
+		const message = describeUnusableEndpoint("local", { status: "unauthenticated" });
+		expect(message).toContain("'local'");
+		expect(message).toContain("was not saved");
+		expect(describeUnusableEndpoint("local", undefined)).toBe(message);
+	});
+
+	it("relays the discovery error when the server stopped answering", () => {
+		expect(describeUnusableEndpoint("local", { status: "unavailable", error: "HTTP 503" })).toBe(
+			"'local' could not list its models after setup: HTTP 503",
+		);
+		expect(describeUnusableEndpoint("local", { status: "unavailable" })).toBe(
+			"'local' could not list its models after setup.",
+		);
+	});
+
+	it("says so when the listing came back empty", () => {
+		expect(describeUnusableEndpoint("local", { status: "empty" })).toBe("'local' listed no models after setup.");
 	});
 });

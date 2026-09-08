@@ -223,6 +223,43 @@ export type CanonicalModelRegistry = Partial<
 >;
 export type ModelLookupRegistry = Pick<ModelRegistry, "getAvailable"> & Partial<CanonicalModelRegistry>;
 type CliModelRegistry = Pick<ModelRegistry, "getAll"> & Partial<CanonicalModelRegistry>;
+
+/** The registry surface the startup lookup needs to warm a discovery-backed provider. */
+export interface DiscoveryProviderRefreshRegistry {
+	getAll(): ReadonlyArray<{ provider: string }>;
+	getProviderDiscoveryState(provider: string): { status: string } | undefined;
+	refreshProvider(providerId: string, strategy: "online-if-uncached"): Promise<void>;
+}
+
+/**
+ * Refresh the provider a `--model provider/id` (or `--provider`) selector
+ * names when its models come from discovery and none have been discovered
+ * yet. Startup resolves `--model` before any refresh runs, so a
+ * discovery-only provider such as a local endpoint would otherwise report a
+ * model that exists as not found. Only a provider that has never been
+ * discovered is refreshed: a usable cache is admitted by startup itself
+ * without a request, and a refresh here would spend one. A failed discovery
+ * is left for the lookup that follows to report. Returns whether a refresh ran.
+ */
+export async function refreshDiscoveryProviderForSelector(
+	registry: DiscoveryProviderRefreshRegistry,
+	selector: { provider?: string; model?: string },
+): Promise<boolean> {
+	const explicit = selector.provider?.trim();
+	const model = selector.model?.trim() ?? "";
+	const slash = model.indexOf("/");
+	const providerId = (explicit || (slash > 0 ? model.slice(0, slash) : "")).trim().toLowerCase();
+	if (!providerId) return false;
+	if (registry.getAll().some(entry => entry.provider.toLowerCase() === providerId)) return false;
+	const state = registry.getProviderDiscoveryState(providerId);
+	if (state?.status !== "idle") return false;
+	try {
+		await registry.refreshProvider(providerId, "online-if-uncached");
+	} catch {
+		// The lookup that follows reports the missing model; the discovery error adds nothing here.
+	}
+	return true;
+}
 type InitialModelRegistry = Pick<ModelRegistry, "getAvailable">;
 type RestorableModelRegistry = Pick<ModelRegistry, "getAvailable" | "getApiKey">;
 
