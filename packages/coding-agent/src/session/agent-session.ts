@@ -431,8 +431,19 @@ import {
 	FallbackChainController,
 	type FallbackChainRuntimeState,
 } from "./fallback-chain-controller";
+import {
+	type FallbackExhaustionDetails,
+	fallbackExhaustionIsQuota,
+	formatFallbackExhaustionMessage,
+	withEarliestReset,
+} from "./fallback-exhaustion";
 
 export { DefaultModelSelectionRecoveryError } from "./default-model-selection";
+export type {
+	FallbackExhaustionAttempt,
+	FallbackExhaustionDetails,
+	FallbackExhaustionSkip,
+} from "./fallback-exhaustion";
 
 import type {
 	ClientBridge,
@@ -813,7 +824,18 @@ export type AgentSessionEvent =
 	| { type: "todo_auto_clear" }
 	| { type: "irc_message"; message: CustomMessage }
 	| { type: "subagent_steer_message"; message: CustomMessage }
-	| { type: "notice"; level: "info" | "warning" | "error"; message: string; source?: string }
+	| {
+			type: "notice";
+			level: "info" | "warning" | "error";
+			message: string;
+			source?: string;
+			/**
+			 * Set only on the `fallback` exhaustion notice. `message` still carries
+			 * the whole story as one line for every surface that prints it; a
+			 * renderer that can do better lays this out instead.
+			 */
+			fallbackExhaustion?: FallbackExhaustionDetails;
+	  }
 	| { type: "thinking_level_changed"; thinkingLevel: ThinkingLevel | undefined }
 	| { type: "goal_updated"; goal: Goal | null; state?: GoalModeState };
 
@@ -5365,8 +5387,19 @@ export class AgentSession {
 	 * for out-of-band conditions the user should see but the model shouldn't
 	 * react to (e.g. background queue flush failures).
 	 */
-	emitNotice(level: "info" | "warning" | "error", message: string, source?: string): void {
-		this.#emit({ type: "notice", level, message, source });
+	emitNotice(
+		level: "info" | "warning" | "error",
+		message: string,
+		source?: string,
+		fallbackExhaustion?: FallbackExhaustionDetails,
+	): void {
+		this.#emit({
+			type: "notice",
+			level,
+			message,
+			source,
+			...(fallbackExhaustion === undefined ? {} : { fallbackExhaustion }),
+		});
 	}
 
 	#queuedExtensionEvents: Promise<void> = Promise.resolve();
@@ -20203,10 +20236,46 @@ export class AgentSession {
 		}
 	}
 
+	/**
+	 * Machine-readable form of an exhausted chain, for surfaces that lay the
+	 * failure out instead of printing one line. Built from the same controller
+	 * state as {@link #fallbackExhaustionError} and carried alongside it, never
+	 * instead of it.
+	 *
+	 * The reset instant is read from the registry's suppression window for the
+	 * selectors that were actually attempted, through the read-only accessor:
+	 * the failing selector is suppressed until the reset when a token limit is
+	 * held. The EARLIEST such instant is reported, because that is when the user
+	 * can work again. The recorded suppression REASON is deliberately not read —
+	 * it is prose that other surfaces own and reformat.
+	 */
+	#fallbackExhaustionDetails(
+		controller: FallbackChainController,
+		resolutionFailure?: string,
+	): FallbackExhaustionDetails {
+		const tried = controller.tried.map(failure => ({
+			selector: failure.selector,
+			triggerClass: failure.triggerClass,
+			reason: failure.reason,
+		}));
+		const skipped = controller.skips.map(skip => ({ selector: skip.selector, reason: skip.reason }));
+		let resetAtMs: number | undefined;
+		for (const failure of tried) {
+			const untilMs = this.#modelRegistry.getSelectorSuppressionUntil(failure.selector);
+			if (untilMs === undefined) continue;
+			if (resetAtMs === undefined || untilMs < resetAtMs) resetAtMs = untilMs;
+		}
+		return {
+			tried,
+			skipped,
+			quota: fallbackExhaustionIsQuota(tried),
+			...(resetAtMs === undefined ? {} : { resetAtMs }),
+			...(resolutionFailure === undefined ? {} : { resolutionFailure }),
+		};
+	}
+
 	#fallbackExhaustionError(controller: FallbackChainController): string {
-		const tried = controller.tried.map(failure => `${failure.selector} (${failure.reason})`).join(", ") || "none";
-		const skipped = controller.skips.map(skip => `${skip.selector} (${skip.reason})`).join(", ") || "none";
-		return `Model fallback chain exhausted; models tried: ${tried}; models skipped: ${skipped}`;
+		return formatFallbackExhaustionMessage(this.#fallbackExhaustionDetails(controller));
 	}
 
 	/**
@@ -20661,20 +20730,26 @@ export class AgentSession {
 		}
 		if (outcome === "exhausted") {
 			if (managedFallback) {
-				let errorMessage = this.#fallbackExhaustionError(controller);
+				// Each annotation below writes a reset instant into the message. The
+				// structured details take the same value, so a renderer working from
+				// the structure never reports less than the line it stands in for.
+				let exhaustion = this.#fallbackExhaustionDetails(controller);
+				let errorMessage = formatFallbackExhaustionMessage(exhaustion);
 				if (trigger.class === "quota" || trigger.class === "rate_limit") {
 					if (!assistantMessageHasVisibleOrToolContent(message)) {
 						const mark = await this.#markFailedCredential(trigger);
 						if (mark === "exhausted") {
 							this.#stampQuotaRetryableAt(message);
 							errorMessage = this.#annotateQuotaRetryableAt(errorMessage);
+							exhaustion = withEarliestReset(exhaustion, this.#quotaRetryableAtMs());
 						}
 					}
 				}
 				if (quotaHoldIsTerminal && quotaResetAtMs !== undefined) {
 					errorMessage = attachQuotaHoldHint(errorMessage, quotaResetAtMs, quotaObservedAtMs);
+					exhaustion = withEarliestReset(exhaustion, quotaResetAtMs);
 				}
-				this.emitNotice("error", errorMessage, "fallback");
+				this.emitNotice("error", errorMessage, "fallback", exhaustion);
 				this.#defaultFallbackExhaustedLastTurn = true;
 				controller.resetSticky();
 				return managedOutcome ? this.#managedFallbackExhaustionDecision(message, errorMessage) : false;
@@ -20772,14 +20847,23 @@ export class AgentSession {
 				return;
 			}
 			if (!advanced) {
-				let errorMessage = resolutionError
-					? `${this.#fallbackExhaustionError(controller)}; resolution failed: ${resolutionError instanceof Error ? resolutionError.message : String(resolutionError)}`
-					: this.#fallbackExhaustionError(controller);
+				let exhaustion = this.#fallbackExhaustionDetails(
+					controller,
+					resolutionError
+						? resolutionError instanceof Error
+							? resolutionError.message
+							: String(resolutionError)
+						: undefined,
+				);
+				let errorMessage = formatFallbackExhaustionMessage(exhaustion);
 				if ((trigger.class === "quota" || trigger.class === "rate_limit") && quotaPoolExhausted) {
 					this.#stampQuotaRetryableAt(message);
 					errorMessage = this.#annotateQuotaRetryableAt(errorMessage);
+					// Same rule as the exhaustion path above: an instant written into
+					// the message is written into the structure too.
+					exhaustion = withEarliestReset(exhaustion, this.#quotaRetryableAtMs());
 				}
-				this.emitNotice("error", errorMessage, "fallback");
+				this.emitNotice("error", errorMessage, "fallback", exhaustion);
 				if (managedOutcome && ownership) {
 					this.agent.requestRunTerminal(ownership.handle.logicalRunId, {
 						stopReason: "exhausted",

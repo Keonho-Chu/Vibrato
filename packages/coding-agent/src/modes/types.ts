@@ -174,6 +174,16 @@ export type IrcArrivalSnapshot = Readonly<{
 	resolvedToggleKey: string | null;
 }>;
 
+/**
+ * One line of a multi-line error presentation. The producer decides what a line
+ * MEANS; the rendering surface decides what it looks like, so a block stays
+ * theme-driven and carries no escape codes of its own.
+ */
+export interface ErrorBlockLine {
+	kind: "title" | "heading" | "detail" | "action" | "blank";
+	text: string;
+}
+
 export interface InteractiveModeContext {
 	// UI access
 	ui: TUI;
@@ -271,6 +281,15 @@ export interface InteractiveModeContext {
 	// UI helpers
 	showStatus(message: string, options?: { dim?: boolean }): void;
 	showError(message: string): void;
+	/**
+	 * Render a titled, multi-line error instead of one prefixed red line.
+	 * `plainMessage` is the single-line form the block stands in for; surfaces
+	 * that cannot draw a block (a backgrounded session's stderr) still print it.
+	 *
+	 * Optional so an existing partial context keeps satisfying this interface; a
+	 * caller that finds it absent falls back to `showError`.
+	 */
+	showErrorBlock?(lines: readonly ErrorBlockLine[], plainMessage: string): void;
 	showWarning(message: string): void;
 	beginOAuthUrlForCopy(url: string): () => void;
 	hasOAuthUrlForCopy(): boolean;

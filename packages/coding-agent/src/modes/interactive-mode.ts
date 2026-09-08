@@ -113,6 +113,7 @@ import {
 	type CompactionQueuedMessage,
 	type ComposerSubmissionOptions,
 	canApplyComposerSubmission,
+	type ErrorBlockLine,
 	type InteractiveModeContext,
 	type IrcArrivalSnapshot,
 	type SubmittedUserInput,
@@ -1804,13 +1805,27 @@ export class InteractiveMode implements InteractiveModeContext {
 	}
 
 	showError(message: string): void {
+		this.#discardPendingSubmissionForError();
+		this.#uiHelpers.showError(message);
+	}
+
+	showErrorBlock(lines: readonly ErrorBlockLine[], plainMessage: string): void {
+		this.#discardPendingSubmissionForError();
+		this.#uiHelpers.showErrorBlock(lines, plainMessage);
+	}
+
+	/**
+	 * An error ends the turn, so the optimistic submission state it was rendered
+	 * against goes with it. Shared by both error surfaces: a block that skipped
+	 * this would leave the loader spinning under a finished failure.
+	 */
+	#discardPendingSubmissionForError(): void {
 		this.#pendingSubmittedInput = undefined;
 		this.optimisticUserMessageSignature = undefined;
 		this.#pendingSubmissionDispose?.();
 		this.#pendingSubmissionDispose = undefined;
 		this.#pendingWorkingMessage = undefined;
 		this.stopLoadingAnimation();
-		this.#uiHelpers.showError(message);
 	}
 
 	showWarning(message: string): void {
