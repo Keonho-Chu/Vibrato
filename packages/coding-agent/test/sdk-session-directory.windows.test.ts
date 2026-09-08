@@ -280,7 +280,13 @@ describe.skipIf(process.platform !== "win32")("Windows managed session directory
 				}
 				return verifyExpected(pathname, kind, expectedDev, expectedIno);
 			});
-		const repair = vi.spyOn(native, "repairOwnerOnlyPathSecurityExpected").mockReturnValue({ ok: true });
+		// Record inside the implementation: bun's mockRestore() clears mock.calls,
+		// so the call log is gone by the time the assertions below run.
+		const repairedDirectories: string[] = [];
+		const repair = vi.spyOn(native, "repairOwnerOnlyPathSecurityExpected").mockImplementation((pathname, kind) => {
+			if (kind === "directory") repairedDirectories.push(path.resolve(pathname));
+			return { ok: true };
+		});
 
 		try {
 			const second = SessionManager.managedDestination(cwd, agentDir);
@@ -292,11 +298,7 @@ describe.skipIf(process.platform !== "win32")("Windows managed session directory
 		}
 
 		expect(reported).toBe(true);
-		expect(
-			repair.mock.calls.some(
-				([pathname, kind]) => kind === "directory" && path.resolve(pathname) === path.resolve(tombstones),
-			),
-		).toBe(true);
+		expect(repairedDirectories).toContain(path.resolve(tombstones));
 	});
 
 	it("still fails closed when the owner repair itself is refused", async () => {
@@ -316,9 +318,11 @@ describe.skipIf(process.platform !== "win32")("Windows managed session directory
 					? { ok: false, code: "owner_mismatch" }
 					: verifyExpected(pathname, kind, expectedDev, expectedIno),
 			);
-		const repair = vi
-			.spyOn(native, "repairOwnerOnlyPathSecurityExpected")
-			.mockReturnValue({ ok: false, code: "owner_mismatch" });
+		let repairAttempts = 0;
+		const repair = vi.spyOn(native, "repairOwnerOnlyPathSecurityExpected").mockImplementation(() => {
+			repairAttempts += 1;
+			return { ok: false, code: "owner_mismatch" };
+		});
 
 		let failure: unknown;
 		try {
@@ -330,7 +334,7 @@ describe.skipIf(process.platform !== "win32")("Windows managed session directory
 			repair.mockRestore();
 		}
 
-		expect(repair).toHaveBeenCalled();
+		expect(repairAttempts).toBeGreaterThan(0);
 		expect(failure).toBeInstanceOf(Error);
 		expect((failure as Error).message).toBe(
 			"Could not prepare managed session scope (owner_mismatch: prepare:tombstones_directory).",
