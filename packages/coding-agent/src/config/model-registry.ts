@@ -879,6 +879,8 @@ interface CustomModelsResult {
 	models?: CustomModelOverlay[];
 	overrides?: Map<string, ProviderOverride>;
 	modelOverrides?: Map<string, Map<string, ModelOverride>>;
+	/** Provider-level `compat` written in models.yml, as opposed to the defaults the registry synthesizes. */
+	declaredProviderCompat?: Map<string, Model<Api>["compat"]>;
 	keylessProviders?: Set<string>;
 	discoverableProviders?: DiscoveryProviderConfig[];
 	configuredProviders?: Set<string>;
@@ -1611,6 +1613,7 @@ export class ModelRegistry {
 	#customModelOverlays: CustomModelOverlay[] = [];
 	#providerOverrides: Map<string, ProviderOverride> = new Map();
 	#modelOverrides: Map<string, Map<string, ModelOverride>> = new Map();
+	#declaredProviderCompat: Map<string, Model<Api>["compat"]> = new Map();
 	#codexContextWindowOverrides: Map<string, number> = new Map();
 	#equivalenceConfig: ModelEquivalenceConfig | undefined;
 	#modelBindingsApplier = new ModelBindingsApplier();
@@ -1957,6 +1960,7 @@ export class ModelRegistry {
 		// registration-time precedence over colliding static provider keys.
 		this.#providerOverrides.clear();
 		this.#modelOverrides.clear();
+		this.#declaredProviderCompat.clear();
 		this.#equivalenceConfig = undefined;
 		this.#modelBindingsApplier.setBindings(undefined);
 		this.#configError = undefined;
@@ -2043,6 +2047,7 @@ export class ModelRegistry {
 			models: customModels = [],
 			overrides = new Map(),
 			modelOverrides = new Map(),
+			declaredProviderCompat = new Map(),
 			keylessProviders = new Set(),
 			discoverableProviders = [],
 			configuredProviders = new Set(),
@@ -2058,6 +2063,7 @@ export class ModelRegistry {
 		this.#customModelOverlays = customModels;
 		this.#providerOverrides = overrides;
 		this.#modelOverrides = normalizeModelOverrideKeys(modelOverrides);
+		this.#declaredProviderCompat = declaredProviderCompat;
 		this.#codexContextWindowOverrides = this.#collectCodexContextWindowOverrides();
 		this.#equivalenceConfig = equivalence;
 		this.#modelBindingsApplier.setBindings(modelBindings);
@@ -2596,6 +2602,7 @@ export class ModelRegistry {
 
 		const overrides = new Map<string, ProviderOverride>();
 		const allModelOverrides = new Map<string, Map<string, ModelOverride>>();
+		const declaredProviderCompat = new Map<string, Model<Api>["compat"]>();
 		const keylessProviders = new Set<string>();
 		const discoverableProviders: DiscoveryProviderConfig[] = [];
 		const providerEntries = Object.entries(value.providers ?? {});
@@ -2616,6 +2623,7 @@ export class ModelRegistry {
 			if (providerConfig.openaiCompat?.apiKey)
 				this.#configuredApiKeyEnvNames.add(providerConfig.openaiCompat.apiKey);
 			if (providerConfig.webSearch) this.#providerWebSearchModes.set(providerName, providerConfig.webSearch);
+			if (providerConfig.compat) declaredProviderCompat.set(providerName, providerConfig.compat);
 			const providerApiKeyConfig = providerConfig.apiKey
 				? resolveApiKeyConfig(providerConfig.apiKey)
 				: resolveApiKeyEnvConfig(providerConfig.apiKeyEnv);
@@ -2751,6 +2759,7 @@ export class ModelRegistry {
 			models: this.#parseModels(value),
 			overrides,
 			modelOverrides: allModelOverrides,
+			declaredProviderCompat,
 			keylessProviders,
 			discoverableProviders,
 			configuredProviders,
@@ -4335,14 +4344,44 @@ export class ModelRegistry {
 	/**
 	 * Apply what the endpoint advertised for a discovered model. This runs after
 	 * the provider override, which pins `supportsReasoningEffort: false` onto
-	 * every model of a configured endpoint, and re-applies the user's
-	 * `modelOverrides` so they keep the last word.
+	 * every model of a configured endpoint, so the hint can lift that default.
+	 * It must not lift what a person declared, though: provider-level `compat`
+	 * from models.yml or `registerProvider`, a same-id `models[]` or
+	 * `registerModel` entry, and `modelOverrides` are put back on top, in that
+	 * order, so the hint only fills the fields nobody set.
 	 */
 	#applyDiscoveryHint(model: Model<Api>): Model<Api> {
 		if (model.discoveryHint === undefined) return model;
-		const hinted = applyDiscoveredModelHint(model, model.discoveryHint);
+		const hinted = this.#restoreDeclaredModelFacts(applyDiscoveredModelHint(model, model.discoveryHint));
 		const override = this.#modelOverrides.get(model.provider.toLowerCase())?.get(model.id.toLowerCase());
 		return override === undefined ? hinted : applyModelOverride(hinted, override);
+	}
+	/**
+	 * Re-apply the capability facts a person declared for this model, so a
+	 * server hint cannot override them. Provider-level `compat` comes first
+	 * (models.yml, then a runtime `registerProvider`), then the name, reasoning
+	 * flag, thinking levels, and compat of a same-id `models[]` or
+	 * `registerModel` entry. Fields the declaration leaves unset keep whatever
+	 * the hint said.
+	 */
+	#restoreDeclaredModelFacts(model: Model<Api>): Model<Api> {
+		let restored = model;
+		const providerCompat = mergeCompat(
+			this.#declaredProviderCompat.get(model.provider),
+			this.#runtimeProviderOverrides.get(model.provider)?.compat,
+		);
+		if (providerCompat) restored = { ...restored, compat: mergeCompat(restored.compat, providerCompat) };
+		const overlay = [...this.#runtimeModelOverlays, ...this.#customModelOverlays].find(
+			candidate => candidate.provider === model.provider && candidate.id === model.id,
+		);
+		if (overlay === undefined) return restored;
+		return {
+			...restored,
+			...(overlay.name !== undefined ? { name: overlay.name } : {}),
+			...(overlay.reasoning !== undefined ? { reasoning: overlay.reasoning } : {}),
+			...(overlay.thinking !== undefined ? { thinking: overlay.thinking } : {}),
+			...(overlay.compat !== undefined ? { compat: mergeCompat(restored.compat, overlay.compat) } : {}),
+		};
 	}
 	#restoreDeclaredThinking(model: Model<Api>): Model<Api> {
 		const overrideThinking = this.#modelOverrides

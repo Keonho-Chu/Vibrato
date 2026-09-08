@@ -85,6 +85,62 @@ const ModelThinkingSchema = z.object({
 	levels: z.array(EffortSchema).optional(),
 });
 
+const EFFORT_RANK = new Map<string, number>(VIB_MODEL_EFFORT_IDS.map((id, index) => [id, index]));
+
+/**
+ * A thinking hint from a server is checked for meaning, not just shape: the
+ * range must run upward, `levels` (when given) must be non-empty and lie
+ * inside that range, and `defaultLevel` must be one of the levels the model
+ * can actually be asked for. `levels` comes out ascending without duplicates,
+ * because level clamping walks the list in order. The hint schema below
+ * rejects the whole hint on any issue, so a server that advertises a
+ * contradictory level set leaves the model exactly as discovery built it.
+ */
+const DiscoveredThinkingHintSchema = ModelThinkingSchema.superRefine((thinking, ctx) => {
+	const min = EFFORT_RANK.get(thinking.minLevel)!;
+	const max = EFFORT_RANK.get(thinking.maxLevel)!;
+	if (min > max) {
+		ctx.addIssue({
+			code: "custom",
+			path: ["minLevel"],
+			message: `minLevel "${thinking.minLevel}" is above maxLevel "${thinking.maxLevel}"`,
+		});
+		return;
+	}
+	const range = VIB_MODEL_EFFORT_IDS.slice(min, max + 1);
+	if (thinking.levels !== undefined) {
+		if (thinking.levels.length === 0) {
+			ctx.addIssue({ code: "custom", path: ["levels"], message: "levels must not be empty" });
+		}
+		for (const level of thinking.levels) {
+			if (!range.includes(level)) {
+				ctx.addIssue({
+					code: "custom",
+					path: ["levels"],
+					message: `level "${level}" is outside ${thinking.minLevel}..${thinking.maxLevel}`,
+				});
+			}
+		}
+	}
+	if (thinking.defaultLevel !== undefined) {
+		const allowed = thinking.levels !== undefined && thinking.levels.length > 0 ? thinking.levels : range;
+		if (!allowed.includes(thinking.defaultLevel)) {
+			ctx.addIssue({
+				code: "custom",
+				path: ["defaultLevel"],
+				message: `defaultLevel "${thinking.defaultLevel}" is not one of the advertised levels`,
+			});
+		}
+	}
+}).transform(thinking =>
+	thinking.levels === undefined
+		? thinking
+		: {
+				...thinking,
+				levels: [...new Set(thinking.levels)].sort((a, b) => EFFORT_RANK.get(a)! - EFFORT_RANK.get(b)!),
+			},
+);
+
 /**
  * What an OpenAI-compatible models-list entry may advertise about itself
  * under a `vibrato` key. A server in front of a model (a gateway, a proxy)
@@ -97,7 +153,7 @@ const ModelThinkingSchema = z.object({
 export const DiscoveredModelHintSchema = z.object({
 	name: z.string().min(1).optional(),
 	reasoning: z.boolean().optional(),
-	thinking: ModelThinkingSchema.optional(),
+	thinking: DiscoveredThinkingHintSchema.optional(),
 	compat: z
 		.object({
 			supportsReasoningEffort: z.boolean().optional(),
