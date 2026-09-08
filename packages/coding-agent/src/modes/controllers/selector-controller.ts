@@ -140,6 +140,7 @@ import {
 	writeOnboardingState,
 } from "../../setup/frictionless-onboarding";
 import {
+	describeUnusableEndpoint,
 	discoverLoopbackEndpoints,
 	normalizeLocalEndpointInput,
 	probeLocalEndpoint,
@@ -1524,13 +1525,26 @@ export class SelectorController {
 			let connect: LocalEndpointConnectComponent;
 			const submit = async (connection: LocalEndpointConnection): Promise<void> => {
 				try {
+					const registry = this.ctx.session.modelRegistry;
 					const result = await registerLocalEndpoint({
 						baseUrl: connection.baseUrl,
 						...(connection.apiKey ? { apiKey: connection.apiKey } : {}),
+						// Through the session's own store: a key written past it stays
+						// invisible to this registry until the next start.
+						authStorage: registry.authStorage,
 					});
 					// The endpoint's models exist only in live discovery, so an offline
 					// refresh would leave the picked model unregistered.
-					await this.ctx.session.modelRegistry.refresh("online");
+					await registry.refresh("online");
+					// The probe just succeeded with this key, so a provider that is not
+					// usable now is a failed setup, not a success to announce.
+					if (connection.apiKey) {
+						const state = registry.getProviderDiscoveryState(result.providerId);
+						if (state?.status !== "ok") {
+							connect.setSubmitError(describeUnusableEndpoint(result.providerId, state));
+							return;
+						}
+					}
 					await this.ctx.notifyConfigChanged?.();
 					this.ctx.showStatus(formatProviderSetupResult(result));
 					connect.complete();
