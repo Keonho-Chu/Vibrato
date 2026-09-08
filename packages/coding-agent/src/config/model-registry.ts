@@ -5820,9 +5820,12 @@ export class ModelRegistry {
 	 * Suppress a specific model selector (e.g., "provider/id") until a specific timestamp.
 	 *
 	 * `reason` is a short, user-facing explanation of WHY the selector is hidden
-	 * ("token limit reached; resets at …"). A rate-limit suppression has
-	 * always been reasonless, so the parameter is optional and a call that omits
-	 * it keeps the previous behavior exactly.
+	 * ("token limit reached"). It carries the condition only: `untilMs` is stored
+	 * beside it, so a surface that wants to say how long the wait still is reads
+	 * that instant back through {@link getSelectorSuppressionUntil} and renders a
+	 * countdown as it draws, rather than freezing one into the reason here. A
+	 * rate-limit suppression has always been reasonless, so the parameter is
+	 * optional and a call that omits it keeps the previous behavior exactly.
 	 */
 	suppressSelector(selector: string, untilMs: number, reason?: string): void {
 		const normalizedSelector = normalizeSuppressedSelector(selector);
@@ -5872,6 +5875,22 @@ export class ModelRegistry {
 		const suppressedUntil = this.#suppressedSelectors.get(normalizedSelector);
 		if (suppressedUntil === undefined || suppressedUntil <= Date.now()) return undefined;
 		return this.#suppressedSelectorReasons.get(normalizedSelector);
+	}
+
+	/**
+	 * Instant an ACTIVE suppression lifts, for surfaces that render the wait as a
+	 * countdown instead of a stored timestamp. An expired window reports nothing.
+	 *
+	 * Shares {@link getSelectorSuppressionReason}'s read-only contract for the
+	 * same reason: `retry.fallbackRevertPolicy: cooldown-expiry` reverts on the
+	 * single "expired" that {@link getSelectorSuppressionStatus} reports, and a
+	 * redraw asking when the hold lifts must never consume it.
+	 */
+	getSelectorSuppressionUntil(selector: string): number | undefined {
+		const normalizedSelector = normalizeSuppressedSelector(selector);
+		const suppressedUntil = this.#suppressedSelectors.get(normalizedSelector);
+		if (suppressedUntil === undefined || suppressedUntil <= Date.now()) return undefined;
+		return suppressedUntil;
 	}
 
 	#forgetSuppressedSelector(normalizedSelector: string): void {
