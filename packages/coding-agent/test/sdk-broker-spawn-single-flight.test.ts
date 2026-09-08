@@ -156,8 +156,11 @@ it("source-mode CLI resolves a relative agent dir once for parent and detached b
 	const agentDir = path.join(root, relativeAgentDir);
 	let brokerPid: number | undefined;
 	try {
+		// Fork note: `--scope all` needs a Git checkout here and `root` is a bare
+		// temp dir, so use the exact-workspace scope; the relative --agent-dir
+		// resolution under test is independent of the listing scope.
 		const child = Bun.spawn(
-			[process.execPath, "run", cli, "sdk", "session", "list", "--scope", "all", "--agent-dir", relativeAgentDir],
+			[process.execPath, "run", cli, "sdk", "session", "list", "--scope", "cwd", "--agent-dir", relativeAgentDir],
 			{ cwd: root, stdout: "pipe", stderr: "pipe" },
 		);
 		const [code, error] = await Promise.all([child.exited, new Response(child.stderr).text()]);

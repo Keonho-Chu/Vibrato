@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Fixed
 
+- File-lock release and (on Linux) acquisition now finish a provably dead predecessor's abandoned `<lock>.removing` transition through the identity-bound exact-removal replay instead of failing every later release of that lock with `quarantine_collision`/EACCES; live, in-process, host-qualified, or unverifiable transition owners are still never displaced (#6).
 - File-lock acquisition timeouts now expose a typed error with the lock path, retry count, and holder description. Lease mutation and SDK shutdown classify contention without depending on operator-facing wording, and unrelated shutdown failures still propagate.
 - File-lock acquisition and GC now reclaim orphaned `.lock.pending.<pid>.<uuid>` directories after their owner dies, with a bounded acquisition sweep and exact-identity deletion. Live, unknown, in-process, malformed, symlinked, and host-qualified owners remain protected; cleanup failures cannot block acquisition (related #5198).
 - `session.delete` uncertain-cleanup fences are now identity-scoped: an unbound `terminal_uncertain` ledger entry no longer blanket-fences deletes for every other session id, and a delete refusal records its own target session so the fence it leaves is scoped to that session. Existing poisoned ledgers need no migration — unbound rows are ignored in place on the next read and stop amplifying (#5364).

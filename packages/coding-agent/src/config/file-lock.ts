@@ -1070,8 +1070,13 @@ async function tryAcquireLock(
 		if (process.platform === "linux") {
 			// Linux exact tree removal owns this deterministic sibling from detach
 			// until cleanup. The outer acquisition loop supplies the existing bounded
-			// contention wait while the predecessor retains that namespace.
-			if (await fileLockRemovalTransitionExists(destinationPath)) return null;
+			// contention wait while the predecessor retains that namespace; only a
+			// proven-dead predecessor's abandoned transition is finished here (#6).
+			if (
+				(await fileLockRemovalTransitionExists(destinationPath)) &&
+				!(await reclaimAbandonedRemovalTransition(destinationPath))
+			)
+				return null;
 			const staged = snapshotDirectoryTree(canonicalPendingPath);
 			if (!staged.ok || !staged.snapshot) {
 				const failure = new Error(
@@ -1257,6 +1262,7 @@ async function releaseOwnedLock(lockPath: string, owner: FileLockOwnerToken): Pr
 		if (!isTransientReleaseError(error)) throw error;
 	}
 	let lastTransientError: unknown;
+	let transitionReclaimAttempted = false;
 	for (let attempt = 0; attempt < FILE_LOCK_RELEASE_RETRY_ATTEMPTS; attempt++) {
 		try {
 			if (await finishDetachedLockCleanup(owner)) return;
@@ -1269,6 +1275,13 @@ async function releaseOwnedLock(lockPath: string, owner: FileLockOwnerToken): Pr
 		} catch (error) {
 			if (!isTransientReleaseError(error)) throw error;
 			lastTransientError = error;
+			// A collision on the deterministic quarantine name is normally a live
+			// predecessor still scrubbing; wait it out. Once, check whether that
+			// predecessor is provably dead and finish its removal instead (#6).
+			if (!transitionReclaimAttempted) {
+				transitionReclaimAttempted = true;
+				if (await reclaimAbandonedRemovalTransition(lockPath)) continue;
+			}
 			if (attempt + 1 < FILE_LOCK_RELEASE_RETRY_ATTEMPTS) await Bun.sleep(FILE_LOCK_RELEASE_RETRY_DELAY_MS);
 		}
 	}
@@ -1607,4 +1620,125 @@ export async function reapOrphanedLockStagingDirs(lockPath: string): Promise<{
 		else summary.retained.push(result);
 	}
 	return summary;
+}
+
+/** Outcome of inspecting `<lock>.removing`, the deterministic exact-removal transition sibling. */
+export interface FileLockTransitionResult {
+	path: string;
+	pid?: number;
+	status: OwnerLiveness;
+	removed: boolean;
+	reason: string;
+}
+
+/**
+ * Inspect the retained removal transition of `lockPath` (issue #6).
+ *
+ * A predecessor killed between detaching its lock to `<lock>.removing` and
+ * finishing the scrub leaves that sibling forever: every later release of the
+ * same lock then collides on the deterministic name, and on Linux every later
+ * acquisition is fenced behind it. The transition tree still carries its
+ * owner's `info` record, so the same proof the staging-orphan reaper uses
+ * applies: only a proven-dead owner (dead pid, or a changed process
+ * incarnation) authorizes finishing that removal, and it is finished through
+ * the identity-bound exact-removal primitive rather than a pathname delete. A
+ * live, in-process, host-qualified, or unverifiable owner is never displaced.
+ */
+export async function inspectFileLockRemovalTransition(
+	lockPath: string,
+	probe: (pid: number) => OwnerLiveness = ownerLiveness,
+	remove = false,
+): Promise<FileLockTransitionResult> {
+	const transitionPath = fileLockRemovalTransitionPath(lockPath);
+	const kept: FileLockTransitionResult = {
+		path: transitionPath,
+		status: "unknown",
+		removed: false,
+		reason: "unverified_removal_transition",
+	};
+	let canonical: string;
+	let root: import("node:fs").BigIntStats;
+	try {
+		canonical = await canonicalLockPathPreservingFinal(transitionPath);
+		root = await fs.lstat(canonical, { bigint: true });
+	} catch (error) {
+		if (isEnoent(error)) return { ...kept, reason: "removal_transition_absent" };
+		throw error;
+	}
+	if (!root.isDirectory() || root.isSymbolicLink()) return kept;
+	const captured = nativeFileLockBindings().snapshotDirectoryTree(canonical);
+	if (
+		!captured.ok ||
+		!captured.snapshot ||
+		captured.snapshot.rootDev !== root.dev.toString() ||
+		captured.snapshot.rootIno !== root.ino.toString()
+	)
+		return kept;
+	const observation = await readFileLockObservationForGc(canonical);
+	// Unlike a staging directory, the transition name carries no owner evidence:
+	// a tree whose info record is already scrubbed (or never existed) is left to
+	// the exact-removal replay that owns it.
+	if (!observation) return kept;
+	if (
+		observation.identity.rootDev !== captured.snapshot.rootDev ||
+		observation.identity.rootIno !== captured.snapshot.rootIno
+	)
+		return kept;
+	const pid = observation.info.pid;
+	if (observation.info.owner_host_id !== undefined) return { ...kept, pid, reason: "host_qualified_transition_owner" };
+	if (pid === process.pid) return { ...kept, pid, status: "alive", reason: "in_process_transition_owner" };
+	let status = probe(pid);
+	if (status === "alive" && ownerIncarnationChanged(observation.info)) status = "dead";
+	const result: FileLockTransitionResult = {
+		path: transitionPath,
+		pid,
+		status,
+		removed: false,
+		reason: `file_lock_transition_owner_${status}`,
+	};
+	if (status !== "dead" || !remove) return result;
+	// The transition name is already the exact-removal replay target: the native
+	// primitive re-verifies the tree against the snapshot and reports
+	// `cleanup_pending` with the same path, leaving the final removal to the
+	// caller — the state a predecessor's own release resumes from through
+	// finishDetachedLockCleanup, finished here with the same identity check.
+	let removal: NativeExactUnlinkResult;
+	try {
+		removal = nativeFileLockBindings().exactRemoveDirectoryTree(canonical, captured.snapshot);
+	} catch (error) {
+		return { ...result, reason: isTransientReleaseError(error) ? "transient_native_failure" : "cleanup_failed" };
+	}
+	if (removal.ok) return { ...result, removed: true, reason: "removed" };
+	const replayPending =
+		removal.code === "cleanup_pending" &&
+		removal.detachedPath !== undefined &&
+		path.resolve(removal.detachedPath) === path.resolve(canonical) &&
+		!removal.retainedSuccessorPath &&
+		!removal.retainedPlaceholderPath &&
+		!removal.retainedUnknownPath;
+	if (!replayPending) return { ...result, reason: removal.code ?? "cleanup_failed" };
+	const current = await fs.lstat(canonical, { bigint: true });
+	if (
+		!current.isDirectory() ||
+		current.isSymbolicLink() ||
+		current.dev.toString() !== captured.snapshot.rootDev ||
+		current.ino.toString() !== captured.snapshot.rootIno
+	)
+		return { ...result, reason: "identity_changed" };
+	await fs.rm(canonical, { recursive: true, force: true });
+	return { ...result, removed: true, reason: "removed" };
+}
+
+/** Finish a proven-dead predecessor's abandoned removal transition; failures are diagnostic only. */
+async function reclaimAbandonedRemovalTransition(lockPath: string): Promise<boolean> {
+	try {
+		const transition = await inspectFileLockRemovalTransition(lockPath, ownerLiveness, true);
+		if (transition.removed) {
+			logger.debug("Reclaimed an abandoned file-lock removal transition", { lockPath, pid: transition.pid });
+		}
+		return transition.removed;
+	} catch (error) {
+		logger.debug("Failed to inspect the file-lock removal transition", { lockPath, error: String(error) });
+		return false;
+	}
 }
