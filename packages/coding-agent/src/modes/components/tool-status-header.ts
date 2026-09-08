@@ -41,7 +41,13 @@ export interface StatusLineSegmentOptions {
 	path?: { abbreviate?: boolean; maxLength?: number; stripWorkPrefix?: boolean };
 	git?: { showBranch?: boolean; showStaged?: boolean; showUnstaged?: boolean; showUntracked?: boolean };
 	time?: { format?: "12h" | "24h"; showSeconds?: boolean };
-	usage?: { mode?: "used" | "remaining" };
+	/**
+	 * `mode` picks used-share or remaining-share wording. `windows` picks which
+	 * windows the segment may draw: `all` (the default) includes the polled
+	 * OAuth/subscription windows, `gateway` restricts it to the budget observed
+	 * on gateway response headers and, with it, keeps the poll switched off.
+	 */
+	usage?: { mode?: "used" | "remaining"; windows?: "all" | "gateway" };
 }
 
 export interface StatusLineSettings {
@@ -607,8 +613,18 @@ export class StatusLineComponent implements Component {
 	): SegmentContext {
 		const state = this.session.state;
 
-		// Trigger background fetch (5-min TTL); render uses cached value
-		this.refreshUsageInBackground();
+		// Which windows the `usage` segment may draw for this layout. A layout
+		// without the segment at all draws none, and is treated the same as the
+		// gateway-only scope: neither can display a polled window, so neither
+		// justifies the poll.
+		const usageScope = this.#usageScope(effectiveSettings);
+
+		// Trigger background fetch (5-min TTL); render uses cached value.
+		// Gated on a layout that can actually show a polled window. The poll is a
+		// network request to the provider's usage endpoint on a 5-minute cadence,
+		// and it used to run for every session regardless of preset — including
+		// the default one, which had no `usage` segment to show the result in.
+		if (usageScope === "all") this.refreshUsageInBackground();
 
 		// Get usage statistics
 		const aggregateUsageStats = this.session.sessionManager?.getUsageStatistics() ?? {
@@ -656,8 +672,25 @@ export class StatusLineComponent implements Component {
 				status: this.#getGitStatus(),
 				pr: prSegmentActive ? this.#lookupPr() : null,
 			},
-			usage: this.#usageWindows(),
+			usage: this.#usageWindows(usageScope),
 		};
+	}
+
+	/**
+	 * Which usage windows the active layout may draw.
+	 *
+	 * `none` when no `usage` segment is rendered at all. Otherwise the segment's
+	 * own `windows` option decides, defaulting to `all` so an explicitly placed
+	 * segment keeps its historical meaning; only a layout that asks for the
+	 * gateway scope narrows it.
+	 */
+	#usageScope(
+		effectiveSettings: Required<Pick<StatusLineSettings, "leftSegments" | "rightSegments">> & StatusLineSettings,
+	): "none" | "gateway" | "all" {
+		const active =
+			effectiveSettings.leftSegments.includes("usage") || effectiveSettings.rightSegments.includes("usage");
+		if (!active) return "none";
+		return effectiveSettings.segmentOptions?.usage?.windows === "gateway" ? "gateway" : "all";
 	}
 
 	/**
@@ -669,11 +702,18 @@ export class StatusLineComponent implements Component {
 	 * so the freshest value is whatever the session last observed. A gateway
 	 * that has never reported a quota header contributes nothing, which keeps
 	 * the segment hidden instead of showing an invented zero.
+	 *
+	 * The gateway window is drawn in every scope. It costs nothing to obtain —
+	 * it is already on responses this session received — so there is no opt-in
+	 * to justify, and it reports a limit the user is about to be stopped by.
+	 * The polled windows are dropped outside the `all` scope, which also covers
+	 * the case of a scope narrowed mid-session after a poll had already landed.
 	 */
-	#usageWindows(): SegmentContext["usage"] {
+	#usageWindows(scope: "none" | "gateway" | "all"): SegmentContext["usage"] {
+		const polled = scope === "all" ? this.#cachedUsage : null;
 		const gateway = gatewayQuotaWindow(this.session.gatewayQuotaState ?? null);
-		if (!gateway) return this.#cachedUsage;
-		return { windows: [...(this.#cachedUsage?.windows ?? []), gateway] };
+		if (!gateway) return polled;
+		return { windows: [...(polled?.windows ?? []), gateway] };
 	}
 
 	#settingsFingerprint(): string {
