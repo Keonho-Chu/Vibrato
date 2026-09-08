@@ -21,7 +21,7 @@
 **Standalone binary** (recommended; no Bun needed) for Linux (x64/arm64), macOS (arm64/x64), and Windows (x64):
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.17.3/scripts/install.sh -o vib-install.sh
+curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.18.0/scripts/install.sh -o vib-install.sh
 sh vib-install.sh
 vib --version
 ```
@@ -29,7 +29,7 @@ vib --version
 Windows (PowerShell, from a normal terminal — not "Run as administrator"):
 
 ```powershell
-Invoke-WebRequest -UseBasicParsing https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.17.3/scripts/install.ps1 -OutFile vib-install.ps1
+Invoke-WebRequest -UseBasicParsing https://raw.githubusercontent.com/Keonho-Chu/Vibrato/v0.18.0/scripts/install.ps1 -OutFile vib-install.ps1
 powershell -File vib-install.ps1
 ```
 
