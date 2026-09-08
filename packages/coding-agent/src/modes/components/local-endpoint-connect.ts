@@ -82,12 +82,15 @@ export interface PendingGatewaySummary {
  * step: the key field is revealed only when the server answers 401/403, and a
  * successful probe goes straight to the model picker.
  *
- * The one exception is an endpoint that turns out to be fronted by a gateway.
- * That is worth a beat, because a gateway meters the key rather than merely
- * accepting it, so the screen shows what the gateway reported about the key
- * once and continues on Enter. A plain server never sees this step: the
- * decision is made from signals only a gateway puts on the response, never from
- * the address or the provider name.
+ * The one exception is an endpoint whose model list said something about
+ * itself, which is worth a beat because a server in front of a model may be
+ * metering the key rather than merely accepting it. The screen shows what the
+ * response actually reported, once, and Enter continues to the picker while Esc
+ * steps back to the address field. It states only what it observed: a quota
+ * header means a metering gateway and is described as one, while a
+ * server-advertised model hint means only that the server described its models.
+ * A silent endpoint never sees this step, and the decision never comes from the
+ * address or the provider name.
  */
 export class LocalEndpointConnectComponent extends Container {
 	#apiKey = "";
@@ -165,6 +168,9 @@ export class LocalEndpointConnectComponent extends Container {
 	setSubmitError(error: string): void {
 		this.#status = null;
 		this.#error = error;
+		// The held connection failed to register, so it is not something a later
+		// Enter may hand over again; the user edits and reprobes instead.
+		this.#summary = null;
 		this.#focus = { kind: "input" };
 		this.#render();
 		this.#onRender();
@@ -172,18 +178,23 @@ export class LocalEndpointConnectComponent extends Container {
 
 	handleInput(keyData: string): void {
 		if (this.#closed) return;
-		if (matchesAppInterrupt(keyData)) {
-			this.complete();
-			this.#onCancel();
-			return;
-		}
 		// The summary owns the screen while it is up, so nothing may reach the
-		// address field or the suggestion rows behind it. Enter is the only key
-		// that does anything; Esc still leaves the screen the way it always has.
+		// address field or the suggestion rows behind it. Enter continues, Esc
+		// steps back to the address field, and every other key is ignored. This
+		// sits above the interrupt branch because on this step Esc means "back
+		// one step", not "leave the screen"; from the address field it still
+		// means what it always did.
 		if (this.#focus.kind === "summary") {
 			if (matchesKey(keyData, "enter") || matchesKey(keyData, "return") || keyData === "\n") {
 				this.#acceptSummary();
+				return;
 			}
+			if (matchesAppInterrupt(keyData)) this.#dismissSummary();
+			return;
+		}
+		if (matchesAppInterrupt(keyData)) {
+			this.complete();
+			this.#onCancel();
 			return;
 		}
 		if (matchesKey(keyData, "up")) {
@@ -271,10 +282,34 @@ export class LocalEndpointConnectComponent extends Container {
 		this.#onRender();
 	}
 
+	/**
+	 * Continue from the summary. A second Enter while the first is still being
+	 * registered changes nothing, and the screen says so: the footer is replaced
+	 * by a progress line the moment the first one is taken, so the extra press
+	 * lands on a screen that already reads as busy rather than on a dead key.
+	 */
 	#acceptSummary(): void {
 		const summary = this.#summary;
-		if (!summary) return;
+		if (!summary || this.#submitInFlight) return;
+		this.#status = `Setting up ${summary.connection.baseUrl}…`;
 		this.#emitConnection(summary.connection);
+		this.#render();
+		this.#onRender();
+	}
+
+	/**
+	 * Leave the summary without connecting. It is a step, so Esc steps back to
+	 * the address field rather than out of the screen; pressing it again there
+	 * leaves for the other providers, as it always has. Nothing is kept: the
+	 * held connection is dropped, so a later Enter cannot hand over an endpoint
+	 * the user backed out of.
+	 */
+	#dismissSummary(): void {
+		this.#summary = null;
+		this.#focus = { kind: "input" };
+		this.#status = null;
+		this.#render();
+		this.#onRender();
 	}
 
 	/** Hand the connection to the caller, ignoring a second Enter while it runs. */
@@ -515,36 +550,40 @@ export class LocalEndpointConnectComponent extends Container {
 	}
 
 	/**
-	 * The gateway beat: what the gateway said about this key, and nothing the
-	 * client had to ask for. Every line is a fact from the model-list response,
-	 * so a gateway that reports no budget says so plainly rather than showing a
-	 * zero or a guessed window.
+	 * The beat before model selection: what the response said about this
+	 * endpoint, and nothing the client had to ask for. Every line is a fact the
+	 * model list carried, so an endpoint that reported no budget says so plainly
+	 * rather than showing a zero or a guessed window — and one that only
+	 * described its models is never called a metering gateway.
 	 */
 	#renderGatewaySummary(summary: PendingGatewaySummary): void {
-		const gateway = summary.gateway;
-		this.#contentContainer.addChild(new TruncatedText(theme.bold("Usage gateway"), 0, 0));
-		this.#contentContainer.addChild(
-			new TruncatedText(
-				theme.fg("muted", "  This endpoint is fronted by a server that meters requests per key."),
-				0,
-				0,
-			),
-		);
+		const flavour = summaryFlavour(summary.gateway);
+		const heading = SUMMARY_HEADINGS[flavour];
+		this.#contentContainer.addChild(new TruncatedText(theme.bold(heading.title), 0, 0));
+		for (const line of heading.lead) {
+			this.#contentContainer.addChild(new TruncatedText(theme.fg("muted", `  ${line}`), 0, 0));
+		}
 		this.#contentContainer.addChild(new Spacer(1));
-		for (const row of gatewaySummaryRows(summary, Date.now())) {
+		const rows = gatewaySummaryRows(summary, Date.now());
+		for (const row of rows) {
 			this.#contentContainer.addChild(
 				new TruncatedText(`  ${theme.fg("muted", row.label.padEnd(SUMMARY_LABEL_WIDTH))}${row.value}`, 0, 0),
 			);
 		}
-		if (!gateway.quota) {
+		// Keyed on what was actually rendered, not on the presence of a quota
+		// object: a quota carrying neither a usable budget nor a reset instant
+		// produces no row, and would otherwise leave the claim unsupported.
+		if (!rows.some(row => BUDGET_ROW_LABELS.has(row.label))) {
 			this.#contentContainer.addChild(new Spacer(1));
-			for (const line of NO_QUOTA_ON_MODEL_LIST) {
+			for (const line of NO_BUDGET_REPORTED[flavour]) {
 				this.#contentContainer.addChild(new TruncatedText(theme.fg("dim", `  ${line}`), 0, 0));
 			}
 		}
 		this.#contentContainer.addChild(new Spacer(1));
 		this.#contentContainer.addChild(
-			new Text(theme.fg("muted", "[Enter to continue, Esc for other providers]"), 0, 0),
+			this.#status
+				? new TruncatedText(theme.fg("muted", this.#status), 0, 0)
+				: new Text(theme.fg("muted", "[Enter to continue, Esc to go back]"), 0, 0),
 		);
 	}
 
@@ -581,15 +620,50 @@ export class LocalEndpointConnectComponent extends Container {
 const SUMMARY_LABEL_WIDTH = 14;
 
 /**
- * Said only when the gateway reported no budget on the model list. It is a
- * statement about this response, not a promise about the gateway's design, and
- * it names no window length: the window is the operator's setting and the client
- * is never told what it is.
+ * The two things the screen may claim, kept apart because only one of them is
+ * evidence of metering.
+ *
+ * A quota header is the gateway counting this key: nothing but a metering
+ * gateway sends `x-vug-*`. A `vibrato` hint is not. It is the general
+ * server-advertised model hint protocol (see "Server-advertised model hints" in
+ * `docs/models.md`), open to any server in front of a model, so a plain vLLM
+ * that adopts it is describing its models and metering nothing. Claiming
+ * "meters requests per key" on the strength of a hint would assert what the
+ * response never said, and because the gateway attaches no quota headers to a
+ * successful model list, the hint-only case is the one production actually hits.
  */
-const NO_QUOTA_ON_MODEL_LIST = [
-	"The model list carries no budget figures. Your key's usage appears in the",
-	"status line once the first request comes back.",
-] as const;
+const SUMMARY_HEADINGS = {
+	metered: {
+		title: "Usage gateway",
+		lead: ["This endpoint is fronted by a server that meters requests per key."],
+	},
+	hinted: {
+		title: "Server-described models",
+		lead: ["This server describes what its models support, so the endpoint needs no", "models.yml entry of its own."],
+	},
+} as const;
+
+/**
+ * Said when no budget figure came back. Neither wording names a window length:
+ * the window is the operator's setting and the client is never told what it is.
+ * The hinted variant does not assert that the server meters anything, because
+ * nothing in the response said so.
+ */
+const NO_BUDGET_REPORTED = {
+	metered: [
+		"The model list carried no budget figures. Your key's usage appears in the",
+		"status line once the first request comes back.",
+	],
+	hinted: [
+		"No token budget was reported. If this server meters your key, that usage",
+		"appears in the status line once the first request comes back.",
+	],
+} as const;
+
+/** Which of the two the response actually proved. */
+function summaryFlavour(gateway: LocalEndpointGatewayFacts): "metered" | "hinted" {
+	return gateway.quota === undefined ? "hinted" : "metered";
+}
 
 /** One `label  value` line of the summary. */
 interface GatewaySummaryRow {
@@ -597,18 +671,28 @@ interface GatewaySummaryRow {
 	value: string;
 }
 
+/** Rows that count as the endpoint having reported something about the budget. */
+const BUDGET_ROW_LABELS: ReadonlySet<string> = new Set(["Token budget", "Resets"]);
+
 /**
  * The summary's content, separated from its rendering so a test reads the same
  * strings the screen draws.
  */
 export function gatewaySummaryRows(summary: PendingGatewaySummary, now: number): GatewaySummaryRow[] {
 	const { connection, gateway, authenticated } = summary;
+	const metered = summaryFlavour(gateway) === "metered";
 	const rows: GatewaySummaryRow[] = [
 		{ label: "Address", value: connection.baseUrl },
 		{ label: "Models", value: describeModelCount(connection.models.length, gateway.hintedModels) },
 		{
+			// "the gateway" only where a quota header proved there is one; otherwise
+			// all that happened is that the server took the key.
 			label: "API key",
-			value: authenticated ? "accepted by the gateway" : "not required by this endpoint",
+			value: authenticated
+				? metered
+					? "accepted by the gateway"
+					: "accepted by the server"
+				: "not required by this endpoint",
 		},
 	];
 	const budget = describeBudget(gateway.quota);
