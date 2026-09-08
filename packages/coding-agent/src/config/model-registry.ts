@@ -917,6 +917,85 @@ function resolveApiKeyEnvConfig(envKey: string | undefined): string | undefined 
 	return $rotatingCredentialEnv(envKey);
 }
 
+/** One `models.yml` provider entry, as parsed. */
+type ConfiguredProviderEntry = NonNullable<ModelsConfig["providers"]>[string];
+
+/**
+ * A provider whose models are hidden because the environment variable named by
+ * its `apiKeyEnv` is unset or empty.
+ *
+ * This is a *cause* record, not a policy: the provider is still excluded from
+ * the usable models exactly as before. It exists because the exclusion is
+ * otherwise silent — the user sees an empty model list and no reason for it —
+ * and because the value behind the name must never be read out to say so.
+ */
+export interface HiddenProviderApiKeyEnv {
+	/** Provider name as written in `models.yml`. */
+	provider: string;
+	/** Environment variable name. Its value is never carried alongside it. */
+	envName: string;
+}
+
+/**
+ * The environment variable a provider entry can only get its credential from,
+ * or `undefined` when the entry has another credential source.
+ *
+ * A literal `apiKey`, `auth: none`, and OAuth all mean an empty `apiKeyEnv`
+ * variable does not decide whether the provider is usable, so none of them can
+ * produce the hidden-provider cause this record describes.
+ */
+function soleApiKeyEnvSource(providerConfig: ConfiguredProviderEntry): string | undefined {
+	if (!providerConfig.apiKeyEnv || providerConfig.apiKey) return undefined;
+	if (providerConfig.auth === "none") return undefined;
+	const isOAuth = resolveCustomModelIsOAuth(
+		(providerConfig.api as Api | undefined) ?? "openai-completions",
+		providerConfig.auth as ProviderAuthMode | undefined,
+	);
+	if (isOAuth === true) return undefined;
+	return providerConfig.apiKeyEnv;
+}
+
+/**
+ * Whether the empty `apiKeyEnv` on this provider entry actually decides
+ * anything, judged from the config plus the environment alone.
+ *
+ * `models.yml` is not the whole credential story. A bundled provider also has a
+ * built-in environment variable of its own — `openai` reads `OPENAI_API_KEY`,
+ * `vllm` reads `VLLM_API_KEY` — and that key authenticates the provider whether
+ * or not the config's own `apiKeyEnv` resolves. Reporting such a provider as
+ * hidden would name a provider whose models are right there in the list.
+ */
+function isHiddenByEmptyApiKeyEnv(provider: string, providerConfig: ConfiguredProviderEntry): string | undefined {
+	const envName = soleApiKeyEnvSource(providerConfig);
+	if (!envName) return undefined;
+	if (resolveApiKeyEnvConfig(envName) !== undefined) return undefined;
+	if (getEnvApiKey(provider) !== undefined) return undefined;
+	return envName;
+}
+
+/**
+ * Providers in a parsed `models.yml` whose only credential source is an
+ * `apiKeyEnv` variable that is currently unset or empty.
+ *
+ * Exported for callers that hold a config but no registry — `vib
+ * local-provider status` reads the file directly — so both surfaces name the
+ * same cause from the same rule.
+ *
+ * This reads config and environment only. A credential stored by `vib auth
+ * login` lives in `agent.db` and is invisible here, so a provider carrying one
+ * would still be named; {@link ModelRegistry.getProvidersHiddenByMissingApiKeyEnv}
+ * is the accurate report, because it additionally requires the provider to have
+ * no usable models.
+ */
+export function findProvidersWithEmptyApiKeyEnv(config: ModelsConfig | undefined): HiddenProviderApiKeyEnv[] {
+	const hidden: HiddenProviderApiKeyEnv[] = [];
+	for (const [provider, providerConfig] of Object.entries(config?.providers ?? {})) {
+		const envName = isHiddenByEmptyApiKeyEnv(provider, providerConfig);
+		if (envName) hidden.push({ provider, envName });
+	}
+	return hidden;
+}
+
 function toPositiveNumberOrUndefined(value: unknown): number | undefined {
 	if (typeof value === "number" && Number.isFinite(value) && value > 0) {
 		return value;
@@ -1666,6 +1745,13 @@ export class ModelRegistry {
 	#rebuildPending: boolean = false;
 	#rebuildSuspended: number = 0;
 	#configuredApiKeyEnvNames: Set<string> = new Set();
+	/**
+	 * Provider -> the env var it can only get its credential from. Recorded at
+	 * config load; whether that variable is *currently* empty is decided live in
+	 * {@link getProvidersHiddenByMissingApiKeyEnv}, because the variable can be
+	 * filled in after startup.
+	 */
+	#apiKeyEnvOnlyProviders: Map<string, string> = new Map();
 	#optionalAuthPreflightGenerations = new Map<string, number>();
 	#optionalAuthPreflightEpoch = 0;
 
@@ -2582,6 +2668,7 @@ export class ModelRegistry {
 
 	#loadCustomModels(): CustomModelsResult {
 		this.#configuredApiKeyEnvNames.clear();
+		this.#apiKeyEnvOnlyProviders.clear();
 		const { value, error, status } = this.#modelsConfigFile.tryLoad();
 
 		if (status === "error") {
@@ -2626,6 +2713,8 @@ export class ModelRegistry {
 			if (providerConfig.apiKeyEnv) {
 				this.#configuredApiKeyEnvNames.add(providerConfig.apiKeyEnv);
 			}
+			const soleApiKeyEnv = soleApiKeyEnvSource(providerConfig);
+			if (soleApiKeyEnv) this.#apiKeyEnvOnlyProviders.set(providerName, soleApiKeyEnv);
 			if (providerConfig.apiKey) this.#configuredApiKeyEnvNames.add(providerConfig.apiKey);
 			if (providerConfig.openaiCompat?.apiKeyEnv)
 				this.#configuredApiKeyEnvNames.add(providerConfig.openaiCompat.apiKeyEnv);
@@ -5005,6 +5094,33 @@ export class ModelRegistry {
 		return this.#availableModelsCache;
 	}
 
+	/**
+	 * Providers that {@link getAvailable} leaves out because the environment
+	 * variable named by their `apiKeyEnv` is unset or empty.
+	 *
+	 * Purely a cause report — nothing here changes availability, and a provider
+	 * that still has usable models (its credential arrived from somewhere else)
+	 * is never named. The env var is re-read on every call, so filling it in and
+	 * reloading the config makes the report go away on its own. Only the
+	 * variable's *name* is ever returned; its value is not read out.
+	 */
+	getProvidersHiddenByMissingApiKeyEnv(): HiddenProviderApiKeyEnv[] {
+		if (this.#apiKeyEnvOnlyProviders.size === 0) return [];
+		const providersWithModels = new Set(this.getAvailable().map(model => model.provider));
+		const hidden: HiddenProviderApiKeyEnv[] = [];
+		for (const [provider, envName] of this.#apiKeyEnvOnlyProviders) {
+			if (providersWithModels.has(provider)) continue;
+			if (resolveApiKeyEnvConfig(envName) !== undefined) continue;
+			// A bundled provider's own environment variable authenticates it
+			// regardless of the config's `apiKeyEnv`, so the empty one decided
+			// nothing. Checked here as well as in the config-only helper so the two
+			// reports can never disagree about the same provider.
+			if (getEnvApiKey(provider) !== undefined) continue;
+			hidden.push({ provider, envName });
+		}
+		return hidden;
+	}
+
 	#synchronizeEnvironmentCredentials(): void {
 		// Runtime registrations own a provider while their credential is present.
 		// Refresh them first so a missing runtime env key can hand ownership back to
@@ -5820,9 +5936,12 @@ export class ModelRegistry {
 	 * Suppress a specific model selector (e.g., "provider/id") until a specific timestamp.
 	 *
 	 * `reason` is a short, user-facing explanation of WHY the selector is hidden
-	 * ("token limit reached; resets at …"). A rate-limit suppression has
-	 * always been reasonless, so the parameter is optional and a call that omits
-	 * it keeps the previous behavior exactly.
+	 * ("token limit reached"). It carries the condition only: `untilMs` is stored
+	 * beside it, so a surface that wants to say how long the wait still is reads
+	 * that instant back through {@link getSelectorSuppressionUntil} and renders a
+	 * countdown as it draws, rather than freezing one into the reason here. A
+	 * rate-limit suppression has always been reasonless, so the parameter is
+	 * optional and a call that omits it keeps the previous behavior exactly.
 	 */
 	suppressSelector(selector: string, untilMs: number, reason?: string): void {
 		const normalizedSelector = normalizeSuppressedSelector(selector);
@@ -5872,6 +5991,22 @@ export class ModelRegistry {
 		const suppressedUntil = this.#suppressedSelectors.get(normalizedSelector);
 		if (suppressedUntil === undefined || suppressedUntil <= Date.now()) return undefined;
 		return this.#suppressedSelectorReasons.get(normalizedSelector);
+	}
+
+	/**
+	 * Instant an ACTIVE suppression lifts, for surfaces that render the wait as a
+	 * countdown instead of a stored timestamp. An expired window reports nothing.
+	 *
+	 * Shares {@link getSelectorSuppressionReason}'s read-only contract for the
+	 * same reason: `retry.fallbackRevertPolicy: cooldown-expiry` reverts on the
+	 * single "expired" that {@link getSelectorSuppressionStatus} reports, and a
+	 * redraw asking when the hold lifts must never consume it.
+	 */
+	getSelectorSuppressionUntil(selector: string): number | undefined {
+		const normalizedSelector = normalizeSuppressedSelector(selector);
+		const suppressedUntil = this.#suppressedSelectors.get(normalizedSelector);
+		if (suppressedUntil === undefined || suppressedUntil <= Date.now()) return undefined;
+		return suppressedUntil;
 	}
 
 	#forgetSuppressedSelector(normalizedSelector: string): void {

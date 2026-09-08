@@ -606,7 +606,7 @@ it("keeps unresolved session cleanup authority through lifecycle ledger compacti
 	expect(await tamperedLedger.begin("cleanup-a", "hash-a")).toMatchObject({ kind: "terminal_uncertain" });
 	expect(tamperedLedger.hasUncertainCleanupForSession("compacted-session", "fresh-delete")).toBe(true);
 	expect(tamperedLedger.hasUncertainCleanupForSession("other-session", "fresh-delete")).toBe(true);
-	expect(tamperedLedger.hasUncertainCleanupForSession("unrelated-session", "fresh-delete")).toBe(true);
+	expect(tamperedLedger.hasUncertainCleanupForSession("unrelated-session", "fresh-delete")).toBe(false);
 	const startupLedger = await new LifecycleLedger(path.join(dir, "startup")).open();
 	await startupLedger.begin("startup-a", "startup-hash");
 	await startupLedger.transition("startup-a", "effect_started", {
@@ -629,6 +629,78 @@ it("keeps unresolved session cleanup authority through lifecycle ledger compacti
 		}),
 	).rejects.toThrow("Cleanup response session does not match its outer lifecycle fence");
 	await fs.rm(dir, { recursive: true, force: true });
+});
+it("ignores poisoned unbound uncertain rows on ledger reopen instead of re-fencing (#5364)", async () => {
+	const dir = await temp();
+	try {
+		const ledger = await new LifecycleLedger(dir).open();
+		await ledger.begin("seed-refusal", "seed-hash", { operationKey: "session.delete\0seed-key" });
+		await ledger.transition("seed-refusal", "terminal_uncertain", {
+			response: {
+				ok: false,
+				error: {
+					code: "terminal_uncertain",
+					message: "Session ownership is uncertain and cannot be deleted safely.",
+				},
+			},
+		});
+		const reopened = await new LifecycleLedger(dir).open();
+		expect(reopened.hasUncertainCleanupForSession("unrelated-session", "other-delete")).toBe(false);
+		expect(reopened.hasUncertainCleanupForSession("unrelated-session", "seed-refusal")).toBe(false);
+		// A delete refusal for X fences X after reopen, but never Y.
+		const brokered = await new LifecycleLedger(dir).open();
+		expect(brokered.hasUncertainCleanupForSession("unrelated-session", "yet-another")).toBe(false);
+	} finally {
+		await fs.rm(dir, { recursive: true, force: true });
+	}
+});
+it("does not let an unbound uncertain entry blanket-fence unrelated session deletes (#5364)", async () => {
+	const dir = await temp();
+	try {
+		const ledger = await new LifecycleLedger(dir).open();
+		// Seed refusal verbatim from #5364: terminal_uncertain with no session binding.
+		await ledger.begin("seed-refusal", "seed-hash", { operationKey: "session.delete\0seed-key" });
+		await ledger.transition("seed-refusal", "terminal_uncertain", {
+			response: {
+				ok: false,
+				error: {
+					code: "terminal_uncertain",
+					message: "Session ownership is uncertain and cannot be deleted safely.",
+				},
+			},
+		});
+		// An unbound refusal must not fence deletes for other session ids,
+		// and the fenced refusal itself must not be re-fenced by its own entry.
+		expect(ledger.hasUncertainCleanupForSession("unrelated-session", "other-delete")).toBe(false);
+		expect(ledger.hasUncertainCleanupForSession("unrelated-session", "seed-refusal")).toBe(false);
+		// A genuinely uncertain entry for session X still fences X.
+		await ledger.begin("uncertain-x", "hash-x", { operationKey: "session.delete\0key-x" });
+		await ledger.transition("uncertain-x", "effect_started", {
+			intendedSessionId: "session-x",
+			response: {
+				ok: false,
+				error: {
+					code: "cleanup_pending",
+					message: "pending",
+					cleanup: {
+						phase: "artifacts",
+						sessionId: "session-x",
+						sessionsRoot: "/sessions",
+						transcriptPath: "/sessions/session-x.jsonl",
+						cwd: "/workspace/a",
+					},
+				},
+			},
+		});
+		await ledger.transition("uncertain-x", "terminal_uncertain", {
+			intendedSessionId: "session-x",
+			response: { ok: false, error: { code: "terminal_uncertain", message: "reproof failed" } },
+		});
+		expect(ledger.hasUncertainCleanupForSession("session-x", "fresh-delete")).toBe(true);
+		expect(ledger.hasUncertainCleanupForSession("session-y", "fresh-delete")).toBe(false);
+	} finally {
+		await fs.rm(dir, { recursive: true, force: true });
+	}
 });
 describe("SDK broker identity and discovery", () => {
 	it("atomically publishes one identity key for concurrent callers", async () => {
@@ -1524,6 +1596,30 @@ describe("SDK broker identity and discovery", () => {
 		const owner = (await import("../src/sdk/broker/ensure")).brokerOwnerForTest(dir);
 		await owner?.stop();
 	}, 15_000);
+	it("does not publish discovery until the initial session heartbeat checkpoint settles", async () => {
+		const dir = await temp();
+		const broker = new Broker({ agentDir: dir });
+		const checkpointEntered = Promise.withResolvers<void>();
+		const releaseCheckpoint = Promise.withResolvers<void>();
+		const heartbeat = vi.spyOn(broker, "heartbeatSessions").mockImplementation(async () => {
+			checkpointEntered.resolve();
+			await releaseCheckpoint.promise;
+			return 0;
+		});
+		try {
+			const start = broker.start();
+			await checkpointEntered.promise;
+			expect(await readBrokerDiscovery(dir)).toBeNull();
+			releaseCheckpoint.resolve();
+			const discovery = await start;
+			expect(await readBrokerDiscovery(dir)).toMatchObject({ pid: discovery.pid, ownerId: discovery.ownerId });
+		} finally {
+			releaseCheckpoint.resolve();
+			heartbeat.mockRestore();
+			await broker.stop();
+			await fs.rm(dir, { recursive: true, force: true });
+		}
+	});
 	it("refuses concurrent launches when a live lock owner has not published discovery", async () => {
 		const dir = await temp();
 		const lock = path.join(dir, "sdk", "broker.lock");

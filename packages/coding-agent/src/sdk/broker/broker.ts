@@ -5,6 +5,7 @@ import * as os from "node:os";
 import path from "node:path";
 import type { NativeDirectoryTreeSnapshot } from "@vib-rato/natives";
 import { logger } from "@vib-rato/utils";
+import packageJson from "../../../package.json" with { type: "json" };
 import type { ModelProfileErrorDetails } from "../../config/model-profile-contract";
 import { planLaunchWorktree } from "../../vib-runtime/launch-worktree";
 import { createDefaultSdkHostModelResolver, type SdkHostModelResolver } from "../host/model-pin";
@@ -57,6 +58,10 @@ type ResolvedBrokerSettings = {
 	heartbeatTtlMs: number;
 	resolveDirectoryMigration: (_cwd: string) => Promise<DirectoryMigrationPolicy>;
 };
+export function resolveBrokerPackageGeneration(): string {
+	const v = (packageJson as { version?: unknown }).version;
+	return typeof v === "string" && v.length > 0 ? v : "unknown";
+}
 
 function modelResolutionCwd(input: Record<string, unknown>): string | undefined {
 	const cwd = typeof input.cwd === "string" ? input.cwd : undefined;
@@ -870,7 +875,7 @@ export class Broker {
 	constructor(settings: BrokerSettings) {
 		this.settings = {
 			agentDir: settings.agentDir,
-			packageGeneration: settings.packageGeneration ?? "unknown",
+			packageGeneration: settings.packageGeneration ?? resolveBrokerPackageGeneration(),
 			port: settings.port ?? 0,
 			heartbeatTtlMs: settings.heartbeatTtlMs ?? BROKER_HEARTBEAT_TTL_MS,
 			resolveDirectoryMigration: settings.resolveDirectoryMigration ?? (async () => "copy-retain"),
@@ -971,26 +976,35 @@ export class Broker {
 		)
 			return;
 
-		// Snapshot validation and the deterministic instance suffix protect successor locks.
-		const tombstone = path.join(
-			path.dirname(this.#lock),
-			`.broker.lock.stale-${createHash("sha256").update(snapshot.lockIdentity).digest("hex")}`,
-		);
-		try {
-			await fs.rename(this.#lock, tombstone);
-		} catch (e) {
-			const code = (e as NodeJS.ErrnoException).code;
-			if (["ENOENT", "EEXIST", "ENOTEMPTY", "EISDIR", "ENOTDIR"].includes(code ?? "")) return;
-			if (code === "EPERM") {
-				try {
-					await fs.lstat(tombstone);
-					return;
-				} catch (statError) {
-					if ((statError as NodeJS.ErrnoException).code !== "ENOENT") throw statError;
+		// Give every reclaimed generation a fresh quarantine name. Older brokers
+		// used only the lock inode hash; if that tombstone survived a crash, the
+		// deterministic name collided forever and left the dead canonical lock in
+		// place. The random suffix preserves no-replace rename semantics without
+		// letting retained cleanup debris block takeover.
+		for (let attempt = 0; attempt < 8; attempt++) {
+			const tombstone = path.join(
+				path.dirname(this.#lock),
+				`.broker.lock.stale-${createHash("sha256").update(snapshot.lockIdentity).digest("hex")}-${randomBytes(8).toString("hex")}`,
+			);
+			try {
+				await fs.rename(this.#lock, tombstone);
+				return;
+			} catch (e) {
+				const code = (e as NodeJS.ErrnoException).code;
+				if (code === "EEXIST" || code === "ENOTEMPTY") continue;
+				if (["ENOENT", "EISDIR", "ENOTDIR"].includes(code ?? "")) return;
+				if (code === "EPERM") {
+					try {
+						await fs.lstat(tombstone);
+						continue;
+					} catch (statError) {
+						if ((statError as NodeJS.ErrnoException).code !== "ENOENT") throw statError;
+					}
 				}
+				throw e;
 			}
-			throw e;
 		}
+		throw new Error(`Broker lock quarantine namespace is saturated for ${this.#lock}`);
 	}
 	async #releaseOwnedLock(): Promise<void> {
 		try {
@@ -1106,6 +1120,11 @@ export class Broker {
 				startedAt: now,
 				heartbeatAt: now,
 			};
+			// Readiness must not be externally visible until the initial session
+			// checkpoint settles. The bootstrap watchdog owns this pre-publication
+			// interval; publishing first allowed it to kill an endpoint already handed
+			// to callers when a legitimate index-lock wait outlived the fence.
+			await this.#checkpointSessionHeartbeats();
 			this.#publication = await publishBrokerDiscovery(this.settings.agentDir, this.discovery);
 			this.#publicationState = "healthy-owned";
 			this.#publishedAt = process.hrtime.bigint();
@@ -1114,7 +1133,6 @@ export class Broker {
 				Math.min(BROKER_PUBLICATION_CADENCE_MS, Math.floor(this.settings.heartbeatTtlMs / 3)),
 			);
 			this.#heartbeatTimer = setInterval(() => void this.#watchPublication(), cadenceMs);
-			await this.#checkpointSessionHeartbeats();
 			return this.discovery;
 		} catch (error) {
 			await this.#transport?.stop();
@@ -1465,16 +1483,21 @@ export class Broker {
 			throw e;
 		}
 	}
-	#storeSessionListCursor(cursor: SessionListCursor, replacingToken?: string): string | BrokerResponse {
+	#storeSessionListCursor(cursor: SessionListCursor, replacingToken?: string): string {
 		const now = Date.now();
 		for (const [token, stored] of this.#sessionListCursors) {
 			if (stored.expiresAt <= now) this.#sessionListCursors.delete(token);
 		}
-		const replacing = replacingToken !== undefined && this.#sessionListCursors.has(replacingToken);
-		if (!replacing && this.#sessionListCursors.size >= SESSION_LIST_MAX_CURSORS)
-			return error("invalid_input", "session.list cursor capacity is exhausted");
-		const token = randomBytes(24).toString("base64url");
 		if (replacingToken !== undefined) this.#sessionListCursors.delete(replacingToken);
+		// Pagination cursors are a paging convenience, not durable state (#5370).
+		// Evict the oldest cursor when the budget is full so abandoned or partial
+		// paginations degrade gracefully instead of failing unrelated session ops.
+		while (this.#sessionListCursors.size >= SESSION_LIST_MAX_CURSORS) {
+			const oldest = this.#sessionListCursors.keys().next();
+			if (oldest.done) break;
+			this.#sessionListCursors.delete(oldest.value);
+		}
+		const token = randomBytes(24).toString("base64url");
 		this.#sessionListCursors.set(token, cursor);
 		return token;
 	}
@@ -1491,8 +1514,11 @@ export class Broker {
 		if (stored && requestedLimit !== undefined && stored.limit !== requestedLimit)
 			return error("invalid_input", "limit must match the cursor page shape");
 		const limit = stored?.limit ?? requestedLimit ?? SESSION_LIST_DEFAULT_LIMIT;
+		const resolveSessionId = typeof input.resolveSessionId === "string" ? input.resolveSessionId : undefined;
 		const snapshot = stored ?? {
-			sessions: [...result.sessions],
+			sessions: [...result.sessions].filter(
+				session => resolveSessionId === undefined || session.sessionId === resolveSessionId,
+			),
 			indexSeq: result.indexSeq,
 			warnings: [...result.warnings],
 			limit,
@@ -1512,7 +1538,6 @@ export class Broker {
 						{ ...snapshot, offset, expiresAt: Date.now() + SESSION_LIST_CURSOR_TTL_MS },
 						typeof cursor === "string" ? cursor : undefined,
 					);
-		if (isBrokerResponse(continuationCursor)) return continuationCursor;
 		return {
 			ok: true,
 			result: {
@@ -1727,6 +1752,12 @@ export class Broker {
 				const response = outcome.response;
 				const storedResponse = credentialFreeLifecycleResponse(response) as BrokerResponse;
 				await this.ledger.transition(identity, lifecycleResponseState(response), {
+					...(operation === "session.delete" &&
+					typeof input.sessionId === "string" &&
+					lifecycleResponseState(response) === "terminal_uncertain" &&
+					!pendingCleanupSessionId(response)
+						? { intendedSessionId: input.sessionId }
+						: {}),
 					response: storedResponse,
 					responseDigest: createHash("sha256").update(canonicalJson(storedResponse)).digest("hex"),
 					...(outcome.durableEffects ? { durableEffects: outcome.durableEffects } : {}),
@@ -1746,6 +1777,12 @@ export class Broker {
 				const storedResponse = credentialFreeLifecycleResponse(response) as BrokerResponse;
 				await this.ledger.transition(identity, lifecycleResponseState(response), {
 					...(pendingCleanupSessionId(response) ? { intendedSessionId: pendingCleanupSessionId(response) } : {}),
+					...(operation === "session.delete" &&
+					typeof input.sessionId === "string" &&
+					lifecycleResponseState(response) === "terminal_uncertain" &&
+					!pendingCleanupSessionId(response)
+						? { intendedSessionId: input.sessionId }
+						: {}),
 					response: storedResponse,
 					responseDigest: createHash("sha256").update(canonicalJson(storedResponse)).digest("hex"),
 					...(outcome.durableEffects ? { durableEffects: outcome.durableEffects } : {}),
@@ -1757,8 +1794,21 @@ export class Broker {
 			const outcome = await executeLifecycle(this, operation, input, identity);
 			const response = outcome.response;
 			const storedResponse = credentialFreeLifecycleResponse(response) as BrokerResponse;
+			// Record the refusal's own target session so the fence it may leave
+			// is scoped to that session. Without this, a session.delete refusal
+			// for X persists as an unbound terminal_uncertain row and fences
+			// every later delete for unrelated sessions (#5364). A refusal that
+			// truly cannot name its target fences nothing (see
+			// hasUncertainCleanupForSession).
+			const refusalSessionId =
+				operation === "session.delete" && typeof input.sessionId === "string" ? input.sessionId : undefined;
 			await this.ledger.transition(identity, lifecycleResponseState(response), {
 				...(pendingCleanupSessionId(response) ? { intendedSessionId: pendingCleanupSessionId(response) } : {}),
+				...(refusalSessionId !== undefined &&
+				lifecycleResponseState(response) === "terminal_uncertain" &&
+				!pendingCleanupSessionId(response)
+					? { intendedSessionId: refusalSessionId }
+					: {}),
 				resultSessionId:
 					response.ok && typeof (response.result as { sessionId?: unknown } | undefined)?.sessionId === "string"
 						? (response.result as { sessionId: string }).sessionId

@@ -859,6 +859,16 @@ When `VIB_AUTH_BROKER_URL` (or `auth.broker.url`) is set, the local SQLite crede
 
 So a model can exist in registry but not be selectable until auth is available.
 
+### Providers hidden by an empty `apiKeyEnv`
+
+A provider whose only credential source is `apiKeyEnv` is dropped from `getAvailable()` when the named environment variable is unset, empty, or whitespace. Its models disappear entirely, so the symptom is an empty model list rather than an auth error. That exclusion is unchanged; what the client adds is the cause, named in three places:
+
+- The interactive TUI queues one startup warning per affected provider: `provider "vllm": VUG_API_KEY is not set, its models are hidden`.
+- `vib local-provider status` prints the same line per affected provider — including when there is no `providers.local.openaiCompat` block at all — and reports the list as `hiddenProviders` under `--json`.
+- The model selector's empty state names the variable on that provider's tab, and lists every hidden provider on the `ALL` tab.
+
+Only the variable's name is ever printed; its value is never read out. A provider with a literal `apiKey`, with `auth: none`, or on OAuth is never reported, because an empty `apiKeyEnv` does not decide whether it is usable.
+
 ## Runtime model resolution
 
 ### CLI and pattern parsing
@@ -1140,20 +1150,20 @@ Bulk-deployment scripts that generate `models.yml` for a fleet of machines must 
 
 ### What the gateway reports back
 
-A gateway that meters usage answers with headers the client reads and keeps. On a served request it may send `x-vug-daily-limit`, `x-vug-daily-remaining`, and `x-vug-daily-reset`, plus `x-vug-queued-ms` when the request waited for an upstream slot. When it refuses a request for a spent allowance it answers `429` with the stable error code `daily_token_limit` and sends `x-vug-daily-limit`, `x-vug-daily-used`, and `x-vug-daily-reset`. When it refuses for congestion it answers `503` with `queue_timeout` or `queue_full`, a short `Retry-After`, and `x-vug-queue-depth` / `x-vug-inflight`.
+A gateway that meters usage answers with headers the client reads and keeps. It attaches the budget only to the chat completions it records — `x-vug-daily-limit`, `x-vug-daily-remaining`, and `x-vug-daily-reset` — so the routes it merely passes through, `GET /v1/models` among them, carry none of it. `x-vug-queued-ms` rides on any response whose request waited for an upstream slot. When it refuses a request for a spent allowance it answers `429` with the stable error code `daily_token_limit` and sends `x-vug-daily-limit`, `x-vug-daily-used`, and `x-vug-daily-reset`. When it refuses for congestion it answers `503` with `queue_timeout` or `queue_full`, a short `Retry-After`, and `x-vug-queue-depth` / `x-vug-inflight`.
 
 Two contract details matter when reading these:
 
 - `remaining` is the balance the gateway measured when it admitted the request, not a live one. The tokens that request went on to spend are not subtracted, and with requests in flight in parallel the figures drift. Nothing decrements it locally.
 - The `daily` in every header and in the error code is a name the wire contract keeps for stability. A gateway counts its limit over an operator-configured window that can be shorter than a day, so `x-vug-daily-reset` is the only trustworthy statement of when the allowance returns. The client never assumes a midnight or a timezone.
 
-Only the listed headers are read. Everything else the gateway sends is ignored rather than stored, and none of it is written to a transcript or a session file.
+Only the listed headers are read; everything else the gateway sends is ignored rather than interpreted. Where they end up differs by outcome. The status-line observation is held in memory for the session and never persisted. A failed request is the exception: these headers are on the allowlist that transport failure facts retain, and those facts travel on the assistant message the failure produced, so a `429` or `503` leaves the gateway's own figures in the session file alongside `retry-after`.
 
 ### Seeing your remaining budget
 
-The status line's `usage` segment renders whatever the gateway last reported, as a window labelled with the provider id from `models.yml`. It reads `75%` while a budget is known, `100% limit reached` after a `429`, and `busy queue 12` while the gateway is shedding load. A provider that has never sent one of these headers contributes no window at all rather than a misleading `0%`.
+The status line's `usage` segment renders whatever the gateway last reported, as a window labelled `vug`. It reads `75%` while a budget is known, `100% limit reached` after a `429`, and `busy queue 12` while the gateway is shedding load. A provider that has never sent one of these headers contributes no window at all rather than a misleading `0%`.
 
-That segment is **not** in the `default` status-line preset. To see it, either switch presets with `vib config set statusLine.preset default-usage` or add `usage` to `statusLine.rightSegments` in a custom layout. A fleet deployment that wants the budget visible has to set this alongside `models.yml`; pointing `baseUrl` at a gateway is not enough on its own.
+The segment ships in the `default` status-line preset, so pointing `baseUrl` at a gateway is enough to see it; a layout that sets `statusLine.rightSegments` by hand has to include `usage` itself.
 
 The observation is bound together to the provider, the gateway URL, the credential the request actually used, and the session. Rotating a key or switching gateways mid-session discards it and starts over from the next response.
 
@@ -1161,6 +1171,48 @@ The observation is bound together to the provider, the gateway URL, the credenti
 
 A `429` carrying a quota code and a `Retry-After` of a minute or more is treated as a spent allowance rather than congestion: the model is not retried, the selector is suppressed until the reset instant, and a managed fallback chain advances only to the next entry you listed. Stored API keys for the same provider are deliberately not rotated, because every one of them spends the same gateway allowance under a different identity. The full policy, including the `retry.rotateCredentialsOnQuota` escape hatch, is in [Token-limit holds](./non-compaction-retry-policy.md#token-limit-holds).
 
+### The connect screen's endpoint summary
+
+Connecting an endpoint through **Connect a local LLM endpoint** ends at the model picker for a server that said nothing about itself. When the model list did say something, one summary is shown first; Enter continues to the picker exactly as before, and Esc steps back to the address field. It exists because a server in front of a model may be metering the key rather than merely accepting it, so "the server answered" is not the confirmation it is for a plain vLLM box.
+
+The decision comes from the model-list response alone, never from the address or the provider name, so a silent vLLM, SGLang, Ollama, or llama.cpp endpoint never sees this step. Two things can trigger it, and the screen keeps them apart because they prove different things.
+
+- **An `x-vug-*` quota header** is a metering gateway counting this key; nothing else sends one. The summary is titled **Usage gateway** and says so.
+- **A `vibrato` object on a models-list entry** is only the general [server-advertised model hint](#server-advertised-model-hints) protocol, open to any server in front of a model. It means the server described its models and says nothing about whether it counts a key, so the summary is titled **Server-described models** and makes no metering claim. Because the gateway attaches no quota headers to a successful model list, this is the case a VUG deployment actually produces.
+
+The summary reports the address, how many models the endpoint serves and how many of them the server described, and whether a key was used. It adds the token budget only when the response carried one. A gateway that meters per key does not attach its quota headers to a successful `GET /v1/models` — that route is passed through unrecorded — so in the usual case the summary says no budget was reported and that usage appears in the status line after the first request. Nothing is sent to obtain a figure the response did not carry: no probe of a health or admin route, and above all no throwaway completion, which would spend tokens against the very budget being asked about. The status-line `usage` segment then reports the budget from the responses to real requests.
+
+A gateway checks the key's budget before it routes anything, the model list included, so a key whose budget is spent gets a 429 on the connect screen too. That is reported as what it is — a valid key with nothing left in the current window, with the figures and the reset instant the gateway sent — rather than as an unreachable server. A 429 with no gateway headers is some other server's throttle and is still reported as a plain HTTP failure.
+
+Every figure shown comes from the gateway. Its quota window is an operator setting (`VUG_QUOTA_WINDOW_HOURS`, 24 by default and 3 in the LIG deployment) that is never sent to the client, so the wording names no window length and no day or midnight boundary: a reset appears only as the instant the gateway reported, and disappears once that instant has passed.
+
+### Reading the gateway's quota from `vib local-provider`
+
+`vib local-provider status --smoke`, `vib local-provider diagnose --smoke`, and `vib local-provider smoke` send one real streaming chat request — one of the requests the section above says the budget appears after. When the endpoint answers as a usage gateway, that response carries the key's quota headers, and the command prints what they say after the ordinary diagnostic lines:
+
+```
+gateway tokens: limit 200000, used 12345, remaining 187655
+gateway resets: in 2h 30m (2026-09-08T15:00:00.000Z)
+gateway wait: 1200ms for an upstream slot
+```
+
+A served request reports the budget, the reset, and how long it waited for an upstream slot. Queue depth and in-flight count are not part of that: the gateway sends them only when it refuses a request for congestion, so they appear beside a `gateway_busy` rejection instead.
+
+```
+gateway queue: depth 3, inflight 8
+```
+
+Each line appears only when the gateway sent the values behind it, so an endpoint that is not behind a gateway prints none of them. `--json` carries the same values under `gateway`. A `status`/`diagnose` run without `--smoke` or `--model` makes no chat request and therefore reports no gateway facts; the command never issues a request of its own to collect them.
+
+A request the gateway refuses is reported by what it refused for, rather than as a generic "server not ready":
+
+| Rejection | Reported as |
+| --- | --- |
+| `429` with `error.code: daily_token_limit` | `token limit reached; resets in 2h 30m`, category `token_limit` |
+| `503` with `error.code: queue_timeout` or `queue_full` | `gateway busy (queue 3)`, category `gateway_busy` |
+| Any other `429`/`503`, including a plain local server's | unchanged `not_ready` output |
+
+The countdown comes from the gateway's own reset instant (`x-vug-daily-reset`), and the busy retry hint from its `retry-after`. The `daily` in the header names is historical: the gateway counts against a window the operator configures (`VUG_QUOTA_WINDOW_HOURS`), so none of this output names a day or a midnight.
 
 ## Practical examples
 

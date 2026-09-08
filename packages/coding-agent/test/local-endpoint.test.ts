@@ -242,6 +242,85 @@ describe("probeLocalEndpoint", () => {
 		expect(probe.status === "unreachable" && probe.detail).toContain("500");
 	});
 
+	it("reports no gateway for a plain OpenAI-compatible server", async () => {
+		const fetchImpl = (async () =>
+			jsonResponse({ data: [{ id: "qwen3", max_model_len: 40960 }] })) as unknown as typeof fetch;
+
+		const probe = await probeLocalEndpoint("http://gpu-box:8000/v1", undefined, { fetchImpl });
+
+		expect(probe).toEqual({ status: "ok", models: [{ id: "qwen3", contextLength: 40960 }] });
+	});
+
+	it("reads a gateway from the server-advertised model hints on the list", async () => {
+		const fetchImpl = (async () =>
+			jsonResponse({
+				data: [
+					{ id: "qwen3", vibrato: { reasoning: true } },
+					{ id: "gpt-oss", vibrato: { name: "GPT OSS" } },
+					{ id: "plain" },
+				],
+			})) as unknown as typeof fetch;
+
+		const probe = await probeLocalEndpoint("http://gpu-box:8000/v1", undefined, { fetchImpl });
+
+		expect(probe.status).toBe("ok");
+		expect(probe.status === "ok" && probe.gateway).toEqual({ hintedModels: 2 });
+	});
+
+	it("reads a gateway from quota headers on the model list, without a hint", async () => {
+		const resetAt = "2026-09-08T21:00:00.000Z";
+		const fetchImpl = (async () =>
+			new Response(JSON.stringify({ data: [{ id: "qwen3" }] }), {
+				status: 200,
+				headers: {
+					"content-type": "application/json",
+					"x-vug-daily-limit": "200000",
+					"x-vug-daily-remaining": "142350",
+					"x-vug-daily-reset": resetAt,
+				},
+			})) as unknown as typeof fetch;
+
+		const probe = await probeLocalEndpoint("http://gpu-box:8000/v1", "vug_key", { fetchImpl });
+
+		expect(probe.status).toBe("ok");
+		expect(probe.status === "ok" && probe.gateway).toEqual({
+			hintedModels: 0,
+			quota: { limit: 200000, remaining: 142350, resetAt: Date.parse(resetAt) },
+		});
+	});
+
+	it("reports a spent token budget rather than an unreachable server on 429", async () => {
+		const resetAt = "2026-09-08T21:00:00.000Z";
+		const fetchImpl = (async () =>
+			new Response(JSON.stringify({ error: { message: "token limit reached", code: "daily_token_limit" } }), {
+				status: 429,
+				headers: {
+					"content-type": "application/json",
+					"retry-after": "9000",
+					"x-vug-daily-limit": "200000",
+					"x-vug-daily-used": "200450",
+					"x-vug-daily-reset": resetAt,
+				},
+			})) as unknown as typeof fetch;
+
+		const probe = await probeLocalEndpoint("http://gpu-box:8000/v1", "vug_key", { fetchImpl });
+
+		expect(probe).toEqual({
+			status: "quota-exhausted",
+			quota: { limit: 200000, used: 200450, resetAt: Date.parse(resetAt) },
+		});
+	});
+
+	it("keeps a 429 without gateway headers on the generic unreachable path", async () => {
+		const fetchImpl = (async () =>
+			new Response("slow down", { status: 429, statusText: "Too Many Requests" })) as unknown as typeof fetch;
+
+		const probe = await probeLocalEndpoint("http://gpu-box:8000/v1", undefined, { fetchImpl });
+
+		expect(probe.status).toBe("unreachable");
+		expect(probe.status === "unreachable" && probe.detail).toContain("429");
+	});
+
 	it("reports unreachable when the connection fails", async () => {
 		const fetchImpl = (async () => {
 			throw new Error("connect ECONNREFUSED 192.168.0.10:8000");

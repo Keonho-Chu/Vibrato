@@ -1,9 +1,10 @@
 import { afterEach, describe, expect, test, vi } from "bun:test";
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 import {
+	FileLockAcquireError,
 	FileLockTestHooks,
 	processStartTime,
 	readFileLockObservationForGc,
@@ -12,8 +13,12 @@ import {
 } from "@vib-rato/coding-agent/config/file-lock";
 import { fileLocksGcAdapter } from "@vib-rato/coding-agent/config/file-lock-gc";
 import type { GcContext, GcPidProbe, GcRecord } from "@vib-rato/coding-agent/vib-runtime/gc-runtime";
-import * as native from "@vib-rato/natives";
-import { snapshotDirectoryTree } from "@vib-rato/natives";
+import {
+	exactRemoveDirectoryTree,
+	renameDirectoryNoReplacePathAsync,
+	renameNoReplacePathAsync,
+	snapshotDirectoryTree,
+} from "@vib-rato/natives";
 
 const DEAD_PID = 525_252;
 const LIVE_PID = 636_363;
@@ -23,6 +28,7 @@ const tempDirs: string[] = [];
 afterEach(async () => {
 	vi.restoreAllMocks();
 	FileLockTestHooks.afterParentMkdir = undefined;
+	FileLockTestHooks.nativePublicationBindings = undefined;
 	FileLockTestHooks.nativeQuarantineBindings = undefined;
 	for (const dir of tempDirs.splice(0)) {
 		await fs.rm(dir, { recursive: true, force: true });
@@ -34,6 +40,21 @@ async function makeTemp(): Promise<string> {
 	tempDirs.push(dir);
 	return dir;
 }
+
+test("acquisition exhaustion reports typed context for a live in-process holder", async () => {
+	const filePath = path.join(await makeTemp(), "held.json");
+	await withFileLock(filePath, async () => {
+		const attempt = withFileLock(filePath, async () => undefined, { retries: 2, retryDelayMs: 1 });
+		await expect(attempt).rejects.toBeInstanceOf(FileLockAcquireError);
+		await expect(attempt).rejects.toMatchObject({
+			code: "acquire_timeout",
+			filePath,
+			lockPath: `${filePath}.lock`,
+			attempts: 2,
+			holder: expect.stringContaining(String(process.pid)),
+		});
+	});
+});
 
 async function writeInfo(
 	lockDir: string,
@@ -98,45 +119,136 @@ describe("withFileLock stale owner liveness (#652)", () => {
 		expect((await fs.readdir(`${file}.lock`)).join(",")).toBe("info");
 	});
 
-	test("fails closed when native no-replace publication is unsupported", async () => {
+	test("publishes through the directory fallback when native no-replace is unsupported", async () => {
 		const root = await makeTemp();
 		const file = path.join(root, "unsupported", "publication.json");
-		const realRename = native.renameNoReplacePathAsync;
-		vi.spyOn(native, "renameNoReplacePathAsync").mockImplementation(async () => ({
-			ok: false,
-			code: "atomic_unavailable",
-			mutationState: "not_committed",
-			durabilityState: "not_attempted",
-			reason: "atomic_unavailable",
-			primitive: "renameat2_noreplace",
-			phase: "preflight",
-			diagnostic: { schemaVersion: 1, collectionState: "unavailable" },
-		}));
-		await expect(withFileLock(file, async () => undefined)).rejects.toThrow(
-			"Failed to publish file lock: atomic_unavailable",
-		);
-		expect(await fs.exists(`${file}.lock`)).toBe(false);
-		vi.spyOn(native, "renameNoReplacePathAsync").mockImplementation(realRename);
+		FileLockTestHooks.nativePublicationBindings = () => ({
+			renameNoReplacePathAsync: async () => ({
+				ok: false,
+				code: "atomic_unavailable",
+				mutationState: "not_committed",
+				durabilityState: "not_attempted",
+				reason: "atomic_unavailable",
+				primitive: "renameat2_noreplace",
+				phase: "preflight",
+				diagnostic: { schemaVersion: 1, collectionState: "unavailable" },
+			}),
+			renameDirectoryNoReplacePathAsync: async (source, destination) => {
+				await fs.rename(source, destination);
+				return {
+					ok: true,
+					mutationState: "committed",
+					durabilityState: "not_attempted",
+					reason: "none",
+					primitive: "mkdirat_renameat_noreplace",
+					phase: "complete",
+					diagnostic: { schemaVersion: 1, collectionState: "unavailable" },
+				};
+			},
+		});
+		let publishedInfo = "";
+		await expect(
+			withFileLock(file, async () => {
+				publishedInfo = await fs.readFile(`${file}.lock/info`, "utf8");
+			}),
+		).resolves.toBeUndefined();
+		expect(publishedInfo).toContain('"pid"');
+	});
+
+	test("keeps non-ASCII lock paths on the native fallback boundary", async () => {
+		const root = await makeTemp();
+		const file = path.join(root, "사내블로그", "월간트렌드_2608", "publication.json");
+		let fallbackCalls = 0;
+		FileLockTestHooks.nativePublicationBindings = () => ({
+			renameNoReplacePathAsync: async () => ({
+				ok: false,
+				code: "atomic_unavailable",
+				mutationState: "not_committed",
+				durabilityState: "not_attempted",
+				reason: "atomic_unavailable",
+				primitive: "renameat2_noreplace",
+				phase: "preflight",
+				diagnostic: { schemaVersion: 1, collectionState: "unavailable" },
+			}),
+			renameDirectoryNoReplacePathAsync: async (source, destination) => {
+				fallbackCalls += 1;
+				await fs.rename(source, destination);
+				return {
+					ok: true,
+					mutationState: "committed",
+					durabilityState: "not_attempted",
+					reason: "none",
+					primitive: "mkdirat_renameat_noreplace",
+					phase: "complete",
+					diagnostic: { schemaVersion: 1, collectionState: "unavailable" },
+				};
+			},
+		});
+
+		await withFileLock(file, async () => {
+			expect(await fs.readFile(`${file}.lock/info`, "utf8")).toContain('"owner_token"');
+		});
+		expect(fallbackCalls).toBe(1);
+	});
+
+	test("rejects malformed runtime lock operands before publication", async () => {
+		let entered = false;
+		for (const operand of ["", null, 42, "../escape"] as unknown[]) {
+			await expect(
+				withFileLock(operand as string, async () => {
+					entered = true;
+				}),
+			).rejects.toThrow("filePath must be a non-empty absolute path");
+		}
+		expect(entered).toBe(false);
 	});
 
 	test("does not replace a legacy empty lock directory when publication is unsupported", async () => {
 		const root = await makeTemp();
 		const file = path.join(root, "legacy-empty", "publication.json");
 		await fs.mkdir(`${file}.lock`, { recursive: true });
-		const realRename = native.renameNoReplacePathAsync;
-		vi.spyOn(native, "renameNoReplacePathAsync").mockImplementation(async () => ({
-			ok: false,
-			code: "invalid_request",
-			mutationState: "not_committed",
-			durabilityState: "not_attempted",
-			reason: "invalid_request",
-			primitive: "renameat2_noreplace",
-			phase: "preflight",
-			diagnostic: { schemaVersion: 1, collectionState: "unavailable" },
-		}));
+		FileLockTestHooks.nativePublicationBindings = () => ({
+			renameNoReplacePathAsync: async () => ({
+				ok: false,
+				code: "invalid_request",
+				mutationState: "not_committed",
+				durabilityState: "not_attempted",
+				reason: "invalid_request",
+				primitive: "renameat2_noreplace",
+				phase: "preflight",
+				diagnostic: { schemaVersion: 1, collectionState: "unavailable" },
+			}),
+			renameDirectoryNoReplacePathAsync: async () => ({
+				ok: false,
+				code: "quarantine_collision",
+				mutationState: "not_committed",
+				durabilityState: "not_attempted",
+				reason: "destination_exists",
+				primitive: "mkdirat_renameat_noreplace",
+				phase: "rename",
+				diagnostic: { schemaVersion: 1, collectionState: "unavailable" },
+			}),
+		});
 		await expect(withFileLock(file, async () => undefined, { retries: 2, retryDelayMs: 1 })).rejects.toThrow();
 		expect((await fs.stat(`${file}.lock`)).isDirectory()).toBe(true);
-		vi.spyOn(native, "renameNoReplacePathAsync").mockImplementation(realRename);
+	});
+
+	test("does not invoke the directory fallback for a malformed native result", async () => {
+		const root = await makeTemp();
+		const file = path.join(root, "malformed", "publication.json");
+		let fallbackCalled = false;
+		FileLockTestHooks.nativePublicationBindings = () => ({
+			renameNoReplacePathAsync: async () => ({ ok: false, code: "atomic_unavailable" }) as never,
+			renameDirectoryNoReplacePathAsync: async () => {
+				fallbackCalled = true;
+				throw new Error("fallback must not run");
+			},
+		});
+
+		await expect(withFileLock(file, async () => undefined, { retries: 1, retryDelayMs: 1 })).rejects.toThrow(
+			"Failed to publish file lock: atomic_unavailable.",
+		);
+		expect(fallbackCalled).toBe(false);
 	});
 
 	test("publishes nested lock directories with private modes under restrictive umask", async () => {
@@ -185,6 +297,21 @@ describe("withFileLock stale owner liveness (#652)", () => {
 		} finally {
 			process.umask(previousUmask);
 		}
+	});
+
+	test("publishes a lock for a non-ASCII path", async () => {
+		const root = await makeTemp();
+		const file = path.join(root, "사내블로그", "월간트렌드_2608", "post.md");
+		await fs.mkdir(path.dirname(file), { recursive: true });
+
+		let entered = false;
+		await withFileLock(file, async () => {
+			entered = true;
+			expect(await fs.readFile(`${file}.lock/info`, "utf8")).toContain('"owner_token"');
+		});
+
+		expect(entered).toBe(true);
+		expect(await fs.exists(`${file}.lock`)).toBe(false);
 	});
 
 	test("honors an already-aborted signal before creating lock parents", async () => {
@@ -313,7 +440,7 @@ describe("withFileLock stale owner liveness (#652)", () => {
 
 		await expect(
 			withFileLock(lockedFile, async () => undefined, { staleMs: 1, retries: 2, retryDelayMs: 1 }),
-		).rejects.toThrow("Failed to acquire lock");
+		).rejects.toThrow(FileLockAcquireError);
 		expect(replaced).toBe(true);
 		expect(await fs.stat(lockDir)).toBeDefined();
 	});
@@ -367,7 +494,7 @@ describe("withFileLock stale owner liveness (#652)", () => {
 
 		await expect(
 			withFileLock(lockedFile, async () => {}, { staleMs: 1, retries: 2, retryDelayMs: 1 }),
-		).rejects.toThrow("Failed to acquire lock");
+		).rejects.toThrow(FileLockAcquireError);
 		expect(await fs.exists(lockDir)).toBe(true);
 	});
 
@@ -376,9 +503,11 @@ describe("withFileLock stale owner liveness (#652)", () => {
 		const lockedFile = path.join(base, "state.json");
 		const lockDir = `${lockedFile}.lock`;
 		await fs.mkdir(lockDir);
+		const old = new Date(Date.now() - 60_000);
+		await fs.utimes(lockDir, old, old);
 
 		await expect(withFileLock(lockedFile, async () => undefined, { retries: 1, retryDelayMs: 1 })).rejects.toThrow(
-			"Failed to acquire lock",
+			FileLockAcquireError,
 		);
 
 		expect((await fs.lstat(lockDir)).isDirectory()).toBe(true);
@@ -397,7 +526,7 @@ describe("withFileLock stale owner liveness (#652)", () => {
 
 		await expect(
 			withFileLock(lockedFile, async () => {}, { staleMs: 1, retries: 2, retryDelayMs: 1 }),
-		).rejects.toThrow("Failed to acquire lock");
+		).rejects.toThrow(FileLockAcquireError);
 		expect(await fs.exists(lockDir)).toBe(true);
 	});
 
@@ -418,7 +547,7 @@ describe("withFileLock stale owner liveness (#652)", () => {
 
 			await expect(
 				withFileLock(lockedFile, async () => {}, { staleMs: 1, retries: 2, retryDelayMs: 1 }),
-			).rejects.toThrow("Failed to acquire lock");
+			).rejects.toThrow(FileLockAcquireError);
 			expect(await fs.exists(lockDir)).toBe(true);
 		}
 	});
@@ -432,7 +561,7 @@ describe("withFileLock stale owner liveness (#652)", () => {
 
 		await expect(
 			withFileLock(lockedFile, async () => {}, { staleMs: 1, retries: 2, retryDelayMs: 1 }),
-		).rejects.toThrow("Failed to acquire lock");
+		).rejects.toThrow(FileLockAcquireError);
 		expect((await fs.lstat(path.join(lockDir, "info"))).isSymbolicLink()).toBe(true);
 	});
 
@@ -447,7 +576,7 @@ describe("withFileLock stale owner liveness (#652)", () => {
 
 		await expect(
 			withFileLock(lockedFile, async () => {}, { staleMs: 1, retries: 2, retryDelayMs: 1 }),
-		).rejects.toThrow("Failed to acquire lock");
+		).rejects.toThrow(FileLockAcquireError);
 		expect(await fs.exists(lockDir)).toBe(true);
 	});
 
@@ -488,7 +617,7 @@ describe("withFileLock stale owner liveness (#652)", () => {
 
 		await expect(
 			withFileLock(lockedFile, async () => {}, { staleMs: 1, retries: 2, retryDelayMs: 1 }),
-		).rejects.toThrow("Failed to acquire lock");
+		).rejects.toThrow(FileLockAcquireError);
 		expect(await fs.exists(lockDir)).toBe(true);
 	});
 
@@ -504,7 +633,7 @@ describe("withFileLock stale owner liveness (#652)", () => {
 
 		await expect(
 			withFileLock(lockedFile, async () => {}, { staleMs: 1, retries: 2, retryDelayMs: 1 }),
-		).rejects.toThrow("Failed to acquire lock");
+		).rejects.toThrow(FileLockAcquireError);
 		expect(await fs.exists(lockDir)).toBe(true);
 	});
 
@@ -625,6 +754,121 @@ describe("file lock cleanup failure handling (#2478)", () => {
 		expect(denied).toBe(false);
 	});
 
+	test.skipIf(process.platform !== "linux")(
+		"rolls back a successor when its predecessor detaches between the transition check and publication",
+		async () => {
+			const base = await makeTemp();
+			const lockedFile = path.join(base, "state.json");
+			const lockDir = `${lockedFile}.lock`;
+			const canonicalLockDir = path.join(await fs.realpath(path.dirname(lockDir)), path.basename(lockDir));
+			const detachedPath = `${canonicalLockDir}.removing`;
+			const holderEntered = Promise.withResolvers<void>();
+			const releaseHolder = Promise.withResolvers<void>();
+			const contenderAtPublication = Promise.withResolvers<void>();
+			const allowContenderPublication = Promise.withResolvers<void>();
+			const predecessorCleanupEntered = Promise.withResolvers<void>();
+			const allowPredecessorCleanup = Promise.withResolvers<void>();
+			const firstContenderPublished = Promise.withResolvers<void>();
+			let holder = Promise.resolve();
+			let successor = Promise.resolve();
+			let successorEntered = false;
+			let blockPredecessorCleanup = true;
+			const realRm = fs.rm;
+			vi.spyOn(fs, "rm").mockImplementation((async (target, options) => {
+				if (blockPredecessorCleanup && String(target) === detachedPath) {
+					blockPredecessorCleanup = false;
+					predecessorCleanupEntered.resolve();
+					await allowPredecessorCleanup.promise;
+				}
+				return await realRm(target, options);
+			}) as typeof fs.rm);
+
+			try {
+				holder = withFileLock(lockedFile, async () => {
+					holderEntered.resolve();
+					await releaseHolder.promise;
+				});
+				await holderEntered.promise;
+				let gateFirstPublication = true;
+				FileLockTestHooks.nativePublicationBindings = () => ({
+					renameNoReplacePathAsync: async (source, destination) => {
+						if (gateFirstPublication && destination === canonicalLockDir) {
+							gateFirstPublication = false;
+							contenderAtPublication.resolve();
+							await allowContenderPublication.promise;
+							const result = await renameNoReplacePathAsync(source, destination);
+							if (result.ok) firstContenderPublished.resolve();
+							return result;
+						}
+						return await renameNoReplacePathAsync(source, destination);
+					},
+					renameDirectoryNoReplacePathAsync,
+				});
+				successor = withFileLock(
+					lockedFile,
+					async () => {
+						successorEntered = true;
+					},
+					{ retries: 100, retryDelayMs: 1 },
+				);
+
+				await contenderAtPublication.promise;
+				releaseHolder.resolve();
+				await predecessorCleanupEntered.promise;
+				const predecessorIdentity = await fs.stat(detachedPath, { bigint: true });
+				allowContenderPublication.resolve();
+				await firstContenderPublished.promise;
+				let rolledBack = false;
+				for (let attempt = 0; attempt < 1_000; attempt++) {
+					if (!(await fs.exists(canonicalLockDir))) {
+						rolledBack = true;
+						break;
+					}
+					await Bun.sleep(1);
+				}
+				expect(rolledBack).toBe(true);
+				expect(successorEntered).toBe(false);
+				const retainedPredecessor = await fs.stat(detachedPath, { bigint: true });
+				expect(retainedPredecessor.dev).toBe(predecessorIdentity.dev);
+				expect(retainedPredecessor.ino).toBe(predecessorIdentity.ino);
+
+				allowPredecessorCleanup.resolve();
+				await Promise.all([holder, successor]);
+				expect(successorEntered).toBe(true);
+				expect(await fs.exists(canonicalLockDir)).toBe(false);
+				expect(await fs.exists(detachedPath)).toBe(false);
+			} finally {
+				releaseHolder.resolve();
+				allowContenderPublication.resolve();
+				allowPredecessorCleanup.resolve();
+				await Promise.allSettled([holder, successor]);
+			}
+		},
+		10_000,
+	);
+	test("waits boundedly for a competing exact-removal quarantine to clear", async () => {
+		const base = await makeTemp();
+		const lockedFile = path.join(base, "state.json");
+		const lockDir = `${lockedFile}.lock`;
+		let collisions = 6;
+		FileLockTestHooks.nativeQuarantineBindings = () => ({
+			snapshotDirectoryTree,
+			exactRemoveDirectoryTree: target => {
+				if (collisions > 0) {
+					collisions--;
+					return { ok: false, code: "quarantine_collision" };
+				}
+				rmSync(target, { recursive: true, force: true });
+				return { ok: true };
+			},
+		});
+
+		await withFileLock(lockedFile, async () => {});
+
+		expect(collisions).toBe(0);
+		expect(await fs.exists(lockDir)).toBe(false);
+	});
+
 	test("quarantines a self-owned lock when transient release denial persists", async () => {
 		const base = await makeTemp();
 		const lockedFile = path.join(base, "state.json");
@@ -652,8 +896,7 @@ describe("file lock cleanup failure handling (#2478)", () => {
 		FileLockTestHooks.nativeQuarantineBindings = () => ({
 			snapshotDirectoryTree,
 			exactRemoveDirectoryTree: target => {
-				rmSync(target, { recursive: true, force: true });
-				mkdirSync(`${target}.removing`);
+				renameSync(target, `${target}.removing`);
 				return {
 					ok: false,
 					code: "detached_failure",
@@ -775,22 +1018,38 @@ describe("file lock cleanup failure handling (#2478)", () => {
 		expect(await fs.exists(lockDir)).toBe(true);
 	});
 
-	test("releases through a verified detach even when quarantine cleanup fails", async () => {
+	test("retains verified detached cleanup failure until the owning process retries", async () => {
 		const base = await makeTemp();
 		const lockedFile = path.join(base, "state.json");
 		const lockDir = `${lockedFile}.lock`;
-		const releaseError = Object.assign(new Error("lock removal denied"), { code: "EIO" });
-		let completed = false;
-
-		// The first rm is the quarantine completion after a verified native detach:
-		// the canonical lock name is already free, so a cleanup failure there is
-		// recoverable debris and must not fail the release (or re-leak the lock).
-		vi.spyOn(fs, "rm").mockRejectedValueOnce(releaseError);
-
-		await withFileLock(lockedFile, async () => {
-			completed = true;
+		const releaseError = Object.assign(new Error("detached lock removal denied"), { code: "EIO" });
+		const realRm = fs.rm;
+		let detachedPath: string | undefined;
+		let failCleanup = true;
+		FileLockTestHooks.nativeQuarantineBindings = () => ({
+			snapshotDirectoryTree,
+			exactRemoveDirectoryTree: (target, expected) => {
+				const result = exactRemoveDirectoryTree(target, expected);
+				if (result.detachedPath) detachedPath = result.detachedPath;
+				return result;
+			},
 		});
-		expect(completed).toBe(true);
+		vi.spyOn(fs, "rm").mockImplementation((async (target, options) => {
+			if (failCleanup && detachedPath && String(target) === detachedPath) throw releaseError;
+			return realRm(target, options);
+		}) as typeof fs.rm);
+		await expect(withFileLock(lockedFile, async () => {})).rejects.toBe(releaseError);
+		expect(detachedPath).toBeDefined();
+		expect(await fs.exists(lockDir)).toBe(false);
+		if (!detachedPath) throw new Error("Expected an owned detached transition");
+		expect(await fs.exists(detachedPath)).toBe(true);
+		failCleanup = false;
+		let entered = false;
+		await withFileLock(lockedFile, async () => {
+			entered = true;
+		});
+		expect(entered).toBe(true);
+		expect(await fs.exists(detachedPath)).toBe(false);
 		expect(await fs.exists(lockDir)).toBe(false);
 	});
 

@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 
 import { type Component, truncateToWidth, visibleWidth } from "@vib-rato/tui";
-import { formatCount, getProjectDir } from "@vib-rato/utils";
+import { formatCount, getProjectDir, logger } from "@vib-rato/utils";
 import {
 	type AppKeybinding,
 	KEYBINDINGS,
@@ -31,6 +31,7 @@ import {
 	resolveCurrentBranch,
 } from "./status-line/git-utils";
 import { getPreset } from "./status-line/presets";
+import { buildPriorityRow, type PriorityItemSet } from "./status-line/priority-row";
 import { renderSegment, type SegmentContext } from "./status-line/segments";
 import { getSeparator } from "./status-line/separators";
 import { calculateTokensPerSecond } from "./status-line/token-rate";
@@ -41,8 +42,35 @@ export interface StatusLineSegmentOptions {
 	path?: { abbreviate?: boolean; maxLength?: number; stripWorkPrefix?: boolean };
 	git?: { showBranch?: boolean; showStaged?: boolean; showUnstaged?: boolean; showUntracked?: boolean };
 	time?: { format?: "12h" | "24h"; showSeconds?: boolean };
-	usage?: { mode?: "used" | "remaining" };
+	/**
+	 * `mode` picks used-share or remaining-share wording. `windows` picks which
+	 * windows the segment may draw: `all` (the default when the key is absent)
+	 * includes the polled OAuth/subscription windows, `gateway` restricts it to
+	 * the budget observed on gateway response headers and, with it, keeps the
+	 * poll switched off, and `none` draws nothing at all.
+	 *
+	 * The value reaches this type from a free-form settings record, so anything
+	 * can arrive here at runtime. See {@link USAGE_WINDOW_SCOPE_FALLBACK} for
+	 * what an unrecognized value does.
+	 */
+	usage?: { mode?: "used" | "remaining"; windows?: UsageWindowScope };
 }
+
+/** Which usage windows a `usage` segment may draw. */
+export type UsageWindowScope = "all" | "gateway" | "none";
+
+/**
+ * Where an unrecognized `windows` value lands.
+ *
+ * Deliberately not `all`, which is where an *absent* value lands. `all` is the
+ * only scope that starts a five-minute network poll of the provider's usage
+ * endpoint, so treating a typo as `all` would let a misspelling switch on
+ * traffic the user never asked for — silently, since a status line has nowhere
+ * to show a settings error. Falling back to `gateway` costs nothing, still
+ * draws the observed gateway budget, and the mistake is reported through the
+ * log rather than through a behavior change.
+ */
+const USAGE_WINDOW_SCOPE_FALLBACK: UsageWindowScope = "gateway";
 
 export interface StatusLineSettings {
 	preset?: StatusLinePreset;
@@ -136,6 +164,8 @@ interface CollectedStatusSegments {
 	left: string[];
 	leftSegIds: StatusLineSegmentId[];
 	right: string[];
+	/** Parallel to `right`; null for action hints, job counts and the version tag. */
+	rightSegIds: (StatusLineSegmentId | null)[];
 	previewHighlightSegment: StatusLineSegmentId | undefined;
 	sessionAccent: boolean | undefined;
 	leftSepWidth: number;
@@ -193,6 +223,9 @@ export class StatusLineComponent implements Component {
 	#defaultBranch?: string;
 	#lastTokensPerSecond: number | null = null;
 	#lastTokensPerSecondTimestamp: number | null = null;
+
+	/** Unrecognized `segmentOptions.usage.windows` values already reported. */
+	#warnedUsageScopes = new Set<string>();
 
 	// Provider usage caching (5-min TTL, OAuth/sub only)
 	#cachedUsage: SegmentContext["usage"] = null;
@@ -607,8 +640,18 @@ export class StatusLineComponent implements Component {
 	): SegmentContext {
 		const state = this.session.state;
 
-		// Trigger background fetch (5-min TTL); render uses cached value
-		this.refreshUsageInBackground();
+		// Which windows the `usage` segment may draw for this layout. A layout
+		// without the segment at all draws none, and is treated the same as the
+		// gateway-only scope: neither can display a polled window, so neither
+		// justifies the poll.
+		const usageScope = this.#usageScope(effectiveSettings);
+
+		// Trigger background fetch (5-min TTL); render uses cached value.
+		// Gated on a layout that can actually show a polled window. The poll is a
+		// network request to the provider's usage endpoint on a 5-minute cadence,
+		// and it used to run for every session regardless of preset — including
+		// the default one, which had no `usage` segment to show the result in.
+		if (usageScope === "all") this.refreshUsageInBackground();
 
 		// Get usage statistics
 		const aggregateUsageStats = this.session.sessionManager?.getUsageStatistics() ?? {
@@ -656,8 +699,50 @@ export class StatusLineComponent implements Component {
 				status: this.#getGitStatus(),
 				pr: prSegmentActive ? this.#lookupPr() : null,
 			},
-			usage: this.#usageWindows(),
+			usage: this.#usageWindows(usageScope),
 		};
+	}
+
+	/**
+	 * Which usage windows the active layout may draw.
+	 *
+	 * `none` when no `usage` segment is rendered at all. Otherwise the segment's
+	 * own `windows` option decides. An absent option means `all`, so a segment
+	 * someone placed by hand keeps its historical meaning; an unrecognized one
+	 * means {@link USAGE_WINDOW_SCOPE_FALLBACK} and is reported once.
+	 */
+	#usageScope(
+		effectiveSettings: Required<Pick<StatusLineSettings, "leftSegments" | "rightSegments">> & StatusLineSettings,
+	): UsageWindowScope {
+		const active =
+			effectiveSettings.leftSegments.includes("usage") || effectiveSettings.rightSegments.includes("usage");
+		if (!active) return "none";
+
+		// Read as `unknown`: the declared type says what is supported, not what a
+		// hand-edited settings file actually contains.
+		const configured: unknown = effectiveSettings.segmentOptions?.usage?.windows;
+		if (configured === undefined) return "all";
+		if (configured === "all" || configured === "gateway" || configured === "none") return configured;
+
+		this.#warnUnknownUsageScope(configured);
+		return USAGE_WINDOW_SCOPE_FALLBACK;
+	}
+
+	/**
+	 * Report an unrecognized `windows` value once per distinct value.
+	 *
+	 * `#usageScope` runs on every render, so an unconditional warning would
+	 * write a line per frame for as long as the typo stands.
+	 */
+	#warnUnknownUsageScope(value: unknown): void {
+		const seen = typeof value === "string" ? value : (JSON.stringify(value) ?? String(value));
+		if (this.#warnedUsageScopes.has(seen)) return;
+		this.#warnedUsageScopes.add(seen);
+		logger.warn("statusLine: ignoring unknown segmentOptions.usage.windows value", {
+			value: seen,
+			expected: ["all", "gateway", "none"],
+			using: USAGE_WINDOW_SCOPE_FALLBACK,
+		});
 	}
 
 	/**
@@ -669,11 +754,24 @@ export class StatusLineComponent implements Component {
 	 * so the freshest value is whatever the session last observed. A gateway
 	 * that has never reported a quota header contributes nothing, which keeps
 	 * the segment hidden instead of showing an invented zero.
+	 *
+	 * The `none` scope draws nothing, and nothing is computed for it: either no
+	 * `usage` segment is in the layout or the option asked for an empty one, so
+	 * there is no reader for the result.
+	 *
+	 * In the two scopes that do draw, the gateway window is always among them.
+	 * It costs nothing to obtain — it is already on responses this session
+	 * received — so there is no opt-in to justify, and it reports a limit the
+	 * user is about to be stopped by. The polled windows are dropped outside
+	 * `all`, which also covers a scope narrowed mid-session after a poll had
+	 * already landed.
 	 */
-	#usageWindows(): SegmentContext["usage"] {
+	#usageWindows(scope: UsageWindowScope): SegmentContext["usage"] {
+		if (scope === "none") return null;
+		const polled = scope === "all" ? this.#cachedUsage : null;
 		const gateway = gatewayQuotaWindow(this.session.gatewayQuotaState ?? null);
-		if (!gateway) return this.#cachedUsage;
-		return { windows: [...(this.#cachedUsage?.windows ?? []), gateway] };
+		if (!gateway) return polled;
+		return { windows: [...(polled?.windows ?? []), gateway] };
 	}
 
 	#settingsFingerprint(): string {
@@ -841,6 +939,7 @@ export class StatusLineComponent implements Component {
 		}
 
 		const right: string[] = [];
+		const rightSegIds: (StatusLineSegmentId | null)[] = [];
 		const actionHints =
 			effectiveSettings.showActionHints === false
 				? []
@@ -855,9 +954,13 @@ export class StatusLineComponent implements Component {
 			const rendered = renderSegment(segId, ctx);
 			if (rendered.visible && rendered.content) {
 				right.push(highlightSegment(segId, rendered.content));
+				rightSegIds.push(segId);
 			}
 		}
-		right.push(...actionHints.map(hint => hint.content));
+		for (const hint of actionHints) {
+			right.push(hint.content);
+			rightSegIds.push(null);
+		}
 
 		const runningBackgroundJobs =
 			this.session.getAsyncJobSnapshot()?.running.filter(job => job.metadata?.monitor !== true).length ?? 0;
@@ -865,9 +968,11 @@ export class StatusLineComponent implements Component {
 			const icon = theme.icon.agents ? `${theme.icon.agents} ` : "";
 			const label = `${formatCount("job", runningBackgroundJobs)} running`;
 			right.push(theme.fg("statusLineSubagents", `${icon}${label}`));
+			rightSegIds.push(null);
 		}
 		if (this.#version) {
 			right.push(theme.fg("dim", `v${this.#version}`));
+			rightSegIds.push(null);
 		}
 
 		return {
@@ -879,6 +984,7 @@ export class StatusLineComponent implements Component {
 			left,
 			leftSegIds,
 			right,
+			rightSegIds,
 			previewHighlightSegment,
 			sessionAccent: effectiveSettings.sessionAccent,
 			leftSepWidth: visibleWidth(separatorDef.left),
@@ -894,22 +1000,134 @@ export class StatusLineComponent implements Component {
 		return Math.max(1, Math.min(3, Math.trunc(raw)));
 	}
 
+	/**
+	 * Which priority items this layout is carrying, and where.
+	 *
+	 * Context % has no segment of its own in most presets — it rides inside the
+	 * `model` segment — so `model` inherits the context rank whenever it does.
+	 * Items whose data is absent (no context window, no active goal) carry no
+	 * priority at all, which keeps a rail with nothing to protect evicting
+	 * exactly as it always did.
+	 */
+	#priorityItems(seg: CollectedStatusSegments): {
+		include: PriorityItemSet;
+		inlineContextPct: boolean;
+		usage: boolean;
+	} {
+		const collected = (id: StatusLineSegmentId): boolean =>
+			seg.leftSegIds.includes(id) || seg.rightSegIds.includes(id);
+		const inlineContextPct =
+			seg.ctx.options.model?.showContextPercent !== false && seg.ctx.contextPctSegmentActive !== true;
+		const goalMode = seg.ctx.goalMode;
+
+		return {
+			inlineContextPct,
+			// A usage window is a limit the session is about to be stopped by, so
+			// it outranks the counters that merely say how much has been spent.
+			// Only a segment with something to draw counts: a `usage` segment that
+			// has observed nothing renders nothing and carries no priority.
+			usage: collected("usage") && (seg.ctx.usage?.windows.length ?? 0) > 0,
+			include: {
+				context:
+					seg.ctx.contextWindow > 0 && (collected("context_pct") || (collected("model") && inlineContextPct)),
+				goal: collected("mode") && goalMode !== null && (goalMode.enabled || goalMode.paused),
+				model: collected("model"),
+			},
+		};
+	}
+
+	/**
+	 * Eviction rank: 0 is ordinary telemetry and goes first, 3 is context % and
+	 * goes last. The model name outranks telemetry but loses to the goal
+	 * indicator, matching context % > goal > model.
+	 *
+	 * A usage window shares the model's rank. It has to outrank the token and
+	 * cache counters, which sit beside it near the tail and would otherwise
+	 * survive it: a counter says how much has been spent, while the window says
+	 * how much is left before the gateway stops answering, and losing the second
+	 * to keep the first is the wrong trade on a rail with room for one. Sharing
+	 * a rank rather than taking a new one leaves the two to the historical
+	 * right-then-left, tail-first order when they meet.
+	 *
+	 * A rendered usage window also switches ranking on, through `anyPriority`,
+	 * for a rail that previously had none. That is reachable: a model declaring
+	 * no context window, with no goal running, behind a gateway that has
+	 * reported a budget — a self-hosted model served through the gateway, which
+	 * is the deployment this window exists for. `model` there moves from 0 to 1
+	 * and starts outliving the counters. That is the same judgement applied to
+	 * the segment beside it rather than an accident: once a rail is worth
+	 * ranking at all, the model name is worth more than a token count. A
+	 * session that has never seen a gateway header still has no window, so it
+	 * ranks nothing and evicts exactly as it did before.
+	 */
+	#priorityRanker(seg: CollectedStatusSegments): (id: StatusLineSegmentId | null) => number {
+		const { include, inlineContextPct, usage } = this.#priorityItems(seg);
+		const anyPriority = include.context || include.goal || usage;
+
+		return (id: StatusLineSegmentId | null): number => {
+			if (id === null || !anyPriority) return 0;
+			if (id === "context_pct") return include.context ? 3 : 0;
+			if (id === "model") {
+				if (include.context && inlineContextPct) return 3;
+				return include.model ? 1 : 0;
+			}
+			if (id === "mode") return include.goal ? 2 : 0;
+			if (id === "usage") return usage ? 1 : 0;
+			return 0;
+		};
+	}
+
+	/**
+	 * Priority row for a layout that could not keep everything the user needs on
+	 * screen, or null when the normal rail already carries context %, the goal
+	 * indicator and the model name.
+	 *
+	 * Context % has no segment of its own in most presets — it rides inside the
+	 * `model` segment — so losing `model` silently loses the highest-priority
+	 * item too. Survival is therefore resolved per item, not per segment.
+	 */
+	#priorityRowFor(
+		seg: CollectedStatusSegments,
+		survivingLeftIds: readonly (StatusLineSegmentId | null)[],
+		survivingRightIds: readonly (StatusLineSegmentId | null)[],
+		width: number,
+	): string | null {
+		const survived = (id: StatusLineSegmentId): boolean =>
+			survivingLeftIds.includes(id) || survivingRightIds.includes(id);
+
+		const { include, inlineContextPct } = this.#priorityItems(seg);
+		if (!include.context && !include.goal) return null;
+
+		const contextLost = include.context && !survived("context_pct") && !(inlineContextPct && survived("model"));
+		const goalLost = include.goal && !survived("mode");
+		const modelLost = include.model && !survived("model");
+		if (!contextLost && !goalLost && !modelLost) return null;
+
+		return buildPriorityRow(seg.ctx, width, include);
+	}
+
 	#buildStatusLine(width: number, precollected?: CollectedStatusSegments): string {
 		const seg = precollected ?? this.#collectStatusSegments(width, this.#resolveSettings());
 		const { ctx, separatorDef, bgAnsi, fgAnsi, sepAnsi, previewHighlightSegment } = seg;
 		const { leftSepWidth, rightSepWidth, leftCapWidth, rightCapWidth } = seg;
 		const topFillWidth = Math.max(0, width);
 
+		const rank = this.#priorityRanker(seg);
+
 		/**
-		 * Evict against `budget` using the existing configured-order semantics
-		 * (shrink path, then pop right, then pop left) and report how many
-		 * segments were dropped. Runs from the original segment lists each time so
-		 * the marker reservation can be recomputed without compounding evictions.
+		 * Evict against `budget`: shrink the path first, then drop the
+		 * lowest-priority segment still standing — right side before left, tail
+		 * first within a side, which is the historical order for everything that
+		 * carries no priority. Context %, the goal indicator and the model name
+		 * outrank ordinary telemetry and are therefore the last to go. Runs from
+		 * the original segment lists each time so the marker reservation can be
+		 * recomputed without compounding evictions.
 		 */
 		const layout = (budget: number) => {
 			const left = [...seg.left];
 			const leftIds = [...seg.leftSegIds];
 			const right = [...seg.right];
+			const rightIds = [...seg.rightSegIds];
 			let leftWidth = this.#groupWidth(left, leftCapWidth, leftSepWidth);
 			let rightWidth = this.#groupWidth(right, rightCapWidth, rightSepWidth);
 			const totalWidth = () => leftWidth + rightWidth + (left.length > 0 && right.length > 0 ? 1 : 0);
@@ -927,19 +1145,42 @@ export class StatusLineComponent implements Component {
 						leftWidth = this.#groupWidth(left, leftCapWidth, leftSepWidth);
 					}
 				}
-				while (totalWidth() > budget && right.length > 0) {
-					right.pop();
+				// Lowest rank loses first; equal ranks fall back to the historical
+				// right-then-left, tail-first order.
+				while (totalWidth() > budget && (left.length > 0 || right.length > 0)) {
+					let victimSide: "left" | "right" | null = null;
+					let victimIndex = -1;
+					let victimRank = Number.POSITIVE_INFINITY;
+					for (let index = right.length - 1; index >= 0; index -= 1) {
+						const candidate = rank(rightIds[index]);
+						if (candidate < victimRank) {
+							victimRank = candidate;
+							victimSide = "right";
+							victimIndex = index;
+						}
+					}
+					for (let index = left.length - 1; index >= 0; index -= 1) {
+						const candidate = rank(leftIds[index]);
+						if (candidate < victimRank) {
+							victimRank = candidate;
+							victimSide = "left";
+							victimIndex = index;
+						}
+					}
+					if (victimSide === null) break;
+					if (victimSide === "right") {
+						right.splice(victimIndex, 1);
+						rightIds.splice(victimIndex, 1);
+						rightWidth = this.#groupWidth(right, rightCapWidth, rightSepWidth);
+					} else {
+						left.splice(victimIndex, 1);
+						leftIds.splice(victimIndex, 1);
+						leftWidth = this.#groupWidth(left, leftCapWidth, leftSepWidth);
+					}
 					dropped += 1;
-					rightWidth = this.#groupWidth(right, rightCapWidth, rightSepWidth);
-				}
-				while (totalWidth() > budget && left.length > 0) {
-					left.pop();
-					leftIds.pop();
-					dropped += 1;
-					leftWidth = this.#groupWidth(left, leftCapWidth, leftSepWidth);
 				}
 			}
-			return { left, right, leftWidth, rightWidth, dropped };
+			return { left, right, leftIds, rightIds, leftWidth, rightWidth, dropped };
 		};
 
 		// First pass with the full budget establishes whether anything is lost at
@@ -961,6 +1202,11 @@ export class StatusLineComponent implements Component {
 			}
 		}
 		const marker = this.#renderOverflowMarker(placed.dropped, reserved);
+		// Nothing survived that the user actually needs? Spend the rail on the
+		// priority row instead of an overflow marker. Suppressing the marker here
+		// is deliberate: at these widths its cells are worth more as context %.
+		const priorityRow = this.#priorityRowFor(seg, placed.leftIds, placed.rightIds, topFillWidth);
+		if (priorityRow !== null) return priorityRow;
 
 		const leftGroup = this.#renderStatusGroup(placed.left, "left", separatorDef, bgAnsi, fgAnsi, sepAnsi);
 		const rightGroup = this.#renderStatusGroup(placed.right, "right", separatorDef, bgAnsi, fgAnsi, sepAnsi);
@@ -1098,6 +1344,17 @@ export class StatusLineComponent implements Component {
 					dropped += 1;
 				}
 				if (row.length === 0) packedRows.splice(index, 1);
+			}
+
+			// Wrapping is supposed to be the lossless path. When even `maxRows` rows
+			// cannot hold everything, the priority row beats a partial rail plus a
+			// count of what is missing.
+			if (dropped > 0) {
+				const priorityRow = this.#priorityRowFor(seg, [], [], topFillWidth);
+				if (priorityRow !== null) {
+					this.#renderedRowsCache = { key: cacheKey, rows: [priorityRow] };
+					return [priorityRow];
+				}
 			}
 
 			// Reserve marker cells on whichever row ends up last, evicting from its

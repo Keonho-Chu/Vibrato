@@ -11,6 +11,7 @@ import { Settings } from "@vib-rato/coding-agent/config/settings";
 import { AgentSession, type AgentSessionEvent } from "@vib-rato/coding-agent/session/agent-session";
 import { AuthStorage } from "@vib-rato/coding-agent/session/auth-storage";
 import { effectiveFallbackDelay } from "@vib-rato/coding-agent/session/fallback-chain-controller";
+import { suppressionHoldParts } from "@vib-rato/coding-agent/session/quota-hold-text";
 import { SessionManager } from "@vib-rato/coding-agent/session/session-manager";
 import { TempDir } from "@vib-rato/utils";
 
@@ -123,9 +124,14 @@ function lastAssistant(session: AgentSession): AssistantMessage {
 	return message as AssistantMessage;
 }
 
-/** Stand-in for the reason the session records; the exact wording is asserted elsewhere. */
+/**
+ * The reason the session records. It is the bare condition on purpose: the
+ * reset instant is stored beside it on the suppression entry, and each surface
+ * composes its own countdown from that instant as it draws, so a reason read an
+ * hour later does not still promise the wait the hold started with.
+ */
 function describeHold(): string {
-	return "token limit reached; resets at (expired)";
+	return "token limit reached";
 }
 
 /** Assert the error names its reset instant once, and return that instant. */
@@ -265,9 +271,14 @@ describe("issue #14 token-limit retry, rotation, and fallback policy", () => {
 
 			const errorMessage = lastAssistant(live).errorMessage ?? "";
 			expect(errorMessage).toContain(QUOTA_ERROR_MESSAGE);
-			// The user must read "the limit is spent until <instant>", not a bare 429
-			// that looks like a rejected key.
+			// The user must read "the limit is spent, back in <duration>", not a bare
+			// 429 that looks like a rejected key.
 			expect(errorMessage).toContain("token limit reached");
+			// A twelve-hour Retry-After reads as a countdown, ahead of the machine
+			// timestamp. "12h" and not "tomorrow": the gateway's window length is
+			// operator-configured and is never sent, so no wording may imply one.
+			expect(errorMessage).toContain("token limit reached; resets in 12h (retryable at ");
+			expect(errorMessage).not.toMatch(/daily|today|midnight/i);
 			// The hold hint and the pre-existing retryable-at hint name the same
 			// instant, so exactly one of them may land.
 			const resetAtMs = expectSingleRetryableAt(errorMessage);
@@ -477,8 +488,33 @@ describe("issue #14 token-limit retry, rotation, and fallback policy", () => {
 
 			expect(modelRegistry.getSelectorSuppressionStatus(selector(primary))).toBe("active");
 			const reason = modelRegistry.getSelectorSuppressionReason(selector(primary));
-			expect(reason).toContain("token limit reached");
-			expect(reason).toMatch(/resets at \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z/);
+			// The condition, and nothing else. A reason carrying its own rendered
+			// wait would still claim twelve hours after eleven of them; the instant
+			// is recorded separately so a reader always gets the remaining time.
+			expect(reason).toBe("token limit reached");
+			expect(reason).not.toMatch(/resets|\d{4}-\d{2}-\d{2}T/);
+
+			const untilMs = modelRegistry.getSelectorSuppressionUntil(selector(primary));
+			if (untilMs === undefined) throw new Error("Expected an active hold to report its reset instant");
+			expect(untilMs).toBeGreaterThan(Date.now() + QUOTA_RETRY_AFTER_MS - 5_000);
+
+			// Composed at read time: the same hold reports a shrinking wait.
+			expect(suppressionHoldParts(reason, untilMs).join("; ")).toBe("token limit reached; resets in 12h");
+			expect(suppressionHoldParts(reason, untilMs, untilMs - 90 * 60_000).join("; ")).toBe(
+				"token limit reached; resets in 1h 30m",
+			);
+		});
+
+		it("reads the reset instant without consuming the one-shot expiry", () => {
+			// Same read-only contract as the reason accessor: the countdown a redraw
+			// needs must not swallow the "expired" the revert policy reverts on.
+			modelRegistry.suppressSelector(selector(primary), Date.now() - 1, describeHold());
+
+			expect(modelRegistry.getSelectorSuppressionUntil(selector(primary))).toBeUndefined();
+			expect(modelRegistry.getSelectorSuppressionUntil(selector(primary))).toBeUndefined();
+
+			expect(modelRegistry.getSelectorSuppressionStatus(selector(primary))).toBe("expired");
+			expect(modelRegistry.getSelectorSuppressionStatus(selector(primary))).toBe("none");
 		});
 
 		it("reports the reason while the window is active", () => {

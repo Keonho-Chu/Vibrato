@@ -5,8 +5,19 @@
  * case — so the entry point is a single URL field that accepts `host:port`
  * shorthand, and loopback discovery is only an extra convenience on the same
  * screen. Everything here is pure logic: no TUI, no prompts, no throwing.
+ *
+ * The probe also reports whether a gateway answered, read from the model-list
+ * response the screen already fetches and from nothing else. There is no
+ * identity or usage endpoint to ask, and asking would cost either an extra round
+ * trip or, in the case of a completion, tokens from the very budget in question.
  */
 import type { AuthStorage } from "../session/auth-storage";
+import {
+	fingerprintCredential,
+	GatewayQuotaObserver,
+	type GatewayQuotaState,
+	hasGatewayQuotaHeaders,
+} from "../session/gateway-quota-observer";
 import { addApiCompatibleProvider, isLocalHttpHost, type ProviderSetupResult } from "./provider-onboarding";
 
 const DEFAULT_PROBE_TIMEOUT_MS = 5_000;
@@ -21,9 +32,42 @@ export interface LocalEndpointModel {
 	contextLength?: number;
 }
 
+/**
+ * Token budget the gateway reported about the probing key, when it reported one
+ * at all. Every field is optional because the gateway sends what it has and the
+ * client invents nothing; `resetAt` in particular exists only when an
+ * unambiguous instant was sent. The window these figures describe is the
+ * gateway's own, configurable one — never assume a day or a midnight boundary.
+ */
+export interface LocalEndpointQuota {
+	limit?: number;
+	remaining?: number;
+	used?: number;
+	resetAt?: number;
+}
+
+/**
+ * What a server in front of the endpoint said about itself on the model list.
+ *
+ * Both signals are structural and belong to the gateway alone: the `x-vug-*`
+ * response headers the quota observer already knows, and the `vibrato` object a
+ * Vibrato-aware server attaches to its models-list entries (see
+ * "Server-advertised model hints" in `docs/models.md`). Neither the URL nor the
+ * provider name is consulted, so a plain vLLM, SGLang, Ollama, or llama.cpp
+ * endpoint never reads as a gateway.
+ */
+export interface LocalEndpointGateway {
+	/** Model entries carrying the server's own `vibrato` hint object. */
+	hintedModels: number;
+	/** Only present when the model-list response actually carried quota headers. */
+	quota?: LocalEndpointQuota;
+}
+
 export type LocalEndpointProbe =
-	| { status: "ok"; models: LocalEndpointModel[] }
+	| { status: "ok"; models: LocalEndpointModel[]; gateway?: LocalEndpointGateway }
 	| { status: "unauthorized" }
+	/** The key is valid, but its budget for the gateway's current window is spent. */
+	| { status: "quota-exhausted"; quota: LocalEndpointQuota }
 	| { status: "no-models" }
 	| { status: "unreachable"; detail: string };
 
@@ -31,6 +75,7 @@ export interface DiscoveredLocalEndpoint {
 	baseUrl: string;
 	label: string;
 	models: LocalEndpointModel[];
+	gateway?: LocalEndpointGateway;
 }
 
 export interface LocalEndpointProbeOptions {
@@ -119,6 +164,15 @@ export async function probeLocalEndpoint(
 	}
 
 	if (response.status === 401 || response.status === 403) return { status: "unauthorized" };
+	// A gateway checks the key's budget before it routes anything, so even this
+	// model list comes back 429 once the budget is spent. Read as a bare HTTP
+	// error it looked like an unreachable server; the headers say plainly that
+	// the key is good and only the allowance is gone. A 429 without them is some
+	// other server's throttle and keeps the generic path.
+	if (response.status === 429) {
+		const exhausted = observeGatewayQuota(baseUrl, key, response, "failure")?.exhausted;
+		if (exhausted) return { status: "quota-exhausted", quota: toLocalEndpointQuota(exhausted) };
+	}
 	if (!response.ok) {
 		return {
 			status: "unreachable",
@@ -142,7 +196,81 @@ export async function probeLocalEndpoint(
 		return { status: "unreachable", detail: "the server did not return an OpenAI-compatible model list" };
 	}
 	const models = toLocalEndpointModels(entries);
-	return models.length > 0 ? { status: "ok", models } : { status: "no-models" };
+	if (models.length === 0) return { status: "no-models" };
+	const gateway = readGatewaySignals(baseUrl, key, response, entries);
+	return { status: "ok", models, ...(gateway ? { gateway } : {}) };
+}
+
+/** Session id for the throwaway observer below; it never outlives one probe. */
+const PROBE_OBSERVER_SESSION = "local-endpoint-probe";
+
+/**
+ * Fold one probe response through the session's own quota observer, so the
+ * `x-vug-*` names and their accepted formats are read in exactly one place. The
+ * observer is created per call and discarded with the state it produced: it
+ * exists here only as a parser, never as the session-long store it is on the
+ * request path.
+ */
+function observeGatewayQuota(
+	baseUrl: string,
+	apiKey: string | undefined,
+	response: Response,
+	kind: "success" | "failure",
+): GatewayQuotaState | null {
+	const headers: Record<string, string> = {};
+	response.headers.forEach((value, name) => {
+		headers[name.toLowerCase()] = value;
+	});
+	// Cheap and allocation-free, and it keeps the credential digest below off the
+	// path of every ordinary endpoint that has nothing to do with a gateway.
+	if (!hasGatewayQuotaHeaders(headers)) return null;
+	const observer = new GatewayQuotaObserver();
+	observer.observe({
+		key: {
+			provider: "local",
+			baseUrl,
+			credentialId: fingerprintCredential(apiKey, PROBE_OBSERVER_SESSION),
+			sessionId: PROBE_OBSERVER_SESSION,
+		},
+		kind,
+		status: response.status,
+		headers,
+	});
+	return observer.state;
+}
+
+function toLocalEndpointQuota(source: {
+	limit?: number;
+	remaining?: number;
+	used?: number;
+	resetAt?: number;
+}): LocalEndpointQuota {
+	return {
+		...(source.limit !== undefined ? { limit: source.limit } : {}),
+		...(source.remaining !== undefined ? { remaining: source.remaining } : {}),
+		...(source.used !== undefined ? { used: source.used } : {}),
+		...(source.resetAt !== undefined ? { resetAt: source.resetAt } : {}),
+	};
+}
+
+/**
+ * Decide whether a gateway answered, from the response alone. Returns undefined
+ * for every endpoint that showed neither signal, which is what keeps the connect
+ * screen's existing flow untouched for a plain server.
+ */
+function readGatewaySignals(
+	baseUrl: string,
+	apiKey: string | undefined,
+	response: Response,
+	entries: readonly Record<string, unknown>[],
+): LocalEndpointGateway | undefined {
+	const hintedModels = entries.filter(entry => isRecord(entry.vibrato)).length;
+	const state = observeGatewayQuota(baseUrl, apiKey, response, "success");
+	const quota = state ? toLocalEndpointQuota(state) : undefined;
+	// An observed state with no field set is not evidence of anything.
+	const reportedQuota = quota && Object.keys(quota).length > 0 ? quota : undefined;
+	if (hintedModels === 0 && !reportedQuota) return undefined;
+	return { hintedModels, ...(reportedQuota ? { quota: reportedQuota } : {}) };
 }
 
 function describeProbeFailure(error: unknown, signal: AbortSignal, timeoutMs: number): string {
@@ -262,7 +390,8 @@ export async function discoverLoopbackEndpoints(
 
 	const probes = [...targets].map(async ([baseUrl, label]) => {
 		const probe = await probeLocalEndpoint(baseUrl, undefined, { timeoutMs, fetchImpl: options?.fetchImpl });
-		return probe.status === "ok" && probe.models.length > 0 ? { baseUrl, label, models: probe.models } : undefined;
+		if (probe.status !== "ok" || probe.models.length === 0) return undefined;
+		return { baseUrl, label, models: probe.models, ...(probe.gateway ? { gateway: probe.gateway } : {}) };
 	});
 	const settled = await Promise.all(probes);
 	return settled.filter((entry): entry is DiscoveredLocalEndpoint => entry !== undefined);

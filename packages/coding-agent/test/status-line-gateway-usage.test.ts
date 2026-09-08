@@ -220,12 +220,27 @@ describe("status line gateway usage window", () => {
 		component.dispose();
 	});
 
-	it("renders a Korean gateway label without mangling it", () => {
+	it("names the window after the gateway, not after the provider entry it went out through", () => {
+		// The deployment guide registers the gateway under whatever provider id
+		// suits the site — `vllm`, because a vLLM box sits behind it. That name
+		// describes the GPU server, and the budget being reported is the
+		// gateway's, so the label is fixed rather than read off the key.
+		const component = usageOnly(makeSession({ observer: servedGateway("vllm", 1000, 400) }));
+
+		const text = stripAnsi(component.getTopBorder(120).content);
+
+		expect(text).toContain("vug 60%");
+		expect(text).not.toContain("vllm");
+		component.dispose();
+	});
+
+	it("keeps the fixed label for a provider entry named in another script", () => {
 		const component = usageOnly(makeSession({ observer: servedGateway("사내게이트웨이", 1000, 400) }));
 
 		const text = stripAnsi(component.getTopBorder(120).content);
 
-		expect(text).toContain("사내게이트웨이 60%");
+		expect(text).toContain("vug 60%");
+		expect(text).not.toContain("사내게이트웨이");
 		component.dispose();
 	});
 
@@ -244,6 +259,198 @@ describe("status line gateway usage window", () => {
 
 		expect(wide).toContain("vug 75% (1h 30m)");
 		expect(narrow).not.toContain("vug");
+		component.dispose();
+	});
+});
+
+describe("usage window scope", () => {
+	const anthropicReport = (now: number) => [
+		{
+			provider: "anthropic",
+			fetchedAt: now,
+			limits: [
+				{
+					id: "anthropic:5h",
+					scope: { provider: "anthropic", windowId: "5h" },
+					window: { id: "5h", resetsAt: now + 180 * 60_000 },
+					amount: { usedFraction: 0.24, unit: "percent" },
+				},
+			],
+		},
+	];
+
+	it("gives a hand-placed usage segment its polled windows", async () => {
+		// A `custom` preset that lists `usage` carries no `windows` option, so it
+		// keeps the meaning the segment has always had: the polled subscription
+		// windows as well as the observed gateway one. Only a layout that asks
+		// for the gateway scope narrows it.
+		let calls = 0;
+		const now = Date.now();
+		const component = usageOnly(
+			makeSession({
+				observer: servedGateway("vllm", 1000, 250),
+				fetchUsageReports: async () => {
+					calls++;
+					return anthropicReport(now);
+				},
+			}),
+		);
+
+		const text = await waitFor(component, /5h 24%/, 200);
+
+		expect(calls).toBeGreaterThan(0);
+		expect(text).toContain("5h 24%");
+		expect(text).toContain("vug 75%");
+		component.dispose();
+	});
+
+	it("draws nothing and polls nothing for the none scope", async () => {
+		let calls = 0;
+		const now = Date.now();
+		const component = usageOnly(
+			makeSession({
+				observer: servedGateway("vllm", 1000, 250),
+				fetchUsageReports: async () => {
+					calls++;
+					return anthropicReport(now);
+				},
+			}),
+			{ usage: { windows: "none" } },
+		);
+
+		stripAnsi(component.getTopBorder(200).content);
+		await Bun.sleep(20);
+		const text = stripAnsi(component.getTopBorder(200).content);
+
+		expect(calls).toBe(0);
+		expect(text).not.toContain("vug");
+		expect(text).not.toContain("5h");
+		component.dispose();
+	});
+
+	it("falls back to the gateway scope for an unrecognized value rather than polling", async () => {
+		// A misspelling must not switch on a five-minute network poll nobody
+		// asked for. The status line has nowhere to show a settings error, so the
+		// mistake goes to the log and the scope that costs nothing is used.
+		let calls = 0;
+		const now = Date.now();
+		const component = usageOnly(
+			makeSession({
+				observer: servedGateway("vllm", 1000, 250),
+				fetchUsageReports: async () => {
+					calls++;
+					return anthropicReport(now);
+				},
+			}),
+			{ usage: { windows: "gatway" } },
+		);
+
+		stripAnsi(component.getTopBorder(200).content);
+		await Bun.sleep(20);
+		const text = stripAnsi(component.getTopBorder(200).content);
+
+		expect(calls).toBe(0);
+		expect(text).toContain("vug 75%");
+		expect(text).not.toContain("5h");
+		component.dispose();
+	});
+});
+
+describe("default preset with a gateway", () => {
+	// The gateway deployment guide only edits `models.yml`, so every machine it
+	// covers is on the stock preset. A budget nobody is on the right preset to
+	// see is not a budget anyone was warned about.
+	it("shows the gateway window with no settings beyond the stock preset", () => {
+		const session = makeSession({ observer: servedGateway("vllm", 1000, 250, AT + 90 * 60_000) });
+		const component = new StatusLineComponent(session);
+		component.updateSettings({ showSkillHud: false });
+
+		const text = stripAnsi(component.getTopBorder(200).content);
+
+		expect(text).toContain("vug 75% (1h 30m)");
+		component.dispose();
+	});
+
+	it("shows nothing when the session has never observed a gateway header", () => {
+		const component = new StatusLineComponent(makeSession({ observer: new GatewayQuotaObserver() }));
+		component.updateSettings({ showSkillHud: false });
+
+		const text = stripAnsi(component.getTopBorder(200).content);
+
+		expect(text).not.toContain("vug");
+		expect(text).not.toContain("0%");
+		component.dispose();
+	});
+
+	it("does not poll the provider usage endpoint, and default-usage still does", async () => {
+		// The gateway window costs no request: it arrives on responses the session
+		// already received. The subscription windows exist only because of a
+		// 5-minute poll, so putting the segment on the stock preset must not
+		// switch that poll on for people who never asked for those windows.
+		let stockCalls = 0;
+		const stock = new StatusLineComponent(
+			makeSession({
+				observer: servedGateway("vllm", 1000, 250),
+				fetchUsageReports: async () => {
+					stockCalls++;
+					return [];
+				},
+			}),
+		);
+		stock.updateSettings({ showSkillHud: false });
+		stripAnsi(stock.getTopBorder(200).content);
+		await Bun.sleep(20);
+		stripAnsi(stock.getTopBorder(200).content);
+
+		expect(stockCalls).toBe(0);
+		stock.dispose();
+
+		let optedInCalls = 0;
+		const optedIn = new StatusLineComponent(
+			makeSession({
+				observer: servedGateway("vllm", 1000, 250),
+				fetchUsageReports: async () => {
+					optedInCalls++;
+					return [];
+				},
+			}),
+		);
+		optedIn.updateSettings({ preset: "default-usage", showSkillHud: false });
+		stripAnsi(optedIn.getTopBorder(200).content);
+		await Bun.sleep(20);
+
+		expect(optedInCalls).toBe(1);
+		optedIn.dispose();
+	});
+
+	it("hides a polled window that landed before the scope narrowed", async () => {
+		const now = Date.now();
+		const session = makeSession({
+			observer: servedGateway("vllm", 1000, 250),
+			fetchUsageReports: async () => [
+				{
+					provider: "anthropic",
+					fetchedAt: now,
+					limits: [
+						{
+							id: "anthropic:5h",
+							scope: { provider: "anthropic", windowId: "5h" },
+							window: { id: "5h", resetsAt: now + 180 * 60_000 },
+							amount: { usedFraction: 0.24, unit: "percent" },
+						},
+					],
+				},
+			],
+		});
+		const component = new StatusLineComponent(session);
+		component.updateSettings({ preset: "default-usage", showSkillHud: false });
+		expect(await waitFor(component, /5h 24%/, 200)).toContain("5h 24%");
+
+		component.updateSettings({ preset: "default" });
+		const text = stripAnsi(component.getTopBorder(200).content);
+
+		expect(text).not.toContain("5h 24%");
+		expect(text).toContain("vug 75%");
 		component.dispose();
 	});
 });

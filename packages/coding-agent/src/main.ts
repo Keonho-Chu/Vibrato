@@ -1972,6 +1972,20 @@ export async function runRootCommand(
 			notifs.push({ kind: "info", message: credentialAutoImportNotice });
 		}
 
+		// A provider whose `apiKeyEnv` variable is unset or empty is dropped from
+		// the usable models, which otherwise looks like "no models" with no cause
+		// attached. The notice names the provider and the variable; the value
+		// behind it is never read out. `notifs` is drained once, so this is shown
+		// once per session.
+		if (isInteractive) {
+			for (const hidden of modelRegistry.getProvidersHiddenByMissingApiKeyEnv()) {
+				notifs.push({
+					kind: "warn",
+					message: `provider "${hidden.provider}": ${hidden.envName} is not set, its models are hidden`,
+				});
+			}
+		}
+
 		if (isInteractive && !session.model && !modelFallbackMessage) {
 			notifs.push({
 				kind: "info",
