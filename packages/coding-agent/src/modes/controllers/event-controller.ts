@@ -1,7 +1,6 @@
 import { INTENT_FIELD } from "@vib-rato/agent-core";
 import { calculatePromptTokens } from "@vib-rato/agent-core/compaction/compaction";
 import type { AssistantMessage, ImageContent } from "@vib-rato/ai/core";
-import { parseRateLimitReason } from "@vib-rato/ai/core";
 import { type Component, Loader, TERMINAL, Text } from "@vib-rato/tui";
 import { logger } from "@vib-rato/utils";
 import { settings } from "../../config/settings";
@@ -29,6 +28,7 @@ import { type CustomMessage, isSilentAbort, readPendingDisplayTag } from "../../
 import { transferSessionMessageIdentity } from "../../session/session-manager";
 import type { ResolveToolDetails } from "../../tools/resolve";
 import { computeIrcSplitWidths, getIrcSidebarSemanticToken } from "../components/irc-sidebar";
+import { friendlyRetryReason } from "../execution-status";
 import type { IrcObservationRecord } from "../irc-observation-ledger";
 import { interruptHint } from "../shared";
 import { buildAbortDisplayMessage } from "../utils/abort-message";
@@ -93,24 +93,6 @@ function buildCompletionNotifyEnv(payload: CompletionNotifyPayload): Record<stri
 		VIB_NOTIFICATION_STOP_REASON: cleanNotificationEnvValue(payload.stopReason, 100),
 		VIB_NOTIFICATION_JSON: cleanNotificationEnvValue(JSON.stringify(payload), 8000),
 	};
-}
-
-function friendlyRetryReason(errorMessage: string | undefined): string {
-	if (!errorMessage) return "";
-	switch (parseRateLimitReason(errorMessage)) {
-		case "RATE_LIMIT_EXCEEDED":
-			return "rate limited";
-		case "QUOTA_EXHAUSTED":
-			return "usage limit";
-		case "MODEL_CAPACITY_EXHAUSTED":
-			return "overloaded";
-		case "SERVER_ERROR":
-			return "server error";
-		default:
-			return /network|connection|socket|fetch failed|terminated|timeout|timed out|stream/i.test(errorMessage)
-				? "connection error"
-				: "transient error";
-	}
 }
 
 type AgentSessionEventHandlers = {

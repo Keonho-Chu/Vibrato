@@ -23,7 +23,8 @@ const LABELS: Record<ExecutionPhase, readonly [string, string]> = {
 
 function seconds(milliseconds: number): string {
 	const whole = Number.isFinite(milliseconds) ? Math.max(0, Math.floor(milliseconds / 1000)) : 0;
-	return whole === 0 ? "0s" : formatDuration(whole * 1000);
+	// Whole seconds below a minute; formatDuration would print a fixed ".0".
+	return whole < 60 ? `${whole}s` : formatDuration(whole * 1000);
 }
 function countLabel(count: number, singular: string, plural: string): string {
 	return `${count} ${count === 1 ? singular : plural}`;

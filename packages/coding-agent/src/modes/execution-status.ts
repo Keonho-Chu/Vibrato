@@ -44,8 +44,10 @@ interface RetryState {
 	reason: string;
 }
 
-function retryCategory(message: string): string {
-	switch (parseRateLimitReason(message)) {
+/** Shared with the retry loader so both surfaces name the same cause, never the provider's text. */
+export function friendlyRetryReason(errorMessage: string | undefined): string {
+	if (!errorMessage) return "";
+	switch (parseRateLimitReason(errorMessage)) {
 		case "RATE_LIMIT_EXCEEDED":
 			return "rate limited";
 		case "QUOTA_EXHAUSTED":
@@ -55,7 +57,7 @@ function retryCategory(message: string): string {
 		case "SERVER_ERROR":
 			return "server error";
 		default:
-			return /network|connection|socket|fetch failed|terminated|timeout|timed out|stream/i.test(message)
+			return /network|connection|socket|fetch failed|terminated|timeout|timed out|stream/i.test(errorMessage)
 				? "connection error"
 				: "transient error";
 	}
@@ -174,10 +176,10 @@ export class ExecutionStatusTracker {
 		switch (event.type) {
 			case "agent_start": {
 				const continuing = this.#retry !== undefined || this.#maintenance;
-				if (!continuing) {
-					this.#promptOpen = false;
-					this.#tools.clear();
-				}
+				if (!continuing) this.#promptOpen = false;
+				// A run that restarts after a retry or maintenance never resumes a
+				// tool: an entry still here has no end event coming.
+				this.#tools.clear();
 				this.#retry = undefined;
 				this.#maintenance = false;
 				this.#responding = false;
@@ -243,7 +245,7 @@ export class ExecutionStatusTracker {
 					attempt: event.attempt,
 					maxAttempts: event.unbounded ? undefined : event.maxAttempts,
 					deadline: this.#now() + Math.max(0, event.delayMs),
-					reason: retryCategory(event.errorMessage),
+					reason: friendlyRetryReason(event.errorMessage),
 				};
 				this.#responding = false;
 				this.#publish(this.#inputLeases.size === 0);
@@ -286,8 +288,10 @@ export class ExecutionStatusTracker {
 			phase,
 			elapsedMs: since === undefined || !Number.isFinite(since) ? 0 : Math.max(0, now - since),
 			runningTools: this.#tools.size,
-			completedTools: this.#completed,
-			failedTools: this.#failed,
+			// Counts describe the current prompt; a phase derived from background
+			// or queued work after the prompt ended must not carry them.
+			completedTools: this.#phase === "idle" ? 0 : this.#completed,
+			failedTools: this.#phase === "idle" ? 0 : this.#failed,
 			backgroundTasks,
 			queuedMessages,
 			inputRequests: this.#inputLeases.size,

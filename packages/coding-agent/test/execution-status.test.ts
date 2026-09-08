@@ -241,3 +241,57 @@ describe("execution summary rendering", () => {
 		expect(plain).not.toContain("Thinking");
 	});
 });
+
+describe("execution state after review", () => {
+	it("drops an orphaned running tool when a retry-continued run restarts", () => {
+		const tracker = new ExecutionStatusTracker();
+		tracker.handleEvent({ type: "agent_start" });
+		tracker.handleEvent(toolStart("a", "bash", "still running when the request failed"));
+		tracker.handleEvent(retry(1000));
+		tracker.handleEvent({ type: "agent_start" });
+		expect(tracker.getSnapshot()).toMatchObject({
+			phase: "model",
+			runningTools: 0,
+			toolName: undefined,
+			intent: undefined,
+		});
+	});
+	it("keeps finished-prompt tool counts out of background and queued phases", () => {
+		const tracker = new ExecutionStatusTracker();
+		tracker.handleEvent({ type: "agent_start" });
+		tracker.handleEvent(toolStart("a"));
+		tracker.handleEvent(toolEnd("a"));
+		tracker.handleEvent(toolStart("b"));
+		tracker.handleEvent(toolEnd("b", undefined, true));
+		expect(tracker.getSnapshot()).toMatchObject({ completedTools: 1, failedTools: 1 });
+		tracker.handleEvent({ type: "agent_end", messages: [] });
+		const background = tracker.getSnapshot({ backgroundTasks: 1, queuedMessages: 0 });
+		expect(background).toMatchObject({ phase: "background", completedTools: 0, failedTools: 0 });
+		const plain = Bun.stripANSI(renderExecutionStatus(background, 80).join("\n"));
+		expect(plain).toContain("1 background");
+		expect(plain).not.toContain("done");
+		expect(plain).not.toContain("failed");
+		expect(tracker.getSnapshot({ backgroundTasks: 0, queuedMessages: 2 })).toMatchObject({
+			phase: "queued",
+			completedTools: 0,
+			failedTools: 0,
+		});
+	});
+	it("renders elapsed and retry times in whole seconds", () => {
+		let now = 0;
+		const tracker = new ExecutionStatusTracker(undefined, () => now);
+		tracker.start();
+		now = 42_000;
+		let plain = Bun.stripANSI(renderExecutionStatus(tracker.getSnapshot(), 80).join("\n"));
+		expect(plain).toContain("42s");
+		expect(plain).not.toContain("42.0s");
+		tracker.handleEvent(retry(1500));
+		now += 400;
+		plain = Bun.stripANSI(renderExecutionStatus(tracker.getSnapshot(), 80).join("\n"));
+		expect(plain).toContain("retry in 1s");
+		expect(plain).toContain("connection error");
+		now += 60_000;
+		plain = Bun.stripANSI(renderExecutionStatus(tracker.getSnapshot(), 80).join("\n"));
+		expect(plain).toContain("1m");
+	});
+});
