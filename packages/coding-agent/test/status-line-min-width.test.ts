@@ -66,6 +66,41 @@ function buildRail(overrides: SessionOverrides = {}, goalActive = true): StatusL
 	return component;
 }
 
+/**
+ * A rail wide enough to need the normal eviction path rather than the priority
+ * row, built only from segments whose width is fixed by the fixture. No `git`
+ * or `path`: their widths come from the checkout, which decides whether the
+ * rail overflows at all.
+ */
+function overflowingRail(): StatusLineComponent {
+	const session = createSession() as unknown as Record<string, unknown>;
+	(session.sessionManager as { getUsageStatistics: () => unknown }).getUsageStatistics = () => ({
+		input: 1000,
+		output: 500,
+		cacheRead: 8200,
+		cacheWrite: 1200,
+		premiumRequests: 0,
+		cost: 0.5,
+	});
+
+	const component = new StatusLineComponent(
+		session as unknown as ConstructorParameters<typeof StatusLineComponent>[0],
+		{ version: "9.9.9" },
+	);
+	component.updateSettings({
+		preset: "custom",
+		leftSegments: ["model", "mode"],
+		rightSegments: ["session_name", "token_in", "token_out", "cache_read", "cache_write", "cost"],
+		separator: "slash",
+		showSkillHud: false,
+		showActionHints: false,
+		sessionAccent: false,
+		maxRows: 1,
+	});
+	component.setGoalModeStatus({ enabled: true, paused: false });
+	return component;
+}
+
 const CONTEXT_TOKEN = /\d+(?:\.\d+)?%/;
 
 /**
@@ -177,26 +212,31 @@ describe("status rail survives very small widths", () => {
 		expect(strip(buildRail().render(12)[0])).toBe(`18%·${goalGlyph}·${modelGlyph}`);
 		expect(strip(buildRail().render(24)[0])).toBe(`18.3%/200K·${goalGlyph}·sonnet-4.5`);
 		expect(strip(buildRail().render(30)[0])).toBe(`18.3%/200K·${goalLabel}·sonnet-4.5`);
-		// Wide enough for the normal rail: the priority row must not hijack it.
-		// Built without `git` and `path`, whose widths come from the checkout —
-		// the branch name and working directory of whoever runs this — so the
-		// assertion is about the layout rather than about where the repo sits.
-		const wideRail = new StatusLineComponent(createSession(), { version: "9.9.9" });
-		wideRail.updateSettings({
-			preset: "custom",
-			leftSegments: ["model", "mode"],
-			rightSegments: ["session_name", "cost"],
-			separator: "slash",
-			showSkillHud: false,
-			showActionHints: false,
-			sessionAccent: false,
-			maxRows: 1,
-		});
-		wideRail.setGoalModeStatus({ enabled: true, paused: false });
-		const wide = strip(wideRail.render(80)[0]);
-		expect(wide).toContain("sonnet-4.5");
-		expect(wide).toContain("Goal");
+		// A rail that overflows at 80 yet is far too wide for the priority row:
+		// normal eviction has to handle it, dropping telemetry from the tail and
+		// drawing the overflow marker.
+		//
+		// Deliberately built from fixed-width segments only. Upstream used `git`
+		// and `path`, whose widths come from the checkout — the branch name and
+		// working directory of whoever runs the test — so whether this case
+		// overflowed at all depended on where the repo happened to sit.
+		const wide = strip(overflowingRail().render(80)[0]);
+		const roomy = strip(overflowingRail().render(200)[0]);
+
+		// It really overflows at 80 and really does not at 200.
+		expect(wide).toContain("…+");
+		expect(roomy).not.toContain("…+");
+		// The priority row draws neither a session name nor an overflow marker,
+		// so this is the normal rail evicting normally.
 		expect(wide).toContain("MinWidth");
+		expect(wide).toContain("sonnet-4.5");
+		expect(wide).toContain("18.3%");
+		expect(wide).toContain("Goal");
+		// Tail telemetry is what paid for the fit.
+		expect(roomy).toContain("cache write 1.2K");
+		expect(roomy).toContain("$0.50");
+		expect(wide).not.toContain("cache write 1.2K");
+		expect(wide).not.toContain("$0.50");
 	});
 
 	it("keeps the goal glyph in its status color", () => {
@@ -250,6 +290,54 @@ describe("status rail survives very small widths", () => {
 });
 
 describe("gateway quota window on a narrow rail", () => {
+	/** An observer holding one served gateway response, 75% of the budget spent. */
+	function servedObserver(): GatewayQuotaObserver {
+		const observer = new GatewayQuotaObserver();
+		observer.observe({
+			key: { provider: "vllm", baseUrl: "https://gateway.internal/v1", credentialId: "c", sessionId: "s" },
+			kind: "success",
+			status: 200,
+			headers: { "x-vug-daily-limit": "1000", "x-vug-daily-remaining": "250" },
+		});
+		return observer;
+	}
+
+	/**
+	 * A rail whose model declares no context window and whose session has no
+	 * goal, so nothing on it carried an eviction rank before the gateway window
+	 * existed. `observed` decides whether the gateway ever answered.
+	 *
+	 * `model` sits at the tail of one group on purpose. Eviction scans the right
+	 * group before the left and each from its tail, so a model anywhere earlier
+	 * outlives the counters on scan order alone and its rank cannot be observed.
+	 * At the tail, rank is the only thing keeping it.
+	 */
+	function buildNoContextRail(observed: boolean): StatusLineComponent {
+		const observer = observed ? servedObserver() : new GatewayQuotaObserver();
+		const session = createSession() as unknown as Record<string, unknown>;
+		(session.state as { model: { contextWindow: number } }).model.contextWindow = 0;
+		session.getContextUsage = () => undefined;
+		session.getGoalModeState = () => undefined;
+		Object.defineProperty(session, "gatewayQuotaState", { get: () => observer.state });
+
+		const component = new StatusLineComponent(
+			session as unknown as ConstructorParameters<typeof StatusLineComponent>[0],
+			{},
+		);
+		component.updateSettings({
+			preset: "custom",
+			leftSegments: [],
+			rightSegments: ["token_in", "token_out", "model", "usage"],
+			separator: "slash",
+			segmentOptions: { usage: { windows: "gateway" } },
+			showSkillHud: false,
+			showActionHints: false,
+			sessionAccent: false,
+			maxRows: 1,
+		});
+		return component;
+	}
+
 	/** A rail carrying the token/cache counters and the gateway usage window. */
 	function buildUsageRail(): StatusLineComponent {
 		const observer = new GatewayQuotaObserver();
@@ -312,6 +400,29 @@ describe("gateway quota window on a narrow rail", () => {
 		},
 		SWEEP_TIMEOUT_MS,
 	);
+
+	it("also lets the model outlive the counters on a rail that had no ranking at all", () => {
+		// A model declaring no context window, with no goal running, behind a
+		// gateway that has reported a budget. That rail ranked nothing before,
+		// so `model` sat at 0 with the counters and went in tail order; the
+		// rendered window switches ranking on and lifts it to 1. This is the one
+		// case where the window widens something other than itself, and it is
+		// the deployment the window exists for: a self-hosted model served
+		// through the gateway.
+		const withGateway = strip(buildNoContextRail(true).render(28)[0]);
+		const withoutGateway = strip(buildNoContextRail(false).render(28)[0]);
+
+		// Ranked: the counters pay for the model and the window.
+		expect(withGateway).toContain("sonnet-4.5");
+		expect(withGateway).not.toContain("in 1K");
+		expect(withGateway).not.toContain("out 500");
+		// Unranked: the same layout at the same width evicts from the tail, and
+		// the model is what sits there.
+		expect(withoutGateway).toContain("in 1K");
+		expect(withoutGateway).toContain("out 500");
+		expect(withoutGateway).not.toContain("sonnet-4.5");
+		expect(withoutGateway).not.toContain("vug");
+	});
 
 	it("carries no priority when the segment has observed nothing", () => {
 		// Without an observation the segment renders nothing, so eviction must be

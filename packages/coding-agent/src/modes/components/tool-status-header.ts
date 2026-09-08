@@ -1046,8 +1046,19 @@ export class StatusLineComponent implements Component {
 	 * survive it: a counter says how much has been spent, while the window says
 	 * how much is left before the gateway stops answering, and losing the second
 	 * to keep the first is the wrong trade on a rail with room for one. Sharing
-	 * a rank rather than taking a new one keeps the tie broken by the historical
-	 * right-then-left order, so nothing about the model's own eviction moves.
+	 * a rank rather than taking a new one leaves the two to the historical
+	 * right-then-left, tail-first order when they meet.
+	 *
+	 * A rendered usage window also switches ranking on, through `anyPriority`,
+	 * for a rail that previously had none. That is reachable: a model declaring
+	 * no context window, with no goal running, behind a gateway that has
+	 * reported a budget — a self-hosted model served through the gateway, which
+	 * is the deployment this window exists for. `model` there moves from 0 to 1
+	 * and starts outliving the counters. That is the same judgement applied to
+	 * the segment beside it rather than an accident: once a rail is worth
+	 * ranking at all, the model name is worth more than a token count. A
+	 * session that has never seen a gateway header still has no window, so it
+	 * ranks nothing and evicts exactly as it did before.
 	 */
 	#priorityRanker(seg: CollectedStatusSegments): (id: StatusLineSegmentId | null) => number {
 		const { include, inlineContextPct, usage } = this.#priorityItems(seg);
