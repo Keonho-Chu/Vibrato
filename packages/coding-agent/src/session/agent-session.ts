@@ -1332,6 +1332,13 @@ function attachRetryableAtHint(errorMessage: string | undefined, retryableAt: nu
  */
 const QUOTA_TERMINAL_RETRY_AFTER_MS = 60_000;
 
+/**
+ * Backoff used when a daily-quota failure names no reset instant. Mirrors
+ * `AuthStorage`'s own default so the session-side hold reports the same instant
+ * the credential block used to report.
+ */
+const QUOTA_HOLD_DEFAULT_BACKOFF_MS = 60_000;
+
 /** Suppression-reason phrasing for the daily-limit hold, shown where a model explains its unavailability. */
 function describeQuotaHold(resetAtMs: number): string | undefined {
 	if (!Number.isFinite(resetAtMs)) return undefined;
@@ -20106,11 +20113,12 @@ export class AgentSession {
 	 *    session now uses a different credential" — with a single-row pool it is
 	 *    true while nothing rotated. Both branches therefore re-resolve and
 	 *    require the active key to have actually changed.
-	 * 4. **A `quota` failure leaves credential state untouched** (issue #14)
-	 *    unless `retry.rotateCredentialsOnQuota` is explicitly enabled. Not merely
-	 *    "reports no rotation": blocking the row would hand the NEXT turn to the
-	 *    second stored identity, which is the same gateway allowance. See the
-	 *    inline comment on that branch.
+	 * 4. **A `quota` failure against an API-key pool leaves credential state
+	 *    untouched** (issue #14) unless `retry.rotateCredentialsOnQuota` is
+	 *    explicitly enabled. Not merely "reports no rotation": blocking the row
+	 *    would hand the NEXT turn to the second key, which is the same gateway
+	 *    allowance. OAuth pools keep their existing rotation. See the inline
+	 *    comment on that branch.
 	 */
 	async #markFailedCredential(trigger: {
 		class: FallbackTriggerClass;
@@ -20133,25 +20141,31 @@ export class AgentSession {
 		const credentialSessionId = this.credentialSessionId;
 		const activeApiKey = await this.#modelRegistry.getApiKey(this.model, credentialSessionId);
 
-		// (4) Quota boundary (issue #14).
+		// (4) Quota boundary for a stored API-key pool (issue #14).
 		//
-		// Every stored credential for a provider is used against that provider's
-		// one baseUrl, so an allowance spent under one identity is the same
+		// Every API key stored for a provider is used against that provider's one
+		// baseUrl, so an allowance spent under one key is the same gateway
 		// allowance under the next. `markUsageLimitReached` would block the failed
-		// row, and a blocked row is skipped by selection — so merely declining to
-		// report a rotation here still moved the NEXT turn onto the second stored
-		// identity. The policy is that no other row is reached until the limit
+		// row, and a blocked row is skipped by API-key selection — so merely
+		// declining to report a rotation here still moved the NEXT turn onto the
+		// second key. The policy is that no other row is reached until the limit
 		// resets, so the row is left completely untouched and the reset instant is
 		// recorded on the session instead. `#quotaRetryableAtMs()` reads that hold,
 		// which is what keeps the retryable-at signal working with nothing blocked.
 		//
-		// The instant comes from AuthStorage's own computation, so a subscription
-		// usage report still raises a bare Retry-After to the real reset.
-		if (trigger.class === "quota" && !this.settings.get("retry.rotateCredentialsOnQuota")) {
-			const resetAtMs = await authStorage.getUsageLimitResetAtMs(provider, credentialSessionId, {
-				retryAfterMs: trigger.retryAfterMs,
-			});
-			if (resetAtMs !== undefined) this.#recordQuotaHold(provider, resetAtMs);
+		// Scoped to API keys on purpose. A provider's API keys all leave through
+		// its one baseUrl, so they are one gateway identity space — the deployment
+		// issue #8 describes. Several OAuth rows are several subscription accounts
+		// the operator owns; they carry their own separate quotas, never traverse
+		// the gateway, and switching between them on a usage limit is an existing
+		// feature rather than a boundary bypass. OAuth therefore keeps today's
+		// `markUsageLimitReached` rotation path untouched.
+		if (
+			trigger.class === "quota" &&
+			!this.settings.get("retry.rotateCredentialsOnQuota") &&
+			authStorage.getSessionCredentialType(provider, credentialSessionId) === "api_key"
+		) {
+			this.#recordApiKeyQuotaHold(provider, trigger.retryAfterMs);
 			return "exhausted";
 		}
 
@@ -20177,41 +20191,46 @@ export class AgentSession {
 		return remaining ? "unchanged" : "exhausted";
 	}
 	/**
-	 * Session-scoped daily-quota holds, keyed by provider.
+	 * Session-scoped daily-quota holds for API-key pools, keyed by provider.
 	 *
-	 * These exist because the policy forbids reaching a different stored row, so
+	 * These exist because the policy forbids reaching a different stored key, so
 	 * the credential row is deliberately NOT blocked in auth storage (a blocked
 	 * row is exactly what selection skips). The reset instant therefore has no
 	 * home in storage and lives here for the life of the session.
 	 */
-	#quotaHoldUntilMs = new Map<string, number>();
+	#apiKeyQuotaHoldUntilMs = new Map<string, number>();
 
 	/** Record (or extend) the hold; a later reset instant never shortens an earlier one. */
-	#recordQuotaHold(provider: string, resetAtMs: number): void {
-		if (!Number.isFinite(resetAtMs)) return;
-		const existing = this.#quotaHoldUntilMs.get(provider);
-		this.#quotaHoldUntilMs.set(provider, existing === undefined ? resetAtMs : Math.max(existing, resetAtMs));
+	#recordApiKeyQuotaHold(provider: string, retryAfterMs: number | undefined): void {
+		const untilMs =
+			Date.now() +
+			(retryAfterMs !== undefined && Number.isFinite(retryAfterMs) && retryAfterMs >= 0
+				? retryAfterMs
+				: QUOTA_HOLD_DEFAULT_BACKOFF_MS);
+		const existing = this.#apiKeyQuotaHoldUntilMs.get(provider);
+		this.#apiKeyQuotaHoldUntilMs.set(provider, existing === undefined ? untilMs : Math.max(existing, untilMs));
 	}
 
 	/** The active hold instant, sweeping an elapsed one so it cannot outlive the limit it describes. */
-	#quotaHoldUntil(provider: string): number | undefined {
-		const untilMs = this.#quotaHoldUntilMs.get(provider);
+	#apiKeyQuotaHoldUntil(provider: string): number | undefined {
+		const untilMs = this.#apiKeyQuotaHoldUntilMs.get(provider);
 		if (untilMs === undefined) return undefined;
 		if (untilMs <= Date.now()) {
-			this.#quotaHoldUntilMs.delete(provider);
+			this.#apiKeyQuotaHoldUntilMs.delete(provider);
 			return undefined;
 		}
 		return untilMs;
 	}
 
 	/**
-	 * The unblock instant for a terminal quota error: the session's own hold when
-	 * one is active, otherwise AuthStorage's already-computed instant for the
-	 * rows it still blocks (auth failures, and quota with rotation opted in).
+	 * The unblock instant for a terminal quota error: the session's own API-key
+	 * hold when one is active, otherwise AuthStorage's already-computed instant
+	 * for the rows it still blocks (OAuth pools, auth failures, and quota with
+	 * rotation opted in).
 	 */
 	#quotaRetryableAtMs(): number | undefined {
 		if (!this.model) return undefined;
-		const held = this.#quotaHoldUntil(this.model.provider);
+		const held = this.#apiKeyQuotaHoldUntil(this.model.provider);
 		if (held !== undefined) return held;
 		const retryableAt = this.#modelRegistry.authStorage.getEarliestUnblockAt(
 			this.model.provider,

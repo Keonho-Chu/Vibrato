@@ -4,6 +4,8 @@ import { Agent, type AgentOptions } from "@vib-rato/agent-core";
 import { type AssistantMessage, getBundledModel, type Model } from "@vib-rato/ai";
 import { AssistantMessageEventStream } from "@vib-rato/ai/utils/event-stream";
 import { classifyFallbackTrigger } from "@vib-rato/ai/utils/fallback-transport";
+import * as oauth from "@vib-rato/ai/utils/oauth";
+import type { OAuthCredentials } from "@vib-rato/ai/utils/oauth/types";
 import { ModelRegistry } from "@vib-rato/coding-agent/config/model-registry";
 import { Settings } from "@vib-rato/coding-agent/config/settings";
 import { AgentSession, type AgentSessionEvent } from "@vib-rato/coding-agent/session/agent-session";
@@ -346,6 +348,9 @@ describe("issue #14 daily-quota retry, rotation, and fallback policy", () => {
 			expect(keyAfterSecondTurn).toBe(keyBefore);
 			// Two turns, one upstream request each, neither of them a rotation.
 			expect(calls).toEqual([selector(primary), selector(primary)]);
+			// Nothing was blocked, which is why the next turn could not be handed
+			// to the second key. The OAuth test below is the deliberate contrast.
+			expect(authStorage.getEarliestUnblockAt("anthropic", live.credentialSessionId)).toBeUndefined();
 		});
 
 		it("still reports the reset instant even though no credential row is blocked", async () => {
@@ -366,6 +371,71 @@ describe("issue #14 daily-quota retry, rotation, and fallback policy", () => {
 			const resetAtMs = expectSingleRetryableAt(lastAssistant(live).errorMessage ?? "");
 			expect(resetAtMs).toBeGreaterThanOrEqual(before + QUOTA_RETRY_AFTER_MS - 5_000);
 			expect(resetAtMs).toBeLessThanOrEqual(after + QUOTA_RETRY_AFTER_MS + 5_000);
+		});
+
+		it("leaves an OAuth pool rotating on a usage limit, because those are separate quotas", async () => {
+			// The hold is scoped to API-key pools, which all leave through one
+			// provider baseUrl and are therefore one gateway identity. Several OAuth
+			// rows are several subscription accounts the operator owns; their quotas
+			// are separate and never traverse the gateway, so switching between them
+			// is an existing feature rather than the bypass issue #8 forbids.
+			const oauthTempDir = TempDir.createSync("@issue-14-oauth-pool-");
+			// No ranking strategy, so `markUsageLimitReached` takes no usage-report
+			// path and the test needs no network.
+			const oauthStorage = await AuthStorage.create(path.join(oauthTempDir.path(), "auth.db"), {
+				rankingStrategyResolver: () => undefined,
+			});
+			try {
+				vi.spyOn(oauth, "refreshOAuthToken").mockImplementation(async (_provider, credential) => credential);
+				vi.spyOn(oauth, "getOAuthApiKey").mockImplementation(async (_provider, credentials) => {
+					const credential = credentials.anthropic as OAuthCredentials | undefined;
+					return credential
+						? { apiKey: `oauth-key-${credential.accountId ?? "unknown"}`, newCredentials: credential }
+						: null;
+				});
+				await oauthStorage.set("anthropic", [
+					{
+						type: "oauth",
+						access: "access-1",
+						refresh: "refresh-1",
+						expires: Date.now() + 3_600_000,
+						accountId: "acct-1",
+					},
+					{
+						type: "oauth",
+						access: "access-2",
+						refresh: "refresh-2",
+						expires: Date.now() + 3_600_000,
+						accountId: "acct-2",
+					},
+				]);
+
+				modelRegistry = new ModelRegistry(oauthStorage);
+				const calls: string[] = [];
+				const live = createSession([primary], model => {
+					calls.push(selector(model));
+					return quotaStream(model);
+				});
+
+				expect(await modelRegistry.getApiKey(primary, live.credentialSessionId)).toBeDefined();
+				await live.prompt("subscription account hits its usage limit");
+				await live.waitForIdle();
+
+				// Rotation is what produces extra attempts on ONE model: the session
+				// switched accounts and tried again, stopping only once the pool was
+				// spent. The identical scenario on an API-key pool makes exactly one
+				// request, which the two tests above assert.
+				expect(calls).toEqual([selector(primary), selector(primary), selector(primary)]);
+				// A row is blocked in storage, which is the `markUsageLimitReached`
+				// path this scope deliberately leaves alone; the API-key pool blocks
+				// nothing at all.
+				expect(oauthStorage.getEarliestUnblockAt("anthropic", live.credentialSessionId)).toBeDefined();
+			} finally {
+				await session?.dispose();
+				session = undefined;
+				oauthStorage.close();
+				oauthTempDir.removeSync();
+			}
 		});
 
 		it("restores rotation only when the operator opts in explicitly", async () => {
