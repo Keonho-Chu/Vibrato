@@ -8,6 +8,7 @@ import {
 	runLocalProviderDiscoverCommand,
 	runLocalProviderSmoke,
 	runLocalProviderStatus,
+	runLocalProviderStatusCommand,
 } from "@vib-rato/coding-agent/cli/local-provider-smoke";
 import { hookFetch } from "@vib-rato/utils/hook-fetch";
 import { LOCAL_PROVIDER_ACTIONS, LOCAL_PROVIDER_DEFAULT_ACTION } from "../src/commands/local-provider";
@@ -344,5 +345,263 @@ describe("local provider streaming smoke", () => {
 		expect(result.ok).toBe(true);
 		expect(result.baseUrl).toBe("http://127.0.0.1:1234/v1");
 		expect(result.model).toBe("local-model");
+	});
+});
+
+describe("local provider gateway facts and hidden providers", () => {
+	let tempDir: string;
+	let modelsPath: string;
+
+	beforeEach(() => {
+		tempDir = path.join(os.tmpdir(), `vib-local-provider-gateway-${crypto.randomUUID()}`);
+		fs.mkdirSync(tempDir, { recursive: true });
+		modelsPath = path.join(tempDir, "models.json");
+	});
+
+	afterEach(() => {
+		if (tempDir && fs.existsSync(tempDir)) {
+			fs.rmSync(tempDir, { recursive: true, force: true });
+		}
+	});
+
+	function writeLocalConfig(): void {
+		fs.writeFileSync(
+			modelsPath,
+			JSON.stringify({
+				providers: {
+					local: { openaiCompat: { baseUrl: "http://127.0.0.1:8788", apiKey: "vug-key" } },
+				},
+			}),
+		);
+	}
+
+	function modelsResponse(): Response {
+		return new Response(JSON.stringify({ data: [{ id: "vug-model" }] }), {
+			status: 200,
+			headers: { "Content-Type": "application/json" },
+		});
+	}
+
+	function emptyStream(headers: Record<string, string>): Response {
+		return new Response(
+			new ReadableStream({
+				start(controller) {
+					controller.enqueue(new TextEncoder().encode("data: [DONE]\n\n"));
+					controller.close();
+				},
+			}),
+			{ status: 200, headers },
+		);
+	}
+
+	async function captureStatusOutput(cmd: { modelsPath: string; smoke?: boolean }): Promise<string> {
+		const captured: string[] = [];
+		const originalStdout = process.stdout.write;
+		const originalStderr = process.stderr.write;
+		const originalExitCode = process.exitCode;
+		process.stdout.write = ((chunk: string) => {
+			captured.push(String(chunk));
+			return true;
+		}) as typeof process.stdout.write;
+		process.stderr.write = ((chunk: string) => {
+			captured.push(String(chunk));
+			return true;
+		}) as typeof process.stderr.write;
+		try {
+			await runLocalProviderStatusCommand(cmd);
+		} finally {
+			process.stdout.write = originalStdout;
+			process.stderr.write = originalStderr;
+			process.exitCode = originalExitCode;
+		}
+		return captured.join("");
+	}
+
+	test("reports the gateway budget, reset countdown and queue wait from the smoke response", async () => {
+		writeLocalConfig();
+		const resetAt = new Date(Date.now() + 2.5 * 60 * 60 * 1000);
+		using _hook = hookFetch(input => {
+			if (String(input).endsWith("/models")) return modelsResponse();
+			return emptyStream({
+				"x-vug-daily-limit": "200000",
+				"x-vug-daily-remaining": "187655",
+				"x-vug-daily-reset": resetAt.toISOString(),
+				"x-vug-queued-ms": "1200",
+			});
+		});
+
+		const result = await runLocalProviderStatus({ modelsPath, smoke: true });
+
+		expect(result.ok).toBe(true);
+		expect(result.gateway).toEqual({
+			limit: 200000,
+			remaining: 187655,
+			used: 12345,
+			resetAt: resetAt.toISOString(),
+			resetInMs: expect.any(Number),
+			queuedMs: 1200,
+		});
+	});
+
+	test("prints the gateway facts as their own status lines", async () => {
+		writeLocalConfig();
+		const resetAt = new Date(Date.now() + 2.5 * 60 * 60 * 1000);
+		using _hook = hookFetch(input => {
+			if (String(input).endsWith("/models")) return modelsResponse();
+			return emptyStream({
+				"x-vug-daily-limit": "200000",
+				"x-vug-daily-remaining": "187655",
+				"x-vug-daily-reset": resetAt.toISOString(),
+			});
+		});
+
+		const output = await captureStatusOutput({ modelsPath, smoke: true });
+
+		expect(output).toContain("gateway tokens: limit 200000, used 12345, remaining 187655");
+		expect(output).toContain(`gateway resets: in 2h 30m (${resetAt.toISOString()})`);
+		expect(output).not.toContain("daily");
+		expect(output).not.toContain("vug-key");
+	});
+
+	test("prints no gateway line for an endpoint that sends no gateway headers", async () => {
+		writeLocalConfig();
+		using _hook = hookFetch(input => {
+			if (String(input).endsWith("/models")) return modelsResponse();
+			return emptyStream({ "content-type": "text/event-stream" });
+		});
+
+		const result = await runLocalProviderStatus({ modelsPath, smoke: true });
+		const output = await captureStatusOutput({ modelsPath, smoke: true });
+
+		expect(result.ok).toBe(true);
+		expect(result.gateway).toBeUndefined();
+		expect(output).not.toContain("gateway");
+	});
+
+	test("reports no gateway facts when no smoke request was made", async () => {
+		writeLocalConfig();
+		using _hook = hookFetch(() => {
+			// The gateway does not attach quota headers to /v1/models, but even if an
+			// endpoint did, a status run without a smoke must report nothing.
+			return new Response(JSON.stringify({ data: [{ id: "vug-model" }] }), {
+				status: 200,
+				headers: { "Content-Type": "application/json", "x-vug-daily-limit": "200000" },
+			});
+		});
+
+		const result = await runLocalProviderStatus({ modelsPath });
+
+		expect(result.checks.find(check => check.name === "chat_stream")?.status).toBe("skipped");
+		expect(result.gateway).toBeUndefined();
+	});
+
+	test("classifies a token-limit rejection with the reset countdown", async () => {
+		writeLocalConfig();
+		const resetAt = new Date(Date.now() + 2 * 60 * 60 * 1000);
+		using _hook = hookFetch(input => {
+			if (String(input).endsWith("/models")) return modelsResponse();
+			return new Response(
+				JSON.stringify({
+					error: { message: "token limit reached", type: "rate_limit_error", code: "daily_token_limit" },
+				}),
+				{
+					status: 429,
+					headers: {
+						"content-type": "application/json",
+						"retry-after": "7200",
+						"x-vug-daily-limit": "200000",
+						"x-vug-daily-used": "200000",
+						"x-vug-daily-reset": resetAt.toISOString(),
+					},
+				},
+			);
+		});
+
+		const result = await runLocalProviderStatus({ modelsPath, smoke: true });
+		const streamCheck = result.checks.find(check => check.name === "chat_stream");
+
+		expect(result.ok).toBe(false);
+		expect(streamCheck?.category).toBe("token_limit");
+		expect(streamCheck?.message).toContain("token limit reached; resets in 2h");
+		expect(result.gateway?.limit).toBe(200000);
+		expect(result.gateway?.used).toBe(200000);
+		expect(result.gateway?.resetAt).toBe(resetAt.toISOString());
+	});
+
+	test("classifies a queue rejection as a busy gateway carrying the queue depth", async () => {
+		writeLocalConfig();
+		using _hook = hookFetch(input => {
+			if (String(input).endsWith("/models")) return modelsResponse();
+			return new Response(
+				JSON.stringify({ error: { message: "gateway busy", type: "overloaded_error", code: "queue_timeout" } }),
+				{
+					status: 503,
+					headers: {
+						"content-type": "application/json",
+						"retry-after": "5",
+						"x-vug-queue-depth": "3",
+						"x-vug-inflight": "8",
+					},
+				},
+			);
+		});
+
+		const result = await runLocalProviderStatus({ modelsPath, smoke: true });
+		const streamCheck = result.checks.find(check => check.name === "chat_stream");
+
+		expect(result.ok).toBe(false);
+		expect(streamCheck?.category).toBe("gateway_busy");
+		expect(streamCheck?.message).toContain("gateway busy (queue 3)");
+		expect(streamCheck?.action).toContain("Retry in 5s");
+		expect(result.gateway?.queueDepth).toBe(3);
+		expect(result.gateway?.inflight).toBe(8);
+		expect(result.gateway?.retryAfterMs).toBe(5000);
+	});
+
+	test("leaves a plain local 503 on the existing not-ready classification", async () => {
+		writeLocalConfig();
+		using _hook = hookFetch(input => {
+			if (String(input).endsWith("/models")) return modelsResponse();
+			return new Response("model is loading", { status: 503 });
+		});
+
+		const result = await runLocalProviderStatus({ modelsPath, smoke: true });
+
+		expect(result.checks.find(check => check.name === "chat_stream")?.category).toBe("not_ready");
+		expect(result.gateway).toBeUndefined();
+	});
+
+	test("names a provider whose apiKeyEnv variable is unset, even with no local endpoint", async () => {
+		fs.writeFileSync(
+			modelsPath,
+			JSON.stringify({
+				providers: {
+					vllm: { baseUrl: "http://10.240.1.240:8788/v1", apiKeyEnv: "VIB_TEST_UNSET_GATEWAY_KEY" },
+				},
+			}),
+		);
+
+		const result = await runLocalProviderStatus({ modelsPath });
+		const output = await captureStatusOutput({ modelsPath });
+
+		expect(result.hiddenProviders).toEqual([{ provider: "vllm", envName: "VIB_TEST_UNSET_GATEWAY_KEY" }]);
+		expect(output).toContain('provider "vllm": VIB_TEST_UNSET_GATEWAY_KEY is not set, its models are hidden');
+	});
+
+	test("says nothing about a provider whose apiKeyEnv variable is set", async () => {
+		const envName = "VIB_TEST_SET_GATEWAY_KEY";
+		fs.writeFileSync(
+			modelsPath,
+			JSON.stringify({ providers: { vllm: { baseUrl: "http://10.240.1.240:8788/v1", apiKeyEnv: envName } } }),
+		);
+		const previous = Bun.env[envName];
+		Bun.env[envName] = "vug_live_value";
+		try {
+			const result = await runLocalProviderStatus({ modelsPath });
+			expect(result.hiddenProviders).toEqual([]);
+		} finally {
+			if (previous === undefined) delete Bun.env[envName];
+			else Bun.env[envName] = previous;
+		}
 	});
 });
