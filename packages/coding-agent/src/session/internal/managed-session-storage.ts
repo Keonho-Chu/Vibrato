@@ -900,6 +900,7 @@ function securityError(pathname: string, result: NativeSecurity): Error {
 }
 
 function secure(pathname: string, kind: "directory" | "file"): void {
+	console.log("TRACE secure(apply)", kind, path.basename(pathname));
 	const applied = validateNativeSecurityResult(
 		nativeSessionStorage().applyOwnerOnlyPathSecurity(pathname, kind),
 		"apply",
@@ -967,6 +968,7 @@ function verifyExistingManagedPathSecurity(
 }
 
 function secureExistingManagedDirectory(pathname: string, kind: "directory" | "file"): void {
+	console.log("TRACE secureExisting enter", kind, path.basename(pathname));
 	const named = fs.lstatSync(pathname, { bigint: true });
 	const safeKind = kind === "directory" ? named.isDirectory() : named.isFile();
 	if (!safeKind || named.isSymbolicLink()) throw new Error(`Unsafe managed ${kind}: ${pathname}`);
@@ -976,18 +978,23 @@ function secureExistingManagedDirectory(pathname: string, kind: "directory" | "f
 		kind,
 	);
 	assertManagedPathIdentity(pathname, kind, named);
+	console.log("TRACE secureExisting verified", path.basename(pathname), JSON.stringify(verified), "repairable:", verified.ok ? "n/a" : isStartupRepairableSecurityFailure(verified.code), "platform:", process.platform);
 	if (verified.ok) return;
 	if (!isStartupRepairableSecurityFailure(verified.code)) throw securityError(pathname, verified);
+	const repairFn = nativeSessionStorage().repairOwnerOnlyPathSecurityExpected as unknown as { mock?: unknown; name?: string };
+	console.log("TRACE secureExisting calling repair", path.basename(pathname), "isMock:", repairFn.mock !== undefined, "name:", repairFn.name);
 	const repaired = validateNativeSecurityResult(
 		nativeSessionStorage().repairOwnerOnlyPathSecurityExpected(pathname, kind, named.dev, named.ino),
 		"verify",
 		kind,
 	);
+	console.log("TRACE secureExisting repaired", path.basename(pathname), JSON.stringify(repaired));
 	if (!repaired.ok) throw securityError(pathname, repaired);
 	assertManagedPathIdentity(pathname, kind, named);
 }
 
 function secureManagedDirectory(pathname: string, created: boolean, policy: ManagedSessionSecurityPolicy): void {
+	console.log("TRACE secureManagedDirectory", path.basename(pathname), "created:", created, "policy:", policy, "verifyFirst:", windowsExistingVerifyFirst(policy));
 	if (!created && windowsExistingVerifyFirst(policy)) {
 		secureExistingManagedDirectory(pathname, "directory");
 		return;
