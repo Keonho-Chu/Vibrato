@@ -1525,6 +1525,23 @@ export const SETTINGS_SCHEMA = {
 			],
 		},
 	},
+	/**
+	 * Escape hatch for the token-limit API-key-switching ban. A `quota` failure
+	 * means the account's allowance for this endpoint is spent, so reaching
+	 * another stored API key for the SAME provider (and therefore the same
+	 * baseUrl) walks around the gateway's audit and quota boundary rather than
+	 * recovering from congestion. With this off the failed row is left untouched,
+	 * so the hold survives into later turns instead of handing the next turn to
+	 * the second key. Enabling it restores the previous behavior for a deployment
+	 * that genuinely owns several independent quotas behind one provider id.
+	 *
+	 * Applies to API-key pools only. OAuth pools are several subscription
+	 * accounts the operator owns, carrying their own separate quotas that never
+	 * traverse the gateway, so they keep rotating on a usage limit either way and
+	 * ignore this key. Deliberately has no `ui` block: an operator escape hatch,
+	 * not a user-facing preference.
+	 */
+	"retry.rotateCredentialsOnQuota": { type: "boolean", default: false },
 
 	// ────────────────────────────────────────────────────────────────────────
 	// Interaction

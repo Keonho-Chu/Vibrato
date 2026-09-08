@@ -22,6 +22,7 @@ import {
 	normalizeTierMap,
 	validateAutoroutingSetup,
 } from "../../config/autorouting-contract";
+import { formatDiscoveryErrorHint } from "../../config/discovery-failure-message";
 import {
 	getProxyRoutableProviders,
 	inspectProxyProviderId,
@@ -30,7 +31,6 @@ import {
 	rewriteSelectorForProxy,
 	tryResolveProxyProviderId,
 } from "../../config/model-profile-activation";
-
 import { isModelProfileProviderAvailable } from "../../config/model-profile-contract";
 import {
 	deriveModelProfileMappedProviders,
@@ -1985,18 +1985,7 @@ export class ModelSelectorComponent extends Container {
 	}
 
 	#formatDiscoveryErrorHint(error: string | undefined): string | undefined {
-		if (!error) {
-			return undefined;
-		}
-		const httpMatch = error.match(/^HTTP (\d+) from (.+)$/);
-		if (!httpMatch) {
-			return undefined;
-		}
-		const [, statusCode, url] = httpMatch;
-		if (statusCode === "404") {
-			return `  Discovery endpoint ${url} returned 404. Point baseUrl at the host that serves /models (usually .../v1).`;
-		}
-		return `  Discovery failed: ${error}`;
+		return formatDiscoveryErrorHint(error);
 	}
 
 	#getProviderEmptyStateMessage(): string | undefined {

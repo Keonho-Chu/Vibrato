@@ -1322,6 +1322,59 @@ function attachRetryableAtHint(errorMessage: string | undefined, retryableAt: nu
 	return current ? `${current}; ${hint}` : hint;
 }
 
+/**
+ * A `quota` failure carrying a Retry-After at or above this threshold is a
+ * spent allowance for the upstream's current quota window, not a moment of
+ * congestion. Below it the upstream is asking for a short pause, which the
+ * ordinary retry budget already handles correctly; at or above it, sleeping is
+ * useless and retrying is the behavior issue #14 forbids.
+ *
+ * 60s is deliberately generous, and stays correct however long the window is.
+ * The gateway's window length is operator-configured (`VUG_QUOTA_WINDOW_HOURS`,
+ * 24 by default and 3 in production), so a reset is hours away at the short end
+ * and a day away at the long end; both clear this threshold, and no realistic
+ * congestion hint reaches it. The wire contract keeps its "daily" names
+ * (`daily_token_limit`, `x-vug-daily-*`) for stability, so this code deliberately
+ * describes the state in window-neutral terms instead of echoing them.
+ */
+const QUOTA_TERMINAL_RETRY_AFTER_MS = 60_000;
+
+/**
+ * Backoff used when a token-limit failure names no reset instant. Mirrors
+ * `AuthStorage`'s own default so the session-side hold reports the same instant
+ * the credential block used to report.
+ */
+const QUOTA_HOLD_DEFAULT_BACKOFF_MS = 60_000;
+
+/** Suppression-reason phrasing for the token-limit hold, shown where a model explains its unavailability. */
+function describeQuotaHold(resetAtMs: number): string | undefined {
+	if (!Number.isFinite(resetAtMs)) return undefined;
+	try {
+		return `token limit reached; resets at ${new Date(resetAtMs).toISOString()}`;
+	} catch {
+		return undefined;
+	}
+}
+
+/**
+ * Error-text phrasing for the same hold. It deliberately carries the exact
+ * `retryable at <ISO>` phrase {@link attachRetryableAtHint} looks for, so the
+ * two hints never both land and name the same instant twice.
+ */
+function attachQuotaHoldHint(errorMessage: string | undefined, resetAtMs: number): string {
+	const current = errorMessage?.trim();
+	if (!Number.isFinite(resetAtMs)) return current || "";
+	let iso: string;
+	try {
+		iso = new Date(resetAtMs).toISOString();
+	} catch {
+		return current || "";
+	}
+	if (current?.includes("token limit reached")) return current;
+	const hint = `token limit reached; retryable at ${iso}`;
+	return current ? `${current}; ${hint}` : hint;
+}
+
 function isMessageOnlyFirstEventTimeout(message: AssistantMessage): boolean {
 	if (hasBareDefaultRetryDisqualifyingFacts(message)) return false;
 	return (
@@ -20067,6 +20120,12 @@ export class AgentSession {
 	 *    session now uses a different credential" — with a single-row pool it is
 	 *    true while nothing rotated. Both branches therefore re-resolve and
 	 *    require the active key to have actually changed.
+	 * 4. **A `quota` failure against an API-key pool leaves credential state
+	 *    untouched** (issue #14) unless `retry.rotateCredentialsOnQuota` is
+	 *    explicitly enabled. Not merely "reports no rotation": blocking the row
+	 *    would hand the NEXT turn to the second key, which is the same gateway
+	 *    allowance. OAuth pools keep their existing rotation. See the inline
+	 *    comment on that branch.
 	 */
 	async #markFailedCredential(trigger: {
 		class: FallbackTriggerClass;
@@ -20089,6 +20148,34 @@ export class AgentSession {
 		const credentialSessionId = this.credentialSessionId;
 		const activeApiKey = await this.#modelRegistry.getApiKey(this.model, credentialSessionId);
 
+		// (4) Quota boundary for a stored API-key pool (issue #14).
+		//
+		// Every API key stored for a provider is used against that provider's one
+		// baseUrl, so an allowance spent under one key is the same gateway
+		// allowance under the next. `markUsageLimitReached` would block the failed
+		// row, and a blocked row is skipped by API-key selection — so merely
+		// declining to report a rotation here still moved the NEXT turn onto the
+		// second key. The policy is that no other row is reached until the limit
+		// resets, so the row is left completely untouched and the reset instant is
+		// recorded on the session instead. `#quotaRetryableAtMs()` reads that hold,
+		// which is what keeps the retryable-at signal working with nothing blocked.
+		//
+		// Scoped to API keys on purpose. A provider's API keys all leave through
+		// its one baseUrl, so they are one gateway identity space — the deployment
+		// issue #8 describes. Several OAuth rows are several subscription accounts
+		// the operator owns; they carry their own separate quotas, never traverse
+		// the gateway, and switching between them on a usage limit is an existing
+		// feature rather than a boundary bypass. OAuth therefore keeps today's
+		// `markUsageLimitReached` rotation path untouched.
+		if (
+			trigger.class === "quota" &&
+			!this.settings.get("retry.rotateCredentialsOnQuota") &&
+			authStorage.getSessionCredentialType(provider, credentialSessionId) === "api_key"
+		) {
+			this.#recordApiKeyQuotaHold(provider, trigger.retryAfterMs);
+			return "exhausted";
+		}
+
 		let remaining: boolean;
 		if (trigger.class === "auth") {
 			if (!isAuthenticated(activeApiKey)) return "unchanged";
@@ -20110,9 +20197,48 @@ export class AgentSession {
 		}
 		return remaining ? "unchanged" : "exhausted";
 	}
-	/** Copy AuthStorage's already-computed unblock instant onto a terminal quota error. */
+	/**
+	 * Session-scoped token-limit holds for API-key pools, keyed by provider.
+	 *
+	 * These exist because the policy forbids reaching a different stored key, so
+	 * the credential row is deliberately NOT blocked in auth storage (a blocked
+	 * row is exactly what selection skips). The reset instant therefore has no
+	 * home in storage and lives here for the life of the session.
+	 */
+	#apiKeyQuotaHoldUntilMs = new Map<string, number>();
+
+	/** Record (or extend) the hold; a later reset instant never shortens an earlier one. */
+	#recordApiKeyQuotaHold(provider: string, retryAfterMs: number | undefined): void {
+		const untilMs =
+			Date.now() +
+			(retryAfterMs !== undefined && Number.isFinite(retryAfterMs) && retryAfterMs >= 0
+				? retryAfterMs
+				: QUOTA_HOLD_DEFAULT_BACKOFF_MS);
+		const existing = this.#apiKeyQuotaHoldUntilMs.get(provider);
+		this.#apiKeyQuotaHoldUntilMs.set(provider, existing === undefined ? untilMs : Math.max(existing, untilMs));
+	}
+
+	/** The active hold instant, sweeping an elapsed one so it cannot outlive the limit it describes. */
+	#apiKeyQuotaHoldUntil(provider: string): number | undefined {
+		const untilMs = this.#apiKeyQuotaHoldUntilMs.get(provider);
+		if (untilMs === undefined) return undefined;
+		if (untilMs <= Date.now()) {
+			this.#apiKeyQuotaHoldUntilMs.delete(provider);
+			return undefined;
+		}
+		return untilMs;
+	}
+
+	/**
+	 * The unblock instant for a terminal quota error: the session's own API-key
+	 * hold when one is active, otherwise AuthStorage's already-computed instant
+	 * for the rows it still blocks (OAuth pools, auth failures, and quota with
+	 * rotation opted in).
+	 */
 	#quotaRetryableAtMs(): number | undefined {
 		if (!this.model) return undefined;
+		const held = this.#apiKeyQuotaHoldUntil(this.model.provider);
+		if (held !== undefined) return held;
 		const retryableAt = this.#modelRegistry.authStorage.getEarliestUnblockAt(
 			this.model.provider,
 			this.credentialSessionId,
@@ -20257,6 +20383,48 @@ export class AgentSession {
 				? this.#managedFallbackExhaustionDecision(message, message.errorMessage || "Model fallback attempt failed")
 				: false;
 		}
+		// Token-limit hold (issue #14). A `quota` class carrying a long Retry-After
+		// is an allowance spent for the upstream's current quota window, not
+		// congestion: the same model cannot succeed before the reset, and the
+		// legacy delay path would cap a multi-hour hint at `retry.maxDelayMs` and
+		// re-issue the request seconds later. Recover the
+		// hint the same way the delay computation below does, so a prose-only
+		// Retry-After on the legacy path is honored too.
+		//
+		// This whole block sits ABOVE the replay-safety and bare-default admission
+		// gates on purpose. Those gates `return false` for a content-free 429 in
+		// the DEFAULT configuration (no `retry.*` keys set), so anything placed
+		// after them never runs for the deployment this policy exists for.
+		const quotaHoldMs =
+			trigger.class === "quota"
+				? (trigger.retryAfterMs ??
+					(managedFallback ? undefined : this.#parseRetryAfterMsFromError(message.errorMessage ?? "")))
+				: undefined;
+		const quotaHoldIsTerminal = quotaHoldMs !== undefined && quotaHoldMs >= QUOTA_TERMINAL_RETRY_AFTER_MS;
+		// One clock read for one instant. The suppression window, the suppression
+		// reason, and the error text all describe the SAME reset; recomputing
+		// `Date.now() + quotaHoldMs` per surface would let them disagree by the
+		// milliseconds between reads.
+		const quotaResetAtMs = quotaHoldMs === undefined ? undefined : Date.now() + quotaHoldMs;
+		if (quotaResetAtMs !== undefined) {
+			// The selector is the one that actually failed, so a single-entry chain
+			// (one model on one gateway, the deployment this policy exists for) also
+			// records why it is unavailable.
+			const quotaSuppressedSelector = controller.currentSelector();
+			if (quotaSuppressedSelector) {
+				this.#modelRegistry.suppressSelector(
+					quotaSuppressedSelector,
+					quotaResetAtMs,
+					describeQuotaHold(quotaResetAtMs),
+				);
+			}
+			// Stamped before the credential marking below so the single combined
+			// phrase lands once; `#stampQuotaRetryableAt` then finds its own
+			// `retryable at` marker already present and leaves the message alone.
+			if (quotaHoldIsTerminal) {
+				message.errorMessage = attachQuotaHoldHint(message.errorMessage, quotaResetAtMs);
+			}
+		}
 		const attemptsUsed = managedFallback ? controller.attemptsUsed || 1 : this.#retryAttempt + 1;
 		const providerRetryCeilingReached =
 			providerRetryMaxAttempts !== undefined && attemptsUsed >= providerRetryMaxAttempts;
@@ -20327,12 +20495,20 @@ export class AgentSession {
 			if (providerRetryCeilingReached && outcome === "retry") {
 				outcome = controller.advance() ? "advance" : "exhausted";
 			}
+			// Never spend the entry's remaining attempts on a model that is held
+			// until its quota window resets. Advancing walks `controller.chain.entries`,
+			// which is exactly the chain the user configured, so this can only ever
+			// reach an entry the user listed — never an unlisted provider or endpoint.
+			if (quotaHoldIsTerminal && outcome === "retry") {
+				outcome = controller.advance() ? "advance" : "exhausted";
+			}
 		} else {
-			outcome = providerRetryCeilingReached
-				? "exhausted"
-				: legacyUnbounded || attemptsUsed <= retrySettings.maxRetries
-					? "retry"
-					: "exhausted";
+			outcome =
+				providerRetryCeilingReached || quotaHoldIsTerminal
+					? "exhausted"
+					: legacyUnbounded || attemptsUsed <= retrySettings.maxRetries
+						? "retry"
+						: "exhausted";
 		}
 		// Credential rotation is unbounded: a fresh credential is a different
 		// retry dimension from transient-error backoff, so it overrides maxRetries
@@ -20372,6 +20548,9 @@ export class AgentSession {
 							errorMessage = this.#annotateQuotaRetryableAt(errorMessage);
 						}
 					}
+				}
+				if (quotaHoldIsTerminal && quotaResetAtMs !== undefined) {
+					errorMessage = attachQuotaHoldHint(errorMessage, quotaResetAtMs);
 				}
 				this.emitNotice("error", errorMessage, "fallback");
 				this.#defaultFallbackExhaustedLastTurn = true;
