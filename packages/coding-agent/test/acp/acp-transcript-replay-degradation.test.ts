@@ -3,6 +3,7 @@ import * as path from "node:path";
 import type { AgentSideConnection, SessionNotification } from "@agentclientprotocol/sdk";
 import { AcpAgent, transcriptReplayContent } from "@vib-rato/coding-agent/modes/acp/acp-agent";
 import { TempDir } from "@vib-rato/utils";
+import packageJson from "../../package.json" with { type: "json" };
 import { writeBrokerDiscovery } from "../../src/sdk/broker/discovery";
 import {
 	type ExactSessionAuthorityFixture,
@@ -238,7 +239,7 @@ describe("ACP transcript replay degradation", () => {
 		await writeBrokerDiscovery(agentDir, {
 			version: 1,
 			protocolVersion: 3,
-			packageGeneration: "test",
+			packageGeneration: packageJson.version,
 			ownerId: "test-owner",
 			pid: process.pid,
 			host: "127.0.0.1",

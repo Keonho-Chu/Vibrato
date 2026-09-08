@@ -8,6 +8,7 @@ import type {
 	SessionNotification,
 } from "@agentclientprotocol/sdk";
 import { TempDir } from "@vib-rato/utils";
+import packageJson from "../package.json" with { type: "json" };
 import { AcpAgent } from "../src/modes/acp/acp-agent";
 import { writeBrokerDiscovery } from "../src/sdk/broker/discovery";
 import { SessionIndex } from "../src/sdk/broker/session-index";
@@ -280,7 +281,7 @@ async function createFixture(
 	await writeBrokerDiscovery(agentDir, {
 		version: 1,
 		protocolVersion: 3,
-		packageGeneration: "test",
+		packageGeneration: packageJson.version,
 		ownerId: "test-owner",
 		pid: process.pid,
 		host: "127.0.0.1",
