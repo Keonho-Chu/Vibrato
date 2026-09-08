@@ -497,6 +497,16 @@ describe("fallback transport facts", () => {
 		expect(classifyFallbackTrigger(oldGatewayShape)).toEqual({ class: "rate_limit", retryAfterMs: 43200000 });
 	});
 
+	it("does not throw on a CRLF-poisoned retained header value and yields no retry hint", () => {
+		const facts = {
+			kind: "transport" as const,
+			status: 429,
+			headers: { "retry-after": "5", "x-vug-daily-reset": "2026-09-09T00:00:00.000Z\r\nInjected: header" },
+		};
+		expect(() => classifyFallbackTrigger(facts)).not.toThrow();
+		expect(classifyFallbackTrigger(facts)).toEqual({ class: "rate_limit" });
+	});
+
 	it("issues an opaque marker for exactly one managed invocation", () => {
 		const token = beginAttempt("provider/model", 3);
 		expect(token).toMatchObject({ modelKey: "provider/model", attemptId: 3 });

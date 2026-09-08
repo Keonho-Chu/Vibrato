@@ -40,8 +40,9 @@ export type TransportHeaders = Headers | Record<string, string | undefined>;
  * Structured facts from an upstream HTTP or transport failure. Retry decisions
  * must use these facts rather than provider- or application-owned error text.
  *
- * `headers` is always a plain record limited to the retained retry-signal
- * entries: facts travel on persisted `AssistantMessage`s and through
+ * `headers` is always a plain record limited to the retained retry and
+ * gateway quota/queue signal entries: facts travel on persisted
+ * `AssistantMessage`s and through
  * `structuredClone` snapshots (managed fallback attempt staging), so they must
  * never carry a live `Headers` instance — cloning one throws `DataCloneError`
  * ("The object can not be cloned.") and masks the real provider failure.
@@ -168,8 +169,8 @@ const RETAINED_TRANSPORT_HEADERS = [
 const RETAINED_TRANSPORT_HEADER_SET: ReadonlySet<string> = new Set(RETAINED_TRANSPORT_HEADERS);
 
 /**
- * Reduce transport headers to the retained retry-signal entries in a plain
- * record, so facts stay structured-cloneable and JSON-serializable and never
+ * Reduce transport headers to the retained retry and gateway quota/queue
+ * signal entries in a plain record, so facts stay structured-cloneable and JSON-serializable and never
  * persist arbitrary response headers into session files.
  *
  * Exception-safe by contract: inspection uses only `Headers.get()` results
@@ -291,9 +292,22 @@ export function transportFailureFacts(
 	};
 }
 
+/**
+ * Exception-safe by contract: `new Headers(record)` throws on an invalid
+ * header value (e.g. a CRLF in a gateway-supplied timestamp like
+ * `x-vug-daily-reset`), and the retained record is otherwise free-form
+ * provider input. A throw here falls through to `undefined` — the same
+ * "no retry hint" result as if no headers were retained at all — instead of
+ * propagating a TypeError out of classification.
+ */
 function headersOf(headers: TransportHeaders | undefined): Headers | undefined {
 	if (headers instanceof Headers) return headers;
-	return headers ? new Headers(headers as Record<string, string>) : undefined;
+	if (!headers) return undefined;
+	try {
+		return new Headers(headers as Record<string, string>);
+	} catch {
+		return undefined;
+	}
 }
 
 function parseRetryAfterSeconds(value: string | null, now = Date.now()): number | undefined {
