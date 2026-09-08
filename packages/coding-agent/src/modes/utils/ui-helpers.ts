@@ -24,6 +24,7 @@ import {
 	type CompactionQueuedMessage,
 	type ComposerSubmissionOptions,
 	canApplyComposerSubmission,
+	type ErrorBlockLine,
 	type InteractiveModeContext,
 	type IrcArrivalSnapshot,
 	type TranscriptRebuildPolicy,
@@ -55,6 +56,15 @@ export type { TranscriptRebuildPolicy } from "../../modes/types";
 const IRC_INLINE_MAX_RENDER_ROWS = 2_048;
 const IRC_INLINE_MAX_SOURCE_UTF8_BYTES = 64 * 1_024;
 const IRC_INLINE_ELISION = "  … message elided …";
+
+/** Theme mapping for a multi-line error block. The producer supplies only meaning. */
+const ERROR_BLOCK_PAINTERS: Record<ErrorBlockLine["kind"], (text: string) => string> = {
+	title: text => theme.bold(theme.fg("error", text)),
+	heading: text => theme.fg("muted", text),
+	detail: text => theme.fg("dim", text),
+	action: text => theme.fg("accent", text),
+	blank: () => "",
+};
 
 class BoundedIrcTextComponent implements Component {
 	#text: Text;
@@ -992,6 +1002,31 @@ export class UiHelpers {
 		}
 		addChatChild(this.ctx, new Spacer(1));
 		addChatChild(this.ctx, new Text(theme.fg("error", `Error: ${errorMessage}`), 1, 0));
+		this.ctx.ui.requestRender();
+	}
+
+	/**
+	 * Render a titled, multi-line error in the chat.
+	 *
+	 * The producer of the lines decides what each line means; the theme mapping
+	 * lives here, so a block never carries escape codes of its own.
+	 *
+	 * `plainMessage` is the single-line form this block stands in for. A
+	 * backgrounded session writes that line FIRST, byte for byte as `showError`
+	 * always did, and only then the block. stderr is read in logs and scraped by
+	 * tooling, so the machine-readable line must not disappear merely because the
+	 * interactive surface learned to lay the same failure out.
+	 */
+	showErrorBlock(lines: readonly ErrorBlockLine[], plainMessage: string): void {
+		if (lines.length === 0) return;
+		if (this.ctx.isBackgrounded) {
+			const body = lines.map(line => line.text).join("\n");
+			process.stderr.write(`Error: ${plainMessage}\n${body}\n`);
+			return;
+		}
+		const rendered = lines.map(line => ERROR_BLOCK_PAINTERS[line.kind](line.text)).join("\n");
+		addChatChild(this.ctx, new Spacer(1));
+		addChatChild(this.ctx, new Text(rendered, 1, 0));
 		this.ctx.ui.requestRender();
 	}
 

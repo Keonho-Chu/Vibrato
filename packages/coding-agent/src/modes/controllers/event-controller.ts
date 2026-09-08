@@ -32,6 +32,7 @@ import { friendlyRetryReason } from "../execution-status";
 import type { IrcObservationRecord } from "../irc-observation-ledger";
 import { interruptHint } from "../shared";
 import { buildAbortDisplayMessage } from "../utils/abort-message";
+import { formatFallbackExhaustionBlock } from "../utils/fallback-exhaustion-block";
 import { emitHostStatus } from "../utils/host-status";
 import { consumeInjectedOptimisticSignature } from "../utils/injected-user-submission";
 import { parseIrcMessage } from "../utils/irc-message";
@@ -581,6 +582,15 @@ export class EventController {
 
 	async #handleNotice(event: Extract<AgentSessionEvent, { type: "notice" }>): Promise<void> {
 		const message = event.source ? `${event.source}: ${event.message}` : event.message;
+		// An exhausted fallback chain is the everyday token-limit screen on a
+		// gateway deployment, so it is laid out rather than printed as the one
+		// prefixed line `event.message` holds. That message is unchanged and every
+		// other surface still prints it; it travels with the block here too,
+		// because a backgrounded session writes it to stderr ahead of the block.
+		if (event.level === "error" && event.fallbackExhaustion && this.ctx.showErrorBlock) {
+			this.ctx.showErrorBlock(formatFallbackExhaustionBlock(event.fallbackExhaustion), message);
+			return;
+		}
 		if (event.level === "error") {
 			this.ctx.showError(message);
 		} else if (event.level === "warning") {
