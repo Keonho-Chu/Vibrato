@@ -67,7 +67,7 @@ Bun is required only to build Vibrato from source. The installer never downloads
 curl -fsSL https://raw.githubusercontent.com/Keonho-Chu/Vibrato/main/scripts/install.sh | sh -s -- --source
 ```
 
-From a checkout: `bun run install:dev`, then `bun run dev` / `bun run dev:link`. See the repository `AGENTS.md` for the development workflow.
+From a checkout: `bun run install:dev`, then `bun run dev` / `bun run dev:link`. The setup command installs dependencies, rebuilds the native addon, links the source CLI, and installs bundled defaults. See the repository `AGENTS.md` for the development workflow.
 
 ## Windows notes
 
