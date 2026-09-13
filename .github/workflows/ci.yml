@@ -458,6 +458,11 @@ jobs:
            with:
               name: vib-binary-${{ matrix.target_id }}
               path: ${{ matrix.binary_path }}
+              # Hand-off to release_prepare/publish inside this run only. The
+              # published binary lives on the GitHub release, so the default
+              # 90-day retention just accumulated ~290 MB per nightly and
+              # exhausted the account's artifact storage quota.
+              retention-days: 3
 
    release_prepare:
       if: ${{ always() && needs.native.result == 'success' && needs.binaries.result == 'success' && ((needs.release_metadata.outputs.channel == 'stable' && startsWith(github.ref, 'refs/tags/v') && github.event_name != 'workflow_dispatch') || (needs.release_metadata.outputs.channel == 'nightly' && needs.nightly_gate.result == 'success')) }}
