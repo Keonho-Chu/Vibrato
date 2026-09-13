@@ -558,12 +558,15 @@ describe("native release binary coverage", () => {
 	test("install tarball smoke includes linux x64 optional natives package", async () => {
 		const installer = await Bun.file(path.join(repoRoot, "scripts/install-tests/run-ci.sh")).text();
 		expect(installer).toContain("stage_linux_x64_optional_package");
+		// The wrapper package directory is `packages/vibrato-cli` (unscoped npm
+		// name), so the pack loop must end with it, not the old `vib-rato` dir.
 		expect(installer).toContain(
-			"for pkg in utils natives-linux-x64 natives ai agent tui stats coding-agent vib-rato",
+			"for pkg in utils natives-linux-x64 natives ai agent tui stats coding-agent vibrato-cli",
 		);
 		expect(installer).not.toContain("bridge-client");
 		expect(installer).toContain("@vib-rato/natives-linux-x64");
 		expect(installer).toContain("vib-rato-natives-[0-9]*.tgz");
+		expect(installer).toContain("vibrato-cli-[0-9]*.tgz");
 	});
 });
 
