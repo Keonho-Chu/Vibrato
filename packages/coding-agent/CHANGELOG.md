@@ -1,6 +1,9 @@
 # Changelog
 
 ## [Unreleased]
+### Fixed
+
+- `install:dev` now builds the workspace native addon before linking the source CLI, so a fresh or cleaned development checkout no longer fails at startup with a missing addon, and a checkout that just moved to a new version no longer loads a stale `.node` whose version sentinel the loader rejects. Ported from upstream gajae-code `e07d8fe28`.
 
 ## [0.18.0] - 2026-09-08
 ### Fixed
