@@ -1,6 +1,9 @@
 # Changelog
 
 ## [Unreleased]
+### Fixed
+
+- Standalone binaries can convert PDFs again. Compiled releases marked `mupdf` as an external package, but compiled-Bun module resolution cannot satisfy markit's bare `mupdf` import, so every PDF conversion failed with a generic "PDF support requires 'mupdf'" note and the read tool fell back to raw bytes (upstream gajae-code #5433). `mupdf` is now bundled, its wasm asset is embedded and routed to the Emscripten loader via a `locateFile` hook, and a narrow `markit-ai` patch replaces its bundler-hostile `require("mupdf")` image-rendering call with a dynamic import. Conversion failures that still name `mupdf` now surface the real import error instead of the swallowed cause.
 
 ## [0.18.0] - 2026-09-08
 ### Fixed
